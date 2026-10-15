@@ -21,8 +21,8 @@ Locates the \eqn{(a, b, k)} entry of a distribution's third derivative,
 which is keyed by name, never by position.
 }
 \details{
-The name is built by putting the three parameter names in the family's own
-order and joining them, the direction \pkg{distributions7} sanctions, and
-then checked against the enumeration, never trusted.
+The name is built by putting the three parameter names in the family's order
+and joining them with an underscore, and is then checked against the names
+that the derivative returned.
 }
 \keyword{internal}

@@ -18,10 +18,10 @@ The term, or \code{NULL} where no equation carries that key.
 The term a key names, searched over every distribution parameter.
 }
 \details{
-A unit records the parameter its penalty is filed under, which for a
-covariance class is the parameter the class is keyed by and not necessarily
-the one carrying the structural term the class reaches into. A caller that
-has a term's key and wants the term asks here rather than assuming the two
-agree.
+A unit records the parameter under which its penalty is filed. For a
+covariance class that is the parameter by which the class is keyed, which is
+not necessarily the parameter carrying the structural term that the class
+reaches into. A caller that has a term's key and needs the term should use
+this function instead of assuming that the two agree.
 }
 \keyword{internal}

@@ -13,14 +13,16 @@ sparse_augmented_solve(R, C, u, how)
 
 \item{u}{The right-hand side, a numeric vector of length \code{p}.}
 
-\item{how}{The decomposition asked for. Only \code{"qr"} is served; \code{"svd"} has
+\item{how}{The decomposition requested. Only \code{"qr"} is served; \code{"svd"} has
 no sparse counterpart and declines.}
 }
 \value{
 A list with \code{delta} (numeric, length \code{p}) and \code{rank} (integer,
 equal to \code{p}), or \code{NULL} when the route declines: \code{how} is not \code{"qr"},
-the factorization fails, or the equilibrated diagonal says the matrix is
-deficient.
+the stacked matrix has fewer rows than columns, a column has zero norm,
+the factorization or the triangular solves fail, or the equilibrated
+diagonal shows that the matrix is deficient. Unlike \code{\link[=augmented_solve]{augmented_solve()}},
+the list has no \code{dropped} element.
 }
 \description{
 The same increment \code{\link[=augmented_solve]{augmented_solve()}} returns, taken through a
@@ -29,49 +31,41 @@ sparse QR of \eqn{[R;\ C]}.
 \section{Why a QR}{
 The augmented form exists so that \eqn{X'X} is never formed and the
 conditioning is never squared. A sparse QR is a QR and keeps that
-property exactly. A sparse Cholesky of the normal equations would be
-faster still and would give it up.
-
-Measured against the dense QR on the same augmented design of a
-random-intercept model: 695 times faster at 100 groups and 75475 times at
-1000, where the dense factorization costs 9.06 s against 0.00012 s.
+property. A sparse Cholesky factorization of the normal equations would
+be faster and would give it up.
 }
 
 \section{The factor is not back-permuted}{
 A sparse QR reorders the columns to reduce fill, so \eqn{AP = QR} for the
-permutation \eqn{P} the decomposition chose, and
+permutation \eqn{P} that the decomposition chose, and
 \eqn{(A'A)^{-1} = P(R'R)^{-1}P'}. The increment is two triangular solves
-between a permutation and its inverse, which is the bookkeeping the dense
-route already does with \code{qr()}'s pivot.
+between a permutation and its inverse, which is the bookkeeping that the
+dense route does with the pivot of \code{qr()}.
 
-\code{qrR(backPermute = TRUE)} looks like the simpler choice and is a trap. The
-back-permuted factor is no longer triangular, so its diagonal says nothing
-about the rank, and a solve against it is a general solve instead of two
-triangular ones.
+The function calls \code{qrR(backPermute = FALSE)}. The back-permuted factor
+is not triangular, so its diagonal does not give the rank, and a solve
+against it is a general solve instead of two triangular ones.
 }
 
 \section{The rank test}{
-Read off the diagonal of the triangular factor, since a sparse QR does not
-report a rank. The test is on the \strong{Jacobi-equilibrated} diagonal, each
-entry divided by its column's norm, and declines when the smallest ratio
-falls to \code{ncol(A) * .Machine$double.eps} of the largest.
+The rank is read off the diagonal of the triangular factor, since a sparse
+QR does not report a rank. The test is on the \strong{Jacobi-equilibrated}
+diagonal, each entry divided by its column's norm, and the route declines
+when the smallest ratio is at most \code{ncol(A) * .Machine$double.eps} times
+the largest.
 
-Without the equilibration the route is barely usable. Reading the raw
-diagonal rejected 87 of 127 solves on matrices the dense route finds at
-full rank, the ratio there running down to \eqn{7 \times 10^{-30}} while
-the equilibrated one stayed between 0.445 and 1. Those matrices are not
-near-singular; their columns differ in size, as a large smoothing
-parameter makes them. With the raw test a random-effect fit fell through
-to a dense QR and cost 34.1 s where it now costs 3.9.
+Without the equilibration the raw diagonal would reject matrices that the
+dense route finds at full rank, because their columns differ in size (a
+large smoothing parameter makes them so), and the solve would fall through
+to the dense QR.
 
-The column norms come from \code{colSums(A^2)}. Writing \code{colSums(A * A)}
-instead makes a binary operation between two sparse matrices, which
-intersects their index sets and is 29 to 35 times slower; the norms were
-70 to 74 per cent of the whole solve until that line changed.
+The column norms come from \code{colSums(A^2)}, which acts on the \code{x} slot of
+the sparse matrix; \code{colSums(A * A)} would form a binary operation between
+two sparse matrices, which intersects their index sets and is slower.
 
-Where the matrix really is rank deficient there is no unique increment,
-and this route declines instead of choosing one. The caller falls back to
-the dense route, which drops columns and says how many it kept.
+Where the matrix is rank deficient there is no unique increment, and this
+route declines instead of choosing one. The caller falls back to the dense
+route, which drops columns and reports the rank and the dropped columns.
 }
 
 \seealso{

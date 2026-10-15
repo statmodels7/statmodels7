@@ -14,18 +14,22 @@ joint_design_rows(spec, design, coef)
 \item{coef}{The coefficients.}
 }
 \value{
-A list with \code{V} (one matrix per distribution parameter),
-\code{ap} (which equation carries the filter), \code{keep} (the columns
-that survive a held level), \code{ev}, \code{f} and the sizes.
+\code{NULL} where the model has no filter. Otherwise a list with \code{V}
+(one matrix per distribution parameter), \code{ap} (which equation carries the
+filter), \code{nb}, \code{np} and \code{mf} (the numbers of coefficients, of the term's
+parameters and the joint width), \code{keep} (the columns that survive a held
+level), \code{zn} (the term's parameter names), \code{ev}, \code{f}, \code{params} and \code{n}.
 }
 \description{
 \eqn{V_{a,t} = \partial\eta_{a,t}/\partial u} over the coefficients of
-every equation followed by a structural term's own parameters: the
-equation's design placed in its own columns, and for the equation carrying
-a filter the forward Jacobian of the recursion, which is dense.
+every equation followed by a structural term's own parameters. The function
+returns each equation's static design placed in its own columns, with zeros
+in the columns of the structural term's parameters. The callers replace the
+matrix of the equation that carries the filter by the forward Jacobian of
+the recursion, which is dense.
 }
 \details{
-It exists so that the contraction \code{\link[=u_vector]{u_vector()}} performs is
+It exists so that the contraction that \code{\link[=u_vector]{u_vector()}} carries out is
 written once. The formula there does not change where a filter is present;
 only its operand does, \eqn{X} becoming \eqn{[X_p \mid D]}. Everything
 downstream, the third derivative against the diagonal of \eqn{M} and the

@@ -12,6 +12,9 @@ outer_newton_ok(spec, design, exact2, method = NULL)
 \item{design}{The design, from \code{\link[=statmod_design]{statmod_design()}}.}
 
 \item{exact2}{Whether the criterion has an exact Hessian at all.}
+
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}, or \code{NULL}. Where its \code{hessian} is
+\code{"expected"} the function returns \code{FALSE}.}
 }
 \value{
 \code{TRUE} or \code{FALSE}.
@@ -23,28 +26,25 @@ the Hessian exists.
 }
 \details{
 The two are separated because a criterion may have an exact second
-derivative that is a poor thing to steer by. Over a COVARIANCE CLASS the
-criterion's Hessian is strongly indefinite wherever the chart's angle
-approaches its boundary -- measured on ten groups of ten whose truth
-carries a correlation of exactly one, the eigenvalues of −H at the point
-the search reports are 1.13e+07, -1.48e+10 and -4.20e+17 -- so
-\code{newton()} takes its eigen-floor branch and the repaired step lands
-elsewhere. On that panel it ends at an angle of -11.35 against -8.14, at a
-criterion of -127.6696 against -126.3168, reporting \verb{not converged} where
-the shorter run reports \code{boundary}, and there the whole outer curvature is
-unreadable so NO coordinate keeps a standard error rather than only the
-correlation. Away from the boundary the same shape is fine and merely
-dearer: on twenty groups \code{newton()} reaches the same criterion in 32
-evaluations against 85 and 13.4 seconds against 7.0.
+derivative that is a poor direction for the search. Over a covariance class
+the Hessian of the criterion is strongly indefinite wherever the angle of
+the chart approaches its boundary, so that \code{\link[optimizers7:newton]{optimizers7::newton()}} repairs
+an indefinite Hessian and the repaired step can end elsewhere than a
+quasi-Newton search. The default therefore uses \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} for a
+covariance class, whose Hessian is exact but not a reliable direction.
 
-What the Hessian's availability still governs is untouched: it is supplied
-to an optimizer the caller NAMES, it is what \code{statmod_hyper_vcov()} and
-\code{vcov(type = "unconditional")} read, and it is recorded as
-\code{exact_hessian}. Only the default direction is held back, and only for the
-shape the measurement names.
+The function returns \code{FALSE} for the expected information, for a model with
+a structural term, and for a penalty with a covariance block wider than one.
+In the first two cases the cost of the Hessian at each evaluation outweighs
+the saving in evaluations.
 
-The block width is asked of the penalty with \code{S7::prop_names()} rather
-than assumed, a branch that does not carry one being univariate.
+The availability of the Hessian still governs the rest: it is supplied to an
+optimizer that the caller names, it is what \code{statmod_hyper_vcov()} and
+\code{vcov(type = "unconditional")} read, and it is recorded as \code{exact_hessian}.
+Only the default direction is held back.
+
+The block width is read from the \code{block} property of the penalty where it
+has one; a penalty without that property is treated as univariate.
 }
 \seealso{
 \code{\link[=outer_default_optimizer]{outer_default_optimizer()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

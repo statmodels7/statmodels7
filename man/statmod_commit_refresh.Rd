@@ -25,9 +25,9 @@ stretch replaced by the coefficients that term stored. Identical to
 \code{coef} when nothing was committed or when no term relabeled.
 }
 \description{
-Replaces the terms the design refreshes from by the ones they refresh to
-at the given coefficients, so that whatever a term carries as a state of
-its iteration moves on one step.
+Replaces each term in the design state by the term that results from
+refreshing it at the given coefficients, so that the state of each term's
+iteration advances one step.
 }
 \section{What moves}{
 The rescaling factor of a discontinuous break-point term, and the
@@ -35,7 +35,10 @@ direction it last traveled in, which \pkg{modelterms7} halves on a
 reversal. Advancing that once per objective evaluation would anneal at
 the speed of the line search instead of the speed of the fit; never
 advancing it would solve a permanently smoothed problem, whose fixed
-point is not the model's. Once per sweep is what this call is for.
+point is not the model's. The alternation commits the Jacobian entries
+once per pass (\code{which = "jacobian"}), and \code{\link[=fit_working]{fit_working()}} commits the
+frozen entries, which include the discontinuous terms, once per working fit
+(\code{which = "frozen"}).
 }
 
 \section{Why a frozen block is committed elsewhere}{
@@ -45,10 +48,11 @@ coefficients and the rescaling reaches only the columns.
 
 Where the block is a frozen working linearization, that is false twice
 over, which is why those terms are committed by \code{\link[=fit_working]{fit_working()}} and
-skipped here at the default. A \code{\link[modelterms7:jseg]{modelterms7::jseg()}} reads its position
+skipped when \code{which = "jacobian"}, the value that the alternation passes.
+A \code{\link[modelterms7:jseg]{modelterms7::jseg()}} reads its position
 from a quadratic that is incremental in the position already committed,
-so a second commit at the same coefficients takes a further hidden step,
-measured at up to 0.71 per observation on the contribution. And a refresh
+so a second commit at the same coefficients takes a further hidden step
+and changes the contribution. And a refresh
 may relabel crossed break-point lineages, after which the caller's own
 copy of the coefficients names them in the old order.
 

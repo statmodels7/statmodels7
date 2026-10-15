@@ -10,7 +10,8 @@ ctx_approx(ctx)
 \item{ctx}{A context, or \code{NULL}.}
 }
 \value{
-A single string.
+A single string: the approximation that the context carries, or
+\code{"opg"} where \code{ctx} is \code{NULL} or carries none.
 }
 \description{
 The Approximation a Context Was Built With

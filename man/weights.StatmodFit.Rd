@@ -12,8 +12,8 @@
 \item{...}{Unused.}
 }
 \value{
-A numeric vector of length \code{nobs(object)}, the prior weights as
-supplied. All ones when none were given. They enter as given and are
+A numeric vector with one entry per row of the data, the prior
+weights as supplied. All ones when none were given. They enter as given and are
 never normalized, so a weight of two counts an observation twice.
 }
 \description{
@@ -34,7 +34,7 @@ dd$y <- 1 + dd$x + rnorm(40, sd = 0.3)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 head(weights(fit))
 
-# An unweighted fit carries ones, so the weights sum to the row count.
+# The weights are frequencies, so nobs() is their sum.
 sum(weights(fit)) == nobs(fit)
 }
 \seealso{

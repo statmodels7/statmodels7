@@ -12,7 +12,7 @@
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly, as a print method should.
+\code{x}, invisibly.
 }
 \description{
 Prints one line naming the criterion and the information it is built on,

@@ -30,7 +30,7 @@ coefficients returning the joint solve over every estimated coordinate;
 or \code{NULL} where the joint curvature cannot be formed or solved.
 }
 \description{
-The pieces \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} reads on the joint vector of
+The pieces that \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} reads on the joint vector of
 coefficients and a filter's own parameters where no penalty covers those
 parameters: a solve with the joint penalized curvature, which is how the
 mode moves, and the derivative of every equation's predictor over that

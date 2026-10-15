@@ -2,7 +2,7 @@
 % Please edit documentation in R/marginal.R
 \name{held_stack}
 \alias{held_stack}
-\title{The Stacked Positions a Specification Holds}
+\title{The Stacked Positions That a Specification Holds}
 \usage{
 held_stack(spec, design)
 }
@@ -16,6 +16,8 @@ An integer vector of positions, empty where nothing is held.
 }
 \description{
 Translates \code{spec@held_coef} into positions in the stacked coefficient
-vector, from the design's own coefficient names.
+vector, from the design's own coefficient names, and adds the positions
+that \code{\link[=term_held_stack]{term_held_stack()}} returns for break-point terms held at fixed
+positions.
 }
 \keyword{internal}

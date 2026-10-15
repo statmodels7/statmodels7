@@ -33,12 +33,12 @@ statmod_marginal_grad(
 \item{basis}{The integrated subspace, or \code{NULL}.}
 
 \item{free}{Whether to carry the result onto the free scale. The Hessian
-asks for the parameter scale, having its own second-order chain rule to
-apply.}
+assembly calls this function with \code{free = FALSE} and applies its own
+second-order chain rule.}
 
 \item{ctx}{The evaluation context, or \code{NULL}.}
 
-\item{gam}{The coefficients the criterion estimates, from
+\item{gam}{The coefficients that the criterion estimates, from
 \code{\link[=marginal_coords]{marginal_coords()}}, or \code{NULL}.}
 }
 \value{
@@ -50,12 +50,27 @@ position of \code{gam$where}, or \code{NULL} where the determinant does not exis
 the hyperparameters under estimation.
 }
 \details{
-The three pieces are the envelope term \eqn{-\partial\rho/\partial\theta},
-the explicit derivative of the determinant \eqn{\mathrm{tr}(M\,\partial
-S/\partial\theta)}, and the implicit one \eqn{u'v}, where
-\eqn{v = -(H+S)^{-1}\partial^2\rho/\partial\beta\partial\theta} is how the
-mode moves and \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)} is how
-the determinant reads that movement.
+The gradient is the sum of the envelope term
+\eqn{-\partial\rho/\partial\theta}, the explicit derivative of the
+determinant, \eqn{-\tfrac12\mathrm{tr}(M\,\partial S/\partial\theta)}, the
+implicit one, \eqn{-\tfrac12 u'v}, and, where a penalty's Hessian depends on
+the coefficients, \eqn{-\tfrac12\mathrm{tr}(M\,\partial S/\partial\beta[v])}.
+Here \eqn{v = -J^{-1}\,\partial^2\rho/\partial\beta\partial\theta} is how the
+mode moves, \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)} is how
+the determinant reads that movement, and \eqn{M} is \eqn{K^{-1}} under
+\code{\link[=reml]{reml()}} and the inverse of \eqn{K} on the integrated subspace under
+\code{\link[=ml]{ml()}}.
+
+The matrix \eqn{J} is the curvature of the penalized likelihood at the mode,
+the observed information plus the penalty's Hessian, with the second
+derivative of a block that moves with its coefficients added
+(\code{\link[=mode_curvature]{mode_curvature()}}). It differs from \eqn{K} when the criterion reads the
+expected information. A coefficient that the criterion estimates, a
+direction that the model does not identify and a coordinate that a kink of a
+break-point term holds do not move with \eqn{\theta}, and the solve is made
+on the directions that they leave free (\code{\link[=mode_solver]{mode_solver()}}). Where a penalty
+covers the parameters of a structural term, the function delegates to
+\code{\link[=statmod_structural_grad]{statmod_structural_grad()}}.
 
 \eqn{u} is assembled without forming any third-derivative array. Writing
 \eqn{G_{ab,i} = x_{ia}'M_{[a][b]}x_{ib}} for the per-observation diagonal of
@@ -64,6 +79,11 @@ the block of \eqn{M},
 one crossprod per distribution parameter. The component
 \eqn{\ell'''_{abk}} is looked up by a name built from the parameter names in
 the family's own order, never parsed out of one.
+
+For each coefficient in \code{gam}, which the criterion estimates, the entry is
+the score of the log-likelihood in that coefficient minus half of the
+movement of the determinant along the direction in which the mode moves
+when the coefficient changes by one unit.
 }
 \seealso{
 \code{\link[=statmod_marginal]{statmod_marginal()}}, \code{\link[=reml]{reml()}}

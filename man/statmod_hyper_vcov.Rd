@@ -26,10 +26,10 @@ statmod_hyper_vcov(
 
 \item{method}{The outer method that estimated them, or \code{NULL}.}
 
-\item{inner}{The inner optimizer the fit used, which the stencil route
-refits its probes with; \code{iwls()} where none is given.}
+\item{inner}{The inner optimizer that the fit used, with which the stencil
+route refits its probes; \code{iwls()} where none is given.}
 
-\item{pinned}{The coordinates the fit left out of the criterion's
+\item{pinned}{The coordinates that the fit left out of the criterion's
 determinant, as it records them in \code{methods$pinned}.}
 
 \item{at_edge}{The \code{boundary_key} of \code{\link[=statmod_certificate]{statmod_certificate()}}: the
@@ -39,33 +39,38 @@ so that the others carry the variance conditional on them.}
 \value{
 A square matrix, one row per estimated hyperparameter, whose
 dimnames join the distribution parameter, the term and the
-hyperparameter's own name with a carriage return, a character no name
-can contain, so the three stay recoverable from the key. The index
-rides on the attribute \code{"idx"}. \code{NULL} where there is nothing to
-report.
+hyperparameter's own name with a carriage return, a character that no
+name can contain, so that the three are recoverable from the key. The
+index is stored in the attribute \code{"idx"}. The rows and columns of held
+coordinates are \code{NA} (see \code{\link[=hyper_variance]{hyper_variance()}}). The value is \code{NULL} where
+there is nothing to report.
 }
 \description{
 The asymptotic variance matrix of the estimated hyperparameters, on the free
 scale their links carry them onto.
 }
 \details{
-A hyperparameter estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} is
-the maximizer of a criterion that is twice differentiable in it, so it has a
-variance like any other maximum-likelihood estimate: the inverse of the
-negative Hessian of that criterion at the point reached, which
-\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} already computes exactly. It is read on
-the free scale because that is where the criterion was maximized and where
-the quadratic approximation behind it is reasonable; a variance for a
-smoothing parameter on its own scale, where the estimate is often several
-orders of magnitude from zero and the criterion far from symmetric, would
-describe a shape the criterion does not have.
+A hyperparameter estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} is the maximizer of a
+criterion that is twice differentiable in it, so its variance is the
+inverse of the negative Hessian of that criterion at the point reached,
+which \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} returns. If the criterion also estimates
+coefficients, the variance is the block of the hyperparameters in the
+inverse of the negative Hessian over the hyperparameters and those
+coefficients. \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} computes the Hessian analytically
+where a route applies and by a difference of the exact gradient otherwise.
+The matrix is read on the free scale because the criterion was maximized on
+that scale, where the quadratic approximation is reasonable. A variance on
+the scale of the hyperparameter itself would describe a shape that the
+criterion does not have where the estimate is far from zero and the
+criterion is asymmetric.
 
-\strong{Where it does not apply.} A hyperparameter chosen along a path, which
-is what \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}} do to a kinked penalty's, is the
-argument of a minimum over a grid. It is no root of a derivative, so there
-is no Hessian to invert and no standard error follows. Its uncertainty is
-a resampling question, and \code{NULL} is returned in place of a number of
-another kind.
+\strong{Where it does not apply.} The function returns \code{NULL} for every outer
+criterion other than \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, including \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}
+used as the outer criterion for a smooth penalty. A hyperparameter that a
+path selects (the penalty of a kinked term, chosen by \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or
+\code{\link[=cv]{cv()}} over a grid) is the argument of a minimum, not a root of a
+derivative, so no Hessian exists to invert. Its uncertainty can be assessed
+by resampling.
 }
 \seealso{
 \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}

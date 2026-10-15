@@ -9,7 +9,7 @@ block_leverage(design, M, params, npar, offs, threads = 1L)
 \arguments{
 \item{design}{The design.}
 
-\item{M}{The matrix the traces are taken against.}
+\item{M}{The matrix against which the traces are taken.}
 
 \item{params}{The distribution's parameter names.}
 
@@ -18,7 +18,8 @@ block_leverage(design, M, params, npar, offs, threads = 1L)
 \item{threads}{How many threads the sparse route's kernel may use.}
 }
 \value{
-A list of lists, \code{G[[a]][[b]]} a vector as long as the sample.
+A list of lists, \code{G[[a]][[b]]} a vector as long as the sample, or
+\code{NULL} where equation \code{a} or equation \code{b} has no coefficients.
 }
 \description{
 \eqn{G_{ab,i} = x_{ia}'M_{[a][b]}x_{ib}}, the diagonal of \eqn{X_a M_{ab}
@@ -29,13 +30,17 @@ This is the one quantity every trace against \eqn{M} reduces to. For a
 matrix of the design's own form,
 \deqn{\mathrm{tr}(M\,X'WX) = \sum_i w_i\,(XMX')_{ii},}
 so a contraction of a third or fourth derivative never has to be assembled
-as a \eqn{p\times p} matrix in order to be traced against \eqn{M}: measured
-at 8000 observations and 69 coefficients, forming it and taking the trace
-costs 25.5 ms where the weighted sum costs 0.031 ms, and at 20000
-observations and 503 coefficients 3480 ms against 0.066 ms.
+as a \eqn{p\times p} matrix in order to be traced against \eqn{M}.
 
 It is computed once per evaluation point and read by the gradient's
 contraction and by every pair of the Hessian.
+
+Where both blocks are sparse, the product of their densities is below
+\eqn{10^{-3}} and the number of pairs is below \eqn{2 \times 10^{7}}, the
+diagonal is computed by \code{\link[=leverage_pairs]{leverage_pairs()}} from the nonzeros of each row.
+The pair count bounds the work in absolute terms, which the density alone
+does not. Otherwise the diagonal is read off the dense product that has the
+fewer columns.
 }
 \seealso{
 \code{\link[=u_vector]{u_vector()}}, \code{\link[=trace_design_form]{trace_design_form()}}

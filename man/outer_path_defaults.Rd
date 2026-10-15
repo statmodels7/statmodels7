@@ -11,16 +11,17 @@ A named list with \code{nfolds}, \code{rule} and \code{folds}, to be spliced int
 an \code{\link[=OuterMethod]{OuterMethod()}} call.
 }
 \description{
-The defaults for the three properties only \code{\link[=cv]{cv()}} reads, so that one class
-can serve every criterion and each constructor names only what it needs.
+The defaults for \code{nfolds}, \code{rule} and \code{folds}, which only \code{\link[=cv]{cv()}} reads,
+so that one class can serve every criterion and each constructor names only
+what it needs.
 }
 \details{
-What a \strong{path} does is not among them. How many values it visits, how far
-down it reaches, and whether a term's own hyperparameters are combined or
-swept one at a time all belong to the term. The same criterion object is
-put to the model's smooth hyperparameters as well, and those are read at
-the mode instead of being swept, so a path setting on the criterion would
-be meaningless for most of what it is asked about.
+The settings of a \strong{path} are not among them. How many values a path
+visits, how far down it reaches, and whether a term's own hyperparameters
+are combined or swept one at a time all belong to the term. \code{\link[=aic]{aic()}} and
+\code{\link[=bic]{bic()}} are also used for a model's smooth hyperparameters, which are read
+at the mode and not swept, so a path setting on the criterion would not
+apply to them. \code{\link[=cv]{cv()}} is accepted only as a \code{sparse_criterion}.
 }
 \seealso{
 \code{\link[=path_fallbacks]{path_fallbacks()}} for the settings a term that declares a kinked

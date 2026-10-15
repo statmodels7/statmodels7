@@ -39,13 +39,14 @@ Estimates each structural term's parameters on the unconstrained scale of
 are, by a general optimizer with the exact gradient.
 }
 \details{
-A general optimizer serves here and the scoring step does not, because
-these are not coefficients of a design block: there is no \eqn{X'WX} to
-invert, the predictor being a recursion and not a product.
+The scoring step does not apply to these parameters, because they are not
+coefficients of a design block: the predictor is a recursion and not a
+product, so there is no \eqn{X'WX} to invert. A general optimizer
+(\code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} by default) is used instead.
 
 The gradient is exact. \code{\link[=statmod_structural_score]{statmod_structural_score()}} chains the filter's
 own Jacobian, which is already the total derivative of the predictor in
-those parameters, so a quasi-Newton method has everything it needs.
+those parameters, and the derivative of the term's own penalties is added.
 }
 \seealso{
 \code{\link[=statmod_structural]{statmod_structural()}}

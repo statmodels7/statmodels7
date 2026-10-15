@@ -23,8 +23,8 @@ equations the active coordinates belong to.
 The information is block diagonal over the equations wherever the family's
 per-observation information is, and in any case a coordinate is identified
 only if its own equation's active columns identify it, so the rank is read
-per equation and added. Nothing of size \eqn{n \times |A|} is formed twice:
-the columns are subset once and decomposed once.
+per equation and added. Each matrix of size \eqn{n \times |A|} is formed
+once: the columns are subset once and decomposed once.
 }
 \seealso{
 \code{\link[=design_count_exact]{design_count_exact()}}, whose certificate makes this unnecessary,

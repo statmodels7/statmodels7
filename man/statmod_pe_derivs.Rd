@@ -38,24 +38,26 @@ A list with \code{grad} and, at order 2, \code{hess}; or
 \code{NULL} where the information is not invertible.
 }
 \description{
-The gradient and, when asked, the Hessian of \eqn{-2\ell + \kappa\tau} over
+The gradient and, at order 2, the Hessian of \eqn{-2\ell + \kappa\tau} over
 the free scale of the hyperparameters.
 }
 \details{
 Writing \eqn{P = J^{-1}}, \eqn{A_m = \partial J/\partial\theta_m = S_m +
 T[\hat\beta_m]} and \eqn{B_m = \partial H/\partial\theta_m = T[\hat\beta_m]},
 \deqn{\tau_m = \mathrm{tr}(PB_m) - \mathrm{tr}(PA_mPH),}
-and the log-likelihood contributes \eqn{(\partial\rho/\partial\beta)'
-\hat\beta_m}. Differentiating once more brings in \eqn{A_{ml}}, \eqn{B_{ml}}
-and \eqn{\hat\beta_{ml}}, which are the quantities
-\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} already assembles.
+and the term \eqn{-2\ell} contributes
+\eqn{-2(\partial\rho/\partial\beta)'\hat\beta_m}. Differentiating once
+more brings in \eqn{A_{ml}}, \eqn{B_{ml}} and \eqn{\hat\beta_{ml}}, which
+are quantities that \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} assembles.
 
 Where \code{method@hessian} is \code{"expected"}, \eqn{\tau} reads the expected
 information \eqn{H_E}, so its derivative contracts the derivative of
 \eqn{H_E} in the predictors, read from
 \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} under its own key, while the
 mode still moves by the observed penalized information. That route has no
-Hessian and is refused at order 2.
+Hessian, and a request for order 2 signals an error. Beside an unpenalized
+filter the mode moves jointly with the filter's own parameters, and only
+the gradient is available.
 }
 \seealso{
 \code{\link[=aic]{aic()}}, \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}

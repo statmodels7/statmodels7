@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{statmod_regime_at}
 \alias{statmod_regime_at}
-\title{Run the Structural Terms at the Current Parameters}
+\title{Run the Terms of the Likelihood Shape at the Current Parameters}
 \usage{
 statmod_regime_at(spec, design, eta_static, theta_static)
 }
@@ -16,33 +16,28 @@ statmod_regime_at(spec, design, eta_static, theta_static)
 \item{theta_static}{The parameters they give.}
 }
 \value{
-A named list, one entry per structural term, each with
-\code{param}, \code{level}, \code{jacobian} and the callbacks used.
-
-A list, one entry per regime term.
+A named list, one entry per structural term of the likelihood
+shape (a regime term or a marginal break-point term), each with \code{param},
+\code{term}, \code{tm}, \code{psi}, \code{gamma} (the posterior), \code{mu} (the shifts), \code{cb}
+(the callbacks), \code{eta_static} and \code{eta_bar} (the posterior-weighted
+predictor).
 }
 \description{
-The level each filter adds to the equation it sits in, together with the
-derivative of that level in the term's own parameters.
-
-The smoothed state probabilities of each latent Markov term, the levels
-its regimes shift the predictor by, and the per-state predictors those
-give.
+The smoothed posterior over the components of each structural term of the
+likelihood shape (the states of a regime term, the intervals or nodes of a
+marginal break-point term), the shifts that the components add to the
+predictor, and the posterior-weighted predictor that these give.
 }
 \details{
-The result is memoized on the coefficients and the term's parameters,
-since the objective, its gradient and its curvature are asked for at the
-same point in turn and a filter is the expensive part of each.
-
 A term of this shape does not report a predictor: its contribution is a
-likelihood mixed over states, so the model's log-likelihood comes from
-\code{\link[modelterms7:term_loglik]{modelterms7::term_loglik()}} and never from the density at a single
+likelihood mixed over components, so the log-likelihood of the model comes
+from \code{\link[modelterms7:term_loglik]{modelterms7::term_loglik()}} and not from the density at a single
 predictor.
 
-Everything else follows from Fisher's identity: the derivative of that
-mixed likelihood in any predictor the model carries is the
+The remaining quantities follow from Fisher's identity: the derivative of
+that mixed likelihood in any predictor of the model is the
 posterior-weighted derivative of the ordinary one. A caller therefore
-differentiates its own log-density once per state, vectorized, and
+differentiates its own log-density once per component, vectorized, and
 weights.
 
 The predictor reported for the equation the term sits in is the
@@ -50,14 +45,5 @@ posterior-weighted one, and that is what a fitted value means here.
 }
 \seealso{
 \code{\link[=statmod_structural]{statmod_structural()}}
-
-\code{\link[=statmod_structural]{statmod_structural()}}
 }
-\keyword{Current}
-\keyword{Parameters}
-\keyword{Regime}
-\keyword{Run}
-\keyword{Terms}
-\keyword{at}
 \keyword{internal}
-\keyword{the}

@@ -29,7 +29,7 @@ of the penalty's null space as the hyperparameter grows.
 }
 \section{Restricting to the active set}{
 A penalty with a kink is not twice differentiable everywhere, and the mode
-of such a fit sits on the kink for every coefficient it sets to zero. It
+of such a fit sits on the kink for every coefficient that it sets to zero. It
 is twice differentiable away from the kink, so the trace is taken over the
 active coordinates alone, which is the submodel the fit has selected.
 
@@ -39,10 +39,9 @@ unbiased count of Zou, Hastie and Tibshirani (2007). The elastic net keeps
 its quadratic part and spends slightly less; SCAD and MCP contribute their
 own curvature and spend slightly more.
 
-Taking the trace over the whole vector instead cannot see the selection at
-all: measured on twenty noise columns it read 14 at every value of
-\eqn{\lambda}, so a criterion built on it prices a model that selects
-nothing the same as one that selects everything.
+The trace over the whole vector does not depend on which coefficients are at
+the kink, so a criterion built on it assigns the same degrees of freedom to
+a model that selects nothing and to one that selects everything.
 }
 
 \section{The inverse}{
@@ -58,7 +57,7 @@ the lasso. \emph{The Annals of Statistics} 35(5), 2173--2192.
 }
 \seealso{
 \code{\link[=aic]{aic()}} for the criterion this feeds,
-\code{\link[=statmod_edf]{statmod_edf()}} for the per-term reading, which inverts each block
-instead.
+\code{\link[=statmod_edf]{statmod_edf()}} for the per-term reading, which splits the same trace
+by term.
 }
 \keyword{internal}

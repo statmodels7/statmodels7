@@ -6,13 +6,19 @@ NULL
 
 #' @title The Number of Observations a Model Was Fitted To
 #' @name nobs.StatmodFit
-#' @description The row count of the fitting data.
+#' @description The number of observations that entered the likelihood: the
+#'   sum of the prior weights, which are frequency weights.
+#' @details A weight of two counts its row twice, so a fit with weights is
+#'   counted as the fit of the data with every row repeated as often as its
+#'   weight says. Without weights the result is the number of rows of the
+#'   data, since [statmod()] drops no rows (a missing value in the response or
+#'   in a variable of an equation is an error). [bic()], the cBIC of
+#'   [summary.StatmodFit()], [logLik.StatmodFit()]'s `"nobs"` attribute and
+#'   [df.residual.StatmodFit()] read the same number.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
-#' @return A single integer: the number of rows of the data the model was
-#'   fitted to. [statmod()] drops no rows (a missing value in the response or
-#'   in a variable of an equation is an error), so this is the number of
-#'   observations that entered the likelihood.
+#' @return A single number, the sum of the weights: an integer where that sum
+#'   is a whole number, and a double otherwise.
 #' @seealso [df.residual.StatmodFit()], which subtracts the effective degrees
 #'   of freedom from it, [statmod()]
 #' @examples
@@ -22,8 +28,28 @@ NULL
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' nobs(fit)
 #' @keywords internal
-nobs.StatmodFit <- function(object, ...) object@spec@n_obs
+nobs.StatmodFit <- function(object, ...) {
+  n <- weight_total(object@spec)
+  # an integer where the total is whole, as the row count was
+  if (n == round(n) && n <= .Machine$integer.max) as.integer(n) else n
+}
 S7::method(nobs, StatmodFit) <- nobs.StatmodFit
+
+
+#' The Number of Observations the Weights Count
+#'
+#' @description
+#' The sum of the prior weights, which are frequency weights: a weight of two
+#' counts the row twice. Without weights it is the number of rows.
+#'
+#' @param spec A [StatmodSpec()].
+#'
+#' @return A single number.
+#'
+#' @seealso [nobs.StatmodFit()], [bic()]
+#'
+#' @keywords internal
+weight_total <- function(spec) sum(spec@weights)
 
 
 #' @title The Formula a Model Was Written With
@@ -91,8 +117,8 @@ S7::method(family, StatmodFit) <- family.StatmodFit
 #' does not.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
-#' @return A numeric vector of length `nobs(object)`, the prior weights as
-#'   supplied. All ones when none were given. They enter as given and are
+#' @return A numeric vector with one entry per row of the data, the prior
+#'   weights as supplied. All ones when none were given. They enter as given and are
 #'   never normalized, so a weight of two counts an observation twice.
 #' @seealso [statmod()], [nobs.StatmodFit()]
 #' @examples
@@ -102,7 +128,7 @@ S7::method(family, StatmodFit) <- family.StatmodFit
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' head(weights(fit))
 #'
-#' # An unweighted fit carries ones, so the weights sum to the row count.
+#' # The weights are frequencies, so nobs() is their sum.
 #' sum(weights(fit)) == nobs(fit)
 #' @keywords internal
 weights.StatmodFit <- function(object, ...) object@spec@weights
@@ -112,7 +138,8 @@ S7::method(weights, StatmodFit) <- weights.StatmodFit
 #' @title Residual Degrees of Freedom of a Fitted Model
 #' @name df.residual.StatmodFit
 #' @description
-#' The observation count less the effective degrees of freedom of the model.
+#' The number of observations, [nobs.StatmodFit()], less the effective
+#' degrees of freedom of the model.
 #' @details
 #' The count subtracted is the effective one, the sum over the terms of their
 #' effective degrees of freedom, as [logLik.StatmodFit()] reports it. A
@@ -136,7 +163,7 @@ S7::method(weights, StatmodFit) <- weights.StatmodFit
 #' @keywords internal
 df.residual.StatmodFit <- function(object, ...) {
   ll <- stats::logLik(object)
-  as.numeric(object@spec@n_obs) - as.numeric(attr(ll, "df"))
+  weight_total(object@spec) - as.numeric(attr(ll, "df"))
 }
 S7::method(df.residual, StatmodFit) <- df.residual.StatmodFit
 

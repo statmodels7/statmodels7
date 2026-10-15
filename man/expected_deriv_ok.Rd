@@ -13,18 +13,18 @@ expected_deriv_ok(distrib)
 A single logical.
 }
 \description{
-Whether \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} answers for
-this family, asked at a probe and never inferred from its class.
+Whether \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} returns a value for
+this family. The generic is called once, at a probe value, and the result is
+not inferred from the family's class.
 }
 \details{
-The default route in \pkg{distributions7} is one central difference of the
-family's own expected information, which is a single stencil on an analytic
-quantity wherever that information is a written-out formula and refuses
-where it is itself an integral. Six of forty univariate families refuse, and
-the reason is cost, never accuracy: measured at 100 observations they
-cost 1880 to 147300 ms against a median of 0.183 ms for the others, so 2p
-of those calls per criterion evaluation is not a slower route but an
-unusable one.
+The default method in \pkg{distributions7} is one central difference of the
+family's expected information. It applies where that information is a
+written-out formula and signals an error where the information is itself
+approximated, because differencing an approximation would be a difference of
+a difference. The function returns \code{FALSE} for a family on which the generic
+signals an error, and also where a random parameter vector or a response
+cannot be drawn for the probe.
 }
 \seealso{
 \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

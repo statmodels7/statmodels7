@@ -22,7 +22,10 @@ and the compiled context carries \code{scaling}, its kernel composing the
 same quantities from the family's scalar entry points.}
 }
 \value{
-A list with \code{score}, \code{curvature} and \code{logdens}.
+A list with \code{score}, \code{curvature}, \code{logdens} and \code{fast}, the last
+being the context for the compiled filter, or \code{NULL} where the registries
+of \pkg{distributions7} and \pkg{linkfunctions7} do not cover the family
+and the link.
 }
 \description{
 The derivative of the log-density in one distribution parameter's
@@ -31,9 +34,10 @@ one observation, with every other parameter held where it is.
 }
 \details{
 They are read one observation at a time because a score-driven filter
-evaluates them at the predictor it has just produced, which is not known
-before the recursion reaches that observation. A term whose callbacks do
-not depend on the state is given the whole index vector instead. A regime
-chain is such a term: its levels shift a predictor known in advance.
+evaluates them at the predictor that it has just produced, and that
+predictor is not known before the recursion reaches the observation. A
+term whose callbacks do not depend on the state is given the whole index
+vector instead. A regime chain is such a term: its levels shift a
+predictor known in advance.
 }
 \keyword{internal}

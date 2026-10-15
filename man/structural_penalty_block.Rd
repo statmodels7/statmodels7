@@ -21,14 +21,17 @@ A square matrix, or \code{NULL}.
 }
 \description{
 The Hessian of whatever penalty covers a structural term's own parameters,
-over the free ones and in their order, which is the order the tail of
-\code{\link[=statmod_full_information]{statmod_full_information()}} carries them in.
+over the free ones and in their order, which is the order in which the
+tail of \code{\link[=statmod_full_information]{statmod_full_information()}} carries them.
 }
 \details{
-Written once because three readers need it and a block each of them placed
-for itself would agree only by accident: the joint fit, the variance
-matrix, and the marginal criterion. Where no structural term carries a
-penalty the answer is \code{NULL}, and a caller pads with zeros as before.
+Written once because its three readers (the variance matrix of
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, the marginal criterion and
+\code{\link[=statmod_structural_table]{statmod_structural_table()}}) would otherwise each place the block for
+themselves. The result is \code{NULL} where no structural term carries a
+penalty, where the only such penalty belongs to a mixed covariance class
+(placed by \code{joint_penalty_at()}), or where no term has \code{nfree} free
+parameters, and the caller then pads with zeros.
 }
 \seealso{
 \code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}}

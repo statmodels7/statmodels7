@@ -16,44 +16,27 @@ hess_stencil_inner_tol()
 A single number.
 }
 \description{
-The step \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} differences at, and how far its two
-readings may disagree before it refuses.
+The step at which \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} differences, the largest
+relative disagreement between its two readings, and the tolerance of the
+probes' inner fit.
 }
 \details{
-Both are measured rather than taken from a library rule.
-\code{\link[numericals7:fd_step]{numericals7::fd_step()}} would give \eqn{\epsilon^{1/3}}, about 6e-6, which
-is right for differencing a function evaluated to machine precision and
-wrong here: the gradient is computed by refitting a mode, so what bounds
-the step below is that reproducibility and not the rounding of a double.
+\code{hess_stencil_step()} is \code{1e-3}, on the free scale of the hyperparameters.
+The default of \code{\link[numericals7:fd_step]{numericals7::fd_step()}}, about 6e-6, is intended for a
+function evaluated to machine precision. Here the gradient is computed by
+refitting a mode, and the reproducibility of that refit bounds the step from
+below.
 
-Swept on a penalized filter against a second difference of the criterion,
-the result is 8.0e-05 out at \eqn{h = 0.1}, where the truncation still
-shows, and then FLAT at 1.06e-05 -- the reference's own error -- for every
-\eqn{h} from 1e-2 down to 3e-5. \code{1e-3} is two decades below where
-truncation matters and two above where anything else begins.
+\code{hess_stencil_tol()} is \code{1e-3}. It is compared with the largest absolute
+difference between the matrices at \code{h} and \code{3 * h}, divided by the largest
+absolute entry of the first. A relative error of \code{1e-3} in the curvature
+corresponds to a relative error of about \code{5e-4} in a standard error.
 
-The tolerance separates two regimes that are SIX ORDERS apart, with
-nothing between them: 5.5e-08, 9.3e-07 and 1.1e-06 where the mode is well
-located, against 6.0e-01 and 5.7e-01 where it is not. \code{1e-3} sits three
-orders above the worst resolved reading and three below the best
-unresolved one, and a relative error of that size in the curvature is
-5e-4 in a standard error, under the fourth significant figure a summary
-prints.
-
-The probes are refitted by \code{\link[=iwls]{iwls()}} at \code{hess_stencil_inner_tol()} and a
-budget of at least 500 iterations, whatever the fit itself used, and
-without the fit's own stopping rule. At the fit's tolerance of \code{1e-6} a
-probe can stop where it started, the score there being already under the
-threshold, and the difference then misses the mode's movement. The bias
-this leaves is CONSTANT in the step rather than growing as \eqn{1/h}, so
-the check at \code{3 * h} passes it wherever both steps share it. Measured at
-\eqn{n = 4000} on one smooth, against the analytic Hessian: 4.8e-02 at
-\eqn{h} of 3e-4 and 1e-3 on a gaussian, 1.6e-04 at 1e-3 and 3e-3 on a gamma
-and a negative binomial, and 9.1e-03 on a Student t prior over a random
-effect, all passing the check; at \code{1e-10} the same readings are 4.5e-06,
-2.8e-06, 5.7e-06 and 2.8e-04. A penalized filter reads 2.6e-08 either way,
-and a mixed covariance class at the boundary of its chart is still refused
-at every step. The stencil costs 1.1 to 1.9 times what it did.
+\code{hess_stencil_inner_tol()} is \code{1e-10}, the largest tolerance that the probes
+use when the inner optimizer is \code{\link[=iwls]{iwls()}}. At the tolerance of a fit a probe can
+stop at its starting point, and the difference then misses the movement of
+the mode. The resulting bias does not grow as \eqn{1/h}, so the comparison
+of the two steps does not detect it.
 }
 \seealso{
 \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}}

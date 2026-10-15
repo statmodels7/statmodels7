@@ -17,7 +17,8 @@ refresh_dblock(un, v, n)
 A numeric matrix, \code{n} by the term's coefficient count.
 }
 \description{
-\code{\link[modelterms7:term_block_deriv]{modelterms7::term_block_deriv()}} on one unit, with the shape it
-returns checked rather than assumed.
+\code{\link[modelterms7:term_block_deriv]{modelterms7::term_block_deriv()}} on one unit, with the shape of the
+result checked. A block of another shape signals an error that names the
+term.
 }
 \keyword{internal}

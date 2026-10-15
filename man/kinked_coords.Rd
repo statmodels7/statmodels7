@@ -19,21 +19,20 @@ The positions of the coefficients whose penalty is not differentiable
 everywhere -- a lasso, a SCAD, an MCP -- as an integer vector.
 }
 \details{
-It is the question \code{\link[=statmod_blocks]{statmod_blocks()}} asks to decide which of the two
-fitting schemes a block goes to, asked of the coordinates instead of the
-blocks, and it reads the same predicate (\code{\link[=penalty_has_kink]{penalty_has_kink()}}) so the two
-cannot disagree. A penalty that is twice differentiable contributes
-nothing, which is what makes a ridge, a random effect and a smooth
-testable.
+It applies to the coordinates the test that \code{\link[=statmod_blocks]{statmod_blocks()}} applies to
+the blocks to decide which of the two fitting schemes a block goes to, and
+it reads the same predicate (\code{\link[=penalty_has_kink]{penalty_has_kink()}}), so that the two cannot
+disagree. A penalty that is twice differentiable contributes nothing, so
+that a ridge, a random effect and a smooth are testable.
 
-A penalty's own enumeration is what answers, so a partial penalty -- one
-covering some of a term's coordinates and not the rest -- names only what
-it covers, and a term is not classified as a whole. A structural term's
-penalty covers positions among the TERM'S own parameters rather than the
-design's, and contributes nothing here.
+The enumeration of each penalty decides, so a partial penalty (one
+covering some of a term's coordinates and not the rest) names only what it
+covers, and a term is not classified as a whole. The penalty of a
+structural term covers positions among the term's own parameters and not
+among the design's, and contributes nothing here.
 }
 \seealso{
-\code{\link[=statmod_penalized]{statmod_penalized()}}, the enumeration it reads, and
-\code{\link[=statmod_blocks]{statmod_blocks()}}, which asks the same question of a whole block.
+\code{\link[=statmod_penalized]{statmod_penalized()}}, the enumeration that it reads, and
+\code{\link[=statmod_blocks]{statmod_blocks()}}, which answers the same question for a whole block.
 }
 \keyword{internal}

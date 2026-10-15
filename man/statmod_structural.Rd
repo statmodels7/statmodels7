@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{statmod_structural}
 \alias{statmod_structural}
-\title{Which Terms Rewrite the Likelihood}
+\title{The Structural Terms of a Specification}
 \usage{
 statmod_structural(spec)
 }
@@ -19,9 +19,10 @@ specification.
 }
 \details{
 The shape is \code{"filter"} for a term that produces a predictor, which
-the layer adds to the equation the term sits in, and \code{"loglik"} for
-one whose contribution is a likelihood mixed over states and cannot be
-written as a predictor at all.
+the layer adds to the equation in which the term sits, and \code{"loglik"} for
+a term whose contribution is a likelihood mixed over components (the
+states of a regime chain, the intervals or nodes of a marginal break-point
+term), which cannot be written as a predictor.
 }
 \seealso{
 \code{\link[=statmod_filter_at]{statmod_filter_at()}}

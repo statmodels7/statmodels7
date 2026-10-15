@@ -19,8 +19,7 @@ StatmodTest(
 )
 }
 \arguments{
-\item{test}{Which of the four statistics, as \code{\link[=statmod_test]{statmod_test()}} was asked
-for it.}
+\item{test}{Which of the four statistics was computed.}
 
 \item{statistic}{Its value, compared with a \eqn{\chi^2_1}.}
 
@@ -60,34 +59,29 @@ printed.
 
 \code{converged} is the inner optimizer's flag: whether a stopping rule fired,
 a boolean about a threshold on a score whose size depends on the model.
-\code{mode_error} is \code{\link[=restricted_mode_error]{restricted_mode_error()}}, how much of the penalized
-objective is still on the table at the point the refit returned, in
-log-likelihood units against \code{\link[=mode_error_limit]{mode_error_limit()}} -- the rule statmodels7
-0.81.0 established for exactly this question.
-
-The flag is not merely a false negative: it is anti-correlated with the
-quality of the point, because a stopping rule reads a change and a
-distance reads a point. Measured on \code{y ~ x} with a Poisson response at
-\eqn{n = 200} over nineteen held values, all nineteen are at their mode
-and the four the flag rejects are the four best-located of them. See
+\code{mode_error} is \code{\link[=restricted_mode_error]{restricted_mode_error()}}, the decrease of the penalized
+objective that a Newton step from the point returned by the refit would
+predict, in log-likelihood units, judged against \code{\link[=mode_error_limit]{mode_error_limit()}}.
+The two need not agree, because a stopping rule reads a change in the
+objective whereas the mode error reads the distance to the mode. See
 \code{\link[=restricted_mode_error]{restricted_mode_error()}}.
 
-A statistic read off a refit that stopped short is the value at wherever
-it stopped, and \code{print()} says so -- reading \code{mode_error}, so that it says
-it where it is true.
+A statistic computed from a refit that stopped short is the value at the
+point where the refit stopped. \code{print()} reports this, reading
+\code{mode_error}.
 
-The class exists rather than a bare list because everything a caller of
-this toolkit receives is an object with declared properties. R's own
-tests return an \code{htest}, which is a list with a class attribute and no
-contract; nothing here can validate one, and a reader cannot ask it what
-it carries.
+The class declares its properties, as every object that this toolkit
+returns does, whereas the \code{htest} returned by the tests of base R is a list
+with a class attribute and no declared structure, so that it cannot be
+validated.
 }
 
 \examples{
 dd <- data.frame(x = seq(-1, 1, length.out = 40))
 dd$y <- rpois(40, exp(0.3 + dd$x))
 fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
-S7::S7_inherits(statmod_test(fit, "mu", "x", 1), StatmodTest)
+S7::S7_inherits(statmod_test(fit, param = "mu", coefname = "x", value = 1),
+                StatmodTest)
 
 }
 \seealso{

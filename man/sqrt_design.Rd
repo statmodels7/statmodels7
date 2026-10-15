@@ -16,9 +16,9 @@ them, or \code{NULL}.}
 \value{
 An \eqn{nK \times p} matrix, dense or a \pkg{Matrix} sparse
 matrix according to the design's own storage, where \eqn{p} is the total
-number of coefficients across the equations. \code{NULL} when \code{L} is \code{NULL},
-so the refusal propagates from the factorization to the solve without a
-test at each step.
+number of coefficients across the equations. \code{NULL} when \code{L} is \code{NULL}
+or has a missing or infinite entry, so the \code{NULL} propagates from the
+factorization to the solve without a test at each step.
 }
 \description{
 Builds \eqn{R} with \eqn{R'R = Z'\Omega Z}, the square root of the

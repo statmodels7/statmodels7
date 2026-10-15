@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_gradient.R
 \name{structural_chain_extra}
 \alias{structural_chain_extra}
-\title{The Two Pieces of the Chain Term That Read the Direction}
+\title{The Chain Term of the Joint Gradient Along a Direction}
 \usage{
 structural_chain_extra(spec, design, jd, M, st, v)
 }
@@ -13,7 +13,7 @@ structural_chain_extra(spec, design, jd, M, st, v)
 
 \item{jd}{The joint rows.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 
 \item{st}{The shared quantities, from \code{\link[=structural_grad_parts]{structural_grad_parts()}}.}
 
@@ -24,8 +24,9 @@ A single number.
 }
 \description{
 The contributions to \eqn{\mathrm{tr}(M\,\partial K/\partial u[v])} that
-come from the recursion, never from the design: the derivative of the
-filter's own Jacobian, and the derivative of the term the level contributes
-to the information.
+come from the recursion and not from the design: the derivative of the
+term's curvature along \eqn{v}, the curvature re-weighted by the derivative
+of the score along \eqn{v}, and the movement of the filter's Jacobian, which
+enters through every cross derivative of the filter's equation.
 }
 \keyword{internal}

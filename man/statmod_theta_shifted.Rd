@@ -19,7 +19,7 @@ statmod_theta_shifted(spec, eta_static, param, shift)
 A named list of per-observation parameters.
 }
 \description{
-The distribution's parameters at every observation with the regime term's
-equation shifted by one state's level.
+The distribution's parameters at every observation with the equation of
+the term shifted by the level of one component.
 }
 \keyword{internal}

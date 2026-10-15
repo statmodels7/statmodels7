@@ -2,24 +2,25 @@
 % Please edit documentation in R/refresh.R
 \name{statmod_refresh_stalled}
 \alias{statmod_refresh_stalled}
-\title{Have the Refreshable Terms Run Out of Step Control?}
+\title{Refreshable Terms That Have Stalled}
 \usage{
 statmod_refresh_stalled(spec, design, which = "all")
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design, whose refresh state holds the terms asked.}
+\item{design}{The design, whose refresh state holds the terms to be
+checked.}
 
-\item{which}{Which entries to ask, as in \code{\link[=statmod_refresh_settled]{statmod_refresh_settled()}}.}
+\item{which}{Which entries to check, as in \code{\link[=statmod_refresh_settled]{statmod_refresh_settled()}}.}
 }
 \value{
-A single logical, \code{FALSE} when there is nothing to ask.
+A single logical, \code{FALSE} when there is nothing to check.
 }
 \description{
 \code{TRUE} when at least one refreshable term reports, through
 \code{\link[modelterms7:term_stalled]{modelterms7::term_stalled()}}, that it has not settled and has no step
-control left, and every other term asked has either settled or reports
+control left, and every other term checked has either settled or reports
 the same. \code{\link[=fit_working]{fit_working()}} reads it to end a working phase that cannot
 settle.
 }

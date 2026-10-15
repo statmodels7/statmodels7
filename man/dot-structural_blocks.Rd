@@ -23,13 +23,14 @@ A function of the direction -- \code{NULL}, one vector, or a list
 of two -- returning a \code{blocks} callback.
 }
 \description{
-Builds the \code{blocks} callback \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}}
-and \code{\link[modelterms7:term_third]{modelterms7::term_third()}} take, at a direction or without
-one.
+Builds the \code{blocks} callback that \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}},
+\code{\link[modelterms7:term_third]{modelterms7::term_third()}} and \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}} take, at a
+direction, at two directions or without one.
 }
 \details{
-The pieces are built on the active set the term asks for, so a panel's
-outer products are of the same size whatever the number of groups.
+The pieces are built on the active set that the term passes to the callback,
+so a panel's outer products have the same size whatever the number of
+groups.
 \code{dcurv} serves twice, as the derivative of the curvature along the
 direction and as the factor multiplying the movement of \eqn{V_p}, and
 \code{N} is where the family's fourth derivative enters: each order of

@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{structural_kind}
 \alias{structural_kind}
-\title{Which Shape of the Structural Contract a Term Implements}
+\title{Which Shape a Structural Term Implements}
 \usage{
 structural_kind(term)
 }
@@ -13,14 +13,15 @@ structural_kind(term)
 A single string.
 }
 \description{
-\code{"filter"} when the term reports a predictor,
-\code{"loglik"} when it reports a likelihood, and \code{""} when it
-implements neither.
+\code{"filter"} when the term registers its own
+\code{\link[modelterms7:term_filter]{modelterms7::term_filter()}} method, \code{"loglik"} when it registers its own
+\code{\link[modelterms7:term_loglik]{modelterms7::term_loglik()}} method, and \code{""} when it registers neither.
 }
 \details{
-The question is asked of the methods the term registers, not of a list of
-class names, so a structural term written outside the package is routed
-without an edit here. The class a method was registered on is
-\code{attr(m, "signature")[[1]]}, compared by name and package.
+The shape is read from the methods that the term registers, not from a
+list of class names, so a structural term written outside the package is
+routed without an edit here. The class on which a method was registered is
+\code{attr(m, "signature")[[1]]}, and a method registered on \code{structural_term}
+itself does not count. The filter shape is tested first.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/marginal.R
 \name{zero_kinked}
 \alias{zero_kinked}
-\title{The Coordinates a Kinked Penalty Holds at Zero}
+\title{The Coordinates That a Kinked Penalty Holds at Zero}
 \usage{
 zero_kinked(spec, design, coef)
 }
@@ -17,6 +17,7 @@ zero_kinked(spec, design, coef)
 An integer vector of stacked positions, possibly empty.
 }
 \description{
-The Coordinates a Kinked Penalty Holds at Zero
+The positions among those of \code{kinked_coords()} whose coefficient equals
+zero.
 }
 \keyword{internal}

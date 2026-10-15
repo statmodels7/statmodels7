@@ -12,15 +12,16 @@ bic(hessian = c("observed", "expected"))
 \arguments{
 \item{k}{The price of one degree of freedom, a single non-negative finite
 number. Defaults to 2, which is Akaike's. \code{k = log(n)} by hand is \code{bic()}.
-Anything else is an error. \code{bic()} does not take it: its \eqn{\kappa} is
+A value that is not a single non-negative finite number is an error. \code{bic()} does not take it: its \eqn{\kappa} is
 \code{NA} on the object and resolved to \eqn{\log n} when the model is fitted,
 the sample size being unknown until then.}
 
 \item{hessian}{Which information the criterion is built on, \code{"observed"}
 (the default) or \code{"expected"}. Matched with \code{\link[=match.arg]{match.arg()}}. The exact
 gradient is available on either wherever the family writes its expected
-information out; the Hessian is exact on the observed one and differenced
-on the expected one. A family that does not write it out would read the
+information out; the Hessian is exact on the observed one and is not
+available on the expected one, where the search uses an optimizer that
+needs the gradient alone. A family that does not write it out would read the
 outer product of its scores at the data under the default
 \code{iwls(approx = "opg")}, and \code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
 \code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
@@ -28,52 +29,56 @@ outer product of its scores at the data under the default
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object with properties \code{kind} (\code{"aic"} or
 \code{"bic"}), \code{hessian} as supplied, \code{k} (the number given, or \code{NA_real_}
-for \code{bic()}), and the path settings \code{nfolds}, \code{rule} and \code{folds}, which
-only \code{\link[=cv]{cv()}} reads.
+for \code{bic()}), \code{marginal} (\code{NULL}), and the path settings \code{nfolds}, \code{rule}
+and \code{folds}, which only \code{\link[=cv]{cv()}} reads.
 }
 \description{
-Build the object that tells \code{\link[=statmod]{statmod()}} to choose a model's
-hyperparameters by an estimate of prediction error. Pass the result as
-\code{outer_criterion} for the smooth hyperparameters, as \code{sparse_criterion}
-for a lasso's or a SCAD's, or as both.
+Build the object that specifies, for \code{\link[=statmod]{statmod()}}, that a model's
+hyperparameters are chosen by an estimate of prediction error. Pass the
+result as \code{outer_criterion} for the smooth hyperparameters, as
+\code{sparse_criterion} for a lasso's or a SCAD's, or as both.
 
 The criterion is
 \deqn{C(\theta) = -2\ell(\hat\beta(\theta)) + \kappa\,\tau(\theta),}
 with \eqn{\tau = \mathrm{tr}[(H+S)^{-1}H]} the effective degrees of freedom
 and \eqn{\kappa} the price of one of them. \code{aic()} charges 2 by default and
-\code{bic()} charges \eqn{\log n}. Both are minimized.
+\code{bic()} charges \eqn{\log n}, with \eqn{n} the number of observations (the
+total of the weights, which are frequencies). Both are minimized.
 }
-\section{The alternative, and when to prefer this}{
+\section{Marginal and prediction-error criteria}{
 \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} integrate the coefficients out and maximize what is
 left, which needs a penalty that is twice differentiable at the mode.
-A kinked penalty puts the mode on the kink for every coefficient it sets
-to zero, so a marginal criterion cannot be read there at all. That is the
-case these two exist for, and \code{bic()} is \code{statmod()}'s default
+A kinked penalty puts the mode on the kink for every coefficient that it sets
+to zero, where the penalized information does not exist. A marginal
+criterion therefore leaves the coordinates that such a penalty covers out
+of its determinant and does not select the hyperparameter of the kinked
+penalty. These two criteria select it, and \code{bic()} is \code{statmod()}'s default
 \code{sparse_criterion}.
 
-For a smooth penalty both families apply and the choice is the usual one:
-a marginal criterion asks which hyperparameter makes the data most likely
-with the coefficients integrated out, and these ask which one predicts
-best.
+For a smooth penalty both families apply. A marginal criterion selects the
+hyperparameter that makes the data most likely with the coefficients
+integrated out, and these select the one that predicts best.
 }
 
-\section{Both derivatives are exact}{
-By the implicit function theorem, from the same pieces the marginal
-criteria use. One thing differs and it separates the two families: the
-envelope theorem does not apply here. \eqn{\ell} alone is not stationary
-at the penalized mode, so its derivative carries \eqn{d\hat\beta/d\theta}
-from the first order. What makes that computable is the mode's own
-condition, \eqn{\partial\ell/\partial\beta = \partial\rho/\partial\beta}.
+\section{Exact derivatives}{
+The derivatives follow from the implicit function theorem, using the same
+pieces as the marginal criteria. The envelope theorem does not apply here:
+\eqn{\ell} alone is not stationary at the penalized mode, so its derivative
+carries \eqn{d\hat\beta/d\theta} from the first order. This is computable
+because of the mode's own condition,
+\eqn{\partial\ell/\partial\beta = \partial\rho/\partial\beta}.
 
-The exact derivatives need \code{hessian = "observed"}, which is the default.
+The gradient is exact with either information. The Hessian is exact with
+\code{hessian = "observed"}, which is the default, and is not available with
+\code{"expected"}.
 }
 
 \section{Which effective degrees of freedom}{
 The trace runs over the whole coefficient vector, so a term's contribution
 reads the full penalized information, its couplings with the other blocks
-included. \code{\link[=statmod_edf]{statmod_edf()}}'s per-term numbers invert each block on its own,
-which is all a per-term reading can do. The two agree when the blocks are
-orthogonal and differ when they are not.
+included. \code{\link[=statmod_edf]{statmod_edf()}} reads each term's share from the diagonal block
+of the same full smoother matrix \eqn{(H+S)^{-1}H}, so the per-term numbers
+add up to \eqn{\tau}.
 
 Where a penalty has a kink the trace is restricted to the active
 coordinates, so for a lasso \eqn{\tau} is the number of surviving
@@ -93,14 +98,14 @@ well-defined object. It would need the derivative of that mean in the
 parameters, which is not one of \pkg{distributions7}'s generics.
 }
 
-\section{Over a kinked penalty these sweep a path}{
+\section{Kinked penalties}{
 The penalized mode is only piecewise smooth in such a hyperparameter,
 turning a corner whenever a coefficient joins the active set or leaves it,
 so the criterion inherits the corners and is swept over a grid. How the
 path covers a term carrying more than one kinked
 hyperparameter belongs to the term, through
-\code{\link[modelterms7:term_search]{modelterms7::term_search()}}: the same criterion object is asked about the
-model's smooth hyperparameters as well, and those are not swept at all.
+\code{\link[modelterms7:term_search]{modelterms7::term_search()}}. The same criterion object also selects the
+model's smooth hyperparameters, which are not swept.
 }
 
 \examples{

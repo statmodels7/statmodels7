@@ -15,6 +15,6 @@ zero_unread(V)
 \description{
 Sets to zero the rows and columns of a variance matrix whose diagonal is
 not finite, which is how \code{\link[=hyper_variance]{hyper_variance()}} marks a coordinate whose
-curvature it could not read.
+curvature could not be read.
 }
 \keyword{internal}

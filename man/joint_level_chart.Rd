@@ -21,13 +21,15 @@ free level: the level \eqn{\omega} of a score-driven term is replaced by
 \eqn{L = \omega / \prod_k (1 - r_k)}, the level around which the
 predictor fluctuates, \eqn{r_k} being the partial autocorrelations that
 carry the persistence (by the Durbin-Levinson recursion,
-\eqn{1 - \sum_k \phi_k = \prod_k (1 - r_k)}). The other coordinates are
-unchanged.
+\eqn{1 - \sum_k \xi_k = \prod_k (1 - r_k)}, \eqn{\xi_k} being the
+autoregressive coefficients that the term reports). The other coordinates
+are unchanged.
 }
 \details{
-The chart applies where the level is one free coordinate on the identity
-link and every persistence is a free scalar partial autocorrelation; in
-any other case the result is \code{NULL} and the fit runs on the term's own
+The chart applies where the level is one free, undeveloped coordinate on
+the identity link and the term has at least one persistence, every
+persistence being a free scalar partial autocorrelation; in any other case
+the result is \code{NULL} and the fit runs on the term's own
 coordinates. With \eqn{\omega = L P(\rho)}, the gradient is
 \eqn{J^\top g} and the Hessian
 \eqn{J^\top H J + g_\omega \nabla^2 \omega}, \eqn{J} the Jacobian of the

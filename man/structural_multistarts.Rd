@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{structural_multistarts}
 \alias{structural_multistarts}
-\title{The Starting Points a Structural Term Asks For}
+\title{The Starting Points of a Structural Term}
 \usage{
 structural_multistarts(spec, design)
 }
@@ -17,8 +17,8 @@ the unit's key, and \code{zeta}, the list of starts, the first being the one
 \code{\link[=statmod_design]{statmod_design()}} already used.
 }
 \description{
-The starts \code{\link[modelterms7:term_starts]{modelterms7::term_starts()}} gives for the model's structural
-term, where it gives more than one and the specification carries no values
-a fit arrived at.
+The starts that \code{\link[modelterms7:term_starts]{modelterms7::term_starts()}} returns for the structural
+term of the model, when it returns more than one and the specification
+carries no values from a previous fit.
 }
 \keyword{internal}

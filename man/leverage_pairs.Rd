@@ -25,19 +25,13 @@ same quantity \code{\link[=block_leverage]{block_leverage()}} otherwise reads of
 }
 \details{
 Where a design is built from grouping indicators a row has one nonzero per
-block, so the quadratic form is over a handful of entries and the dense
-product computes \eqn{p_a p_b} of them per row to keep one. The pairs are
-expanded once and the whole sum is vectorized.
-
-\strong{It is taken only where it wins}, and the threshold is measured
-and nothing about it is assumed. At a combined density of 3.6e-05 (a
-random intercept
-over 500 levels) it is 14.2 times the dense route; at 0.18 (three smooths
-and a random effect) it is 50 times slower, R's per-element indexing being
-far dearer than a BLAS flop, and at a dense block 50 times slower again.
-Interpolating the two measurements puts the crossover at a combined density
-near 1.1e-03, which is the gate: below it the route is taken, at it the two
-cost the same, and above it the dense product stands.
+block, so the quadratic form is over a handful of entries, while the dense
+product computes \eqn{p_a p_b} of them per row to keep one. The compiled
+kernel \code{leverage_pairs_cpp()} reads the nonzeros of the two designs row by
+row and sums them without expanding the pairs, and each row is written by
+one thread. \code{\link[=block_leverage]{block_leverage()}} takes this route only where both blocks are
+sparse, the product of their densities is below \eqn{10^{-3}} and the number
+of pairs is below \eqn{2 \times 10^{7}}.
 }
 \seealso{
 \code{\link[=block_leverage]{block_leverage()}}

@@ -41,8 +41,10 @@ statmod_marginal_hess(
 the hyperparameters.}
 }
 \value{
-A square matrix, one row per row of \code{idx}, or \code{NULL} where
-the determinant does not exist.
+A square matrix with one row for each row of \code{idx}, followed by one
+row for each coefficient in \code{gam}, or \code{NULL} where the penalized
+information or the matrix of the determinant cannot be formed or, on a
+differenced route, where the two steps disagree.
 }
 \description{
 \eqn{\partial^2 V/\partial\eta^2} at the penalized mode, over the free scale
@@ -54,19 +56,29 @@ hyperparameter Hessian of the penalty, the movement of the mode read
 through the penalized curvature, and two contributions from the
 determinant, one from \eqn{M} moving and one from \eqn{K_m} moving.
 
-\strong{Everything the penalty contributes is asked of the penalty}
-(\code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_hess_theta()}},
-\code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}},
-\code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}},
-\code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}}), so a penalty that is not
-quadratic in its hyperparameters is covered by the same assembly with no
-branch here: a ridge, a random effect, a structured prior.
+\strong{Contributions of the penalty.} Every contribution of the penalty comes
+from a generic of \pkg{penalties7}: \code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_hess_theta()}},
+\code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_cross()}}, \code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}},
+\code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}} and \code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}}, with
+\code{\link[penalties7:penalty_dhessian_beta]{penalties7::penalty_dhessian_beta()}} and its second-order companions for a
+penalty whose Hessian depends on the coefficients. The assembly therefore
+contains no branch for a particular penalty class (a ridge, a random
+effect, a structured prior).
 
 \strong{Onto the free scale} the chain rule is second order and diagonal,
 each hyperparameter having its own link: with \eqn{\theta = h(\eta)},
 \deqn{\partial^2 V/\partial\eta_m\partial\eta_l =
   h_m'h_l'\,\partial^2 V/\partial\theta_m\partial\theta_l
   + \delta_{ml}\,h_m''\,\partial V/\partial\theta_m.}
+
+\strong{Routes.} For a model with a structural term the function returns
+\code{\link[=statmod_structural_hess]{statmod_structural_hess()}} where the term implements
+\code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}} and a penalty covers the term's own parameters,
+and \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} otherwise, including the case where that
+assembly returns no finite matrix. On the expected information the
+assembly runs only where \code{\link[=outer_gradient_ok]{outer_gradient_ok()}} admits order 2, and the
+stencil is used elsewhere. Any other model is answered by the assembly
+described above.
 }
 \seealso{
 \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}, \code{\link[=reml]{reml()}}

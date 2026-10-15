@@ -19,7 +19,8 @@ number of coefficients of that term (the number of free parameters, for a
 structural term) in its place, so the result is always a number.
 }
 \description{
-The observation count less the effective degrees of freedom of the model.
+The number of observations, \code{\link[=nobs.StatmodFit]{nobs.StatmodFit()}}, less the effective
+degrees of freedom of the model.
 }
 \details{
 The count subtracted is the effective one, the sum over the terms of their

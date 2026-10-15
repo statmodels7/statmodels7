@@ -18,7 +18,7 @@ outer_context(spec, design, coef, hyper, approx = "opg")
 \item{approx}{The approximation for the expected information.}
 }
 \value{
-An environment carrying the point and, as they are asked for, the
+An environment carrying the point and, as they are requested, the
 quantities derived from it.
 }
 \description{
@@ -27,22 +27,18 @@ read at one \eqn{(\beta, \theta)}: the linear predictors, the information,
 the penalty's Hessian, their sum and its factorization.
 }
 \details{
-The three consumers each used to assemble these for themselves, so at one
-point the information was built three times and the penalized matrix
-factorized twice, and \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} additionally
-calls the gradient, which repeated the whole of it a fourth time. Measured
-by \code{Rprof}'s \code{by.total} on a random intercept over 500 levels at
-20000 observations, the gradient and the Hessian together accounted for 128
-per cent of the fit, the overlap being exactly that repetition.
+The criterion, its gradient and its Hessian read the same information, the
+same penalty Hessian and the same factorization at one point. The context
+holds them, so that each is computed once.
 
 The context is an environment, so an accessor fills it in place and later
-readers find the quantity already there. Each is computed on first demand
-and never speculatively: the criterion alone does not need an inverse, and
-a search running without an exact gradient must not pay for one.
+readers find the quantity already there. Each quantity is computed on first
+demand and never speculatively: the criterion alone does not need an
+inverse, and a search that runs without an exact gradient does not compute
+one.
 
-Passing \code{NULL} wherever a context is accepted restores the earlier
-behavior exactly, so every existing caller goes on working unchanged, a
-caller's own code included.
+Passing \code{NULL} wherever a context is accepted computes every quantity
+afresh at the point given.
 }
 \seealso{
 \code{\link[=statmod_marginal]{statmod_marginal()}}, \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}},

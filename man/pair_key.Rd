@@ -9,7 +9,7 @@ pair_key(a, b, keys)
 \arguments{
 \item{a, b}{The two hyperparameter names.}
 
-\item{keys}{The names the penalty actually returned.}
+\item{keys}{The names that the penalty returned.}
 }
 \value{
 A single string.

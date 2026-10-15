@@ -23,18 +23,17 @@ every other one to the joint mode of the penalized likelihood. The
 unrestricted side has to be read at the same kind of point, or the
 statistic compares two fits whose other coefficients were chosen by
 different rules. Where the outer criterion estimated some coefficients
-itself -- by default, \code{\link[=reml]{reml()}} estimates a dispersion's unpenalized
-coefficients on the criterion (\code{\link[=marginal_coords]{marginal_coords()}}) -- the point the fit
-returned is not the joint mode, and \code{fit@objective} is not its minimum.
-Measured on a gaussian linear regression at \eqn{n = 40}, differencing
-against it gave a likelihood ratio of 1.0458 against the 1.1643 that
-\code{\link[stats:lm]{stats::lm()}} gives, and -0.118 at the estimate itself.
+itself (by default \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} estimate on the criterion the
+unpenalized coefficients of every parameter but the first, see
+\code{\link[=marginal_coords]{marginal_coords()}}), the point that the fit returned is not the joint
+mode, and \code{fit@objective} is not its minimum. A likelihood ratio
+differenced against \code{fit@objective} then contains the difference between
+the objective at the fitted point and at the joint mode.
 
 The full model is therefore refitted with nothing held, from the fitted
 coefficients, which are already close to the joint mode, at the fitted
-hyperparameters. Where the criterion estimated nothing the fit IS at the
-joint mode and \code{fit@objective} is returned unchanged, so every such
-statistic is what it was.
+hyperparameters. Where the criterion estimated nothing, the fit is at the
+joint mode and \code{fit@objective} is returned unchanged.
 }
 \seealso{
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}, \code{\link[=statmod_restrict]{statmod_restrict()}}.

@@ -11,7 +11,7 @@ d4_key(params, a, b, k, q, keys)
 
 \item{a, b, k, q}{Indices into \code{params}.}
 
-\item{keys}{The names the derivative returned.}
+\item{keys}{The names that the derivative returned.}
 }
 \value{
 A single string.

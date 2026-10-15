@@ -1153,7 +1153,8 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     if (joint) {
       if (vb$blocks) {
         vb_rule(sprintf("inner pass %d: joint system", pass),
-                vb_name(inner_optimizer, "newton"), indent = 2L)
+                if (S7::S7_inherits(inner_optimizer, optimizers7::optimizer))
+                  vb_name(inner_optimizer) else "newton", indent = 2L)
       }
       # the caller's optimizer, where they named one. `iwls()` is a scoring
       # iteration over a design block and has no meaning over a filter's own
@@ -1224,7 +1225,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       v0 <- value
       if (vb$blocks) {
         vb_rule(sprintf("inner pass %d: structural terms", pass),
-                "newton", indent = 2L)
+                "lbfgs", indent = 2L)
       }
       res <- statmod_fit_structural(spec, design, obj, beta, hyper, NULL,
                                     verbose = vb$blocks)
@@ -1894,16 +1895,18 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
       }
     }
     # WHERE A SHARP BREAK-POINT SITS ON AN OBSERVATION the objective has a
-    # kink, and iwls_fit() holds the coordinates that move it once a line
-    # search rejects every step: see there
+    # kink, and iwls_fit() solves on the subspace that keeps it there once a
+    # line search rejects every step: see there. The constraints are read
+    # over the block's coordinates, the others being held by the alternation.
     kinks_at <- NULL
     if (has_sharp_breakpoint(spec)) {
       sp <- obj$split(seq_along(beta))
       kinks_at <- function(b) {
         v <- beta
         v[idx] <- b
-        k <- kink_positions(spec, design, obj$split(v), sp)
-        match(intersect(k, idx), idx)
+        A <- kink_constraints(spec, design, obj$split(v), sp, length(beta))
+        A <- A[, idx, drop = FALSE]
+        A[rowSums(abs(A)) > 0, , drop = FALSE]
       }
     }
     # THE FULL HESSIAN WHERE A BLOCK IS THE JACOBIAN OF ITS TERM. The scoring

@@ -20,8 +20,9 @@ OuterMethod(
 criterion is evaluated and, through \code{\link[=outer_minimize]{outer_minimize()}}, whether it is
 made small or large.}
 
-\item{hessian}{\code{"expected"} or \code{"observed"}. Which information enters the
-Laplace determinant, and whether the exact gradient is available.}
+\item{hessian}{\code{"auto"}, \code{"expected"} or \code{"observed"}. Which information
+enters the Laplace determinant. \code{\link[=statmod]{statmod()}} settles \code{"auto"} against the
+family through \code{\link[=outer_resolve]{outer_resolve()}}.}
 
 \item{k}{The price of one effective degree of freedom, for a
 prediction-error criterion. \code{NA_real_} for \code{\link[=bic]{bic()}}, which resolves it to
@@ -50,9 +51,11 @@ The class every outer criterion is an instance of: \code{\link[=reml]{reml()}}, 
 the coefficients is integrated over, which information matrix enters the
 determinant, and the settings a path or a cross-validation needs.
 
-One class serves all five, so a property a given criterion does not read
-is present and unused. Use the five constructors, which validate; this raw
-one does not.
+One class serves every criterion, so a property that a given criterion does
+not read is present and unused. The class validates the values of its
+properties. The constructors \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}}
+also match \code{hessian} and \code{rule} against their choices and check \code{k} and
+\code{marginal}.
 }
 \examples{
 reml()

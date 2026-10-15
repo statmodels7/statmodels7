@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_refresh.R
 \name{refresh_amat}
 \alias{refresh_amat}
-\title{The Weight a Refreshable Block Is Contracted Against}
+\title{The Weight for Contracting a Refreshable Block}
 \usage{
 refresh_amat(spec, design, M, params, npar, offs, ra, cw)
 }
@@ -11,7 +11,7 @@ refresh_amat(spec, design, M, params, npar, offs, ra, cw)
 
 \item{design}{The design.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 
 \item{params, npar, offs}{The block bookkeeping.}
 
@@ -25,8 +25,8 @@ A numeric matrix, one row per observation and one column per
 coefficient of the term.
 }
 \description{
-\eqn{A_a[i,j] = w_i\sum_b c_{ab}(i)\,(X_b M_{ab}^\top)[i,j]}, the matrix a
-term's own derivative is paired with.
+\eqn{A_a[i,j] = w_i\sum_b c_{ab}(i)\,(X_b M_{ab}^\top)[i,j]}, the matrix
+with which a term's own derivative is paired.
 }
 \details{
 The same shape serves three quantities and differs only in \eqn{c_{ab}}: the

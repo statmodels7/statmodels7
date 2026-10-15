@@ -2601,12 +2601,18 @@ summary.StatmodFit <- function(object, level = 0.95,
     cc <- tryCatch(statmod_edf_correction(spec, object@coefficients,
                                           object@hyper, design,
                                           object@methods$outer,
+                                          expected = if (is.null(expected))
+                                            fit_expected(object) else expected,
+                                          approx = approx,
                                           pinned = object@methods$pinned),
                    error = function(e)
-                     list(total = 0, per = numeric(0), n_hyper = 0L))
+                     list(total = 0, per = numeric(0), n_hyper = NA_integer_))
     corr <- cc$total
     df <- df + corr
     nh <- if (is.null(cc$n_hyper)) 0L else cc$n_hyper
+    # an error is a correction that could not be computed, not one that is
+    # zero for want of a hyperparameter
+    if (is.na(nh)) nh <- 1L
     notes <- c(notes, if (corr > 0) sprintf(paste0(
       "The degrees of freedom carry %.3f for the hyperparameters, which ",
       "were\n  estimated rather than given. Without it the criteria are ",
@@ -2765,7 +2771,7 @@ summary.StatmodFit <- function(object, level = 0.95,
     structural = strc,
     loglik = object@loglik, df = df,
     aic = -2 * object@loglik + 2 * df,
-    bic = -2 * object@loglik + log(spec@n_obs) * df,
+    bic = -2 * object@loglik + log(weight_total(spec)) * df,
     converged = object@converged, elapsed = object@elapsed,
     level = level, type = type, test = test, max_coef = max_coef,
     notes = notes, certificate = cert)
@@ -4838,8 +4844,9 @@ drop_common_prefix <- function(nms) {
 #' Hessian nothing is refitted. Where it does not -- a criterion asked for on
 #' the expected information, or a penalty whose Hessian moves with the
 #' coefficients beside a structural term -- the curvature comes
-#' from one central difference of the **exact** gradient, which is
-#' \eqn{4n_h} refits and was measured at 0.05 to 0.13 seconds, 5 to 37 per
+#' from one central difference of the **exact** gradient over the
+#' hyperparameters and the coefficients that the criterion estimates, which is
+#' \eqn{4(n_h + n_\gamma)} refits and was measured at 0.05 to 0.13 seconds, 5 to 37 per
 #' cent of the fit itself. [outer_curvature()] says which route was taken, the
 #' result reports it in `curvature`, and [summary.StatmodFit()] says so on the
 #' certificate's own line where it was differenced -- a verdict resting on a
@@ -5593,7 +5600,8 @@ criterion_differenced <- function(fit, spec, design, blocks, method, idx, cf,
 #'
 #' The two routes agree where both exist: on a gaussian smooth the decrement
 #' reads `3.01e-10` by either. What the difference costs is measured and is
-#' not nothing -- it is \eqn{4n_h} refits, 0.05 to 0.13 seconds on the three
+#' not nothing -- it is \eqn{4(n_h + n_\gamma)} refits, \eqn{n_\gamma} the
+#' coefficients that the criterion estimates, 0.05 to 0.13 seconds on the three
 #' shapes tried, 5 to 37 per cent of the fit itself, where the analytic route
 #' is below the clock's own resolution. So a fit whose form carries the
 #' analytic Hessian refits nothing, and one that does not pays for its
@@ -5641,15 +5649,10 @@ outer_curvature <- function(spec, design, coef, hyper, method, idx,
                       error = function(e) NULL))
     if (!is.null(A)) return(list(A = A, source = "analytic", why = character(0)))
   }
-  # the differenced route perturbs the hyperparameters alone
-  if (ng) {
-    return(list(A = NULL, source = NA_character_, why = paste0(
-      "the outer criterion's curvature over the coefficients it estimates ",
-      "has no analytic form here, and differencing covers the ",
-      "hyperparameters alone")))
-  }
+  # the differenced route perturbs the hyperparameters and the coefficients
+  # that the criterion estimates
   A <- sym(tryCatch(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
-                                         basis, inner),
+                                         basis, inner, gam = gam),
                     error = function(e) NULL))
   if (!is.null(A)) return(list(A = A, source = "differenced", why = character(0)))
   list(A = NULL, source = NA_character_, why = paste0(

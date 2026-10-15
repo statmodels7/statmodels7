@@ -23,9 +23,11 @@ or \code{NULL} to find it.}
 default), or \code{NULL} to find it. Needed only where the model carries
 more than one break-point term.}
 
-\item{k}{The number of positions at which a continuous process is read.}
+\item{k}{The number of positions at which a continuous process is read, a
+whole number of at least 3. It is not used for a sharp step.}
 
-\item{n_boot}{The number of bootstrap replicates for a sharp step.}
+\item{n_boot}{The number of bootstrap replicates for a sharp step, a
+positive whole number. It is not used for a continuous process.}
 
 \item{seed}{A seed for the bootstrap, or \code{NULL}.}
 }
@@ -38,11 +40,14 @@ columns \code{psi} and \code{score}.
 }
 \description{
 Tests the hypothesis that a model has no break-point against the
-alternative of the break-point term it carries: no change of slope for a
-\code{\link[modelterms7:seg]{modelterms7::seg()}}, no change of level for a \code{\link[modelterms7:jump]{modelterms7::jump()}}, and
-neither for a \code{\link[modelterms7:jseg]{modelterms7::jseg()}}. The term can sit in the equation of
-any distribution parameter, beside any other term, and inside a parameter
-of \code{\link[modelterms7:nl]{modelterms7::nl()}}.
+alternative of the break-point term that the model carries: no change of
+slope for a \code{\link[modelterms7:seg]{modelterms7::seg()}}, no change of level for a
+\code{\link[modelterms7:jump]{modelterms7::jump()}}, and neither for a \code{\link[modelterms7:jseg]{modelterms7::jseg()}}. The term
+can sit in the equation of any distribution parameter, beside any other
+term that is not structural, and inside a parameter of \code{\link[modelterms7:nl]{modelterms7::nl()}}
+when it is a change of slope or a smoothed step. A model that carries a
+structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}} or the
+marginal break-point term) has no break-point test.
 }
 \details{
 Under the null hypothesis the position \eqn{\psi} of the break-point does
@@ -65,8 +70,8 @@ bound of Davies (1987) for a \eqn{\chi^2_s} process,
   V M^{(s-1)/2} e^{-M/2} 2^{-s/2} / \Gamma(s/2),}
 with \eqn{V = \sum_j |S(q_{j+1})^{1/2} - S(q_j)^{1/2}|} the total
 variation of the root of the process and \eqn{s} the number of change
-coefficients. This is the test of \code{segmented::davies.test()}, read on the
-score of the model at hand.
+coefficients. The bound is the one that \code{segmented::davies.test()} also
+applies; the process read here is the score statistic of the model at hand.
 
 Where the step is sharp the process is constant between consecutive
 values of the covariate and jumps at each of them, and the bound, which
@@ -74,14 +79,17 @@ counts the variation over every interval, is too wide to be useful. The
 supremum is then taken over every interval inside the confinement limits,
 and its distribution under the null is estimated by a parametric
 bootstrap: \code{n_boot} responses are drawn from the null fit, the null model
-is refitted to each, and the p-value is the share of replicates whose
-supremum reaches the observed one, \eqn{(1 + \#\{M^* \ge M\})/(1 +
-B)}. The draws are conditional on the fitted random effects, if any.
+is refitted to each, and the p-value is \eqn{(1 + \#\{M^* \ge M\})/(1 +
+B)}, where \eqn{M^*} is the supremum of the score process of a replicate
+and \eqn{B} is the number of replicates that were refitted. The draws are
+conditional on the fitted random effects, if any.
 
 The hyperparameters are held at the values of the fit, so the test is
-conditional on the smoothing the data chose. The term must carry one
-break-point whose position has no development; for a choice between one
-and several break-points, compare the fits by an information criterion.
+conditional on the smoothing that the data chose. The term must carry one
+break-point, and none of its coefficients (the position, the change of
+slope or the change of level) may have a development on covariates. For a
+choice between one and several break-points, the fits can be compared by an
+information criterion.
 }
 \examples{
 set.seed(1)

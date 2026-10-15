@@ -16,36 +16,42 @@ parameter, each as long as its equation's design is wide.}
 }
 \value{
 A design of the same shape as \code{design}, with the refreshable
-terms' column blocks replaced and each equation's \code{adj} set to the
-per-observation adjustment above. \code{design} itself when nothing
-refreshes.
+terms' column blocks replaced and the \code{adj} of each equation that carries
+a refreshable term set to the per-observation adjustment above. \code{design}
+itself when nothing refreshes.
 }
 \description{
-Recomputes every refreshable term's design block at the coefficients
-currently in hand, and carries the difference between what the term
-contributes and what its linearization contributes as a per-observation
-adjustment to the predictor. With it, every cross-product in the objective
-reads the block as an ordinary design while the predictor stays exact:
+Recomputes the design block of every refreshable term at the coefficients
+currently in hand, except that a frozen block is read as the fit last
+committed it, and carries the difference between what the term contributes
+and what its linearization contributes as a per-observation adjustment to
+the predictor. With it, every cross-product in the objective reads the
+block as an ordinary design while the predictor stays exact:
 
 \deqn{\mathrm{adj} = \mathrm{term\_value}(\beta) - X(\beta)\,\beta}
 
-For a term whose block is a Jacobian, \code{\link[modelterms7:seg]{modelterms7::seg()}} and
-\code{\link[modelterms7:nl]{modelterms7::nl()}}, the adjustment is non-zero and the resulting scoring
-step is the Gauss-Newton one. For \code{\link[modelterms7:jump]{modelterms7::jump()}} the columns
-satisfy \eqn{X\beta = \mathrm{value}} exactly, so the adjustment is zero
-and the same step is Fasola's fixed-point iteration.
+For a term whose block is a Jacobian, \code{\link[modelterms7:seg]{modelterms7::seg()}},
+\code{\link[modelterms7:nl]{modelterms7::nl()}} and a smoothed \code{\link[modelterms7:jump]{modelterms7::jump()}} or
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}}, the adjustment is non-zero and the resulting
+scoring step is the Gauss-Newton one. A sharp, unheld \code{\link[modelterms7:jump]{modelterms7::jump()}}
+or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} is a frozen block instead. It is not recomputed
+at a trial point. Inside \code{\link[=fit_working]{fit_working()}} its columns give the predictor
+exactly, so that the adjustment is zero and the working fit is the
+fixed-point iteration of Fasola et al.; elsewhere the adjustment is
+anchored at the committed coefficients.
 }
-\section{A model with no refreshable term pays nothing}{
-\code{\link[=refresh_units]{refresh_units()}} is empty there, the design is returned as it arrived,
-and the arithmetic downstream is untouched.
+\section{Models without a refreshable term}{
+The design is returned as it arrived, and the arithmetic downstream is
+unchanged.
 }
 
 \section{Chained from the term, not from the specification}{
-The refresh reads the term the design state currently holds, never the one
-the specification was built with. A discontinuous break-point term carries
-a rescaling factor that is a state of its iteration: \pkg{modelterms7}
-halves it whenever the break-point reverses direction, so it records the
-path taken and cannot be recovered from the point reached. Refreshing from
+The refresh reads the term that the design state currently holds, and not
+the term with which the specification was built. A discontinuous
+break-point term carries a rescaling factor that is a state of its
+iteration: \pkg{modelterms7} halves it whenever the break-point reverses
+direction, so it records the path taken and cannot be recovered from the
+point reached. Refreshing from
 the specification each time would reset that factor to its starting value
 and solve a permanently smoothed problem, whose fixed point is not the
 model's.
@@ -55,10 +61,18 @@ every trial point of a line search sees one schedule and the schedule
 advances once per sweep.
 }
 
+\section{New data}{
+When the specification carries new data, nothing is refreshed. The design
+block is the one in \code{design}, and the contribution on the new rows is
+\code{\link[modelterms7:term_value]{modelterms7::term_value()}} at the coefficients in hand, or at the
+committed coefficients for a frozen block.
+}
+
 \section{Memoization}{
-The result is cached on the coefficients, because the objective, its
-gradient and its curvature are all asked for at the same point in turn
-and each would otherwise rebuild the same blocks.
+The result is cached on the coefficients and on whether the design is in
+a working fit, because the objective, its gradient and its curvature are
+all evaluated at the same point in turn and each would otherwise rebuild
+the same blocks.
 }
 
 \seealso{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_refresh.R
 \name{refresh_hessian}
 \alias{refresh_hessian}
-\title{The Log-Density's Curvature the Refresh Corrections Read}
+\title{The Log-Density's Curvature Used by the Refresh Corrections}
 \usage{
 refresh_hessian(spec, design, coef, expected = FALSE, approx = "opg")
 }

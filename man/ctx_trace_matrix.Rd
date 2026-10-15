@@ -15,13 +15,11 @@ ctx_trace_matrix(ctx, pen, basis, expected = FALSE)
 
 \item{expected}{Which information \code{pen} was built with, which is the
 cache's key: the projection is of that matrix, so one entry cannot serve
-both. Nothing reaches it today, a search holding one \code{\link[=OuterMethod]{OuterMethod()}}
-throughout. The slot is keyed all the same, the twin defect in
-\code{\link[=ctx_penalized]{ctx_penalized()}} having been unreachable in exactly the same way until
-it was not.}
+both information types.}
 }
 \value{
-A square matrix, or \code{NULL}.
+A square matrix, with the rows and columns of the pinned
+coordinates set to zero, or \code{NULL}.
 }
 \description{
 \eqn{M}, which is \eqn{K^{-1}} when nothing is projected away and the

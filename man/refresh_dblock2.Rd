@@ -17,14 +17,17 @@ refresh_dblock2(un, v, u, n)
 A numeric matrix, \code{n} by the term's coefficient count.
 }
 \description{
-\code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}} on one unit, with the shape it
-returns checked rather than assumed.
+\code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}} on one unit, with the shape of the
+result checked. A block of another shape signals an error that names the
+term.
 }
 \details{
-A term that has not written the method inherits the base one and gets
-zeros, which is exact for a design that does not move and a deliberate
-refusal for a block that is a working linearization rather than a Jacobian.
-Nothing is differenced here in either case.
+The base method on \code{model_term} answers zeros, which is exact for a design
+that does not move. A sharp \code{\link[modelterms7:seg]{modelterms7::seg()}} answers zeros because its
+second derivative vanishes away from the break-points, and a sharp
+\code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} answers zeros because its
+block is a working linearization with a frozen weight and not a Jacobian.
+Nothing is differenced here in any case.
 }
 \seealso{
 \code{\link[=refresh_dblock]{refresh_dblock()}}, \code{\link[=trace_refresh4]{trace_refresh4()}}

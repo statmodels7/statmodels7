@@ -65,11 +65,13 @@ rejected, and escalating the damping at every inner fit costs iterations
 without reaching anything that a stop would not.}
 
 \item{kinks_at}{\code{NULL}, or a function of the coefficients returning the
-positions at which the objective has a kink there, as
-\code{\link[=kink_positions]{kink_positions()}} finds them. Where a line search rejects every step
-length those positions are held and the step is retried on the rest;
-once the run has converged with them held, one step on every coordinate
-is tried, and taken if it decreases the objective.}
+rows of the linear constraints that hold the objective on its kinks
+there, a matrix with one column per coefficient, as
+\code{\link[=kink_constraints]{kink_constraints()}} finds them. Where a line search rejects every step
+length, the problem is solved on the subspace that those constraints and
+\code{frozen} leave free (\code{\link[=iwls_tied]{iwls_tied()}}); from the point reached one step on
+every coordinate is tried, and where it is rejected too the run stops
+there, with the verdict of the constrained fit.}
 
 \item{newton_at}{\code{NULL}, or a function of the coefficients returning the
 full Hessian of the objective, the scoring pieces' curvature plus the

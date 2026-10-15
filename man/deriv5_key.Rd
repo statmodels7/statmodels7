@@ -20,15 +20,14 @@ fifth-derivative list, built the same way \code{\link[=deriv4_key]{deriv4_key()}
 own.
 }
 \details{
-The fifth order is wanted where a filter's FOURTH derivative is, by the
-rule the fourth's own page states one order down: the criterion's second
-derivative in a pair of hyperparameters reads
-\code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}, and the score that recursion is driven
-by is read at the predictor it produces.
+The fifth order is needed where a filter's fourth derivative is, by the
+rule that the page of \code{\link[=deriv4_key]{deriv4_key()}} states one order down: the criterion's
+second derivative in a pair of hyperparameters reads
+\code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}, and the score that drives that recursion is
+read at the predictor that the recursion produces.
 
-It is the one place the fifth order enters, and
-\code{\link[distributions7:distrib_deriv5]{distributions7::distrib_deriv5()}} supplies it as ONE central
-difference of the analytic fourth rather than in closed form. What that
-costs is measured on the page of \code{\link[=statmod_structural_hess]{statmod_structural_hess()}}.
+\code{\link[distributions7:distrib_deriv5]{distributions7::distrib_deriv5()}} supplies the values in closed form for
+the families that register their own fifth-order method, and as one
+central difference of the fourth order for the others.
 }
 \keyword{internal}

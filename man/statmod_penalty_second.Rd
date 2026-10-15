@@ -53,17 +53,16 @@ more along \eqn{t_l}, with \eqn{\beta} moving by \eqn{b_l}, gives
   + \frac{\partial^2 S}{\partial\beta^2}[b_l, b_m]
   + \frac{\partial S}{\partial\beta}[b_{ml}]}
 beside \eqn{S_{ml}}, which \code{\link[=outer_pieces]{outer_pieces()}} already carries. The first two
-are one quantity by the symmetry of mixed partials, read from
-\code{\link[penalties7:penalty_d2hessian_beta]{penalties7::penalty_dhessian_beta_theta()}} for the hyperparameters a
-penalty owns; the third is \code{\link[penalties7:penalty_d2hessian_beta]{penalties7::penalty_d2hessian_beta()}} and the
+are the mixed derivative \eqn{\partial^2 S/\partial\beta\,\partial\theta}
+taken along two directions, \eqn{b_l} for the hyperparameters of row \eqn{m}
+and \eqn{b_m} for those of row \eqn{l}; each is read from
+\code{\link[penalties7:penalty_d2hessian_beta]{penalties7::penalty_dhessian_beta_theta()}} for the hyperparameters that the
+penalty owns. The third is \code{\link[penalties7:penalty_d2hessian_beta]{penalties7::penalty_d2hessian_beta()}} and the
 fourth \code{\link[penalties7:penalty_dhessian_beta]{penalties7::penalty_dhessian_beta()}}. A penalty that
-\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} calls quadratic contributes nothing, so a
-model carrying only those gets \code{NULL} and its Hessian is untouched.
-
-Measured on a Student t prior over 30 groups before it was written, the
-assembly without these pieces is 122 per cent out and flat in the step, and
-with them it converges on a central difference of the exact gradient as
-\eqn{h^2} down to the reference's own floor.
+\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} calls quadratic contributes nothing, and
+neither do a kinked penalty, a mixed covariance class and a penalty over a
+structural term's own parameters, so a model carrying only those gets \code{NULL}
+and its Hessian is untouched.
 }
 \seealso{
 \code{\link[=statmod_penalty_dbeta]{statmod_penalty_dbeta()}}, \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}},

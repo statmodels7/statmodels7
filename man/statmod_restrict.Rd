@@ -22,7 +22,8 @@ A list:
 \describe{
 \item{\code{coefficients}}{the restricted estimates, a named list.}
 \item{\code{loglik}}{the log-likelihood there, unpenalized.}
-\item{\code{objective}}{the penalized objective there.}
+\item{\code{objective}}{the penalized objective there, the negative
+log-likelihood plus the penalty, which the fit minimizes.}
 \item{\code{score}}{the penalized score at the restricted point, a numeric
 vector over the stacked coefficients. Its free entries are zero to
 the tolerance; the held one is what the statistics read.}
@@ -37,9 +38,9 @@ gradient statistic need no matrix.}
 \code{\link[=restricted_mode_error]{restricted_mode_error()}}, how far above its own mode the refit
 stopped. It reads the information, so it costs one Hessian.}
 \item{\code{labels}}{the stacked coefficient labels.}
-\item{\code{converged}}{the inner optimizer's flag, a single logical.
-Measured, it is anti-correlated with how well the point is located
--- see \code{\link[=restricted_mode_error]{restricted_mode_error()}}, which is the reading to prefer.}
+\item{\code{converged}}{the inner optimizer's flag, a single logical. It
+records whether a stopping rule fired and does not measure the
+distance to the mode, which \code{\link[=restricted_mode_error]{restricted_mode_error()}} measures.}
 }
 }
 \description{
@@ -54,28 +55,29 @@ rebuilt would carry different knots and answer for a different model. See
 \code{\link[=held_positions]{held_positions()}} and \code{\link[=iwls_solve]{iwls_solve()}} for the two halves.
 }
 \section{The hyperparameters are held too}{
-The refit runs the alternation ONCE at the hyperparameters the
-unrestricted fit arrived at, with no outer search. That makes the
-statistics built on it CONDITIONAL on the smoothing the data chose once,
-which is the honest reading of a penalized fit and is also what makes an
-interval by inversion affordable -- re-selecting the smoothing at every
-held value would put a whole outer search inside every step of a root
-find. A caller who wants the profiled version can refit by hand.
+The refit runs the alternation once at the hyperparameters of the
+unrestricted fit, with no outer search. The statistics built on it are
+therefore conditional on the smoothing that the data chose once. That is
+the reading that a penalized fit supports, because the penalty is a
+log-prior at the hyperparameters in force, and it keeps an interval by
+inversion affordable: re-selecting the smoothing at every held value would
+put a whole outer search inside every step of a root find. A profiled
+version requires refitting by hand.
 }
 
-\section{What is refused}{
-A coefficient under a KINKED penalty -- a lasso, a SCAD, an MCP -- for two
-reasons that point the same way: that block is fitted by a coordinate
-descent, and \code{\link[=coord_fit]{coord_fit()}} does not read \code{held_coef} at all, so a hold
-there would be moved by the sweep without a word (measured: held at 3, the
-refit reports 2.7348); and at the kink the objective has no curvature, so
-the statistics have nothing to read and the null distribution of a
-coefficient a selection kept is a different problem. An ALIASED
-coefficient, which has no estimate to test. And a model carrying a
-structural term, whose contribution is a recursion's state rather than
-\eqn{X\beta} and which the hold does not reach.
+\section{Coefficients that cannot be held}{
+A coefficient under a kinked penalty (a lasso, a SCAD, an MCP) cannot be
+held, for two reasons. The block is fitted by a coordinate descent, which
+updates every coordinate of the block and cannot leave one at a held
+value, so that \code{\link[=coord_fit]{coord_fit()}} signals an error when a held coordinate lies
+in its block. And at the kink the objective has no curvature for the
+statistics to read, while the null distribution of a coefficient that a
+selection kept is a different problem. An aliased coefficient has no
+estimate to test. A model that carries a structural term cannot hold a
+coefficient either, because the contribution of the term is the state of a
+recursion and not \eqn{X\beta}, and the hold does not reach it.
 
-A coefficient under a penalty that IS twice differentiable is held like
+A coefficient under a penalty that is twice differentiable is held like
 any other: a smooth's linear column and its rotated coordinates, a ridge,
 a random effect. What such a fit means is stated at \code{\link[=statmod_stat_at]{statmod_stat_at()}}.
 }

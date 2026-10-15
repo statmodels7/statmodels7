@@ -2,7 +2,7 @@
 % Please edit documentation in R/marginal.R
 \name{fit_marginal_context}
 \alias{fit_marginal_context}
-\title{The Criterion a Fit Maximized, Rebuilt From the Fit}
+\title{The Criterion That a Fit Maximized, Rebuilt From the Fit}
 \usage{
 fit_marginal_context(spec, design, coef, method, pinned = NULL)
 }
@@ -24,8 +24,8 @@ A list with \code{spec}, \code{design} and \code{gam}, the last as
 }
 \description{
 The specification and the design on which a fit's marginal criterion was
-maximized: the coefficients \code{\link[=marginal_coords]{marginal_coords()}} names are held at their
-fitted values, and the coordinates left out of the determinant are
+maximized: the coefficients that \code{\link[=marginal_coords]{marginal_coords()}} names are held at
+their fitted values, and the coordinates left out of the determinant are
 recorded on the design.
 }
 \details{
@@ -33,5 +33,7 @@ A consumer that reads the criterion's derivatives at a fitted object has
 to read them on this criterion. On the fit's own specification, which
 holds nothing, the same functions return the derivatives of a criterion
 that integrates the estimated coefficients, which is another function.
+Where \code{\link[=marginal_coords]{marginal_coords()}} signals an error, no coefficient is treated as
+estimated.
 }
 \keyword{internal}

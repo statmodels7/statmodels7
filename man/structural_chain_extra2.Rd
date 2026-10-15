@@ -13,7 +13,7 @@ structural_chain_extra2(spec, design, jd, M, st, blk4, v, w)
 
 \item{jd}{The joint rows.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 
 \item{st}{The shared quantities, from \code{\link[=structural_grad_parts]{structural_grad_parts()}}.}
 
@@ -31,19 +31,18 @@ A single number.
 and contracted against a second direction.
 }
 \details{
-Nine terms, and none of them assembles a matrix over the coefficients: a
-term in \eqn{V_a^\top V_b} traces as a weighted sum of the
-per-observation diagonal \eqn{G}, a term carrying
-\eqn{\mathrm{d}\varphi} traces against the rows \eqn{M} has already been
-applied to, and the three terms carrying the recursion's own derivatives
-trace against what \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}},
-\code{\link[modelterms7:term_third]{modelterms7::term_third()}} and \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}
-return at the right weights.
+The terms are listed in the comments of the code. None of them assembles a
+matrix over the coefficients: a term in \eqn{V_a^\top V_b} traces as a
+weighted sum of the per-observation diagonal \eqn{G}, a term carrying
+\eqn{\mathrm{d}\varphi} traces against the rows to which \eqn{M} has
+already been applied, and the terms that carry the derivatives of the
+recursion trace against what \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}},
+\code{\link[modelterms7:term_third]{modelterms7::term_third()}} and \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}} return at the
+appropriate weights.
 
 The last of those is the fourth derivative of the predictor through the
-recursion, which is the object this whole route exists for, and the only
-place the family's FIFTH derivative enters is \code{P} inside its
-\code{blocks} callback.
+recursion. The fifth derivative of the family enters only through \code{P} in
+the \code{blocks} callback of that call.
 }
 \seealso{
 \code{\link[=structural_chain_extra]{structural_chain_extra()}}, \code{\link[=statmod_structural_hess]{statmod_structural_hess()}}

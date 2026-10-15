@@ -35,9 +35,11 @@ filter_scaling <- function(tm) {
 #' Check That a Family Supports a Scaled Score
 #'
 #' @description
-#' Signals an error unless the family is univariate and carries an analytic
-#' second derivative of its expected information, which the derivatives of a
-#' filter driven by a scaled score reach (the fourth from a stencil on it).
+#' Signals an error unless the family is univariate and its second derivative
+#' of the expected information can be evaluated at the first observation. The
+#' derivatives of a filter driven by a scaled score read that second
+#' derivative, and the third and fourth derivatives of the information are
+#' finite differences of it.
 #'
 #' @param d A distribution object.
 #' @param y The response.
@@ -90,7 +92,7 @@ check_filter_scaling <- function(d, y, theta) {
 #'
 #' @param spec A [StatmodSpec()].
 #' @param theta The per-observation parameters.
-#' @param ap The index of the parameter the filter sits in.
+#' @param ap The index of the parameter in whose equation the filter sits.
 #' @param scaling The exponent \eqn{d}.
 #' @param gl,H,D3,D4,D5 The family's link-scale derivatives; the higher ones
 #'   may be `NULL`.

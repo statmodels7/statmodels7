@@ -13,17 +13,15 @@ expected_deriv2_ok(distrib)
 A single logical.
 }
 \description{
-Whether \code{\link[distributions7:distrib_d2expected_hessian]{distributions7::distrib_d2expected_hessian()}} answers for this
-family, asked at a probe.
+Whether \code{\link[distributions7:distrib_d2expected_hessian]{distributions7::distrib_d2expected_hessian()}} returns a value for
+this family. The generic is called once, at a probe value.
 }
 \details{
-There is no numerical default in \pkg{distributions7} -- a difference of the
-first derivative, itself a difference for most families, would be the nested
-differencing that package forbids -- so the families that answer are the
-ones that wrote the derivative out: \code{gaussian1_distrib()},
-\code{poisson_distrib()}, \code{gamma1_distrib()}, \code{negbin2_distrib()} and
-\code{beta1_distrib()}. Every other family keeps the expected route's order 2 on
-\code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}}.
+The default method in \pkg{distributions7} signals an error, because
+differencing the first derivative of the expected information would be a
+difference of a difference. The function therefore returns \code{TRUE} only for a
+family that provides the derivative itself. For any other family the order-2
+Hessian of the expected route is computed by \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}}.
 }
 \seealso{
 \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}, \code{\link[=expected_deriv_ok]{expected_deriv_ok()}}

@@ -21,7 +21,7 @@ together with its key builder.
 }
 \details{
 It is read only on the expected route, where \code{\link[=outer_gradient_ok]{outer_gradient_ok()}} has
-already asked \code{\link[=expected_deriv2_ok]{expected_deriv2_ok()}}. The components are symmetric in the
+already checked \code{\link[=expected_deriv2_ok]{expected_deriv2_ok()}}. The components are symmetric in the
 information's pair and in the pair differentiated in, separately, so they are
 read through \code{\link[distributions7:d2expected_key]{distributions7::d2expected_key()}} and never through the
 observed route's sorted quadruple.

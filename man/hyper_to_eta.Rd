@@ -14,8 +14,8 @@ eta_to_hyper(eta, idx, hyper)
 and then by term.}
 
 \item{idx}{The index, as \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns it, whose rows say
-which hyperparameters are on the search and whose \code{"link"} attribute
-says how each is carried.}
+which hyperparameters are on the search and whose \code{"links"} attribute
+gives the link that carries each.}
 
 \item{eta}{A free vector, as long as \code{idx} has rows.}
 }
@@ -31,8 +31,9 @@ line through their links; \code{eta_to_hyper()} puts a free vector back.
 \details{
 The outer search runs on the free scale for the reason every other search
 in the toolkit does: a smoothing parameter is positive, and an optimizer
-that does not know it will step outside the domain. Each hyperparameter's
-own link comes from the \code{"link"} attribute \code{\link[=outer_hyper_index]{outer_hyper_index()}} carries.
+that has no information about the domain can step outside it. The link of
+each hyperparameter is read from the \code{"links"} attribute of the index that
+\code{\link[=outer_hyper_index]{outer_hyper_index()}} returns.
 
 The two are inverses over the estimated hyperparameters:
 \code{eta_to_hyper(hyper_to_eta(h, idx), idx, h)} returns \code{h}. The

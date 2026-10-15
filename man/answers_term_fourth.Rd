@@ -19,12 +19,12 @@ class names.
 }
 \details{
 The criterion's own second derivative reads a fourth order through the
-recursion, so a term that has written the third and not the fourth
-supplies an exact gradient and no exact Hessian. That is the state
-\code{regime()} is in: it implements neither, and a term implementing only
-the third would be answered here with \code{FALSE} and left to
-\code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}}, which is the same fallback its search
-already has.
+recursion, so a term that implements the third derivative and not the
+fourth supplies an exact gradient and no exact Hessian. For such a term the
+function returns \code{FALSE} and the Hessian is computed by
+\code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}}. A term of the likelihood shape (\code{regime()} and the
+marginal break-point term) implements neither derivative, and
+\code{\link[=outer_gradient_ok]{outer_gradient_ok()}} returns \code{FALSE} for it at both orders.
 }
 \seealso{
 \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}, \code{\link[=statmod_structural_hess]{statmod_structural_hess()}}

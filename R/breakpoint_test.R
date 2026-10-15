@@ -7,11 +7,14 @@
 #'
 #' @description
 #' Tests the hypothesis that a model has no break-point against the
-#' alternative of the break-point term it carries: no change of slope for a
-#' [modelterms7::seg()], no change of level for a [modelterms7::jump()], and
-#' neither for a [modelterms7::jseg()]. The term can sit in the equation of
-#' any distribution parameter, beside any other term, and inside a parameter
-#' of [modelterms7::nl()].
+#' alternative of the break-point term that the model carries: no change of
+#' slope for a [modelterms7::seg()], no change of level for a
+#' [modelterms7::jump()], and neither for a [modelterms7::jseg()]. The term
+#' can sit in the equation of any distribution parameter, beside any other
+#' term that is not structural, and inside a parameter of [modelterms7::nl()]
+#' when it is a change of slope or a smoothed step. A model that carries a
+#' structural term ([modelterms7::gas()], [modelterms7::regime()] or the
+#' marginal break-point term) has no break-point test.
 #'
 #' @details
 #' Under the null hypothesis the position \eqn{\psi} of the break-point does
@@ -34,8 +37,8 @@
 #'   V M^{(s-1)/2} e^{-M/2} 2^{-s/2} / \Gamma(s/2),}
 #' with \eqn{V = \sum_j |S(q_{j+1})^{1/2} - S(q_j)^{1/2}|} the total
 #' variation of the root of the process and \eqn{s} the number of change
-#' coefficients. This is the test of `segmented::davies.test()`, read on the
-#' score of the model at hand.
+#' coefficients. The bound is the one that `segmented::davies.test()` also
+#' applies; the process read here is the score statistic of the model at hand.
 #'
 #' Where the step is sharp the process is constant between consecutive
 #' values of the covariate and jumps at each of them, and the bound, which
@@ -43,14 +46,17 @@
 #' supremum is then taken over every interval inside the confinement limits,
 #' and its distribution under the null is estimated by a parametric
 #' bootstrap: `n_boot` responses are drawn from the null fit, the null model
-#' is refitted to each, and the p-value is the share of replicates whose
-#' supremum reaches the observed one, \eqn{(1 + \#\{M^* \ge M\})/(1 +
-#' B)}. The draws are conditional on the fitted random effects, if any.
+#' is refitted to each, and the p-value is \eqn{(1 + \#\{M^* \ge M\})/(1 +
+#' B)}, where \eqn{M^*} is the supremum of the score process of a replicate
+#' and \eqn{B} is the number of replicates that were refitted. The draws are
+#' conditional on the fitted random effects, if any.
 #'
 #' The hyperparameters are held at the values of the fit, so the test is
-#' conditional on the smoothing the data chose. The term must carry one
-#' break-point whose position has no development; for a choice between one
-#' and several break-points, compare the fits by an information criterion.
+#' conditional on the smoothing that the data chose. The term must carry one
+#' break-point, and none of its coefficients (the position, the change of
+#' slope or the change of level) may have a development on covariates. For a
+#' choice between one and several break-points, the fits can be compared by an
+#' information criterion.
 #'
 #' @param fit A [StatmodFit()] carrying the break-point term.
 #' @param param The distribution parameter whose equation carries the term,
@@ -58,8 +64,10 @@
 #' @param term The label of the term (`"seg"`, `"jump"`, `"jseg"` by
 #'   default), or `NULL` to find it. Needed only where the model carries
 #'   more than one break-point term.
-#' @param k The number of positions at which a continuous process is read.
-#' @param n_boot The number of bootstrap replicates for a sharp step.
+#' @param k The number of positions at which a continuous process is read, a
+#'   whole number of at least 3. It is not used for a sharp step.
+#' @param n_boot The number of bootstrap replicates for a sharp step, a
+#'   positive whole number. It is not used for a continuous process.
 #' @param seed A seed for the bootstrap, or `NULL`.
 #'
 #' @return An object of class `"htest"` with the supremum of the score
@@ -90,14 +98,16 @@ statmod_breakpoint_test <- function(fit, param = NULL, term = NULL, k = 10L,
   if (!S7::S7_inherits(fit, StatmodFit)) {
     stop("'fit' must be a statmod fit.", call. = FALSE)
   }
-  k <- as.integer(k)
-  if (length(k) != 1L || is.na(k) || k < 3L) {
+  whole <- function(v) is.numeric(v) && length(v) == 1L && is.finite(v) &&
+    v == round(v)
+  if (!whole(k) || k < 3) {
     stop("'k' must be a whole number of at least 3.", call. = FALSE)
   }
-  n_boot <- as.integer(n_boot)
-  if (length(n_boot) != 1L || is.na(n_boot) || n_boot < 1L) {
+  k <- as.integer(k)
+  if (!whole(n_boot) || n_boot < 1) {
     stop("'n_boot' must be a positive whole number.", call. = FALSE)
   }
+  n_boot <- as.integer(n_boot)
   spec0 <- fit@spec
   if (length(statmod_structural(spec0))) {
     stop("A model carrying a structural term has no break-point test.",
@@ -260,10 +270,10 @@ statmod_breakpoint_test <- function(fit, param = NULL, term = NULL, k = 10L,
 #' Where the Break-Point Term of a Fit Is
 #'
 #' @description
-#' Finds the break-point term a test reads: its equation, the prefix of its
-#' coefficient names, the built term, and whether its step is sharp. The term
-#' is looked for among the terms of every equation and among the sub-terms of
-#' the parameters of a [modelterms7::nl()] term.
+#' Finds the break-point term that a test reads and returns its equation, the
+#' prefix of its coefficient names, the built term and whether its step is
+#' sharp. The term is looked for among the terms of every equation and among
+#' the sub-terms of the parameters of a [modelterms7::nl()] term.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param param,term As [statmod_breakpoint_test()].
@@ -317,7 +327,7 @@ bp_test_locate <- function(spec, param = NULL, term = NULL) {
   }
   f$sharp <- !identical(f$term@kind, "seg") && is.null(bp$smooth)
   if (f$sharp && !grepl("^[^.]+\\.$", f$prefix)) {
-    stop("A sharp step inside nl() is not a model statmod() fits.",
+    stop("A sharp step inside nl() is not a model that statmod() fits.",
          call. = FALSE)
   }
   f

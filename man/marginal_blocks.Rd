@@ -26,19 +26,21 @@ A list with \code{Pu}, \code{ui}, \code{p}, \code{Bg}, \code{Be}, \code{Hv}, \co
 \code{idx}, or \code{NULL} where a piece cannot be computed.
 }
 \description{
-The quantities \code{\link[=marginal_vcov]{marginal_vcov()}} and \code{\link[=marginal_edf_correction]{marginal_edf_correction()}} share:
+The quantities that \code{\link[=marginal_vcov]{marginal_vcov()}} and \code{\link[=marginal_edf_correction]{marginal_edf_correction()}}
+share:
 the inverse of the penalized information over the integrated
 coefficients, the movement of those coefficients with the estimated ones
 and with the hyperparameters, and the Hessian of the criterion over
 \eqn{(\eta, \gamma)}.
 }
 \details{
-Write \eqn{u} for the coefficients the criterion integrates and
-\eqn{\gamma} for the ones it estimates. At the mode,
+Write \eqn{u} for the coefficients that the criterion integrates and
+\eqn{\gamma} for the ones that it estimates. At the mode,
 \eqn{\partial u/\partial\gamma = -A_{uu}^{-1}A_{u\gamma}}, and a
 hyperparameter moves \eqn{u} by
 \eqn{-A_{uu}^{-1}\,\partial^2\rho/\partial u\,\partial\eta}. The
 columns of \code{Bg} and \code{Be} are these movements written over the kept
-coordinates, with a unit entry at \eqn{\gamma}'s own position.
+coordinates; each column of \code{Bg} also has a unit entry at the position of
+its own \eqn{\gamma_j}.
 }
 \keyword{internal}

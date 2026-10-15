@@ -30,9 +30,10 @@ A square matrix.
 coefficients.
 }
 \details{
-Each block is a weighted crossproduct, the weight being
-\eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}: the third derivative never
-appears as an array.
+Each block is minus a weighted crossproduct of the two designs, the weight
+being \eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}, so that the third
+derivative is never formed as an array over the coefficients. The sign makes
+\eqn{T[v]} the derivative of \eqn{K = -\ell'' + S}.
 
 On the expected route \code{d3} is the derivative of the expected information in
 the predictors, \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}}, and the same

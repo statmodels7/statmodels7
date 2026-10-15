@@ -1,32 +1,33 @@
 #' @include statmod.R
 NULL
 
-#' How Many Restarts the Terms Ask For
+#' Restart Budget of the Break-Point Terms
 #'
 #' @description
-#' Returns the largest `n_boot` any break-point term of the specification
-#' declares, and zero when the model carries no such term. This is the
-#' budget [statmod_boot_restart()] spends: how many proposals it may try
-#' before giving up on improving the fit.
+#' Returns the largest `n_boot` set in a break-point term that is written
+#' directly in an equation of the specification, and zero when there is no
+#' such term. A break-point term nested inside a parameter of
+#' [modelterms7::nl()] is not counted. [statmod_boot_restart()] takes this
+#' number as the maximum number of proposals that it tries.
 #'
 #' @details
-#' The number is declared on the term. [modelterms7::seg()],
-#' [modelterms7::jump()] and [modelterms7::jseg()] each take `n_boot`, with
-#' a default of 10, because those are the terms whose objective has the
-#' spurious local optima the device exists for. Running the restarts belongs
-#' here, in the layer that can refit the model, and the split follows the
-#' one a penalty already uses: the term says what it needs, this package
-#' does it.
+#' The number is set in the term. [modelterms7::seg()], [modelterms7::jump()]
+#' and [modelterms7::jseg()] each take `n_boot`, with a default of 10,
+#' because the objective of these terms has spurious local optima that the
+#' restarts search for. The restarts are run by this package, which can refit
+#' the model.
 #'
-#' A model with two break-point terms asking for 10 and 25 gets 25. The
-#' restart loop works on all of them together, since a proposal moves every
-#' break-point in the model at once, so the budget is one number and the
-#' largest request is the one honored.
+#' A model with two break-point terms that set `n_boot` to 10 and to 25 gets
+#' 25. The restart loop works on all of the terms together, since a proposal
+#' is a configuration of positions for every break-point term in the model,
+#' so the budget is a single number and the largest of the set values is
+#' used.
 #'
-#' @param spec A [StatmodSpec()], whose terms are walked in every equation.
+#' @param spec A [StatmodSpec()]. The terms of every equation are examined.
 #'
-#' @return A single non-negative integer. Zero when no term declares
-#'   `n_boot`, and a budget of zero turns the restart loop off.
+#' @return A single non-negative integer. It is zero when no term sets
+#'   `n_boot`, and [statmod()] does not run the restart loop for a budget of
+#'   zero.
 #'
 #' @seealso [statmod_boot_restart()], which spends this budget,
 #'   [modelterms7::seg()] for where the number is set.
@@ -47,86 +48,89 @@ seg_boot_total <- function(spec) {
 }
 
 
-#' Restarting Around a Fitted Model, Screened on the Exact Profile
+#' Bootstrap Restarting of a Break-Point Fit
 #'
 #' @description
 #' Improves a fitted break-point model by bootstrap restarting (Wood 2001),
-#' screening each proposal on the exact profile before paying for a refit.
-#' The objective of a model with break-points has spurious local minima, and
-#' an ordinary fit converges into whichever one its starting positions sit
-#' in; this searches for a better one.
+#' screening each proposal on the profile of the term's equation before a
+#' refit of the model. The objective of a model with break-points has
+#' spurious local minima, and an ordinary fit converges into the one in which
+#' its starting positions lie; this search looks for a better one.
 #'
 #' @details
-#' # What makes the screen cheap
+#' # The screen on the profile
 #'
-#' The non-convexity of a break-point model lives entirely in the positions.
-#' Hold them and everything left is convex, so the exact profile at a fixed
-#' configuration of positions is one linear fit. A proposal is therefore a
-#' configuration of positions and nothing else, and two proposals are ranked
-#' by their profiles at a cost of one linear fit each. Only a proposal the
-#' profile prefers earns a refit of the whole model, and the refit's answer
-#' is accepted or rejected on the true objective.
-#'
-#' Measured at \eqn{n = 10^4}: a proposal that goes nowhere costs about half
-#' a second, against 5 to 15 seconds for the refit it would otherwise have
-#' triggered. The design this replaced refitted every proposal and spent
-#' 945 seconds re-verifying an optimum the sweep had already found.
+#' The non-convexity of a break-point model is in the positions. Given the
+#' positions, the coefficients of a term enter linearly, so the profile at a
+#' fixed configuration of positions is one weighted linear fit of the working
+#' response of the term's equation. A proposal is therefore a configuration of
+#' positions, and two proposals are ranked by their profiles at the cost of
+#' one linear fit each. Only a proposal that the profile prefers leads to a
+#' refit of the whole model, and the refit is accepted or rejected on the true
+#' objective. A proposal that the profile rejects costs profile evaluations
+#' only, with no refit of the model.
 #'
 #' # The three proposal kinds
 #'
-#' Tried in this order.
+#' The kinds are tried in this order.
 #'
 #' 1. **The deterministic sweep.** Each break-point in turn is swept over a
 #'    grid on the profile with the others held, which is
-#'    [modelterms7::seg_polish()]. This walks straight to a feature the
-#'    fitting iteration pressed a break-point away from.
+#'    [modelterms7::seg_polish()]. This reaches a feature of the profile from
+#'    which the fitting iteration had moved a break-point away.
 #' 2. **The bootstrap sweep.** The same descent on the profile of a
 #'    resample, the multinomial counts entering as weights, which moves the
 #'    profile's optima the way refitting the resample would.
 #' 3. **The random sweep.** The same descent from positions drawn uniformly
 #'    over the confinement interval.
 #'
-#' The two stochastic kinds alternate. Four consecutive proposals that fail
-#' the screen end the loop, whatever budget is left.
+#' The two stochastic kinds alternate. Four consecutive proposals that do not
+#' improve the objective, either because the screen rejects them or because
+#' the refit does not decrease the objective, end the loop, whatever budget
+#' is left.
 #'
-#' # The profile is exact for an identity link and a proposal elsewhere
+#' # The profile for a gaussian location and for other equations
 #'
-#' It reads the response net of the other contributions in the term's
-#' equation, on the predictor scale. For a Gaussian response and an identity
-#' link that is the model's own least-squares objective. For anything else
-#' it is an approximation used to rank candidates, and the true objective
-#' decides the acceptance, so a poor ranking costs time and never
-#' correctness.
-#' [modelterms7::seg_start()] makes the same argument for the same reason.
+#' The profile is the weighted least-squares fit of the working response of
+#' the term's equation, net of the other contributions to that equation, with
+#' the working weights of a scoring step. For the location parameter of a
+#' gaussian family on the identity link, this is the least-squares objective
+#' of the model. In every other equation, it is a quadratic model of the
+#' objective that ranks the candidates, and the acceptance is decided on the
+#' true objective. [modelterms7::seg_start()] uses the same profile to place
+#' starting values.
 #'
 #' # Reproducibility
 #'
 #' The draws come from the session's generator, so a fit with restarts
 #' repeats under [set.seed()]. The refreshable and structural state of the
 #' design is snapshotted at the incumbent and restored whenever a candidate
-#' loses, so a rejected proposal leaves nothing behind.
+#' loses, so that a rejected proposal leaves the state unchanged.
 #'
 #' @param spec The [StatmodSpec()] being fitted.
 #' @param design The assembled design, as [statmod_design()] returns it.
 #' @param blocks The split of the terms into the jointly fitted smooth block
 #'   and the kinked ones, as [statmod_blocks()] returns it.
-#' @param hyper The hyperparameters the fit ended at, held fixed throughout:
-#'   the restarts search over positions, not over hyperparameters.
+#' @param hyper The hyperparameters at which the fit ended, held fixed
+#'   throughout. The restarts search over positions only.
 #' @param inner_optimizer How the smooth block is fitted, [iwls()] or an
 #'   \pkg{optimizers7} optimizer.
 #' @param res The fitted result to improve, as [statmod_alternate()] returns
-#'   it. Returned unchanged when nothing better is found.
+#'   it. It is returned unchanged when no proposal improves the objective, and
+#'   also when the design carries no state, or when the response is a matrix,
+#'   is not numeric or has missing values.
 #' @param expected,approx,maxit,tol Passed to [statmod_alternate()] for each
-#'   refit, with the same meanings they have there.
+#'   refit, with the meanings that they have there.
 #' @param vb The resolved verbosity, as [verbosity()] returns it.
-#' @param nb The budget: at most how many proposals to try, as
-#'   [seg_boot_total()] reports it. A budget of zero returns `res`
-#'   untouched.
+#' @param nb The budget: the maximum number of proposals to try, as
+#'   [seg_boot_total()] reports it. The first proposal is the deterministic
+#'   sweep. A budget below one returns `res` unchanged.
 #'
 #' @return `res`, with `par`, `value`, `converged`, `obj` and the block
-#'   histories replaced when a restart improved the objective. Everything
-#'   else is carried over untouched, an outer search's history and its
-#'   optimizer among them, so the result is the same shape either way.
+#'   histories replaced when a restart improved the objective. Every other
+#'   element is carried over unchanged, including the history of an outer
+#'   search and its optimizer, so the result has the same structure either
+#'   way.
 #'
 #' @references
 #' Wood, S. N. (2001). Minimizing model fitting objectives that contain
@@ -232,6 +236,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
     if (gain) par else NULL
   }
 
+  if (nb < 1L) return(res)
   dry <- 0L
   kinds <- c("sweep", rep(c("boot", "random"), length.out = max(0L, nb - 1L)))
   for (b in seq_along(kinds)) {
@@ -272,8 +277,9 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #'
 #' @description
 #' After the working phase and the restarts, every sharp [modelterms7::jump()]
-#' or [modelterms7::jseg()] term is moved to the minimum of its exact
-#' least-squares profile ([modelterms7::seg_polish_exact()]), held there
+#' or [modelterms7::jseg()] term is moved to the minimum of the least-squares
+#' profile of its working response ([modelterms7::seg_polish_exact()]), which
+#' is exact only for the location of a gaussian family, held there
 #' ([modelterms7::seg_hold()]), and the coefficients of the model are refitted
 #' with the positions held.
 #'
@@ -284,12 +290,9 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #' the coefficients that maximize the likelihood at the positions reached; and
 #' the profile of a discontinuous term is constant between consecutive
 #' observations, so the iteration can stop one interval away from the
-#' minimum. Measured on 16 samples of 200 observations (a jseg and a jump, 8
-#' seeds each), the fit reached the interval of the profile's minimum in 11,
-#' its coefficients sat up to 0.04 log-likelihood units below least squares
-#' at the position reached, and `statmod_certificate()` reported
-#' `not converged` in 12, reading the mode along the working block's auxiliary
-#' column, which is not a direction of the model.
+#' minimum. The certificate of such a fit can then read the mode along the
+#' auxiliary column of the working block, which is not a direction of the
+#' model.
 #'
 #' Held, a break-point term contributes a linear function of its remaining
 #' coefficients, so the refit is an ordinary fit, and the coordinate that
@@ -299,11 +302,20 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #'
 #' The profile is weighted least squares of the working response of the
 #' term's own equation, net of the rest of that equation, on the term's own
-#' columns, with the working weights of a scoring step: exact for a gaussian
-#' mean and the quadratic model of the objective for any other equation. A polished position is kept
-#' only where the refit at it reaches a better objective than the refit at the
-#' position the iteration reached. A term whose per-break-point coefficients
-#' carry a development is held without polishing, its positions being one per
+#' columns, with the working weights of a scoring step. It is exact for the
+#' location of a gaussian family on the identity link and is a quadratic model
+#' of the objective in any other equation. A polished position is kept only
+#' where the refit at it reaches a better objective than the refit at the
+#' position that the iteration reached. The polish is repeated, up to
+#' `rounds` times, while the refit improves the objective.
+#'
+#' A term whose break-point or per-break-point coefficients carry a development
+#' is held and polished like any other term, with the exact line searches of
+#' [modelterms7::seg_polish_exact()] in the coefficients of the development.
+#' In an equation whose working profile is only a model of the objective, the
+#' five deepest local minima of the profile are also refitted with the
+#' positions held, and so are the neighboring intervals of the best position;
+#' these two searches skip a developed term, whose positions are one per
 #' observation.
 #'
 #' @param spec The specification, holds included.
@@ -311,6 +323,8 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #' @param blocks,hyper,inner_optimizer,expected,approx,maxit,tol,vb As
 #'   [statmod_alternate()].
 #' @param res The fit to settle, as [statmod_alternate()] returns it.
+#' @param rounds The maximum number of times that the polished positions are
+#'   read again after a refit, 5 by default.
 #'
 #' @return A list: `res`, the settled fit, `moved`, `TRUE` where a
 #'   polished position replaced the one the iteration reached, and `settled`,
@@ -534,19 +548,17 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
 #' Settle the Changes of Slope on the Profile
 #'
 #' @description
-#' After the working phase and the restarts, every sharp [modelterms7::seg()]
-#' term is moved to the minimum of its exact least-squares profile over every
+#' After the working phase and the restarts, every [modelterms7::seg()] term
+#' that is not smoothed, not developed and not marginal is moved to the
+#' minimum of the least-squares profile of its working response over every
 #' interval of the covariate ([modelterms7::seg_polish_exact()]), and the
 #' model is refitted from there with the positions free.
 #'
 #' @details
 #' The profile of a change of slope is smooth inside each interval between
 #' consecutive observed values and has a kink at each of them, so the
-#' iteration of Muggeo (2003) can stop on a kink that is not a minimum:
-#' measured on `segmented::globTempAnom` with four break-points, it stopped
-#' with two positions on observed years and the inner fit 0.106
-#' log-likelihood units above its mode, and the REML criterion could not be
-#' evaluated at its start. Inside an interval the profile has one stationary
+#' iteration of Muggeo (2003) can stop on a kink that is not a minimum.
+#' Inside an interval the profile has one stationary
 #' point, so its minimum over every interval is exact
 #' ([modelterms7::seg_polish_exact()]). The profile is read on the working
 #' response of the term's equation, and a polished position is kept only
@@ -704,8 +716,8 @@ statmod_settle_seg <- function(spec, design, blocks, hyper, inner_optimizer,
 #' @description
 #' `TRUE` where the working response of a distribution parameter's equation
 #' gives the objective exactly: the location of a gaussian family on the
-#' identity link, whose log-likelihood is quadratic in that predictor. Every
-#' other equation reads a quadratic model of its objective.
+#' identity link, whose log-likelihood is quadratic in that predictor. In
+#' every other equation the profile is a quadratic model of the objective.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param p The distribution parameter, a string.

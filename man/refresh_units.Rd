@@ -16,12 +16,18 @@ refresh_units(spec, design, coef, params, npar, offs)
 \item{params, npar, offs}{The block bookkeeping.}
 }
 \value{
-A list, empty where no block moves.
+A list, empty where no block moves. Each element is a list with
+\code{a}, the index of the term's equation; \code{param}, the distribution
+parameter of that equation; \code{term}, the name of the term within the
+equation; \code{cols}, its columns within the equation; \code{ra}, the same columns
+in the stacked coefficient vector; \code{bt}, the term's coefficients; and
+\code{built}, the term refreshed at \code{bt}.
 }
 \description{
 One entry per refreshable term, carrying everything its derivative needs:
-the distribution parameter it sits in, its columns in the stacked
-coefficient vector, its own coefficients and the term rebuilt at them.
+the distribution parameter it sits in, its columns within that equation
+and in the stacked coefficient vector, its own coefficients and the term
+rebuilt at them.
 }
 \details{
 Resolved once and passed to every consumer, so the gradient's contraction

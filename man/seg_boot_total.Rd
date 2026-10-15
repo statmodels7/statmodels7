@@ -2,36 +2,37 @@
 % Please edit documentation in R/boot_restart.R
 \name{seg_boot_total}
 \alias{seg_boot_total}
-\title{How Many Restarts the Terms Ask For}
+\title{Restart Budget of the Break-Point Terms}
 \usage{
 seg_boot_total(spec)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, whose terms are walked in every equation.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}. The terms of every equation are examined.}
 }
 \value{
-A single non-negative integer. Zero when no term declares
-\code{n_boot}, and a budget of zero turns the restart loop off.
+A single non-negative integer. It is zero when no term sets
+\code{n_boot}, and \code{\link[=statmod]{statmod()}} does not run the restart loop for a budget of
+zero.
 }
 \description{
-Returns the largest \code{n_boot} any break-point term of the specification
-declares, and zero when the model carries no such term. This is the
-budget \code{\link[=statmod_boot_restart]{statmod_boot_restart()}} spends: how many proposals it may try
-before giving up on improving the fit.
+Returns the largest \code{n_boot} set in a break-point term that is written
+directly in an equation of the specification, and zero when there is no
+such term. A break-point term nested inside a parameter of
+\code{\link[modelterms7:nl]{modelterms7::nl()}} is not counted. \code{\link[=statmod_boot_restart]{statmod_boot_restart()}} takes this
+number as the maximum number of proposals that it tries.
 }
 \details{
-The number is declared on the term. \code{\link[modelterms7:seg]{modelterms7::seg()}},
-\code{\link[modelterms7:jump]{modelterms7::jump()}} and \code{\link[modelterms7:jseg]{modelterms7::jseg()}} each take \code{n_boot}, with
-a default of 10, because those are the terms whose objective has the
-spurious local optima the device exists for. Running the restarts belongs
-here, in the layer that can refit the model, and the split follows the
-one a penalty already uses: the term says what it needs, this package
-does it.
+The number is set in the term. \code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}}
+and \code{\link[modelterms7:jseg]{modelterms7::jseg()}} each take \code{n_boot}, with a default of 10,
+because the objective of these terms has spurious local optima that the
+restarts search for. The restarts are run by this package, which can refit
+the model.
 
-A model with two break-point terms asking for 10 and 25 gets 25. The
-restart loop works on all of them together, since a proposal moves every
-break-point in the model at once, so the budget is one number and the
-largest request is the one honored.
+A model with two break-point terms that set \code{n_boot} to 10 and to 25 gets
+25. The restart loop works on all of the terms together, since a proposal
+is a configuration of positions for every break-point term in the model,
+so the budget is a single number and the largest of the set values is
+used.
 }
 \seealso{
 \code{\link[=statmod_boot_restart]{statmod_boot_restart()}}, which spends this budget,

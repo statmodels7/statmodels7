@@ -16,9 +16,9 @@ A list with \code{param}, \code{name} (the term's name in its equation),
 \code{prefix}, \code{term} and \code{sharp}.
 }
 \description{
-Finds the break-point term a test reads: its equation, the prefix of its
-coefficient names, the built term, and whether its step is sharp. The term
-is looked for among the terms of every equation and among the sub-terms of
-the parameters of a \code{\link[modelterms7:nl]{modelterms7::nl()}} term.
+Finds the break-point term that a test reads and returns its equation, the
+prefix of its coefficient names, the built term and whether its step is
+sharp. The term is looked for among the terms of every equation and among
+the sub-terms of the parameters of a \code{\link[modelterms7:nl]{modelterms7::nl()}} term.
 }
 \keyword{internal}

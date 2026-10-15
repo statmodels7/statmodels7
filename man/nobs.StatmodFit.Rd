@@ -12,13 +12,21 @@
 \item{...}{Unused.}
 }
 \value{
-A single integer: the number of rows of the data the model was
-fitted to. \code{\link[=statmod]{statmod()}} drops no rows (a missing value in the response or
-in a variable of an equation is an error), so this is the number of
-observations that entered the likelihood.
+A single number, the sum of the weights: an integer where that sum
+is a whole number, and a double otherwise.
 }
 \description{
-The row count of the fitting data.
+The number of observations that entered the likelihood: the
+sum of the prior weights, which are frequency weights.
+}
+\details{
+A weight of two counts its row twice, so a fit with weights is
+counted as the fit of the data with every row repeated as often as its
+weight says. Without weights the result is the number of rows of the
+data, since \code{\link[=statmod]{statmod()}} drops no rows (a missing value in the response or
+in a variable of an equation is an error). \code{\link[=bic]{bic()}}, the cBIC of
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}'s \code{"nobs"} attribute and
+\code{\link[=df.residual.StatmodFit]{df.residual.StatmodFit()}} read the same number.
 }
 \examples{
 set.seed(1)

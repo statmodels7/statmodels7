@@ -29,14 +29,23 @@ statmod_marginal(
 \item{approx}{The approximation for the expected information.}
 
 \item{basis}{The integrated subspace, from \code{\link[=integrated_basis]{integrated_basis()}}.}
+
+\item{ctx}{An evaluation context from \code{\link[=outer_context]{outer_context()}} built at the same
+coefficients and hyperparameters, or \code{NULL} to assemble the information
+and the penalty afresh.}
 }
 \value{
 A list with \code{value}, \code{loglik}, \code{penalty},
 \code{logdet} and \code{q}, or \code{NULL} where the determinant does not
-exist.
+exist. Where the integrated subspace is empty, \code{value} is the profile
+log-likelihood minus the penalty, with \code{logdet} and \code{q} equal to zero.
 }
 \description{
 The Laplace approximation to the log marginal likelihood, evaluated at the
-penalized mode.
+penalized mode: the log-likelihood minus the penalty, plus
+\eqn{(q/2)\log 2\pi}, minus half the log determinant of the penalized
+information over the integrated subspace. A coordinate with a non-finite
+curvature is pinned to the identity (see \code{\link[=pin_boundary]{pin_boundary()}}), which lowers
+\eqn{q} by one. The determinant is read through \code{\link[=pd_logdet]{pd_logdet()}}.
 }
 \keyword{internal}

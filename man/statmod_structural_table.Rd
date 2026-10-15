@@ -9,23 +9,16 @@ statmod_structural_table(fit, level = 0.95)
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{level}{The interval's level, \code{0.95} by default.
-
-A quantity that depends on a coordinate past the edge of its chart (see
-\code{\link[=structural_edge_rows]{structural_edge_rows()}}) is reported without a standard error and an
-interval, for the reason a correlation at the boundary is: the chart's
-derivative tends to zero there, so the delta method reports a standard
-error that collapses exactly where the quantity stops being identified.}
+\item{level}{The interval's level, \code{0.95} by default.}
 }
 \value{
-A data frame with one row per quantity each structural term
-reports, carrying the estimate, its standard error and the interval's
-two ends, \code{held} (the quantity is a held parameter), \code{edge} (it depends
-on a coordinate past the edge of its chart),
-plus \code{component} and \code{position}: which of the term's own parameters the
-quantity belongs to, and where in the parameter vector it sits, both
-read off the Jacobian's support. \code{NULL} where the model carries no
-structural term.
+A data frame with one row per quantity that each structural term
+reports and the columns \code{parameter}, \code{term}, \code{name}, \code{estimate}, \code{se},
+\code{lower}, \code{upper}, \code{held} (the quantity is a held parameter), \code{edge}
+(it depends on a coordinate past the edge of its chart), \code{component} and
+\code{position} (which of the term's own parameters the quantity belongs to,
+and where in the parameter vector it sits, both read off the Jacobian's
+support). \code{NULL} where the model carries no structural term.
 }
 \description{
 The estimated parameters of every structural term, on their own scale,
@@ -33,24 +26,39 @@ with standard errors and intervals taken from the joint observed
 information.
 }
 \details{
-A structural term contributes no design block, so nothing in the
-coefficient tables can report it and the values were reachable only
-through \code{fit@structural}. The information for them exists:
-\code{\link[=statmod_full_information]{statmod_full_information()}} spans the coefficients \strong{and} the
-term's own parameters, and the tail block of its inverse is their
-variance on the unconstrained scale.
+A structural term contributes no design block, so the coefficient tables
+do not report it. \code{\link[=statmod_full_information]{statmod_full_information()}} spans the coefficients and
+the term's own parameters, and the tail block of its inverse (with the
+penalty Hessians added) is the variance of those parameters on the
+unconstrained scale. A covariance class split between the coefficients and
+the term's own parameters is placed by \code{joint_penalty_at()}, as in
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.
 
-The interval is built on that scale and mapped back through the link,
-which keeps a persistence inside \eqn{(-1, 1)} and a positive loading
-positive.
-
-The standard error on the parameter scale is the delta method,
-\eqn{|h'(\zeta)|\,\mathrm{se}(\zeta)}. It is reported for reading, and the
-interval is not built from it.
+The quantities reported are those of \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, which
+are not always the coordinates on which the term was estimated (a
+persistence of a score-driven term is an autoregressive coefficient, a
+function of the partial autocorrelations). The standard error of a quantity
+is the delta method over the joint variance of the term's parameters,
+\eqn{\sqrt{J V J^\top}}, with \eqn{J} the Jacobian that
+\code{term_readable()} returns (a persistence of a term with \eqn{q > 1} reads
+several coordinates). The interval is built on the scale that the term
+declares for the quantity (for a score-driven term, the log scale for a
+positive loading, the scale of the partial autocorrelation's link for the
+persistence when \eqn{q = 1}, and the identity scale for a persistence when
+\eqn{q > 1}): the standard error is carried to that scale by the derivative
+of its link and the end points are mapped back. The interval of a
+persistence is therefore confined to \eqn{(-1, 1)} only when
+\eqn{q = 1}.
 
 A level held because an intercept in the same equation carries it is not
-estimated, and is reported with a missing standard error. Zero would claim
-it had been estimated exactly.
+estimated, and its standard error is reported as missing, as is that of any
+quantity whose Jacobian row reads a held parameter.
+
+A quantity that depends on a coordinate past the edge of its chart (see
+\code{\link[=structural_edge_rows]{structural_edge_rows()}}) is reported without a standard error and an
+interval, for the reason a correlation at the boundary is: the chart's
+derivative tends to zero there, so the delta method reports a standard
+error that collapses exactly where the quantity stops being identified.
 }
 \seealso{
 \code{\link[=statmod_full_information]{statmod_full_information()}} for the joint matrix inverted,

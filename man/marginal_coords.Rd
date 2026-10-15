@@ -2,7 +2,7 @@
 % Please edit documentation in R/marginal.R
 \name{marginal_coords}
 \alias{marginal_coords}
-\title{The Coefficients a Marginal Criterion Estimates}
+\title{The Coefficients That a Marginal Criterion Estimates}
 \usage{
 marginal_coords(spec, design, method)
 }
@@ -17,37 +17,43 @@ marginal_coords(spec, design, method)
 A list with \code{where} (integer positions in the stacked vector),
 \code{param} and \code{name} (the equation and the coefficient name of each
 position), and \code{skipped}, a named character vector giving, for every
-parameter the default named and this function left out, the reason.
-Every field is empty where nothing is estimated this way.
+parameter that has coefficients, that the default named and that this
+function left out, the reason. Every field is empty where nothing is
+estimated this way.
 }
 \description{
 The positions, in the stacked coefficient vector, of the coordinates that
 \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} estimate by maximizing the criterion: in the equation
-of every parameter \code{\link[=marginal_params]{marginal_params()}} names, the coefficients no penalty
-shrinks.
+of every parameter that \code{\link[=marginal_params]{marginal_params()}} names, the coefficients that
+are not shrunk by a penalty.
 }
 \details{
 A coefficient qualifies when no penalty covers it, or when it lies in the
-null space of the quadratic penalty covering it and that null space is
+null space of the quadratic penalty that covers it and that null space is
 spanned by coordinates. The free columns of \code{\link[modelterms7:s]{modelterms7::s()}} are the
-second case: the Demmler-Reinsch penalty is \eqn{\mathrm{diag}(0, 1,
-\ldots, 1)}, so its null space is the linear column.
+second case: the null space of the Demmler-Reinsch penalty is spanned by
+the coordinates of the linear part.
 
-A coefficient a penalty with a kink covers (lasso, SCAD, MCP) is not
-one of them: it stays at the joint mode, and the criterion leaves it out
-of its determinant (\code{\link[=laplace_pinned]{laplace_pinned()}}). The unpenalized coefficients
-beside it are estimated on the criterion as anywhere else, which corrects
-a dispersion's intercept for the columns of the mean it is fitted with.
+A coefficient that a penalty with a kink covers (lasso, SCAD, MCP) does
+not qualify: it stays at the joint mode, and the criterion leaves it out
+of its determinant (\code{\link[=laplace_pinned]{laplace_pinned()}}). Beside a penalty with a kink the
+default names no parameter, so no coefficient is estimated on the
+criterion. A parameter that the caller names in \code{marginal} has its
+unpenalized coefficients estimated on the criterion, which corrects a
+dispersion's intercept for the columns of the mean that are fitted with
+it.
 
-Four configurations are not covered yet, and for each one a parameter
-the caller named is refused while a parameter the default named keeps the
-convention of the criterion without the argument:
+The following configurations are not covered yet. For each one, a
+parameter that the caller names in \code{marginal} signals an error, and a
+parameter that the default would name is left out and listed in
+\code{skipped}, which keeps the convention of the criterion without the
+argument:
 \itemize{
 \item a model carrying a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}},
 \code{\link[modelterms7:regime]{modelterms7::regime()}}), whose joint fit does not hold a coefficient;
 \item an equation carrying a block that moves with its coefficients
 (\code{\link[modelterms7:nl]{modelterms7::nl()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} and the other break-point
-terms);
+terms that are not held at fixed positions);
 \item a model carrying a block that is a working linearization rather
 than a Jacobian, which is the case of a sharp \code{\link[modelterms7:jump]{modelterms7::jump()}}
 and \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, in any equation: the determinant over its

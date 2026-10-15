@@ -10,25 +10,20 @@ mode_error_limit()
 A single number.
 }
 \description{
-The limit \code{\link[=criterion_resolution]{criterion_resolution()}} puts on \eqn{g'K^{-1}g/2}, the
-decrease the mode's own Newton correction predicts, before it refuses to
-report a resolution at all.
+The limit that \code{\link[=criterion_resolution]{criterion_resolution()}} places on \eqn{g'K^{-1}g/2}, the
+decrease that the mode's own Newton correction predicts, above which no
+resolution is reported.
 }
 \details{
-The resolution is read by displacing the coefficients to where the inner
-score says the mode is and asking how far the criterion moved. That is a
+The resolution is read by displacing the coefficients to the mode implied
+by the inner score and measuring how far the criterion moves. That is a
 resolution while the displacement is a correction and something else
 entirely once it is not: an inner fit that stopped far from a mode produces
 a large displacement, a large movement, and a number that
 \code{\link[optimizers7:crit_abs_obj]{optimizers7::crit_abs_obj()}} would read as license to stop.
 
-The quantity tested is in log-likelihood units, not in the coefficients',
-so one limit serves every shape. Measured over whole fits it
-reaches 2.8e-08 on a smooth and 1.4e-10 on a random intercept, against 20.9
-to 22.9 on a hierarchical break-point model whose inner fit reports
-convergence at a score of 247.8. Nine orders separate them, so the value
-below has five orders of room on either side and is not what decides
-anything.
+The quantity tested is in log-likelihood units and not in the units of the
+coefficients, so one limit serves every model.
 }
 \seealso{
 \code{\link[=criterion_resolution]{criterion_resolution()}}

@@ -24,43 +24,72 @@ NULL
 # crossprod per distribution parameter, so nothing of order p^3 beyond the
 # factorization of K that the criterion has already paid for.
 
-#' Can the Exact Gradient Be Computed Here?
+#' Can the Exact Derivatives of the Criterion Be Computed Here?
 #'
 #' @description
-#' `TRUE` when every hyperparameter under estimation belongs to a penalty
-#' whose second derivative in the coefficients is linear in the
-#' hyperparameters and free of the coefficients, and the criterion uses the
-#' observed information.
+#' `TRUE` when the exact gradient of the marginal criterion in the
+#' hyperparameters under estimation (`order = 1`), or the exact gradient and
+#' Hessian (`order = 2`), can be assembled for the model.
 #'
 #' @details
-#' **Why the observed information.** \eqn{K} enters the criterion through
-#' its determinant, so the gradient needs \eqn{\partial K/\partial\beta}. With
-#' the observed information that is the third derivative of the log-likelihood
-#' in the link-scale predictors, which every family of \pkg{distributions7}
-#' carries in closed form. With the expected information it would be the
-#' derivative in \eqn{\beta} of \eqn{-E[\ell'']}, which is not
-#' \eqn{-E[\ell''']} and is not one of that package's generics. So
-#' `reml(hessian = "observed")` is what the exact route asks for, and
-#' `"expected"` keeps the derivative-free search.
+#' The family must carry the derivatives that the order needs
+#' ([order_available()]): the third derivative of the log-likelihood for the
+#' gradient and the fourth for the Hessian.
 #'
-#' **Why the penalty is asked.** \eqn{\partial S/\partial\theta} and its
-#' second derivative are generics of \pkg{penalties7}
-#' ([penalties7::penalty_dhessian()],
-#' [penalties7::penalty_d2hessian()],
-#' [penalties7::penalty_dcross()]). A penalty that answers them is
-#' estimable by a marginal criterion whatever its shape: the quadratic, the
-#' additive, the structured and the separable branches all do, so a ridge, a
-#' random effect and a heavy-tailed prior are covered as well as a spline. One
-#' that does not, a SCAD or an MCP or anything with a kink, rejects, and the
-#' search stays derivative-free. Nothing here tests a penalty's behavior to
-#' find out what it is; it is asked.
+#' **The information.** \eqn{K} enters the criterion through its determinant,
+#' so the gradient needs \eqn{\partial K/\partial\beta}. With the observed
+#' information that is the third derivative of the log-likelihood in the
+#' link-scale predictors. With the expected information it is the derivative in
+#' the predictors of \eqn{-E[\ell'']}, which is not \eqn{-E[\ell''']}. That
+#' derivative is supplied by [distributions7::distrib_dexpected_hessian()], and
+#' the expected route is admitted when the family returns it
+#' ([expected_deriv_ok()]). At order 2 the expected route is admitted only for
+#' [reml()] and [ml()], for a model without a block that moves with its
+#' coefficients and without a structural term, and for a family that returns
+#' [distributions7::distrib_d2expected_hessian()] ([expected_deriv2_ok()]).
+#' The expected route is not admitted at either order where a penalty covers
+#' the parameters of a structural term, because the criterion is then assembled
+#' from the observed joint curvature.
+#'
+#' **The structural terms.** A term of the likelihood shape (`regime()` and the
+#' marginal break-point term) has no exact derivatives at either order. For a
+#' term of the filter shape, order 2 requires a penalty over the term's own
+#' parameters and a term that implements [modelterms7::term_fourth()]. Where a
+#' penalty covers the term's parameters, the term must also implement
+#' [modelterms7::term_third()].
+#'
+#' **The moving blocks.** A block that moves with its coefficients (`nl()`,
+#' `seg()`, `jump()` and `jseg()`) is admitted at order 1 on either route and
+#' at order 2 on the observed route. Its contribution is read from the term
+#' ([u_refresh()], [mode_curvature()]) and is never differenced.
+#'
+#' **The penalties.** \eqn{\partial S/\partial\theta} and its second
+#' derivative are given by the generics of \pkg{penalties7}
+#' ([penalties7::penalty_dhessian()], [penalties7::penalty_d2hessian()] and
+#' [penalties7::penalty_dcross()]). The function calls the derivative methods
+#' of a penalty at probe values and reads an error as a penalty that does not
+#' supply them, so that a penalty is admitted according to what its methods
+#' return and not according to its class. The check has two parts. Every
+#' penalized unit of the model is examined, because the movement of the mode
+#' reaches the determinant through each penalty whose Hessian moves with the
+#' coefficients (a Student t prior, for instance). A penalty that
+#' [penalties7::beta_quadratic()] calls quadratic passes, and so does a penalty
+#' with a kink (a lasso, a SCAD or an MCP). Any other penalty must supply
+#' [penalties7::penalty_dhessian_beta()], and a mixed covariance class of this
+#' kind is not admitted. Beside a structural term such a penalty is not
+#' admitted at order 2. The second part examines, with [penalty_answers()], the
+#' penalty of every term that owns a hyperparameter under estimation, and for a
+#' hyperparameter shared by several terms the penalty of each of them. A
+#' penalty with a kink does not remove the exact derivatives of the other
+#' hyperparameters, because its own hyperparameters are left out of the outer
+#' index.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param idx The outer index, from [outer_hyper_index()].
 #' @param method An [OuterMethod()].
 #' @param order `1` for the gradient, `2` for the Hessian as well.
-#' @param gamma `TRUE` where the outer vector also carries coefficients the
+#' @param gamma `TRUE` where the outer vector also carries coefficients that the
 #'   criterion estimates ([marginal_coords()]), so an empty index is not a
 #'   reason to answer `FALSE`.
 #'
@@ -280,11 +309,11 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
 #' The term a key names, searched over every distribution parameter.
 #'
 #' @details
-#' A unit records the parameter its penalty is filed under, which for a
-#' covariance class is the parameter the class is keyed by and not necessarily
-#' the one carrying the structural term the class reaches into. A caller that
-#' has a term's key and wants the term asks here rather than assuming the two
-#' agree.
+#' A unit records the parameter under which its penalty is filed. For a
+#' covariance class that is the parameter by which the class is keyed, which is
+#' not necessarily the parameter carrying the structural term that the class
+#' reaches into. A caller that has a term's key and needs the term should use
+#' this function instead of assuming that the two agree.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param key A term's key, its call as written.
@@ -304,18 +333,18 @@ find_term <- function(spec, key) {
 #' Does the Family Supply the Expected Information's Derivative?
 #'
 #' @description
-#' Whether [distributions7::distrib_dexpected_hessian()] answers for
-#' this family, asked at a probe and never inferred from its class.
+#' Whether [distributions7::distrib_dexpected_hessian()] returns a value for
+#' this family. The generic is called once, at a probe value, and the result is
+#' not inferred from the family's class.
 #'
 #' @details
-#' The default route in \pkg{distributions7} is one central difference of the
-#' family's own expected information, which is a single stencil on an analytic
-#' quantity wherever that information is a written-out formula and refuses
-#' where it is itself an integral. Six of forty univariate families refuse, and
-#' the reason is cost, never accuracy: measured at 100 observations they
-#' cost 1880 to 147300 ms against a median of 0.183 ms for the others, so 2p
-#' of those calls per criterion evaluation is not a slower route but an
-#' unusable one.
+#' The default method in \pkg{distributions7} is one central difference of the
+#' family's expected information. It applies where that information is a
+#' written-out formula and signals an error where the information is itself
+#' approximated, because differencing an approximation would be a difference of
+#' a difference. The function returns `FALSE` for a family on which the generic
+#' signals an error, and also where a random parameter vector or a response
+#' cannot be drawn for the probe.
 #'
 #' @param distrib A \pkg{distributions7} distribution.
 #'
@@ -342,17 +371,15 @@ expected_deriv_ok <- function(distrib) {
 #' Does the Family Supply the Expected Information's Second Derivative?
 #'
 #' @description
-#' Whether [distributions7::distrib_d2expected_hessian()] answers for this
-#' family, asked at a probe.
+#' Whether [distributions7::distrib_d2expected_hessian()] returns a value for
+#' this family. The generic is called once, at a probe value.
 #'
 #' @details
-#' There is no numerical default in \pkg{distributions7} -- a difference of the
-#' first derivative, itself a difference for most families, would be the nested
-#' differencing that package forbids -- so the families that answer are the
-#' ones that wrote the derivative out: `gaussian1_distrib()`,
-#' `poisson_distrib()`, `gamma1_distrib()`, `negbin2_distrib()` and
-#' `beta1_distrib()`. Every other family keeps the expected route's order 2 on
-#' [statmod_hess_stencil()].
+#' The default method in \pkg{distributions7} signals an error, because
+#' differencing the first derivative of the expected information would be a
+#' difference of a difference. The function therefore returns `TRUE` only for a
+#' family that provides the derivative itself. For any other family the order-2
+#' Hessian of the expected route is computed by [statmod_hess_stencil()].
 #'
 #' @param distrib A \pkg{distributions7} distribution.
 #'
@@ -384,10 +411,11 @@ expected_deriv2_ok <- function(distrib) {
 #' class names, so a term written later is covered without an edit here.
 #'
 #' @details
-#' A structural term that has not written it inherits a method that signals an
-#' error, and an additive term inherits one that returns zero, which is the
-#' right answer for a predictor that is a block of columns. The question is
-#' therefore whether the owning class is the refusing base.
+#' A structural term that has not implemented the method inherits one that
+#' signals an error, and an additive term inherits one that returns zero, which
+#' is correct for a predictor that is a block of columns. The function
+#' therefore returns `FALSE` where the class that owns the method is the base
+#' class `structural_term`.
 #'
 #' @param term A built term.
 #'
@@ -416,12 +444,12 @@ answers_term_third <- function(term) {
 #'
 #' @details
 #' The criterion's own second derivative reads a fourth order through the
-#' recursion, so a term that has written the third and not the fourth
-#' supplies an exact gradient and no exact Hessian. That is the state
-#' `regime()` is in: it implements neither, and a term implementing only
-#' the third would be answered here with `FALSE` and left to
-#' [statmod_hess_stencil()], which is the same fallback its search
-#' already has.
+#' recursion, so a term that implements the third derivative and not the
+#' fourth supplies an exact gradient and no exact Hessian. For such a term the
+#' function returns `FALSE` and the Hessian is computed by
+#' [statmod_hess_stencil()]. A term of the likelihood shape (`regime()` and the
+#' marginal break-point term) implements neither derivative, and
+#' [outer_gradient_ok()] returns `FALSE` for it at both orders.
 #'
 #' @param term A built term.
 #'
@@ -448,11 +476,11 @@ answers_term_fourth <- function(term) {
 #' carries none.
 #'
 #' @details
-#' At most one structural term is admitted per formula, so a caller wanting
-#' to ask that term a question -- does it answer [term_third()], does
-#' it answer [term_fourth()] -- has one to ask. It is looked up through
-#' the design's structural attribute rather than by walking the terms,
-#' which is where the fit records what it built.
+#' At most one structural term is admitted per formula, so a caller that tests
+#' whether the term implements [modelterms7::term_third()] or
+#' [modelterms7::term_fourth()] needs one term. The term is found through the
+#' design's structural attribute, where the fit records what it built, and not
+#' by walking the terms.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -472,14 +500,18 @@ structural_term_of <- function(spec, design) {
 #' Does a Penalty Supply What a Marginal Criterion Needs?
 #'
 #' @description
-#' Asks the penalty for the derivatives, at a probe value of its
-#' hyperparameters, and reports whether it answered.
+#' Evaluates the derivatives of a penalty at a probe value of its
+#' hyperparameters and reports whether they could be computed.
 #'
 #' @details
-#' The order-2 route additionally requires the penalty to be quadratic in the
-#' coefficients ([penalties7::beta_quadratic()]), since otherwise the
-#' third and fourth derivatives of the penalty in \eqn{\beta} enter the
-#' criterion's own second derivative and \pkg{penalties7} does not carry them.
+#' The gradient requires [penalties7::penalty_dhessian()]. A penalty that is
+#' not quadratic in the coefficients ([penalties7::beta_quadratic()]) must also
+#' supply [penalties7::penalty_dhessian_beta()], because its Hessian moves with
+#' the mode. The order-2 route additionally requires
+#' [penalties7::penalty_d2hessian()] and [penalties7::penalty_dcross()] and,
+#' for a penalty that is not quadratic, [penalties7::penalty_d2hessian_beta()]
+#' and [penalties7::penalty_dhessian_beta_theta()]. A penalty without
+#' hyperparameters returns `FALSE`.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param order `1` or `2`.
@@ -525,12 +557,27 @@ penalty_answers <- function(pen, order = 1L) {
 #' the hyperparameters under estimation.
 #'
 #' @details
-#' The three pieces are the envelope term \eqn{-\partial\rho/\partial\theta},
-#' the explicit derivative of the determinant \eqn{\mathrm{tr}(M\,\partial
-#' S/\partial\theta)}, and the implicit one \eqn{u'v}, where
-#' \eqn{v = -(H+S)^{-1}\partial^2\rho/\partial\beta\partial\theta} is how the
-#' mode moves and \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)} is how
-#' the determinant reads that movement.
+#' The gradient is the sum of the envelope term
+#' \eqn{-\partial\rho/\partial\theta}, the explicit derivative of the
+#' determinant, \eqn{-\tfrac12\mathrm{tr}(M\,\partial S/\partial\theta)}, the
+#' implicit one, \eqn{-\tfrac12 u'v}, and, where a penalty's Hessian depends on
+#' the coefficients, \eqn{-\tfrac12\mathrm{tr}(M\,\partial S/\partial\beta[v])}.
+#' Here \eqn{v = -J^{-1}\,\partial^2\rho/\partial\beta\partial\theta} is how the
+#' mode moves, \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)} is how
+#' the determinant reads that movement, and \eqn{M} is \eqn{K^{-1}} under
+#' [reml()] and the inverse of \eqn{K} on the integrated subspace under
+#' [ml()].
+#'
+#' The matrix \eqn{J} is the curvature of the penalized likelihood at the mode,
+#' the observed information plus the penalty's Hessian, with the second
+#' derivative of a block that moves with its coefficients added
+#' ([mode_curvature()]). It differs from \eqn{K} when the criterion reads the
+#' expected information. A coefficient that the criterion estimates, a
+#' direction that the model does not identify and a coordinate that a kink of a
+#' break-point term holds do not move with \eqn{\theta}, and the solve is made
+#' on the directions that they leave free ([mode_solver()]). Where a penalty
+#' covers the parameters of a structural term, the function delegates to
+#' [statmod_structural_grad()].
 #'
 #' \eqn{u} is assembled without forming any third-derivative array. Writing
 #' \eqn{G_{ab,i} = x_{ia}'M_{[a][b]}x_{ib}} for the per-observation diagonal of
@@ -540,6 +587,11 @@ penalty_answers <- function(pen, order = 1L) {
 #' \eqn{\ell'''_{abk}} is looked up by a name built from the parameter names in
 #' the family's own order, never parsed out of one.
 #'
+#' For each coefficient in `gam`, which the criterion estimates, the entry is
+#' the score of the log-likelihood in that coefficient minus half of the
+#' movement of the determinant along the direction in which the mode moves
+#' when the coefficient changes by one unit.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients at the penalized mode.
@@ -548,10 +600,10 @@ penalty_answers <- function(pen, order = 1L) {
 #' @param idx The outer index.
 #' @param basis The integrated subspace, or `NULL`.
 #' @param free Whether to carry the result onto the free scale. The Hessian
-#'   asks for the parameter scale, having its own second-order chain rule to
-#'   apply.
+#'   assembly calls this function with `free = FALSE` and applies its own
+#'   second-order chain rule.
 #' @param ctx The evaluation context, or `NULL`.
-#' @param gam The coefficients the criterion estimates, from
+#' @param gam The coefficients that the criterion estimates, from
 #'   [marginal_coords()], or `NULL`.
 #'
 #' @return A numeric vector, one entry per row of `idx` followed by one per
@@ -614,27 +666,13 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # refreshable block is not the Gauss-Newton matrix the design gives
   Dm <- mode_curvature(spec, design, coef, params, npar, offs, total)
   # a coordinate pinned in K other than at a boundary (a coefficient the
-  # criterion estimates, one the model does not identify) stays pinned when a
-  # moving block's own curvature is added to it
-  pinned <- setdiff(attr(mode_pen$K, "held_at"), attr(mode_pen$K, "boundary_at"))
-  if (length(pinned)) {
-    Dm[pinned, ] <- 0
-    Dm[, pinned] <- 0
-  }
-  msolve <- NULL
-  if (any(Dm != 0)) {
-    Km <- as_dense(mode_pen$K) + Dm
-    fac <- tryCatch(chol(Km), error = function(e) NULL)
-    # the TRUE Hessian may lose definiteness where Gauss-Newton cannot, and a
-    # mode's movement is worth having approximately rather than not at all
-    if (!is.null(fac)) {
-      msolve <- function(z) backsolve(fac, forwardsolve(t(fac), z))
-    }
-  }
-  if (is.null(msolve)) {
-    Kinv <- mode_pen$inv
-    msolve <- function(z) as.numeric(Kinv %*% z)
-  }
+  # criterion estimates, one the model does not identify), and one that a
+  # break-point term's kink holds at the mode, stays where it is when the
+  # mode moves; see mode_solver()
+  ms <- mode_solver(spec, design, coef, mode_pen$K, mode_pen$inv, Dm, npar,
+                    offs)
+  Dm <- ms$Dm
+  msolve <- ms$solve
   M <- ctx_trace_matrix(ctx, pen, basis, expected)
   if (is.null(M)) return(NULL)
   # ⚠️ THE CRITERION PINS A SATURATED COORDINATE, SO ITS GRADIENT MUST TOO.
@@ -767,8 +805,9 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   sc <- statmod_score_at(spec, coef, design, index = gam$where)
   gout <- numeric(length(gam$where))
   # every coordinate the mode's curvature pins other than a boundary: the
-  # estimated coefficients and the ones the model does not identify
-  hold <- setdiff(attr(mode_pen$K, "held_at"), attr(mode_pen$K, "boundary_at"))
+  # estimated coefficients, the ones the model does not identify and the ones
+  # a break-point's kink holds
+  hold <- ms$hold
   for (i in seq_along(gam$where)) {
     w <- gam$where[i]
     col <- Hm[, w]
@@ -787,7 +826,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
 #' How the Mode Moves Where an Unpenalized Filter Moves With It
 #'
 #' @description
-#' The pieces [statmod_marginal_grad()] reads on the joint vector of
+#' The pieces that [statmod_marginal_grad()] reads on the joint vector of
 #' coefficients and a filter's own parameters where no penalty covers those
 #' parameters: a solve with the joint penalized curvature, which is how the
 #' mode moves, and the derivative of every equation's predictor over that
@@ -887,13 +926,10 @@ filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3) {
 #' A penalty that [penalties7::beta_quadratic()] calls quadratic is skipped,
 #' which is every ridge, smooth and Gaussian random effect, so a model carrying
 #' only those assembles nothing: the matrix is `NULL` and the trace exactly
-#' `0`, which leaves its gradient identical to the bit. A kinked penalty is
-#' skipped as well, and a penalty over a structural term's own parameters
-#' belongs to the joint route.
-#'
-#' Measured on a Student t prior over 30 groups, the gradient without this
-#' piece is 4.3e-04 out and flat in the step; with it, 1.5e-06 against a
-#' central difference of the criterion with the mode refitted.
+#' `0`, which leaves the gradient unchanged. A kinked penalty and a mixed
+#' covariance class are skipped as well, and a penalty over a structural term's
+#' own parameters is read on the joint vector by
+#' [statmod_structural_grad()].
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -901,7 +937,7 @@ filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3) {
 #' @param hyper The hyperparameters.
 #' @param v The direction, over the stacked coefficients.
 #' @param total The stacked width.
-#' @param M The matrix the trace is taken against, `total` square.
+#' @param M The matrix against which the trace is taken, `total` square.
 #'
 #' @return `statmod_penalty_dbeta()` a `total` square matrix, or `NULL` where
 #'   no penalty's Hessian moves; `penalty_dbeta_trace()` a single number;
@@ -966,17 +1002,16 @@ penalty_dbeta_blocks <- function(spec, design, coef, hyper, v) {
 #'   + \frac{\partial^2 S}{\partial\beta^2}[b_l, b_m]
 #'   + \frac{\partial S}{\partial\beta}[b_{ml}]}
 #' beside \eqn{S_{ml}}, which [outer_pieces()] already carries. The first two
-#' are one quantity by the symmetry of mixed partials, read from
-#' [penalties7::penalty_dhessian_beta_theta()] for the hyperparameters a
-#' penalty owns; the third is [penalties7::penalty_d2hessian_beta()] and the
+#' are the mixed derivative \eqn{\partial^2 S/\partial\beta\,\partial\theta}
+#' taken along two directions, \eqn{b_l} for the hyperparameters of row \eqn{m}
+#' and \eqn{b_m} for those of row \eqn{l}; each is read from
+#' [penalties7::penalty_dhessian_beta_theta()] for the hyperparameters that the
+#' penalty owns. The third is [penalties7::penalty_d2hessian_beta()] and the
 #' fourth [penalties7::penalty_dhessian_beta()]. A penalty that
-#' [penalties7::beta_quadratic()] calls quadratic contributes nothing, so a
-#' model carrying only those gets `NULL` and its Hessian is untouched.
-#'
-#' Measured on a Student t prior over 30 groups before it was written, the
-#' assembly without these pieces is 122 per cent out and flat in the step, and
-#' with them it converges on a central difference of the exact gradient as
-#' \eqn{h^2} down to the reference's own floor.
+#' [penalties7::beta_quadratic()] calls quadratic contributes nothing, and
+#' neither do a kinked penalty, a mixed covariance class and a penalty over a
+#' structural term's own parameters, so a model carrying only those gets `NULL`
+#' and its Hessian is untouched.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1037,11 +1072,14 @@ statmod_penalty_second <- function(spec, design, coef, hyper, idx, m, l, bm,
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #' @param params The distribution's parameter names.
 #' @param npar,offs,total The block sizes, their offsets and the total.
-#' @param d3 The array \eqn{\partial K/\partial\eta} is read from, or `NULL`
-#'   for the family's third derivative at the fitted predictors.
+#' @param d3 The array from which \eqn{\partial K/\partial\eta} is read, with
+#'   a negative sign: the third derivatives of the log-likelihood on the
+#'   observed route, the derivatives in the predictors of \eqn{E[\ell'']} on
+#'   the expected one. `NULL` for the family's third derivative at the fitted
+#'   predictors.
 #' @param G The per-observation diagonals of \eqn{M}, or `NULL`.
 #' @param key The builder of `d3`'s component names, or `NULL`.
 #' @param rows `NULL` for the contraction against each equation's design, or
@@ -1117,18 +1155,19 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #' \eqn{A_a[i,j] = w_i\sum_b \ell_{ab,i}R_{ab}[i,j]},
 #' \deqn{\Delta u_c = -2\sum_{i,j}A_a[i,j]\,\partial X_a[i,j]/\partial\beta_c.}
 #'
-#' **The derivative is asked of the term**, through
-#' [modelterms7::term_block_contract()], and never differenced here.
-#' Two reasons, both measured. A term carries its own chain rule, the links
-#' on its parameters and a subformula's design; and a break-point column is a
-#' step function in its break-point, so a difference quotient of it diverges as
-#' the step shrinks and never converges. A term that does not implement the
-#' contraction inherits zeros, which is exactly right for a fixed design.
+#' The derivative is read from the term, through
+#' [modelterms7::term_block_contract()], and is never differenced. A term
+#' carries its own chain rule, the links on its parameters and a subformula's
+#' design. A break-point column is a step function of its break-point, so a
+#' difference quotient of it diverges as the step shrinks. A term that does not
+#' implement the contraction inherits zeros, which is correct for a fixed
+#' design. A sharp `jump()` or `jseg()` returns zeros as well, its block being a
+#' working linearization with a frozen weight.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design, already refreshed at `coef`.
 #' @param coef The coefficients at the penalized mode.
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #' @param params,npar,offs,total The block bookkeeping.
 #' @param expected Whether the criterion carries the expected information.
 #' @param approx The approximation for the expected information.
@@ -1180,14 +1219,14 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #'
 #' @description
 #' What separates the true Hessian of the penalized log-likelihood from the
-#' Gauss-Newton matrix [statmod_information_at()] returns, where a
+#' Gauss-Newton matrix that [statmod_information_at()] returns, where a
 #' term's block moves with its coefficients.
 #'
 #' @details
 #' \eqn{v = \partial\hat\beta/\partial\theta} solves
 #' \eqn{(\partial^2\rho/\partial\beta^2 - \partial^2\ell/\partial\beta^2)v =
-#' \partial^2\rho/\partial\beta\partial\theta}, and
-#' \eqn{\partial^2\ell/\partial\beta^2} is the TRUE second derivative:
+#' -\partial^2\rho/\partial\beta\partial\theta}, and
+#' \eqn{\partial^2\ell/\partial\beta^2} is the true second derivative:
 #' \deqn{\sum_i\sum_{a,b}\ell_{ab}\frac{\partial\eta_a}{\partial\beta}
 #'   \frac{\partial\eta_b}{\partial\beta}
 #'   + \sum_i\sum_a \ell_a\frac{\partial^2\eta_a}{\partial\beta^2}.}
@@ -1199,24 +1238,22 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #' [modelterms7::term_block_contract()] per column, weighted by the
 #' score where [u_refresh()] weights by \eqn{M}.
 #'
-#' Note that it is the **mode's** matrix and not the criterion's. The
-#' determinant is of
-#' whatever [statmod_information_at()] assembles, and its derivative
-#' reads that one; how the mode moves is a fact about the penalized likelihood
-#' and reads this one. Confusing the two is the defect this file already
-#' records for the expected information, in a second place.
-#'
-#' Measured on `nl(a ~ 0 + ridge(~grp))` against a finite difference of
-#' the criterion with the mode refitted: the gradient goes from 1.5e-04 to
-#' 8.8e-09 at 320 observations and from 1.6e-05 to 1.6e-09 at 960, on the
-#' observed route and the expected one alike.
+#' This is the matrix by which the mode moves, and it differs from the
+#' criterion's matrix. The determinant is of the matrix that
+#' [statmod_information_at()] assembles, and the derivative of the determinant
+#' is read from that matrix; how the mode moves depends on the penalized
+#' likelihood and is read from this one. The two coincide for the observed
+#' information when no block moves with its coefficients. With the expected
+#' information a single matrix for both would give a systematic error in the
+#' gradient, and the two are kept apart.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design, already refreshed at `coef`.
 #' @param coef The coefficients at the penalized mode.
 #' @param params,npar,offs,total The block bookkeeping.
 #'
-#' @return A square matrix, zero everywhere no refreshable term reaches.
+#' @return A symmetric matrix over the stacked coefficients, with nonzero
+#'   entries only on the blocks of refreshable terms.
 #'
 #' @seealso [u_refresh()],
 #'   [modelterms7::term_block_contract()]
@@ -1264,9 +1301,9 @@ mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
 #' which is keyed by name, never by position.
 #'
 #' @details
-#' The name is built by putting the three parameter names in the family's own
-#' order and joining them, the direction \pkg{distributions7} sanctions, and
-#' then checked against the enumeration, never trusted.
+#' The name is built by putting the three parameter names in the family's order
+#' and joining them with an underscore, and is then checked against the names
+#' that the derivative returned.
 #'
 #' @param params The parameter names, in the family's order.
 #' @param a,b,k Indices into `params`.
@@ -1288,12 +1325,14 @@ d3_key <- function(params, a, b, k, keys) {
 #'
 #' @description
 #' \eqn{V_{a,t} = \partial\eta_{a,t}/\partial u} over the coefficients of
-#' every equation followed by a structural term's own parameters: the
-#' equation's design placed in its own columns, and for the equation carrying
-#' a filter the forward Jacobian of the recursion, which is dense.
+#' every equation followed by a structural term's own parameters. The function
+#' returns each equation's static design placed in its own columns, with zeros
+#' in the columns of the structural term's parameters. The callers replace the
+#' matrix of the equation that carries the filter by the forward Jacobian of
+#' the recursion, which is dense.
 #'
 #' @details
-#' It exists so that the contraction [u_vector()] performs is
+#' It exists so that the contraction that [u_vector()] carries out is
 #' written once. The formula there does not change where a filter is present;
 #' only its operand does, \eqn{X} becoming \eqn{[X_p \mid D]}. Everything
 #' downstream, the third derivative against the diagonal of \eqn{M} and the
@@ -1306,9 +1345,11 @@ d3_key <- function(params, a, b, k, keys) {
 #' @param design The design.
 #' @param coef The coefficients.
 #'
-#' @return A list with `V` (one matrix per distribution parameter),
-#'   `ap` (which equation carries the filter), `keep` (the columns
-#'   that survive a held level), `ev`, `f` and the sizes.
+#' @return `NULL` where the model has no filter. Otherwise a list with `V`
+#'   (one matrix per distribution parameter), `ap` (which equation carries the
+#'   filter), `nb`, `np` and `mf` (the numbers of coefficients, of the term's
+#'   parameters and the joint width), `keep` (the columns that survive a held
+#'   level), `zn` (the term's parameter names), `ev`, `f`, `params` and `n`.
 #'
 #' @seealso [u_vector()], [statmod_full_information()]
 #'
@@ -1347,9 +1388,9 @@ joint_design_rows <- function(spec, design, coef) {
 #' The Exact Gradient Where a Penalty Covers a Filter's Own Parameters
 #'
 #' @description
-#' [statmod_marginal_grad()] over the joint vector of coefficients
-#' and a structural term's parameters, over which the determinant spans
-#' there.
+#' The exact gradient of the marginal criterion where a penalty covers a
+#' structural term's own parameters, so that the determinant spans the joint
+#' vector of the coefficients and those parameters.
 #'
 #' @details
 #' The criterion is the same and so are its three pieces; what changes is that
@@ -1521,9 +1562,15 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param jd The joint rows, from [joint_design_rows()].
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #'
-#' @return A list of the shared quantities.
+#' @return A list with `u`, `V`, `Vk`, `VM`, `G`, `H`, `D3`, `D4`, `gl`,
+#'   `s_at`, `sd_at`, `cd_at`, `seed`, `blocks`, `blocks_data` and `w`: the
+#'   contraction \eqn{u}, the rows of the joint predictor derivative with the
+#'   filter's Jacobian in place, their products with \eqn{M}, the
+#'   per-observation diagonals of \eqn{M}, the family's derivatives, the score
+#'   and curvature that drive the recursion, the seed of the recursion, the
+#'   `blocks` callback with its data, and the observation weights.
 #'
 #' @keywords internal
 structural_grad_parts <- function(spec, design, coef, jd, M) {
@@ -1618,18 +1665,19 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
 }
 
 
-#' The Two Pieces of the Chain Term That Read the Direction
+#' The Chain Term of the Joint Gradient Along a Direction
 #'
 #' @description
 #' The contributions to \eqn{\mathrm{tr}(M\,\partial K/\partial u[v])} that
-#' come from the recursion, never from the design: the derivative of the
-#' filter's own Jacobian, and the derivative of the term the level contributes
-#' to the information.
+#' come from the recursion and not from the design: the derivative of the
+#' term's curvature along \eqn{v}, the curvature re-weighted by the derivative
+#' of the score along \eqn{v}, and the movement of the filter's Jacobian, which
+#' enters through every cross derivative of the filter's equation.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param jd The joint rows.
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #' @param st The shared quantities, from [structural_grad_parts()].
 #' @param v The direction, over the estimated coordinates.
 #'
@@ -1687,13 +1735,14 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' The Model's Derivative Pieces for a Filter's Recursion
 #'
 #' @description
-#' Builds the `blocks` callback [modelterms7::term_curvature()]
-#' and [modelterms7::term_third()] take, at a direction or without
-#' one.
+#' Builds the `blocks` callback that [modelterms7::term_curvature()],
+#' [modelterms7::term_third()] and [modelterms7::term_fourth()] take, at a
+#' direction, at two directions or without one.
 #'
 #' @details
-#' The pieces are built on the active set the term asks for, so a panel's
-#' outer products are of the same size whatever the number of groups.
+#' The pieces are built on the active set that the term passes to the callback,
+#' so a panel's outer products have the same size whatever the number of
+#' groups.
 #' `dcurv` serves twice, as the derivative of the curvature along the
 #' direction and as the factor multiplying the movement of \eqn{V_p}, and
 #' `N` is where the family's fourth derivative enters: each order of
@@ -1849,8 +1898,8 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' The Same Pieces as Data for the Compiled Recursion
 #'
 #' @description
-#' The quantities the callback of `.structural_blocks()` reads, laid out
-#' as matrices so `modelterms7`'s compiled second-order route can read
+#' The quantities that the callback of `.structural_blocks()` reads, laid out
+#' as matrices so that the compiled routes of `modelterms7` can read
 #' them without calling back into R: the mixed second derivatives one column
 #' per distribution parameter (the filter's own column zero, the loop skips
 #' it), the third derivatives one column per parameter pair with pair
@@ -1913,7 +1962,7 @@ structural_blocks_data <- function(params, ap, Vs, H, D3, n, D4 = NULL,
 #' The Subspace a Marginal Criterion Integrates Over, Jointly
 #'
 #' @description
-#' The basis [ml()] projects the joint curvature onto: the
+#' The basis onto which [ml()] projects the joint curvature: the
 #' coefficients' own range basis, with one column per penalized parameter of
 #' the structural term appended.
 #'
@@ -1929,7 +1978,7 @@ structural_blocks_data <- function(params, ap, Vs, H, D3, n, D4 = NULL,
 #' @param nb The number of coefficients.
 #' @param basis The coefficients' basis.
 #'
-#' @return A matrix.
+#' @return A matrix with `nb` plus `length(free)` rows.
 #'
 #' @keywords internal
 structural_joint_basis <- function(spec, design, key, free, nb, basis) {
@@ -1954,21 +2003,26 @@ structural_joint_basis <- function(spec, design, key, free, nb, basis) {
 #' matrix of the design's own form,
 #' \deqn{\mathrm{tr}(M\,X'WX) = \sum_i w_i\,(XMX')_{ii},}
 #' so a contraction of a third or fourth derivative never has to be assembled
-#' as a \eqn{p\times p} matrix in order to be traced against \eqn{M}: measured
-#' at 8000 observations and 69 coefficients, forming it and taking the trace
-#' costs 25.5 ms where the weighted sum costs 0.031 ms, and at 20000
-#' observations and 503 coefficients 3480 ms against 0.066 ms.
+#' as a \eqn{p\times p} matrix in order to be traced against \eqn{M}.
 #'
 #' It is computed once per evaluation point and read by the gradient's
 #' contraction and by every pair of the Hessian.
 #'
+#' Where both blocks are sparse, the product of their densities is below
+#' \eqn{10^{-3}} and the number of pairs is below \eqn{2 \times 10^{7}}, the
+#' diagonal is computed by [leverage_pairs()] from the nonzeros of each row.
+#' The pair count bounds the work in absolute terms, which the density alone
+#' does not. Otherwise the diagonal is read off the dense product that has the
+#' fewer columns.
+#'
 #' @param design The design.
-#' @param M The matrix the traces are taken against.
+#' @param M The matrix against which the traces are taken.
 #' @param params The distribution's parameter names.
 #' @param npar,offs The block sizes and their offsets.
 #' @param threads How many threads the sparse route's kernel may use.
 #'
-#' @return A list of lists, `G[[a]][[b]]` a vector as long as the sample.
+#' @return A list of lists, `G[[a]][[b]]` a vector as long as the sample, or
+#'   `NULL` where equation `a` or equation `b` has no coefficients.
 #'
 #' @seealso [u_vector()], [trace_design_form()]
 #'
@@ -2049,19 +2103,13 @@ row_nonzeros <- function(X) {
 #'
 #' @details
 #' Where a design is built from grouping indicators a row has one nonzero per
-#' block, so the quadratic form is over a handful of entries and the dense
-#' product computes \eqn{p_a p_b} of them per row to keep one. The pairs are
-#' expanded once and the whole sum is vectorized.
-#'
-#' **It is taken only where it wins**, and the threshold is measured
-#' and nothing about it is assumed. At a combined density of 3.6e-05 (a
-#' random intercept
-#' over 500 levels) it is 14.2 times the dense route; at 0.18 (three smooths
-#' and a random effect) it is 50 times slower, R's per-element indexing being
-#' far dearer than a BLAS flop, and at a dense block 50 times slower again.
-#' Interpolating the two measurements puts the crossover at a combined density
-#' near 1.1e-03, which is the gate: below it the route is taken, at it the two
-#' cost the same, and above it the dense product stands.
+#' block, so the quadratic form is over a handful of entries, while the dense
+#' product computes \eqn{p_a p_b} of them per row to keep one. The compiled
+#' kernel `leverage_pairs_cpp()` reads the nonzeros of the two designs row by
+#' row and sums them without expanding the pairs, and each row is written by
+#' one thread. [block_leverage()] takes this route only where both blocks are
+#' sparse, the product of their densities is below \eqn{10^{-3}} and the number
+#' of pairs is below \eqn{2 \times 10^{7}}.
 #'
 #' @param ta,tb The two designs' nonzeros, from [row_nonzeros()].
 #' @param Mab The block of \eqn{M}.
@@ -2106,9 +2154,9 @@ leverage_pairs <- function(ta, tb, Mab, n, threads = 1L) {
 #' The block and its transpose both contribute, so an off-diagonal pair counts
 #' twice.
 #'
-#' The weights \eqn{w_i} are built exactly as those two functions build them,
-#' and that keeps the two routes the same arithmetic in the same order
-#' where it matters.
+#' The contraction of the derivative with the direction is formed exactly as
+#' those two functions form it, which keeps the two routes on the same
+#' arithmetic.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param G The per-observation diagonals, from [block_leverage()].
@@ -2120,8 +2168,8 @@ leverage_pairs <- function(ta, tb, Mab, n, threads = 1L) {
 #' @param key A function of the three or four parameter positions returning
 #'   the component of `deriv` to read, or `NULL` for the observed route's keys,
 #'   which are symmetric in every position. On the expected route `deriv` is
-#'   the derivative of the expected information, symmetric in its first pair
-#'   and in its second separately, and carries its own builder.
+#'   the derivative of the expected information, symmetric in its first two
+#'   positions only, and carries its own builder.
 #'
 #' @return A single number.
 #'

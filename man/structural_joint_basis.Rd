@@ -20,10 +20,10 @@ structural_joint_basis(spec, design, key, free, nb, basis)
 \item{basis}{The coefficients' basis.}
 }
 \value{
-A matrix.
+A matrix with \code{nb} plus \code{length(free)} rows.
 }
 \description{
-The basis \code{\link[=ml]{ml()}} projects the joint curvature onto: the
+The basis onto which \code{\link[=ml]{ml()}} projects the joint curvature: the
 coefficients' own range basis, with one column per penalized parameter of
 the structural term appended.
 }

@@ -18,7 +18,6 @@ A square matrix.
 The Penalty's Hessian at the Context's Point
 }
 \details{
-The non-finite entries are zeroed here, once. Three callers did it
-separately before, and a fourth would have had to remember.
+The non-finite entries are set to zero here, once.
 }
 \keyword{internal}

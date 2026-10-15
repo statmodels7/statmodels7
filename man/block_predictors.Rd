@@ -16,7 +16,9 @@ block_predictors(design, params, npar, offs, v)
 \item{v}{A stacked coefficient vector.}
 }
 \value{
-A list of numeric vectors, one per parameter.
+A list with one element for each distribution parameter: a numeric
+vector with one value per observation, or \code{NULL} for a parameter whose
+equation has no coefficients.
 }
 \description{
 \eqn{(X_k v_k)_i} for each distribution parameter, which is how a movement

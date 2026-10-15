@@ -41,19 +41,29 @@ NULL
 #' through the penalized curvature, and two contributions from the
 #' determinant, one from \eqn{M} moving and one from \eqn{K_m} moving.
 #'
-#' **Everything the penalty contributes is asked of the penalty**
-#' ([penalties7::penalty_hess_theta()],
-#' [penalties7::penalty_dhessian()],
-#' [penalties7::penalty_d2hessian()],
-#' [penalties7::penalty_dcross()]), so a penalty that is not
-#' quadratic in its hyperparameters is covered by the same assembly with no
-#' branch here: a ridge, a random effect, a structured prior.
+#' **Contributions of the penalty.** Every contribution of the penalty comes
+#' from a generic of \pkg{penalties7}: [penalties7::penalty_hess_theta()],
+#' [penalties7::penalty_cross()], [penalties7::penalty_dhessian()],
+#' [penalties7::penalty_dcross()] and [penalties7::penalty_d2hessian()], with
+#' [penalties7::penalty_dhessian_beta()] and its second-order companions for a
+#' penalty whose Hessian depends on the coefficients. The assembly therefore
+#' contains no branch for a particular penalty class (a ridge, a random
+#' effect, a structured prior).
 #'
 #' **Onto the free scale** the chain rule is second order and diagonal,
 #' each hyperparameter having its own link: with \eqn{\theta = h(\eta)},
 #' \deqn{\partial^2 V/\partial\eta_m\partial\eta_l =
 #'   h_m'h_l'\,\partial^2 V/\partial\theta_m\partial\theta_l
 #'   + \delta_{ml}\,h_m''\,\partial V/\partial\theta_m.}
+#'
+#' **Routes.** For a model with a structural term the function returns
+#' [statmod_structural_hess()] where the term implements
+#' [modelterms7::term_fourth()] and a penalty covers the term's own parameters,
+#' and [statmod_hess_stencil()] otherwise, including the case where that
+#' assembly returns no finite matrix. On the expected information the
+#' assembly runs only where [outer_gradient_ok()] admits order 2, and the
+#' stencil is used elsewhere. Any other model is answered by the assembly
+#' described above.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -68,8 +78,10 @@ NULL
 #'   [marginal_coords()], or `NULL`. Their rows and columns follow those of
 #'   the hyperparameters.
 #'
-#' @return A square matrix, one row per row of `idx`, or `NULL` where
-#'   the determinant does not exist.
+#' @return A square matrix with one row for each row of `idx`, followed by one
+#'   row for each coefficient in `gam`, or `NULL` where the penalized
+#'   information or the matrix of the determinant cannot be formed or, on a
+#'   differenced route, where the two steps disagree.
 #'
 #' @seealso [statmod_marginal_grad()], [reml()]
 #'
@@ -107,7 +119,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
       if (!is.null(h) && all(is.finite(h))) return(h)
     }
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
-                                basis, inner))
+                                basis, inner, gam = gam))
   }
   # ⚠️ ON THE EXPECTED ROUTE THE ASSEMBLY BELOW IS THE CRITERION'S SECOND
   # DERIVATIVE ONLY WHERE outer_gradient_ok() ADMITS ORDER 2, which asks the
@@ -124,7 +136,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   if (expected && !outer_gradient_ok(spec, design, idx, method, 2L,
                                      gamma = ng > 0L)) {
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
-                                basis, inner))
+                                basis, inner, gam = gam))
   }
   # the block AT THE MODE, for the reason statmod_marginal_grad() records: the
   # leverage diagonal and the contractions must read the same block K was
@@ -209,28 +221,15 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   Dm <- if (length(units)) {
     mode_curvature(spec, design, coef, params, npar, offs, total)
   } else NULL
-  # the coordinates pinned in K other than at a boundary: the coefficients the
-  # criterion estimates and those the model does not identify. The mode does
-  # not move in them, so every solve below leaves them at zero.
-  hold <- setdiff(attr(K, "held_at"), attr(K, "boundary_at"))
-  if (length(hold) && !is.null(Dm)) {
-    Dm[hold, ] <- 0
-    Dm[, hold] <- 0
-  }
-  Jmat <- K
-  msolve <- function(z) as.numeric(Kinv %*% z)
-  if (!is.null(Dm) && any(Dm != 0)) {
-    Jt <- as_dense(K) + Dm
-    fac <- tryCatch(chol(Jt), error = function(e) NULL)
-    # the true Hessian may lose definiteness where Gauss-Newton cannot, and a
-    # mode's movement is worth having approximately rather than not at all
-    if (!is.null(fac)) {
-      Jmat <- Jt
-      # as.numeric because one caller passes the result of a `%*%`, which would
-      # otherwise carry a one-column matrix through every consumer below
-      msolve <- function(z) as.numeric(backsolve(fac, forwardsolve(t(fac), z)))
-    }
-  }
+  # the coordinates pinned in K other than at a boundary (the coefficients
+  # the criterion estimates and those the model does not identify) and those
+  # a break-point's kink holds at the mode. The mode does not move in them,
+  # so every solve below leaves them at zero; see mode_solver()
+  ms <- mode_solver(spec, design, coef, K, Kinv, Dm, npar, offs)
+  hold <- ms$hold
+  Dm <- ms$Dm
+  Jmat <- ms$J
+  msolve <- ms$solve
 
   # the pieces each hyperparameter owns, in the stacked coefficient space
   pieces <- outer_pieces(spec, design, coef, hyper, idx, offs, total)
@@ -408,10 +407,17 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
 #'   second-order ones as well.
 #'
 #' @details
-#' At order 1 the second-order generics are not called at all. That is what
-#' lets a penalty supplying only `penalty_dhessian()` give an exact
-#' gradient: asking it for a derivative the gradient does not use would have
-#' rejected it for a quantity nobody wanted.
+#' At order 1 the function calls [penalties7::penalty_dhessian()] and
+#' [penalties7::penalty_cross()] only. The second-order generics
+#' [penalties7::penalty_d2hessian()], [penalties7::penalty_dcross()] and
+#' [penalties7::penalty_hess_theta()] are called at order 2, so a penalty that
+#' supplies the first two generics gives an exact gradient without
+#' implementing the others.
+#'
+#' A shared hyperparameter occupies one row of `idx` and receives the sum of
+#' the contributions of its members. A penalty over the own parameters of a
+#' structural term and a mixed covariance class contribute nothing here;
+#' [structural_outer_pieces()] places them on the joint vector.
 #'
 #' @return A list with `S` (one matrix per hyperparameter) and `c`
 #'   (one vector), and at order 2 also `S2` and `c2` (one per pair,
@@ -528,59 +534,61 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
 #' coefficients refitted at every probe.
 #'
 #' @details
-#' This is what a model carrying a structural term gets, and the reason is
-#' that the analytic assembly of [statmod_marginal_hess()] spans the stacked
-#' coefficients while a filter's own parameters are estimated beside them and
-#' move with the hyperparameter as well. Extending it is not a matter of
-#' bookkeeping: each order of differentiation through the recursion pulls in
-#' one more order of the response's family, so the first derivative reads the
-#' family's fourth through [modelterms7::term_third()] and the second would
-#' read a fifth, which does not exist.
+#' [statmod_marginal_hess()] uses this function for a model with a structural
+#' term for which the joint assembly [statmod_structural_hess()] does not
+#' apply: a filter without a penalty over its own parameters, a term of the
+#' likelihood shape such as `regime()`, or a term that does not implement
+#' [modelterms7::term_fourth()]. It also uses it on the expected information
+#' where [outer_gradient_ok()] does not admit order 2. The analytic assembly
+#' over the coefficients alone is not the criterion's Hessian when a filter's
+#' own parameters move with the hyperparameter. [statmod_structural_hess()]
+#' covers that case with the fourth derivative of the recursion from
+#' [modelterms7::term_fourth()] and the fifth derivative of the family from
+#' [distributions7::distrib_deriv5()].
 #'
-#' Differencing an ANALYTIC quantity once is the licence this toolkit already
-#' grants itself for the Student t's degrees of freedom and for the marginal
-#' break-point's prior rows. What it forbids is a difference of a difference,
-#' and there is one layer here.
+#' The function differences the exact gradient once, so the result contains a
+#' single layer of finite differences. The matrix is symmetrized by averaging
+#' it with its transpose.
 #'
-#' # The two probes start from the same place
+#' # Probes
 #'
-#' Both refit from the coefficients given and from the structural state as it
-#' stands, restored before each probe, so the two differ in the hyperparameter
-#' alone. That is what makes the result stable: the mode's own location error
-#' is nearly the same at \eqn{+h} and \eqn{-h} and cancels in the difference
-#' rather than being amplified by \eqn{1/h}. Measured on a penalized filter
-#' against a second difference of the criterion, the result is FLAT over four
-#' decades of the step -- -1.971435 at every \eqn{h} from 1e-2 down to 3e-5,
-#' against a criterion second difference of -1.971456 -- where the assembled
-#' Hessian reads -1.1e-08.
+#' Each probe refits the coefficients from the coefficients supplied and from
+#' the structural state as it stands, which is restored before each probe, so
+#' that the two probes of a column differ in the hyperparameter alone. The
+#' location error of the mode is nearly the same at \eqn{+h} and \eqn{-h} and
+#' cancels in the difference. Where the inner optimizer is [iwls()], the probes
+#' use its tolerance `min(tol, hess_stencil_inner_tol())`, a budget of at
+#' least 500 iterations and no stopping criterion of its own; any other inner
+#' optimizer is used as given.
 #'
-#' # Where it refuses
+#' # Rejection of an unresolved stencil
 #'
-#' A stencil inherits the reproducibility of the quantity it differences,
-#' divided by the step, so where the mode is poorly located the answer is
-#' noise rather than a curvature. It is therefore computed TWICE, at `h` and
-#' at `3 * h`, and refused where the two disagree by more than
-#' [hess_stencil_tol()]. The two regimes are six orders apart and nothing
-#' sits between them: measured, 5.5e-08 on a penalized filter, 9.3e-07 on an
-#' unpenalized one beside a smooth and 1.1e-06 on an ordinary smooth, against
-#' 6.0e-01 and 5.7e-01 on two mixed covariance classes whose correlation the
-#' search left at \eqn{|z| = 8.53}, where the chart's conditioning is 1e10 and
-#' the exact gradient itself reads 1e-3. A refusal there is the answer, and
-#' the consumers already handle `NULL`.
+#' A stencil inherits the reproducibility of the quantity that it differences,
+#' divided by the step, so where the mode is poorly located the result is
+#' noise. The matrix is therefore computed at `h` and at `3 * h`, and the
+#' function returns `NULL` where the largest absolute difference between the
+#' two exceeds [hess_stencil_tol()] times the largest absolute entry of the
+#' first. Callers treat a `NULL` result as an unavailable curvature.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param coef The coefficients the probes start from.
+#' @param coef The coefficients from which the probes start.
 #' @param hyper The hyperparameters.
 #' @param method An [OuterMethod()].
 #' @param idx The hyperparameter index, from [outer_hyper_index()].
 #' @param basis The integrated basis, or `NULL`.
-#' @param inner The inner optimizer the probes refit with; `iwls()` where
+#' @param inner The inner optimizer with which the probes refit; `iwls()` where
 #'   none is given.
-#' @param h The step, on the free scale the search runs on.
+#' @param h The step, on the free scale on which the search runs. For a
+#'   coefficient that the criterion estimates the step is
+#'   \eqn{h \max(1, |\gamma_j|)}.
+#' @param gam The coefficients that the criterion estimates, from
+#'   [marginal_coords()], or `NULL`. Each probe holds them at its own values
+#'   and refits the rest, as [outer_fit()] does.
 #'
-#' @return The Hessian on the free scale, or `NULL` where a probe could not
-#'   be evaluated or the two steps disagree.
+#' @return The Hessian on the free scale over the hyperparameters followed
+#'   by the coefficients in `gam`, or `NULL` where a probe could not be
+#'   evaluated or the two steps disagree.
 #'
 #' @seealso [statmod_marginal_hess()], [statmod_marginal_grad()],
 #'   [hess_stencil_step()]
@@ -588,8 +596,9 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
 #' @keywords internal
 statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
                                  basis = NULL, inner = NULL,
-                                 h = hess_stencil_step()) {
-  if (!nrow(idx)) return(NULL)
+                                 h = hess_stencil_step(), gam = NULL) {
+  ng <- if (is.null(gam)) 0L else length(gam$where)
+  if (!nrow(idx) && !ng) return(NULL)
   if (is.null(inner)) inner <- iwls()
   if (S7::S7_inherits(inner, Iwls)) {
     inner <- iwls_resolve(inner, spec@distrib)
@@ -606,9 +615,14 @@ statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
   cfg <- inner_settings(inner)
   blocks <- tryCatch(statmod_blocks(spec, design), error = function(e) NULL)
   if (is.null(blocks)) return(NULL)
-  eta0 <- hyper_to_eta(hyper, idx)
-  nh <- length(eta0)
   beta0 <- unlist(coef[spec@distrib@params], use.names = FALSE)
+  # the outer vector is (eta, gamma): the coefficients the criterion
+  # estimates are held at the probe's values, as outer_fit() holds them, and
+  # their step is relative to their own size
+  nh <- nrow(idx)
+  eta0 <- c(hyper_to_eta(hyper, idx), if (ng) beta0[gam$where])
+  nv <- length(eta0)
+  scale <- c(rep(1, nh), if (ng) pmax(1, abs(beta0[gam$where])))
   # a structural term's own parameters live in an ENVIRONMENT the inner fit
   # writes into as it goes, so a probe moves them and the next one would
   # start from wherever the last left them. That is the ratchet outer_fit()
@@ -619,29 +633,37 @@ statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
   z0 <- if (is.null(sst)) NULL else sst$zeta
   restore <- function() if (!is.null(z0)) sst$zeta <- z0
   on.exit(restore(), add = TRUE)
-  grad_at <- function(eta) {
+  grad_at <- function(v) {
     restore()
-    hy <- eta_to_hyper(eta, idx, hyper)
-    r <- tryCatch(statmod_alternate(spec, design, blocks, hy, inner, beta0,
+    hy <- eta_to_hyper(v[seq_len(nh)], idx, hyper)
+    sp <- spec
+    b0 <- beta0
+    if (ng) {
+      g <- v[nh + seq_len(ng)]
+      sp <- statmod_hold(spec, gam, g)
+      b0[gam$where] <- g
+    }
+    r <- tryCatch(statmod_alternate(sp, design, blocks, hy, inner, b0,
                                     cfg$expected, cfg$approx, cfg$maxit,
                                     cfg$tol, verbosity(0),
                                     hold_refresh = TRUE),
                   error = function(e) NULL)
     if (is.null(r)) return(NULL)
-    v <- tryCatch(statmod_marginal_grad(spec, design, r$obj$split(r$par), hy,
-                                        method, idx, basis),
+    u <- tryCatch(statmod_marginal_grad(sp, design, r$obj$split(r$par), hy,
+                                        method, idx, basis, gam = gam),
                   error = function(e) NULL)
-    if (is.null(v) || !all(is.finite(v))) NULL else v
+    if (is.null(u) || length(u) != nv || !all(is.finite(u))) NULL else u
   }
   at_step <- function(step) {
-    H <- matrix(0, nh, nh)
-    for (m in seq_len(nh)) {
-      ep <- eta0; ep[[m]] <- ep[[m]] + step
-      em <- eta0; em[[m]] <- em[[m]] - step
+    H <- matrix(0, nv, nv)
+    for (m in seq_len(nv)) {
+      s <- step * scale[[m]]
+      ep <- eta0; ep[[m]] <- ep[[m]] + s
+      em <- eta0; em[[m]] <- em[[m]] - s
       gp <- grad_at(ep)
       gm <- grad_at(em)
       if (is.null(gp) || is.null(gm)) return(NULL)
-      H[, m] <- (gp - gm) / (2 * step)
+      H[, m] <- (gp - gm) / (2 * s)
     }
     # the criterion's Hessian is symmetric; the two columns of a pair are
     # computed from different probes and agree only up to what the probes
@@ -662,44 +684,27 @@ statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
 #' The Step and the Tolerance of the Outer Hessian's Stencil
 #'
 #' @description
-#' The step [statmod_hess_stencil()] differences at, and how far its two
-#' readings may disagree before it refuses.
+#' The step at which [statmod_hess_stencil()] differences, the largest
+#' relative disagreement between its two readings, and the tolerance of the
+#' probes' inner fit.
 #'
 #' @details
-#' Both are measured rather than taken from a library rule.
-#' [numericals7::fd_step()] would give \eqn{\epsilon^{1/3}}, about 6e-6, which
-#' is right for differencing a function evaluated to machine precision and
-#' wrong here: the gradient is computed by refitting a mode, so what bounds
-#' the step below is that reproducibility and not the rounding of a double.
+#' `hess_stencil_step()` is `1e-3`, on the free scale of the hyperparameters.
+#' The default of [numericals7::fd_step()], about 6e-6, is intended for a
+#' function evaluated to machine precision. Here the gradient is computed by
+#' refitting a mode, and the reproducibility of that refit bounds the step from
+#' below.
 #'
-#' Swept on a penalized filter against a second difference of the criterion,
-#' the result is 8.0e-05 out at \eqn{h = 0.1}, where the truncation still
-#' shows, and then FLAT at 1.06e-05 -- the reference's own error -- for every
-#' \eqn{h} from 1e-2 down to 3e-5. `1e-3` is two decades below where
-#' truncation matters and two above where anything else begins.
+#' `hess_stencil_tol()` is `1e-3`. It is compared with the largest absolute
+#' difference between the matrices at `h` and `3 * h`, divided by the largest
+#' absolute entry of the first. A relative error of `1e-3` in the curvature
+#' corresponds to a relative error of about `5e-4` in a standard error.
 #'
-#' The tolerance separates two regimes that are SIX ORDERS apart, with
-#' nothing between them: 5.5e-08, 9.3e-07 and 1.1e-06 where the mode is well
-#' located, against 6.0e-01 and 5.7e-01 where it is not. `1e-3` sits three
-#' orders above the worst resolved reading and three below the best
-#' unresolved one, and a relative error of that size in the curvature is
-#' 5e-4 in a standard error, under the fourth significant figure a summary
-#' prints.
-#'
-#' The probes are refitted by [iwls()] at `hess_stencil_inner_tol()` and a
-#' budget of at least 500 iterations, whatever the fit itself used, and
-#' without the fit's own stopping rule. At the fit's tolerance of `1e-6` a
-#' probe can stop where it started, the score there being already under the
-#' threshold, and the difference then misses the mode's movement. The bias
-#' this leaves is CONSTANT in the step rather than growing as \eqn{1/h}, so
-#' the check at `3 * h` passes it wherever both steps share it. Measured at
-#' \eqn{n = 4000} on one smooth, against the analytic Hessian: 4.8e-02 at
-#' \eqn{h} of 3e-4 and 1e-3 on a gaussian, 1.6e-04 at 1e-3 and 3e-3 on a gamma
-#' and a negative binomial, and 9.1e-03 on a Student t prior over a random
-#' effect, all passing the check; at `1e-10` the same readings are 4.5e-06,
-#' 2.8e-06, 5.7e-06 and 2.8e-04. A penalized filter reads 2.6e-08 either way,
-#' and a mixed covariance class at the boundary of its chart is still refused
-#' at every step. The stencil costs 1.1 to 1.9 times what it did.
+#' `hess_stencil_inner_tol()` is `1e-10`, the largest tolerance that the probes
+#' use when the inner optimizer is [iwls()]. At the tolerance of a fit a probe can
+#' stop at its starting point, and the difference then misses the movement of
+#' the mode. The resulting bias does not grow as \eqn{1/h}, so the comparison
+#' of the two steps does not detect it.
 #'
 #' @return A single number.
 #'
@@ -724,7 +729,7 @@ hess_stencil_inner_tol <- function() 1e-10
 #' name, never by position.
 #'
 #' @param a,b The two hyperparameter names.
-#' @param keys The names the penalty actually returned.
+#' @param keys The names that the penalty returned.
 #'
 #' @return A single string.
 #'
@@ -750,7 +755,9 @@ pair_key <- function(a, b, keys) {
 #' @param npar,offs The block sizes and offsets.
 #' @param v A stacked coefficient vector.
 #'
-#' @return A list of numeric vectors, one per parameter.
+#' @return A list with one element for each distribution parameter: a numeric
+#'   vector with one value per observation, or `NULL` for a parameter whose
+#'   equation has no coefficients.
 #'
 #' @keywords internal
 block_predictors <- function(design, params, npar, offs, v) {
@@ -768,9 +775,10 @@ block_predictors <- function(design, params, npar, offs, v) {
 #' coefficients.
 #'
 #' @details
-#' Each block is a weighted crossproduct, the weight being
-#' \eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}: the third derivative never
-#' appears as an array.
+#' Each block is minus a weighted crossproduct of the two designs, the weight
+#' being \eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}, so that the third
+#' derivative is never formed as an array over the coefficients. The sign makes
+#' \eqn{T[v]} the derivative of \eqn{K = -\ell'' + S}.
 #'
 #' On the expected route `d3` is the derivative of the expected information in
 #' the predictors, [distributions7::distrib_dexpected_hessian()], and the same
@@ -828,6 +836,11 @@ contract3 <- function(spec, design, d3, params, npar, offs, total, tv,
 #' \eqn{U[v, u] = (\partial^2 K/\partial\beta^2)\cdot(v, u)}, a matrix over the
 #' stacked coefficients.
 #'
+#' @details
+#' The blocks follow [contract3()]: each is minus a weighted crossproduct of the
+#' two designs, with the weight formed from the fourth derivatives and the
+#' predictors of the two directions.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param d4 The fourth derivatives in the link scale.
@@ -874,7 +887,7 @@ contract4 <- function(spec, design, d4, params, npar, offs, total, tv, tu) {
 #'
 #' @param params The parameter names.
 #' @param a,b,k,q Indices into `params`.
-#' @param keys The names the derivative returned.
+#' @param keys The names that the derivative returned.
 #'
 #' @return A single string.
 #'
@@ -895,10 +908,9 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' complexity of a fit whose hyperparameters were themselves estimated.
 #'
 #' @details
-#' The ordinary effective degrees of freedom read the smoothing parameters
-#' as though they were known, and they were not: they were chosen from the
-#' same data. Propagating their uncertainty into the coefficients gives the
-#' corrected Bayesian covariance
+#' The ordinary effective degrees of freedom treat the smoothing parameters as
+#' known, although they were chosen from the same data. Propagating their
+#' uncertainty into the coefficients gives the corrected Bayesian covariance
 #'
 #' \deqn{V' = V_\beta + J V_\theta J^\top, \qquad
 #'   J = \partial\hat\beta/\partial\theta,}
@@ -908,73 +920,72 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' \eqn{\partial(-\ell + \rho)/\partial\beta = 0} in the hyperparameter
 #' gives \eqn{(H+S)J_k = -\partial^2\rho/\partial\beta\,\partial\theta_k},
 #' whose right-hand side is \pkg{penalties7}'s `penalty_cross()`.
-#' \eqn{V_\theta} is the inverse of the outer criterion's own Hessian,
-#' which [statmod_marginal_hess()] returns, negated because that
-#' criterion is a maximand.
+#' \eqn{V_\theta} is the inverse of the negative of the outer criterion's
+#' Hessian, which [statmod_marginal_hess()] returns; the negative is taken
+#' because the criterion is maximized. The Hessian is that of the criterion
+#' the fit maximized, so for [ml()] the determinant spans the range space of
+#' the penalty ([integrated_basis()]).
 #'
-#' Everything is on the hyperparameter's link scale, which is where the
-#' outer criterion optimizes and therefore the only scale on which its
-#' Hessian is a variance.
+#' Everything is on the hyperparameter's link scale, which is the scale on
+#' which the outer criterion is optimized and therefore the only scale on which
+#' its Hessian is a variance.
 #'
-#' **Against mgcv.** This is the first of the two terms mgcv sums into
-#' `edf2`, and it agrees with mgcv's to about 3e-4 on a univariate
-#' smooth once the difference between the two bases is allowed for. mgcv
-#' adds a second term for the Gaussian scale, which it profiles out of the
-#' fit and whose uncertainty it must therefore add back; here every
-#' distribution parameter carries its own equation and its own coefficients,
-#' so that uncertainty is already inside \eqn{H}. The residual difference is
-#' measured at 0.16, 0.10 and 0.05 effective parameters at n = 200, 400 and
-#' 2000, falling with the sample size.
+#' **Relation to mgcv.** The correction corresponds to the term of the
+#' effective degrees of freedom `edf2` of mgcv that arises from the uncertainty
+#' of the smoothing parameters (Wood, Pya and Safken, 2016). The scale of a
+#' Gaussian response is a distribution parameter with its own coefficients here,
+#' so its uncertainty is part of \eqn{H} and needs no separate term.
 #'
-#' **Where it does not apply.** A kinked penalty has no hyperparameter
-#' the outer criterion estimates, [outer_hyper_index()] skipping it, so
-#' there is nothing to propagate and the correction is zero. That is
-#' not an approximation: the map from the hyperparameter to the penalized
-#' mode turns a corner whenever a coefficient joins or leaves the active
-#' set, and a delta method needs a derivative that does not exist there.
+#' **Where it does not apply.** The function returns zero, with `n_hyper` zero,
+#' for every outer criterion other than [reml()] and [ml()], including [aic()]
+#' and [bic()] used for a smooth penalty. A kinked penalty has no hyperparameter
+#' that the outer criterion estimates, because [outer_hyper_index()] skips it,
+#' so there is nothing to propagate and the correction is zero. The map from
+#' the hyperparameter to the penalized mode turns a corner whenever a
+#' coefficient joins or leaves the active set, and a delta method needs a
+#' derivative that does not exist there.
 #'
-#' **A model carrying a filter.** There the mode moves in the JOINT vector,
-#' the coefficients followed by the structural term's own parameters, which
-#' is what the criterion's determinant spans. A penalty over those
-#' parameters is a column of no design, so read on the coefficients alone
-#' [hyper_mode_cross()] skips it and the mode moves by nothing in exactly
-#' the coordinates that penalty shrinks. Measured on a converged filter
-#' with a penalized loading over ten groups of forty, the correction on the
-#' coefficients was EXACTLY 0 against 1.108889 on the joint vector, a
-#' quarter of that model's whole effective count of 4.4976, moving cAIC by
-#' 2.22 and cBIC by 6.64.
+#' **Coefficients estimated on the criterion.** Where the criterion also
+#' estimates coefficients ([marginal_coords()]), the function returns
+#' [marginal_edf_correction()].
 #'
-#' The count this corrects was ALREADY read on that vector.
-#' [statmod_edf()] takes a structural model's effective degrees of freedom
-#' from `joint_smoother_diag()`, which reads the very same two matrices,
-#' so the base count was joint while its correction was on the
-#' coefficients -- two halves of one number read on two different vectors.
-#'
-#' The two matrices are the ones [statmod_marginal_full()] and
-#' [statmod_full_information()] already build, so there is no second
-#' assembly to disagree with the criterion's. That route reads the
-#' OBSERVED information, a filter having no expected one to offer, so
-#' `expected` and `approx` do not reach it. A model with no structural
-#' term of the filter shape is untouched by construction rather than by
-#' tolerance, [statmod_marginal_full()] returning `NULL` there.
+#' **A model carrying a filter.** The mode of such a model moves in the joint
+#' vector of the coefficients and the own parameters of the structural term,
+#' which is the vector that the determinant of the criterion spans. A penalty
+#' over those parameters is not a column of any design, so [hyper_mode_cross()]
+#' omits it when it is called for the coefficients alone. The correction is
+#' therefore computed on the joint vector.
+#' [statmod_edf()] takes the effective degrees of freedom of a structural
+#' model from `joint_smoother_diag()`, which reads the same two matrices, so
+#' the base count and the correction are both computed on the joint vector.
+#' The two matrices are those that [statmod_marginal_full()] and
+#' [statmod_full_information()] build, so that this function and the
+#' criterion use one assembly. The joint route reads the observed information,
+#' and `expected` and `approx` do not reach it. A model with no structural term
+#' of the filter shape takes the coefficient route, because
+#' [statmod_marginal_full()] returns `NULL` there.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
 #' @param design The design.
 #' @param method The outer method that estimated them, or `NULL`.
-#' @param expected Whether the information is the expected one. Not read
-#'   where the model carries a filter, whose information is observed.
+#' @param expected Whether the information \eqn{H} is the expected one. Not
+#'   read where the model carries a filter, whose information is observed. The
+#'   caller passes the information that the fit used, so that \eqn{V_\beta},
+#'   \eqn{H} and the criterion's Hessian read one information.
 #' @param approx The approximation for the expected information. Not read
 #'   where the model carries a filter.
-#' @param pinned The coordinates the fit left out of the criterion's
+#' @param pinned The coordinates that the fit left out of the criterion's
 #'   determinant, as it records them in `methods$pinned`.
 #'
-#' @return A list with `total`, the scalar correction, `per`, one entry per
-#'   penalty key, and `n_hyper`, how many hyperparameters were estimated.
-#'   Zero throughout where none was; a zero `total` beside a positive
-#'   `n_hyper` means the curvature could not be read, and a caller
-#'   reporting to a reader has to tell the two apart.
+#' @return A list with `total`, the scalar correction, `per`, one entry for
+#'   each parameter and term, and `n_hyper`, the number of hyperparameters that
+#'   were estimated. `per` uses the diagonal of \eqn{V_\theta} alone, so its
+#'   sum differs from `total` when the estimated hyperparameters are
+#'   correlated. The total and `n_hyper` are zero and `per` is empty where no
+#'   hyperparameter was estimated. A zero `total` beside a positive `n_hyper`
+#'   means that the curvature could not be read.
 #'
 #' @references
 #' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
@@ -1054,8 +1065,11 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   J <- -Vb %*% hyper_mode_cross(spec, design, coef, hyper, idx,
                                 nrow(as.matrix(H)), joint = joint)$cross
 
+  # the curvature of the criterion the fit maximized: under ml() the
+  # determinant spans the penalty's range space, and NULL is reml()'s
   Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method,
-                                       idx, NULL),
+                                       idx, integrated_basis(spec, design,
+                                                             method@kind)),
                  error = function(e) NULL)
   if (is.null(Ho)) return(zero)
   # the criterion is a maximand, so its Hessian is negative definite at the
@@ -1083,32 +1097,33 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 #' stacked coefficient vector with one column per estimated hyperparameter.
 #'
 #' @details
-#' This is the one ingredient of the penalized mode's movement that nothing
-#' else computes, and both consumers of that movement read it here rather than
-#' assembling it each: [statmod_edf_correction()], which contracts it against
-#' the information to price what estimating a hyperparameter cost, and
-#' [hyper_correction()], which keeps the matrix and adds it to a variance.
+#' This function computes the cross derivative of the penalty that the
+#' movement of the penalized mode requires. Three functions read it here
+#' instead of assembling it separately: [statmod_edf_correction()], which
+#' contracts the movement with the information to obtain the additional
+#' effective degrees of freedom, [hyper_correction()], which adds the resulting
+#' matrix to a variance, and [marginal_blocks()], which builds the movement of
+#' the integrated coefficients.
 #'
-#' A shared hyperparameter is ONE column standing for several penalties, so
-#' each member writes into the group's column and they accumulate. Where
-#' nothing is shared each member is its own row and the lookup is what was
-#' here before the groups existed.
+#' A shared hyperparameter is one column that stands for several penalties, so
+#' each member writes into the column of its group and the contributions
+#' accumulate. Where nothing is shared, each member has its own column.
 #'
-#' A penalty over a STRUCTURAL term's own parameters covers positions among
-#' those parameters rather than columns of a design, so where the caller's
-#' matrix spans the coefficients alone there is nowhere to write it and it is
-#' skipped. It is counted rather than passed over in silence: a correction
-#' assembled without it is incomplete, and a caller reporting to a reader has
-#' to be able to say so.
+#' A penalty over the own parameters of a structural term covers positions among
+#' those parameters, which are not columns of a design. Where the matrix spans
+#' the coefficients alone, there is no position to write to and the penalty is
+#' skipped. The skipped penalties are counted in `skipped`, because a
+#' correction assembled without them is incomplete.
 #'
-#' With `joint` the matrix spans the vector the mode really moves in for such
-#' a model, the coefficients followed by the term's own free parameters, and
-#' those penalties have rows after all. What they lacked was an address and
-#' not a derivative: [unit_joint_positions()] says where each unit's
-#' coordinates live in that vector and [unit_joint_beta()] reads their values,
-#' so nothing here is derived. [hyper_correction()] asks for it because
-#' [vcov.StatmodFit()] inverts the joint penalized information; the
-#' coefficient-space consumer does not, and its answer is unchanged.
+#' With `joint` the matrix spans the vector in which the mode of such a model
+#' moves, the coefficients followed by the free parameters of the term, and
+#' the penalties over those parameters have rows. [unit_joint_positions()]
+#' returns the positions of the coordinates of each unit in that vector and
+#' [unit_joint_beta()] returns their values. [hyper_correction()] and
+#' [statmod_edf_correction()] pass `joint = TRUE` for a model that carries a
+#' filter, because [vcov.StatmodFit()] and [statmod_edf()] use the joint
+#' penalized information. [marginal_blocks()] uses the matrix over the
+#' coefficients alone.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1118,8 +1133,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 #' @param n How many rows the matrix carries: the stacked coefficients, and
 #'   with `joint` a structural term's free parameters after them.
 #' @param joint Whether those rows include that tail. `FALSE`, the default,
-#'   is the coefficient-only matrix, which is what
-#'   [statmod_edf_correction()] contracts.
+#'   gives the matrix over the coefficients alone.
 #'
 #' @return A list with `cross`, an `n` by `nrow(idx)` matrix, and `skipped`,
 #'   how many penalties contributed nothing to it.
@@ -1177,64 +1191,67 @@ hyper_mode_cross <- function(spec, design, coef, hyper, idx, n,
 #' hyperparameters, as a matrix to be added to \eqn{V_b}.
 #'
 #' @details
-#' The two matrices [vcov.StatmodFit()] reports by default are conditional on
-#' the hyperparameters: both are read at the value the outer search stopped
-#' at, as though it had been known. It was estimated from the same data, and
-#' what that costs is
+#' The matrices that [vcov.StatmodFit()] returns for `type = "bayesian"` and
+#' `type = "frequentist"` are conditional on the hyperparameters: each is read
+#' at the value at which the outer search stopped, as though that value were
+#' known. The value was estimated from the same data, and the cost of that is
 #' \deqn{V' = V_b + J V_\theta J', \qquad
 #'   J = -(H + S)^{-1} \frac{\partial^2 \rho}{\partial\beta \partial\theta},}
 #' the delta method applied to the map from the hyperparameter to the mode
-#' (Wood, Pya and Safken, 2016). It is the same quantity
-#' [statmod_edf_correction()] contracts against the information to obtain a
-#' count of parameters; here the matrix itself is what is wanted.
+#' (Wood, Pya and Safken, 2016). The same quantity is contracted against the
+#' information by [statmod_edf_correction()] to obtain a count of parameters;
+#' this function returns the matrix.
 #'
-#' \eqn{V_b} is PASSED IN rather than recomputed, and that is what keeps the
-#' two halves of the sum describing one model. The caller has already settled
+#' \eqn{V_b} is passed in and is not recomputed. The caller has already settled
 #' which information \eqn{H} is, which coordinates are held and which are
-#' aliased; a correction built on a second inverse, regularized differently,
-#' would not be the movement of the mode whose variance it is added to.
+#' aliased, and a correction built on a second inverse, regularized
+#' differently, would not describe the movement of the mode to whose variance
+#' it is added.
 #'
-#' # Where there is nothing to add, and where it cannot be read
+#' # Availability of the correction
 #'
-#' The correction is exactly zero where no hyperparameter was estimated by a
-#' differentiable criterion. A kinked penalty's is the argument of a minimum
-#' over a grid, which [outer_hyper_index()] skips, and the map from it to the
-#' mode turns a corner whenever a coefficient joins or leaves the active set,
-#' so there is no derivative to propagate. That is a property of the model and
-#' not a failure, and `n_hyper` is zero.
+#' The function returns `C = NULL` with `n_hyper = 0` where no hyperparameter
+#' was estimated by [reml()] or [ml()]. That includes a fit whose outer
+#' criterion is [aic()] or [bic()], and a kinked penalty, whose hyperparameter
+#' is the argument of a minimum over a grid that [outer_hyper_index()] skips.
+#' The map from that hyperparameter to the mode turns a corner whenever a
+#' coefficient joins or leaves the active set, so no derivative exists to
+#' propagate.
 #'
-#' It is UNAVAILABLE, with `n_hyper` positive and `C` `NULL`, where the
-#' criterion's own Hessian cannot be read, which is where the search left a
-#' coordinate at the edge of its range.
+#' The correction is unavailable, with `n_hyper` positive and `C` `NULL`, where
+#' the criterion's own Hessian cannot be read, or where [hyper_variance()]
+#' cannot invert it because the coupling of a held coordinate to the kept ones
+#' is too large to ignore.
 #'
-#' It is PARTIAL, with `complete` false, where some of it could be read and
-#' some could not: a hyperparameter [hyper_variance()] held contributes
-#' nothing. The matrix returned is then a lower bound on the correction rather
-#' than the whole of it.
+#' The correction is partial, with `complete` false, where some of it could be
+#' read and some could not: a hyperparameter that [hyper_variance()] held
+#' contributes nothing, and a penalty for which [hyper_mode_cross()] could not
+#' return a column (counted in its `skipped`) contributes nothing. The matrix
+#' returned then omits those contributions.
 #'
-#' A penalty over a STRUCTURAL term's own parameters no longer makes it
-#' partial. The mode of such a model moves in the joint vector, coefficients
-#' and the term's free parameters together, which is what `Vb` already spans
-#' here, and [hyper_mode_cross()] is asked for the same vector rather than for
-#' the coefficients with a tail of zeros after them.
+#' A penalty over the own parameters of a structural term does not make the
+#' correction partial. The mode of such a model moves in the joint vector of
+#' the coefficients and the free parameters of the term, which `Vb` spans, and
+#' [hyper_mode_cross()] is called with `joint = TRUE` to return rows for the
+#' whole vector.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
 #' @param method The outer method that estimated them, or `NULL`.
-#' @param Vb The bayesian variance the correction is to be added to, over the
-#'   coordinates `keep` names.
-#' @param keep A logical vector over the joint vector, the stacked
-#'   coefficients followed by any structural tail, saying which coordinates
-#'   `Vb` spans. It is the caller's whole vector and not its head: a tail
-#'   coordinate dropped as a flat direction leaves `Vb` narrower than the
-#'   count alone would say.
+#' @param Vb The bayesian variance to which the correction is added, over the
+#'   coordinates that `keep` marks.
+#' @param keep A logical vector over the joint vector (the stacked
+#'   coefficients followed by any structural tail) that marks the coordinates
+#'   `Vb` spans. It is the whole vector of the caller and not its head,
+#'   because a tail coordinate dropped as a flat direction leaves `Vb` narrower
+#'   than the count alone would indicate.
 #' @param nz How many of those coordinates are the structural tail.
 #'
-#' @return A list with `C`, the correction or `NULL`, `n_hyper`, how many
-#'   hyperparameters a differentiable criterion estimated, and `complete`,
-#'   whether every one of them contributed.
+#' @return A list with `C`, the correction or `NULL`, `n_hyper`, the number of
+#'   hyperparameters that [reml()] or [ml()] estimated, and `complete`,
+#'   whether every one of them contributed and no penalty was skipped.
 #'
 #' @references
 #' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
@@ -1262,7 +1279,8 @@ hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
                          joint = nz > 0L)
   X <- cr$cross[keep, , drop = FALSE]
   Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method,
-                                       idx, NULL),
+                                       idx, integrated_basis(spec, design,
+                                                             method@kind)),
                  error = function(e) NULL)
   if (is.null(Ho)) return(out)
   # the criterion is a maximand, so its Hessian is negative definite at the
@@ -1296,50 +1314,39 @@ hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
 #' or one the search left before reaching a maximum, has a curvature there
 #' that is zero or of the wrong sign, and no variance follows from it.
 #'
-#' Such a coordinate used to cost every other one its standard error, the
-#' whole matrix being refused. It is held instead and the rest is inverted,
-#' which is the variance CONDITIONAL on it — the same reading `vcov()` gives
-#' a coefficient the information carries nothing about. That is the marginal
-#' variance only where the coupling contributes nothing to the kept
-#' curvature, so the Schur correction \eqn{A_{kb}A_{bb}^{-1}A_{bk}} is
-#' computed and compared against the kept diagonal rather than assumed
-#' negligible; above `schur` the whole matrix is refused as before. The
-#' default is the size at which the correction cannot move the four
-#' significant digits the summary prints.
+#' Such a coordinate is held, and the remaining coordinates are inverted. The
+#' result is the variance conditional on the held coordinates, which is the
+#' reading that [vcov.StatmodFit()] gives to the remaining coefficients when
+#' it leaves out a coefficient about which the information is flat. The
+#' conditional variance equals the marginal variance only where the coupling
+#' contributes nothing to the curvature of the kept coordinates. The Schur
+#' correction \eqn{A_{kb}A_{bb}^{-1}A_{bk}} is therefore computed and compared
+#' with the kept diagonal. Above `schur` times the kept diagonal, the function
+#' returns `NULL`.
 #'
-#' A variance is returned only where the matrix inverted is positive
-#' definite, which is read off the smallest eigenvalue of the matrix
-#' equilibrated to a unit diagonal. A positive diagonal of the inverse is
-#' not enough: an indefinite matrix can have one. Measured on a
-#' zero-inflated negative binomial with a random effect on each equation,
-#' stopped where the criterion's curvature has an eigenvalue of -5 on that
-#' scale, every diagonal entry of `A` was negative and the inverse's diagonal
-#' was positive, so the two standard deviations were reported with standard
-#' errors of 0.015 and 0.0009 on the free scale.
+#' A variance is returned only where the inverted matrix is positive definite,
+#' which is decided from the smallest eigenvalue of the matrix equilibrated to
+#' a unit diagonal. A positive diagonal of the inverse does not suffice,
+#' because an indefinite matrix can have one.
 #'
-#' A coordinate the certificate names at the edge of its range is held
-#' whatever its curvature, and the Schur test is not applied to it: there the
-#' criterion has stopped moving in it, so its curvature and its coupling to
-#' the others are below the resolution of the criterion. Measured on two
-#' correlated random intercepts whose correlation runs to one, at an angle of
-#' -9.14 the analytic coupling of the angle to the two standard deviations
-#' read 3.9e-3 and 5.2e-3 beside its own curvature of 8e-7, while the
-#' criterion differenced by refitting read 1.2e-3 and -2.5e-6 at a step of
-#' 0.05 and -5.0e-5 and 1.3e-4 at a step of 0.2. That coupling made the
-#' whole matrix indefinite, and the two standard deviations lost their
-#' standard errors to a coordinate whose own were already missing.
+#' A coordinate that the certificate places at the edge of its range is held
+#' whatever its curvature, and the Schur test is not applied to it, because
+#' the criterion is flat in that coordinate and its curvature and its coupling
+#' to the other coordinates are below the resolution of the criterion.
 #'
 #' @param A The negative of the outer Hessian, with dimnames.
-#' @param schur The largest relative Schur correction a held coordinate may
-#'   contribute to a kept one's curvature.
+#' @param schur The largest ratio of the Schur correction to the diagonal entry
+#'   of a kept coordinate. The default is `1e-4`.
 #' @param at_edge Positions of coordinates at the edge of their range, held
 #'   without the Schur test.
 #'
 #' @return A matrix of the same shape as `A` with the variance in the kept
-#'   rows and columns and `NA` elsewhere, or `NULL` when no coordinate is
-#'   usable or the coupling is too large to ignore.
+#'   rows and columns and `NA` elsewhere, or `NULL` when the matrix is not
+#'   positive definite and no coordinate can be held to make the kept part so,
+#'   when no coordinate remains, or when the Schur test fails.
 #'
-#' @seealso [statmod_hyper_vcov()], its only caller.
+#' @seealso [statmod_hyper_vcov()], [hyper_correction()], [marginal_vcov()] and
+#'   [marginal_edf_correction()], which also call it.
 #'
 #' @keywords internal
 hyper_variance <- function(A, schur = 1e-4, at_edge = integer(0)) {
@@ -1388,32 +1395,36 @@ hyper_variance <- function(A, schur = 1e-4, at_edge = integer(0)) {
 #' scale their links carry them onto.
 #'
 #' @details
-#' A hyperparameter estimated by [reml()] or [ml()] is
-#' the maximizer of a criterion that is twice differentiable in it, so it has a
-#' variance like any other maximum-likelihood estimate: the inverse of the
-#' negative Hessian of that criterion at the point reached, which
-#' [statmod_marginal_hess()] already computes exactly. It is read on
-#' the free scale because that is where the criterion was maximized and where
-#' the quadratic approximation behind it is reasonable; a variance for a
-#' smoothing parameter on its own scale, where the estimate is often several
-#' orders of magnitude from zero and the criterion far from symmetric, would
-#' describe a shape the criterion does not have.
+#' A hyperparameter estimated by [reml()] or [ml()] is the maximizer of a
+#' criterion that is twice differentiable in it, so its variance is the
+#' inverse of the negative Hessian of that criterion at the point reached,
+#' which [statmod_marginal_hess()] returns. If the criterion also estimates
+#' coefficients, the variance is the block of the hyperparameters in the
+#' inverse of the negative Hessian over the hyperparameters and those
+#' coefficients. [statmod_marginal_hess()] computes the Hessian analytically
+#' where a route applies and by a difference of the exact gradient otherwise.
+#' The matrix is read on the free scale because the criterion was maximized on
+#' that scale, where the quadratic approximation is reasonable. A variance on
+#' the scale of the hyperparameter itself would describe a shape that the
+#' criterion does not have where the estimate is far from zero and the
+#' criterion is asymmetric.
 #'
-#' **Where it does not apply.** A hyperparameter chosen along a path, which
-#' is what [aic()], [bic()] and [cv()] do to a kinked penalty's, is the
-#' argument of a minimum over a grid. It is no root of a derivative, so there
-#' is no Hessian to invert and no standard error follows. Its uncertainty is
-#' a resampling question, and `NULL` is returned in place of a number of
-#' another kind.
+#' **Where it does not apply.** The function returns `NULL` for every outer
+#' criterion other than [reml()] and [ml()], including [aic()] and [bic()]
+#' used as the outer criterion for a smooth penalty. A hyperparameter that a
+#' path selects (the penalty of a kinked term, chosen by [aic()], [bic()] or
+#' [cv()] over a grid) is the argument of a minimum, not a root of a
+#' derivative, so no Hessian exists to invert. Its uncertainty can be assessed
+#' by resampling.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients at the penalized mode.
 #' @param hyper The hyperparameters.
 #' @param method The outer method that estimated them, or `NULL`.
-#' @param inner The inner optimizer the fit used, which the stencil route
-#'   refits its probes with; `iwls()` where none is given.
-#' @param pinned The coordinates the fit left out of the criterion's
+#' @param inner The inner optimizer that the fit used, with which the stencil
+#'   route refits its probes; `iwls()` where none is given.
+#' @param pinned The coordinates that the fit left out of the criterion's
 #'   determinant, as it records them in `methods$pinned`.
 #' @param at_edge The `boundary_key` of [statmod_certificate()]: the
 #'   hyperparameters at the edge of their range, held by [hyper_variance()]
@@ -1421,10 +1432,11 @@ hyper_variance <- function(A, schur = 1e-4, at_edge = integer(0)) {
 #'
 #' @return A square matrix, one row per estimated hyperparameter, whose
 #'   dimnames join the distribution parameter, the term and the
-#'   hyperparameter's own name with a carriage return, a character no name
-#'   can contain, so the three stay recoverable from the key. The index
-#'   rides on the attribute `"idx"`. `NULL` where there is nothing to
-#'   report.
+#'   hyperparameter's own name with a carriage return, a character that no
+#'   name can contain, so that the three are recoverable from the key. The
+#'   index is stored in the attribute `"idx"`. The rows and columns of held
+#'   coordinates are `NA` (see [hyper_variance()]). The value is `NULL` where
+#'   there is nothing to report.
 #'
 #' @seealso [statmod_marginal_hess()], [summary.StatmodFit()]
 #'
@@ -1491,12 +1503,13 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
 #' [structural_chain_extra()] returns only its trace against \eqn{M}.
 #'
 #' @details
-#' The gradient needs the trace and nothing else, so it never forms this. The
-#' HESSIAN needs the matrix twice over: in \eqn{\mathrm{tr}(M K_l M K_m)},
-#' which no contraction reduces, and as the operator carrying the mode's
-#' second movement. Writing \eqn{V_a} for each equation's rows,
-#' \eqn{\mathrm{d}\varphi = E v} for the filter's own moving, and \eqn{E} for
-#' the second derivative of the predictor the filter produces,
+#' The gradient uses only the trace of this matrix against \eqn{M} and does
+#' not form the matrix. The Hessian uses the matrix in two places: in
+#' \eqn{\mathrm{tr}(M K_l M K_m)}, which no contraction reduces, and as the
+#' operator that carries the second movement of the mode. Write \eqn{V_a} for
+#' the rows of each equation, \eqn{\mathrm{d}\varphi = E v} for the movement of
+#' the filter's own parameters, and \eqn{E} for the second derivative of the
+#' predictor that the filter produces. Then
 #'
 #' \deqn{\frac{\partial K}{\partial u}[v] =
 #'   -\sum_i w_i\Big[\sum_{a,b}\Big(\sum_k\ell_{abk}(V_k\cdot v)\Big)
@@ -1505,11 +1518,10 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
 #'     + V_b\otimes\mathrm{d}\varphi\big)\Big]
 #'   - W(\kappa_v) - W_3[v],}
 #'
-#' with \eqn{\kappa_v = \sum_k \ell_{pk}(V_k\cdot v)} the weight the level's
-#' own term is re-read at and \eqn{W_3[v]} what
-#' [modelterms7::term_third()] returns. Traced against \eqn{M} it
-#' reproduces [structural_chain_extra()] exactly, which is what a test
-#' asserts of it.
+#' with \eqn{\kappa_v = \sum_k \ell_{pk}(V_k\cdot v)} the weight at which the
+#' term of the level is read again and \eqn{W_3[v]} the curvature that
+#' [modelterms7::term_third()] returns. The trace of the matrix against
+#' \eqn{M} equals the value of [structural_chain_extra()] up to rounding.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1583,24 +1595,23 @@ structural_dk_matrix <- function(spec, design, jd, st, v) {
 #' and contracted against a second direction.
 #'
 #' @details
-#' Nine terms, and none of them assembles a matrix over the coefficients: a
-#' term in \eqn{V_a^\top V_b} traces as a weighted sum of the
-#' per-observation diagonal \eqn{G}, a term carrying
-#' \eqn{\mathrm{d}\varphi} traces against the rows \eqn{M} has already been
-#' applied to, and the three terms carrying the recursion's own derivatives
-#' trace against what [modelterms7::term_curvature()],
-#' [modelterms7::term_third()] and [modelterms7::term_fourth()]
-#' return at the right weights.
+#' The terms are listed in the comments of the code. None of them assembles a
+#' matrix over the coefficients: a term in \eqn{V_a^\top V_b} traces as a
+#' weighted sum of the per-observation diagonal \eqn{G}, a term carrying
+#' \eqn{\mathrm{d}\varphi} traces against the rows to which \eqn{M} has
+#' already been applied, and the terms that carry the derivatives of the
+#' recursion trace against what [modelterms7::term_curvature()],
+#' [modelterms7::term_third()] and [modelterms7::term_fourth()] return at the
+#' appropriate weights.
 #'
 #' The last of those is the fourth derivative of the predictor through the
-#' recursion, which is the object this whole route exists for, and the only
-#' place the family's FIFTH derivative enters is `P` inside its
-#' `blocks` callback.
+#' recursion. The fifth derivative of the family enters only through `P` in
+#' the `blocks` callback of that call.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param jd The joint rows.
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #' @param st The shared quantities, from [structural_grad_parts()].
 #' @param blk4 The `blocks` factory carrying the family's fifth
 #'   derivative, as [.structural_blocks()] builds it.
@@ -1732,19 +1743,19 @@ structural_chain_extra2 <- function(spec, design, jd, M, st, blk4, v, w) {
 #' The Penalty's Pieces on the Joint Vector
 #'
 #' @description
-#' [outer_pieces()] over the coefficients AND a filter's own
-#' parameters, which is the vector a marginal criterion's determinant spans
-#' where a penalty covers those parameters.
+#' [outer_pieces()] for the vector that consists of the coefficients and the
+#' own parameters of a filter. The determinant of a marginal criterion spans
+#' that vector where a penalty covers those parameters.
 #'
 #' @details
-#' The arithmetic is [outer_pieces()]'s and the difference is where each
-#' unit's coordinates live: an ordinary unit is matched into the kept
-#' coefficients, a penalty over a structural term's own parameters is placed
-#' among the filter's free ones, and a MIXED covariance class is read where
-#' each of its coordinates lives and put back in the class's own interleaved
-#' order. Those three readings are the gradient's own, in
-#' [statmod_structural_grad()], and are composed here so the two
-#' cannot disagree about a position.
+#' The arithmetic is that of [outer_pieces()]; the difference is where the
+#' coordinates of each unit are placed. An ordinary unit is matched into the
+#' kept coefficients, a penalty over the own parameters of a structural term is
+#' placed among the free parameters of the filter, and a mixed covariance
+#' class is read where each of its coordinates lives and put back in the
+#' interleaved order of the class. These three readings are those of
+#' [statmod_structural_grad()], and they are reused here so that the gradient
+#' and the Hessian place each coordinate at the same position.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1840,21 +1851,22 @@ structural_outer_pieces <- function(spec, design, coef, hyper, idx, jd) {
 #' a filter's own parameters, which is what the determinant spans there.
 #'
 #' @details
-#' # Why it needs a fourth order
+#' # Orders of differentiation
 #'
-#' Each order of differentiating the predictor through the recursion pulls in
-#' one more order of the response's family, the score the recursion is driven
-#' by being read at the predictor it produces. The gradient reads
-#' \eqn{\partial^3 e/\partial u^3} in one direction through
-#' [modelterms7::term_third()]; the criterion's own second derivative
-#' reads \eqn{\partial^4 e/\partial u^4} in two, through
-#' [modelterms7::term_fourth()], and the family's FIFTH derivative with
-#' it.
+#' Each order of differentiating the predictor through the recursion requires
+#' one more order of the response's family, because the score that drives the
+#' recursion is read at the predictor that the recursion produces. The gradient
+#' reads \eqn{\partial^3 e/\partial u^3} in one direction through
+#' [modelterms7::term_third()]. The second derivative of the criterion reads
+#' \eqn{\partial^4 e/\partial u^4} in two directions through
+#' [modelterms7::term_fourth()], and the fifth derivative of the family, from
+#' [distributions7::distrib_deriv5()], enters with it.
 #'
-#' # The shape is [statmod_marginal_hess()]'s
+#' # Form of the assembly
 #'
-#' With \eqn{u} the joint vector, \eqn{K} the penalized information over it
-#' and \eqn{M} the matrix the trace is taken against,
+#' The assembly has the form of [statmod_marginal_hess()]. With \eqn{u} the
+#' joint vector, \eqn{K} the penalized information over it and \eqn{M} the
+#' matrix against which the trace is taken,
 #'
 #' \deqn{\frac{\partial^2 V}{\partial t_m\partial t_l}
 #'   = -\rho_{ml} + \hat b_m^\top K \hat b_l
@@ -1864,21 +1876,23 @@ structural_outer_pieces <- function(spec, design, coef, hyper, idx, jd) {
 #' with \eqn{\hat b_m = -K^{-1}c_m} the mode's movement, \eqn{K_m = S_m +
 #' \partial K/\partial u[\hat b_m]} and the last trace carrying the penalty's
 #' second derivative, the twice-contracted second derivative of \eqn{K} and
-#' the once-contracted one at the mode's second movement. Every piece is the
-#' one the coefficient-space assembly uses, read on the joint vector.
+#' the once-contracted one at the second movement of the mode. Every piece is
+#' the one that the coefficient-space assembly uses, read on the joint vector.
 #'
-#' # What it does not carry
+#' # Blocks that move with their coefficients
 #'
-#' A block that MOVES with its coefficients -- `nl()`, `seg()` --
-#' beside the filter contributes nothing here, exactly as it contributes
-#' nothing to [statmod_structural_grad()]: that correction is written
-#' in the coefficient-space assembly and has no joint twin. Such a model is
-#' admitted at both orders and the approximation is the gradient's own.
+#' A block that moves with its coefficients (`nl()`, `seg()`) beside the filter
+#' contributes nothing here, as it contributes nothing to
+#' [statmod_structural_grad()]: the correction for such a block is written in
+#' the coefficient-space assembly and has no counterpart on the joint vector.
+#' Such a model is admitted at both orders, and the result has the
+#' approximation of the gradient.
 #'
 #' # Cost
 #'
-#' One [modelterms7::term_fourth()] and three lower recursions per PAIR
-#' of hyperparameters, against the stencil's four refits per hyperparameter.
+#' The assembly makes one call of [modelterms7::term_fourth()], together with
+#' calls of the lower-order recursions, for each pair of hyperparameters. The
+#' stencil refits the model four times for each hyperparameter.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1888,11 +1902,12 @@ structural_outer_pieces <- function(spec, design, coef, hyper, idx, jd) {
 #' @param idx The outer index.
 #' @param basis The integrated subspace, or `NULL`.
 #'
-#' @return A square matrix on the free scale, one row per row of `idx`,
-#'   or `NULL` where the joint matrix could not be formed.
+#' @return A square matrix on the free scale with one row for each row of
+#'   `idx`, or `NULL` where the joint matrix cannot be formed or factorized or
+#'   the fifth derivative of the family is unavailable.
 #'
 #' @seealso [statmod_structural_grad()], [statmod_marginal_hess()],
-#'   [statmod_hess_stencil()] for the route it replaces.
+#'   [statmod_hess_stencil()] for the route that it replaces.
 #'
 #' @keywords internal
 statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,

@@ -2,12 +2,12 @@
 % Please edit documentation in R/outer_context.R
 \name{criterion_resolution}
 \alias{criterion_resolution}
-\title{What the Marginal Criterion Can Resolve at This Fit}
+\title{What the Outer Criterion Can Resolve at This Fit}
 \usage{
 criterion_resolution(st, spec, design, method, criterion_at)
 }
 \arguments{
-\item{st}{An evaluation's stored state, carrying \code{par}, \code{split},
+\item{st}{An evaluation's stored state, carrying \code{ok}, \code{par}, \code{split},
 \code{score}, \code{cf}, \code{hy}, \code{ctx} and \code{value}.}
 
 \item{spec}{The specification.}
@@ -16,52 +16,45 @@ criterion_resolution(st, spec, design, method, criterion_at)
 
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
-\item{criterion_at}{A function of \verb{(cf, hy, par, ctx)} returning what
-\strong{this} search is running, a prediction-error criterion or a marginal
-one. It is passed in and never chosen here: reading the marginal
-criterion of a fit whose search is \code{\link[=aic]{aic()}} answers for a quantity the
-search never sees, and the number that came back stopped two such fits
-short of their own optimum.}
+\item{criterion_at}{A function of \verb{(cf, hy, par, ctx)} returning what the
+search is running, a prediction-error criterion or a marginal one. It is
+passed in and not chosen here, because the marginal criterion of a fit
+whose search runs \code{\link[=aic]{aic()}} is a quantity that the search does not evaluate.}
 }
 \value{
-A single positive number, or \code{NA_real_} where the pieces are
-not available.
+A single positive number, or \code{NA_real_} where the pieces are not
+available. Where the mode error exceeds \code{\link[=mode_error_limit]{mode_error_limit()}}, the \code{NA}
+carries the attribute \code{mode_error}, which holds that error.
 }
 \description{
-The size of the difference in the criterion that carries no information,
-measured at the point. Nothing about it is assumed.
+The size of a difference in the criterion that carries no information,
+computed from the fit at the point.
 }
 \details{
 The criterion is read at the penalized mode, and the inner fit stops short
-of that mode by whatever its rule allows. Writing \eqn{g} for the score it
-stopped at and \eqn{K = H + S} for the penalized information, the mode is
-out by \eqn{\delta\beta = K^{-1} g}, and the criterion read at
-\eqn{\hat\beta - \delta\beta} instead of at \eqn{\hat\beta} differs by an
-amount that is exactly what an evaluation from a different warm start would
-differ by. One assembly of the criterion at given coefficients answers it,
-with no refit.
+of that mode by whatever its rule allows. Writing \eqn{g} for the score at
+which the inner fit stopped and \eqn{K = H + S} for the penalized
+information, the mode is out by \eqn{\delta\beta = K^{-1} g}, and the
+criterion read at \eqn{\hat\beta - \delta\beta} instead of at
+\eqn{\hat\beta} differs by an amount that equals the difference between
+two evaluations from different warm starts. One assembly of the criterion
+at given coefficients gives it, with no refit.
 
-\strong{The quadratic form alone is not enough}, and the reason is structural
-before it is a matter of accuracy: the criterion carries
-\eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which is not stationary in
-\eqn{\beta}, so a mode error enters it at \strong{first} order. Measured,
-\eqn{\tfrac{1}{2} g' K^{-1} g} is right to one per cent at an inner
-tolerance of \code{1e-4}, where the second-order term dominates, and
-undershoots by 50 to 1000 times at \code{1e-6} and below, where the first
-order does.
+The criterion carries \eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which
+is not stationary in \eqn{\beta}, so a mode error enters it at first order
+and the quadratic form \eqn{\tfrac{1}{2} g' K^{-1} g} alone does not bound
+the change. The criterion is therefore evaluated at the displaced
+coefficients.
 
-Measured against the spread of the criterion at one hyperparameter reached
-from six different warm starts, over four shapes and five inner tolerances,
-the displaced reading tracks it across six orders of magnitude, from
-\code{8.6e-2} down to \code{2.2e-7}, at a ratio between 0.05 and 0.99, and
-separates shapes that a formula cannot: at an inner tolerance of \code{1e-6}
-it reads \code{1.7e-4} on a random intercept over 500 levels against
-\code{7.9e-8} on a gaussian smooth.
+The reading estimates the spread of the criterion across warm starts. It is
+usually below that spread, because the spread is a range over several paths
+and the reading is one deviation. A resolution smaller than the true one
+leaves the search where it was, and a larger one stops a search before it
+has converged.
 
-It reads low by two to three times, the spread being a range over six paths
-where this is one deviation, and that is the side to err on. A resolution
-smaller than the truth leaves the search where it was; one larger stops a
-healthy search short.
+The reading is \code{NA} where \eqn{g' K^{-1} g / 2} exceeds
+\code{\link[=mode_error_limit]{mode_error_limit()}}, because a displacement computed from an inner fit that
+is far from its mode is not a resolution.
 }
 \seealso{
 \code{\link[=outer_fit]{outer_fit()}}, \code{\link[optimizers7:armijo]{optimizers7::armijo()}}

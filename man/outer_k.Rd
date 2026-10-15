@@ -9,7 +9,8 @@ outer_k(method, n)
 \arguments{
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}. Its \code{kind} and \code{k} are read.}
 
-\item{n}{The number of observations, a single positive number.}
+\item{n}{The number of observations, a single positive number. The fit
+passes the total of the weights, which are frequencies.}
 }
 \value{
 A single number: \eqn{\log n} for \code{\link[=bic]{bic()}}, and \code{method@k} for
@@ -23,8 +24,8 @@ the method left it open. \code{\link[=bic]{bic()}} stores \code{NA} and gets \eq
 every other criterion returns the \code{k} it was constructed with.
 }
 \details{
-The resolution happens at fit time because \code{\link[=bic]{bic()}} takes no data and
-cannot know \eqn{n} at construction. A criterion object is a
+The resolution happens at fit time because \code{\link[=bic]{bic()}} takes no data, so
+\eqn{n} is not available at construction. A criterion object is a
 specification, reusable across models of different sizes.
 }
 \seealso{

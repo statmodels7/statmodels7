@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_context.R
 \name{ctx_usable}
 \alias{ctx_usable}
-\title{Refuse a Context That Belongs Somewhere Else}
+\title{Check That a Context Belongs to the Point Read}
 \usage{
 ctx_usable(ctx, coef, hyper)
 }
@@ -18,13 +18,13 @@ ctx_usable(ctx, coef, hyper)
 \code{NULL}; an error when it belongs to another point.
 }
 \description{
-Stops when a context is handed to a consumer reading a different point.
+Signals an error when a context is handed to a consumer that reads a
+different point.
 }
 \details{
-A stale cached information is a silently wrong gradient, which is the one
-failure a shared cache can introduce and the one that would be hardest to
-find. The comparison is over the coefficients and the hyperparameters,
-which is linear in their length and so negligible beside the \eqn{O(np^2)}
-assembly it guards.
+A cached information that belongs to another point yields a wrong gradient
+without any other sign of failure. The comparison is over the coefficients
+and the hyperparameters, so its cost is linear in their length, which is
+negligible beside the \eqn{O(np^2)} assembly that it guards.
 }
 \keyword{internal}

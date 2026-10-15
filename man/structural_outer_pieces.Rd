@@ -24,19 +24,19 @@ A list with \code{S}, \code{c}, \code{S2}, \code{c2}, \code{rho2}
 and \code{pair}, in the shape \code{\link[=outer_pieces]{outer_pieces()}} returns them.
 }
 \description{
-\code{\link[=outer_pieces]{outer_pieces()}} over the coefficients AND a filter's own
-parameters, which is the vector a marginal criterion's determinant spans
-where a penalty covers those parameters.
+\code{\link[=outer_pieces]{outer_pieces()}} for the vector that consists of the coefficients and the
+own parameters of a filter. The determinant of a marginal criterion spans
+that vector where a penalty covers those parameters.
 }
 \details{
-The arithmetic is \code{\link[=outer_pieces]{outer_pieces()}}'s and the difference is where each
-unit's coordinates live: an ordinary unit is matched into the kept
-coefficients, a penalty over a structural term's own parameters is placed
-among the filter's free ones, and a MIXED covariance class is read where
-each of its coordinates lives and put back in the class's own interleaved
-order. Those three readings are the gradient's own, in
-\code{\link[=statmod_structural_grad]{statmod_structural_grad()}}, and are composed here so the two
-cannot disagree about a position.
+The arithmetic is that of \code{\link[=outer_pieces]{outer_pieces()}}; the difference is where the
+coordinates of each unit are placed. An ordinary unit is matched into the
+kept coefficients, a penalty over the own parameters of a structural term is
+placed among the free parameters of the filter, and a mixed covariance
+class is read where each of its coordinates lives and put back in the
+interleaved order of the class. These three readings are those of
+\code{\link[=statmod_structural_grad]{statmod_structural_grad()}}, and they are reused here so that the gradient
+and the Hessian place each coordinate at the same position.
 }
 \seealso{
 \code{\link[=statmod_structural_hess]{statmod_structural_hess()}}, \code{\link[=outer_pieces]{outer_pieces()}}

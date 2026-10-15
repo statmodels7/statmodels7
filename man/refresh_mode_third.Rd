@@ -47,14 +47,6 @@ the first reading the block's first derivative and the second its second,
 \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]}. Both are one
 \code{crossprod} against a per-observation weight, so neither the
 third-derivative array of the predictor nor any contraction of it is formed.
-
-\strong{Measured} against the mode refitted at four hyperparameter values
-and differenced twice, on \code{nl(a ~ 0 + ridge(~grp))}: \eqn{b_m} is right
-to 3.8e-08 without this and \eqn{b_{ml}} is wrong by 7.6 to 9.0 per cent at
-every step tried, which is a systematic error and no reference's noise.
-With it
-the gap falls to 1.8e-05 at the reference's best step, which is inside the
-spread between the reference's own consecutive steps.
 }
 \seealso{
 \code{\link[=mode_curvature]{mode_curvature()}}, \code{\link[=trace_refresh4]{trace_refresh4()}}

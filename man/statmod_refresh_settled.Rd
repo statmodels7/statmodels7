@@ -2,30 +2,31 @@
 % Please edit documentation in R/refresh.R
 \name{statmod_refresh_settled}
 \alias{statmod_refresh_settled}
-\title{Have the Refreshable Terms Settled?}
+\title{The Refreshable Terms' Own Verdict}
 \usage{
 statmod_refresh_settled(spec, design, which = "all")
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design, whose refresh state holds the terms asked.}
+\item{design}{The design, whose refresh state holds the terms to be
+checked.}
 
-\item{which}{Which entries to ask: \code{"all"} (the default), \code{"jacobian"} or
+\item{which}{Which entries to check: \code{"all"} (the default), \code{"jacobian"} or
 \code{"frozen"}.}
 }
 \value{
-A single logical. \code{TRUE} when every term asked reports it has
-settled, and \code{TRUE} when there is nothing to ask, so a model with no
-refreshable term never blocks a fit's verdict on this.
+A single logical. \code{TRUE} when every term checked reports that it
+has settled, and \code{TRUE} when there is nothing to check, so a model with
+no refreshable term never blocks a fit's verdict on this.
 }
 \description{
-Asks every term that recomputes its own block whether its own iteration
-has anything further to say, through
-\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}}, and returns \code{TRUE} when none of them
-does. This is the verdict for the refreshable half of a fit.
+Reads \code{\link[modelterms7:term_converged]{modelterms7::term_converged()}} for every term that recomputes its
+own block and returns \code{TRUE} when all of them report that their own
+iteration has settled. This is the verdict for the refreshable half of a
+fit.
 }
-\section{Why the score cannot answer this}{
+\section{The score of the working model}{
 Where a term's block is the Jacobian of its contribution, the gradient of
 the model's objective is the model's own gradient and its vanishing is
 the test. Where the block is a working linearization with a frozen
@@ -33,17 +34,15 @@ weight, as in a discontinuous break-point term, the gradient belongs to
 the working model alone, and the profile objective there is a step
 function in the break-point with no gradient to vanish at all.
 
-Measured on \code{y ~ jump(x)} at \eqn{n = 400}, a Gaussian response with a
-step of 2 at \eqn{x = 6}: the fit recovers the position at 6.004 and
-reports \code{converged = TRUE}, while the score of the working model at that
-point is \eqn{7.8 \times 10^{7}}. The size is the annealed rescaling
-factor, whose auxiliary columns grow as the schedule tightens. A rule
-reading that score would never stop.
+A fit of a discontinuous break-point term can report convergence at a
+position where the score of the working model is very large, because the
+auxiliary columns of the working block grow as the rescaling factor is
+annealed, so that a stopping rule reading that score would not stop.
 }
 
 \seealso{
 \code{\link[modelterms7:term_converged]{modelterms7::term_converged()}} for what each construction
 answers, \code{\link[=statmod_design_at]{statmod_design_at()}} for the refresh,
-\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} for the state it reads.
+\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} for the state that it reads.
 }
 \keyword{internal}

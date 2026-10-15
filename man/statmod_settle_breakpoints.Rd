@@ -28,6 +28,9 @@ statmod_settle_breakpoints(
 \code{\link[=statmod_alternate]{statmod_alternate()}}.}
 
 \item{res}{The fit to settle, as \code{\link[=statmod_alternate]{statmod_alternate()}} returns it.}
+
+\item{rounds}{The maximum number of times that the polished positions are
+read again after a refit, 5 by default.}
 }
 \value{
 A list: \code{res}, the settled fit, \code{moved}, \code{TRUE} where a
@@ -36,8 +39,9 @@ polished position replaced the one the iteration reached, and \code{settled},
 }
 \description{
 After the working phase and the restarts, every sharp \code{\link[modelterms7:jump]{modelterms7::jump()}}
-or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} term is moved to the minimum of its exact
-least-squares profile (\code{\link[modelterms7:seg_polish_exact]{modelterms7::seg_polish_exact()}}), held there
+or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} term is moved to the minimum of the least-squares
+profile of its working response (\code{\link[modelterms7:seg_polish_exact]{modelterms7::seg_polish_exact()}}), which
+is exact only for the location of a gaussian family, held there
 (\code{\link[modelterms7:seg_hold]{modelterms7::seg_hold()}}), and the coefficients of the model are refitted
 with the positions held.
 }
@@ -48,12 +52,9 @@ model, whose block carries a weight frozen at the previous iterate, and not
 the coefficients that maximize the likelihood at the positions reached; and
 the profile of a discontinuous term is constant between consecutive
 observations, so the iteration can stop one interval away from the
-minimum. Measured on 16 samples of 200 observations (a jseg and a jump, 8
-seeds each), the fit reached the interval of the profile's minimum in 11,
-its coefficients sat up to 0.04 log-likelihood units below least squares
-at the position reached, and \code{statmod_certificate()} reported
-\verb{not converged} in 12, reading the mode along the working block's auxiliary
-column, which is not a direction of the model.
+minimum. The certificate of such a fit can then read the mode along the
+auxiliary column of the working block, which is not a direction of the
+model.
 
 Held, a break-point term contributes a linear function of its remaining
 coefficients, so the refit is an ordinary fit, and the coordinate that
@@ -63,11 +64,20 @@ their coefficients: at the estimated positions, conditional on them.
 
 The profile is weighted least squares of the working response of the
 term's own equation, net of the rest of that equation, on the term's own
-columns, with the working weights of a scoring step: exact for a gaussian
-mean and the quadratic model of the objective for any other equation. A polished position is kept
-only where the refit at it reaches a better objective than the refit at the
-position the iteration reached. A term whose per-break-point coefficients
-carry a development is held without polishing, its positions being one per
+columns, with the working weights of a scoring step. It is exact for the
+location of a gaussian family on the identity link and is a quadratic model
+of the objective in any other equation. A polished position is kept only
+where the refit at it reaches a better objective than the refit at the
+position that the iteration reached. The polish is repeated, up to
+\code{rounds} times, while the refit improves the objective.
+
+A term whose break-point or per-break-point coefficients carry a development
+is held and polished like any other term, with the exact line searches of
+\code{\link[modelterms7:seg_polish_exact]{modelterms7::seg_polish_exact()}} in the coefficients of the development.
+In an equation whose working profile is only a model of the objective, the
+five deepest local minima of the profile are also refitted with the
+positions held, and so are the neighboring intervals of the best position;
+these two searches skip a developed term, whose positions are one per
 observation.
 }
 \references{

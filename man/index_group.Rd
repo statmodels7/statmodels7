@@ -28,12 +28,13 @@ the links carried alongside.
 \details{
 A label ties its members into one coordinate. Two checks run here because
 this is where both sides are visible: every member of a group must carry
-the same link, one free value having to land in each of their domains, and
-no label may span a smooth penalty and a kinked one, which are estimated by
-two different machines and would be given two values under one name.
+the same link (compared as objects, so two links of one class with different
+parameters differ), one free value having to lie in the domain of each
+member, and no label may span a smooth penalty and a kinked one, which are
+estimated by two different procedures and would be given two values under
+one name.
 
 Where nothing is shared each row is its own group and the member table is
-the index, so the result is what this function's caller produced before
-sharing existed.
+the index.
 }
 \keyword{internal}

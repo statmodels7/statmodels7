@@ -37,9 +37,9 @@ A numeric vector, one entry per row of \code{idx}, or \code{NULL}
 where the determinant does not exist.
 }
 \description{
-\code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} over the joint vector of coefficients
-and a structural term's parameters, over which the determinant spans
-there.
+The exact gradient of the marginal criterion where a penalty covers a
+structural term's own parameters, so that the determinant spans the joint
+vector of the coefficients and those parameters.
 }
 \details{
 The criterion is the same and so are its three pieces; what changes is that

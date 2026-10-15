@@ -562,7 +562,13 @@ test_that("what a test says about the refit is the mode error, not the flag", {
   expect_false(warned(mode_error = 1e-20, converged = TRUE))
   ## a mode that is NOT located says so, whatever the flag says
   expect_true(warned(mode_error = 1, converged = TRUE))
-  expect_true(warned(mode_error = NA_real_, converged = TRUE))
+  ## and a mode error that could not be read is reported as such
+  expect_false(warned(mode_error = NA_real_, converged = TRUE))
+  expect_true(any(grepl("could not be read", utils::capture.output(print(
+    StatmodTest(test = "lr", statistic = 1, df = 1L, p.value = 0.3,
+                estimate = 1, null_value = 0, parameter = "mu",
+                coefficient = "x", mode_error = NA_real_,
+                converged = TRUE))), fixed = TRUE)))
   ## and Wald, which refits nothing, has no mode to be above
   expect_false(warned(mode_error = NA_real_, converged = NA))
 })

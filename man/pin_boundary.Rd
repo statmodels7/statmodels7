@@ -8,29 +8,36 @@ pin_boundary(K, hold = integer(0))
 }
 \arguments{
 \item{K}{The penalized information.}
+
+\item{hold}{Integer positions to pin in addition to the coordinates with a
+non-finite diagonal (the coefficients that the marginal criterion holds,
+and the coordinates that a kinked penalty covers). None by default.}
 }
 \value{
-\code{K} with the frozen coordinates pinned, or \code{K} unchanged
-where there are none.
+\code{K} with the pinned coordinates replaced by the identity's rows and
+columns, carrying the attributes \code{held} (their number), \code{held_at} (their
+positions), \code{boundary_at} (the positions with a non-finite diagonal) and
+\code{hold_at} (the positions pinned through \code{hold} alone). Where there are no
+pinned coordinates the matrix is otherwise unchanged and the positions
+are empty.
 }
 \description{
 Replaces the row and column of every coordinate whose curvature is not
-finite by the identity's, leaving the rest of the matrix alone.
+finite, and of every coordinate named in \code{hold}, by the identity's, leaving
+the rest of the matrix alone.
 }
 \details{
-A parameter that has reached the clamp its link keeps it strictly inside
-leaves the family's curvature there at \code{NaN}, and one such entry is
+A parameter that has reached the clamp that its link keeps it strictly
+inside leaves the family's curvature there at \code{NaN}, and one such entry is
 enough to deny the whole matrix a Cholesky factor. The coordinate is not
-one the criterion integrates over, being held at a boundary where its own
-score is exactly zero, so the Laplace approximation wants nothing from it.
-A unit diagonal contributes exactly that:
+one that the criterion integrates over, being held at a boundary where its
+own score is exactly zero, so it contributes nothing to the Laplace
+approximation. A unit diagonal contributes exactly that:
 \eqn{\log\lvert K\rvert} gains \eqn{\log 1 = 0}, and
 \eqn{K^{-1}g} returns that coordinate's own score, which is zero.
 
-The shape is preserved deliberately. Dropping the coordinate would change
-the dimension of \code{K} and of its inverse, which some twenty consumers
-index into by position; pinning says the same thing and breaks none of
-them.
+The dimension of \code{K} is preserved, because its consumers index \code{K} and its
+inverse by position. Dropping the coordinate would change both dimensions.
 }
 \seealso{
 \code{\link[=ctx_penalized]{ctx_penalized()}}, \code{\link[=iwls_solve]{iwls_solve()}}

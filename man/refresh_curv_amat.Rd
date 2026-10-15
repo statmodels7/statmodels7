@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_refresh.R
 \name{refresh_curv_amat}
 \alias{refresh_curv_amat}
-\title{The Weight the Second Derivative of a Block Is Paired With}
+\title{The Weight for the Second Derivative of a Block}
 \usage{
 refresh_curv_amat(spec, design, M, params, npar, offs, units, Hl)
 }
@@ -11,7 +11,7 @@ refresh_curv_amat(spec, design, M, params, npar, offs, units, Hl)
 
 \item{design}{The design.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 
 \item{params, npar, offs}{The block bookkeeping.}
 

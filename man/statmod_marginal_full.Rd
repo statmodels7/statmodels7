@@ -36,19 +36,21 @@ those quantities are not coefficients.
 
 Taken over the coefficients alone the determinant then does not depend on
 the hyperparameter at all, and the criterion reduces to the penalized
-likelihood, whose maximum in a shrinkage parameter is at no shrinkage. It
-does not merely lose accuracy: it answers a different question.
+likelihood, whose maximum in a shrinkage parameter is at no shrinkage. The
+criterion then answers a different question from the marginal likelihood.
 }
 
-\section{Both pieces already exist}{
+\section{The matrix}{
 \code{\link[=statmod_full_information]{statmod_full_information()}} spans the coefficients followed by the term's
 free parameters, which is the order the joint fit uses, and
-\code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} gives the penalty's Hessian in those same
-parameters.
+\code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} gives the Hessian of the penalty in those same
+parameters. A covariance class split between the two halves is placed by
+\code{\link[=joint_penalty_at]{joint_penalty_at()}}.
 
-The information here is the \strong{observed} one whatever the method asks for.
-The expected information over a filter's own parameters is not a quantity
-the toolkit carries, the recursion's state entering the expectation.
+The information here is the observed one whatever the \code{hessian} of the
+method is. The expected information over the own parameters of a filter is
+not a quantity that the toolkit carries, since the state of the recursion
+enters the expectation.
 }
 
 \section{Under ML}{

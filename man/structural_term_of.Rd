@@ -19,10 +19,10 @@ The single term of the structural branch, or \code{NULL} where the model
 carries none.
 }
 \details{
-At most one structural term is admitted per formula, so a caller wanting
-to ask that term a question -- does it answer \code{\link[modelterms7:term_third]{modelterms7::term_third()}}, does
-it answer \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}} -- has one to ask. It is looked up through
-the design's structural attribute rather than by walking the terms,
-which is where the fit records what it built.
+At most one structural term is admitted per formula, so a caller that tests
+whether the term implements \code{\link[modelterms7:term_third]{modelterms7::term_third()}} or
+\code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}} needs one term. The term is found through the
+design's structural attribute, where the fit records what it built, and not
+by walking the terms.
 }
 \keyword{internal}

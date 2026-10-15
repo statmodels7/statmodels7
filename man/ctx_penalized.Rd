@@ -19,7 +19,9 @@ ctx_penalized(
 
 \item{spec, design, coef, hyper}{The fallback arguments.}
 
-\item{expected}{Whether the information is the expected one.}
+\item{expected}{Whether \eqn{H} is the expected information, as the
+criterion carries under \code{reml(hessian = "expected")}, or the observed one.
+The two give different matrices and keep separate cache entries.}
 
 \item{laplace}{Whether the matrix is the criterion's, with the kinked
 coordinates left out, or the mode's.}
@@ -32,44 +34,35 @@ A list with \code{K}, \code{inv} and \code{logdet}, or \code{NULL}.
 the gradient and the Hessian both read.
 }
 \details{
-\strong{The storage is the matrix's own.} \eqn{H} is already sparse wherever
-the design is, which covers a grouping indicator, a factor \code{by} and a
-\code{linpar} over many levels, and it was being densified here only because
-the penalty's accumulator is a base matrix. Where the sum is large
-enough and sparse enough to be worth it (\code{\link[=worth_sparse]{worth_sparse()}}) it is
-kept sparse and factorized as such: measured on a random intercept over 500
-levels, p = 503 at a density of 0.014, the factorization and its
-log-determinant cost 0.102 ms against 10.811 ms dense, and the full inverse
-3.280 ms against 25.000 ms, each route timed with its own factorization.
-End to end that is 1.25x at 500 levels and 2.01x at 1000, the difference
-between the operation and the fit being the lesson this package records
-three times over: removing the dearer half leaves the cheaper one. Nothing
-here asks which term produced the matrix; both quantities are read off the
-matrix.
-
-Those figures are the ones measured with \pkg{Matrix}'s factorization
-cache defeated. \code{Matrix::Cholesky} stores its result in the matrix's
-\code{factors} slot, so a benchmark that refactorizes the same object
-measures a cache hit, 0.004 ms against 0.102, and reports the sparse
-route as three times better than it is. A fit never gets that hit,
-the penalized matrix being a new one at every point.
+\strong{The storage is the matrix's own.} \eqn{H} is sparse wherever the design
+is, which covers a grouping indicator, a factor \code{by} and a \code{linpar} over
+many levels. Where the sum \eqn{H + S} is large enough and sparse enough
+(\code{\link[=worth_sparse]{worth_sparse()}}) it is kept sparse and factorized as such. The decision
+reads the matrix alone and does not depend on which term produced it. The
+penalized matrix is a new object at every point, so a factorization stored
+on an earlier matrix is never reused.
 
 \strong{The inverse stays dense whatever the factor is.} Its readers take full
 matrix products against it, \code{\link[=block_leverage]{block_leverage()}} and the Hessian's pair loop
-among them, so a dense inverse of a sparse matrix costs nothing sparsity
-could have kept. What the sparse factor buys is the cost
-of producing it.
+among them, so a dense inverse of a sparse matrix costs nothing that
+sparsity could have kept. What the sparse factor saves is the cost of
+producing it.
 
-\code{NULL} is returned where the matrix is not positive definite, which is
-the answer both callers already gave there.
+\code{NULL} is returned where the matrix is not positive definite. For the
+mode's matrix (\code{laplace = FALSE}) the directions that \code{\link[=deficient_coords]{deficient_coords()}}
+reports as unidentified are pinned and the factorization is attempted once
+more before \code{NULL} is returned.
 
 \strong{Two matrices, where a penalty has a kink.} The criterion's determinant
-leaves out every coordinate a kinked penalty covers (\code{\link[=laplace_pinned]{laplace_pinned()}}),
-which is what \code{laplace = TRUE} asks for. The default is the mode's own
-curvature, which leaves out only the coordinates a kinked penalty holds at
-ZERO (\code{\link[=zero_kinked]{zero_kinked()}}): those stay at zero when a hyperparameter moves, and
-a Newton correction of the mode does not move them either. Where no
-penalty has a kink the two are one matrix and one cache entry.
+leaves out every coordinate that a kinked penalty covers
+(\code{\link[=laplace_pinned]{laplace_pinned()}}), which is the matrix that \code{laplace = TRUE} selects. The
+default is the mode's own curvature, which leaves out the coordinates that
+the marginal criterion holds or does not identify (\code{\link[=pinned_coords]{pinned_coords()}}), the
+boundary coordinates (\code{\link[=pin_boundary]{pin_boundary()}}) and the coordinates that a kinked
+penalty holds at zero (\code{\link[=zero_kinked]{zero_kinked()}}): those stay at zero when a
+hyperparameter moves, and a Newton correction of the mode does not move
+them either. Where no penalty has a kink the two are one matrix and one
+cache entry.
 }
 \seealso{
 \code{\link[=pd_factor]{pd_factor()}}

@@ -11,7 +11,7 @@ structural_memo(design, slot, key, compute)
 
 \item{slot}{A short name, one cache per slot.}
 
-\item{key}{The exact inputs the value depends on.}
+\item{key}{The exact inputs on which the value depends.}
 
 \item{compute}{A function of no arguments.}
 }
@@ -24,11 +24,9 @@ call's key is \code{identical()} to this one's, the stored value is
 returned; otherwise \code{compute()} runs and replaces it.
 }
 \details{
-Measured on the gas panel at 60 groups, 62 of the 154 curvature
-recursions of one fit recompute a point already visited: the same
-coefficients and the same term parameters, up to five times each, the
-criterion and its gradient and the joint step's curvature all reading the
-same mode. The recursion is 35 per cent of the fit. The
+The criterion, its gradient and the joint step's curvature all read the
+same mode, so the same coefficients and the same term parameters recur
+within a fit. The
 cache returns the previously computed object itself, so a hit is
 bit-identical to recomputing by construction, and the key is compared
 with \code{identical()} on the full numeric inputs, so a collision

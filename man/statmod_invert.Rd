@@ -29,9 +29,10 @@ statistic reads.}
 \item{maxit}{How many widenings to try on each side before giving up.}
 }
 \value{
-A numeric vector of two, \code{lower} and \code{upper}. An end the search
-could not bracket is \code{NA}, which is what an unbounded interval looks
-like and is reported rather than guessed at.
+A numeric vector of two, \code{lower} and \code{upper}. An end that the
+search could not bracket within \code{maxit} widenings, or at which the
+statistic could not be evaluated, is \code{NA}; both ends are \code{NA} when the
+standard error of the coefficient is not finite and positive.
 }
 \description{
 The set of values a test does not reject at \code{level}, found by locating the
@@ -40,16 +41,19 @@ two points where the statistic crosses its critical value.
 \details{
 An interval by inversion is \eqn{\{b : T(b) \le \chi^2_{1,\alpha}\}}, and
 it is not symmetric about the estimate unless the statistic is a parabola
-in \eqn{b} -- which the Wald statistic is BY CONSTRUCTION, the curvature
-being read once at \eqn{\hat\beta}, and which the other three are not.
-That asymmetry is the whole reason to invert one of the others: it follows
-the likelihood's own shape rather than a quadratic fitted at its top.
+in \eqn{b}. The Wald statistic is a parabola by construction, the
+curvature being read once at \eqn{\hat\beta}, and the other three
+statistics are not. The asymmetry is the reason to invert one of the other
+three: the interval follows the shape of the likelihood and not a quadratic
+fitted at its maximum.
 
-The search starts from the Wald interval, widens by a factor of 1.6 until
-the statistic exceeds its critical value, and then bisects. Each
-evaluation is one restricted refit, warm-started at the unrestricted
-estimates and run at the fitted hyperparameters, so an interval costs a
-few dozen inner fits and no outer search at all.
+The search starts at the half-width of the Wald interval and widens the
+distance from the estimate by a factor of 1.6, at most \code{maxit} times on
+each side, until the statistic exceeds its critical value. It then locates
+the crossing with \code{\link[stats:uniroot]{stats::uniroot()}} (Brent's method) at tolerance 1e-7.
+Each evaluation is one restricted refit, warm-started at the unrestricted
+estimates and run at the fitted hyperparameters, so the interval requires
+no outer search.
 }
 \seealso{
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the statistic being inverted.

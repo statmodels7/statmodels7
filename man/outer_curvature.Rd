@@ -58,7 +58,8 @@ what the difference is taken of.
 
 The two routes agree where both exist: on a gaussian smooth the decrement
 reads \code{3.01e-10} by either. What the difference costs is measured and is
-not nothing -- it is \eqn{4n_h} refits, 0.05 to 0.13 seconds on the three
+not nothing -- it is \eqn{4(n_h + n_\gamma)} refits, \eqn{n_\gamma} the
+coefficients that the criterion estimates, 0.05 to 0.13 seconds on the three
 shapes tried, 5 to 37 per cent of the fit itself, where the analytic route
 is below the clock's own resolution. So a fit whose form carries the
 analytic Hessian refits nothing, and one that does not pays for its

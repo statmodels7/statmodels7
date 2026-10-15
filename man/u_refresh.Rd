@@ -26,7 +26,7 @@ u_refresh(
 
 \item{coef}{The coefficients at the penalized mode.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 
 \item{params, npar, offs, total}{The block bookkeeping.}
 
@@ -58,13 +58,14 @@ transposes under the trace, so with
 \eqn{A_a[i,j] = w_i\sum_b \ell_{ab,i}R_{ab}[i,j]},
 \deqn{\Delta u_c = -2\sum_{i,j}A_a[i,j]\,\partial X_a[i,j]/\partial\beta_c.}
 
-\strong{The derivative is asked of the term}, through
-\code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}}, and never differenced here.
-Two reasons, both measured. A term carries its own chain rule, the links
-on its parameters and a subformula's design; and a break-point column is a
-step function in its break-point, so a difference quotient of it diverges as
-the step shrinks and never converges. A term that does not implement the
-contraction inherits zeros, which is exactly right for a fixed design.
+The derivative is read from the term, through
+\code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}}, and is never differenced. A term
+carries its own chain rule, the links on its parameters and a subformula's
+design. A break-point column is a step function of its break-point, so a
+difference quotient of it diverges as the step shrinks. A term that does not
+implement the contraction inherits zeros, which is correct for a fixed
+design. A sharp \code{jump()} or \code{jseg()} returns zeros as well, its block being a
+working linearization with a frozen weight.
 }
 \seealso{
 \code{\link[=u_vector]{u_vector()}}, \code{\link[=refresh_amat]{refresh_amat()}},

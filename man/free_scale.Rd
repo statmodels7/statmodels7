@@ -22,10 +22,12 @@ link_slopes(hyper, idx)
 \item{M}{A Hessian on the parameter scale.}
 }
 \value{
-A vector, or a matrix.
+For \code{free_scale()} a vector, for \code{free_scale2()} a matrix, and for
+\code{link_slopes()} a list with the components \code{h1} and \code{h2}, the first and
+second derivatives of each hyperparameter's inverse link at its value.
 }
 \description{
-The diagonal chain rule each hyperparameter's own link induces, at first
-order for a gradient and at second order for a Hessian.
+The diagonal chain rule that each hyperparameter's own link induces, at
+first order for a gradient and at second order for a Hessian.
 }
 \keyword{internal}

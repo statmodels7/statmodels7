@@ -9,20 +9,23 @@ statmod_fitted_spec(spec, coef, design)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, the one the fit started from.}
 
-\item{coef}{A named list of coefficient vectors, the ones the fit reached.}
+\item{coef}{A named list of coefficient vectors, the coefficients at which
+the fit stopped.}
 
 \item{design}{The design at those coefficients, whose refresh state holds
 the terms to copy across.}
 }
 \value{
 A \code{\link[=StatmodSpec]{StatmodSpec()}} identical to \code{spec} except that each
-refreshable term is the object the fit left behind.
+refreshable term is the term held in the design's state and that
+\code{structural} holds the fitted parameters of a structural term, when the
+design carries one.
 }
 \description{
-Returns the specification with every refreshable term replaced by the one
-the fit arrived at. A break-point, a nonlinear parameter and the design
-block they imply are then read off the fitted object, and the
-specification a caller passed to \code{\link[=statmod]{statmod()}} no longer decides what
+Returns the specification with every refreshable term replaced by the term
+at which the fit arrived. A break-point, a nonlinear parameter and the
+design block they imply are then read off the fitted object, and the
+specification that a caller passed to \code{\link[=statmod]{statmod()}} no longer decides what
 \code{summary()}, \code{predict()} or \code{\link[modelterms7:seg_psi]{modelterms7::seg_psi()}} report.
 }
 \details{

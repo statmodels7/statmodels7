@@ -22,28 +22,29 @@
 #'
 #' # The hyperparameters are held too
 #'
-#' The refit runs the alternation ONCE at the hyperparameters the
-#' unrestricted fit arrived at, with no outer search. That makes the
-#' statistics built on it CONDITIONAL on the smoothing the data chose once,
-#' which is the honest reading of a penalized fit and is also what makes an
-#' interval by inversion affordable -- re-selecting the smoothing at every
-#' held value would put a whole outer search inside every step of a root
-#' find. A caller who wants the profiled version can refit by hand.
+#' The refit runs the alternation once at the hyperparameters of the
+#' unrestricted fit, with no outer search. The statistics built on it are
+#' therefore conditional on the smoothing that the data chose once. That is
+#' the reading that a penalized fit supports, because the penalty is a
+#' log-prior at the hyperparameters in force, and it keeps an interval by
+#' inversion affordable: re-selecting the smoothing at every held value would
+#' put a whole outer search inside every step of a root find. A profiled
+#' version requires refitting by hand.
 #'
-#' # What is refused
+#' # Coefficients that cannot be held
 #'
-#' A coefficient under a KINKED penalty -- a lasso, a SCAD, an MCP -- for two
-#' reasons that point the same way: that block is fitted by a coordinate
-#' descent, and [coord_fit()] does not read `held_coef` at all, so a hold
-#' there would be moved by the sweep without a word (measured: held at 3, the
-#' refit reports 2.7348); and at the kink the objective has no curvature, so
-#' the statistics have nothing to read and the null distribution of a
-#' coefficient a selection kept is a different problem. An ALIASED
-#' coefficient, which has no estimate to test. And a model carrying a
-#' structural term, whose contribution is a recursion's state rather than
-#' \eqn{X\beta} and which the hold does not reach.
+#' A coefficient under a kinked penalty (a lasso, a SCAD, an MCP) cannot be
+#' held, for two reasons. The block is fitted by a coordinate descent, which
+#' updates every coordinate of the block and cannot leave one at a held
+#' value, so that [coord_fit()] signals an error when a held coordinate lies
+#' in its block. And at the kink the objective has no curvature for the
+#' statistics to read, while the null distribution of a coefficient that a
+#' selection kept is a different problem. An aliased coefficient has no
+#' estimate to test. A model that carries a structural term cannot hold a
+#' coefficient either, because the contribution of the term is the state of a
+#' recursion and not \eqn{X\beta}, and the hold does not reach it.
 #'
-#' A coefficient under a penalty that IS twice differentiable is held like
+#' A coefficient under a penalty that is twice differentiable is held like
 #' any other: a smooth's linear column and its rotated coordinates, a ridge,
 #' a random effect. What such a fit means is stated at [statmod_stat_at()].
 #'
@@ -58,7 +59,8 @@
 #'   \describe{
 #'     \item{`coefficients`}{the restricted estimates, a named list.}
 #'     \item{`loglik`}{the log-likelihood there, unpenalized.}
-#'     \item{`objective`}{the penalized objective there.}
+#'     \item{`objective`}{the penalized objective there, the negative
+#'       log-likelihood plus the penalty, which the fit minimizes.}
 #'     \item{`score`}{the penalized score at the restricted point, a numeric
 #'       vector over the stacked coefficients. Its free entries are zero to
 #'       the tolerance; the held one is what the statistics read.}
@@ -73,9 +75,9 @@
 #'       [restricted_mode_error()], how far above its own mode the refit
 #'       stopped. It reads the information, so it costs one Hessian.}
 #'     \item{`labels`}{the stacked coefficient labels.}
-#'     \item{`converged`}{the inner optimizer's flag, a single logical.
-#'       Measured, it is anti-correlated with how well the point is located
-#'       -- see [restricted_mode_error()], which is the reading to prefer.}
+#'     \item{`converged`}{the inner optimizer's flag, a single logical. It
+#'       records whether a stopping rule fired and does not measure the
+#'       distance to the mode, which [restricted_mode_error()] measures.}
 #'   }
 #'
 #' @seealso [iwls_solve()], which drops the held coordinate from the system.
@@ -86,8 +88,7 @@ statmod_restrict <- function(fit, param, coefname, value) {
   # length and fails several frames down, inside the objective, on a names
   # assignment -- which names neither the argument nor the mistake
   if (!is.numeric(value) || length(value) != 1L || !is.finite(value)) {
-    stop("'value' is the single finite number the coefficient is held at.",
-         call. = FALSE)
+    stop("'value' must be a single finite number.", call. = FALSE)
   }
   spec0 <- fit@spec
   params <- spec0@distrib@params
@@ -118,13 +119,14 @@ statmod_restrict <- function(fit, param, coefname, value) {
                  coefname, param), call. = FALSE)
   }
   if (at %in% kinked_coords(spec0, design0)) {
-    stop(sprintf(paste0("'%s' is under a kinked penalty -- a lasso, a SCAD ",
-                        "or an MCP -- and\n  cannot be held. That block is ",
-                        "fitted by a coordinate descent, which does\n  not ",
-                        "read the hold, and at the kink the objective has ",
-                        "no curvature for\n  a statistic to read. A penalty ",
-                        "that is twice differentiable -- a ridge, a\n  ",
-                        "random effect, a smooth -- is held like any other ",
+    stop(sprintf(paste0("'%s' is under a kinked penalty (a lasso, a SCAD ",
+                        "or an MCP) and\n  cannot be held. That block is ",
+                        "fitted by a coordinate descent, which\n  updates ",
+                        "every coordinate of the block and cannot leave one ",
+                        "at a held value,\n  and at the kink the objective ",
+                        "has no curvature for a statistic to read.\n  A ",
+                        "penalty that is twice differentiable (a ridge, a ",
+                        "random effect,\n  a smooth) is held like any other ",
                         "coefficient."), coefname), call. = FALSE)
   }
 
@@ -172,34 +174,19 @@ statmod_restrict <- function(fit, param, coefname, value) {
 #' How Far Above Its Mode a Restricted Fit Stopped
 #'
 #' @description
-#' \eqn{\tfrac12 g'K^{-1}g} over the FREE coordinates of a restricted fit:
-#' how much of the penalized objective is still on the table at the point
-#' [statmod_restrict()] returned, in log-likelihood units.
+#' \eqn{\tfrac12 g'K^{-1}g} over the free coordinates of a restricted fit:
+#' the decrease of the penalized objective that a Newton step from the point
+#' returned by [statmod_restrict()] would predict, in log-likelihood units.
 #'
 #' @details
-#' It is [inner_mode_error()]'s question asked of a restricted fit, and it
-#' is asked for the reason statmodels7 0.81.0 established: the inner
-#' optimizer's flag says whether a stopping rule fired, which is a boolean
-#' about a threshold on a score whose size depends on the model, while
-#' whether a point is at its mode is a matter of distance and has a natural
-#' scale.
-#'
-#' The two come apart here as they do there, and they come apart BACKWARDS:
-#' the flag rejects the points that are located best. Measured on `y ~ x`
-#' with a Poisson response at \eqn{n = 200}, holding the slope at nineteen
-#' values from 0.6 to 1.5, all nineteen are at their mode -- the worst at
-#' 1.04e-11 against a limit of 1e-03 -- and fifteen report the flag. The four
-#' it rejects are **the four best-located of the nineteen**, every one of
-#' them near 1e-23 where the fifteen it accepts run out to 1.04e-11. On a
-#' gaussian smooth holding `s(x).lin` at thirteen values it is the two
-#' best-located of the thirteen, at 1.31e-12 against a worst of 6.67e-09.
-#'
-#' The mechanism is that a stopping rule reads a CHANGE and a distance reads
-#' a POINT: where the refit lands on its mode in one step the objective does
-#' not move between iterations, the objective-stall guard fires, and the run
-#' is labelled stopped rather than converged. The better the point, the
-#' likelier the flag denies it, which is why a warning printed off the flag
-#' would fire loudest where there is least to warn about.
+#' It is the quantity that [inner_mode_error()] computes inside a search,
+#' applied to a restricted fit. The inner optimizer's flag records whether a
+#' stopping rule fired, which is a boolean about a threshold on a score whose
+#' size depends on the model, whereas whether a point is at its mode is a
+#' matter of distance and has a natural scale. A stopping rule reads a change
+#' in the objective and this quantity reads the point, so the two need not
+#' agree, and the print method of [StatmodTest()] reads the mode error and
+#' not the flag.
 #'
 #' The held coordinate is excluded because it is not free: its score is the
 #' quantity Rao's statistic reads and does not vanish under the restriction.
@@ -208,8 +195,9 @@ statmod_restrict <- function(fit, param, coefname, value) {
 #' @param information Its penalized information, all coordinates.
 #' @param at The position of the held coordinate.
 #'
-#' @return A single number, or `NA` where the free block could not be
-#'   inverted there -- which is itself a reason to doubt the point.
+#' @return A single number, or `NA` where the score on the free coordinates
+#'   is not finite, where there is no free coordinate, or where the
+#'   information on the free coordinates cannot be inverted.
 #'
 #' @seealso [mode_error_limit()], the limit it is read against, and
 #'   [inner_mode_error()], the same reading inside a search.
@@ -232,26 +220,25 @@ restricted_mode_error <- function(score, information, at) {
 #' everywhere -- a lasso, a SCAD, an MCP -- as an integer vector.
 #'
 #' @details
-#' It is the question [statmod_blocks()] asks to decide which of the two
-#' fitting schemes a block goes to, asked of the coordinates instead of the
-#' blocks, and it reads the same predicate ([penalty_has_kink()]) so the two
-#' cannot disagree. A penalty that is twice differentiable contributes
-#' nothing, which is what makes a ridge, a random effect and a smooth
-#' testable.
+#' It applies to the coordinates the test that [statmod_blocks()] applies to
+#' the blocks to decide which of the two fitting schemes a block goes to, and
+#' it reads the same predicate ([penalty_has_kink()]), so that the two cannot
+#' disagree. A penalty that is twice differentiable contributes nothing, so
+#' that a ridge, a random effect and a smooth are testable.
 #'
-#' A penalty's own enumeration is what answers, so a partial penalty -- one
-#' covering some of a term's coordinates and not the rest -- names only what
-#' it covers, and a term is not classified as a whole. A structural term's
-#' penalty covers positions among the TERM'S own parameters rather than the
-#' design's, and contributes nothing here.
+#' The enumeration of each penalty decides, so a partial penalty (one
+#' covering some of a term's coordinates and not the rest) names only what it
+#' covers, and a term is not classified as a whole. The penalty of a
+#' structural term covers positions among the term's own parameters and not
+#' among the design's, and contributes nothing here.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design Its design.
 #'
 #' @return An integer vector of stacked positions, possibly empty.
 #'
-#' @seealso [statmod_penalized()], the enumeration it reads, and
-#'   [statmod_blocks()], which asks the same question of a whole block.
+#' @seealso [statmod_penalized()], the enumeration that it reads, and
+#'   [statmod_blocks()], which answers the same question for a whole block.
 #'
 #' @keywords internal
 kinked_coords <- function(spec, design) {
@@ -272,7 +259,7 @@ kinked_coords <- function(spec, design) {
 #' the hypothesis that one coefficient equals `value`, with its p-value.
 #'
 #' @details
-#' All four read the PENALIZED objective, which is the function the fit
+#' All four read the penalized objective, which is the function the fit
 #' maximizes. Writing \eqn{\ell_p(\beta) = \ell(\beta) - \rho(\beta;\theta)}
 #' for it, \eqn{\hat\beta} for the unrestricted estimates, \eqn{\tilde\beta}
 #' for those with \eqn{\beta_j} held at \eqn{b}, \eqn{U = \partial\ell_p} for
@@ -282,50 +269,44 @@ kinked_coords <- function(spec, design) {
 #' \deqn{S = U_j(\tilde\beta)^2 \, [K(\tilde\beta)^{-1}]_{jj}, \qquad
 #' T = U_j(\tilde\beta)\,(\hat\beta_j - b),}
 #' each compared with a \eqn{\chi^2_1}. Where the model carries no penalty
-#' \eqn{\ell_p} IS the log-likelihood and these are the classical four.
+#' \eqn{\ell_p} is the log-likelihood and these are the classical four.
 #'
-#' The score statistic's general form is \eqn{U'K^{-1}U}, which reduces to
+#' The score statistic has the general form \eqn{U'K^{-1}U}. It reduces to
 #' the product above because every other component of \eqn{U} vanishes at the
-#' restricted maximum -- and that is worth knowing rather than assuming,
-#' since it is what says the restricted fit converged.
+#' restricted maximum, which also indicates that the restricted fit has
+#' converged.
 #'
-#' # Why the penalized objective and not the likelihood
+#' # The penalized objective and the likelihood
 #'
-#' Reading the likelihood alone would make the four incoherent with one
-#' another and the second of them not a ratio at all. \eqn{\tilde\beta}
-#' maximizes \eqn{\ell_p} under the restriction and not \eqn{\ell}, so
-#' \eqn{\ell(\tilde\beta)} can exceed \eqn{\ell(\hat\beta)} and the
-#' difference come out NEGATIVE -- measured on a smooth, holding
-#' `s(z).z3` at two values either side of its estimate gives -0.0379 and
-#' -0.1075 where \eqn{\ell_p} gives +0.0054 and +0.1355. The other three
-#' were already reading the penalized objective, \eqn{U} and \eqn{K} being
-#' its gradient and its curvature and the Wald variance being
-#' \eqn{(H+S)^{-1}}, so one table would have carried two different tests.
+#' The likelihood ratio is taken on \eqn{\ell_p} and not on \eqn{\ell}.
+#' \eqn{\tilde\beta} maximizes \eqn{\ell_p} under the restriction and not
+#' \eqn{\ell}, so \eqn{\ell(\tilde\beta)} can exceed
+#' \eqn{\ell(\hat\beta)} and the difference of log-likelihoods can be
+#' negative. The other three statistics read the penalized objective as well:
+#' \eqn{U} and \eqn{K} are its gradient and its curvature, and the Wald
+#' variance is \eqn{(H+S)^{-1}} under `type = "bayesian"`.
 #'
-#' What it means for a SHRUNK coordinate is the reading
-#' [vcov.StatmodFit()] already gives it under `type = "bayesian"`: the
-#' penalty is a log-prior, so \eqn{\ell_p} is a log posterior at the
-#' hyperparameters in force and the interval by inversion is the set the
-#' posterior does not reject, conditional on them. Nothing new is claimed;
-#' the claim the Wald interval on such a row already carries is extended to
-#' the other three. Measured, the two agree as they must: on a smooth at
-#' \eqn{n = 300} the inverted interval and the Wald one differ by 8.7e-04
-#' on `s(z).z1`, 1.1e-03 on an unpenalized covariate and 2.5e-03 on the
-#' smooth's linear column, which is second-order agreement, and what the
-#' inversion adds is the asymmetry.
+#' For a shrunk coordinate this is the reading that [vcov.StatmodFit()] gives
+#' under `type = "bayesian"`: the penalty is a log-prior, so \eqn{\ell_p} is
+#' a log posterior at the hyperparameters in force, and the interval by
+#' inversion is the set that the posterior does not reject, conditional on
+#' them. The interpretation that the Wald interval on such a row carries
+#' therefore extends to the other three statistics. On a smooth the inverted
+#' interval and the Wald one agree to second order, and the inversion adds
+#' the asymmetry.
 #'
-#' # What separates them
+#' # Differences between the statistics
 #'
-#' Wald reads the unrestricted fit alone and needs no refit, which is why it
-#' is the one every summary prints and also the one that is NOT invariant to
-#' how the parameter is written: a reparametrization moves it and moves none
-#' of the other three. It is also the one that loses power against a distant
-#' alternative, the Hauck-Donner effect, the curvature being read at
-#' \eqn{\hat\beta} rather than under the null.
+#' The Wald statistic reads the unrestricted fit alone and needs no refit,
+#' which is why the summary reports it by default. It depends on how the
+#' parameter is written: a nonlinear reparametrization of the coefficient
+#' changes it, whereas the likelihood ratio, a difference of objective values
+#' at the same two points, is not changed. The Wald statistic also loses power
+#' against a distant alternative (the Hauck-Donner effect), the curvature
+#' being read at \eqn{\hat\beta} rather than under the null.
 #'
-#' The gradient statistic needs the restricted fit but NO matrix inversion at
-#' all, which is its whole point: it is the score contracted with the
-#' distance between the two fits.
+#' The gradient statistic needs the restricted fit and no matrix inversion:
+#' it is the score contracted with the distance between the two fits.
 #'
 #' @param fit A [StatmodFit()].
 #' @param param,coefname Which coefficient, as in [statmod_restrict()].
@@ -336,16 +317,16 @@ kinked_coords <- function(spec, design) {
 #' @param mode_error Whether to read how far above its mode the restricted
 #'   fit stopped ([restricted_mode_error()]). `FALSE` by default, because it
 #'   costs one Hessian where the likelihood ratio and the gradient statistic
-#'   need none, and the two loops that call this in quantity --
-#'   [summary.StatmodFit()], one row at a time, and [statmod_invert()], five
-#'   to seven times per interval -- do not read it.
+#'   need none. [summary.StatmodFit()], which calls this once per row, and
+#'   [statmod_invert()], which calls it once per evaluation of the statistic,
+#'   do not read it.
 #' @param objective0 The penalized objective at the unrestricted joint mode,
 #'   as [joint_objective()] returns it, for a caller that reads the
 #'   likelihood ratio many times on one fit. `NULL` computes it here.
 #'
 #' @return A list with `test`, `statistic`, `df`, `p.value`, `converged` --
 #'   `NA` for the Wald statistic and the restricted fit's flag for the other
-#'   three -- and `mode_error`, `NA` unless it was asked for.
+#'   three -- and `mode_error`, `NA` unless it is requested.
 #'
 #' @seealso [statmod_restrict()], which the three restricted statistics read.
 #'
@@ -423,18 +404,17 @@ statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
 #' unrestricted side has to be read at the same kind of point, or the
 #' statistic compares two fits whose other coefficients were chosen by
 #' different rules. Where the outer criterion estimated some coefficients
-#' itself -- by default, [reml()] estimates a dispersion's unpenalized
-#' coefficients on the criterion ([marginal_coords()]) -- the point the fit
-#' returned is not the joint mode, and `fit@objective` is not its minimum.
-#' Measured on a gaussian linear regression at \eqn{n = 40}, differencing
-#' against it gave a likelihood ratio of 1.0458 against the 1.1643 that
-#' [stats::lm()] gives, and -0.118 at the estimate itself.
+#' itself (by default [reml()] and [ml()] estimate on the criterion the
+#' unpenalized coefficients of every parameter but the first, see
+#' [marginal_coords()]), the point that the fit returned is not the joint
+#' mode, and `fit@objective` is not its minimum. A likelihood ratio
+#' differenced against `fit@objective` then contains the difference between
+#' the objective at the fitted point and at the joint mode.
 #'
 #' The full model is therefore refitted with nothing held, from the fitted
 #' coefficients, which are already close to the joint mode, at the fitted
-#' hyperparameters. Where the criterion estimated nothing the fit IS at the
-#' joint mode and `fit@objective` is returned unchanged, so every such
-#' statistic is what it was.
+#' hyperparameters. Where the criterion estimated nothing, the fit is at the
+#' joint mode and `fit@objective` is returned unchanged.
 #'
 #' @param fit A [StatmodFit()].
 #'
@@ -480,30 +460,23 @@ joint_objective <- function(fit) {
 #'
 #' `converged` is the inner optimizer's flag: whether a stopping rule fired,
 #' a boolean about a threshold on a score whose size depends on the model.
-#' `mode_error` is [restricted_mode_error()], how much of the penalized
-#' objective is still on the table at the point the refit returned, in
-#' log-likelihood units against [mode_error_limit()] -- the rule statmodels7
-#' 0.81.0 established for exactly this question.
-#'
-#' The flag is not merely a false negative: it is anti-correlated with the
-#' quality of the point, because a stopping rule reads a change and a
-#' distance reads a point. Measured on `y ~ x` with a Poisson response at
-#' \eqn{n = 200} over nineteen held values, all nineteen are at their mode
-#' and the four the flag rejects are the four best-located of them. See
+#' `mode_error` is [restricted_mode_error()], the decrease of the penalized
+#' objective that a Newton step from the point returned by the refit would
+#' predict, in log-likelihood units, judged against [mode_error_limit()].
+#' The two need not agree, because a stopping rule reads a change in the
+#' objective whereas the mode error reads the distance to the mode. See
 #' [restricted_mode_error()].
 #'
-#' A statistic read off a refit that stopped short is the value at wherever
-#' it stopped, and `print()` says so -- reading `mode_error`, so that it says
-#' it where it is true.
+#' A statistic computed from a refit that stopped short is the value at the
+#' point where the refit stopped. `print()` reports this, reading
+#' `mode_error`.
 #'
-#' The class exists rather than a bare list because everything a caller of
-#' this toolkit receives is an object with declared properties. R's own
-#' tests return an `htest`, which is a list with a class attribute and no
-#' contract; nothing here can validate one, and a reader cannot ask it what
-#' it carries.
+#' The class declares its properties, as every object that this toolkit
+#' returns does, whereas the `htest` returned by the tests of base R is a list
+#' with a class attribute and no declared structure, so that it cannot be
+#' validated.
 #'
-#' @param test Which of the four statistics, as [statmod_test()] was asked
-#'   for it.
+#' @param test Which of the four statistics was computed.
 #' @param statistic Its value, compared with a \eqn{\chi^2_1}.
 #' @param df One, always.
 #' @param p.value The upper tail of that \eqn{\chi^2_1}.
@@ -524,7 +497,8 @@ joint_objective <- function(fit) {
 #' dd <- data.frame(x = seq(-1, 1, length.out = 40))
 #' dd$y <- rpois(40, exp(0.3 + dd$x))
 #' fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
-#' S7::S7_inherits(statmod_test(fit, "mu", "x", 1), StatmodTest)
+#' S7::S7_inherits(statmod_test(fit, param = "mu", coefname = "x", value = 1),
+#'                 StatmodTest)
 #'
 #' @name StatmodTest-class
 #' @aliases StatmodTest
@@ -556,7 +530,9 @@ StatmodTest <- S7::new_class("StatmodTest",
 #'
 #' @description
 #' The statistic, its degrees of freedom and the p-value on one line, under
-#' a title naming the test, in the layout R uses for a hypothesis test.
+#' a title naming the test, in the layout R uses for a hypothesis test. A
+#' note follows when the restricted refit stopped above its mode, by more than
+#' [mode_error_limit()], or when its mode error could not be read.
 #'
 #' @param x A [StatmodTest()].
 #' @param digits Significant digits.
@@ -588,11 +564,14 @@ print.StatmodTest <- function(x, digits = 4L, ...) {
   # `converged` is NA exactly there
   refitted <- length(x@converged) == 1L && !is.na(x@converged)
   me <- if (length(x@mode_error) == 1L) x@mode_error else NA_real_
-  if (refitted && !isTRUE(me <= mode_error_limit())) {
+  if (refitted && is.na(me)) {
+    cat("\nthe mode error of the restricted fit could not be read,\n",
+        "  so the statistic is the value at wherever the refit stopped\n",
+        sep = "")
+  } else if (refitted && me > mode_error_limit()) {
     cat("\nthe restricted fit stopped above its own mode",
-        if (is.na(me)) "" else
-          sprintf(" (by %s, against %s)", format(me, digits = digits),
-                  format(mode_error_limit(), digits = digits)),
+        sprintf(" (by %s, against %s)", format(me, digits = digits),
+                format(mode_error_limit(), digits = digits)),
         ",\n  so the statistic is the value at wherever it stopped\n",
         sep = "")
   }
@@ -608,24 +587,24 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #' statistic, the likelihood ratio, Rao's score or Terrell's gradient.
 #'
 #' @details
-#' `summary(fit, test =)` reports the same four statistics for every row of
-#' the coefficient tables, and always against zero. This tests ONE
-#' coefficient against ANY value, which is the question a summary cannot be
-#' asked: whether a slope is one, whether an elasticity is unity, whether a
-#' coefficient matches a value fixed outside the data.
+#' `summary(fit, test =)` reports one of the four statistics for the rows of
+#' the coefficient tables that can be held (not a row under a kinked penalty,
+#' not an aliased one, and none for a model with a structural term), always
+#' against zero. This function tests one coefficient against any value, which
+#' is a question that a summary cannot answer: whether a slope is one, whether
+#' an elasticity is unity, whether a coefficient matches a value fixed outside
+#' the data.
 #'
-#' What the statistics are, what they read and what they cost is at
-#' [statmod_stat_at()]; the restricted fit the last three are built on is
-#' [statmod_restrict()], and the interval obtained by inverting one is
+#' The statistics, the quantities that they read and their cost are described
+#' at [statmod_stat_at()]. The last three are built on the restricted fit of
+#' [statmod_restrict()], and inverting one gives the interval of
 #' [confint.StatmodFit()].
 #'
-#' Reading one row costs one restricted refit, where `summary(test =)` costs
-#' one per row: measured on a Poisson fit of twenty-five covariates, one
-#' statistic is 0.010 s against the summary's 0.220 s over twenty-six rows.
-#' It also reads the refit's mode error, which is one Hessian -- 63 per cent
-#' of the refit on that fit and 2.3 per cent on a penalized smooth, and none
-#' at all for Rao's score, which reads the same matrix anyway. The summary
-#' and the interval do not pay it.
+#' Reading one row costs one restricted refit, whereas `summary(test =)`
+#' costs one per row. The function also reads the mode error of the refit,
+#' which costs one Hessian of the restricted fit; the Rao score statistic
+#' reads that matrix anyway, so that it adds no cost there. The summary and
+#' the interval do not read the mode error.
 #'
 #' @param fit A [StatmodFit()].
 #' @param param,coefname Which coefficient, as in [statmod_restrict()]:
@@ -638,7 +617,7 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #'
 #' @return A [StatmodTest()].
 #'
-#' @seealso [summary.StatmodFit()] for every row against zero,
+#' @seealso [summary.StatmodFit()] for the rows that can be held, against zero,
 #'   [confint.StatmodFit()] for the interval a test inverts.
 #'
 #' @examples
@@ -646,9 +625,9 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #' dd <- data.frame(x = rnorm(200))
 #' dd$y <- rpois(200, exp(0.3 + dd$x))
 #' fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
-#' ## the summary asks whether the slope is zero; this asks whether it is one
-#' statmod_test(fit, "mu", "x", 1, "lr")
-#' statmod_test(fit, "mu", "x", 0, "lr")
+#' ## the summary tests whether the slope is zero; this tests whether it is one
+#' statmod_test(fit, param = "mu", coefname = "x", value = 1, test = "lr")
+#' statmod_test(fit, param = "mu", coefname = "x", value = 0, test = "lr")
 #'
 #' @export
 statmod_test <- function(fit, param, coefname, value = 0, test = "wald",
@@ -679,16 +658,19 @@ statmod_test <- function(fit, param, coefname, value = 0, test = "wald",
 #' @details
 #' An interval by inversion is \eqn{\{b : T(b) \le \chi^2_{1,\alpha}\}}, and
 #' it is not symmetric about the estimate unless the statistic is a parabola
-#' in \eqn{b} -- which the Wald statistic is BY CONSTRUCTION, the curvature
-#' being read once at \eqn{\hat\beta}, and which the other three are not.
-#' That asymmetry is the whole reason to invert one of the others: it follows
-#' the likelihood's own shape rather than a quadratic fitted at its top.
+#' in \eqn{b}. The Wald statistic is a parabola by construction, the
+#' curvature being read once at \eqn{\hat\beta}, and the other three
+#' statistics are not. The asymmetry is the reason to invert one of the other
+#' three: the interval follows the shape of the likelihood and not a quadratic
+#' fitted at its maximum.
 #'
-#' The search starts from the Wald interval, widens by a factor of 1.6 until
-#' the statistic exceeds its critical value, and then bisects. Each
-#' evaluation is one restricted refit, warm-started at the unrestricted
-#' estimates and run at the fitted hyperparameters, so an interval costs a
-#' few dozen inner fits and no outer search at all.
+#' The search starts at the half-width of the Wald interval and widens the
+#' distance from the estimate by a factor of 1.6, at most `maxit` times on
+#' each side, until the statistic exceeds its critical value. It then locates
+#' the crossing with [stats::uniroot()] (Brent's method) at tolerance 1e-7.
+#' Each evaluation is one restricted refit, warm-started at the unrestricted
+#' estimates and run at the fitted hyperparameters, so the interval requires
+#' no outer search.
 #'
 #' @param fit A [StatmodFit()].
 #' @param param,coefname Which coefficient, as in [statmod_restrict()].
@@ -698,9 +680,10 @@ statmod_test <- function(fit, param, coefname, value = 0, test = "wald",
 #'   statistic reads.
 #' @param maxit How many widenings to try on each side before giving up.
 #'
-#' @return A numeric vector of two, `lower` and `upper`. An end the search
-#'   could not bracket is `NA`, which is what an unbounded interval looks
-#'   like and is reported rather than guessed at.
+#' @return A numeric vector of two, `lower` and `upper`. An end that the
+#'   search could not bracket within `maxit` widenings, or at which the
+#'   statistic could not be evaluated, is `NA`; both ends are `NA` when the
+#'   standard error of the coefficient is not finite and positive.
 #'
 #' @seealso [statmod_stat_at()], the statistic being inverted.
 #'
@@ -768,17 +751,18 @@ statmod_invert <- function(fit, param, coefname, level = 0.95, test = "lr",
 #' structural term.
 #'
 #' @details
-#' It is the enumeration [statmod_restrict()] refuses one coordinate at a
-#' time, asked once for the whole vector instead. A caller reporting a table
-#' needs it that way round, since each restricted statistic is a refit and an
-#' interval by inversion is a few dozen: a row that cannot be tested has to
-#' be recognized before it is paid for rather than after.
+#' It applies to the whole vector the enumeration that [statmod_restrict()]
+#' applies to one coordinate at a time, signaling an error for a coordinate
+#' that cannot be held. A caller reporting a table needs it in this form,
+#' since each restricted statistic is a refit and an interval by inversion
+#' requires many, so that a row that cannot be tested has to be recognized
+#' before its refit is computed and not after.
 #'
-#' A coordinate under a penalty that is twice differentiable IS included --
+#' A coordinate under a penalty that is twice differentiable is included:
 #' a smooth's linear column and its rotated coordinates, a ridge, a random
-#' effect -- and the restricted fit holds it exactly as it holds an
-#' unpenalized one, [fit_smooth()] enforcing the hold in the solve. Only a
-#' kinked penalty is excluded, for the reasons [statmod_restrict()] gives.
+#' effect. The restricted fit holds it exactly as it holds an unpenalized
+#' one, [fit_smooth()] enforcing the hold in the solve. Only a kinked penalty
+#' is excluded, for the reasons that [statmod_restrict()] gives.
 #'
 #' @param fit A [StatmodFit()].
 #' @param spec,design The specification and its design, where the caller has
@@ -787,7 +771,7 @@ statmod_invert <- function(fit, param, coefname, level = 0.95, test = "lr",
 #' @return An integer vector of stacked positions, possibly empty, named by
 #'   the labels [coef_labels()] gives them.
 #'
-#' @seealso [statmod_restrict()], which refuses the same coordinates one at a
+#' @seealso [statmod_restrict()], which rejects the same coordinates one at a
 #'   time, and [kinked_coords()].
 #'
 #' @keywords internal

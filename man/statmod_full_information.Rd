@@ -20,8 +20,10 @@ statmod_full_information_impl(spec, coef, design, params, ev)
 already in hand at the caller.}
 }
 \value{
-A square matrix over the coefficients and the term's parameters,
-or the ordinary information where there is no structural term.
+A square matrix over the coefficients followed by the term's free
+parameters (a level held because an intercept carries it leaves the
+matrix), or the ordinary observed information where there is no
+structural term.
 }
 \description{
 The information of a model carrying a structural filter, over the
@@ -30,9 +32,10 @@ recursion's own curvature in it.
 }
 \details{
 The gradient of such a model is exact already, through
-\code{\link[modelterms7:term_adjoint]{modelterms7::term_adjoint()}}. Its curvature is not: the matrix
-the scoring step inverts is assembled as though the level were an offset,
-which is a legitimate scoring matrix and is not the information. Writing
+\code{\link[modelterms7:term_adjoint]{modelterms7::term_adjoint()}}. The matrix that the scoring step inverts is
+assembled as though the level were an offset; it serves as a scoring
+matrix and differs from the observed information, which this function
+computes. Writing
 \eqn{u} for the coefficients followed by the term's parameters on the
 unconstrained scale, \eqn{V_{q,t}} for the derivative of equation
 \eqn{q}'s predictor in \eqn{u}, and \eqn{E_t} for the second derivative
@@ -46,7 +49,7 @@ Only the equation carrying the filter has a \eqn{V} that is not its own
 design: there it is the forward Jacobian of the recursion, which
 \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} returns beside the contracted
 \eqn{E}. The third derivatives the second sum needs are
-\pkg{distributions7}'s, in closed form for every family.
+\pkg{distributions7}'s, from \code{\link[distributions7:distrib_deriv3]{distributions7::distrib_deriv3()}}.
 
 The term's parameters are the last columns, which is the convention
 \code{term_curvature()} shares with its caller.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{statmod_regime_information}
 \alias{statmod_regime_information}
-\title{The Observed Information of a Model Carrying a Regime Term}
+\title{The Observed Information of a Model Carrying a Mixture Term}
 \usage{
 statmod_regime_information(spec, ev, design, npar, offs, nb, n, w)
 }
@@ -24,13 +24,14 @@ term's own free parameters.
 }
 \description{
 The observed information over the coefficients of every equation together
-with the regime term's own parameters, from the exact Hessian of the
+with the own parameters of a structural term of the likelihood shape (a
+regime term or a marginal break-point term), from the exact Hessian of the
 mixed log-likelihood.
 }
 \details{
 The matrix \code{\link[=statmod_information_at]{statmod_information_at()}} assembles for a mixture is
 the complete-data information, the ordinary one averaged over the
-smoothed states. That is a legitimate scoring matrix and it is not the
+smoothed states. It serves as a scoring matrix and differs from the
 observed information: by Louis's missing-information principle the two
 differ by the conditional variance of the complete-data score, which is
 positive semidefinite, so the complete-data matrix is the larger and a
@@ -38,14 +39,13 @@ standard error read off it is too small.
 
 \code{\link[modelterms7:term_hessian]{modelterms7::term_hessian()}} returns the exact Hessian by
 propagating first and second derivatives through the same scaled forward
-recursion that computes the likelihood. What this function supplies is
-the model's side of that contract: how each equation's unknowns reach
-each predictor, and the family's first and second derivatives at the
-predictor each regime shifts to.
+recursion that computes the likelihood. This function supplies the part of
+the calculation that belongs to the model: how each equation's unknowns
+reach each predictor, and the family's first and second derivatives at the
+predictor to which each component shifts.
 
 Unlike the filter's, these derivatives cannot be looked up from a single
-evaluation: a regime shifts the predictor by a level of its own, so the
-family is evaluated once per regime, vectorized over observations. That
-is the same property that made the forward recursion compilable.
+evaluation: a component shifts the predictor by a level of its own, so the
+family is evaluated once per component, vectorized over observations.
 }
 \keyword{internal}

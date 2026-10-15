@@ -21,18 +21,18 @@ rank. The \verb{k x k} identity for a proper penalty.
 }
 \description{
 Returns an orthonormal basis of the directions a penalty constrains, which
-are the ones \code{\link[=ml]{ml()}} integrates over and \code{\link[=reml]{reml()}} would integrate anyway.
+are the ones \code{\link[=ml]{ml()}} integrates over and \code{\link[=reml]{reml()}} integrates together with
+the others.
 }
 \details{
 A proper penalty constrains every direction, so the basis is the identity
-and \code{\link[penalties7:is_proper]{penalties7::is_proper()}} is all that has to be asked. A penalty with
-a null space supplies it through
+and \code{\link[penalties7:is_proper]{penalties7::is_proper()}} is the only function that is called. A
+penalty with a null space supplies it through
 \code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}}, and the range basis is the orthogonal
 complement.
 
-A penalty answering neither question is \strong{rejected by name}. Integrating
-over a subspace guessed at would give a criterion that looks like a
-number and is not one.
+A penalty that answers neither is rejected by name, because integrating
+over a guessed subspace would not give the marginal likelihood.
 }
 \seealso{
 \code{\link[=integrated_basis]{integrated_basis()}}, which assembles these blockwise.

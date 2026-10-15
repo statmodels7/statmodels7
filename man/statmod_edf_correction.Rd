@@ -26,31 +26,34 @@ statmod_edf_correction(
 
 \item{method}{The outer method that estimated them, or \code{NULL}.}
 
-\item{expected}{Whether the information is the expected one. Not read
-where the model carries a filter, whose information is observed.}
+\item{expected}{Whether the information \eqn{H} is the expected one. Not
+read where the model carries a filter, whose information is observed. The
+caller passes the information that the fit used, so that \eqn{V_\beta},
+\eqn{H} and the criterion's Hessian read one information.}
 
 \item{approx}{The approximation for the expected information. Not read
 where the model carries a filter.}
 
-\item{pinned}{The coordinates the fit left out of the criterion's
+\item{pinned}{The coordinates that the fit left out of the criterion's
 determinant, as it records them in \code{methods$pinned}.}
 }
 \value{
-A list with \code{total}, the scalar correction, \code{per}, one entry per
-penalty key, and \code{n_hyper}, how many hyperparameters were estimated.
-Zero throughout where none was; a zero \code{total} beside a positive
-\code{n_hyper} means the curvature could not be read, and a caller
-reporting to a reader has to tell the two apart.
+A list with \code{total}, the scalar correction, \code{per}, one entry for
+each parameter and term, and \code{n_hyper}, the number of hyperparameters that
+were estimated. \code{per} uses the diagonal of \eqn{V_\theta} alone, so its
+sum differs from \code{total} when the estimated hyperparameters are
+correlated. The total and \code{n_hyper} are zero and \code{per} is empty where no
+hyperparameter was estimated. A zero \code{total} beside a positive \code{n_hyper}
+means that the curvature could not be read.
 }
 \description{
 The amount by which \eqn{\mathrm{tr}[(H+S)^{-1}H]} understates the
 complexity of a fit whose hyperparameters were themselves estimated.
 }
 \details{
-The ordinary effective degrees of freedom read the smoothing parameters
-as though they were known, and they were not: they were chosen from the
-same data. Propagating their uncertainty into the coefficients gives the
-corrected Bayesian covariance
+The ordinary effective degrees of freedom treat the smoothing parameters as
+known, although they were chosen from the same data. Propagating their
+uncertainty into the coefficients gives the corrected Bayesian covariance
 
 \deqn{V' = V_\beta + J V_\theta J^\top, \qquad
   J = \partial\hat\beta/\partial\theta,}
@@ -60,55 +63,50 @@ the implicit function theorem at the penalized mode: differentiating
 \eqn{\partial(-\ell + \rho)/\partial\beta = 0} in the hyperparameter
 gives \eqn{(H+S)J_k = -\partial^2\rho/\partial\beta\,\partial\theta_k},
 whose right-hand side is \pkg{penalties7}'s \code{penalty_cross()}.
-\eqn{V_\theta} is the inverse of the outer criterion's own Hessian,
-which \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} returns, negated because that
-criterion is a maximand.
+\eqn{V_\theta} is the inverse of the negative of the outer criterion's
+Hessian, which \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} returns; the negative is taken
+because the criterion is maximized. The Hessian is that of the criterion
+the fit maximized, so for \code{\link[=ml]{ml()}} the determinant spans the range space of
+the penalty (\code{\link[=integrated_basis]{integrated_basis()}}).
 
-Everything is on the hyperparameter's link scale, which is where the
-outer criterion optimizes and therefore the only scale on which its
-Hessian is a variance.
+Everything is on the hyperparameter's link scale, which is the scale on
+which the outer criterion is optimized and therefore the only scale on which
+its Hessian is a variance.
 
-\strong{Against mgcv.} This is the first of the two terms mgcv sums into
-\code{edf2}, and it agrees with mgcv's to about 3e-4 on a univariate
-smooth once the difference between the two bases is allowed for. mgcv
-adds a second term for the Gaussian scale, which it profiles out of the
-fit and whose uncertainty it must therefore add back; here every
-distribution parameter carries its own equation and its own coefficients,
-so that uncertainty is already inside \eqn{H}. The residual difference is
-measured at 0.16, 0.10 and 0.05 effective parameters at n = 200, 400 and
-2000, falling with the sample size.
+\strong{Relation to mgcv.} The correction corresponds to the term of the
+effective degrees of freedom \code{edf2} of mgcv that arises from the uncertainty
+of the smoothing parameters (Wood, Pya and Safken, 2016). The scale of a
+Gaussian response is a distribution parameter with its own coefficients here,
+so its uncertainty is part of \eqn{H} and needs no separate term.
 
-\strong{Where it does not apply.} A kinked penalty has no hyperparameter
-the outer criterion estimates, \code{\link[=outer_hyper_index]{outer_hyper_index()}} skipping it, so
-there is nothing to propagate and the correction is zero. That is
-not an approximation: the map from the hyperparameter to the penalized
-mode turns a corner whenever a coefficient joins or leaves the active
-set, and a delta method needs a derivative that does not exist there.
+\strong{Where it does not apply.} The function returns zero, with \code{n_hyper} zero,
+for every outer criterion other than \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, including \code{\link[=aic]{aic()}}
+and \code{\link[=bic]{bic()}} used for a smooth penalty. A kinked penalty has no hyperparameter
+that the outer criterion estimates, because \code{\link[=outer_hyper_index]{outer_hyper_index()}} skips it,
+so there is nothing to propagate and the correction is zero. The map from
+the hyperparameter to the penalized mode turns a corner whenever a
+coefficient joins or leaves the active set, and a delta method needs a
+derivative that does not exist there.
 
-\strong{A model carrying a filter.} There the mode moves in the JOINT vector,
-the coefficients followed by the structural term's own parameters, which
-is what the criterion's determinant spans. A penalty over those
-parameters is a column of no design, so read on the coefficients alone
-\code{\link[=hyper_mode_cross]{hyper_mode_cross()}} skips it and the mode moves by nothing in exactly
-the coordinates that penalty shrinks. Measured on a converged filter
-with a penalized loading over ten groups of forty, the correction on the
-coefficients was EXACTLY 0 against 1.108889 on the joint vector, a
-quarter of that model's whole effective count of 4.4976, moving cAIC by
-2.22 and cBIC by 6.64.
+\strong{Coefficients estimated on the criterion.} Where the criterion also
+estimates coefficients (\code{\link[=marginal_coords]{marginal_coords()}}), the function returns
+\code{\link[=marginal_edf_correction]{marginal_edf_correction()}}.
 
-The count this corrects was ALREADY read on that vector.
-\code{\link[=statmod_edf]{statmod_edf()}} takes a structural model's effective degrees of freedom
-from \code{joint_smoother_diag()}, which reads the very same two matrices,
-so the base count was joint while its correction was on the
-coefficients -- two halves of one number read on two different vectors.
-
-The two matrices are the ones \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} and
-\code{\link[=statmod_full_information]{statmod_full_information()}} already build, so there is no second
-assembly to disagree with the criterion's. That route reads the
-OBSERVED information, a filter having no expected one to offer, so
-\code{expected} and \code{approx} do not reach it. A model with no structural
-term of the filter shape is untouched by construction rather than by
-tolerance, \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} returning \code{NULL} there.
+\strong{A model carrying a filter.} The mode of such a model moves in the joint
+vector of the coefficients and the own parameters of the structural term,
+which is the vector that the determinant of the criterion spans. A penalty
+over those parameters is not a column of any design, so \code{\link[=hyper_mode_cross]{hyper_mode_cross()}}
+omits it when it is called for the coefficients alone. The correction is
+therefore computed on the joint vector.
+\code{\link[=statmod_edf]{statmod_edf()}} takes the effective degrees of freedom of a structural
+model from \code{joint_smoother_diag()}, which reads the same two matrices, so
+the base count and the correction are both computed on the joint vector.
+The two matrices are those that \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} and
+\code{\link[=statmod_full_information]{statmod_full_information()}} build, so that this function and the
+criterion use one assembly. The joint route reads the observed information,
+and \code{expected} and \code{approx} do not reach it. A model with no structural term
+of the filter shape takes the coefficient route, because
+\code{\link[=statmod_marginal_full]{statmod_marginal_full()}} returns \code{NULL} there.
 }
 \references{
 Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model

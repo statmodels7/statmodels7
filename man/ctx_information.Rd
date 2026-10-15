@@ -14,7 +14,7 @@ ctx_information(ctx, spec, design, coef, hyper, expected, approx = "opg")
 
 \item{hyper}{The hyperparameters, for the context's own check.}
 
-\item{expected}{Whether the expected information is wanted.}
+\item{expected}{Whether the expected information is read.}
 
 \item{approx}{The approximation for the expected information.}
 }

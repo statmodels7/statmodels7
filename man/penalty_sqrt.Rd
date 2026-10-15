@@ -9,27 +9,30 @@ penalty_sqrt(S)
 \arguments{
 \item{S}{The penalty Hessian, a \verb{p x p} symmetric matrix, dense or sparse.
 \code{Matrix::isDiagonal()} decides which route is taken, so a matrix stored
-as diagonal and one merely having zero off-diagonals are both caught.}
+as diagonal and one that only has zero off-diagonal entries are both
+treated as diagonal.}
 }
 \value{
 A matrix with \code{ncol(S)} columns and one row per retained
-eigendirection, so at most \code{p} and fewer where the penalty has a null
-space. Its class mirrors \code{S}'s, dense for dense and sparse for sparse.
-\code{NULL} when the penalty is indefinite beyond the tolerance.
+eigendirection, so at most \code{p} rows and fewer where the penalty has a
+null space. The result is a \pkg{Matrix} sparse matrix only where \code{S} is
+a diagonal matrix stored sparse; for any other \code{S}, including the zero
+matrix, it is a dense base matrix. \code{NULL} when the penalty is indefinite
+beyond the tolerance.
 }
 \description{
 Returns \eqn{C} with \eqn{C'C = S(\theta)}, the block-diagonal penalty
-Hessian, dropping the rows a null space contributes nothing to.
+Hessian, omitting the rows that correspond to its null space.
 }
 \section{Why an eigendecomposition}{
 A penalty is positive semidefinite and is often rank deficient. A spline's
-is deficient by exactly the dimension of its null space, which is the
-whole point of the construction: the null space is what the penalty does
-not shrink. A Cholesky fails there, so the factor comes from an
-eigendecomposition with the non-positive eigenvalues dropped, and the rows
-they would have contributed are simply absent.
+is deficient by exactly the dimension of its null space, the set of
+coefficient directions that the penalty does not shrink. A Cholesky
+factorization fails there, so the factor comes from an eigendecomposition
+with the non-positive eigenvalues dropped, and the rows that they would
+have contributed are absent. A zero matrix gives a factor with no rows.
 
-A non-convex penalty has an indefinite Hessian and no such factor at all.
+A non-convex penalty has an indefinite Hessian and no such factor.
 \code{NULL} is returned and the caller falls back to the assembled route.
 }
 
@@ -39,14 +42,14 @@ That is the same answer the eigendecomposition gives, since the
 eigenvalues of a diagonal matrix are its diagonal entries, so the two
 routes agree by construction and a test pins them together.
 
-The case is worth detecting for how often it arises. A ridge is diagonal,
-a random effect is diagonal, and the Demmler-Reinsch penalty of
-\code{\link[modelterms7:s]{modelterms7::s()}} is \eqn{\mathrm{diag}(0, 1, \ldots, 1)} exactly. So is
-any block-diagonal assembly of them. The factor is recomputed at every
-iteration of the scoring loop, so its cost is multiplied by the iteration
-count: measured on a random intercept over 1000 groups, one dense
-eigendecomposition of the 1003 by 1003 penalty cost 0.63 s and was 83 per
-cent of the whole fit.
+The case is common. A ridge penalty and the penalty of a random effect
+with independent coefficients are diagonal, and so is the penalty of a
+smoother in the Demmler-Reinsch basis (see \code{\link[modelterms7:s]{modelterms7::s()}}), which is
+zero on the null-space coordinates and a multiple of the smoothing
+parameter elsewhere. Any block-diagonal assembly of such penalties is
+diagonal as well. The factor is recomputed at every iteration of the
+scoring loop, so the diagonal route avoids one dense eigendecomposition
+per iteration.
 }
 
 \seealso{

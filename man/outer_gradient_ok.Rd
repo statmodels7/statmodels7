@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_gradient.R
 \name{outer_gradient_ok}
 \alias{outer_gradient_ok}
-\title{Can the Exact Gradient Be Computed Here?}
+\title{Can the Exact Derivatives of the Criterion Be Computed Here?}
 \usage{
 outer_gradient_ok(spec, design, idx, method, order = 1L, gamma = FALSE)
 }
@@ -17,7 +17,7 @@ outer_gradient_ok(spec, design, idx, method, order = 1L, gamma = FALSE)
 
 \item{order}{\code{1} for the gradient, \code{2} for the Hessian as well.}
 
-\item{gamma}{\code{TRUE} where the outer vector also carries coefficients the
+\item{gamma}{\code{TRUE} where the outer vector also carries coefficients that the
 criterion estimates (\code{\link[=marginal_coords]{marginal_coords()}}), so an empty index is not a
 reason to answer \code{FALSE}.}
 }
@@ -25,33 +25,62 @@ reason to answer \code{FALSE}.}
 \code{TRUE} or \code{FALSE}.
 }
 \description{
-\code{TRUE} when every hyperparameter under estimation belongs to a penalty
-whose second derivative in the coefficients is linear in the
-hyperparameters and free of the coefficients, and the criterion uses the
-observed information.
+\code{TRUE} when the exact gradient of the marginal criterion in the
+hyperparameters under estimation (\code{order = 1}), or the exact gradient and
+Hessian (\code{order = 2}), can be assembled for the model.
 }
 \details{
-\strong{Why the observed information.} \eqn{K} enters the criterion through
-its determinant, so the gradient needs \eqn{\partial K/\partial\beta}. With
-the observed information that is the third derivative of the log-likelihood
-in the link-scale predictors, which every family of \pkg{distributions7}
-carries in closed form. With the expected information it would be the
-derivative in \eqn{\beta} of \eqn{-E[\ell'']}, which is not
-\eqn{-E[\ell''']} and is not one of that package's generics. So
-\code{reml(hessian = "observed")} is what the exact route asks for, and
-\code{"expected"} keeps the derivative-free search.
+The family must carry the derivatives that the order needs
+(\code{\link[=order_available]{order_available()}}): the third derivative of the log-likelihood for the
+gradient and the fourth for the Hessian.
 
-\strong{Why the penalty is asked.} \eqn{\partial S/\partial\theta} and its
-second derivative are generics of \pkg{penalties7}
-(\code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}},
-\code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}},
-\code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}}). A penalty that answers them is
-estimable by a marginal criterion whatever its shape: the quadratic, the
-additive, the structured and the separable branches all do, so a ridge, a
-random effect and a heavy-tailed prior are covered as well as a spline. One
-that does not, a SCAD or an MCP or anything with a kink, rejects, and the
-search stays derivative-free. Nothing here tests a penalty's behavior to
-find out what it is; it is asked.
+\strong{The information.} \eqn{K} enters the criterion through its determinant,
+so the gradient needs \eqn{\partial K/\partial\beta}. With the observed
+information that is the third derivative of the log-likelihood in the
+link-scale predictors. With the expected information it is the derivative in
+the predictors of \eqn{-E[\ell'']}, which is not \eqn{-E[\ell''']}. That
+derivative is supplied by \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}}, and
+the expected route is admitted when the family returns it
+(\code{\link[=expected_deriv_ok]{expected_deriv_ok()}}). At order 2 the expected route is admitted only for
+\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, for a model without a block that moves with its
+coefficients and without a structural term, and for a family that returns
+\code{\link[distributions7:distrib_d2expected_hessian]{distributions7::distrib_d2expected_hessian()}} (\code{\link[=expected_deriv2_ok]{expected_deriv2_ok()}}).
+The expected route is not admitted at either order where a penalty covers
+the parameters of a structural term, because the criterion is then assembled
+from the observed joint curvature.
+
+\strong{The structural terms.} A term of the likelihood shape (\code{regime()} and the
+marginal break-point term) has no exact derivatives at either order. For a
+term of the filter shape, order 2 requires a penalty over the term's own
+parameters and a term that implements \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}. Where a
+penalty covers the term's parameters, the term must also implement
+\code{\link[modelterms7:term_third]{modelterms7::term_third()}}.
+
+\strong{The moving blocks.} A block that moves with its coefficients (\code{nl()},
+\code{seg()}, \code{jump()} and \code{jseg()}) is admitted at order 1 on either route and
+at order 2 on the observed route. Its contribution is read from the term
+(\code{\link[=u_refresh]{u_refresh()}}, \code{\link[=mode_curvature]{mode_curvature()}}) and is never differenced.
+
+\strong{The penalties.} \eqn{\partial S/\partial\theta} and its second
+derivative are given by the generics of \pkg{penalties7}
+(\code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}}, \code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}} and
+\code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}}). The function calls the derivative methods
+of a penalty at probe values and reads an error as a penalty that does not
+supply them, so that a penalty is admitted according to what its methods
+return and not according to its class. The check has two parts. Every
+penalized unit of the model is examined, because the movement of the mode
+reaches the determinant through each penalty whose Hessian moves with the
+coefficients (a Student t prior, for instance). A penalty that
+\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} calls quadratic passes, and so does a penalty
+with a kink (a lasso, a SCAD or an MCP). Any other penalty must supply
+\code{\link[penalties7:penalty_dhessian_beta]{penalties7::penalty_dhessian_beta()}}, and a mixed covariance class of this
+kind is not admitted. Beside a structural term such a penalty is not
+admitted at order 2. The second part examines, with \code{\link[=penalty_answers]{penalty_answers()}}, the
+penalty of every term that owns a hyperparameter under estimation, and for a
+hyperparameter shared by several terms the penalty of each of them. A
+penalty with a kink does not remove the exact derivatives of the other
+hyperparameters, because its own hyperparameters are left out of the outer
+index.
 }
 \seealso{
 \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}

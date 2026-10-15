@@ -19,8 +19,8 @@ Locates the \eqn{(a, b, c)} entry of a distribution's third-derivative
 list, which is keyed by \code{\link[distributions7:deriv_names]{distributions7::deriv_names()}}.
 }
 \details{
-The name is built from the parameter names in the family's own order, not
-parsed out of one, which is the discipline \pkg{distributions7} records
-for a parameter whose own name contains the separator.
+The name is built from the parameter names in the family's own order and
+is not parsed out of an existing name, so that a parameter whose own name
+contains the separator is handled as \pkg{distributions7} handles it.
 }
 \keyword{internal}

@@ -18,8 +18,13 @@ negated observed Hessian.}
 
 \item{approx}{How the expected information is approximated for a family
 that has no closed form, passed through to \pkg{distributions7}:
-\code{"bartlett"}, \code{"integrate"} or \code{"mc"}. Ignored when \code{expected} is
-\code{FALSE} or when the family computes its expected information exactly.}
+\code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}. Ignored
+when \code{expected} is \code{FALSE} or when the family computes its expected
+information exactly.}
+
+\item{H}{The family's link-scale second derivatives, as
+\code{\link[=statmod_family_hessian]{statmod_family_hessian()}} returns them, when the caller has already
+computed them at \code{theta}; \code{NULL} computes them here.}
 }
 \value{
 An \eqn{n \times K \times K} numeric array, symmetric in its last
@@ -38,7 +43,7 @@ nothing here multiplies by a link's derivative. With \code{expected = TRUE} the
 expected information is taken and the blocks are positive definite
 wherever the family is regular; with \code{expected = FALSE} the observed
 Hessian is negated, which far from the optimum is routinely indefinite.
-\code{\link[=chol_blocks]{chol_blocks()}}'s refusal is the ordinary consequence.
+In that case \code{\link[=chol_blocks]{chol_blocks()}} returns \code{NULL}.
 
 The weights enter as given, without normalization, so a weight of two
 counts an observation twice.

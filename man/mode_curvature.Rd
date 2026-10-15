@@ -16,18 +16,19 @@ mode_curvature(spec, design, coef, params, npar, offs, total)
 \item{params, npar, offs, total}{The block bookkeeping.}
 }
 \value{
-A square matrix, zero everywhere no refreshable term reaches.
+A symmetric matrix over the stacked coefficients, with nonzero
+entries only on the blocks of refreshable terms.
 }
 \description{
 What separates the true Hessian of the penalized log-likelihood from the
-Gauss-Newton matrix \code{\link[=statmod_information_at]{statmod_information_at()}} returns, where a
+Gauss-Newton matrix that \code{\link[=statmod_information_at]{statmod_information_at()}} returns, where a
 term's block moves with its coefficients.
 }
 \details{
 \eqn{v = \partial\hat\beta/\partial\theta} solves
 \eqn{(\partial^2\rho/\partial\beta^2 - \partial^2\ell/\partial\beta^2)v =
-\partial^2\rho/\partial\beta\partial\theta}, and
-\eqn{\partial^2\ell/\partial\beta^2} is the TRUE second derivative:
+-\partial^2\rho/\partial\beta\partial\theta}, and
+\eqn{\partial^2\ell/\partial\beta^2} is the true second derivative:
 \deqn{\sum_i\sum_{a,b}\ell_{ab}\frac{\partial\eta_a}{\partial\beta}
   \frac{\partial\eta_b}{\partial\beta}
   + \sum_i\sum_a \ell_a\frac{\partial^2\eta_a}{\partial\beta^2}.}
@@ -39,17 +40,14 @@ and that is what keeps this cheap: one call of
 \code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}} per column, weighted by the
 score where \code{\link[=u_refresh]{u_refresh()}} weights by \eqn{M}.
 
-Note that it is the \strong{mode's} matrix and not the criterion's. The
-determinant is of
-whatever \code{\link[=statmod_information_at]{statmod_information_at()}} assembles, and its derivative
-reads that one; how the mode moves is a fact about the penalized likelihood
-and reads this one. Confusing the two is the defect this file already
-records for the expected information, in a second place.
-
-Measured on \code{nl(a ~ 0 + ridge(~grp))} against a finite difference of
-the criterion with the mode refitted: the gradient goes from 1.5e-04 to
-8.8e-09 at 320 observations and from 1.6e-05 to 1.6e-09 at 960, on the
-observed route and the expected one alike.
+This is the matrix by which the mode moves, and it differs from the
+criterion's matrix. The determinant is of the matrix that
+\code{\link[=statmod_information_at]{statmod_information_at()}} assembles, and the derivative of the determinant
+is read from that matrix; how the mode moves depends on the penalized
+likelihood and is read from this one. The two coincide for the observed
+information when no block moves with its coefficients. With the expected
+information a single matrix for both would give a systematic error in the
+gradient, and the two are kept apart.
 }
 \seealso{
 \code{\link[=u_refresh]{u_refresh()}},

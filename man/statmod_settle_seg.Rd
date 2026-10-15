@@ -28,25 +28,26 @@ statmod_settle_seg(
 \code{\link[=statmod_alternate]{statmod_alternate()}}.}
 
 \item{res}{The fit to settle, as \code{\link[=statmod_alternate]{statmod_alternate()}} returns it.}
+
+\item{rounds}{The maximum number of times that the polished positions are
+read again after a refit, 5 by default.}
 }
 \value{
 A list: \code{res}, the fit, and \code{moved}, \code{TRUE} where a polished
 position replaced the one the iteration reached.
 }
 \description{
-After the working phase and the restarts, every sharp \code{\link[modelterms7:seg]{modelterms7::seg()}}
-term is moved to the minimum of its exact least-squares profile over every
+After the working phase and the restarts, every \code{\link[modelterms7:seg]{modelterms7::seg()}} term
+that is not smoothed, not developed and not marginal is moved to the
+minimum of the least-squares profile of its working response over every
 interval of the covariate (\code{\link[modelterms7:seg_polish_exact]{modelterms7::seg_polish_exact()}}), and the
 model is refitted from there with the positions free.
 }
 \details{
 The profile of a change of slope is smooth inside each interval between
 consecutive observed values and has a kink at each of them, so the
-iteration of Muggeo (2003) can stop on a kink that is not a minimum:
-measured on \code{segmented::globTempAnom} with four break-points, it stopped
-with two positions on observed years and the inner fit 0.106
-log-likelihood units above its mode, and the REML criterion could not be
-evaluated at its start. Inside an interval the profile has one stationary
+iteration of Muggeo (2003) can stop on a kink that is not a minimum.
+Inside an interval the profile has one stationary
 point, so its minimum over every interval is exact
 (\code{\link[modelterms7:seg_polish_exact]{modelterms7::seg_polish_exact()}}). The profile is read on the working
 response of the term's equation, and a polished position is kept only

@@ -10,11 +10,13 @@ check_marginal_arg(marginal)
 \item{marginal}{The argument as given.}
 }
 \value{
-\code{marginal}, unchanged, or an error naming the argument.
+\code{marginal} with repeated names removed, or an error that names the
+argument.
 }
 \description{
 Checks the shape of \code{marginal} before any family is known: \code{NULL}, or a
-character vector with no missing and no empty entry. Whether the names
-belong to the family is checked by \code{\link[=marginal_params]{marginal_params()}}, at fit time.
+character vector with no missing and no empty entry. \code{"none"} and \code{"all"}
+must stand alone. Whether the names belong to the family is checked by
+\code{\link[=marginal_params]{marginal_params()}}, at fit time.
 }
 \keyword{internal}

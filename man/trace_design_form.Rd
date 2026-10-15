@@ -23,8 +23,8 @@ third.}
 \item{key}{A function of the three or four parameter positions returning
 the component of \code{deriv} to read, or \code{NULL} for the observed route's keys,
 which are symmetric in every position. On the expected route \code{deriv} is
-the derivative of the expected information, symmetric in its first pair
-and in its second separately, and carries its own builder.}
+the derivative of the expected information, symmetric in its first two
+positions only, and carries its own builder.}
 }
 \value{
 A single number.
@@ -41,9 +41,9 @@ of that block against \eqn{M_{ab}} is \eqn{-\sum_i \omega_i w_i G_{ab,i}}.
 The block and its transpose both contribute, so an off-diagonal pair counts
 twice.
 
-The weights \eqn{w_i} are built exactly as those two functions build them,
-and that keeps the two routes the same arithmetic in the same order
-where it matters.
+The contraction of the derivative with the direction is formed exactly as
+those two functions form it, which keeps the two routes on the same
+arithmetic.
 }
 \seealso{
 \code{\link[=contract3]{contract3()}}, \code{\link[=contract4]{contract4()}}

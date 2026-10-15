@@ -26,12 +26,13 @@ coefficients and the filter's own parameters, where
 \code{\link[=structural_chain_extra]{structural_chain_extra()}} returns only its trace against \eqn{M}.
 }
 \details{
-The gradient needs the trace and nothing else, so it never forms this. The
-HESSIAN needs the matrix twice over: in \eqn{\mathrm{tr}(M K_l M K_m)},
-which no contraction reduces, and as the operator carrying the mode's
-second movement. Writing \eqn{V_a} for each equation's rows,
-\eqn{\mathrm{d}\varphi = E v} for the filter's own moving, and \eqn{E} for
-the second derivative of the predictor the filter produces,
+The gradient uses only the trace of this matrix against \eqn{M} and does
+not form the matrix. The Hessian uses the matrix in two places: in
+\eqn{\mathrm{tr}(M K_l M K_m)}, which no contraction reduces, and as the
+operator that carries the second movement of the mode. Write \eqn{V_a} for
+the rows of each equation, \eqn{\mathrm{d}\varphi = E v} for the movement of
+the filter's own parameters, and \eqn{E} for the second derivative of the
+predictor that the filter produces. Then
 
 \deqn{\frac{\partial K}{\partial u}[v] =
   -\sum_i w_i\Big[\sum_{a,b}\Big(\sum_k\ell_{abk}(V_k\cdot v)\Big)
@@ -40,11 +41,10 @@ the second derivative of the predictor the filter produces,
     + V_b\otimes\mathrm{d}\varphi\big)\Big]
   - W(\kappa_v) - W_3[v],}
 
-with \eqn{\kappa_v = \sum_k \ell_{pk}(V_k\cdot v)} the weight the level's
-own term is re-read at and \eqn{W_3[v]} what
-\code{\link[modelterms7:term_third]{modelterms7::term_third()}} returns. Traced against \eqn{M} it
-reproduces \code{\link[=structural_chain_extra]{structural_chain_extra()}} exactly, which is what a test
-asserts of it.
+with \eqn{\kappa_v = \sum_k \ell_{pk}(V_k\cdot v)} the weight at which the
+term of the level is read again and \eqn{W_3[v]} the curvature that
+\code{\link[modelterms7:term_third]{modelterms7::term_third()}} returns. The trace of the matrix against
+\eqn{M} equals the value of \code{\link[=structural_chain_extra]{structural_chain_extra()}} up to rounding.
 }
 \seealso{
 \code{\link[=structural_chain_extra]{structural_chain_extra()}}, \code{\link[=statmod_structural_hess]{statmod_structural_hess()}}

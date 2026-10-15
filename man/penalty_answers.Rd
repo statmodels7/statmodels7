@@ -15,13 +15,17 @@ penalty_answers(pen, order = 1L)
 A single logical.
 }
 \description{
-Asks the penalty for the derivatives, at a probe value of its
-hyperparameters, and reports whether it answered.
+Evaluates the derivatives of a penalty at a probe value of its
+hyperparameters and reports whether they could be computed.
 }
 \details{
-The order-2 route additionally requires the penalty to be quadratic in the
-coefficients (\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}}), since otherwise the
-third and fourth derivatives of the penalty in \eqn{\beta} enter the
-criterion's own second derivative and \pkg{penalties7} does not carry them.
+The gradient requires \code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}}. A penalty that is
+not quadratic in the coefficients (\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}}) must also
+supply \code{\link[penalties7:penalty_dhessian_beta]{penalties7::penalty_dhessian_beta()}}, because its Hessian moves with
+the mode. The order-2 route additionally requires
+\code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}} and \code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}} and,
+for a penalty that is not quadratic, \code{\link[penalties7:penalty_d2hessian_beta]{penalties7::penalty_d2hessian_beta()}}
+and \code{\link[penalties7:penalty_d2hessian_beta]{penalties7::penalty_dhessian_beta_theta()}}. A penalty without
+hyperparameters returns \code{FALSE}.
 }
 \keyword{internal}

@@ -33,9 +33,16 @@ The penalty's contributions to the criterion's gradient and Hessian, placed
 in the stacked coefficient space.
 }
 \details{
-At order 1 the second-order generics are not called at all. That is what
-lets a penalty supplying only \code{penalty_dhessian()} give an exact
-gradient: asking it for a derivative the gradient does not use would have
-rejected it for a quantity nobody wanted.
+At order 1 the function calls \code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}} and
+\code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_cross()}} only. The second-order generics
+\code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}}, \code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}} and
+\code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_hess_theta()}} are called at order 2, so a penalty that
+supplies the first two generics gives an exact gradient without
+implementing the others.
+
+A shared hyperparameter occupies one row of \code{idx} and receives the sum of
+the contributions of its members. A penalty over the own parameters of a
+structural term and a mixed covariance class contribute nothing here;
+\code{\link[=structural_outer_pieces]{structural_outer_pieces()}} places them on the joint vector.
 }
 \keyword{internal}

@@ -20,9 +20,9 @@ Its class mirrors \code{S}'s. \code{NULL} when any entry is negative beyond the
 tolerance.
 }
 \description{
-One row per coordinate the penalty reaches, carrying the square root of
-that coordinate's entry, which is \code{\link[=penalty_sqrt]{penalty_sqrt()}}'s answer
-where the matrix is diagonal.
+One row per coordinate that the penalty reaches, carrying the square root
+of that coordinate's entry, which is the value of \code{\link[=penalty_sqrt]{penalty_sqrt()}} where
+the matrix is diagonal.
 }
 \details{
 The thresholds are the eigen route's, applied to the diagonal, which for
@@ -30,10 +30,10 @@ a diagonal matrix is its spectrum. A negative entry beyond the tolerance
 makes the penalty indefinite and there is no factor to return; an entry
 at or below the tolerance is a null direction and contributes no row.
 
-The class of the result mirrors the argument's and is not chosen here.
-\code{\link[=augmented_solve]{augmented_solve()}} routes on whether either of its two factors is
-sparse, so a sparse factor returned for a dense design would send a dense
-fit down the sparse route.
+The class of the result follows the argument's: a sparse \code{S} gives a
+sparse factor and a dense \code{S} a dense one. \code{\link[=augmented_solve]{augmented_solve()}} takes the
+sparse route whenever either of its two factors is sparse, so the class is
+not changed here.
 }
 \seealso{
 \code{\link[=penalty_sqrt]{penalty_sqrt()}}, which dispatches here for a diagonal penalty.

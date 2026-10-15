@@ -30,9 +30,9 @@ statmod_stat_at(
 \item{mode_error}{Whether to read how far above its mode the restricted
 fit stopped (\code{\link[=restricted_mode_error]{restricted_mode_error()}}). \code{FALSE} by default, because it
 costs one Hessian where the likelihood ratio and the gradient statistic
-need none, and the two loops that call this in quantity --
-\code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, one row at a time, and \code{\link[=statmod_invert]{statmod_invert()}}, five
-to seven times per interval -- do not read it.}
+need none. \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, which calls this once per row, and
+\code{\link[=statmod_invert]{statmod_invert()}}, which calls it once per evaluation of the statistic,
+do not read it.}
 
 \item{objective0}{The penalized objective at the unrestricted joint mode,
 as \code{\link[=joint_objective]{joint_objective()}} returns it, for a caller that reads the
@@ -41,14 +41,14 @@ likelihood ratio many times on one fit. \code{NULL} computes it here.}
 \value{
 A list with \code{test}, \code{statistic}, \code{df}, \code{p.value}, \code{converged} --
 \code{NA} for the Wald statistic and the restricted fit's flag for the other
-three -- and \code{mode_error}, \code{NA} unless it was asked for.
+three -- and \code{mode_error}, \code{NA} unless it is requested.
 }
 \description{
 The Wald, likelihood-ratio, Rao score or Terrell gradient statistic for
 the hypothesis that one coefficient equals \code{value}, with its p-value.
 }
 \details{
-All four read the PENALIZED objective, which is the function the fit
+All four read the penalized objective, which is the function the fit
 maximizes. Writing \eqn{\ell_p(\beta) = \ell(\beta) - \rho(\beta;\theta)}
 for it, \eqn{\hat\beta} for the unrestricted estimates, \eqn{\tilde\beta}
 for those with \eqn{\beta_j} held at \eqn{b}, \eqn{U = \partial\ell_p} for
@@ -58,49 +58,43 @@ its score and \eqn{K} for the penalized information, the four are
 \deqn{S = U_j(\tilde\beta)^2 \, [K(\tilde\beta)^{-1}]_{jj}, \qquad
 T = U_j(\tilde\beta)\,(\hat\beta_j - b),}
 each compared with a \eqn{\chi^2_1}. Where the model carries no penalty
-\eqn{\ell_p} IS the log-likelihood and these are the classical four.
+\eqn{\ell_p} is the log-likelihood and these are the classical four.
 
-The score statistic's general form is \eqn{U'K^{-1}U}, which reduces to
+The score statistic has the general form \eqn{U'K^{-1}U}. It reduces to
 the product above because every other component of \eqn{U} vanishes at the
-restricted maximum -- and that is worth knowing rather than assuming,
-since it is what says the restricted fit converged.
+restricted maximum, which also indicates that the restricted fit has
+converged.
 }
-\section{Why the penalized objective and not the likelihood}{
-Reading the likelihood alone would make the four incoherent with one
-another and the second of them not a ratio at all. \eqn{\tilde\beta}
-maximizes \eqn{\ell_p} under the restriction and not \eqn{\ell}, so
-\eqn{\ell(\tilde\beta)} can exceed \eqn{\ell(\hat\beta)} and the
-difference come out NEGATIVE -- measured on a smooth, holding
-\verb{s(z).z3} at two values either side of its estimate gives -0.0379 and
--0.1075 where \eqn{\ell_p} gives +0.0054 and +0.1355. The other three
-were already reading the penalized objective, \eqn{U} and \eqn{K} being
-its gradient and its curvature and the Wald variance being
-\eqn{(H+S)^{-1}}, so one table would have carried two different tests.
+\section{The penalized objective and the likelihood}{
+The likelihood ratio is taken on \eqn{\ell_p} and not on \eqn{\ell}.
+\eqn{\tilde\beta} maximizes \eqn{\ell_p} under the restriction and not
+\eqn{\ell}, so \eqn{\ell(\tilde\beta)} can exceed
+\eqn{\ell(\hat\beta)} and the difference of log-likelihoods can be
+negative. The other three statistics read the penalized objective as well:
+\eqn{U} and \eqn{K} are its gradient and its curvature, and the Wald
+variance is \eqn{(H+S)^{-1}} under \code{type = "bayesian"}.
 
-What it means for a SHRUNK coordinate is the reading
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} already gives it under \code{type = "bayesian"}: the
-penalty is a log-prior, so \eqn{\ell_p} is a log posterior at the
-hyperparameters in force and the interval by inversion is the set the
-posterior does not reject, conditional on them. Nothing new is claimed;
-the claim the Wald interval on such a row already carries is extended to
-the other three. Measured, the two agree as they must: on a smooth at
-\eqn{n = 300} the inverted interval and the Wald one differ by 8.7e-04
-on \verb{s(z).z1}, 1.1e-03 on an unpenalized covariate and 2.5e-03 on the
-smooth's linear column, which is second-order agreement, and what the
-inversion adds is the asymmetry.
+For a shrunk coordinate this is the reading that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} gives
+under \code{type = "bayesian"}: the penalty is a log-prior, so \eqn{\ell_p} is
+a log posterior at the hyperparameters in force, and the interval by
+inversion is the set that the posterior does not reject, conditional on
+them. The interpretation that the Wald interval on such a row carries
+therefore extends to the other three statistics. On a smooth the inverted
+interval and the Wald one agree to second order, and the inversion adds
+the asymmetry.
 }
 
-\section{What separates them}{
-Wald reads the unrestricted fit alone and needs no refit, which is why it
-is the one every summary prints and also the one that is NOT invariant to
-how the parameter is written: a reparametrization moves it and moves none
-of the other three. It is also the one that loses power against a distant
-alternative, the Hauck-Donner effect, the curvature being read at
-\eqn{\hat\beta} rather than under the null.
+\section{Differences between the statistics}{
+The Wald statistic reads the unrestricted fit alone and needs no refit,
+which is why the summary reports it by default. It depends on how the
+parameter is written: a nonlinear reparametrization of the coefficient
+changes it, whereas the likelihood ratio, a difference of objective values
+at the same two points, is not changed. The Wald statistic also loses power
+against a distant alternative (the Hauck-Donner effect), the curvature
+being read at \eqn{\hat\beta} rather than under the null.
 
-The gradient statistic needs the restricted fit but NO matrix inversion at
-all, which is its whole point: it is the score contracted with the
-distance between the two fits.
+The gradient statistic needs the restricted fit and no matrix inversion:
+it is the score contracted with the distance between the two fits.
 }
 
 \seealso{

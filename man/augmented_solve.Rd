@@ -16,20 +16,24 @@ model.}
 
 \item{u}{The right-hand side, a numeric vector of length \code{p}.}
 
-\item{how}{\code{"qr"} or \code{"svd"}. \code{"svd"} has no sparse counterpart, so a
-sparse pair asked for it is densified first.}
+\item{how}{\code{"qr"} or \code{"svd"}. \code{"svd"} has no sparse counterpart, so with
+\code{how = "svd"} a sparse pair is densified first.}
 
 \item{threads}{How many threads the triangular factor may use, a plain
-integer. \code{1L} takes \code{qr()} unconditionally.}
+integer. With \code{1L} the threaded route is not used.}
 }
 \value{
-A list of two:
+A list with the elements \code{delta}, \code{rank} and \code{dropped}:
 \describe{
 \item{\code{delta}}{the increment, an unnamed numeric vector of length \code{p}.
-Zero in any coordinate the pivoted route dropped.}
+Zero in every coordinate that the pivoted route dropped.}
 \item{\code{rank}}{the rank used, an integer. Always \code{p} on the threaded
 and sparse routes, which decline on a deficient matrix instead of
-reporting a smaller rank.}
+reporting a smaller rank, and the number of retained singular
+values on the \code{"svd"} route.}
+\item{\code{dropped}}{the integer positions of the columns that the pivoted
+\code{qr()} route left out (the aliased coordinates); \code{integer(0)} on the
+sparse, threaded and \code{"svd"} routes.}
 }
 }
 \description{
@@ -39,50 +43,48 @@ increment solving
 
 \deqn{(R'R + C'C)\,\delta = u}
 
-The augmented form is the point: neither \eqn{R'R} nor the penalized
-information is ever formed, so a design whose condition number is
-\eqn{\kappa} is decomposed at \eqn{\kappa}. Forming the normal equations
-would square it.
+The augmented form never forms \eqn{R'R} or the penalized information, so
+a design with condition number \eqn{\kappa} is decomposed at \eqn{\kappa}
+and not at \eqn{\kappa^2}, which the normal equations would give.
 }
 \section{The four routes}{
-Tried in this order.
+The routes are tried in this order.
 \enumerate{
-\item \strong{Sparse QR}, when either factor is a \pkg{Matrix} object. Handed to
-\code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}, which declines on a rank-deficient matrix.
+\item \strong{Sparse QR}, when either factor is a \pkg{Matrix} object. The pair is
+passed to \code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}, which declines on a
+rank-deficient matrix.
 \item \strong{SVD}, when \code{how = "svd"}. The singular values below
 \eqn{\max(\dim A)\,\epsilon\,\sigma_{\max}} are dropped and the
 increment is built from the retained right singular vectors, so a
-deficient system gets the minimum-norm answer.
+deficient system gets the minimum-norm solution.
 \item \strong{The threaded triangular factor}, when \code{how = "qr"}, \code{threads > 1}
-and the work \eqn{n p^2} is at least \code{5e7}. Only the triangular factor
-is ever read, so a kernel that produces it and never accumulates
-\eqn{Q} does the whole job.
-\item \strong{\code{qr()}}, the pivoted LINPACK route, which reports a rank and can
-drop columns. A sparse solve that declined falls through to here on
+and \eqn{m p^2} is at least \code{5e7}, where \eqn{m} is the number of rows
+of \eqn{A}. Only the triangular factor is read, so a kernel that
+produces it without accumulating \eqn{Q} does the whole job.
+\item \strong{\code{qr()}}, the pivoted LINPACK route, which returns a rank and can
+drop columns. A sparse solve that declined continues here on
 densified factors.
 }
 }
 
 \section{Why the rank test is equilibrated}{
-The threaded route is taken only where the matrix is comfortably of full
-rank, and the test reads the diagonal of the triangular factor \strong{divided
-by each column's norm}. Since \eqn{A'A = R'R}, scaling \eqn{A}'s columns
-scales that diagonal by the same factors, so the ratio is the diagonal of
-a decomposition with unit column norms.
+The threaded route is taken only where the matrix has full rank by a
+comfortable margin. The test reads the diagonal of the triangular factor
+\strong{divided by each column's norm}. Writing \eqn{T} for the triangular
+factor of \eqn{A}, so that \eqn{A'A = T'T}, scaling the columns of \eqn{A}
+scales the diagonal of \eqn{T} by the same factors, so the ratio is the
+diagonal of a decomposition with unit column norms.
 
-Reading the raw diagonal instead reports a matrix as near-singular
-whenever its columns differ in size, and a large smoothing parameter does
-exactly that to the penalty rows of its own block beside an unpenalized
-one. Per-column scaling forgives separation from any source; an exact
-collinearity stays exactly singular.
+The raw diagonal would report a matrix as near-singular whenever its
+columns differ in size, and a large smoothing parameter produces that
+difference between the penalty rows of its own block and an unpenalized
+block. Scaling each column to unit norm removes differences in column size
+from any source and leaves an exact collinearity exactly singular.
 
-The tolerance is \code{1e-7} on that ratio, the same one \code{dqrdc2} uses, so
-anything the pivoted route would call deficient still goes there and is
-reported with its rank.
-
-Measured against \code{qr()} at \eqn{n = 40000} with the column scales spread
-over \eqn{10^8}: 2.6x at \eqn{p = 51} and 3.8x at \eqn{p = 145} to 600 on
-eight threads, with the increment agreeing to \eqn{1.6 \times 10^{-16}}.
+The route is taken when the smallest equilibrated entry exceeds \code{1e-7}
+times the largest, the tolerance that \code{dqrdc2} uses, so a matrix that the
+pivoted route would call deficient is solved there and its rank is
+returned.
 }
 
 \seealso{

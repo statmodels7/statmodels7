@@ -13,12 +13,15 @@ statmod_structural_par(spec, design)
 }
 \value{
 A named list, one entry per structural term, each a list with
-\code{parameter} and \code{unconstrained}. Empty when there is none.
+\code{parameter} (the named vector on the parameter scale), \code{unconstrained},
+\code{equation} (the distribution parameter in which the term sits) and \code{held}
+(the names of the parameters that an intercept of the equation carries).
+Empty when there is none.
 }
 \description{
-One named vector per structural term, on the scale the term's own
-documentation describes them on, together with the unconstrained values
-they were estimated as.
+One named vector per structural term, on the scale that the term's own
+documentation uses for its parameters, together with the unconstrained
+values that were estimated.
 }
 \seealso{
 \code{\link[=statmod_fit_structural]{statmod_fit_structural()}}

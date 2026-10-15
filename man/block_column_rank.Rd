@@ -14,8 +14,8 @@ A single number, or \code{NA_integer_} where the decomposition fails.
 }
 \description{
 The number of linearly independent columns, by the pivoted decomposition
-the fit's own solve uses, so that the two cannot disagree about which
-columns a model identifies.
+that the fit's own solve uses, so that the two agree on which columns a
+model identifies.
 }
 \details{
 A dense block goes through \code{qr()}, at \code{dqrdc2}'s own tolerance, which is

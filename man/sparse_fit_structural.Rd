@@ -56,35 +56,20 @@ the negative log-likelihood with this penalty taken back out, its gradient
 is \code{\link[=statmod_structural_score]{statmod_structural_score()}}'s with the same correction, and the
 operator is the penalty's own.
 
-Measured on a panel of eight groups of forty where three carry a level, the
-route selects: the coordinates at exactly zero are 0, 0, 1, 3 and 8 of 8 at
-\code{lambda} of 0.1, 1, 5, 20 and 80, and the survivors are the three that
-carry one. What says the point is the model's is the Karush-Kuhn-Tucker
-condition, computed by differencing the smooth objective with
-\pkg{numDeriv} and sharing no arithmetic with either the filter's adjoint
-or the operator: the stationarity
-\eqn{|g + \lambda\,\mathrm{sign}(b)|} on the coordinates away from zero is
-2.1e-08, 2.3e-08 and 6.9e-07 at \code{lambda} of 1, 5 and 20, and the ones at
-zero sit inside the interval the kink opens, 0.83 against 5 and 17.6
-against 20.
+The iteration stops when the gradient criterion \code{crit_grad(tol)} is met. A
+coordinate at exactly zero is one whose gradient of the smooth part lies
+inside the interval that the kink opens.
 
-The hyperparameter is HELD. A criterion that would select it is refused by
-\code{\link[=assert_criterion_reach]{assert_criterion_reach()}}, a prediction-error criterion reading the
-degrees of freedom over the coefficients alone, where such a penalty covers
-nothing.
+The hyperparameter is held. A prediction-error or cross-validation
+criterion (\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}}) that would select it is rejected by
+\code{\link[=assert_criterion_reach]{assert_criterion_reach()}}, because such a criterion works over the
+coefficients alone, where this penalty covers nothing.
 
-THE FIT REPORTS \code{converged = FALSE} AT A POINT THAT IS AT ITS MODE, and the
-flag is not this route's. Traced on the panel above at \code{lambda} of 20, the
-passes are: the joint block converges in 58 iterations, this block runs its
-budget of 500 and moves the objective by 8.6e-03, then at the second pass
-the joint block takes ONE iteration and moves it by exactly 0 while this
-block converges in 189. What reports \code{FALSE} is the joint block at a pass
-where there is nothing left to move, which is the stall guard firing at the
-mode -- the reading \code{\link[=inner_mode_error]{inner_mode_error()}} replaces for availability and
-which the alternation's own flag does not yet use. The control is that the
-same model under \code{ridge(~ id, lambda = 20)} and with the levels unpenalized
-reports \code{TRUE}, so the flag follows the extra pass a kinked block costs
-rather than anything about the point.
+The convergence flag of a fit that uses this route is the flag of the
+alternation. Beside a structural term or a kinked block the alternation
+requires the point to be settled in the sense of \code{\link[=alternation_settled]{alternation_settled()}}
+(the Newton decrement of the smooth part and the decrement of the kinked
+zeros both at most \code{\link[=mode_error_limit]{mode_error_limit()}}).
 }
 \seealso{
 \code{\link[=sparse_fit]{sparse_fit()}}, \code{\link[=statmod_fit_structural]{statmod_fit_structural()}}, which fits the term's

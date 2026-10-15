@@ -18,10 +18,16 @@ structural_grad_parts_impl(spec, design, coef, jd, M)
 
 \item{jd}{The joint rows, from \code{\link[=joint_design_rows]{joint_design_rows()}}.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 }
 \value{
-A list of the shared quantities.
+A list with \code{u}, \code{V}, \code{Vk}, \code{VM}, \code{G}, \code{H}, \code{D3}, \code{D4}, \code{gl},
+\code{s_at}, \code{sd_at}, \code{cd_at}, \code{seed}, \code{blocks}, \code{blocks_data} and \code{w}: the
+contraction \eqn{u}, the rows of the joint predictor derivative with the
+filter's Jacobian in place, their products with \eqn{M}, the
+per-observation diagonals of \eqn{M}, the family's derivatives, the score
+and curvature that drive the recursion, the seed of the recursion, the
+\code{blocks} callback with its data, and the observation weights.
 }
 \description{
 The quantities of \code{\link[=statmod_structural_grad]{statmod_structural_grad()}} that do not depend

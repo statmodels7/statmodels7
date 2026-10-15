@@ -19,10 +19,10 @@ Locates the \eqn{(a, b, c, d)} entry of a distribution's fourth-derivative
 list, built the same way \code{\link[=deriv3_key]{deriv3_key()}} builds its own.
 }
 \details{
-The fourth order is wanted where a filter's third derivative is: each
-order of differentiating the predictor through the recursion pulls in one
-more order of the family, the score the recursion is driven by being read
-at the predictor it produces. Every family of \pkg{distributions7} carries
-it in closed form.
+The fourth order is needed where a filter's third derivative is: each
+order of differentiating the predictor through the recursion requires one
+more order of the family, because the score that drives the recursion is
+read at the predictor that the recursion produces. The values come from
+\code{\link[distributions7:distrib_deriv4]{distributions7::distrib_deriv4()}}.
 }
 \keyword{internal}

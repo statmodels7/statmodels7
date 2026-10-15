@@ -21,7 +21,7 @@ filter_driving(
 
 \item{theta}{The per-observation parameters.}
 
-\item{ap}{The index of the parameter the filter sits in.}
+\item{ap}{The index of the parameter in whose equation the filter sits.}
 
 \item{scaling}{The exponent \eqn{d}.}
 

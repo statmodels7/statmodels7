@@ -18,10 +18,11 @@ from the class the method is registered on, never from a list of
 class names, so a term written later is covered without an edit here.
 }
 \details{
-A structural term that has not written it inherits a method that signals an
-error, and an additive term inherits one that returns zero, which is the
-right answer for a predictor that is a block of columns. The question is
-therefore whether the owning class is the refusing base.
+A structural term that has not implemented the method inherits one that
+signals an error, and an additive term inherits one that returns zero, which
+is correct for a predictor that is a block of columns. The function
+therefore returns \code{FALSE} where the class that owns the method is the base
+class \code{structural_term}.
 }
 \seealso{
 \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

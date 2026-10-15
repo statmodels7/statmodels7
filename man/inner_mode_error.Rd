@@ -23,8 +23,8 @@ one the criterion will read rather than a second copy.}
 \item{expected}{Whether the penalized information is the expected one.}
 }
 \value{
-A single number, or \code{NA} where the penalized system could not
-be read there -- which is itself a reason to call the point unavailable.
+A single number, or \code{NA} where the penalized system could not be
+read there, which is itself a reason to call the point unavailable.
 }
 \description{
 \eqn{\tfrac12 g'K^{-1}g}, the decrease the penalized likelihood's own
@@ -32,32 +32,20 @@ Newton correction predicts at the point the inner fit returned: how much
 log-likelihood is still on the table there.
 }
 \details{
-It answers the question \strong{availability} asks, which is a different
-question from the one the inner optimizer's flag answers. The flag says
-whether a stopping rule fired. Availability asks whether the criterion, a
-Laplace expansion at the mode, is valid at this point.
+It decides whether a point is available, which is a different question from
+the one that the inner optimizer's flag answers. The flag reports whether a
+stopping rule fired. Availability is whether the criterion, a Laplace
+expansion at the mode, is valid at this point.
 
-The second is a matter of distance and has a natural scale, log-likelihood
-units. The first is a boolean about a threshold on a score whose size
-depends on the model.
+Availability is a matter of distance and has a natural scale, log-likelihood
+units. The flag is a boolean about a threshold on a score whose size depends
+on the model. The two can differ: an inner fit may stop on the
+objective-stall guard with the score slightly above the absolute tolerance
+and the penalized likelihood already at its mode to many digits. Such a
+point is available by this reading and unavailable by the flag.
 
-The two come apart on nearly every point. Measured on
-\code{y ~ s(x) | sigma ~ s(z)}, of 38 inner fits during one search, 38 are at
-their mode by this reading, between 1e-09 and 3e-09 against a limit of
-1e-03, and \strong{four} report convergence. The
-other 34 stopped on the objective-stall guard with the objective already
-fixed to twelve significant digits and a score oscillating between 2.5e-06
-and 3.3e-06, just above the absolute tolerance of 1e-06. Read as
-unavailable, they made the outer line search backtrack eleven times per
-iteration and accept a step of 0.0026 where the Newton step is 1.4, so the
-search moved 0.005 in eta over 38 evaluations and stopped 4.0 criterion
-units below the optimum its own gradient was correctly pointing at.
-
-It is used to add points and never to remove one: a run whose flag says
-converged stays usable whatever this reads, so no model that fitted before
-can stop fitting. That is also why it is not folded into the flag itself,
-which \code{piano_stabilita.txt} section 13 measured and withdrew -- there
-the flag was made stricter, and it cost a false negative on a good fit.
+It is used to add points and not to remove any: a run whose flag reports
+convergence stays usable whatever this reads.
 }
 \seealso{
 \code{\link[=mode_error_limit]{mode_error_limit()}}, \code{\link[=criterion_resolution]{criterion_resolution()}}

@@ -18,7 +18,8 @@ list of two:
 \describe{
 \item{\code{param}}{the distribution parameter whose equation the term sits
 in, a string.}
-\item{\code{term}}{the term's index within that equation, an integer.}
+\item{\code{term}}{the name of the term within that equation, a string
+(for example \code{"seg(x)"}).}
 }
 An empty list when no term refreshes, which is the common case.
 }
@@ -31,14 +32,14 @@ terms whose block has to be rebuilt whenever the coefficients move:
 time.
 }
 \details{
-Membership is decided by asking whether the term registers a
+Membership is decided by testing whether the term registers a
 \code{term_refresh()} method of its own, which is \code{\link[=refreshes_own_block]{refreshes_own_block()}}. The
 base method on \code{model_term} is the identity, so a term written later is
 covered without an edit here.
 
-This is the list every other function in the file walks. Its emptiness is
-what makes a model of ordinary terms pay nothing for the refresh
-machinery.
+The design stores this list, and every other function in the file walks
+it. When it is empty, a model of ordinary terms incurs no cost from the
+refresh machinery.
 }
 \seealso{
 \code{\link[=statmod_design_at]{statmod_design_at()}} for the rebuild,

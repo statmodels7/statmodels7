@@ -33,8 +33,10 @@ outer_fit(
 
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
-\item{optimizer}{An \pkg{optimizers7} optimizer, or \code{NULL} to let the
-availability of the exact gradient decide.}
+\item{optimizer}{An \pkg{optimizers7} optimizer, or \code{NULL} to choose one with
+\code{\link[=outer_default_optimizer]{outer_default_optimizer()}} from the derivatives that the criterion
+supplies. With \code{NULL}, the stopping rule and the line search are also set
+by the function.}
 
 \item{beta}{The starting coefficients, stacked.}
 
@@ -48,27 +50,28 @@ availability of the exact gradient decide.}
 search over the criterion's own coefficients alone.}
 }
 \value{
-A list with \code{par}, \code{hyper}, \code{value}, \code{criterion},
-\code{converged}, \code{history} and the inner results.
+A list with \code{par}, \code{hyper}, \code{value}, \code{criterion}, \code{converged},
+\code{settled}, \code{obj}, \code{hist_blocks}, \code{hist_inner}, \code{aliased}, \code{spec},
+\code{hist_outer}, \code{iterations}, \code{evaluations}, \code{exact_gradient},
+\code{exact_hessian}, \code{optimizer}, \code{held_coef}, \code{marginal} and \code{pinned}.
+\code{hist_outer} holds the trace of the search.
 }
 \description{
 Runs \code{outer_optimizer} on the marginal criterion, refitting the
-coefficients at every hyperparameter it tries.
+coefficients at every hyperparameter that it tries.
 }
 \details{
-Each evaluation is a whole inner fit, warm-started from the previous one,
-and that is what makes the search affordable: after the first few
-hyperparameters the coefficients move very little and the inner loop
-converges in two or three iterations.
+Each evaluation is a whole inner fit, warm-started from the incumbent, the
+best usable point found so far. Near the optimum the coefficients move
+little, so the inner fit converges in few iterations.
 
-\strong{The optimizer is chosen by whether the gradient exists.} Where
-\code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} applies -- the observed information, and
-penalties whose Hessian is linear in their hyperparameters -- the criterion
-is handed its exact derivative and \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} is the
-default; otherwise the search compares values and
-\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}} is. An optimizer given explicitly is
-used as given, and one that needs a gradient it cannot be given will say so
-itself.
+The optimizer is chosen by \code{\link[=outer_default_optimizer]{outer_default_optimizer()}} from the derivatives
+that the criterion supplies: \code{\link[optimizers7:newton]{optimizers7::newton()}} where the exact Hessian
+is used, \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} where the gradient is exact (or a covariance
+class spans a structural term's parameters), \code{\link[optimizers7:brent]{optimizers7::brent()}} for a
+single coordinate without a gradient, and \code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}}
+otherwise. An optimizer given explicitly is used as given, and an optimizer
+that needs a gradient that is not available signals its own error.
 }
 \seealso{
 \code{\link[=reml]{reml()}}, \code{\link[=statmod]{statmod()}}

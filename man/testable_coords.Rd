@@ -23,20 +23,21 @@ less the aliased ones, and none at all where the model carries a
 structural term.
 }
 \details{
-It is the enumeration \code{\link[=statmod_restrict]{statmod_restrict()}} refuses one coordinate at a
-time, asked once for the whole vector instead. A caller reporting a table
-needs it that way round, since each restricted statistic is a refit and an
-interval by inversion is a few dozen: a row that cannot be tested has to
-be recognized before it is paid for rather than after.
+It applies to the whole vector the enumeration that \code{\link[=statmod_restrict]{statmod_restrict()}}
+applies to one coordinate at a time, signaling an error for a coordinate
+that cannot be held. A caller reporting a table needs it in this form,
+since each restricted statistic is a refit and an interval by inversion
+requires many, so that a row that cannot be tested has to be recognized
+before its refit is computed and not after.
 
-A coordinate under a penalty that is twice differentiable IS included --
+A coordinate under a penalty that is twice differentiable is included:
 a smooth's linear column and its rotated coordinates, a ridge, a random
-effect -- and the restricted fit holds it exactly as it holds an
-unpenalized one, \code{\link[=fit_smooth]{fit_smooth()}} enforcing the hold in the solve. Only a
-kinked penalty is excluded, for the reasons \code{\link[=statmod_restrict]{statmod_restrict()}} gives.
+effect. The restricted fit holds it exactly as it holds an unpenalized
+one, \code{\link[=fit_smooth]{fit_smooth()}} enforcing the hold in the solve. Only a kinked penalty
+is excluded, for the reasons that \code{\link[=statmod_restrict]{statmod_restrict()}} gives.
 }
 \seealso{
-\code{\link[=statmod_restrict]{statmod_restrict()}}, which refuses the same coordinates one at a
+\code{\link[=statmod_restrict]{statmod_restrict()}}, which rejects the same coordinates one at a
 time, and \code{\link[=kinked_coords]{kinked_coords()}}.
 }
 \keyword{internal}

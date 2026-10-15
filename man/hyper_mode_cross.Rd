@@ -22,8 +22,7 @@ hyper_mode_cross(spec, design, coef, hyper, idx, n, joint = FALSE)
 with \code{joint} a structural term's free parameters after them.}
 
 \item{joint}{Whether those rows include that tail. \code{FALSE}, the default,
-is the coefficient-only matrix, which is what
-\code{\link[=statmod_edf_correction]{statmod_edf_correction()}} contracts.}
+gives the matrix over the coefficients alone.}
 }
 \value{
 A list with \code{cross}, an \code{n} by \code{nrow(idx)} matrix, and \code{skipped},
@@ -34,32 +33,33 @@ how many penalties contributed nothing to it.
 stacked coefficient vector with one column per estimated hyperparameter.
 }
 \details{
-This is the one ingredient of the penalized mode's movement that nothing
-else computes, and both consumers of that movement read it here rather than
-assembling it each: \code{\link[=statmod_edf_correction]{statmod_edf_correction()}}, which contracts it against
-the information to price what estimating a hyperparameter cost, and
-\code{\link[=hyper_correction]{hyper_correction()}}, which keeps the matrix and adds it to a variance.
+This function computes the cross derivative of the penalty that the
+movement of the penalized mode requires. Three functions read it here
+instead of assembling it separately: \code{\link[=statmod_edf_correction]{statmod_edf_correction()}}, which
+contracts the movement with the information to obtain the additional
+effective degrees of freedom, \code{\link[=hyper_correction]{hyper_correction()}}, which adds the resulting
+matrix to a variance, and \code{\link[=marginal_blocks]{marginal_blocks()}}, which builds the movement of
+the integrated coefficients.
 
-A shared hyperparameter is ONE column standing for several penalties, so
-each member writes into the group's column and they accumulate. Where
-nothing is shared each member is its own row and the lookup is what was
-here before the groups existed.
+A shared hyperparameter is one column that stands for several penalties, so
+each member writes into the column of its group and the contributions
+accumulate. Where nothing is shared, each member has its own column.
 
-A penalty over a STRUCTURAL term's own parameters covers positions among
-those parameters rather than columns of a design, so where the caller's
-matrix spans the coefficients alone there is nowhere to write it and it is
-skipped. It is counted rather than passed over in silence: a correction
-assembled without it is incomplete, and a caller reporting to a reader has
-to be able to say so.
+A penalty over the own parameters of a structural term covers positions among
+those parameters, which are not columns of a design. Where the matrix spans
+the coefficients alone, there is no position to write to and the penalty is
+skipped. The skipped penalties are counted in \code{skipped}, because a
+correction assembled without them is incomplete.
 
-With \code{joint} the matrix spans the vector the mode really moves in for such
-a model, the coefficients followed by the term's own free parameters, and
-those penalties have rows after all. What they lacked was an address and
-not a derivative: \code{\link[=unit_joint_positions]{unit_joint_positions()}} says where each unit's
-coordinates live in that vector and \code{\link[=unit_joint_beta]{unit_joint_beta()}} reads their values,
-so nothing here is derived. \code{\link[=hyper_correction]{hyper_correction()}} asks for it because
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} inverts the joint penalized information; the
-coefficient-space consumer does not, and its answer is unchanged.
+With \code{joint} the matrix spans the vector in which the mode of such a model
+moves, the coefficients followed by the free parameters of the term, and
+the penalties over those parameters have rows. \code{\link[=unit_joint_positions]{unit_joint_positions()}}
+returns the positions of the coordinates of each unit in that vector and
+\code{\link[=unit_joint_beta]{unit_joint_beta()}} returns their values. \code{\link[=hyper_correction]{hyper_correction()}} and
+\code{\link[=statmod_edf_correction]{statmod_edf_correction()}} pass \code{joint = TRUE} for a model that carries a
+filter, because \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} and \code{\link[=statmod_edf]{statmod_edf()}} use the joint
+penalized information. \code{\link[=marginal_blocks]{marginal_blocks()}} uses the matrix over the
+coefficients alone.
 }
 \seealso{
 \code{\link[=statmod_edf_correction]{statmod_edf_correction()}}, \code{\link[=hyper_correction]{hyper_correction()}},

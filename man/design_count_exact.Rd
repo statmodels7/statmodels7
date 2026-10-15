@@ -19,8 +19,8 @@ well, so that \eqn{|A|} is \eqn{\mathrm{rank}(X_A)} whatever the active set
 turns out to be.
 }
 \details{
-The question \code{\link[=statmod_pe]{statmod_pe()}} asks is about one active set at one point, and
-answering it there would cost a decomposition per evaluation. Full column
+The question that \code{\link[=statmod_pe]{statmod_pe()}} answers concerns one active set at one
+point, and answering it there would cost a decomposition per evaluation. Full column
 rank of the whole design answers it for every active set at once, so it is
 read once and reused, which is what keeps the count free on the path it was
 introduced for.
@@ -31,15 +31,14 @@ each design. A term registering \code{modelterms7::term_refresh()} recomputes
 its block as the coefficients move, so the same column counts do not imply
 the same columns and a memo that cannot see the refresh must not answer;
 there the certificate is declined outright and \code{\link[=active_rank]{active_rank()}} runs
-instead. That route is bounded by the trace it replaced, being a
-decomposition of \eqn{X_A} where the trace needs the cross product of the
-same columns.
+instead. That route is a decomposition of \eqn{X_A}, where the trace needs
+the cross product of the same columns.
 
 A design carrying a structural term has no \code{eta_memo} either, so there the
-certificate is recomputed at each call rather than declined. It is correct
-and it is not free; what makes it affordable is that a structural term's
-own penalty covers no coefficient, so the branch this serves is reached
-only where some other block is penalized by a kink and nothing else.
+certificate is recomputed at each call and costs one decomposition per
+equation. The branch that this serves is reached only where a penalty with
+a kink is present and the penalty's Hessian vanishes on the active
+coordinates.
 }
 \seealso{
 \code{\link[=active_rank]{active_rank()}}, which answers for one active set where this

@@ -26,14 +26,17 @@ u_vector(
 
 \item{coef}{The coefficients.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 
 \item{params}{The distribution's parameter names.}
 
 \item{npar, offs, total}{The block sizes, their offsets and the total.}
 
-\item{d3}{The array \eqn{\partial K/\partial\eta} is read from, or \code{NULL}
-for the family's third derivative at the fitted predictors.}
+\item{d3}{The array from which \eqn{\partial K/\partial\eta} is read, with
+a negative sign: the third derivatives of the log-likelihood on the
+observed route, the derivatives in the predictors of \eqn{E[\ell'']} on
+the expected one. \code{NULL} for the family's third derivative at the fitted
+predictors.}
 
 \item{G}{The per-observation diagonals of \eqn{M}, or \code{NULL}.}
 

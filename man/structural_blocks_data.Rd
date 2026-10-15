@@ -27,8 +27,8 @@ A list with \code{H}, \code{D3}, \code{Vs} and \code{ap}, and \code{D4} and \cod
 they were given.
 }
 \description{
-The quantities the callback of \code{.structural_blocks()} reads, laid out
-as matrices so \code{modelterms7}'s compiled second-order route can read
+The quantities that the callback of \code{.structural_blocks()} reads, laid out
+as matrices so that the compiled routes of \code{modelterms7} can read
 them without calling back into R: the mixed second derivatives one column
 per distribution parameter (the filter's own column zero, the loop skips
 it), the third derivatives one column per parameter pair with pair

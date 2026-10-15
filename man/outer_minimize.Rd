@@ -20,9 +20,9 @@ Reports whether a criterion is to be made small: \code{TRUE} for \code{\link[=ai
 }
 \details{
 The outer search always minimizes, so this decides whether the criterion
-goes in as it stands or with its sign turned. Asking the method, rather
-than writing the list of kinds into the search, means a criterion added
-later declares its own orientation in one place.
+goes in as it stands or with its sign turned. Reading the orientation from
+the method, and not from a list of kinds written into the search, lets a
+criterion added later declare its own orientation in one place.
 }
 \seealso{
 \code{\link[=outer_k]{outer_k()}} for the other property of a criterion the search

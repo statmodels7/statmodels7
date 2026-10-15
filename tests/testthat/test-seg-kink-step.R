@@ -31,9 +31,15 @@ kink_setup <- function(sig) {
     r <- statmod_alternate(spec, design, blocks, hy, inner, start,
                            cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
                            verbosity(0), hold_refresh = TRUE)
-    kk <- kink_positions(spec, design, r$obj$split(r$par),
-                         r$obj$split(seq_along(r$par)))
-    list(par = r$par, value = r$value, kinks = kk, gr = r$obj$gr(r$par))
+    # the constraints that hold the kinked break-point on its observation,
+    # and the gradient in the directions that they leave free
+    A <- kink_constraints(spec, design, r$obj$split(r$par),
+                          r$obj$split(seq_along(r$par)), length(r$par))
+    kk <- which(colSums(abs(A)) > 0)
+    N <- null_basis(A, length(r$par))
+    g <- r$obj$gr(r$par)
+    list(par = r$par, value = r$value, kinks = kk,
+         free_gr = as.numeric(N %*% crossprod(N, g)))
   }
   list(run = run)
 }
@@ -46,8 +52,8 @@ test_that("the inner fit reaches the mode from a point stopped at a kink", {
   # observation. Where it does not on some platform there is nothing to test.
   skip_if(!length(m$kinks), "the mode has no break-point on an observation here")
   expect_true(all(m$kinks %in% 4:16))
-  # the other coordinates are at their optimum there
-  expect_lt(max(abs(m$gr[-m$kinks])), 1e-2)
+  # the directions that keep it there are at their optimum
+  expect_lt(max(abs(m$free_gr)), 1e-2)
 
   # move every OTHER group's deviation off its optimum, keeping the kinked
   # break-point where it is: a step on all the coordinates crosses the kink
@@ -56,7 +62,7 @@ test_that("the inner fit reaches the mode from a point stopped at a kink", {
   start[dev] <- start[dev] + 0.05
   r <- s$run(start)
   expect_lt(r$value - m$value, 1e-6)
-  expect_lt(max(abs(r$gr[-r$kinks])), 1e-2)
+  expect_lt(max(abs(r$free_gr)), 1e-2)
 })
 
 test_that("seg with a developed break-point reads one criterion across routes", {

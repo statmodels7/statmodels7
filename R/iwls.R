@@ -790,11 +790,13 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   rejected, and escalating the damping at every inner fit costs iterations
 #'   without reaching anything that a stop would not.
 #' @param kinks_at `NULL`, or a function of the coefficients returning the
-#'   positions at which the objective has a kink there, as
-#'   [kink_positions()] finds them. Where a line search rejects every step
-#'   length those positions are held and the step is retried on the rest;
-#'   once the run has converged with them held, one step on every coordinate
-#'   is tried, and taken if it decreases the objective.
+#'   rows of the linear constraints that hold the objective on its kinks
+#'   there, a matrix with one column per coefficient, as
+#'   [kink_constraints()] finds them. Where a line search rejects every step
+#'   length, the problem is solved on the subspace that those constraints and
+#'   `frozen` leave free ([iwls_tied()]); from the point reached one step on
+#'   every coordinate is tried, and where it is rejected too the run stops
+#'   there, with the verdict of the constrained fit.
 #' @param newton_at `NULL`, or a function of the coefficients returning the
 #'   full Hessian of the objective, the scoring pieces' curvature plus the
 #'   term a block moving with its coefficients adds. Where the scoring step
@@ -866,9 +868,9 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   damp_tries <- 0L
   # how often the expected pieces stepped in, and for what
   fallback <- c(indefinite = 0L, search = 0L, error = 0L, newton = 0L)
-  # the positions held because the objective has a kink there, apart from
-  # the ones the caller holds
-  kinked <- integer(0)
+  # the constrained fit on the subspace a kink leaves free, once one has run
+  # from the current point; reset by every ordinary step that is accepted
+  tied <- NULL
   # the equations' coordinate ranges, for the dimensionless reading of the
   # final verdict; the caller says them where the coefficients it hands in
   # are a subset, since the objective's own split maps the full vector
@@ -942,25 +944,6 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       if (is.finite(dec) && dec > iwls_decrement_limit()) met <- FALSE
     }
     if (met) {
-      # HELD AT A KINK IS HELD FOR THIS STEP AND NOT FOREVER. The other
-      # coordinates have settled with those positions where they are, and
-      # where the kink is not the minimum in them any more, one step on every
-      # coordinate now decreases the objective and the run goes on from it.
-      if (length(kinked)) {
-        fr0 <- setdiff(frozen, kinked)
-        st0 <- iwls_line_search(obj, beta, value, g, pieces_at(beta), method,
-                                damp, fr0, guard = !is.null(backup_at))
-        if (st0$ok && value - st0$vnew > 1e-12 * max(1, abs(value))) {
-          frozen <- fr0
-          kinked <- integer(0)
-          x_old <- beta
-          f_old <- value
-          beta <- st0$cand
-          value <- st0$vnew
-          step_used <- st0$step_used
-          next
-        }
-      }
       converged <- TRUE
       # ONE MORE STEP AT THE POINT THE RULE ACCEPTED. The marginal criterion
       # carries log|K(beta)|, which is not stationary in beta, so a mode left
@@ -1090,12 +1073,37 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       # the mode, and holding the two coordinates that move the kinked
       # break-point reached the mode in four iterations. Damping does not
       # reach it: measured from the same point, it stops where it started.
+      # The constraint is linear in the coefficients, so the problem is
+      # solved on its null space: where the break-point's position is one
+      # coefficient that coefficient is held, and where it is developed over
+      # a design the coefficients move along the hyperplane that keeps the
+      # break-point on the observation. Once the constrained fit has run
+      # from here, a further rejection means the point is its optimum.
       if (!is.null(kinks_at)) {
-        kk <- setdiff(kinks_at(beta), frozen)
-        if (length(kk)) {
-          frozen <- c(frozen, kk)
-          kinked <- c(kinked, kk)
-          next
+        if (!is.null(tied)) {
+          converged <- isTRUE(tied$converged)
+          score <- tied$score
+          note <- paste0("the objective has a kink at the point reached; ",
+                         "the fit is the constrained one on the subspace ",
+                         "that keeps it there")
+          break
+        }
+        Ak <- kinks_at(beta)
+        if (NROW(Ak)) {
+          tied <- iwls_tied(obj, beta, method, n, pieces_at, Ak, frozen,
+                            backup_at = backup_at, newton_at = newton_at,
+                            switch_at = switch_at, switch_after = switch_after,
+                            kinks_at = kinks_at,
+                            damp_on_reject = damp_on_reject)
+          if (!is.null(tied)) {
+            if (tied$value <= value) {
+              x_old <- beta
+              f_old <- value
+              beta <- tied$par
+              value <- tied$value
+            }
+            next
+          }
         }
       }
       if (damp_on_reject && damp_tries < 8L) {
@@ -1119,6 +1127,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     # still, which is what a term whose gradient belongs to a working model
     # rather than to the objective produces at its own fixed point.
     stalled <- value - vnew <= 1e-12 * max(1, abs(value))
+    tied <- NULL
     x_old <- beta
     f_old <- value
     beta <- cand
@@ -1224,6 +1233,80 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
        iterations = it, score = score, note = note, aliased = aliased,
        fallback = fallback, switched = switched,
        history = if (length(hist)) do.call(rbind, hist) else NULL)
+}
+
+
+#' The Scoring Fit on the Subspace That a Kink Leaves Free
+#'
+#' @description
+#' Runs [iwls_fit()] on \eqn{\beta = \beta_0 + N w}, with \eqn{N} a basis of
+#' the directions that the kink constraints and the held coordinates leave
+#' free ([null_basis()]), and returns the point reached in the coefficients.
+#'
+#' @details
+#' The reparametrization is linear, so the reduced problem's pieces are the
+#' full problem's pieces carried through \eqn{N}: the square-root design and
+#' the penalty's factor are multiplied by \eqn{N} on the right, the assembled
+#' matrix becomes \eqn{N^\top A N}, the gradient \eqn{N^\top g} and the full
+#' Hessian \eqn{N^\top H N}. A kink met in the reduced problem adds its row,
+#' carried through \eqn{N}, in the same way.
+#'
+#' @param obj The objective, with `fn` and `gr`.
+#' @param beta The point \eqn{\beta_0}.
+#' @param method The [Iwls()] method.
+#' @param n The number of observations.
+#' @param pieces_at,backup_at,newton_at,switch_at,kinks_at As [iwls_fit()]
+#'   takes them, in the full coefficients.
+#' @param Ak The rows of the kink constraints at `beta`.
+#' @param frozen The positions held.
+#' @param switch_after,damp_on_reject As [iwls_fit()] takes them.
+#'
+#' @return `NULL` where the constraints leave no direction free, and
+#'   otherwise a list with `par`, the coefficients reached, `value`,
+#'   `converged` and `score`, the reduced fit's.
+#'
+#' @seealso [iwls_fit()], [kink_constraints()]
+#'
+#' @keywords internal
+iwls_tied <- function(obj, beta, method, n, pieces_at, Ak, frozen,
+                      backup_at = NULL, newton_at = NULL, switch_at = NULL,
+                      switch_after = Inf, kinks_at = NULL,
+                      damp_on_reject = TRUE) {
+  p <- length(beta)
+  E <- matrix(0, length(frozen), p)
+  if (length(frozen)) E[cbind(seq_along(frozen), frozen)] <- 1
+  N <- null_basis(rbind(as.matrix(Ak), E), p)
+  if (!ncol(N)) return(NULL)
+  b0 <- beta
+  at <- function(w) b0 + as.numeric(N %*% w)
+  carry <- function(pc) {
+    if (is.null(pc)) return(NULL)
+    if (!is.null(pc$R)) pc$R <- pc$R %*% N
+    if (!is.null(pc$C)) pc$C <- pc$C %*% N
+    if (!is.null(pc$A)) pc$A <- crossprod(N, as_dense(pc$A) %*% N)
+    pc
+  }
+  wrap <- function(f) if (is.null(f)) NULL else function(w) carry(f(at(w)))
+  sub <- list(fn = function(w) obj$fn(at(w)),
+              gr = function(w) as.numeric(crossprod(N, obj$gr(at(w)))))
+  nt <- if (is.null(newton_at)) NULL else function(w) {
+    H <- newton_at(at(w))
+    if (is.null(H)) NULL else crossprod(N, as_dense(H) %*% N)
+  }
+  kt <- if (is.null(kinks_at)) NULL else function(w) {
+    A <- kinks_at(at(w))
+    if (!NROW(A)) return(A)
+    A <- as.matrix(A) %*% N
+    A[rowSums(abs(A)) > 1e-12 * max(1, max(abs(A))), , drop = FALSE]
+  }
+  r <- iwls_fit(sub, numeric(ncol(N)), method, n, wrap(pieces_at),
+                verbose = FALSE, groups = list(seq_len(ncol(N))),
+                frozen = integer(0), backup_at = wrap(backup_at),
+                damp_on_reject = damp_on_reject, kinks_at = kt,
+                newton_at = nt, switch_at = wrap(switch_at),
+                switch_after = switch_after)
+  list(par = at(r$par), value = r$value, converged = r$converged,
+       score = r$score)
 }
 
 

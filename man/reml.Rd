@@ -17,19 +17,17 @@ information, a function of the parameters alone, or \code{"auto"}, which
 \code{\link[=statmod]{statmod()}} settles against the family through \code{\link[=outer_resolve]{outer_resolve()}}: the
 expected information for a Student t, a skew t or a Cauchy response,
 whose observed information is not positive definite at an outlier, and
-the observed information otherwise. The observed information is the
-default because, once a degrees-of-freedom start run to its limit is
-replaced (statmodels7 0.193.0), it reaches the same point as the expected
-one on every case measured and 2 to 20 times faster; the case that needs
-the expected information (\code{MASS::GAGurine} with \code{nu ~ Age}) is one where
-the caller names it (Giovanni, 2026-10-07). The fitted model records the
-information used. Matched with
-\code{\link[=match.arg]{match.arg()}}. Both carry an exact outer gradient and Hessian wherever the
-family writes its expected information out, which every shipped family
-does since distributions7 0.65.0. A family that does not would read the
-outer product of its
-scores at the data under the
-default \code{iwls(approx = "opg")}, which is not an expectation, and
+the observed information otherwise. The default is \code{"observed"}; the
+expected information is used where the caller names it, as for a Student t
+whose degrees of freedom are modeled. The fitted model records the
+information used. Matched with \code{\link[=match.arg]{match.arg()}}. On the expected route the
+outer gradient is exact wherever the family writes its expected
+information out, as every shipped family does, and the outer Hessian is
+exact wherever the family also supplies the derivative of that information
+that the Hessian reads (every shipped family except
+\code{\link[distributions7:enet_distrib]{distributions7::enet_distrib()}}). A family that does not write its
+expected information out reads the outer product of its scores at the data
+under the default \code{iwls(approx = "opg")}, which is not an expectation, and
 \code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
 \code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
 
@@ -39,14 +37,16 @@ read at the joint mode (\code{ml()}) or integrated (\code{reml()}). \code{NULL},
 default, names every parameter except the position, which is the
 family's first parameter. \code{"none"} names no parameter, \code{"all"} names
 every one, and a character vector names the parameters listed. With
-\code{"all"}, \code{reml()} and \code{ml()} are the same criterion.
+\code{"all"}, \code{reml()} and \code{ml()} are the same criterion. For a multivariate
+family the default names no parameter, and naming one explicitly is an
+error.
 Where the model carries a penalty with a kink (a lasso, an elastic
 net, a SCAD or an MCP, in any equation), \code{NULL} names no parameter:
 the path that chooses the kinked penalty scores the model at the joint
-mode, and the fit returned is the model it scored. A parameter named
-explicitly is still estimated on the criterion, at the value the path
-chose. Where the family lacks the two derivatives the criterion reads
-in some parameter (a Laplace response) and the model carries no smooth
+mode, and the fit returned is the model that it scored. A parameter
+named explicitly is still estimated on the criterion, at the value that
+the path chose. Where the family lacks the two derivatives that the
+criterion reads in some parameter (a Laplace response) and the model carries no smooth
 hyperparameter, the default criterion is not run at all, and a
 \code{reml()} or \code{ml()} passed by name is rejected.}
 }
@@ -55,14 +55,14 @@ An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \co
 \code{hessian} and \code{marginal} as supplied and the path settings unused.
 }
 \description{
-Build the object that tells \code{\link[=statmod]{statmod()}} to choose a model's smooth
+Build the criterion object that \code{\link[=statmod]{statmod()}} uses to choose a model's smooth
 hyperparameters by a marginal likelihood: the coefficients are integrated
 out by a Laplace approximation at the penalized mode, and what is left is
 maximized in the hyperparameters. Pass the result as \code{outer_criterion}.
 
-\code{reml()} integrates \strong{every} coefficient out. \code{ml()} integrates only the
-penalized directions and profiles the rest. \code{reml()} is \code{\link[=statmod]{statmod()}}'s
-default.
+\code{reml()} integrates every coefficient that \code{marginal} does not name. \code{ml()}
+integrates only the penalized directions and profiles the rest. \code{reml()} is
+the default of \code{\link[=statmod]{statmod()}}.
 }
 \section{The criterion}{
 At the penalized mode \eqn{\hat\beta(\theta)},
@@ -70,9 +70,9 @@ At the penalized mode \eqn{\hat\beta(\theta)},
   + \frac{q}{2}\log 2\pi - \frac12\log|A'(H+S)A|,}
 with \eqn{H} the information of the log-likelihood, \eqn{S} the penalty's
 second derivative in the coefficients, and \eqn{A} an orthonormal basis of
-the subspace integrated over. Nothing is added to \eqn{\rho} to make this
-work: a \pkg{penalties7} penalty keeps its normalizing constant, so it is
-exactly minus a log prior density, and for a quadratic penalty that constant
+the subspace integrated over. The term \eqn{\rho} needs no correction: a
+\pkg{penalties7} penalty keeps its normalizing constant, so it is exactly
+minus a log prior density, and for a quadratic penalty that constant
 carries the \eqn{-\frac{r}{2}\log\lambda} and the log pseudo-determinant
 that a marginal criterion needs. Written out, the expression reproduces
 Wood's (2011) REML criterion term for term.
@@ -95,13 +95,13 @@ smooth does not act on it.
 
 With \code{marginal = "all"}, \eqn{\gamma} holds every unpenalized
 coefficient. The two criteria then integrate the same directions, and they
-are the same function: measured on six families with a random intercept,
-the two maxima and the two sets of coefficients agree exactly.
+are the same function.
 
-A coefficient that the model does not identify at the first fit is left
-out of the determinant for the whole search, and it stays free in the
-inner fit. This is how \code{\link[stats:lm]{stats::lm()}} computes its REML criterion, with the
-rank of the design instead of its number of columns.
+Where the criterion estimates coefficients, a coefficient that the model
+does not identify at the first fit is left out of the determinant for the
+whole search and stays free in the inner fit. This corresponds to the REML
+log-likelihood of \code{\link[stats:lm]{stats::lm()}} (\code{logLik(fit, REML = TRUE)}), which uses the
+rank of the design in place of its number of columns.
 }
 
 \section{Where a dispersion and a shape are estimated}{
@@ -113,66 +113,69 @@ the mean are integrated, and \eqn{\sigma} is maximized on the criterion.
 Without any penalty, \code{reml()} returns the \eqn{\sigma} of \code{\link[stats:lm]{stats::lm()}},
 \eqn{\sqrt{\mathrm{rss}/(n-p)}}, and its criterion equals
 \code{logLik(lm(...), REML = TRUE)}. \code{ml()} returns \eqn{\sqrt{\mathrm{rss}/n}}.
-On \code{nlme::Orthodont}, \code{distance ~ agec + random(~ agec | Subject)} gives
-\eqn{\sigma} = 1.310039, standard deviations 2.134332 and 0.226429, and a
-criterion of -221.31834, which are the values of \code{lme} to six digits.
+With \code{agec} defined as \code{age - 11}, the model
+\code{distance ~ agec + random(~ agec | Subject)} on \code{nlme::Orthodont} gives the
+estimates and the criterion of \code{lme}.
 
 \code{marginal = "none"} gives the convention of \code{gamlss} and of mgcv's
 \code{gaulss}: every parameter of the distribution is read at the joint mode of
 the penalized likelihood. That estimate ignores the degrees of freedom of
 the coefficients estimated beside it, so a dispersion read there is biased
-downwards. Measured over 20 replicates of 40 groups of 8, a gamma
-dispersion with a random effect of its own is biased by -8.0 per cent at the
-joint mode and by -2.6 per cent on the criterion, and a Weibull shape with
-a random intercept by +8.7 and +1.1 per cent.
+downwards. Where a dispersion carries a random effect of its own, the bias
+at the joint mode is larger than the bias on the criterion.
 
 Where some coefficients of the location are integrated, the estimate
 depends on the parametrization of the family. The dispersion of
 \code{\link[distributions7:gamma1_distrib]{distributions7::gamma1_distrib()}} and the variance of
 \code{\link[distributions7:gamma2_distrib]{distributions7::gamma2_distrib()}}, \eqn{\sigma^2 = \phi\mu^2}, differ
-by about one per cent under \code{reml()}, because the second contains the
-integrated mean. With \code{"all"} the criterion does not depend on the
-parametrization.
+under \code{reml()}, because the second contains the integrated mean. With
+\code{"all"} the criterion does not depend on the parametrization.
 
-Five configurations are not covered yet, and \code{\link[=marginal_coords]{marginal_coords()}} lists
-them: a structural term, a block that moves with its coefficients, a
-penalty with a kink, a block that is a working linearization (a sharp
-\code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}), and a penalty whose null
-space is not spanned by coordinates. In each case a parameter that the default names keeps the
-convention of \code{"none"}, and a parameter named explicitly is refused.
+Some configurations are not covered, and \code{\link[=marginal_coords]{marginal_coords()}} lists them: a
+structural term anywhere in the model, a block that is a working
+linearization (a sharp \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}})
+anywhere in the model, a block that moves with its coefficients in the
+parameter's own equation, and a quadratic penalty in that equation whose
+null space is not spanned by coordinates. In each case a parameter that the
+default names keeps the convention of \code{"none"}, and a parameter named
+explicitly is rejected. Beside a penalty with a kink the default names no
+parameter, and a parameter named explicitly is estimated on the criterion,
+with the coordinates that the kinked penalty covers excluded. For a
+multivariate family the default names no parameter, and an explicit
+\code{marginal} other than \code{"none"} is an error.
 }
 
 \section{Which hyperparameters}{
 Those of the terms fitted in one system, meaning those whose penalty is
 twice differentiable. A lasso, a SCAD or an MCP has a kink, its
 coefficients are estimated by a method of their own, and a Laplace
-approximation at a point where the second derivative does not exist would
-be arithmetic with no meaning. Those hyperparameters stay where their term
-left them, and \code{\link[=bic]{bic()}} is what \code{\link[=statmod]{statmod()}} puts to them instead.
+approximation is undefined at a point where the second derivative does not
+exist. Those hyperparameters are not on the outer search. \code{\link[=statmod]{statmod()}}
+chooses them by a path under \code{sparse_criterion}, which is \code{\link[=bic]{bic()}} by default
+and can also be \code{\link[=aic]{aic()}} or \code{\link[=cv]{cv()}}.
 }
 
 \section{The exact gradient}{
-The criterion has one where the information is the observed one and every
-penalty under estimation has a Hessian linear in its hyperparameters,
-which covers \code{\link[modelterms7:s]{modelterms7::s()}}, \code{\link[modelterms7:te]{modelterms7::te()}} and any
-\code{\link[penalties7:quadratic_penalty]{penalties7::quadratic_penalty()}}. It is then supplied to the search and
-\code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} becomes the default optimizer; otherwise the search
-compares values.
-
-Measured in evaluations of the criterion, each a whole inner fit, against
-\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}}: 40 against 32 with one smoothing parameter,
-40 against 135 with two, 41 against 269 with three, and 12 against 283
-with three and a modeled scale. It does not pay in one dimension and pays
-from two on, a simplex needing a vertex per dimension and a quasi-Newton
-method not.
+The criterion has an exact gradient on the observed and on the expected
+information, for every penalty whose derivatives in the coefficients and the
+hyperparameters are available, as those of \code{\link[modelterms7:s]{modelterms7::s()}},
+\code{\link[modelterms7:te]{modelterms7::te()}} and any \code{\link[penalties7:quadratic_penalty]{penalties7::quadratic_penalty()}} are; a model
+with a \code{\link[modelterms7:regime]{modelterms7::regime()}} term has none. The gradient, and the Hessian
+where it is exact, are supplied to the search. The default optimizer is
+\code{\link[optimizers7:newton]{optimizers7::newton()}} with a bounded step where the Hessian is exact and
+steers the search, \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} where only the gradient is exact,
+\code{\link[optimizers7:brent]{optimizers7::brent()}} for a single coordinate without a gradient, and
+\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}} otherwise. A simplex needs one vertex per
+dimension and a quasi-Newton method does not, so an exact gradient saves
+criterion evaluations once there are two or more hyperparameters.
 }
 
 \section{ML needs a null basis}{
-For every penalty that has one, since that is what says which directions
-are profiled. \code{\link[penalties7:is_proper]{penalties7::is_proper()}} answers for a penalty with no null
-space at all, and \code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}} for the quadratic and
-structured branches. A penalty offering neither is rejected by name,
-instead of being integrated over a subspace guessed at.
+\code{ml()} reads the null space of every penalty that it integrates over,
+because the null space determines which directions are profiled. \code{\link[penalties7:is_proper]{penalties7::is_proper()}} identifies a penalty with
+no null space, and \code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}} returns the null space
+of a quadratic, structured, additive or separable penalty. A penalty that
+offers neither is rejected by name, and no subspace is guessed.
 }
 
 \examples{
@@ -183,7 +186,7 @@ dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dd,
                outer_criterion = reml())
 
-# The smoothing parameter was estimated, and hyper() says by what.
+# The smoothing parameter was estimated, and hyper() reports it.
 hyper(fit)
 
 # ML profiles the unpenalized directions instead of integrating them, so

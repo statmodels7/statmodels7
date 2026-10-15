@@ -32,8 +32,9 @@ NULL
 #'
 #' @description
 #' One entry per refreshable term, carrying everything its derivative needs:
-#' the distribution parameter it sits in, its columns in the stacked
-#' coefficient vector, its own coefficients and the term rebuilt at them.
+#' the distribution parameter it sits in, its columns within that equation
+#' and in the stacked coefficient vector, its own coefficients and the term
+#' rebuilt at them.
 #'
 #' @details
 #' Resolved once and passed to every consumer, so the gradient's contraction
@@ -45,7 +46,12 @@ NULL
 #' @param coef The coefficients.
 #' @param params,npar,offs The block bookkeeping.
 #'
-#' @return A list, empty where no block moves.
+#' @return A list, empty where no block moves. Each element is a list with
+#'   `a`, the index of the term's equation; `param`, the distribution
+#'   parameter of that equation; `term`, the name of the term within the
+#'   equation; `cols`, its columns within the equation; `ra`, the same columns
+#'   in the stacked coefficient vector; `bt`, the term's coefficients; and
+#'   `built`, the term refreshed at `bt`.
 #'
 #' @seealso [u_refresh()], [contract3_refresh()]
 #'
@@ -73,14 +79,22 @@ refresh_units <- function(spec, design, coef, params, npar, offs) {
 }
 
 
-#' Where the Objective Has a Kink, in the Stacked Coefficients
+#' The Constraints That the Kinks Place on the Stacked Coefficients
 #'
 #' @description
-#' Asks every term that recomputes its own block where, among its own
-#' coefficients, the objective is not differentiable at the coefficients
-#' given, through [modelterms7::term_kinks()], and carries the answer into
-#' the positions of the stacked vector. [iwls_fit()] holds those positions
-#' where a line search rejects every step length.
+#' Reads, through [modelterms7::term_kink_constraints()], the linear
+#' constraints that hold the objective on its kinks at the coefficients given,
+#' for every term that recomputes its own block, and places their rows in the
+#' columns of the stacked vector.
+#'
+#' @details
+#' A break-point that sits on an observation is a kink of the objective. Where
+#' its position is a single coefficient the row is that coefficient's unit
+#' vector; where the position is developed over a design the row is the
+#' development's row of that observation, and the coefficients can still move
+#' along the hyperplane on which the break-point stays on the observation.
+#' [iwls_fit()] solves on that subspace where a line search rejects every step
+#' length, and [mode_solver()] moves the mode in it.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -89,30 +103,168 @@ refresh_units <- function(spec, design, coef, params, npar, offs) {
 #' @param split The stacked positions of each parameter's coefficients, a
 #'   named list as the objective's `split` returns it for `seq_along()` of the
 #'   stacked vector.
+#' @param total The length of the stacked vector.
 #'
-#' @return An integer vector of stacked positions, possibly empty.
+#' @return A numeric matrix with `total` columns and one row per constraint,
+#'   with no rows where no term has a kink.
 #'
-#' @seealso [iwls_fit()], [refresh_units()].
+#' @seealso [iwls_fit()], [mode_solver()], [refresh_units()].
 #'
 #' @keywords internal
-kink_positions <- function(spec, design, coef, split) {
+kink_constraints <- function(spec, design, coef, split, total) {
   rf <- attr(design, "refresh")
   st <- attr(design, "state")
-  if (is.null(rf) || !length(rf) || is.null(st)) return(integer(0))
-  out <- integer(0)
+  out <- matrix(0, 0, total)
+  if (is.null(rf) || !length(rf) || is.null(st)) return(out)
   for (r in rf) {
     p <- r$param
     cols <- design[[p]]$blocks[[r$term]]
     tm <- st$terms[[p]][[r$term]]
     if (!length(cols) || is.null(tm)) next
-    k <- modelterms7::term_kinks(tm, coef = coef[[p]][cols])
-    if (length(k)) out <- c(out, split[[p]][cols[k]])
+    A <- modelterms7::term_kink_constraints(tm, coef = coef[[p]][cols])
+    if (!nrow(A)) next
+    M <- matrix(0, nrow(A), total)
+    M[, split[[p]][cols]] <- A
+    out <- rbind(out, M)
   }
-  sort(unique(as.integer(out)))
+  out
 }
 
 
-#' The Log-Density's Curvature the Refresh Corrections Read
+#' A Basis of the Directions That a Set of Linear Constraints Leaves Free
+#'
+#' @description
+#' The columns of a `p x r` matrix \eqn{N} with \eqn{B N = 0} and
+#' \eqn{N^\top N = I}, spanning the null space of `B`.
+#'
+#' @details
+#' Where every row of `B` is a multiple of a unit vector, the constraints hold
+#' coordinates, and \eqn{N} is the identity's columns of the other
+#' coordinates, so the reduced problem is the problem without those
+#' coordinates exactly. Otherwise \eqn{N} is read off the complete QR
+#' decomposition of \eqn{B^\top}.
+#'
+#' @param B A numeric matrix with `p` columns.
+#' @param p The number of columns.
+#'
+#' @return The matrix \eqn{N}, with zero columns where `B` has full column
+#'   rank.
+#'
+#' @keywords internal
+null_basis <- function(B, p = ncol(B)) {
+  B <- as.matrix(B)
+  if (!nrow(B)) return(diag(p))
+  nz <- rowSums(B != 0)
+  B <- B[nz > 0, , drop = FALSE]
+  if (!nrow(B)) return(diag(p))
+  if (all(rowSums(B != 0) == 1L)) {
+    held <- unique(apply(B != 0, 1L, which))
+    return(diag(p)[, setdiff(seq_len(p), held), drop = FALSE])
+  }
+  q <- qr(t(B))
+  if (q$rank >= p) return(matrix(0, p, 0L))
+  Q <- qr.Q(q, complete = TRUE)
+  Q[, (q$rank + 1L):p, drop = FALSE]
+}
+
+
+#' The Movement of the Mode Under Held Coordinates and Kinks
+#'
+#' @description
+#' Builds the solve that gives the movement of the penalized mode under a
+#' perturbation \eqn{c}: \eqn{v = -N (N^\top (K + D_m) N)^{-1} N^\top c}, with
+#' \eqn{N} a basis of the directions that the held coordinates and the kinks
+#' leave free.
+#'
+#' @details
+#' The held coordinates are those pinned in \eqn{K} other than at a boundary
+#' (a coefficient that the criterion estimates, a direction that the model
+#' does not identify, a coefficient that a kinked penalty holds at zero). The
+#' kinks are the break-points that sit on an observation at the mode
+#' ([kink_constraints()]): there the one-sided slopes have opposite signs, so
+#' a small perturbation leaves the break-point on the observation, as a lasso
+#' leaves a coefficient at zero. Where the break-point's position is a single
+#' coefficient that coefficient does not move; where it is developed over a
+#' design the mode moves along the hyperplane on which the break-point stays
+#' on the observation. The solve is the bordered system of the equality
+#' constrained problem, written in the basis of its null space. The
+#' criterion's own determinant is not affected: it keeps the side convention
+#' of the break-point term.
+#'
+#' Where \eqn{N^\top (K + D_m) N} is not positive definite, \eqn{K} alone
+#' replaces \eqn{K + D_m}.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design at the mode.
+#' @param coef The coefficients at the mode, a named list.
+#' @param K The mode's penalized information, as [ctx_penalized()] returns
+#'   it with `laplace = FALSE`.
+#' @param Kinv Its inverse.
+#' @param Dm The block's own curvature from [mode_curvature()], or `NULL`.
+#' @param npar,offs The coefficient counts and offsets per parameter.
+#'
+#' @return A list with `solve`, a function of \eqn{c} returning \eqn{v}
+#'   without the sign; `J`, the curvature solved with; `Dm`, the curvature
+#'   with the held rows and columns set to zero; and `hold`, the held
+#'   positions.
+#'
+#' @seealso [statmod_marginal_grad()], [statmod_marginal_hess()],
+#'   [null_basis()]
+#'
+#' @keywords internal
+mode_solver <- function(spec, design, coef, K, Kinv, Dm, npar, offs) {
+  total <- sum(npar)
+  split <- stats::setNames(lapply(seq_along(npar), function(a)
+    offs[a] + seq_len(npar[a])), names(design))
+  Ak <- kink_constraints(spec, design, coef, split, total)
+  hold <- setdiff(attr(K, "held_at"), attr(K, "boundary_at"))
+  if (!is.null(Dm) && length(hold)) {
+    Dm[hold, ] <- 0
+    Dm[, hold] <- 0
+  }
+  J <- K
+  solve <- function(z) as.numeric(Kinv %*% z)
+  kinked <- nrow(Ak) > 0L
+  if ((!is.null(Dm) && any(Dm != 0)) || kinked) {
+    Jt <- as_dense(K) + if (is.null(Dm)) 0 else Dm
+    if (kinked) {
+      E <- matrix(0, length(hold), total)
+      if (length(hold)) E[cbind(seq_along(hold), hold)] <- 1
+      N <- null_basis(rbind(Ak, E), total)
+      reduced <- function(Jm) {
+        fac <- tryCatch(chol(crossprod(N, Jm %*% N)), error = function(e) NULL)
+        if (is.null(fac)) return(NULL)
+        function(z) {
+          r <- crossprod(N, as.numeric(z))
+          as.numeric(N %*% backsolve(fac, forwardsolve(t(fac), r)))
+        }
+      }
+      f <- reduced(Jt)
+      if (is.null(f)) {
+        Jt <- as_dense(K)
+        f <- reduced(Jt)
+      }
+      if (!is.null(f)) {
+        J <- Jt
+        solve <- f
+      }
+    } else {
+      fac <- tryCatch(chol(Jt), error = function(e) NULL)
+      # the true Hessian may lose definiteness where Gauss-Newton cannot, and
+      # the mode's movement is then read off K
+      if (!is.null(fac)) {
+        J <- Jt
+        solve <- function(z) {
+          as.numeric(backsolve(fac, forwardsolve(t(fac), as.numeric(z))))
+        }
+      }
+    }
+  }
+  list(solve = solve, J = J, Dm = Dm, hold = hold)
+}
+
+
+#' The Log-Density's Curvature Used by the Refresh Corrections
 #'
 #' @description
 #' \eqn{\ell_{ab}} on the link scale, from whichever route the criterion's
@@ -140,11 +292,11 @@ refresh_hessian <- function(spec, design, coef, expected = FALSE,
 }
 
 
-#' The Weight a Refreshable Block Is Contracted Against
+#' The Weight for Contracting a Refreshable Block
 #'
 #' @description
-#' \eqn{A_a[i,j] = w_i\sum_b c_{ab}(i)\,(X_b M_{ab}^\top)[i,j]}, the matrix a
-#' term's own derivative is paired with.
+#' \eqn{A_a[i,j] = w_i\sum_b c_{ab}(i)\,(X_b M_{ab}^\top)[i,j]}, the matrix
+#' with which a term's own derivative is paired.
 #'
 #' @details
 #' The same shape serves three quantities and differs only in \eqn{c_{ab}}: the
@@ -154,7 +306,7 @@ refresh_hessian <- function(spec, design, coef, expected = FALSE,
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #' @param params,npar,offs The block bookkeeping.
 #' @param ra The term's rows in the stacked coefficient vector.
 #' @param cw One length-\eqn{n} vector per distribution parameter, or
@@ -180,8 +332,9 @@ refresh_amat <- function(spec, design, M, params, npar, offs, ra, cw) {
 #' A Refreshable Block's Derivative Along One Direction
 #'
 #' @description
-#' [modelterms7::term_block_deriv()] on one unit, with the shape it
-#' returns checked rather than assumed.
+#' [modelterms7::term_block_deriv()] on one unit, with the shape of the
+#' result checked. A block of another shape signals an error that names the
+#' term.
 #'
 #' @param un One entry of [refresh_units()].
 #' @param v The direction, as long as the term's coefficients.
@@ -205,14 +358,17 @@ refresh_dblock <- function(un, v, n) {
 #' A Refreshable Block's Second Derivative Along Two Directions
 #'
 #' @description
-#' [modelterms7::term_block_deriv2()] on one unit, with the shape it
-#' returns checked rather than assumed.
+#' [modelterms7::term_block_deriv2()] on one unit, with the shape of the
+#' result checked. A block of another shape signals an error that names the
+#' term.
 #'
 #' @details
-#' A term that has not written the method inherits the base one and gets
-#' zeros, which is exact for a design that does not move and a deliberate
-#' refusal for a block that is a working linearization rather than a Jacobian.
-#' Nothing is differenced here in either case.
+#' The base method on `model_term` answers zeros, which is exact for a design
+#' that does not move. A sharp [modelterms7::seg()] answers zeros because its
+#' second derivative vanishes away from the break-points, and a sharp
+#' [modelterms7::jump()] or [modelterms7::jseg()] answers zeros because its
+#' block is a working linearization with a frozen weight and not a Jacobian.
+#' Nothing is differenced here in any case.
 #'
 #' @param un One entry of [refresh_units()].
 #' @param v,u The two directions, each as long as the term's coefficients.
@@ -236,7 +392,7 @@ refresh_dblock2 <- function(un, v, u, n) {
 }
 
 
-#' The Weight the Second Derivative of a Block Is Paired With
+#' The Weight for the Second Derivative of a Block
 #'
 #' @description
 #' [refresh_amat()] with the curvature, one matrix per unit.
@@ -248,7 +404,7 @@ refresh_dblock2 <- function(un, v, u, n) {
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #' @param params,npar,offs The block bookkeeping.
 #' @param units The refreshable terms, from [refresh_units()].
 #' @param Hl The link-scale curvature, from [refresh_hessian()].
@@ -310,8 +466,8 @@ d3_direction <- function(spec, d3, params, npar, a, b, tv) {
 #' \eqn{\partial X/\partial\beta}: with \eqn{D_a = (\partial X_a/\partial\beta)v},
 #' \deqn{R[(a,j),(b,k)] = -\sum_i w_i\,\ell_{ab,i}\,D_a[i,j]\,X_b[i,k],}
 #' and the other is its transpose, so the correction is \eqn{R + R^\top}. The
-#' derivative is asked of the term through
-#' [modelterms7::term_block_deriv()] and never differenced here, for
+#' derivative is read from the term through
+#' [modelterms7::term_block_deriv()] and is never differenced here, for
 #' the reason [u_refresh()] records: a break-point column is a step
 #' function in its break-point.
 #'
@@ -348,7 +504,7 @@ contract3_refresh <- function(spec, design, params, npar, offs, total, dir, Hl,
 }
 
 
-#' What One Direction Costs a Moving Block
+#' The Derivatives of a Moving Block Along One Direction
 #'
 #' @description
 #' The two quantities every consumer of \eqn{\partial X/\partial\beta} reads
@@ -363,7 +519,7 @@ contract3_refresh <- function(spec, design, params, npar, offs, total, dir, Hl,
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #' @param params,npar,offs The block bookkeeping.
 #' @param d3 The third derivatives on the link scale.
 #' @param tv The predictors of the direction.
@@ -409,10 +565,11 @@ refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
 #' \eqn{N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]} with
 #' \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]} from
 #' [modelterms7::term_block_deriv2()]. Those four enter as
-#' \eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}, and each is read off
-#' [refresh_amat()], with the third derivative for the first two and the
-#' curvature for the fourth, so neither \eqn{N} nor any contraction is
-#' assembled.
+#' \eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}. \eqn{N_1}, \eqn{N_2} and
+#' \eqn{N_4} are read off [refresh_amat()], with the third derivative for the
+#' first two and the curvature for the fourth, and \eqn{N_3} is summed from
+#' the two blocks' derivatives with the rows of \eqn{M} between them, so that
+#' neither \eqn{N} nor any contraction is assembled.
 #'
 #' The fifth is of another shape and is added separately. The
 #' third-derivative contraction carries the direction's predictor
@@ -426,16 +583,8 @@ refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
 #' contracted in both directions and is therefore symmetric in them, which is
 #' a free check on the assembly.
 #'
-#' **Measured**, against a mixed second difference of \eqn{H} that shares
-#' no arithmetic with any of this: on a bilinear \eqn{f}, where the fourth
-#' term is exactly zero, the fifth is the whole of the gap and takes
-#' \eqn{2.32\times10^{-2}} to \eqn{2.19\times10^{-8}}; on a curved one neither
-#' alone suffices: \eqn{2.62\times10^{-2}} today, \eqn{2.88\times10^{-2}}
-#' with the fifth alone, \eqn{2.65\times10^{-3}} with the fourth alone,
-#' \eqn{5.19\times10^{-8}} with both.
-#'
 #' @param spec A [StatmodSpec()].
-#' @param M The matrix the trace is taken against.
+#' @param M The matrix against which the trace is taken.
 #' @param params,npar The parameter names and block sizes.
 #' @param Hl The link-scale curvature, from [refresh_hessian()].
 #' @param dv,du The two directions, from [refresh_direction()].
@@ -498,14 +647,6 @@ trace_refresh4 <- function(spec, M, params, npar, Hl, dv, du, units, G, d3,
 #' \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]}. Both are one
 #' `crossprod` against a per-observation weight, so neither the
 #' third-derivative array of the predictor nor any contraction of it is formed.
-#'
-#' **Measured** against the mode refitted at four hyperparameter values
-#' and differenced twice, on `nl(a ~ 0 + ridge(~grp))`: \eqn{b_m} is right
-#' to 3.8e-08 without this and \eqn{b_{ml}} is wrong by 7.6 to 9.0 per cent at
-#' every step tried, which is a systematic error and no reference's noise.
-#' With it
-#' the gap falls to 1.8e-05 at the reference's best step, which is inside the
-#' spread between the reference's own consecutive steps.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param params,npar,total The block bookkeeping.

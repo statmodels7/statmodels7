@@ -9,7 +9,7 @@ trace_refresh4(spec, M, params, npar, Hl, dv, du, units, G, d3, v, f2, acurv)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 
 \item{params, npar}{The parameter names and block sizes.}
 
@@ -51,10 +51,11 @@ supported where both blocks move. A fourth reads the second,
 \eqn{N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]} with
 \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]} from
 \code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}}. Those four enter as
-\eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}, and each is read off
-\code{\link[=refresh_amat]{refresh_amat()}}, with the third derivative for the first two and the
-curvature for the fourth, so neither \eqn{N} nor any contraction is
-assembled.
+\eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}. \eqn{N_1}, \eqn{N_2} and
+\eqn{N_4} are read off \code{\link[=refresh_amat]{refresh_amat()}}, with the third derivative for the
+first two and the curvature for the fourth, and \eqn{N_3} is summed from
+the two blocks' derivatives with the rows of \eqn{M} between them, so that
+neither \eqn{N} nor any contraction is assembled.
 
 The fifth is of another shape and is added separately. The
 third-derivative contraction carries the direction's predictor
@@ -67,14 +68,6 @@ piece is one further call of it with \eqn{\dot v} in place of the
 predictors. \eqn{\dot v} is the predictor's own second derivative
 contracted in both directions and is therefore symmetric in them, which is
 a free check on the assembly.
-
-\strong{Measured}, against a mixed second difference of \eqn{H} that shares
-no arithmetic with any of this: on a bilinear \eqn{f}, where the fourth
-term is exactly zero, the fifth is the whole of the gap and takes
-\eqn{2.32\times10^{-2}} to \eqn{2.19\times10^{-8}}; on a curved one neither
-alone suffices: \eqn{2.62\times10^{-2}} today, \eqn{2.88\times10^{-2}}
-with the fifth alone, \eqn{2.65\times10^{-3}} with the fourth alone,
-\eqn{5.19\times10^{-8}} with both.
 }
 \seealso{
 \code{\link[=trace_design_form]{trace_design_form()}}, \code{\link[=contract3_refresh]{contract3_refresh()}},

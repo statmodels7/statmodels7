@@ -414,7 +414,7 @@ logLik.StatmodFit <- function(object,
                      numeric(1)))
     return(structure(as.numeric(object@criterion),
                      df = sum(!lab$penalized) + nh + ns,
-                     nobs = object@spec@n_obs, class = "logLik"))
+                     nobs = weight_total(object@spec), class = "logLik"))
   }
   df <- if (is.null(object@edf)) {
     sum(lengths(object@coefficients))
@@ -442,7 +442,7 @@ logLik.StatmodFit <- function(object,
     }
     sum(ifelse(is.na(e$edf), bound, e$edf))
   }
-  structure(object@loglik, df = df, nobs = object@spec@n_obs,
+  structure(object@loglik, df = df, nobs = weight_total(object@spec),
             class = "logLik")
 }
 S7::method(logLik, StatmodFit) <- logLik.StatmodFit

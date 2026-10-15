@@ -20,8 +20,8 @@ coefficients.}
 }
 \value{
 The variance over the kept coordinates, or \code{NULL} where the fit
-estimated no coefficient on its criterion, or where a piece cannot be
-read.
+estimated no coefficient on its criterion, where the model carries a
+structural term, or where a piece cannot be read.
 }
 \description{
 The variance of the coefficients of a fit whose marginal criterion

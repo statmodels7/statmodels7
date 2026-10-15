@@ -9,7 +9,7 @@ outer_default_optimizer(exact, use_hess, mixed = FALSE, n = NA_integer_)
 \arguments{
 \item{exact}{Whether the criterion has an exact gradient.}
 
-\item{use_hess}{Whether the search should STEER by the exact Hessian, which
+\item{use_hess}{Whether the search should steer by the exact Hessian, which
 is not the same question as whether one exists: see \code{\link[=outer_newton_ok]{outer_newton_ok()}}.}
 
 \item{mixed}{Whether the model carries a covariance class spanning the
@@ -25,37 +25,23 @@ The choice is made from what the criterion can supply: its exact Hessian,
 its exact gradient, or neither.
 
 A covariance class split between the coefficients and a filter's own
-parameters takes \code{lbfgs()} even where the exact gradient is unavailable to
-it, which since the gradient was written is a shape it reaches only for some
-further reason of its own. Such a class carries at least three
-hyperparameters -- two scales and a correlation -- and three is where this
-file already records the simplex stalling. Measured on a panel of twelve
-groups while the gradient was still refused, both searches reporting
-convergence: \code{nelder_mead()} reached a criterion of -684.789 in 123 seconds,
-at a loading scale collapsed to 2.1e-06 and a correlation of -0.9999, while
-\code{lbfgs()} differencing the criterion reached -683.305 in 27 seconds at
-scales of 0.647 and 0.389 and a correlation of 0.733 -- which on data
-simulated with the two effects INDEPENDENT is the answer the two separate
-fits give, to 0.2 of log-likelihood.
+parameters takes \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} even where the exact gradient is
+unavailable, because such a class carries at least three hyperparameters
+(two scales and a correlation) and a simplex search is unreliable at that
+dimension.
 
-\code{newton()} is given \code{max_length = 5}, which bounds every component of a
-step on the free scale, as \code{maxNstep} does in mgcv. Where the criterion
-flattens as a smoothing parameter grows, the curvature at the start can be
-small enough for the Newton step to jump past the maximum onto that
-plateau, where the gradient is close to zero and the search stops.
-Measured on a ridge over the fifteen predictors of \code{MASS::UScrime},
-standardized by the term, the first step went from \eqn{\lambda = 1} to
-\eqn{1.6\times10^{10}}, a length of 23.5, and the fit reported the empty
-model at a criterion of -65.40, where the maximum is -53.30 near
-\eqn{\lambda = 91.5}.
+\code{\link[optimizers7:newton]{optimizers7::newton()}} is given \code{max_length = 5}, which bounds every
+component of a step on the free scale, as \code{maxNstep} does in mgcv. Where the
+criterion flattens as a smoothing parameter grows, the curvature at the
+start can be small enough for the Newton step to jump past the maximum onto
+that plateau, where the gradient is close to zero and the search stops.
 
 A search over one coordinate with no exact gradient takes
 \code{\link[optimizers7:brent]{optimizers7::brent()}}, which brackets the maximum and reduces the bracket
 by parabolic steps, stopping when its half-width on the free scale is
 below \eqn{10^{-3}}, a change of one part in a thousand in the
-hyperparameter. Measured on \code{seg(t, psi ~ random(~1 | id), marginal = TRUE)} over a 20 x 15 panel, where the only hyperparameter is the scale of
-a random intercept, the search took 11 evaluations against the 23 of
-\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}}, at a criterion 2e-05 lower.
+hyperparameter. On a single coordinate it needs fewer evaluations than
+\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}}.
 }
 \seealso{
 \code{\link[=outer_fit]{outer_fit()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

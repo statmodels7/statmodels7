@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_refresh.R
 \name{refresh_direction}
 \alias{refresh_direction}
-\title{What One Direction Costs a Moving Block}
+\title{The Derivatives of a Moving Block Along One Direction}
 \usage{
 refresh_direction(spec, design, M, params, npar, offs, d3, tv, v, units)
 }
@@ -11,7 +11,7 @@ refresh_direction(spec, design, M, params, npar, offs, d3, tv, v, units)
 
 \item{design}{The design.}
 
-\item{M}{The matrix the trace is taken against.}
+\item{M}{The matrix against which the trace is taken.}
 
 \item{params, npar, offs}{The block bookkeeping.}
 

@@ -13,7 +13,8 @@ statmod_hess_stencil(
   idx,
   basis = NULL,
   inner = NULL,
-  h = hess_stencil_step()
+  h = hess_stencil_step(),
+  gam = NULL
 )
 }
 \arguments{
@@ -21,7 +22,7 @@ statmod_hess_stencil(
 
 \item{design}{The design.}
 
-\item{coef}{The coefficients the probes start from.}
+\item{coef}{The coefficients from which the probes start.}
 
 \item{hyper}{The hyperparameters.}
 
@@ -31,14 +32,21 @@ statmod_hess_stencil(
 
 \item{basis}{The integrated basis, or \code{NULL}.}
 
-\item{inner}{The inner optimizer the probes refit with; \code{iwls()} where
+\item{inner}{The inner optimizer with which the probes refit; \code{iwls()} where
 none is given.}
 
-\item{h}{The step, on the free scale the search runs on.}
+\item{h}{The step, on the free scale on which the search runs. For a
+coefficient that the criterion estimates the step is
+\eqn{h \max(1, |\gamma_j|)}.}
+
+\item{gam}{The coefficients that the criterion estimates, from
+\code{\link[=marginal_coords]{marginal_coords()}}, or \code{NULL}. Each probe holds them at its own values
+and refits the rest, as \code{\link[=outer_fit]{outer_fit()}} does.}
 }
 \value{
-The Hessian on the free scale, or \code{NULL} where a probe could not
-be evaluated or the two steps disagree.
+The Hessian on the free scale over the hyperparameters followed
+by the coefficients in \code{gam}, or \code{NULL} where a probe could not be
+evaluated or the two steps disagree.
 }
 \description{
 The criterion's second derivative in the hyperparameters where no analytic
@@ -46,44 +54,40 @@ route exists: one central difference of \code{\link[=statmod_marginal_grad]{stat
 coefficients refitted at every probe.
 }
 \details{
-This is what a model carrying a structural term gets, and the reason is
-that the analytic assembly of \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} spans the stacked
-coefficients while a filter's own parameters are estimated beside them and
-move with the hyperparameter as well. Extending it is not a matter of
-bookkeeping: each order of differentiation through the recursion pulls in
-one more order of the response's family, so the first derivative reads the
-family's fourth through \code{\link[modelterms7:term_third]{modelterms7::term_third()}} and the second would
-read a fifth, which does not exist.
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} uses this function for a model with a structural
+term for which the joint assembly \code{\link[=statmod_structural_hess]{statmod_structural_hess()}} does not
+apply: a filter without a penalty over its own parameters, a term of the
+likelihood shape such as \code{regime()}, or a term that does not implement
+\code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}. It also uses it on the expected information
+where \code{\link[=outer_gradient_ok]{outer_gradient_ok()}} does not admit order 2. The analytic assembly
+over the coefficients alone is not the criterion's Hessian when a filter's
+own parameters move with the hyperparameter. \code{\link[=statmod_structural_hess]{statmod_structural_hess()}}
+covers that case with the fourth derivative of the recursion from
+\code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}} and the fifth derivative of the family from
+\code{\link[distributions7:distrib_deriv5]{distributions7::distrib_deriv5()}}.
 
-Differencing an ANALYTIC quantity once is the licence this toolkit already
-grants itself for the Student t's degrees of freedom and for the marginal
-break-point's prior rows. What it forbids is a difference of a difference,
-and there is one layer here.
+The function differences the exact gradient once, so the result contains a
+single layer of finite differences. The matrix is symmetrized by averaging
+it with its transpose.
 }
-\section{The two probes start from the same place}{
-Both refit from the coefficients given and from the structural state as it
-stands, restored before each probe, so the two differ in the hyperparameter
-alone. That is what makes the result stable: the mode's own location error
-is nearly the same at \eqn{+h} and \eqn{-h} and cancels in the difference
-rather than being amplified by \eqn{1/h}. Measured on a penalized filter
-against a second difference of the criterion, the result is FLAT over four
-decades of the step -- -1.971435 at every \eqn{h} from 1e-2 down to 3e-5,
-against a criterion second difference of -1.971456 -- where the assembled
-Hessian reads -1.1e-08.
+\section{Probes}{
+Each probe refits the coefficients from the coefficients supplied and from
+the structural state as it stands, which is restored before each probe, so
+that the two probes of a column differ in the hyperparameter alone. The
+location error of the mode is nearly the same at \eqn{+h} and \eqn{-h} and
+cancels in the difference. Where the inner optimizer is \code{\link[=iwls]{iwls()}}, the probes
+use its tolerance \code{min(tol, hess_stencil_inner_tol())}, a budget of at
+least 500 iterations and no stopping criterion of its own; any other inner
+optimizer is used as given.
 }
 
-\section{Where it refuses}{
-A stencil inherits the reproducibility of the quantity it differences,
-divided by the step, so where the mode is poorly located the answer is
-noise rather than a curvature. It is therefore computed TWICE, at \code{h} and
-at \code{3 * h}, and refused where the two disagree by more than
-\code{\link[=hess_stencil_tol]{hess_stencil_tol()}}. The two regimes are six orders apart and nothing
-sits between them: measured, 5.5e-08 on a penalized filter, 9.3e-07 on an
-unpenalized one beside a smooth and 1.1e-06 on an ordinary smooth, against
-6.0e-01 and 5.7e-01 on two mixed covariance classes whose correlation the
-search left at \eqn{|z| = 8.53}, where the chart's conditioning is 1e10 and
-the exact gradient itself reads 1e-3. A refusal there is the answer, and
-the consumers already handle \code{NULL}.
+\section{Rejection of an unresolved stencil}{
+A stencil inherits the reproducibility of the quantity that it differences,
+divided by the step, so where the mode is poorly located the result is
+noise. The matrix is therefore computed at \code{h} and at \code{3 * h}, and the
+function returns \code{NULL} where the largest absolute difference between the
+two exceeds \code{\link[=hess_stencil_tol]{hess_stencil_tol()}} times the largest absolute entry of the
+first. Callers treat a \code{NULL} result as an unavailable curvature.
 }
 
 \seealso{

@@ -17,66 +17,69 @@ hyper_correction(spec, design, coef, hyper, method, Vb, keep, nz = 0L)
 
 \item{method}{The outer method that estimated them, or \code{NULL}.}
 
-\item{Vb}{The bayesian variance the correction is to be added to, over the
-coordinates \code{keep} names.}
+\item{Vb}{The bayesian variance to which the correction is added, over the
+coordinates that \code{keep} marks.}
 
-\item{keep}{A logical vector over the joint vector, the stacked
-coefficients followed by any structural tail, saying which coordinates
-\code{Vb} spans. It is the caller's whole vector and not its head: a tail
-coordinate dropped as a flat direction leaves \code{Vb} narrower than the
-count alone would say.}
+\item{keep}{A logical vector over the joint vector (the stacked
+coefficients followed by any structural tail) that marks the coordinates
+\code{Vb} spans. It is the whole vector of the caller and not its head,
+because a tail coordinate dropped as a flat direction leaves \code{Vb} narrower
+than the count alone would indicate.}
 
 \item{nz}{How many of those coordinates are the structural tail.}
 }
 \value{
-A list with \code{C}, the correction or \code{NULL}, \code{n_hyper}, how many
-hyperparameters a differentiable criterion estimated, and \code{complete},
-whether every one of them contributed.
+A list with \code{C}, the correction or \code{NULL}, \code{n_hyper}, the number of
+hyperparameters that \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} estimated, and \code{complete},
+whether every one of them contributed and no penalty was skipped.
 }
 \description{
 \eqn{J V_\theta J'}, the movement of the penalized mode under the estimated
 hyperparameters, as a matrix to be added to \eqn{V_b}.
 }
 \details{
-The two matrices \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} reports by default are conditional on
-the hyperparameters: both are read at the value the outer search stopped
-at, as though it had been known. It was estimated from the same data, and
-what that costs is
+The matrices that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} returns for \code{type = "bayesian"} and
+\code{type = "frequentist"} are conditional on the hyperparameters: each is read
+at the value at which the outer search stopped, as though that value were
+known. The value was estimated from the same data, and the cost of that is
 \deqn{V' = V_b + J V_\theta J', \qquad
   J = -(H + S)^{-1} \frac{\partial^2 \rho}{\partial\beta \partial\theta},}
 the delta method applied to the map from the hyperparameter to the mode
-(Wood, Pya and Safken, 2016). It is the same quantity
-\code{\link[=statmod_edf_correction]{statmod_edf_correction()}} contracts against the information to obtain a
-count of parameters; here the matrix itself is what is wanted.
+(Wood, Pya and Safken, 2016). The same quantity is contracted against the
+information by \code{\link[=statmod_edf_correction]{statmod_edf_correction()}} to obtain a count of parameters;
+this function returns the matrix.
 
-\eqn{V_b} is PASSED IN rather than recomputed, and that is what keeps the
-two halves of the sum describing one model. The caller has already settled
+\eqn{V_b} is passed in and is not recomputed. The caller has already settled
 which information \eqn{H} is, which coordinates are held and which are
-aliased; a correction built on a second inverse, regularized differently,
-would not be the movement of the mode whose variance it is added to.
+aliased, and a correction built on a second inverse, regularized
+differently, would not describe the movement of the mode to whose variance
+it is added.
 }
-\section{Where there is nothing to add, and where it cannot be read}{
-The correction is exactly zero where no hyperparameter was estimated by a
-differentiable criterion. A kinked penalty's is the argument of a minimum
-over a grid, which \code{\link[=outer_hyper_index]{outer_hyper_index()}} skips, and the map from it to the
-mode turns a corner whenever a coefficient joins or leaves the active set,
-so there is no derivative to propagate. That is a property of the model and
-not a failure, and \code{n_hyper} is zero.
+\section{Availability of the correction}{
+The function returns \code{C = NULL} with \code{n_hyper = 0} where no hyperparameter
+was estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}}. That includes a fit whose outer
+criterion is \code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}}, and a kinked penalty, whose hyperparameter
+is the argument of a minimum over a grid that \code{\link[=outer_hyper_index]{outer_hyper_index()}} skips.
+The map from that hyperparameter to the mode turns a corner whenever a
+coefficient joins or leaves the active set, so no derivative exists to
+propagate.
 
-It is UNAVAILABLE, with \code{n_hyper} positive and \code{C} \code{NULL}, where the
-criterion's own Hessian cannot be read, which is where the search left a
-coordinate at the edge of its range.
+The correction is unavailable, with \code{n_hyper} positive and \code{C} \code{NULL}, where
+the criterion's own Hessian cannot be read, or where \code{\link[=hyper_variance]{hyper_variance()}}
+cannot invert it because the coupling of a held coordinate to the kept ones
+is too large to ignore.
 
-It is PARTIAL, with \code{complete} false, where some of it could be read and
-some could not: a hyperparameter \code{\link[=hyper_variance]{hyper_variance()}} held contributes
-nothing. The matrix returned is then a lower bound on the correction rather
-than the whole of it.
+The correction is partial, with \code{complete} false, where some of it could be
+read and some could not: a hyperparameter that \code{\link[=hyper_variance]{hyper_variance()}} held
+contributes nothing, and a penalty for which \code{\link[=hyper_mode_cross]{hyper_mode_cross()}} could not
+return a column (counted in its \code{skipped}) contributes nothing. The matrix
+returned then omits those contributions.
 
-A penalty over a STRUCTURAL term's own parameters no longer makes it
-partial. The mode of such a model moves in the joint vector, coefficients
-and the term's free parameters together, which is what \code{Vb} already spans
-here, and \code{\link[=hyper_mode_cross]{hyper_mode_cross()}} is asked for the same vector rather than for
-the coefficients with a tail of zeros after them.
+A penalty over the own parameters of a structural term does not make the
+correction partial. The mode of such a model moves in the joint vector of
+the coefficients and the free parameters of the term, which \code{Vb} spans, and
+\code{\link[=hyper_mode_cross]{hyper_mode_cross()}} is called with \code{joint = TRUE} to return rows for the
+whole vector.
 }
 
 \references{
