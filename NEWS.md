@@ -1,3 +1,10 @@
+# statmodels7 0.200.2
+
+* The page of `vcov()` states what the bayesian matrix is under a prior that
+  is not Gaussian (the Laplace approximation of the posterior variance at the
+  mode, with a curvature of the prior that can be negative) and under SCAD
+  and MCP, whose concave part widens the variance.
+
 # statmodels7 0.200.1
 
 * The second start of a score loading (0.1/I) is fitted where the first

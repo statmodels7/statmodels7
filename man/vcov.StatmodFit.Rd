@@ -74,6 +74,21 @@ deviation of a Gaussian) are estimated on the criterion, and \code{"bayesian"} a
 types then differ from \code{"frequentist"} for those coefficients even without a
 penalty.
 
+\strong{A prior that is not Gaussian.} \eqn{V_b} is computed in the same way for
+every penalty that is twice differentiable at the mode. \eqn{H + S} is then
+the curvature of the log-posterior at the mode, and \eqn{V_b} is the Laplace
+approximation of the posterior variance. The statement about coverage above
+holds for a Gaussian prior, whose \eqn{S} does not depend on the
+coefficients. For another prior \eqn{S} is evaluated at the estimate and can
+be negative. Under a Student t prior with scale \eqn{s} and \eqn{\nu}
+degrees of freedom it is negative for every effect larger than
+\eqn{\sqrt{\nu}\, s} in absolute value, so such an effect is shrunk little
+and its variance comes mostly from the likelihood. The approximation is
+local, and it can be poor where the posterior is skewed or has more than one
+mode. Where \eqn{H + S} is not positive definite, a coordinate whose
+diagonal entry is not positive is held as described below, and otherwise an
+error is signaled.
+
 \strong{The first two matrices are conditional on the hyperparameters}, which
 they read at the value where the outer search stopped, as though it were
 known. That value was estimated from the same data, and the third matrix
@@ -103,7 +118,13 @@ states it. See \code{\link[=hyper_correction]{hyper_correction()}}.
 column.} At zero the penalty is not twice differentiable, so \eqn{S} does
 not exist there and no curvature can be read. The coefficients that a lasso
 or an MCP leaves non-zero have a variance, which is conditional on that
-selection; \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reports this in a note.
+selection; \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reports this in a note. Away from zero
+the lasso contributes nothing to \eqn{S}, and SCAD and MCP contribute a
+negative curvature on their concave part, which makes the variance of a
+coefficient there larger than that of the likelihood alone. For these
+penalties \eqn{V_b} is therefore not the posterior variance under the
+corresponding prior, because a curvature read at the mode does not see the
+mass that the prior puts near zero.
 
 \strong{Which information.} \code{expected} selects the matrix used as \eqn{H}. Its
 default is the expected information where the fit inverted it and the
