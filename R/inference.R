@@ -2535,6 +2535,29 @@ summary.StatmodFit <- function(object, level = 0.95,
         names(x), collapse = " "), ""), collapse = "; "),
       paste(rownames(ci)[ridge_rows], collapse = ", "))
   }
+  # A COEFFICIENT THAT THE CRITERION ESTIMATED AND LEFT AT A BOUNDARY has no
+  # curvature there, so its standard error describes rounding: measured on a
+  # Student t fitted to gaussian data, the intercept of log nu stopped at
+  # 20.8 with a standard error of 1e4 and an interval from -2e4 to 2e4.
+  edge_rows <- if (is.null(cert) || !length(cert$boundary_coef)) integer(0)
+    else stats::na.omit(match(cert$boundary_coef, rownames(ci)))
+  edge_msg <- character(0)
+  if (length(edge_rows)) {
+    ci[edge_rows, c("se", "statistic", "p_value", "lower", "upper")] <-
+      NA_real_
+    edge_msg <- sprintf(paste0(
+      "%s %s estimated on the outer criterion and %s at a boundary of it: ",
+      "the
+  criterion has no curvature there, so %s no standard error, ",
+      "interval or test.
+  A boundary of this kind appears when a parameter ",
+      "runs to a limit at which the
+  family becomes another one."),
+      paste(rownames(ci)[edge_rows], collapse = ", "),
+      if (length(edge_rows) == 1L) "was" else "were",
+      if (length(edge_rows) == 1L) "sits" else "sit",
+      if (length(edge_rows) == 1L) "it carries" else "they carry")
+  }
   strc <- tryCatch(statmod_structural_table(object, level),
                    error = function(e) NULL)
   tables <- lapply(spec@distrib@params, function(p)
@@ -2573,7 +2596,8 @@ summary.StatmodFit <- function(object, level = 0.95,
             if (length(object@aliased) == 1L) "Its" else "Their",
             paste(object@aliased, collapse = ", "))
   } else character(0)
-  notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, test_msg,
+  notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, edge_msg,
+             test_msg,
              tryCatch(class_notes(spec, design), error = function(e) character(0)))
   # WHERE THE PARAMETERS ENDED UP, for a fit that did not converge. It
   # qualifies the fit rather than describing it, so it is a note and not a
@@ -5061,7 +5085,11 @@ drop_common_prefix <- function(nms) {
 #'   `boundary_key` names the hyperparameters among the coordinates of
 #'   `boundary`, in the key that [statmod_hyper_vcov()] labels its rows by;
 #'   [summary.StatmodFit()] reads it to leave a standard error off a
-#'   hyperparameter pinned at an edge. The state is `"not converged"` also
+#'   hyperparameter pinned at an edge. `boundary_coef` names the
+#'   coefficients estimated on the outer criterion among the coordinates of
+#'   `boundary`, as `parameter:name`, and [summary.StatmodFit()] reads it to
+#'   leave their standard errors, tests and intervals off. The state is
+#'   `"not converged"` also
 #'   when the fit recorded a coordinate at the edge of its chart whose return
 #'   raises the log-likelihood.
 #'
@@ -5117,6 +5145,7 @@ certificate_core <- function(fit, tol, flat, edge) {
   out <- list(state = "unknown", decrement = NA_real_, gradient = NA_real_,
               mode_error = NA_real_, curvature = NA_character_,
               boundary = character(0), boundary_key = character(0),
+              boundary_coef = character(0),
               ridge = list(), reason = character(0),
               inner = c(gradient = NA_real_, eigen = NA_real_),
               outer = c(gradient = NA_real_, eigen = NA_real_),
@@ -5477,6 +5506,11 @@ certificate_core <- function(fit, tol, flat, edge) {
         character(1)),
       vapply(rep_g, function(k) paste(gam$param[k], gam$name[k], sep = "/"),
              character(1)))
+  }
+  # the same coefficients by the row names of vcov() and of the summary
+  # table, which summary() reads to leave their standard errors off
+  if (length(rep_g)) {
+    out$boundary_coef <- paste(gam$param[rep_g], gam$name[rep_g], sep = ":")
   }
   if (length(rep_h)) {
     # THE SAME COORDINATES IN THE KEY summary() reads its variance matrix by.

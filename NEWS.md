@@ -1,3 +1,12 @@
+# statmodels7 0.202.0
+
+* `summary()` reports no standard error, test or interval for a coefficient
+  that the outer criterion estimated and that `statmod_certificate()` finds
+  at a boundary, and a note says why. On a Student t fitted to gaussian
+  data the intercept of log nu stopped at 20.8 with a standard error of 1e4
+  and an interval from -2e4 to 2e4. `statmod_certificate()` returns these
+  coefficients in `boundary_coef`, as `parameter:name`.
+
 # statmodels7 0.201.0
 
 * A smooth random effect, `random(~ s(x) | g)` from modelterms7 0.99.0, is

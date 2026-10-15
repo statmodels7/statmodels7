@@ -37,7 +37,11 @@ was differenced by refits, and \code{NA} when no curvature was read.
 \code{boundary_key} names the hyperparameters among the coordinates of
 \code{boundary}, in the key that \code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}} labels its rows by;
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads it to leave a standard error off a
-hyperparameter pinned at an edge. The state is \code{"not converged"} also
+hyperparameter pinned at an edge. \code{boundary_coef} names the
+coefficients estimated on the outer criterion among the coordinates of
+\code{boundary}, as \code{parameter:name}, and \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads it to
+leave their standard errors, tests and intervals off. The state is
+\code{"not converged"} also
 when the fit recorded a coordinate at the edge of its chart whose return
 raises the log-likelihood.
 
