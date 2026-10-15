@@ -798,11 +798,20 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # the rule the multistarts below use. A beta share in Seatbelts stops
   # unconverged at -3326.66 from the first and converges at 450.48 from the
   # second; the second fit is paid only on a failure.
+  # ⚠️ A FAILURE IS READ ON THE MODE AND NOT ON THE FLAG ALONE: where the
+  # filter explodes the likelihood is flat to rounding, and the optimizer's
+  # flag at that point is noise. On ubuntu's R 4.5.3 the Seatbelts fit from
+  # the first start stopped at -3299.1 with the flag TRUE and a Newton
+  # decrement of 3e51, so the second start was never tried; on Windows the
+  # same point carried the flag FALSE. filter_decrement() reads the decrement
+  # over the coefficients and the filter's own parameters.
   sst0 <- statmod_structural_state(design)
   alt <- if (!is.null(sst0)) sst0$info_start else NULL
   if (length(alt)) {
     f1 <- tryCatch(fit_once(beta), error = function(e) e)
-    if (inherits(f1, "error") || !isTRUE(f1$res$converged)) {
+    if (inherits(f1, "error") || !isTRUE(f1$res$converged) ||
+        !isTRUE(filter_decrement(f1$spec_h, design, f1$res, f1$hyper) <=
+                  mode_error_limit())) {
       zinfo <- sst0$zeta
       for (tn in names(alt)) sst0$zeta[[tn]] <- alt[[tn]]
       f2 <- tryCatch(fit_once(beta), error = function(e) NULL)

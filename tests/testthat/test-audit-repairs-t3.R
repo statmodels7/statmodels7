@@ -380,3 +380,27 @@ test_that("a prediction beside a marginal break-point term does too", {
   ref <- t3_delta_ref(f)
   expect_lt(max(abs(p$se - ref) / ref), 1e-7)
 })
+
+test_that("a filter that explodes is restarted whatever its flag says", {
+  # on ubuntu's R 4.5.3 the first start of this fit stopped at -3299.1 with
+  # the optimizer's flag TRUE and a Newton decrement of 3e51, and the second
+  # start was never tried; the flag is forced TRUE here to reach that case on
+  # every platform
+  sb <- data.frame(month = seq_len(nrow(datasets::Seatbelts)),
+                   share = datasets::Seatbelts[, "front"] /
+                     (datasets::Seatbelts[, "front"] +
+                        datasets::Seatbelts[, "rear"]),
+                   law = datasets::Seatbelts[, "law"])
+  ns <- asNamespace("statmodels7")
+  orig <- ns$statmod_fit_joint
+  forced <- function(...) {
+    r <- orig(...)
+    r$converged <- TRUE
+    r
+  }
+  utils::assignInNamespace("statmod_fit_joint", forced, "statmodels7")
+  on.exit(utils::assignInNamespace("statmod_fit_joint", orig, "statmodels7"))
+  fit <- statmod(share ~ law + gas(p = 1, q = 1, time = month),
+                 distributions7::beta1_distrib(), sb)
+  expect_equal(as.numeric(logLik(fit)), 450.4818421, tolerance = 1e-6)
+})

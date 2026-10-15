@@ -1271,6 +1271,50 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
 }
 
 
+#' How Far Above Its Mode a Filter Fit Stopped
+#'
+#' @description
+#' The Newton decrement \eqn{\tfrac12 g^\top H^{-1} g} of the joint objective
+#' over the coefficients and the free parameters of a score-driven term, at
+#' the point that an inner fit returned.
+#'
+#' @details
+#' [statmod()] reads it to decide whether the fit from the term's own start
+#' failed, beside the optimizer's flag: where the filter explodes the
+#' objective is flat to rounding, the flag at that point depends on the
+#' platform, and the decrement is many orders of magnitude above
+#' [mode_error_limit()]. The coefficients that the specification holds (those
+#' that the outer criterion estimates) are left out, their score not being a
+#' residual of the inner fit. A gradient or a curvature that is not finite, or
+#' a curvature that cannot be solved, gives `Inf`.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design Its design, whose structural state holds the filter's
+#'   parameters at the point.
+#' @param res The inner fit's result, a list with `par` (the stacked
+#'   coefficients) and `obj` (the objective).
+#' @param hyper The hyperparameters.
+#'
+#' @return A single non-negative number, or `Inf`.
+#'
+#' @seealso [statmod_joint_pieces()], [mode_error_limit()]
+#'
+#' @keywords internal
+filter_decrement <- function(spec, design, res, hyper) {
+  if (is.null(res$obj) || is.null(res$par)) return(Inf)
+  v <- tryCatch({
+    jp <- statmod_joint_pieces(spec, design, res$obj, hyper)
+    u <- c(res$par, jp$zeta())
+    keep <- setdiff(seq_along(u), held_stack(spec, design))
+    g <- jp$gr(u)[keep]
+    H <- as.matrix(jp$he(u))[keep, keep, drop = FALSE]
+    if (!all(is.finite(g)) || !all(is.finite(H))) Inf else
+      0.5 * sum(g * solve(H, g))
+  }, error = function(e) Inf)
+  if (length(v) == 1L && is.finite(v)) abs(v) else Inf
+}
+
+
 #' The Level Chart of a Filter's Joint Fit
 #'
 #' @description
