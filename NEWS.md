@@ -1,3 +1,24 @@
+# statmodels7 0.201.0
+
+* A smooth random effect, `random(~ s(x) | g)` from modelterms7 0.99.0, is
+  fitted, summarized, predicted and simulated as a random effect. The summary
+  reports the prior of the null space as `sd[(Intercept)]`, `sd[lin]` and
+  `cor[(Intercept), lin]`, and the penalized coordinates as `smooth.sigma`
+  (or `sigma1`, `sigma2`, ... for an adaptive smoother or an anisotropic
+  tensor product). `predict(random = "zero")` sets every curve aside and
+  reads a new level as a zero curve, and `predict(random = "marginal")`
+  integrates over a new curve. On a simulated panel the fit has the
+  log-likelihood of the same model written as `random(~ 1 + lin | g)` beside
+  a smooth per group without its null space, to 1e-5.
+* `predict(random = "marginal")` integrates a random-effect term that
+  declares several Gaussian priors, one over each within-group column under
+  `correlated = FALSE` or one over each of the two parts of a smooth random
+  effect, by assembling the precision of one group from the parts. Before,
+  it signaled an error.
+* `summary()` labels the coordinates of a multivariate prior that covers part
+  of the within-group columns of a term by the columns that it covers.
+* Requires modelterms7 0.99.0 and penalties7 0.32.0.
+
 # statmodels7 0.200.2
 
 * The page of `vcov()` states what the bayesian matrix is under a prior that

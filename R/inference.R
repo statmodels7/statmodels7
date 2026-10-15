@@ -3311,8 +3311,11 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         # label collects them. The labels are passed only where there are as
         # many of them as the prior has dimensions, so a penalty of another
         # shape keeps the names it gives itself.
+        own <- if (is.null(e$class_key))
+          entry_owner(spec@terms[[p]][[nm]], e$index)
         cvl <- if (!is.null(e$class_key)) class_coords(cl)$label else
-          term_coord_labels(entry_owner(spec@terms[[p]][[nm]], e$index))
+          term_coord_labels(own, if (identical(own, spec@terms[[p]][[nm]]))
+            e$index)
         blk <- tryCatch(as.integer(u$penalty@block),
                         error = function(z) NA_integer_)
         if (length(blk) != 1L || is.na(blk) || blk != length(cvl)) {
@@ -3946,7 +3949,15 @@ entry_owner <- function(term, ii) {
 #' coordinates of its own multivariate prior are, or nothing for a term that
 #' has no grouping.
 #'
+#' @details
+#' Where the prior covers some of the within-group columns and not all of
+#' them, as the null-space prior of a smooth random effect does, `ii` gives
+#' the entry's positions in the block and the labels are those of the columns
+#' it covers, in the order of the block.
+#'
 #' @param term One built term.
+#' @param ii The entry's positions in the term's block, or `NULL` for every
+#'   within-group column.
 #'
 #' @return A character vector, possibly empty.
 #'
@@ -3954,10 +3965,14 @@ entry_owner <- function(term, ii) {
 #'   [entry_owner()] for the term to which this applies.
 #'
 #' @keywords internal
-term_coord_labels <- function(term) {
+term_coord_labels <- function(term, ii = NULL) {
   gr <- tryCatch(modelterms7::term_group(term), error = function(e) NULL)
   if (is.null(gr) || length(gr$names) != gr$dim) return(character(0))
-  as.character(gr$names)
+  lab <- as.character(gr$names)
+  if (length(ii)) {
+    lab <- lab[unique((as.integer(ii) - 1L) %% gr$dim + 1L)]
+  }
+  lab
 }
 
 #' A Coordinate's Name in Place of Its Number

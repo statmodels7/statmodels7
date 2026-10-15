@@ -119,16 +119,19 @@ random_prior <- function(spec, design, fit, param, key) {
   }
   units <- Filter(function(u) identical(u$param, param) &&
                     identical(u$term, key), statmod_penalized(spec, design))
-  if (length(units) != 1L) {
-    stop(sprintf("'%s' has no single prior to integrate over.", key),
+  if (!length(units)) {
+    stop(sprintf("'%s' has no prior to integrate over.", key),
          call. = FALSE)
+  }
+  gr <- modelterms7::term_group(tm)
+  d <- gr$dim
+  m <- length(gr$levels)
+  if (length(units) > 1L) {
+    return(random_prior_joint(units, fit, param, key, d))
   }
   u <- units[[1L]]
   pen <- u$penalty
   th <- as.list(fit@hyper[[param]][[u$key]])
-  gr <- modelterms7::term_group(tm)
-  d <- gr$dim
-  m <- length(gr$levels)
   if (prior_is_gaussian(pen, th)) {
     H <- as.matrix(penalties7::penalty_hessian(pen, rep(0, pen@n_coef), th))
     Om <- H[seq_len(d), seq_len(d), drop = FALSE]
@@ -151,6 +154,52 @@ random_prior <- function(spec, design, fit, param, key) {
                         "the typical group."), key, param), call. = FALSE)
   }
   list(gaussian = FALSE, dim = d, pen = pen, theta = th, m = m)
+}
+
+
+#' One Group's Gaussian Prior From Several Penalties
+#'
+#' @description
+#' Assembles the precision of one group's effect where a random-effect term
+#' declares several penalties, each over some of the within-group columns:
+#' one per column under `correlated = FALSE`, or one over the null space and
+#' one over the penalized coordinates of a smooth random effect.
+#'
+#' @details
+#' Every penalty of such a term reads the same within-group columns in every
+#' group, group by group, so the first group's positions of each entry, and
+#' the corresponding block of the penalty's Hessian, are that entry's part of
+#' one group's precision \eqn{\Omega}. The parts cover disjoint columns and
+#' are added. A term whose penalties are not all Gaussian has no closed-form
+#' joint prior and signals an error.
+#'
+#' @param units The term's penalized units, from [statmod_penalized()].
+#' @param fit The fitted model, for the hyperparameters.
+#' @param param,key The term.
+#' @param d The number of within-group columns.
+#'
+#' @return A list with `gaussian = TRUE`, `dim` and `chol`, as
+#'   [random_prior()] returns for a Gaussian prior.
+#'
+#' @keywords internal
+random_prior_joint <- function(units, fit, param, key, d) {
+  Om <- matrix(0, d, d)
+  for (u in units) {
+    th <- as.list(fit@hyper[[param]][[u$key]])
+    if (!prior_is_gaussian(u$penalty, th)) {
+      stop(sprintf(paste0("'%s' has several priors and not all of them are ",
+                          "Gaussian, so random = \"marginal\"\n  cannot ",
+                          "integrate it. random = \"zero\" can."), key),
+           call. = FALSE)
+    }
+    pos <- (as.integer(u$within) - 1L) %% d + 1L
+    k <- length(unique(pos))
+    H <- as.matrix(penalties7::penalty_hessian(u$penalty,
+                                               rep(0, u$penalty@n_coef), th))
+    Om[pos[seq_len(k)], pos[seq_len(k)]] <-
+      Om[pos[seq_len(k)], pos[seq_len(k)]] + H[seq_len(k), seq_len(k)]
+  }
+  list(gaussian = TRUE, dim = d, chol = t(chol(solve(Om))))
 }
 
 

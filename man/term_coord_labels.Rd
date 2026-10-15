@@ -4,10 +4,13 @@
 \alias{term_coord_labels}
 \title{The Coordinates of a Term's Own Covariance}
 \usage{
-term_coord_labels(term)
+term_coord_labels(term, ii = NULL)
 }
 \arguments{
 \item{term}{One built term.}
+
+\item{ii}{The entry's positions in the term's block, or \code{NULL} for every
+within-group column.}
 }
 \value{
 A character vector, possibly empty.
@@ -16,6 +19,12 @@ A character vector, possibly empty.
 The within-group column names of a random-effect term, which are what the
 coordinates of its own multivariate prior are, or nothing for a term that
 has no grouping.
+}
+\details{
+Where the prior covers some of the within-group columns and not all of
+them, as the null-space prior of a smooth random effect does, \code{ii} gives
+the entry's positions in the block and the labels are those of the columns
+it covers, in the order of the block.
 }
 \seealso{
 \code{\link[=class_coords]{class_coords()}} for the same question about a shared block,
