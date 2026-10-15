@@ -17,10 +17,11 @@ filter_joint_jacobian(spec, design, coef)
 \code{NULL} where the model carries no filter, otherwise a list with
 \code{J} (the filter equation's rows), \code{V} (every equation's rows, the
 filter's being \code{J}), \code{H} (the family's second derivatives on the link
-scale), \code{ap} (the index of the filter's parameter), \code{nb} (the number of
-coefficient columns), \code{key} (the names of the columns in the variance
-matrix) and \code{free} (the term's free parameters), all columns restricted
-to the free ones.
+scale), \code{Hd} (the derivatives of the filter's driving quantity, which
+are \code{H} where the filter is not scaled), \code{ap} (the index of the filter's
+parameter), \code{nb} (the number of coefficient columns), \code{key} (the names of
+the columns in the variance matrix) and \code{free} (the term's free
+parameters), all columns restricted to the free ones.
 }
 \description{
 The derivative of the predictor that a score-driven term produces, in the

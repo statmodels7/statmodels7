@@ -17,24 +17,25 @@
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{parm}{Which coefficients: a distribution parameter's name, a vector of
-\code{parameter:coefficient} labels, or \code{NULL} for all of them.}
+\item{parm}{Which coefficients: a distribution parameter's name, a term's
+name, a vector of \code{parameter:coefficient} labels, or \code{NULL} for all of
+them. With \code{readable = TRUE}, the name of a quantity is accepted as well.}
 
 \item{level}{The confidence level.}
 
 \item{type}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{"bayesian"}, \code{"frequentist"}
 or \code{"unconditional"}.}
 
-\item{readable}{Whether to report the quantities the model is written in
--- a term's own parameters under the names its literature gives them --
-rather than the raw coordinates. Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, and
-necessarily \code{FALSE} for the three restricted \code{method}s.}
+\item{readable}{Whether to report the quantities in which the model is written
+(a term's own parameters under the names of the literature) and not the
+raw coordinates. Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, and necessarily \code{FALSE}
+for the three restricted tests.}
 
-\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
-
-\item{method}{Which test the interval is the acceptance region of:
+\item{test}{Which test the interval is the acceptance region of:
 \code{"wald"}, the default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, each
 inverted by \code{\link[=statmod_invert]{statmod_invert()}}.}
+
+\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 }
 \value{
 A data frame with the parameter, the term, the coefficient, the
@@ -45,54 +46,55 @@ Confidence intervals for the coefficients of every distribution parameter,
 by default the Wald ones and otherwise by inverting a likelihood test.
 }
 \details{
-The interval is symmetric about the estimate and needs no mapping back. A
-coefficient of a linear predictor is unbounded whatever the distribution
-parameter it belongs to, the link having already carried that parameter onto
-the whole line, so the scale the interval is built on is the scale the
-quantity lives on. What the interval does not do is respect a bound on the
-parameter itself; for that, map an interval for the predictor through the
-inverse link at the covariate values of interest.
+With \code{readable = FALSE}, the interval for a coefficient of a linear
+predictor is symmetric about the estimate and needs no mapping back. Such a
+coefficient is unbounded whatever the distribution parameter it belongs to,
+the link having already carried that parameter onto the whole line, so the
+scale on which the interval is built is the scale on which the quantity
+lives. The interval does not respect a bound on the distribution parameter
+itself; for that, map an interval for the predictor through the inverse link
+at the covariate values of interest. With the default \code{readable = TRUE}, each
+quantity that a structural term declares (a loading or a persistence, for
+example) has an interval built on the link scale of that quantity and mapped
+back, so that interval is not symmetric.
 
 The variance comes from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so the same three
-conventions apply, and a coefficient a kinked penalty set to zero has
-\code{NA} in place of an interval. An interval around a penalized term is worth
-asking for as \code{type = "unconditional"}, which does not read the smoothing
-parameter as though it had been known.
+conventions apply, and a coefficient that a kinked penalty has set to zero
+has \code{NA} in place of an interval. For an interval around a penalized term,
+\code{type = "unconditional"} does not treat the smoothing parameter as known.
 }
 \section{Inverting a test instead}{
-\code{method} chooses which statistic the interval is the acceptance region of.
-The Wald interval is the set of \eqn{b} the Wald statistic does not
-reject, and it is symmetric BY CONSTRUCTION: that statistic is a parabola
+\code{test} chooses which statistic the interval is the acceptance region of.
+The Wald interval is the set of \eqn{b} that the Wald statistic does not
+reject, and it is symmetric by construction: that statistic is a parabola
 in \eqn{b}, the curvature having been read once at \eqn{\hat\beta}. The
 other three read the likelihood at each \eqn{b} in turn, so their
-intervals follow its own shape and are not symmetric where it is not.
-Measured on a Poisson regression at \eqn{n = 500}, where the likelihood is
-nearly quadratic, the four agree to three decimals; at \eqn{n = 25} with a
-skewed fit the likelihood-ratio interval sits \eqn{0.046} further right
-than the Wald one and the gradient interval \eqn{0.071}.
+intervals follow its shape and are not symmetric where it is not. Where the
+likelihood is nearly quadratic the four intervals agree; with a small sample
+and a skewed likelihood the likelihood-ratio and gradient intervals shift
+away from the Wald interval.
 
-Each of the three is found by \code{\link[=statmod_invert]{statmod_invert()}}, which brackets from the
-Wald interval and bisects, so one interval is a few dozen restricted
-refits -- measured, about six times one fit of the model. It is therefore
-asked for one coefficient at a time in practice, through \code{parm}, and the
-subsetting happens BEFORE the search rather than after so that nothing is
-paid for that is not reported.
+Each of the three is found by \code{\link[=statmod_invert]{statmod_invert()}}, which brackets the
+crossing outward from the Wald interval and locates it with a root finder,
+so one interval requires a few dozen restricted refits. The \code{parm} argument
+therefore selects the coefficients before the search and not after it, so
+that only the requested intervals are computed.
 
-A row the restricted fit is not defined for keeps \code{NA} limits:
-\code{\link[=testable_coords]{testable_coords()}} says which those are -- a coefficient under a KINKED
+A row for which the restricted fit is not defined keeps \code{NA} limits.
+\code{\link[=testable_coords]{testable_coords()}} identifies those rows: a coefficient under a kinked
 penalty, an aliased one, and every coefficient of a model carrying a
-structural term. The estimate and the standard error in such a row are the
-fit's own and stand whatever \code{method} is.
+structural term. The estimate and the standard error in such a row are those
+of the fit and do not depend on \code{test}.
 
-A coefficient under a penalty that is twice differentiable -- a smooth's
-own coordinates, a ridge, a random effect -- is inverted like any other,
-and the interval is the credible one \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} already gives it
-under \code{type = "bayesian"}, conditional on the hyperparameters the fit
+A coefficient under a penalty that is twice differentiable (a smooth's own
+coordinates, a ridge, a random effect) is inverted like any other, and the
+interval is the credible one that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} gives for it under
+\code{type = "bayesian"}, conditional on the hyperparameters that the fit
 reached. See \code{\link[=statmod_stat_at]{statmod_stat_at()}}.
 
-The three restricted methods need \code{readable = FALSE}, since a test is
-about one coefficient and a readable quantity is a function of several at
-once.
+The three restricted tests (\code{"lr"}, \code{"score"} and \code{"gradient"}) need
+\code{readable = FALSE}, since a test is about one coefficient and a readable
+quantity is a function of several at once.
 }
 
 \examples{
@@ -107,7 +109,7 @@ confint(fit, "mu:x", test = "lr", readable = FALSE)
 \seealso{
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
 \code{\link[=statmod_test]{statmod_test()}}, which tests one coefficient against a value of its
-own, and \code{\link[=statmod_invert]{statmod_invert()}} and \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the two internals
-an inverted interval is built from
+own, and \code{\link[=statmod_invert]{statmod_invert()}} and \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the two internal
+functions from which an inverted interval is built
 }
 \keyword{internal}

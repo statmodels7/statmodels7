@@ -11,7 +11,7 @@ solve_pd(A, what, labels = NULL)
 
 \item{what}{What the matrix is, for the message.}
 
-\item{labels}{The names of the coefficients \code{A} is indexed by.}
+\item{labels}{The names of the coefficients that index \code{A}.}
 }
 \value{
 The inverse.
@@ -23,41 +23,39 @@ matrix when a direction is flat.
 \details{
 A failure here is a statement about the fit and not about the arithmetic:
 at a maximum the penalized information is positive definite, so a matrix
-that is not says something about where the run stopped.
+that is not positive definite indicates that the run stopped away from a
+maximum.
 
-The test is \code{lmin > tol * ref} on the smallest eigenvalue, and never
-whether \code{chol()} raised. On an exactly singular matrix the pivot that
-should be zero comes out positive or negative according to rounding, so
-the second answer differs between platforms for one matrix.
+The matrix is first scaled to a unit diagonal,
+\eqn{A_e = D^{-1/2} A D^{-1/2}} with \eqn{D} the diagonal of \eqn{A}. The
+test is \verb{lmin > 1e-12 * ||A_e||_1} on the smallest eigenvalue of
+\eqn{A_e}, and never whether \code{chol()} raised. On an exactly singular matrix
+the pivot that should be zero comes out positive or negative according to
+rounding, so the second answer differs between platforms for one matrix.
 
-\code{ref} is the matrix's own scale, or the scale of the unpenalized
-information where the caller holds it. That is what separates a flat
-direction from the scale separation a large smoothing parameter
-legitimately produces. Returning a pseudo-inverse instead would give a
-standard error for a direction the data does not identify.
+The scaling separates a flat direction from the scale separation that a
+large smoothing parameter legitimately produces, because a direction is
+flat only against its own scale. Returning a pseudo-inverse instead would
+give a standard error for a direction that the data do not identify.
 
-The smallest eigenvalue is estimated, never computed, from LAPACK's
-condition estimator (\code{dpocon}) read on the Cholesky factor the
+The smallest eigenvalue is estimated and not computed, from LAPACK's
+condition estimator (\code{dpocon}) read on the Cholesky factor that the
 inverse needs anyway: \code{rcond} is
 \eqn{1/(\lVert A\rVert_1\lVert A^{-1}\rVert_1)}, so
-\verb{rcond * ||A||_1} is \eqn{1/\lVert A^{-1}\rVert_1}, which for a
-symmetric matrix lies between \eqn{\lambda_{\min}/\sqrt{p}} and
-\eqn{\lambda_{\min}}. The estimate therefore errs on the small side and
-the test is conservative by at most a factor \eqn{\sqrt{p}}, plus
-whatever the estimator's own slack is; the two cases it has to keep
-apart are separated by some fifty orders of magnitude, so neither
-reaches the other. It replaced a full eigendecomposition, which answers
-the same question exactly and costs \eqn{O(p^3)} with a large constant:
-measured at \eqn{p = 1022}, 1.18 s against the Cholesky's 0.25.
+\verb{rcond * ||A||_1} is \eqn{1/\lVert A^{-1}\rVert_1}. For a symmetric
+matrix the exact value of this product lies between
+\eqn{\lambda_{\min}/\sqrt{p}} and \eqn{\lambda_{\min}}. The estimator
+of \eqn{\lVert A^{-1}\rVert_1} is a lower bound, so the value read can
+exceed the exact product, and can exceed \eqn{\lambda_{\min}} by a small
+factor. The two cases to be separated differ by many
+orders of magnitude, so neither reaches the other. The estimate replaces a
+full eigendecomposition, which answers the same question exactly and costs
+\eqn{O(p^3)} with a larger constant than the Cholesky factorization.
 
-The message names the directions, never the causes. A first version
-offered two causes, the run not having reached a maximum and two columns
-of the design carrying the same information, and on a Student t fitted to
-\code{iris} neither was right: the design was full rank and the score was
-4e-5. What had
-happened is the third and commonest case, a parameter drifting to where its
-information vanishes, and no list of guesses would have said so. The
-eigenvector of the smallest eigenvalue does: it is read off and the
-coefficients that load on it are printed.
+The message names the coefficients that load on the eigenvector of the
+smallest eigenvalue, and no cause. A flat direction can arise from a run
+that has not reached a maximum, from two columns of the design carrying the
+same information, or from a parameter that has drifted to where its
+information vanishes.
 }
 \keyword{internal}

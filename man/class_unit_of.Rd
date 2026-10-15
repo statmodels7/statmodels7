@@ -20,11 +20,11 @@ One unit, as \code{\link[=statmod_penalized]{statmod_penalized()}} returns it, o
 }
 \description{
 The penalized unit of the covariance class that covers a term's
-coefficients, or \code{NULL} where the term is not labelled.
+coefficients, or \code{NULL} where the term has no label.
 }
 \details{
-A labelled term declares no penalty of its own, the class carrying it, so a
-reader asking a term for its hyperparameters has to ask the class instead.
+A term with a label declares no penalty of its own, because the class
+carries it, so the hyperparameters of such a term are read from the class.
 The lookup is by the pair of the equation and the term's name, which is what
 a class's pieces record.
 }

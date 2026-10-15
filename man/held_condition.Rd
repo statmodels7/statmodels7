@@ -13,9 +13,9 @@ held_condition(msg)
 A condition of class \code{statmod_held_coord}.
 }
 \description{
-A classed warning, so a caller can silence or catch the one raised when
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} holds a coordinate the information carries nothing
-about, without silencing every other warning of a fit.
+A classed warning, so that a caller can silence or catch the one raised when
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} holds a coordinate about which the information carries
+nothing, without silencing every other warning of a fit.
 }
 \seealso{
 \code{\link[=uninformative_coords]{uninformative_coords()}}, which finds them, and

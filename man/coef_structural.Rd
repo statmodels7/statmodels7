@@ -13,7 +13,7 @@ coef_structural(spec, fit, p, readable)
 
 \item{p}{The distribution parameter naming the equation, a string.}
 
-\item{readable}{\code{TRUE} for the quantities the term declares, \code{FALSE} for
+\item{readable}{\code{TRUE} for the quantities that the term declares, \code{FALSE} for
 the coordinates on the unconstrained scale.}
 }
 \value{
@@ -22,19 +22,20 @@ A named numeric vector of that term's own parameters.
 }
 \description{
 The own parameters of a structural term of one equation, as quantities or
-as the coordinates they were estimated on.
+as the coordinates on which they were estimated.
 }
 \details{
-A structural term rewrites the likelihood instead of adding columns to a
-design, so its parameters sit in no block and appeared in no reading of
-\code{\link[=coef.StatmodFit]{coef.StatmodFit()}}: a model whose whole predictor is a score-driven
-filter answered with an empty vector. They are named from the term's
-label, as every other coefficient of that term is.
+A structural term rewrites the likelihood and adds no columns to a design,
+so its parameters sit in no block. \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} appends them to the
+vector of the equation under both readings, named from the term's label as
+every other coefficient of that term is.
 
-A \strong{held} parameter is one an intercept in the same equation carries, so
-it is not estimated. It is reported under either reading, at the value it
-is held at. Leaving it out would make the vector shorter than the term's
-own parameter count and break the correspondence with \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.
+A \strong{held} parameter is one that an intercept in the same equation
+carries, so it is not estimated. It is reported under either reading, at
+the value at which it is held. Leaving it out would make the vector
+shorter than the term's own parameter count, and the readable vector would
+no longer correspond to the rows of \code{vcov(readable = TRUE)}, where the
+held level has a row of missing values.
 }
 \seealso{
 \code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, the caller,

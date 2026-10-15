@@ -22,11 +22,12 @@ Returns the fitted coefficients when \code{par} is \code{NULL}, and otherwise ch
 a supplied structure against the design before returning it.
 }
 \details{
-Three things are checked: that \code{par} is a named list, that it names every
-distribution parameter, and that each vector is as long as that equation's
-design is wide. Each failure signals an error naming the parameter, which
-is the alternative to R recycling a short vector into a different model
-without a word.
+Three things are checked: that \code{par} is a named list, that every name of
+\code{par} is a distribution parameter, and that the vector given for each is
+as long as that equation's design is wide. Each failure signals an error.
+The messages for a name and for a length name the parameter, so that a
+short vector is not recycled into a different model. A distribution
+parameter that \code{par} omits keeps its fitted coefficients.
 }
 \seealso{
 \code{\link[=loglik]{loglik()}}, whose three methods all pass through this.

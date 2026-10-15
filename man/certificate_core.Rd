@@ -10,9 +10,7 @@ certificate_core(fit, tol, flat, edge)
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{tol}{The largest rise, in the criterion's own units, that a certified
-point may still have available to it. ⚠️ Until 0.127.0 this was a
-threshold on the outer gradient. The default has not moved and its
-meaning has: a caller who set one should read \code{\link[=joint_decrement]{joint_decrement()}}.}
+point may still have available; see \code{\link[=joint_decrement]{joint_decrement()}}.}
 
 \item{flat}{The largest curvature \eqn{\lvert A_{jj}\rvert} of the outer
 criterion in a hyperparameter's free value at which that hyperparameter

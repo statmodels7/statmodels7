@@ -13,7 +13,8 @@ summary_blocks(
   level = 0.95,
   V = NULL,
   st = NULL,
-  at_edge = character(0)
+  at_edge = character(0),
+  test = "wald"
 )
 }
 \arguments{
@@ -34,12 +35,13 @@ returns it with the statistic and the p-value added.}
 \code{NULL}. It is needed only by a term reported through
 \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, whose quantities are
 functions of several coefficients at once and whose standard errors
-are therefore the delta method and no diagonal entry.}
+therefore come from the delta method and not from a diagonal entry.}
 
 \item{st}{The structural table, or \code{NULL}. A structural term has no
-design columns, so its block is built from what it reports, never from
-a block of the design, and its hyperparameter is reported there instead
-of in a block of its own carrying nothing else.}
+design columns, so its block is built from the parameters that the term
+reports and not from a block of the design, and its hyperparameter is
+reported there instead of in a block of its own that would carry nothing
+else.}
 
 \item{at_edge}{The \code{boundary_key} of \code{\link[=statmod_certificate]{statmod_certificate()}}:
 the hyperparameter coordinates that have run to an edge of their range
@@ -47,20 +49,30 @@ with their own gradient already met. Such a coordinate reports no
 standard error and no interval, and neither does any quantity that
 depends on it; the variance matrix around it is computed and reported
 as it always was.}
+
+\item{test}{Which test the statistic column reports. Under a test other
+than \code{"wald"}, a quantity of a break-point term that is one coefficient
+carries the restricted statistic of that coefficient, and any other
+quantity carries none.}
 }
 \value{
-A list of block records, each with \code{kind}, \code{label},
-\code{n_coef}, \code{edf}, \code{n_zero} and \code{table}, together
-with \code{head} and \code{components}: a term written in parameters
-of its own that develops one of them over covariates reports that
-parameter as a compartment of its own, carrying its hyperparameter and
-its sub-terms' rows, and \code{table} keeps only what is left. Such a term
-with a kinked sub-term also carries \code{n_kinked}, the number of
-coordinates under the kink, which \code{n_zero} and the count of selected
-coefficients read.
+A list of block records, each with \code{kind}, \code{label}, \code{term},
+\code{n_coef}, \code{edf}, \code{n_zero}, \code{table} and \code{components}, and, where they
+apply, \code{classes} and \code{note} (the covariance blocks and the note that
+locates them), \code{n_na} (the aliased coefficients of a selection) and
+\code{spread} (the summary of the predicted effects of a random effect). A
+term written in parameters of its own that develops one of them over
+covariates reports that parameter as a compartment of its own, carrying
+its hyperparameter and the rows of its sub-terms, and \code{table} keeps only
+what is left. Such a term with a kinked sub-term also carries
+\code{n_kinked}, the number of coordinates under the kink, which \code{n_zero} and
+the count of selected coefficients read. The element \code{head} is always
+\code{NULL}.
 }
 \description{
-Groups a parameter's terms into the readings a summary prints: the
-parametric terms together, and one block per penalized term.
+Groups the terms of a distribution parameter into the blocks that a
+summary prints: the parametric terms together, and one block for each other
+term (smooth, random effect, selection, other penalized term, break-point
+term or structural term).
 }
 \keyword{internal}

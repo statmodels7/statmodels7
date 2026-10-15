@@ -19,24 +19,23 @@ restricted_stat_rows(fit, ci, test, type, spec, design)
 }
 \value{
 A list with \code{statistic}, \code{p_value} and \code{note}, the last a
-character vector of what the reader has to be told about the column.
+character vector of the notes that qualify the column.
 }
 \description{
-The likelihood-ratio, score or gradient statistic for each coefficient a
-restricted fit can hold, against the null that it is zero, reported as the
-signed root of the \eqn{\chi^2_1} value together with that value's
-p-value.
+The likelihood-ratio, score or gradient statistic for each coefficient that
+a restricted fit can hold, against the null that it is zero, reported as
+the signed root of the \eqn{\chi^2_1} value together with the p-value of
+that value.
 }
 \details{
 The root carries the sign of the estimate, so the column holds one kind of
-quantity whatever produced it and Wald's own \eqn{z} is the case where the
-root is exact. The p-value is the \eqn{\chi^2_1} one and is not recomputed
-from the root.
+quantity whichever statistic produced it, and Wald's own \eqn{z} is the
+case where the root is exact. The p-value is the \eqn{\chi^2_1} one and is
+not recomputed from the root.
 
-A row \code{\link[=testable_coords]{testable_coords()}} does not name keeps \code{NA} in both columns rather
-than the Wald reading it arrived with: a column carrying two different
-tests, one row apiece and unmarked, is worse than a column with holes in
-it.
+A row that \code{\link[=testable_coords]{testable_coords()}} does not name keeps \code{NA} in both columns
+instead of the Wald value that it arrived with, so that no column carries
+two different tests.
 }
 \seealso{
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}, which computes one of them.

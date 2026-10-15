@@ -26,29 +26,29 @@ carrying one width per replaced position, the names being the positions.
 }
 \description{
 Walks the terms of every equation and hands each the slice of the drawn
-coefficients its block owns, taking back whatever it chose to replace.
+coefficients that its block owns, taking back whatever it replaced.
 }
 \details{
 Almost every term replaces nothing: a slope is measured in the response's
 units against a covariate's and a normal of the caller's width is as good
 a truth as any. A break-point is the exception, being a position on the
-covariate's own axis, and \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}} is where a term
-says so.
+covariate's own axis, and \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}} is the method by
+which a term declares such coordinates.
 
-It runs last, after the plain draw and after the priors, because a
-coordinate a term owns is one no other rule describes correctly. Which
-coordinates those were comes back so that a prior covering them is
-reported at the width the term used rather than at the one it drew.
+It runs last, after the plain draw and after the priors, because those
+describe a coordinate that a term owns incorrectly. The coordinates
+replaced are returned, so that a prior covering them is reported at the
+width that the term used and not at the one that it drew.
 
 An equation \code{par} fixes whole is skipped: its coefficients are the
 caller's and are written over everything afterwards anyway.
 
 The walk is over the design's blocks and does not descend into a term's
 subformulas, so a break-point developing another term's own parameter --
-\code{nl(a ~ 0 + seg(x))} -- is drawn by the plain rule as it was before. The
-sub-terms a break-point's own development carries are \code{linpar()} and
-\code{random()}, which have nothing to say here, so the shapes that reach one
-are covered by the block walk.
+\code{nl(a ~ 0 + seg(x))} -- is drawn by the plain rule. The sub-terms in a
+break-point's own development are \code{linpar()} and \code{random()}, which replace
+no coordinates, so the shapes that reach one are covered by the block
+walk.
 }
 \seealso{
 \code{\link[=rstatmod_truth]{rstatmod_truth()}}, \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}}

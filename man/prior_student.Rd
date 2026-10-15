@@ -11,11 +11,11 @@ prior_student(pen, th, d)
 
 \item{th}{Its hyperparameters, a named list.}
 
-\item{d}{The number of coefficients a group carries.}
+\item{d}{The number of coefficients that a group carries.}
 }
 \value{
 A list with \code{Sigma} and \code{nu} where the penalty is a Student t prior
-with one mixing variable a group (a multivariate t, or a univariate one
+with one mixing variable per group (a multivariate t, or a univariate one
 on a single coefficient), and \code{NULL} otherwise.
 }
 \description{

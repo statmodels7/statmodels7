@@ -10,17 +10,19 @@ mixture_quantile(M, S, W, p)
 \item{M, S}{Matrices with a row per observation and a column per
 component.}
 
-\item{W}{The components' weights, summing to one.}
+\item{W}{The components' weights, rescaled to sum to one.}
 
 \item{p}{The probability.}
 }
 \value{
-One value a row.
+One value a row, \code{NA} for a row that has no finite mixture.
 }
 \description{
 The value at which \eqn{\sum_c w_c \Phi((e - m_c)/s_c)} reaches \code{p}, one
 a row, a component with \eqn{s_c = 0} being a point mass at \eqn{m_c}.
 Found by bisection, which needs no derivative and is exact to the
-tolerance for a step function as well.
+tolerance for a step function as well. A row in which some mean or
+standard deviation is not finite (a missing covariate) is \code{NA}, and the
+bisection runs over the other rows.
 }
 \keyword{internal}

@@ -11,13 +11,13 @@ marginal_quad(spec, eta0, Z, param, prior, what, kind, inv)
 
 \item{eta0}{The predictors at the fixed part, a named list.}
 
-\item{Z}{The within-group column of the term, one value a row.}
+\item{Z}{The within-group column of the term, one value per row.}
 
 \item{param}{The parameter whose equation holds the term.}
 
 \item{prior}{What \code{\link[=random_prior]{random_prior()}} returns for the term.}
 
-\item{what, kind}{What was asked for and its kind, as in
+\item{what, kind}{The quantity predicted and its kind, as in
 \code{\link[=random_marginal]{random_marginal()}}.}
 
 \item{inv}{The inverse link or its derivative.}
@@ -32,8 +32,6 @@ one coordinate with a prior that is not Gaussian: each quantity is
 density, computed by \code{\link[numericals7:quad_vec]{numericals7::quad_vec()}} over the rows at once.
 }
 \details{
-Measured on a Bernoulli with a logit link and a Student t prior, 10000
-Monte Carlo draws were 3e-3 out against \code{integrate()}; this is within the
-default tolerances of \code{quad_vec()}.
+The integral is evaluated with the default tolerances of \code{quad_vec()}.
 }
 \keyword{internal}

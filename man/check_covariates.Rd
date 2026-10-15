@@ -18,9 +18,8 @@ Validates \code{covariates} and returns it, or \code{NULL}.
 \details{
 Each entry is a function of the observation count, as an entry of
 \code{par} may be, so the two arguments read alike. A value that is not a
-function is rejected rather than recycled: a constant column is what
-\code{data} is for, and the whole point of this argument is that the
-covariates are drawn afresh at every replicate.
+function is rejected, since a constant column belongs in \code{data} and the
+covariates of this argument are drawn afresh at every replicate.
 }
 \seealso{
 \code{\link[=rstatmod]{rstatmod()}}

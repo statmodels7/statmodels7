@@ -10,10 +10,11 @@ NULL
 #' [modelterms7::seg()].
 #'
 #' @details
-#' The terms are read through [modelterms7::term_components()], which every
-#' term carrying developed parameters answers. The key of a row is the outer
-#' term's key, the parameter and the sub-term joined by `"::"`, which is the
-#' key [hyper()] reports where a term carries more than one penalty.
+#' The terms are read through [modelterms7::term_components()], which returns
+#' the developed parameters of a term that carries any and an empty list
+#' otherwise. The key of a row is the outer term's key, the parameter and the
+#' sub-term joined by `"::"`, which is the key that [hyper()] reports where a
+#' term carries more than one penalty.
 #'
 #' @param spec The fit's specification.
 #'
@@ -57,15 +58,15 @@ nested_random_terms <- function(spec) {
 #'
 #' @details
 #' A random effect set aside contributes \eqn{z_i^\top u} at every row, with
-#' \eqn{z_i} the row's within-group design and \eqn{u} the value it is read
-#' at: zero for `random = "zero"`, a node of the prior for `"marginal"`.
+#' \eqn{z_i} the row's within-group design and \eqn{u} the value at which it
+#' is read: zero for `random = "zero"`, a node of the prior for `"marginal"`.
 #' Inside a nonlinear term the effect enters the parameter, and the
 #' contribution of the term is not linear in it, so the columns cannot
 #' simply be set to zero as they are for a term written in an equation. With
 #' every row in the first level, writing \eqn{u} into that level's
 #' coefficients gives every row the effect \eqn{z_i^\top u}, and the term is
-#' evaluated at those coefficients by its own methods. A group the fit never
-#' saw is read the same way, so it needs no effect of its own.
+#' evaluated at those coefficients by its own methods. A group that the fit
+#' never saw is read the same way, so it needs no effect of its own.
 #'
 #' Two places are rewritten. At the fitting rows the term reads the stored
 #' design of the developed parameter, `blueprint$Z`, whose columns for the
@@ -76,8 +77,8 @@ nested_random_terms <- function(spec) {
 #'
 #' @param tm A built term carrying developed parameters.
 #' @param rows The rows of [nested_random_terms()] for this term.
-#' @param coef The term's coefficients to record as the ones it was last
-#'   committed at, so that its block at new rows is the Jacobian there.
+#' @param coef The term's coefficients to record as the ones at which it was
+#'   last committed, so that its block at new rows is the Jacobian there.
 #'
 #' @return The modified term.
 #'
@@ -152,8 +153,11 @@ nested_columns <- function(spec, design, rows) {
 #' The penalty unit is the outer term's, keyed by the outer term where it
 #' carries one penalty and by the row's key where it carries several. Only a
 #' Gaussian prior is integrated: inside a nonlinear term the average is taken
-#' over the nodes of a product grid at which the term is evaluated, and a
-#' prior of another family signals an error naming `random = "zero"`.
+#' over the nodes of [random_nodes()] at which the term is evaluated, those of
+#' a product grid up to three coordinates in all and Monte Carlo draws
+#' beyond that. A prior of another family signals an error naming
+#' `random = "zero"`; the Gaussian test is [prior_is_gaussian()], which
+#' excludes a prior with a kink.
 #'
 #' @param spec,design The specification and its design.
 #' @param fit The fitted model, for the hyperparameters.
@@ -181,7 +185,7 @@ nested_prior <- function(spec, design, fit, row) {
   d <- modelterms7::term_group(sub)$dim
   th <- as.list(fit@hyper[[row$param]][[u$key]])
   pen <- u$penalty
-  if (!isTRUE(penalties7::beta_quadratic(pen, th))) {
+  if (!prior_is_gaussian(pen, th)) {
     stop(sprintf(paste0("The prior of '%s' is not Gaussian, and inside a ",
                         "term's subformula only a\n  Gaussian prior is ",
                         "averaged over. random = \"zero\" gives the typical ",
@@ -239,7 +243,7 @@ nested_design_at <- function(spec, design, coef, terms) {
 #' at zero or averaged over their prior.
 #'
 #' @details
-#' Every term holding such an effect is replaced by the copy
+#' Every term holding such an effect is replaced by the copy that
 #' [pool_nested_random()] returns, its effects' coefficients are set to zero
 #' and its columns are recomputed there. The columns of the effects
 #' themselves are then set to zero, so that the delta method of the
@@ -251,8 +255,9 @@ nested_design_at <- function(spec, design, coef, terms) {
 #' @param nest The rows of [nested_random_terms()] set aside, with `mode`.
 #' @param unseen As in [statmod_design()].
 #'
-#' @return A list with `spec`, `design`, `coef` and `cols`, the latter from
-#'   [nested_columns()].
+#' @return A list with `spec`, `design`, `coef`, `cols` (from
+#'   [nested_columns()]) and `terms`, the distinct pairs of `param` and `term`
+#'   among the rows of `nest`.
 #'
 #' @keywords internal
 nested_prepare <- function(fit, spec, nest, unseen) {

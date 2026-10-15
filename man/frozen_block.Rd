@@ -19,19 +19,16 @@ The positions of every coefficient of a term whose design block is a
 working linearization with a frozen weight.
 }
 \details{
-A discontinuous break-point term is fitted through a block whose weight is
-held at the previous iterate, so the curvature that block carries is the
-working model's, never the model's. Measured on a jump at 400
-observations against a bootstrap of 200 resamples: the working information
-gives the change of level and the auxiliary coordinate a standard error of
-\strong{exactly zero}, where the resamples give 0.063 and 0.540, and the
-position read off them 1.8e-05 against 0.090. A zero looks like a number and is
-worse than a gap, so those coefficients are left missing.
+A block whose term answers \code{FALSE} to
+\code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}} is a working linearization with a
+weight held at the previous iterate, so the curvature that the block carries
+is that of the working model and not that of the model. The standard errors
+computed from it would be zero, which would be reported as a measurement, and
+those coefficients are left missing.
 
-The question is asked of the term through
-\code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}} and never of its class,
-so a construction whose block is a Jacobian keeps its inference: a
-continuous \code{\link[modelterms7:seg]{modelterms7::seg()}}, and a discontinuous one
-smoothed by an \code{\link[numericals7:abs_smoother]{numericals7::abs_smoother()}}, both answer yes.
+The check reads the term through \code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}} and
+never through its class, so a construction whose block is a Jacobian keeps
+its inference: a continuous \code{\link[modelterms7:seg]{modelterms7::seg()}}, and a discontinuous one
+smoothed by an \code{\link[numericals7:abs_smoother]{numericals7::abs_smoother()}}, both answer \code{TRUE}.
 }
 \keyword{internal}

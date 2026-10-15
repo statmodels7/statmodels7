@@ -19,14 +19,14 @@ removing it leaves every name non-empty.
 \details{
 A term composes its coefficients' names from its own and its parameters',
 so inside the block of one term the leading piece repeats on every row
-and says what the heading has already said. It is dropped for the
+and repeats what the heading has already stated. It is dropped for the
 printing alone; \code{\link[=coef]{coef()}} and the summary's own tables keep the
-names the fit was built with, which are the ones another call can be
-indexed by.
+names with which the fit was built, which are the names that another call
+can use as an index.
 
-\strong{one piece} and never every piece they share: the term's own name is
-one, and a set of coefficients that happen to agree further along, \code{r.1}
-and \code{r.2} of a matrix column, would otherwise be left as the bare
+Only one piece is dropped, and never every piece that the names share: the
+term's own name is one, and a set of coefficients that agree further along,
+such as \code{r.1} and \code{r.2} of a matrix column, would otherwise be left as bare
 numbers.
 }
 \keyword{internal}

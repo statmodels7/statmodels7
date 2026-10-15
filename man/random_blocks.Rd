@@ -22,12 +22,12 @@ coordinates in that order.
 }
 \description{
 The covariance of one new group's effects, block by block: a term with a
-prior of its own is one block, and the terms a label ties together are one
-block over all of them.
+prior of its own is one block, and the terms that a label ties together are
+one block over all of them.
 }
 \details{
-A new group's effect is drawn from the prior the fit estimated, so its
-variance is that prior's, at the hyperparameters the fit reached; the
+A new group's effect is drawn from the prior that the fit estimated, so its
+variance is that prior's, at the hyperparameters that the fit reached; the
 uncertainty of those hyperparameters is not propagated, which the page of
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} states. A prior that is not Gaussian has no
 covariance to read here and is rejected by name; a group interval and a

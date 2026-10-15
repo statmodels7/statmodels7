@@ -28,24 +28,25 @@ response at each row, under a mixture of the family over the predictors.
 Each component \eqn{c} gives, at row \eqn{i}, the predictors' mean
 \eqn{\eta_{ci}} and their covariance \eqn{C_{ci}}, the predictors being
 taken jointly Gaussian within it. The distribution of \eqn{Y} is the
-equally weighted mixture of the family over the components and, within
-each, over the predictors,
-\deqn{G_i(y) = \frac{1}{B}\sum_{c=1}^{B} E_{\eta \sim
+mixture of the family over the components, with weights \eqn{w_c} that
+sum to one (equal where a component carries none), and, within each
+component, over the predictors,
+\deqn{G_i(y) = \sum_{c} w_c E_{\eta \sim
   \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))],}
 each expectation evaluated at the single node \eqn{\eta_{ci}} where
 \eqn{C_{ci}} is zero at every row. Otherwise \eqn{C_{ci} = LL^\top} is
-split by its eigenvectors: the directions after the first are a
-Gauss-Hermite product grid of at most 64 nodes, and the first, the one of
-largest variance, a 20-node Gauss-Hermite rule. Where that variance is
-large against the spread of the conditional law, the law's distribution
-function turns from 0 to 1 between two adjacent nodes, which the rule
-integrates badly: with \eqn{r} the ratio of the two standard deviations of
-a Gaussian law, its error in probability is 2e-11 at \eqn{r = 1}, 1.5e-03
-at \eqn{r = 3} and 1.8e-02 at \eqn{r = 5}. A direction whose values at two
-adjacent nodes differ by more than 0.3 is therefore integrated by
-\code{\link[numericals7:quad_vec]{numericals7::quad_vec()}} instead, at its default tolerances. A
-direction cell is left to Gauss-Hermite whatever its values when it is
-among the lightest, whose weights add up to at most 1e-8. One
+split by its eigenvectors, and \eqn{r} directions carry variance. The
+directions after the first are a Gauss-Hermite product grid with
+\eqn{k^{r-1}} nodes, where
+\eqn{k = \max(2, \min(8, \lfloor 64^{1/(r-1)} \rfloor))}, and the first,
+the one of largest variance, a 20-node Gauss-Hermite rule. Where that
+variance is large against the spread of the conditional law, the law's
+distribution function turns from 0 to 1 between two adjacent nodes, which
+the rule integrates badly. A direction cell whose distribution function
+differs by more than 0.3 between two adjacent nodes is therefore
+integrated by \code{\link[numericals7:quad_vec]{numericals7::quad_vec()}} instead, at its default
+tolerances. A direction cell is left to Gauss-Hermite whatever its values
+when it is among the lightest, whose weights add up to at most 1e-8. One
 component carries the default interval, two sources of variation being
 folded into its covariance; the parametric bootstrap gives one component
 per replica. A quantile of \eqn{G_i} lies between the smallest and the
@@ -55,9 +56,10 @@ it is found by Newton's method on \eqn{G_i(y) = p} with the mixture's
 density as the derivative, started at the weighted median of those
 quantiles and kept inside a bracket every evaluation shrinks; for a
 discrete one by bisection on the integers, as the smallest value at which
-\eqn{G_i} reaches the level. Only the family's distribution function,
-density and quantile are read, so no location parameter is needed. The
-standard deviation is
+\eqn{G_i} reaches the level. The quantiles read the family's distribution
+function and quantile function, and the density for a continuous family,
+so no location parameter is needed. The standard deviation reads the
+family's mean and variance, and is
 \eqn{\sqrt{E[\mathrm{Var}(Y\mid\eta)] + \mathrm{Var}(E[Y\mid\eta])}},
 \code{NA} where the family's mean or variance does not exist.
 }

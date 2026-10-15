@@ -9,7 +9,7 @@ marginal_out_of_domain(link, eta0, Zs, nodes, idx)
 \arguments{
 \item{link}{The parameter's link.}
 
-\item{eta0}{The predictor at the fixed part, one value a row.}
+\item{eta0}{The predictor at the fixed part, one value per row.}
 
 \item{Zs}{The within-group rows of the marginal terms.}
 

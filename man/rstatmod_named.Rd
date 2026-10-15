@@ -25,13 +25,13 @@ Writes the entries of \code{par} over the drawn truth, each addressed by a name
 the result reports it under.
 }
 \details{
-One namespace covers the whole model, so a caller names what it cares
-about and everything else stays drawn. A key may be a distribution
-parameter, which is that whole equation; one of its coefficients or a
-group of them, written \code{parameter.coefficient}; a structural term's own
-parameter; or a group of those. A group is a name the members extend at a
-dot, so \code{omega.random} is every deviation a development of \code{omega} carries
-and \code{mu.s(x)} is every coordinate of that smooth.
+A single namespace covers the whole model, so the caller names the
+quantities to fix and everything else stays drawn. A key may be a
+distribution parameter, which is that whole equation; one of its
+coefficients or a group of them, written \code{parameter.coefficient}; a
+structural term's own parameter; or a group of those. A group is a name
+that its members extend at a dot, so \code{omega.random} is every deviation in
+a development of \code{omega} and \code{mu.s(x)} is every coordinate of that smooth.
 
 A value may be a vector of the group's own length, a single number used
 for all of them, or a function of the count. The function is how a
@@ -39,8 +39,8 @@ structured truth is written: \code{function(k) rnorm(k, 0, 0.4)} is a random
 effect at a scale of its own and \code{function(k) c(2, -1.5, rep(0, k - 2))}
 is a sparse truth for a lasso to find.
 
-A structural parameter is named on the scale a reader knows, which is
-\code{\link[modelterms7:term_params]{modelterms7::term_params()}}'s: a loading is the loading and not its
+A structural parameter is named on the scale of
+\code{\link[modelterms7:term_params]{modelterms7::term_params()}}: a loading is the loading and not its
 logarithm.
 }
 \seealso{

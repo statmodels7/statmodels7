@@ -23,18 +23,18 @@ and \code{structural}.
 }
 \description{
 The linear predictors, the distribution's parameters, and -- where a term
-has state -- the response it drew and the latent quantity behind it.
+has state -- the response that it drew and the latent quantity behind it.
 }
 \details{
-With no structural term this is \code{\link[=statmod_eta]{statmod_eta()}} exactly, which is
-the point: the simulated data comes from the assembly a fit reads, so a
-term whose block moves with its coefficients contributes what it
-contributes rather than a linearization.
+With no structural term the result is that of \code{\link[=statmod_eta]{statmod_eta()}}: the
+simulated data come from the assembly that a fit reads, so a term whose
+block moves with its coefficients contributes its value and not a
+linearization.
 
-With one, the static part is assembled the same way and the term is asked
-to finish through \code{\link[modelterms7:term_simulate]{modelterms7::term_simulate()}}. A term that
-draws the response as it goes returns it; one that does not returns
-\code{NULL} there and the caller draws at the predictor.
+With one, the static part is assembled the same way and the term completes
+the predictor through \code{\link[modelterms7:term_simulate]{modelterms7::term_simulate()}}. A term that draws the
+response as it goes returns it; one that does not returns \code{NULL} there and
+the caller draws at the predictor.
 }
 \seealso{
 \code{\link[=rstatmod]{rstatmod()}}, \code{\link[=statmod_eta]{statmod_eta()}}

@@ -140,15 +140,16 @@ test_that("a fit that did not converge says where its parameters ended up", {
   fit <- statmod(y ~ lasso(x, lambda = 12) - 1 | sigma ~ 1,
                  distributions7::gaussian1_distrib(), dd)
   skip_if(fit@converged, "the runaway did not happen on this platform")
-  out <- paste(utils::capture.output(print(fit)), collapse = "\n")
-  expect_match(out, "the parameters it reached")
+  # the note is summary()'s, print() carrying none
+  out <- paste(summary(fit)@notes, collapse = "\n")
+  expect_match(out, "The parameters it reached")
   expect_match(out, "sigma")
   # and a fit that converged says nothing of the kind
   ok <- statmod(y ~ x1, distributions7::gaussian1_distrib(),
                 data.frame(y = stats::rnorm(50), x1 = stats::rnorm(50)))
   expect_true(ok@converged)
-  expect_false(grepl("the parameters it reached",
-                     paste(utils::capture.output(print(ok)), collapse = "\n")))
+  expect_false(grepl("The parameters it reached",
+                     paste(summary(ok)@notes, collapse = "\n")))
 })
 
 test_that("neither view prints a verdict on the search", {

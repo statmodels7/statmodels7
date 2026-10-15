@@ -9,6 +9,7 @@ StatmodSummary(
   call = NULL,
   distrib_name = character(0),
   n_obs = integer(0),
+  weight_total = integer(0),
   tables = list(),
   classes = list(),
   links = character(0),
@@ -33,20 +34,28 @@ StatmodSummary(
 
 \item{distrib_name}{The distribution's name.}
 
-\item{n_obs}{The number of observations.}
+\item{n_obs}{The number of rows of the data.}
+
+\item{weight_total}{The sum of the prior weights, which \code{\link[=nobs]{nobs()}} reports.}
 
 \item{tables}{A named list, one entry per distribution parameter, each a
 list of block records.}
 
-\item{classes}{The covariance blocks shared by more than one term, one
-block record each. They belong to no equation and are printed ahead of
-them.}
+\item{classes}{The covariance blocks that two or more pieces share (terms,
+or developments of one term), one block record each. They belong to no
+equation and are printed ahead of the equations.}
+
+\item{links}{The link of each distribution parameter, a character vector
+named by parameter.}
 
 \item{edf}{The per-term degrees of freedom.}
 
-\item{loglik}{The maximized log-likelihood.}
+\item{structural}{The table of the structural term's parameters, or \code{NULL}.}
 
-\item{df}{The effective degrees of freedom in total.}
+\item{loglik}{The conditional log-likelihood at the fit.}
+
+\item{df}{The effective degrees of freedom in total, including the
+correction for estimated hyperparameters where it was requested.}
 
 \item{aic, bic}{The information criteria.}
 
@@ -58,15 +67,24 @@ them.}
 
 \item{type}{Which variance convention was used.}
 
-\item{notes}{Character vector of things the reader has to know.}
+\item{test}{Which statistic the coefficient tables report: \code{"wald"},
+\code{"lr"}, \code{"score"} or \code{"gradient"}.}
+
+\item{max_coef}{The number of coefficient rows that each block prints, or
+\code{NULL} where the option \code{statmodels7.summary_max_coef} decides.}
+
+\item{notes}{A character vector of the notes that qualify the numbers.}
+
+\item{certificate}{The list returned by \code{\link[=statmod_certificate]{statmod_certificate()}}, or \code{NULL}
+where it could not be computed.}
 }
 \value{
 An object of class \code{StatmodSummary}.
 }
 \description{
 What \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} returns: the blocks of each
-distribution parameter, the degrees of freedom, the information criteria and
-whatever has to be said about how the numbers should be read.
+distribution parameter, the degrees of freedom, the information criteria
+and the notes that qualify the numbers.
 }
 \examples{
 dd <- data.frame(y = rnorm(30), x = runif(30))

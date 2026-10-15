@@ -2,7 +2,7 @@
 % Please edit documentation in R/report.R
 \name{format_duration}
 \alias{format_duration}
-\title{Format a Duration in the Unit It Deserves}
+\title{Format a Duration in a Readable Unit}
 \usage{
 format_duration(seconds, digits = 3L)
 }
@@ -14,35 +14,36 @@ out, each element in its own unit.}
 Defaults to 3.}
 }
 \value{
-A character vector the length of \code{seconds}, each element a number
-and a unit separated by a space, as \code{"340 us"} or \code{"2.6 h"}.
+A character vector of the length of \code{seconds}. Each element is a
+number and a unit separated by a space, as \code{"340 us"} or \code{"2.6 h"}. A
+non-finite value gives \code{"NA"} and a negative value gives \code{"negative"}.
 }
 \description{
-Turns a number of seconds into a string in microseconds, milliseconds,
-seconds, minutes, hours or days, whichever keeps it readable.
+Converts a number of seconds to a string in microseconds, milliseconds,
+seconds, minutes, hours or days, whichever keeps the number readable.
 }
 \details{
-A fit that took 340 microseconds and one that took 2.6 hours must both
-read at a glance, and no single unit does that.
+Fit times range from a few hundred microseconds to several hours, so the
+unit is chosen from the magnitude of the value.
 
-The thresholds are the obvious ones: below a millisecond it reads in
-microseconds, below a second in milliseconds, below a minute in seconds,
-then minutes, hours and days.
+The thresholds are the usual ones: a value reads in microseconds below a
+millisecond, in milliseconds below a second, in seconds below a minute,
+and then in minutes, hours and days. The unit is chosen after the value
+is rounded to \code{digits} significant digits, so that a value just below a
+threshold reads in the larger unit (59.99 seconds reads \code{"1 min"}).
 
-Zero is a reading. On a coarse clock a fast fit measures exactly zero
-seconds, and it is reported as \code{"0 s"} rather than suppressed. A guard of
-the form \verb{if (elapsed > 0)} would claim that zero cannot be measured,
-which for a duration is false, and would make what the object prints
-depend on the platform's timer resolution.
+A duration of zero is reported as \code{"0 s"}. On a coarse clock a fast fit
+can measure exactly zero seconds, and suppressing that value would make
+the printed output depend on the timer resolution of the platform.
 }
 \examples{
 format_duration(c(3.4e-4, 0.25, 90, 7200))
 
-# Zero is a reading, not a missing value.
-format_duration(0)
+# A duration of zero is reported in seconds, a missing value as "NA".
+format_duration(c(0, NA))
 
 }
 \seealso{
-\code{\link[=print.StatmodFit]{print.StatmodFit()}}, which reports a fit's elapsed time with
-this.
+\code{\link[=print.StatmodFit]{print.StatmodFit()}}, which reports the elapsed time of a fit
+with this function.
 }

@@ -21,8 +21,8 @@ sum of the prior weights, which are frequency weights.
 }
 \details{
 A weight of two counts its row twice, so a fit with weights is
-counted as the fit of the data with every row repeated as often as its
-weight says. Without weights the result is the number of rows of the
+counted as the fit of the data with every row repeated as many times as
+its weight. Without weights the result is the number of rows of the
 data, since \code{\link[=statmod]{statmod()}} drops no rows (a missing value in the response or
 in a variable of an equation is an error). \code{\link[=bic]{bic()}}, the cBIC of
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}'s \code{"nobs"} attribute and

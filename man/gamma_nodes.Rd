@@ -27,18 +27,12 @@ A prediction's distribution function, averaged over \eqn{w}, depends on
 its tails come from small \eqn{w}. A Gauss-Laguerre rule in \eqn{w}
 converges slowly there; in \eqn{\log w} the integrand decays
 exponentially at both ends and the trapezoidal rule converges
-exponentially. Measured on the probability that a Gaussian measurement
-around a Student t effect falls below the 2.5 per cent quantile, against
-adaptive quadrature: at \eqn{\nu = 1} the error is 1e-04 with 40 nodes and
-2e-08 with 80, against 1.2e-02 for Gauss-Laguerre with 96; at
-\eqn{\nu = 2.54} it is 1e-07 and 4e-13, against 5e-05.
+exponentially.
 
-The range widens as \eqn{\nu} falls (25 units of \eqn{\log w} at
-\eqn{\nu = 2.54}, 62 at 0.95, 190 at 0.3), so the rule fixes the spacing
-of the nodes rather than their number. At a spacing of 0.6 the error is at
-most 2e-08 from \eqn{\nu = 0.3} to 2.54, against 7e-05 with 64 nodes at
-\eqn{\nu = 0.5}; at least 40 nodes are used, which covers a large
-\eqn{\nu}, where the range is short.
+The range of \eqn{\log w} widens as \eqn{\nu} falls, so the rule fixes the
+spacing \code{h} of the nodes and not their number. At least \code{k_min} nodes are
+used, so that a large \eqn{\nu}, where the range is short, is still
+covered.
 }
 \examples{
 q <- statmodels7:::gamma_nodes(1.5)

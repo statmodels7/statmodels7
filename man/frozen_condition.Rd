@@ -18,7 +18,7 @@ its own channel can muffle it in place of repeating it.
 }
 \details{
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} calls \code{\link[=vcov]{vcov()}} more than
-once and would raise the warning once per call; it says it once, as a
-note.
+once and would raise the warning once per call; the summary records it
+once, as a note.
 }
 \keyword{internal}

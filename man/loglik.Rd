@@ -18,24 +18,29 @@ hessian(object, par = NULL, data = NULL, expected = FALSE, ...)
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{par}{A named list of coefficient vectors, one per distribution
-parameter, each as long as that equation's design is wide. Defaults to
-the fitted coefficients. Validated against the design, so a wrong length
-is an error, never a recycling.}
+\item{par}{A named list of coefficient vectors, each as long as the
+design of the equation that it names. A distribution parameter that the list
+omits keeps its fitted coefficients, so a list may change one equation
+and leave the others at the fit. Defaults to the fitted coefficients. A
+\code{par} that is not a named list, a name that is not a distribution
+parameter, or a vector of the wrong length is an error. The own
+parameters of a structural term are not among the arguments.}
 
-\item{data}{A data frame with the columns the model names. Defaults to the
+\item{data}{A data frame with the columns that the model names. Defaults to the
 data the model was fitted to. New data must carry the response, since a
 likelihood needs one.}
 
 \item{...}{Passed to methods. No shipped method reads it.}
 
-\item{expected}{Whether the expected information is wanted.}
+\item{expected}{\code{hessian()} only: \code{TRUE} for the expected information,
+\code{FALSE} (the default) for the observed Hessian.}
 }
 \value{
 \code{loglik()} gives a single number. \code{gradient()} gives a named list
 of numeric vectors, one per distribution parameter. \code{hessian()} gives a
-symmetric \verb{p x p} matrix over the stacked coefficients, \code{p} being their
-total count.
+symmetric \verb{p x p} matrix over the stacked regression coefficients, \code{p}
+being their total count. The own parameters of a structural term are not
+among them and have no entry in the gradient or in the Hessian.
 }
 \description{
 Turn a fitted model back into a function. \code{loglik()}, \code{gradient()} and
@@ -47,29 +52,30 @@ With no arguments beyond the fit they read at the fitted coefficients and
 the fitting data.
 }
 \section{The name}{
-\code{loglik}, not \code{logLik}. R's \code{\link[stats:logLik]{stats::logLik()}} returns the maximized value
-of the fitted model and carries \code{df} and \code{nobs} with it, and overloading
-it would give one name two behaviors. Both exist here, and
-\code{loglik(fit)} with no further arguments equals \code{logLik(fit)} to the last
-digit, which is the cheapest check that the callable route and the fitting
-route are the same model.
+The generic is \code{loglik}, not \code{logLik}. R's \code{\link[stats:logLik]{stats::logLik()}} returns the
+log-likelihood of a fitted model and carries \code{df} and \code{nobs} with it, and
+overloading it would give one name two behaviors. Both functions are
+available, and \code{loglik(fit)} with no further arguments equals
+\code{logLik(fit)}, which checks that the callable route and the fitting route
+evaluate the same model.
 }
 
-\section{Generics, not closures on the fit}{
+\section{Generics instead of closures}{
 A closure captures its environment, which here means the data. A fit
 carrying one would hold the frame twice and would keep a stale copy after
 the data changed.
 
-These rebuild from the specification the fit keeps whole, running each
-term's blueprint against \code{data} by the same path \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
-takes. A factor's levels, a spline's knots and a basis reparametrization
-are therefore reapplied, never relearned.
+The generics rebuild from the specification that the fit keeps whole,
+running each term's blueprint against \code{data} by the same path as
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}. A factor's levels, a spline's knots and a basis
+reparametrization are therefore reapplied to the new rows and not
+estimated again.
 }
 
 \section{No penalty enters}{
-All three are the likelihood alone. A model's penalized objective at given
-coefficients is not what a caller profiling a likelihood wants, and the
-hyperparameters are not arguments here.
+All three functions evaluate the likelihood alone, without the penalty.
+The penalized objective at given coefficients is a different quantity,
+and the hyperparameters are not arguments of these functions.
 }
 
 \examples{
@@ -78,23 +84,26 @@ dd <- data.frame(x = runif(40))
 dd$y <- 1 + dd$x + rnorm(40, sd = 0.5)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 
-# At the fitted coefficients it is the maximized value.
+# At the fitted coefficients it equals the conditional log-likelihood.
 all.equal(loglik(fit), as.numeric(logLik(fit)))
 
-# Anywhere else it is lower, and the gradient says which way to go.
+# Far from the fit it is lower, and the gradient gives the direction of
+# increase.
 loglik(fit, par = list(mu = c(0, 0), sigma = 0))
 gradient(fit, par = list(mu = c(0, 0), sigma = 0))
 
-# At the optimum the gradient vanishes.
-max(abs(unlist(gradient(fit))))
+# The gradient with respect to the mu coefficients vanishes at the fit.
+# The sigma coordinate is estimated on the REML criterion, so its
+# component is minus the number of mu coefficients (here -2).
+gradient(fit)
 
-# And the observed information is positive definite there.
+# The observed information is positive definite at the fit.
 eigen(-hessian(fit), only.values = TRUE)$values
 
 }
 \seealso{
-\code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}} for the maximized value with its degrees of
-freedom, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the variance matrix,
+\code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}} for the log-likelihood of the fit with its
+degrees of freedom, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the variance matrix,
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} for the same reapplication on new data.
 }
 \keyword{internal}

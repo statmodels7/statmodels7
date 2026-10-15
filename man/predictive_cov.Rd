@@ -24,12 +24,12 @@ A list with \code{fixed} and \code{random}, arrays of dimension
 \description{
 For each observation, the covariance over the distribution's parameters of
 their linear predictors: the estimation uncertainty of the fixed part, from
-the variance matrix, plus the variance a new group's effects add.
+the variance matrix, plus the variance that a new group's effects add.
 }
 \details{
 The fixed part is \eqn{x_{ip}^\top V_{pq} x_{iq}}, read with the columns
 of the effects set aside at zero, so it is the uncertainty of the typical
-group's predictor; the part the effects add is
+group's predictor; the part that the effects add is
 \eqn{z_{ip}^\top \Sigma_{pq} z_{iq}}, summed over the blocks of
 \code{\link[=random_blocks]{random_blocks()}}.
 }

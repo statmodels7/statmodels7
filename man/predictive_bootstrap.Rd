@@ -19,7 +19,9 @@ with the columns of the effects set aside at zero.}
 \item{refit}{\code{"coefficients"} or \code{"full"}.}
 }
 \value{
-A list of components, each a list with \code{eta} and \code{C}.
+A list of components, each a list with \code{eta}, \code{C} and \code{weight},
+with the attribute \code{infinite_variance} set to \code{TRUE} where a prior has
+no variance. The weights of the components add up to one.
 }
 \description{
 The components of the predictive mixture \code{\link[=predictive_response]{predictive_response()}} reads
@@ -30,34 +32,40 @@ no estimation uncertainty of its own.
 \details{
 A replica draws the response from the family at the fitted model. The
 effects of a \code{\link[modelterms7:random]{modelterms7::random()}} term that \code{random} sets aside are
-drawn afresh from the prior the fit estimated, so the groups of the data
-are new groups in every replica, as they are in the sampling distribution
-of the population-level estimates a new group's prediction rests on. The
+drawn afresh from the prior that the fit estimated, so the groups of the
+data are new groups in every replica, as they are in the sampling
+distribution of the population-level estimates on which a new group's
+prediction rests. The
 effects of a term read \code{"conditional"} keep their estimates: the
 prediction is about those groups, and their effects are the quantity
 predicted rather than a source of variation. Every other coefficient keeps
 its estimate. The replica is then refitted in one of two ways:
 \describe{
-\item{\code{"coefficients"}}{at the hyperparameters the fit reached, every
-coefficient re-estimated. A coefficient the fit estimated on its
-criterion (a dispersion under \code{\link[=reml]{reml()}}) is estimated there again, the
-hyperparameters held, so the replica's estimator is the fit's.}
+\item{\code{"coefficients"}}{at the hyperparameters that the fit reached, every
+coefficient re-estimated. A coefficient that the fit estimated on its
+criterion (a dispersion under \code{\link[=reml]{reml()}}) is estimated there again, with
+the hyperparameters held, so the replica's estimator is the fit's.}
 \item{\code{"full"}}{with the hyperparameters chosen again by the fit's own
-criteria, so their uncertainty enters the interval too. A
-cross-validated criterion needs the data's folds and is rejected.}
+criteria, so their uncertainty enters the interval too, and the path
+of a kinked penalty is walked again, warm started from the fit's
+coefficients. A cross-validated criterion needs the data's folds and
+is rejected.}
 }
-Every refit starts at the optimum the fit found: its coefficients, the
-criterion's own coefficients among them, and its hyperparameters. A
-kinked penalty's path is the one search that walks its own grid, warm
-started from the fit's coefficients.
+Every refit starts at the optimum that the fit found: its coefficients,
+the criterion's own coefficients among them, and its hyperparameters.
+The bootstrap is rejected for a model with a block that moves with its
+coefficients (\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}},
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}}) and for a response that is not
+one number per observation.
+
 Each replica gives the component \eqn{(\hat\eta^*_b, C^*_b)}: its
-predictors at the rows predicted and the covariance the effects set aside
-add, at its own hyperparameters. The interval is the mixture's, which is
-the parametric bootstrap predictive distribution of Harris (1989); the
+predictors at the rows predicted and the covariance that the effects set
+aside add, at its own hyperparameters. The interval is the mixture's, which
+is the parametric bootstrap predictive distribution of Harris (1989); the
 default \code{predictive = "averaged"} is its normal approximation, the
 sampling distribution of the estimates replaced by \eqn{\mathrm{N}(\hat
-\beta, \widehat{V})}. A replica whose refit fails is left out, and a
-warning says how many were.
+\beta, \widehat{V})}. A replica whose refit fails is left out, and the
+warning reports how many were.
 }
 \examples{
 set.seed(2)

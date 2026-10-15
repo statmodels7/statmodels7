@@ -15,7 +15,7 @@ gh_moments(g, M, S, W)
 A list with \code{m1} and \code{m2}, one value a row.
 }
 \description{
-Each component is integrated by a 40-node Gauss-Hermite rule, or read at
-its mean where its standard deviation is zero (a Monte Carlo draw).
+Each component is integrated by a 40-node Gauss-Hermite rule, and a
+component with a zero standard deviation gives its value at the mean.
 }
 \keyword{internal}

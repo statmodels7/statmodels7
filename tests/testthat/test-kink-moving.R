@@ -35,7 +35,7 @@ test_that("a kinked penalty on a block that moves fits the model it names", {
   # anchored on the truth as well as on the control, so that both agreeing on
   # a wrong answer would still fail: the fitted mean has to be the curve the
   # data were simulated from
-  expect_gt(stats::cor(as.numeric(predict(la, type = "response")$mu),
+  expect_gt(stats::cor(as.numeric(predict(la, what = "parameter")$mu),
                        a_true[grp] * exp(-0.7 * x)), 0.99)
 
   # and the selection: with every true amplitude far from zero, a lasso at a

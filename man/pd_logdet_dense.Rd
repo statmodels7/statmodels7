@@ -12,8 +12,9 @@ pd_logdet_dense(M, scale = NULL)
 \item{scale}{A reference magnitude.}
 }
 \value{
-A list with \code{logdet}, \code{ok} and, on a refusal reached
-through the eigendecomposition, \code{min_ev} and \code{max_ev}.
+A list with \code{logdet} and \code{ok}; \code{factor}, the Cholesky factor, when
+the Cholesky route accepted the matrix; and \code{min_ev} and \code{max_ev} when the
+eigendecomposition rejected it.
 }
 \description{
 The three routes described at \code{\link[=pd_logdet]{pd_logdet()}}, on a dense matrix.

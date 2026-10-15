@@ -2,7 +2,7 @@
 % Please edit documentation in R/report.R
 \name{logLik.StatmodFit}
 \alias{logLik.StatmodFit}
-\title{The Maximized Log-Likelihood of a Fit}
+\title{The Log-Likelihood of a Fit}
 \usage{
 \method{logLik}{StatmodFit}(object, type = c("conditional", "marginal"), ...)
 }
@@ -15,45 +15,47 @@
 }
 \value{
 A \code{logLik} object: a single number with attributes \code{df}, the
-degrees of freedom, and \code{nobs}. \code{\link[stats:AIC]{stats::AIC()}} and \code{\link[stats:AIC]{stats::BIC()}} read
-it, so \code{AIC(fit)} is the conditional AIC.
+degrees of freedom, and \code{nobs}, the sum of the prior weights (the number
+of rows where the weights are all 1). \code{\link[stats:AIC]{stats::AIC()}} and \code{\link[stats:AIC]{stats::BIC()}}
+read it, so \code{AIC(fit)} is the conditional AIC.
 }
 \description{
-The value R's convention expects, carrying the degrees of freedom and the
-number of observations. \code{\link[=loglik]{loglik()}} is the other thing: the model
-evaluated at parameters and data of the caller's choosing.
+The value that R's convention expects, with the degrees of freedom and the
+number of observations as attributes. \code{\link[=loglik]{loglik()}} is a different function:
+it evaluates the model at parameters and data chosen by the caller.
 }
 \section{Which likelihood, and why it matters}{
 The default is the \strong{conditional} one: the log-density at the fitted
 coefficients, a penalized coefficient among them, paired with the
 effective degrees of freedom \eqn{\mathrm{tr}[(H+S)^{-1}H]}. A criterion
-built on that pair is the conditional AIC, and it asks how well the model
-describes the groups, curves and states actually observed.
+built on that pair is the conditional AIC, which measures how well the
+model describes the groups, curves and states actually observed.
 
 A mixed-model package reports the \strong{marginal} likelihood instead: the
 random effects are integrated out and the count is the number of estimated
-parameters, variance components among them. That asks about the
-population, and its AIC is a different number, not comparable with the
-conditional one.
+parameters, variance components among them. That likelihood concerns the
+population, and the AIC built on it is a different number, not comparable
+with the conditional one.
 
-Neither convention allows the halves to be mixed: a marginal likelihood
-against an effective count, or a conditional one against a parameter count
-(Vaida and Blanchard, 2005).
-
-Measured on a random intercept over 120 groups, the two readings of the
-same fit are -4148.59 on 115.72 effective degrees of freedom and -4372.79
-on 4, against \code{lme4::lmer}'s marginal -4371.71 on 4.
+Each likelihood keeps its own count. A marginal likelihood against an
+effective count, or a conditional one against a parameter count, mixes the
+two conventions (Vaida and Blanchard, 2005).
 }
 
 \section{When the marginal one is available}{
-\code{type = "marginal"} returns the value the outer criterion evaluated while
-choosing the hyperparameters, with the number of estimated parameters as
-its degrees of freedom. It exists only where a marginal criterion actually
-ran, which is \code{\link[=ml]{ml()}} or \code{\link[=reml]{reml()}}.
+\code{type = "marginal"} returns the value of the outer criterion at the fit.
+Its degrees of freedom count the parameters that the marginal model
+estimates: the coefficients that no penalty covers, the dimension of the
+null space of each penalty without a kink (the straight line of a
+smooth), the hyperparameters that the outer search or a path estimated,
+and the free parameters of a structural term. A held hyperparameter is not
+counted, and a hyperparameter shared by several terms is counted once. The
+other coefficients of a penalized term are integrated out and are not
+counted.
 
-Where the hyperparameters were held, or chosen by \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or
-\code{\link[=cv]{cv()}}, there is no marginal likelihood to report and asking for one
-signals an error instead of returning a number that would look like one.
+The value exists only where the outer criterion is \code{\link[=ml]{ml()}} or \code{\link[=reml]{reml()}}.
+Where no outer criterion ran, or where it is \code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}}, there is
+no marginal likelihood, and requesting one signals an error.
 }
 
 \references{

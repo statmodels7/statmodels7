@@ -21,13 +21,12 @@ coordinates this model is written in: \code{sd[mu:(Intercept)]},
 \code{cor[mu:(Intercept), sigma:(Intercept)]}.
 }
 \details{
-The family names its coordinates by position because that is all it has,
-and every one of its readings -- a standard deviation, a correlation, a
-partial correlation, a conditional scale -- is named \code{prefix_vi} or
-\code{prefix_vi_vj}. The rewrite is on that shape alone: a name it does not
-match, or one whose index no label answers for, is left exactly as it is,
-so a family declaring a reading of another kind keeps its own name rather
-than being renamed into a wrong one.
+A multivariate family names its coordinates by position, and each of its
+readings -- a standard deviation, a correlation, a partial correlation, a
+conditional scale -- is named \code{prefix_vi} or \code{prefix_vi_vj}. The rewrite
+applies to that shape alone: a name that does not match, or whose index has
+no label, is left unchanged, so a family declaring a reading of another
+kind keeps its own name.
 }
 \seealso{
 \code{\link[=class_coords]{class_coords()}} and \code{\link[=term_coord_labels]{term_coord_labels()}} for the labels,

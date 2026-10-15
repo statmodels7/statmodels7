@@ -25,23 +25,22 @@ equation and the own parameters of a structural term, with the Jacobian
 from the coordinates those were estimated on.
 }
 \details{
-This is the one place the readable view is built, so that
-\code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} and
-\code{\link[=confint.StatmodFit]{confint.StatmodFit()}} cannot report a quantity under one name
-and index it under another.
+This function builds the readable view that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} and
+\code{\link[=confint.StatmodFit]{confint.StatmodFit()}} share. \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} builds its own readable
+vector from the same \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}} declarations.
 
-A term says what it is about through
-\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, which gives the quantities and
-the Jacobian. The coordinates that Jacobian touches are replaced by the
-quantities; a coordinate no quantity reads stands where it is, with a unit
-row of its own. That is what leaves a developed parameter intact: its
+A term declares its quantities through
+\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, which returns the quantities and
+the Jacobian. The coordinates that the Jacobian touches are replaced by the
+quantities; a coordinate that no quantity reads stands where it is, with a
+unit row of its own. A developed parameter is therefore left intact: its
 development is a vector of coefficients over covariates with no single
-value, so nothing is declared for it and nothing is taken away.
+value, so nothing is declared for it and nothing is replaced.
 
 The joint coordinate vector is the design coefficients of every equation
-in order, then the \strong{free} parameters of each structural term. Free,
-because a level an intercept in the same equation carries is held and is
-absent from the information the variance comes from. A quantity that reads a held
+in order, then the \strong{free} parameters of each structural term. A level that
+an intercept in the same equation carries is held and is absent from the
+information that the variance comes from. A quantity that reads a held
 parameter is marked: its value stands, and its variance would be that of
 the rest alone, so it is not reported. A quantity that reads a coordinate
 past the edge of its chart is marked in the same way

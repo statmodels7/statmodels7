@@ -2,82 +2,47 @@
 % Please edit documentation in R/inference.R
 \name{worth_sparse}
 \alias{worth_sparse}
-\title{Is a Matrix Worth Factorizing Sparsely?}
+\title{When a Matrix Is Factorized Sparsely}
 \usage{
 worth_sparse(M, min_dim = 100L, max_density = 0.1)
 }
 \arguments{
 \item{M}{A symmetric matrix.}
 
-\item{min_dim}{The smallest order worth the fixed cost.}
+\item{min_dim}{The smallest order for which a sparse factorization is used.}
 
-\item{max_density}{The largest fraction of nonzeros worth it.}
+\item{max_density}{The largest fraction of nonzero entries for which a
+sparse factorization is used.}
 }
 \value{
 A single logical.
 }
 \description{
 Whether a symmetric matrix is large enough and sparse enough that a sparse
-Cholesky beats a dense one. The question is put to the matrix and to
-nothing else: no term, no model and no caller's preference enters.
+Cholesky factorization is used in place of a dense one. The decision depends
+on the matrix alone: no term, no model and no caller's preference enters.
 }
 \details{
-The two conditions are the measured crossover. On the penalized
-information of a random intercept over \eqn{m} levels at 20000
-observations, the sparse route against the dense one, with coercion,
-factorization, log-determinant and full inverse each timed with the
-repetition loop sized by elapsed time:
+A matrix is factorized sparsely when it is stored as an S4 sparse matrix,
+its order is at least \code{min_dim} and its fraction of nonzero entries is at
+most \code{max_density}. Below about a hundred coefficients the sparse route is
+slower, because its fixed cost is the coercion and the S4 dispatch around it,
+which does not shrink with the matrix. The size condition prevents this on
+the fully dense penalized information of a single smooth.
 
-\tabular{rrrrr}{
-\strong{m} \tab \strong{p} \tab \strong{density} \tab \strong{whole route}
-\tab \strong{inverse} \cr
-20 \tab 23 \tab 0.282 \tab 1.08x \tab \strong{0.13x} \cr
-50 \tab 53 \tab 0.128 \tab 1.06x \tab \strong{0.33x} \cr
-100 \tab 103 \tab 0.067 \tab 1.18x \tab 1.14x \cr
-200 \tab 203 \tab 0.034 \tab 1.74x \tab 2.9x \cr
-500 \tab 503 \tab 0.014 \tab 5.28x \tab 7.6x \cr
-1000 \tab 1003 \tab 0.007 \tab 2.50x \tab 11.2x \cr
-2000 \tab 2003 \tab 0.003 \tab 4.20x \tab 7.0x
-}
-
-The whole-route column builds the matrix afresh on each repetition and is
-the one the thresholds are read from. The inverse column is the like-for-
-like comparison, each route carrying its own factorization; an earlier
-version of it timed the sparse solves against a factor built once outside
-the loop, which flattered the sparse side without changing where it loses.
-
-Below about a hundred coefficients the sparse route loses badly:
-its fixed cost is the coercion and the S4 dispatch around it, which does not
-shrink with the matrix. On the fully dense penalized information of a single
-smooth (\eqn{p = 16}, density 1) it measures 0.01x, a hundred times
-slower, and preventing that is what the size condition is for.
-
-\strong{Both quantities are read off the matrix, and the first is its storage.}
-A matrix held as a base matrix is refused whatever its zeros,
-which reads like a test of the container instead of the mathematics, so
-it is worth saying why it is neither an oversight nor a term test.
-\code{\link[=statmod_information_at]{statmod_information_at()}} accumulates into the design's own kind,
-so the penalized matrix is stored sparsely exactly when the design is, and
-\pkg{modelterms7} builds a block sparse only when asked
-(\code{sparse = TRUE}, whose default is \code{FALSE}). Measured on
-\code{y ~ 0 + g + s(x)} over 400 levels at 20000 observations, whose
-penalized matrix is 5 per cent nonzero either way: built dense the fit takes
-104.24 s and this factorization is \strong{0.16 per cent} of it, the time
-being in the \eqn{O(np^2)} products against a dense design
-(\code{statmod_information_at} 48.8 per cent, \code{crossprod} 57.2 per cent
-of self time); built sparse the same fit takes 2.19 s. So where the storage
-is dense the factorization is not what a fit is spending its time on, and
-coercing a dense \eqn{p \times p} matrix here to save a share of that size
-would cost more than it returns.
-
-\strong{The like-for-like comparison is the one that says this is not a term
-test}, and it is the check \code{piano_lme4.txt} section 5 asks for. With
-every design built the same way, this route is worth 1.38x on
-\code{0 + g + s(x)} over 400 levels, 1.33x on \code{random(~1|g)} over 500
-and 1.07x on \code{s(x, by = g)} over 60: an unpenalized indicator block,
-a random effect and a factor-\code{by} smooth, gaining together and in the
-order their sizes predict. Nothing here asks which term or which family
-produced the matrix.
+\strong{Both quantities are read from the matrix, and the first is its storage.}
+A matrix held as a base matrix is never factorized sparsely, whatever its
+zeros. This is not a test of the term that produced the matrix.
+\code{\link[=statmod_information_at]{statmod_information_at()}} accumulates into the design's own kind, so the
+penalized matrix is stored sparsely exactly when the design is. \pkg{modelterms7}
+settles the storage of a block at build when \code{sparse = NULL}, the default,
+and builds it sparse where the product of the number of rows and the number
+of indicator columns exceeds \eqn{10^5}; \code{sparse = TRUE} and \code{sparse = FALSE}
+force the sparse and the dense storage. Where the storage is dense the
+factorization is a small share of the time of a fit, which is spent in the
+\eqn{O(np^2)} products against the design, and coercing a dense
+\eqn{p \times p} matrix here to save a share of that size would cost more
+than it returns.
 }
 \seealso{
 \code{\link[=pd_factor]{pd_factor()}}

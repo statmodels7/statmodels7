@@ -11,18 +11,18 @@
 
 \item{digits}{Significant digits in the tables.}
 
-\item{notes}{Whether to print the qualifications the numbers carry.
-\code{FALSE} by default, when the foot says how many there are: they
-state conventions, never facts of the fit, so they read the same
-under every model. They are on the summary's \code{notes} property
-either way.}
+\item{notes}{Whether to print the notes that qualify the numbers. With the
+default \code{FALSE} the foot gives only the number of notes. Most of them
+state conventions of the model, and some name the coefficients or the
+values that the fit reached, so they can differ between models. The
+notes are on the summary's \code{notes} property in either case.}
 
 \item{max_coef}{How many coefficient rows a block shows, \code{Inf} or \code{NA}
 for all of them. \code{NULL}, the default, reads what \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
 was told; failing that the option \code{statmodels7.summary_max_coef}, and
 failing that 10. A hyperparameter row is shown whatever \code{max_coef} is:
 it governs the coefficients under it, and every one of them is
-conditional on the value it reached. A block short enough to fit in
+conditional on the value that it reached. A block short enough to fit in
 twelve rows is never abridged, so raising \code{max_coef} changes nothing
 for a parametric block of ordinary size.}
 
@@ -40,10 +40,12 @@ Below the criteria the point is described by dimensionless numbers from
 \code{\link[=statmod_certificate]{statmod_certificate()}}: for the inner fit, and for the outer criterion
 where there is one, the largest gradient in conditional standard errors
 and the smallest eigenvalue of the equilibrated curvature
-(\code{\link[=certificate_readings]{certificate_readings()}}), and for the coefficients a kinked penalty set
-to zero the largest ratio of the likelihood's pull to the kink
+(\code{\link[=certificate_readings]{certificate_readings()}}), and for the coefficients that a kinked penalty
+has set to zero the largest ratio of the pull of the likelihood to the kink
 (\code{\link[=zero_readings]{zero_readings()}}). No verdict is printed. How each is read is on the
-page of \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, under "Reading the foot".
+page of \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, under "Reading the foot". The line of the
+observations also gives the sum of the prior weights where they are not
+all 1.
 }
 \seealso{
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}

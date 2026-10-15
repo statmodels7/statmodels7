@@ -22,7 +22,7 @@ per coordinate.
 \description{
 One row per coordinate of a class's covariance, naming the equation it
 belongs to, the term that carries it, the within-group column it is, and
-the label a summary prints for it.
+the label that a summary prints for it.
 }
 \details{
 The prior of a covariance class describes the effects of \strong{one group} over
@@ -32,16 +32,17 @@ contributing its own columns in order -- which is exactly how
 \code{\link[=class_index]{class_index()}} interleaves them.
 
 The multivariate family that carries the chart numbers those coordinates
-\code{v1}, \code{v2}, and so on, and it is right to: it is a law on
-\eqn{\mathbb{R}^d} and knows nothing of the model. Which equation and which
-term a coordinate belongs to is this layer's answer, and without it a
-printed correlation between \code{v1} and \code{v3} says nothing at all.
+\code{v1}, \code{v2}, and so on, since it is a law on \eqn{\mathbb{R}^d} without
+reference to the model. The equation and the term to which a coordinate
+belongs are determined by this layer; without them a printed correlation
+between \code{v1} and \code{v3} cannot be attributed to any effect.
 
 The label is the shortest one that separates the coordinates: the column
 alone where every coordinate comes from one term, the equation and the
 column where more than one term is involved, and the term as well where two
-terms of one equation write the same column name. A coordinate reached
-through a subformula carries the parameter it develops in front of its
+terms of one equation write the same column name. If two labels are still
+equal, a running number \verb{#i} is appended. A coordinate reached
+through a subformula carries the parameter that it develops in front of its
 column, so that an effect on a break-point is not read as an effect on the
 equation the break-point sits in.
 }

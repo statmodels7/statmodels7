@@ -1,18 +1,19 @@
 #' @include statmod.R
 NULL
 
-#' The Random-Effect Terms a Prediction Can Set Aside
+#' The Random-Effect Terms That a Prediction Can Set Aside
 #'
 #' @description
 #' Lists the [modelterms7::random()] terms written in the model's equations,
-#' with the mode `predict()` reads each at.
+#' with the mode that `predict()` applies to each.
 #'
 #' @details
 #' `random` is a single string, applied to every such term, or a character
-#' vector named by the terms' keys, one mode per term named, the rest staying
-#' conditional. A key is matched with its white space removed, so
-#' `"random(~1|g)"` finds the term written `random(~ 1 | g)`. A name that
-#' matches no term signals an error listing those there are.
+#' vector named by the terms' keys, one mode per key named, applying to every
+#' term with that key in any equation, and the rest staying conditional. A key
+#' is matched with its white space removed, so `"random(~1|g)"` finds the
+#' term written `random(~ 1 | g)`. A name that matches no term signals an
+#' error that lists the terms of the model.
 #'
 #' Only a term written in an equation is listed. One written inside a
 #' subformula develops another term's parameter; those are listed by
@@ -45,8 +46,8 @@ random_modes <- function(spec, random) {
   if (!is.character(random) || !length(random) || anyNA(random) ||
       !all(random %in% modes)) {
     stop("'random' must be \"conditional\", \"zero\" or \"marginal\", or a ",
-         "character vector of\n  those named by the random-effect terms.",
-         call. = FALSE)
+         "character vector of\n  these modes named by the random-effect ",
+         "terms.", call. = FALSE)
   }
   nested <- nested_random_terms(spec)
   if (is.null(names(random))) {
@@ -82,16 +83,21 @@ random_modes <- function(spec, random) {
 #' The Prior of One Random-Effect Term, for Integrating a New Group
 #'
 #' @description
-#' Nodes and weights, or draws, for one group's effect under the prior the
-#' fit estimated for it.
+#' The description of the prior that the fit estimated for one random-effect
+#' term: a Cholesky factor for a Gaussian prior, and the penalty with its
+#' hyperparameters otherwise. [random_nodes()] turns it into nodes or draws.
 #'
 #' @details
-#' A term whose penalty is quadratic in the coefficients carries a Gaussian
-#' prior, read off the penalty's Hessian: its first \eqn{d\times d} block is
-#' one group's precision \eqn{\Omega}, the block being
-#' \eqn{I_m \otimes \Omega}. Any other prior, a Student t for one, is
-#' sampled with [penalties7::penalty_draw()], one draw of the block giving
-#' \eqn{m} independent groups.
+#' A term whose penalty is quadratic in the coefficients and has no kink
+#' carries a Gaussian prior, read off the penalty's Hessian: its first
+#' \eqn{d\times d} block is one group's precision \eqn{\Omega}, the block
+#' being \eqn{I_m \otimes \Omega}. For any other prior the function returns
+#' the penalty and its hyperparameters, and [random_nodes()] integrates over
+#' it by quadrature (one univariate prior) or by [penalties7::penalty_draw()],
+#' one draw of the block giving \eqn{m} independent groups. A prior that is
+#' not Gaussian is rejected under an inverse link whose range is not bounded.
+#' A term that shares a covariance with other terms through a label has no
+#' prior of its own and is rejected.
 #'
 #' @param spec,design The specification and its design.
 #' @param fit The fitted model, for the hyperparameters.
@@ -106,8 +112,9 @@ random_prior <- function(spec, design, fit, param, key) {
   tm <- spec@terms[[param]][[key]]
   if (!is.na(modelterms7::term_tag(tm))) {
     stop(sprintf(paste0("'%s' shares a covariance with other terms, so its ",
-                        "prior is not its own\n  and random = \"marginal\" ",
-                        "cannot integrate it alone. random = \"zero\" can."),
+                        "prior is not its own\n  and a marginal prediction ",
+                        "cannot integrate it alone. Set it aside with ",
+                        "random = \"zero\"."),
                  key), call. = FALSE)
   }
   units <- Filter(function(u) identical(u$param, param) &&
@@ -122,7 +129,7 @@ random_prior <- function(spec, design, fit, param, key) {
   gr <- modelterms7::term_group(tm)
   d <- gr$dim
   m <- length(gr$levels)
-  if (isTRUE(penalties7::beta_quadratic(pen, th))) {
+  if (prior_is_gaussian(pen, th)) {
     H <- as.matrix(penalties7::penalty_hessian(pen, rep(0, pen@n_coef), th))
     Om <- H[seq_len(d), seq_len(d), drop = FALSE]
     L <- t(chol(solve(Om)))
@@ -147,22 +154,22 @@ random_prior <- function(spec, design, fit, param, key) {
 }
 
 
-#' Nodes and Weights for the Effects a Marginal Prediction Integrates
+#' Nodes and Weights for the Effects That a Marginal Prediction Integrates
 #'
 #' @description
 #' A product Gauss-Hermite grid where every prior is Gaussian and the total
 #' dimension is at most three; the prior itself, for [marginal_quad()], where
-#' the only prior is univariate and not Gaussian; Monte Carlo draws otherwise.
+#' the only prior is univariate, not Gaussian and has a parent family; Monte
+#' Carlo draws otherwise.
 #'
 #' @details
 #' The grid has \eqn{\min(40, \lfloor 8000^{1/D}\rfloor)} nodes per
-#' dimension, so at most 8000 in all. Measured on a random intercept, 20
-#' nodes give the marginal mean exactly to 1e-15 under a log link and to
-#' 3e-10 and 9e-06 under a logit at prior standard deviations of 1 and 2,
-#' where 10000 Monte Carlo draws stop between 1e-2 and 1e-3. The draws are
-#' taken from a seed of their own and the caller's random stream is put back
-#' afterwards, so the prediction is reproducible and moves nothing a session
-#' draws next.
+#' dimension, so at most 8000 in all. Where the grid is not used, `nsim` draws
+#' with equal weights are taken for each prior, a Gaussian prior through its
+#' Cholesky factor and any other through [penalties7::penalty_draw()]. The
+#' draws are taken from a seed of their own and the caller's random stream is
+#' put back afterwards, so the prediction is reproducible and leaves the
+#' session's random stream unchanged.
 #'
 #' @param priors A list of [random_prior()] results.
 #' @param nsim The number of draws where the grid is not used.
@@ -245,7 +252,7 @@ gauss_hermite <- function(k) {
 #' A Marginal Prediction: the Population Average Over New Groups
 #'
 #' @description
-#' Integrates the quantity asked for over the prior of every random-effect
+#' Integrates the requested quantity over the prior of every random-effect
 #' term read at `"marginal"`, at the fixed part of each equation's predictor.
 #'
 #' @details
@@ -256,7 +263,8 @@ gauss_hermite <- function(k) {
 #' total expectation; the variance adds the variance of the conditional mean,
 #' \eqn{E_b[\mathrm{Var}(Y\mid b)] + \mathrm{Var}_b(E[Y\mid b])}, which is
 #' where a random effect on the scale enters. A predictor, `"link"` or
-#' `"link:p"`, is \eqn{\eta_0} itself, the effects having mean zero.
+#' `"link:p"`, is not computed here: [predict.StatmodFit()] returns
+#' \eqn{\eta_0} itself for it, the effects having mean zero.
 #'
 #' @param spec,design The specification at the new rows and its design, with
 #'   the marginal terms' columns set to zero.
@@ -264,7 +272,8 @@ gauss_hermite <- function(k) {
 #'   them.
 #' @param mt The marginal terms, rows of [random_modes()].
 #' @param nodes What [random_nodes()] returns, in the order of `mt`.
-#' @param what What was asked for.
+#' @param what The quantity predicted: a parameter name, `"parameter"`,
+#'   `"mean"`, `"variance"` or `"std_dev"`.
 #' @param eta_at A named list of predictors to integrate at in place of
 #'   `ep$eta`, for the ends of an interval; `NULL` for `ep$eta`.
 #' @param deriv `TRUE` to average the derivative of the inverse link instead
@@ -303,9 +312,11 @@ random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
   mom <- predict_moments()
   kind <- if (what %in% params) "param" else if (identical(what, "parameter"))
     "all" else if (what %in% c("mean", "variance", "std_dev")) "moment" else
-      stop(sprintf(paste0("'%s' has no marginal prediction here. Ask for a ",
-                          "parameter (%s),\n  \"parameter\", \"mean\", ",
-                          "\"variance\", \"std_dev\" or a predictor."),
+      stop(sprintf(paste0("'%s' has no marginal prediction here. The ",
+                          "quantities available are a parameter (%s),\n  ",
+                          "\"parameter\", \"mean\", \"variance\", ",
+                          "\"std_dev\", \"link\" or ",
+                          "\"link:<parameter>\"."),
                    what, paste(params, collapse = ", ")), call. = FALSE)
   if (!is.null(nodes$quad)) {
     return(marginal_quad(spec, eta0, Zs[[1L]], mt$param[1L], nodes$quad,
@@ -377,7 +388,7 @@ random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
 #' exactly, the effects having mean zero.
 #'
 #' @param link The parameter's link.
-#' @param eta0 The predictor at the fixed part, one value a row.
+#' @param eta0 The predictor at the fixed part, one value per row.
 #' @param Zs The within-group rows of the marginal terms.
 #' @param nodes What [random_nodes()] returns.
 #' @param idx The marginal terms in this parameter's equation.
@@ -421,16 +432,14 @@ marginal_out_of_domain <- function(link, eta0, Zs, nodes, idx) {
 #' density, computed by [numericals7::quad_vec()] over the rows at once.
 #'
 #' @details
-#' Measured on a Bernoulli with a logit link and a Student t prior, 10000
-#' Monte Carlo draws were 3e-3 out against `integrate()`; this is within the
-#' default tolerances of `quad_vec()`.
+#' The integral is evaluated with the default tolerances of `quad_vec()`.
 #'
 #' @param spec The specification at the rows predicted.
 #' @param eta0 The predictors at the fixed part, a named list.
-#' @param Z The within-group column of the term, one value a row.
+#' @param Z The within-group column of the term, one value per row.
 #' @param param The parameter whose equation holds the term.
 #' @param prior What [random_prior()] returns for the term.
-#' @param what,kind What was asked for and its kind, as in
+#' @param what,kind The quantity predicted and its kind, as in
 #'   [random_marginal()].
 #' @param inv The inverse link or its derivative.
 #'

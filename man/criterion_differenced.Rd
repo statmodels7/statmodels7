@@ -21,7 +21,8 @@ criterion_differenced(fit, spec, design, blocks, method, idx, cf, hy, h = 0.01)
 }
 \value{
 A list with the gradient \code{g} and the curvature \code{A} (minus the
-Hessian), or \code{NULL} where a refit did not reach a mode.
+Hessian). An error is signaled where a refit gives no finite
+criterion; the caller reads it as \code{NULL}.
 }
 \description{
 The gradient and the curvature of the outer criterion in its free
@@ -33,10 +34,11 @@ coefficients, and the criterion is read at the refitted mode.
 With one coordinate the readings are
 \eqn{g = (c_+ - c_-)/(2h)} and \eqn{A = -(c_+ - 2c_0 + c_-)/h^2}; with two
 the four axial points give the diagonal and the four diagonal points the
-cross term, \eqn{(c_{++} - c_{+-} - c_{-+} + c_{--})/(4h^2)}. The centre
+off-diagonal entry
+\eqn{A_{12} = -(c_{++} - c_{+-} - c_{-+} + c_{--})/(4h^2)}. The center
 \eqn{c_0} is refitted too, so every reading comes from the same inner
-iteration. The step is \eqn{h = 10^{-2}} on the free scale, where a
-hyperparameter's logarithm moves by one per cent; the truncation error is
+iteration. The step is \eqn{h = 10^{-2}} on the free scale, where the
+logarithm of a hyperparameter moves by one percent; the truncation error is
 of order \eqn{h^2} and the effect of an inner tolerance \eqn{\epsilon}
 on the curvature of order \eqn{\epsilon/h^2}.
 }

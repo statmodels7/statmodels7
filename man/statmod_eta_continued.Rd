@@ -16,10 +16,11 @@ statmod_eta_continued(fit, spec, design, deriv = FALSE)
 \item{deriv}{Whether to return the forecast's derivative rows.}
 }
 \value{
-A list shaped as \code{\link[=statmod_eta]{statmod_eta()}}'s, without the
-memoized filter objects, plus \code{cont_cols}: for each equation whose
-filter was continued with \code{deriv = TRUE}, a list with \code{X} (the
-derivative of the predictor at the new rows in the coefficients of
+A list shaped as \code{\link[=statmod_eta]{statmod_eta()}}'s, without the memoized filter
+objects and with \code{eta_static}, the static predictor at the new rows
+before the continued levels are added, plus \code{cont_cols}: for each
+equation whose filter was continued with \code{deriv = TRUE}, a list with \code{X}
+(the derivative of the predictor at the new rows in the coefficients of
 every equation and the term's free parameters) and \code{key} (the names of
 its columns in the variance matrix).
 }
@@ -31,13 +32,12 @@ where the fitting data left it.
 \details{
 The static part is the ordinary assembly: each term's block reapplied at
 the new rows, the offsets re-evaluated there. What cannot be reapplied is
-the structural term, whose contribution at one row is the state a
+the structural term, whose contribution at one row is the state that a
 recursion has reached over every row before it. The fit is therefore run
 once at the observed rows to recover that state -- the level and the
 driving quantity at each of them, the level being the difference between
-the filtered predictor and the static one -- and the term is asked to
-continue from there through
-\code{\link[modelterms7:term_continue]{modelterms7::term_continue()}}.
+the filtered predictor and the static one -- and the term continues from
+there through \code{\link[modelterms7:term_continue]{modelterms7::term_continue()}}.
 
 Only rows without the response are continued, and they must come after
 the observed series. Rows that carry it are a series of their own, rebuilt

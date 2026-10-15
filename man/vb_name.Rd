@@ -9,7 +9,8 @@ vb_name(x, default = "")
 \arguments{
 \item{x}{An optimizer, a criterion, or \code{NULL}.}
 
-\item{default}{What to say when there is no object to ask.}
+\item{default}{The string returned when \code{x} is \code{NULL} or carries neither a
+name nor a kind.}
 }
 \value{
 A single string.

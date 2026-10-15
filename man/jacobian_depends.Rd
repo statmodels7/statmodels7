@@ -20,27 +20,24 @@ where a quantity depends on a coordinate, \code{FALSE} where the entry is the
 floating-point image of a structural zero.
 }
 \details{
-Two callers ask this question and both used to ask it as \verb{== 0}, which is
-an exact test on a quantity the chart arrives at by arithmetic.
-⚠️ \strong{Measured, it is wrong.} On a covariance a class carries, whose chart
-is \code{parameters7::dr_prod(2)}, a standard deviation is a function of its own
-log coordinate and of nothing else, so its entry in the correlation column
-is structurally zero -- and at one fitted point that entry came back
-\code{1.338e-23} against a row whose own size is \code{0.5056}, a relative
-\code{2.6e-23}, while at another it came back exactly \code{0}. Read exactly, the
-first blanks the standard deviation's standard error and its interval for
-a dependence that is not there.
+The reading replaces the test \verb{== 0}, an exact comparison on a quantity
+that the chart produces by arithmetic. On a covariance that a class
+carries, whose chart is \code{parameters7::dr_prod(2)}, a standard deviation is
+a function of its own log coordinate only, so its entry in the correlation
+column is structurally zero. The entry that is computed can be a small
+nonzero number from cancellation, and an exact comparison then reads it as
+a dependence, which removes the standard error and the interval of the
+standard deviation for a dependence that does not exist.
 
-The scale a Jacobian entry means anything against is the row's own largest
-entry, that row being a gradient, and the tolerance is
-\code{sqrt(.Machine$double.eps)} -- the point past which a differentiated
-quantity cannot be told from the rounding of what it was formed from,
-which is the constant this toolkit derives for that question everywhere
-else. The two errors it arbitrates are wildly asymmetric, which is why the
-generous side is the right one: a genuine dependence of relative size
-below \code{sqrt(eps)} read as zero costs a variance contribution of relative
-order \code{1e-16}, while a cancellation artifact read as a dependence costs a
-quantity its standard error outright.
+A Jacobian entry is judged against the largest entry of its own row, a row
+being a gradient, and the tolerance is \code{sqrt(.Machine$double.eps)}, the
+point beyond which a differentiated quantity cannot be distinguished from
+the rounding of the quantities it was formed from. The two possible errors
+are asymmetric, so the tolerance errs on the generous side: a genuine
+dependence of relative size below \code{sqrt(eps)} that is read as zero changes
+a variance contribution by a relative amount of order \code{1e-16}, whereas a
+cancellation artifact read as a dependence removes the standard error of a
+quantity.
 }
 \seealso{
 \code{\link[=readable_hyper_rows]{readable_hyper_rows()}}, \code{\link[=summary_blocks]{summary_blocks()}}

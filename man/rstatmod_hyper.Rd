@@ -11,16 +11,16 @@ rstatmod_hyper(pen, sd, unit = 1)
 
 \item{sd}{The width of the draws.}
 
-\item{unit}{How far from a one-sided bound the draw is centred, passed to
-\code{\link[=penalty_theta_start]{penalty_theta_start()}}. Half for a prior over a structural term's own
-parameters, which ride charts.}
+\item{unit}{How far from a one-sided bound the draw is centered, passed to
+\code{\link[=penalty_theta_start]{penalty_theta_start()}}. It is one half for a prior over a structural
+term's own parameters, which ride charts.}
 }
 \value{
 A named list, empty for a penalty with no hyperparameters.
 }
 \description{
-A value per hyperparameter, drawn on the chart the penalty carries for it
-around the neutral point \code{\link[=penalty_theta_start]{penalty_theta_start()}} gives.
+A value per hyperparameter, drawn on the chart that the penalty carries for
+it around the neutral point that \code{\link[=penalty_theta_start]{penalty_theta_start()}} gives.
 }
 \details{
 The draw is on the unconstrained scale so that whatever comes out is
@@ -29,12 +29,12 @@ interval, and a log-Cholesky coordinate is free on the line already. The
 width is half of \code{sd} for the reason \code{\link[modelterms7:term_draw]{modelterms7::term_draw()}} halves it,
 a chart mapping a width of one onto most of its parameter's range.
 
-\code{unit} moves the centre away from a ONE-SIDED bound and reaches nothing
-else, so a hyperparameter unbounded on both sides -- a coordinate of a
-multivariate prior's own chart -- is drawn around that chart's neutral
-point whatever the term is. That is the point a fit starts from as well,
-and on \code{dr_prod} it reads as unit standard deviations and no correlation,
-so a simulation of a covariance block begins where a reader would put it.
+\code{unit} moves the center away from a one-sided bound and affects nothing
+else, so a hyperparameter that is unbounded on both sides (a coordinate of
+a multivariate prior's own chart) is drawn around the neutral point of that
+chart whatever the term is. This is also the point that a fit starts from;
+on \code{dr_prod} it corresponds to unit standard deviations and no
+correlation.
 }
 \seealso{
 \code{\link[=rstatmod_truth]{rstatmod_truth()}}, \code{\link[=penalty_theta_start]{penalty_theta_start()}}

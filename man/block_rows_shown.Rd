@@ -9,9 +9,15 @@ block_rows_shown(tb, max_coef = NULL, cap = 12L, show = 10L)
 \arguments{
 \item{tb}{A summary table.}
 
-\item{cap}{The length above which a table is cut.}
+\item{max_coef}{How many coefficient rows a long table keeps, \code{Inf} or \code{NA}
+for all of them. \code{NULL} reads the option \code{statmodels7.summary_max_coef},
+and then \code{show}.}
 
-\item{show}{How many coefficient rows a cut table keeps.}
+\item{cap}{The number of rows up to which a table is printed whole. A table
+is cut only above \verb{max(cap, max_coef + number of hyperparameter rows)}.}
+
+\item{show}{The number of coefficient rows kept when \code{max_coef} is \code{NULL}
+and the option is not set.}
 }
 \value{
 An integer vector of row positions.
@@ -21,10 +27,9 @@ Every row of a short table, and of a long one the hyperparameters
 together with the first few coefficients, the rest reported as a count.
 }
 \details{
-A block of a few coefficients is printed whole: a threshold that cut it
-would hide the very numbers a reader opened the summary for. A block of
-many is a column of numbers nobody reads to the end, and what is dropped
-is still in \code{\link[=coef]{coef()}}. The hyperparameters are never dropped,
-whatever the length: they govern every coefficient under them.
+A block of a few coefficients is printed whole. A long block is abridged to
+its first \code{max_coef} coefficient rows, and the rows that are dropped remain
+in \code{\link[=coef]{coef()}}. The hyperparameters are never dropped, whatever the length,
+because they govern every coefficient under them.
 }
 \keyword{internal}

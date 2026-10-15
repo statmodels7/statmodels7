@@ -17,15 +17,15 @@ term_drawn_scale(tg, ok, owned)
 A single number, or \code{NULL}.
 }
 \description{
-One number where every coordinate a penalty covers was written by the
+One number where every coordinate that a penalty covers was written by the
 term that owns it, and \code{NULL} otherwise.
 }
 \details{
 A penalty whose coordinates a term overwrote no longer describes them, so
 the truth reported for it is the width the term drew at. The test is that
-EVERY covered coordinate was owned: a penalty spanning owned and unowned
+every covered coordinate was owned: a penalty spanning owned and unowned
 ones together is described by neither width, and reporting either would
-name a truth half the coefficients do not have.
+name a truth that part of the coefficients do not have.
 }
 \seealso{
 \code{\link[=rstatmod_term_draw]{rstatmod_term_draw()}}

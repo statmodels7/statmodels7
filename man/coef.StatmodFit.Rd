@@ -9,8 +9,9 @@
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{readable}{\code{TRUE}, the default, reports the quantities the model is
-written in. \code{FALSE} reports the coordinates it was estimated on.}
+\item{readable}{\code{TRUE}, the default, reports the quantities in which the
+model is written. \code{FALSE} reports the coordinates on which it was
+estimated.}
 
 \item{...}{Unused.}
 }
@@ -21,43 +22,60 @@ coefficient labels, composed from each term's own label, so two terms of
 one kind in one formula stay apart.
 }
 \description{
-One named vector per distribution parameter: the quantities the model is
-written in, or the coordinates it was estimated on.
+One named vector per distribution parameter: the quantities in which the
+model is written, or the coordinates on which it was estimated.
 }
 \section{What \code{readable} moves, and what it does not}{
-Most coefficients are the same under either reading. A coefficient of a
-linear predictor is what it is. Two kinds of parameter are reported under
-a different name from the one they are carried under, and those are the
-ones this argument moves.
+Most coefficients are the same under either reading: the coefficient of a
+linear predictor is reported as it is estimated. Three kinds of term
+report quantities that differ from the coordinates they are carried on,
+and those are the parameters that this argument moves.
 
-A \strong{break-point} term is fitted through a working pair and its position
-is read off that pair. A discontinuous term carries \eqn{g} and reports
-\eqn{\psi = -g/\delta}, so at \code{readable = FALSE} the vector holds a number
-that is no quantity of the model at all.
+A \strong{break-point} term is fitted through a working block, and its
+quantities are read from that block. A continuous term holds each quantity
+as a coefficient, and the two readings coincide. A discontinuous term
+carries \eqn{g} and \eqn{\delta}; where its position is not held, it
+reports \eqn{\psi = -g/\delta}, so that at \code{readable = FALSE} the vector
+holds \eqn{g}, which is no quantity of the model. Where the term holds its
+position, as a sharp \code{jump()} or \code{jseg()} does after the fit has settled
+it, the reported position is the held one.
 
-A \strong{score-driven} term's persistence rides a partial autocorrelation, the
-stationary region not being a box, and what the literature calls
-\eqn{\xi_j} is the autoregressive coefficient the whole chart produces.
-At \eqn{q = 2} a fit reporting \eqn{\xi_1 = 0.761} has a free coordinate
-of \eqn{\mathrm{pacf}_1 = 0.857}.
+A \strong{score-driven} term carries its level and its loadings
+\eqn{\kappa_j} through their own links, the log for a loading, and its
+persistence on partial autocorrelations, the stationary region not being a
+box. Each partial autocorrelation is carried on the unconstrained scale of
+its link, the inverse hyperbolic tangent by default. What the literature
+calls \eqn{\xi_j} is the autoregressive coefficient that the whole chart
+produces. With one persistence, \eqn{\xi_1} is the partial
+autocorrelation. With two, \eqn{\xi_1 = \mathrm{pacf}_1 (1 -
+\mathrm{pacf}_2)} and \eqn{\xi_2 = \mathrm{pacf}_2}.
 
-Where a term declares no quantities of its own the coordinates stand. So
+A \strong{regime} term is estimated on the additive log-ratios of each row of
+its transition matrix, and it reports the transition probabilities
+\eqn{p_{ij}} in their place. Its levels and gaps are reported through
+their own links.
+
+Where a term declares no quantities of its own, the coordinates stand. So
 do the coefficients of a parameter developed over covariates: a
 development is a vector with no single value to report, so the term
 declares nothing for it.
 }
 
 \section{A structural term is present under both readings}{
-It contributes no design columns, so its parameters are in no block. They
-used to be in neither reading, and a model whose whole predictor is a
-score-driven filter answered \code{numeric(0)}.
+A structural term contributes no design columns, so its parameters are in
+no block of the design. Both readings append them to the vector of the
+equation, so that a model whose whole predictor is a score-driven filter
+returns its filter parameters.
 }
 
-\section{When to ask for \code{FALSE}}{
-\code{readable = FALSE} gives the vector the fit was estimated on, in the order
-and under the names \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} is indexed by, with a structural
-term's part on the unconstrained scale its charts define. That is what a
-caller feeding a fit back to \code{\link[=loglik]{loglik()}} or to an optimizer needs.
+\section{The coordinates of the fit}{
+\code{readable = FALSE} gives the coordinates on which the fit was estimated,
+with a structural term's part on the unconstrained scale that its charts
+define. For a model without a structural term, this vector has the order of
+the rows of \code{vcov(object, readable = FALSE)}, and it can be passed as the
+\code{par} argument of \code{\link[=loglik]{loglik()}} or to an optimizer. A structural level that
+is held appears in the vector at its held value and has no row in that
+matrix.
 
 Hyperparameters are not coefficients and are not here. \code{\link[=hyper]{hyper()}} reports
 them.
@@ -74,14 +92,15 @@ fit <- statmod(y ~ modelterms7::seg(x, psi = 4),
 coef(fit)$mu
 
 # The coordinates the fit ran on are the same numbers here, seg() being
-# continuous, and vcov() is indexed by these names.
+# continuous, and vcov() has one row for each of them.
 coef(fit, readable = FALSE)$mu
-rownames(vcov(fit))
+rownames(vcov(fit, readable = FALSE))
 
 }
 \seealso{
 \code{\link[=hyper]{hyper()}} for the hyperparameters, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the
-variance matrix indexed by the \code{readable = FALSE} names,
+variance matrix, whose rows with \code{readable = FALSE} are the unheld
+coordinates of \code{coef(object, readable = FALSE)},
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the two together,
 \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}} for what a term declares.
 }

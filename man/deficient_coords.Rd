@@ -25,59 +25,55 @@ Only \code{\link[=iwls]{iwls()}} on a pivoting decomposition reports which colum
 dropped, that being a by-product of the solve that fitted the model. An
 \code{optimizers7} method solves nothing by a pivot, and neither do the
 \code{chol} and \code{svd} routes, so a design of less than full
-rank left every coordinate unnamed and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} refused the
-whole matrix. The question a pivot answers is asked here instead, on the
-matrix \code{vcov()} inverts anyway, so the two cannot disagree about which
-model is being reported.
+rank left every coordinate unnamed and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} signaled an
+error for the whole matrix. The question that a pivot answers is answered
+here on the matrix that \code{vcov()} inverts, so the two agree on which model is
+being reported.
 
-The matrix is \eqn{K = H + S}, which is what makes a PENALIZED coordinate
-safe without a clause of its own: the penalty's own curvature is in
-\eqn{S}, so a column the design alone does not identify is identified in
-\eqn{K}, exactly as it is identified in the augmented system the pivoted
-route factorizes. Measured on two identical columns under
-\code{ridge(~ 0 + x1 + x3)}, nothing is named.
+The matrix is \eqn{K = H + S}, which makes a penalized coordinate safe
+without a clause of its own: the curvature of the penalty is in \eqn{S}, so
+a column that the design alone does not identify is identified in \eqn{K},
+as it is identified in the augmented system that the pivoted route
+factorizes. Under \code{ridge(~ 0 + x1 + x3)} with two identical columns, no
+coordinate is named.
 
-\eqn{K} is EQUILIBRATED to a unit diagonal before the pivot runs, which
-is the correction \code{\link[=solve_pd]{solve_pd()}} and the sparse rank test already carry: a
-smoothing parameter a criterion sends to 1e15 and a break-point term's
-annealed columns both separate the scales without flattening a direction,
-and per-direction scaling forgives either. Measured, a coordinate whose
-curvature is 1e-14 of its neighbours' is not named.
+\eqn{K} is equilibrated to a unit diagonal before the pivot runs, as in
+\code{\link[=solve_pd]{solve_pd()}} and the sparse rank test: a smoothing parameter sent to 1e15
+and the annealed columns of a break-point term both separate the scales
+without flattening a direction, and per-direction scaling accommodates both.
+A coordinate whose curvature is small only because of its scale is not
+named.
 
-A coordinate is a candidate only where its OWN curvature is finite and
-positive, which is \code{\link[=boundary_coords]{boundary_coords()}}' rule read once more: a parameter
-at its link's clamp makes its whole row non-finite, and a coordinate the
-information carries nothing about has an empty one. Neither is an
-aliasing. There the estimate stands and only the variance does not, which
-is what \code{\link[=uninformative_coords]{uninformative_coords()}} handles and why the two must not be
-confused: aliasing reports the coefficient itself as missing.
+A coordinate is a candidate only where its own curvature is finite and
+positive, which is the rule of \code{\link[=boundary_coords]{boundary_coords()}}: a parameter at the clamp
+of its link makes its whole row non-finite, and a coordinate about which the
+information carries nothing has an empty row. Neither is an aliasing. There
+the estimate stands and only the variance does not, which is what
+\code{\link[=uninformative_coords]{uninformative_coords()}} handles; aliasing reports the coefficient itself as
+missing.
 
-WHETHER THERE IS ANYTHING TO NAME IS \code{\link[=solve_pd]{solve_pd()}}'S VERDICT and not a
-tolerance of this function's, so a fit whose information inverts is
-untouched and the alias can never disagree with the variance reported
-beside it. That gate is load-bearing rather than an economy. \eqn{K} is
-\eqn{X'X} up to the weights, so it SQUARES the conditioning of the
-design, and a pivoted QR read at \code{dqrdc2}'s own tolerance is therefore
-twice as strict here as it is on the augmented system: measured on two
-columns made collinear to within 1e-4 -- an ordinary pair of correlated
-covariates -- the bare pivot names one of them while \code{solve_pd()} inverts
-the matrix without difficulty, so the column would have been thrown away
-for nothing. With the gate, that case is untouched and the naming runs
-only where the whole matrix would otherwise have been refused.
+Whether there is anything to name is decided by \code{\link[=solve_pd]{solve_pd()}} and not by a
+tolerance of this function, so a fit whose information inverts is untouched
+and the alias cannot disagree with the variance reported beside it. The gate
+is necessary. \eqn{K} is \eqn{X'X} up to the weights, so it squares the
+conditioning of the design, and a pivoted QR read at the tolerance of
+\code{dqrdc2} is twice as strict here as it is on the augmented system. For two
+columns collinear to within 1e-4 (an ordinary pair of correlated
+covariates), the bare pivot would name one of them while \code{solve_pd()}
+inverts the matrix without difficulty. With the gate, such a case is
+untouched and the naming runs only where the whole matrix would otherwise
+have been rejected.
 
-Which coordinate is then named is the pivot's, as it is in
-\code{\link[=augmented_solve]{augmented_solve()}}. Measured against that pivot where both speak, the
-two agree on a duplicated column under four families and on an
-over-parametrized \code{\link[modelterms7:nl]{modelterms7::nl()}} term.
+Which coordinate is then named is determined by the pivot, as in
+\code{\link[=augmented_solve]{augmented_solve()}}.
 
-A coordinate a kinked penalty holds at zero is left out of the test,
-as \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} leaves it out of the matrix it inverts. The kink
-identifies such a coordinate although \eqn{K} carries no curvature for
-it: under \code{1 + lasso(~ g)}, with every level of \code{g} coded, the direction
+A coordinate that a kinked penalty holds at zero is left out of the test,
+as \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} leaves it out of the matrix that it inverts. The
+kink identifies such a coordinate although \eqn{K} carries no curvature for
+it: under \code{1 + lasso(~ g)} with every level of \code{g} coded, the direction
 that raises the intercept and lowers every level is flat in \eqn{K} and
-not in the objective, whose minimum over it is unique. Read on the whole
-matrix the pivot named the last level, reported it as missing, and
-\code{summary()} failed where that level was the only one selected.
+not in the objective, whose minimum over it is unique. Reading the pivot on
+the whole matrix would name the last level, so that coordinate is excluded.
 }
 \seealso{
 \code{\link[=uninformative_coords]{uninformative_coords()}}, which holds a coordinate the

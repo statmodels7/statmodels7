@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict_random.R
 \name{random_modes}
 \alias{random_modes}
-\title{The Random-Effect Terms a Prediction Can Set Aside}
+\title{The Random-Effect Terms That a Prediction Can Set Aside}
 \usage{
 random_modes(spec, random)
 }
@@ -18,14 +18,15 @@ nested terms in the attribute \code{"nested"}.
 }
 \description{
 Lists the \code{\link[modelterms7:random]{modelterms7::random()}} terms written in the model's equations,
-with the mode \code{predict()} reads each at.
+with the mode that \code{predict()} applies to each.
 }
 \details{
 \code{random} is a single string, applied to every such term, or a character
-vector named by the terms' keys, one mode per term named, the rest staying
-conditional. A key is matched with its white space removed, so
-\code{"random(~1|g)"} finds the term written \code{random(~ 1 | g)}. A name that
-matches no term signals an error listing those there are.
+vector named by the terms' keys, one mode per key named, applying to every
+term with that key in any equation, and the rest staying conditional. A key
+is matched with its white space removed, so \code{"random(~1|g)"} finds the
+term written \code{random(~ 1 | g)}. A name that matches no term signals an
+error that lists the terms of the model.
 
 Only a term written in an equation is listed. One written inside a
 subformula develops another term's parameter; those are listed by

@@ -19,17 +19,16 @@ specification.
 }
 \details{
 A key is the call that produced the term, and for a penalty over a
-sub-term it is that call followed by \verb{::parameter::sub-term}. The
-call is what grows: printed in full, one line of an outer trace carried
-the deparsed \code{gas(p = 1, q = 1, time = t, by = ~ridge(~id), links = list(...))} three times over, which is a line no reader can use. Only the
-leading call is shortened, and only past its first argument, so
-\code{s(x, bspline_smooth(k = 20))} and \code{s(z, bspline_smooth(k = 8))} stay apart; everything after
-\code{::} is kept whole, that being what distinguishes one entry of a term
-from another.
+sub-term it is that call followed by \verb{::parameter::sub-term}. The call is
+what grows when a term has many arguments, so that printing it in full
+makes a line of an outer trace unreadable. Only the leading call is
+shortened, and only past its first argument, so that
+\code{s(x, bspline_smooth(k = 20))} and \code{s(z, bspline_smooth(k = 8))} stay
+apart. Everything after \code{::} is kept whole, because that distinguishes
+one entry of a term from another.
 
-Where shortening would make two labels the same the full ones are
-returned, all of them: a shorter label that is ambiguous is worse than a
-long one, and deciding per label would leave a reader unable to tell which
-convention a given line follows.
+Where shortening would make two labels the same, the full labels are
+returned, all of them, so that every line of a trace follows one
+convention.
 }
 \keyword{internal}

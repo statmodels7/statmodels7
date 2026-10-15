@@ -21,11 +21,12 @@ A data frame.
 Resolves \code{data} and \code{n} into one data frame of covariates.
 }
 \details{
-A model may have no covariates at all -- a pure time series is the case --
-and then a row count is the whole of what a simulation needs, so the two
-arguments are alternatives rather than one being compulsory. Where both
-are given they must agree, which is checked rather than resolved by
-preferring one: a caller who wrote both and got them wrong wants to know.
+A model may have no covariates at all (a pure time series is the case),
+and then a row count is all that a simulation needs, so \code{data} and \code{n} are
+alternatives and one of them must be given. Where both are given they must
+agree, which is checked and not resolved by preferring one, since a
+disagreement points to a mistake of the caller. \code{n} must be a positive
+whole number.
 }
 \seealso{
 \code{\link[=rstatmod]{rstatmod()}}

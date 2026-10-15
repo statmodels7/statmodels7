@@ -41,19 +41,19 @@ A combination \eqn{c'\hat\beta} has a finite asymptotic variance exactly
 where \eqn{c} is orthogonal to the null space \eqn{\mathcal{N}} of
 \eqn{K}, and then \eqn{\mathrm{Var}(c'\hat\beta) = c'K^{+}c} with
 \eqn{K^{+}} the Moore-Penrose inverse. Reading \verb{diag(K^+)} is therefore
-not enough on its own: for a \eqn{c} that is NOT orthogonal it returns a
+not enough on its own: for a \eqn{c} that is not orthogonal it returns a
 number where the truth is infinite. The rule is in two parts, invert away
 from \eqn{\mathcal{N}} and report nothing on it, and this function is the
 second part.
 
 A candidate is a coordinate with no curvature of its own. Its diagonal is
 not finite, which is what a parameter run out of its range leaves behind;
-or it is not positive, which is \code{\link[=solve_pd]{solve_pd()}}'s own reading of that entry
+or it is not positive, which is the reading of \code{\link[=solve_pd]{solve_pd()}} for that entry
 and is a statement about the coordinate whatever scale it is on; or, among
-the coordinates whose diagonal IS positive, it carries the whole of a null
-direction of the JACOBI-EQUILIBRATED matrix. The equilibration is what
-tells a flat direction from scale separation, and requiring one coordinate
-to carry the whole direction is what excludes the collinear case, where
+the coordinates whose diagonal is positive, it carries the whole of a null
+direction of the Jacobi-equilibrated matrix. The equilibration
+distinguishes a flat direction from scale separation, and requiring one
+coordinate to carry the whole direction excludes the collinear case, where
 the null vector is \eqn{(e_1 - e_2)/\sqrt{2}} and each of the two carries
 half of it.
 
@@ -62,33 +62,32 @@ amount it disturbs is the Schur correction it removes from the others,
 \eqn{K_{Aj}K_{jj}^{-1}K_{jA}}. That test has two branches, because it has
 two scales.
 
-Where \eqn{K_{jj}} is POSITIVE the coordinate has a scale of its own and
+Where \eqn{K_{jj}} is positive the coordinate has a scale of its own and
 the correction, read against \eqn{K_{AA}} in equilibrated units where that
 block has a unit diagonal, is
 \deqn{\max_k \Bigl(\frac{|K_{jk}|}{\sqrt{K_{kk}}}\Bigr)^{2}
       \Big/ K_{jj} \;\le\; \texttt{schur}.}
 It is dimensionless and needs no reference: a coordinate measured a
-thousand times smaller than its neighbours has a small row AND a small
-diagonal, and the ratio sees through both. Scaling one down by
-\eqn{10^{-14}} leaves the ratio at one, and nothing is held.
+thousand times smaller than its neighbors has a small row and a small
+diagonal, and the ratio is unchanged by the scaling. Scaling one coordinate
+down by \eqn{10^{-14}} leaves the ratio unchanged, and nothing is held.
 
-Where \eqn{K_{jj}} is NOT positive the coordinate has no scale of its own
--- the information in that direction is zero rather than small -- so that
-ratio is \eqn{0/0} and says nothing. The only scale left is the matrix's,
-and the question becomes whether the row sits at the level its entries
-were accumulated to: \eqn{\max_k |K_{jk}| \le \texttt{row\_tol}\max|K|}.
-Measured on a count model whose dispersion left its range, \eqn{K_{jj}} is
-exactly zero, the row's largest entry is \eqn{1.2\times10^{-15}} against a
-matrix whose largest is 2562, and \eqn{\lVert K_{j\cdot}\rVert/\lVert
-K\rVert} is \eqn{4.4\times10^{-19}}.
+Where \eqn{K_{jj}} is not positive the coordinate has no scale of its own
+(the information in that direction is zero and not merely small), so that
+ratio is \eqn{0/0} and carries no information. The only scale left is that
+of the matrix, and the question becomes whether the row sits at the level
+to which its entries were accumulated:
+\eqn{\max_k |K_{jk}| \le \texttt{row\_tol}\max|K|}. For a count model whose
+dispersion has left its range, \eqn{K_{jj}} is exactly zero and the entries
+of the row of that coordinate are at the rounding level of the matrix.
 
 Where neither branch passes, dropping the coordinate would leave
-\eqn{K_{AA}^{-1}}, the variance CONDITIONAL on that coefficient being
+\eqn{K_{AA}^{-1}}, the variance conditional on that coefficient being
 known, which is smaller than the marginal one; nothing is held and the
-caller's refusal stands.
+error signaled by the caller stands.
 }
 \seealso{
-\code{\link[=solve_pd]{solve_pd()}}, which refuses the matrix these come from, and
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which holds them.
+\code{\link[=solve_pd]{solve_pd()}}, which signals an error for the matrix these come
+from, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which holds them.
 }
 \keyword{internal}

@@ -23,11 +23,11 @@ reaches one of them, that is where both its coefficient in \eqn{x_a} and
 its coefficient in \eqn{x_b} are non-zero.
 }
 \details{
-A coefficient a kinked prior holds at its kink, such as a random effect
-under a Laplace prior estimated at exactly zero, has no variance, and
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} reports \code{NA} there. A prediction whose design does not
-reach that coefficient, the typical group's under \code{random = "zero"} for
-one, has a standard error all the same; requiring every entry of the block
-to be finite made it \code{NA} as well.
+A coefficient that a kinked prior holds at its kink, such as a random
+effect under a Laplace prior estimated at exactly zero, has no variance,
+and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} reports \code{NA} there. A prediction whose design does
+not reach that coefficient, the typical group's under \code{random = "zero"} for
+one, has a standard error all the same, so that only the rows whose design
+reaches a missing entry are \code{NA}.
 }
 \keyword{internal}

@@ -16,13 +16,12 @@ A single string.
 The name on the formula's left-hand side, which must be a symbol.
 }
 \details{
-A transformed response is rejected rather than answered. Under
-\code{log(y) ~ x} the model generates values of \code{log(y)}, so a column
-called \code{y} would hold the wrong quantity and one called
-\code{"log(y)"} would not be the name the formula reads back; the earlier
-version wrote the first of those silently. A censored response is rejected
-for the reason \code{\link[=statmod]{statmod()}} rejects one -- there is no censored
-likelihood to fit it back with.
+A transformed response is rejected. Under \code{log(y) ~ x} the model
+generates values of \code{log(y)}, so a column called \code{y} would hold the wrong
+quantity and one called \code{"log(y)"} would not be the name that the formula
+reads back. A censored response is rejected for the reason that
+\code{\link[=statmod]{statmod()}} rejects one: there is no censored likelihood to fit it back
+with.
 }
 \seealso{
 \code{\link[=rstatmod]{rstatmod()}}

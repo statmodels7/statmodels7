@@ -11,7 +11,7 @@ prior_draw_groups(pen, th, D, n_draw)
 
 \item{th}{Its hyperparameters.}
 
-\item{D}{The coordinates one group carries.}
+\item{D}{The number of coordinates that one group carries.}
 
 \item{n_draw}{The number of draws.}
 }

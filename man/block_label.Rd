@@ -13,7 +13,7 @@ block_label(kind)
 A single string.
 }
 \description{
-The name a summary gives a block, from the kind
-\code{\link[=term_block_kind]{term_block_kind()}} answered with.
+The name that a summary gives a block, from the kind that
+\code{\link[=term_block_kind]{term_block_kind()}} returns.
 }
 \keyword{internal}

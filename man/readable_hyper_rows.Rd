@@ -25,23 +25,23 @@ readable_hyper_rows(
 
 \item{Vh}{The hyperparameter variance matrix, or \code{NULL}.}
 
-\item{p}{The parameter the term sits in.}
+\item{p}{The distribution parameter whose equation contains the term.}
 
 \item{key}{The penalty's key.}
 
 \item{level}{The confidence level.}
 
-\item{role, src}{What the coordinate rows reported.}
+\item{role, src}{The role and the source reported for the coordinate rows.}
 
 \item{cols}{The column names of a summary block.}
 
 \item{labels}{One label per coordinate of the matrix, or nothing. A
 correlation between the second and the third coordinate of a covariance
 is a number about two named effects, and the family that carries the
-chart cannot say which; where the labels are given, they replace the
-positions in the printed name.}
+chart does not identify which; where the labels are given, they replace
+the positions in the printed name.}
 
-\item{at_edge}{The keys of the hyperparameter coordinates
+\item{at_edge}{The keys of the hyperparameter coordinates that
 \code{\link[=statmod_certificate]{statmod_certificate()}} found at a boundary. A quantity whose
 Jacobian entry on one of them is not structurally zero reports no
 standard error and no interval; every other quantity keeps its own.}
@@ -51,25 +51,24 @@ A data frame of rows, in the shape of a summary block.
 }
 \description{
 Replaces the coordinate rows of a penalty whose hyperparameters are a chart
-with the quantities it declares through
+with the quantities that the penalty declares through
 \code{\link[penalties7:penalty_readable]{penalties7::penalty_readable()}}: the standard deviations and
 correlations of a correlated random effect, in place of the logarithms of
-a
-Cholesky diagonal and the entries below it.
+a Cholesky diagonal and the entries below it.
 }
 \details{
 The standard error is the delta method, and it composes two Jacobians: the
 penalty's, which is in the parameter scale of its hyperparameters, and the
-link's, the variance matrix being on the free scale the outer criterion was
-maximized on. Each interval is built on the scale the quantity declares,
-log for a standard deviation and Fisher's z for a correlation, and
-mapped
-back, so a standard deviation cannot be given a negative lower end and a
-correlation cannot be given an interval that leaves \eqn{(-1, 1)}. That is
-the rule every other interval in the toolkit follows.
+link's, the variance matrix being on the free scale on which the outer
+criterion was maximized. Each interval is built on the scale that the
+quantity declares, log for a standard deviation and Fisher's z for a
+correlation, and mapped back, so a standard deviation cannot be given a
+negative lower end and a correlation cannot be given an interval that
+leaves \eqn{(-1, 1)}. The coefficients of a linear predictor keep the
+symmetric interval of the estimate plus or minus \eqn{z} standard errors.
 
-No test is printed, for the reason the coordinate rows print none: the null
-a \eqn{z} of value over standard error reports on is that the quantity is
-zero, which for a standard deviation is the edge of its range.
+No test is printed, for the same reason that the coordinate rows print
+none: the null hypothesis that a \eqn{z} statistic reports on is that the
+quantity is zero, which for a standard deviation is the edge of its range.
 }
 \keyword{internal}

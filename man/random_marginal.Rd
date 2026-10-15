@@ -27,7 +27,8 @@ them.}
 
 \item{nodes}{What \code{\link[=random_nodes]{random_nodes()}} returns, in the order of \code{mt}.}
 
-\item{what}{What was asked for.}
+\item{what}{The quantity predicted: a parameter name, \code{"parameter"},
+\code{"mean"}, \code{"variance"} or \code{"std_dev"}.}
 
 \item{eta_at}{A named list of predictors to integrate at in place of
 \code{ep$eta}, for the ends of an interval; \code{NULL} for \code{ep$eta}.}
@@ -47,7 +48,7 @@ usual. The check of a predictor's domain reads \code{eta0} and is not run.}
 A numeric vector, or a named list of them for \code{"parameter"}.
 }
 \description{
-Integrates the quantity asked for over the prior of every random-effect
+Integrates the requested quantity over the prior of every random-effect
 term read at \code{"marginal"}, at the fixed part of each equation's predictor.
 }
 \details{
@@ -58,6 +59,7 @@ design (\code{\link[modelterms7:term_within]{modelterms7::term_within()}}). A pa
 total expectation; the variance adds the variance of the conditional mean,
 \eqn{E_b[\mathrm{Var}(Y\mid b)] + \mathrm{Var}_b(E[Y\mid b])}, which is
 where a random effect on the scale enters. A predictor, \code{"link"} or
-\code{"link:p"}, is \eqn{\eta_0} itself, the effects having mean zero.
+\code{"link:p"}, is not computed here: \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} returns
+\eqn{\eta_0} itself for it, the effects having mean zero.
 }
 \keyword{internal}

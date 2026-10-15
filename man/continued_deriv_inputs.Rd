@@ -35,12 +35,17 @@ prediction at the observed rows, so a forecast and a fitted value are
 read against the same rows and columns of the variance. The derivative of
 the filtered predictor at an observed row is the forward Jacobian of
 \code{\link[=filter_joint_jacobian]{filter_joint_jacobian()}}; the level's derivative is that minus the
-equation's design row. The score drives the recursion and depends on the
-predictors of every equation, so its derivative is
+equation's design row. The quantity that drives the recursion depends on
+the predictors of every equation, so its derivative is
 \eqn{\sum_b \ell_{pb,t} V_{b,t}}, with \eqn{V_{b,t}} the derivative row
-of equation \eqn{b} and \eqn{\ell_{pb,t}} the family's second derivative
-on the link scale. A parameter's derivative in its own unconstrained
-coordinate is its link's, and one for a coefficient of a development.
+of equation \eqn{b} and \eqn{\ell_{pb,t}} the derivative of the driving
+quantity with respect to the predictor of equation \eqn{b}. Where the
+filter is not scaled, the driving quantity is the score and
+\eqn{\ell_{pb,t}} is the family's second derivative on the link scale;
+where it is scaled, \eqn{\ell_{pb,t}} is the derivative that
+\code{filter_driving()} returns. A parameter's derivative in its own
+unconstrained coordinate is its link's, and one for a coefficient of a
+development.
 }
 \seealso{
 \code{\link[=statmod_eta_continued]{statmod_eta_continued()}}, \code{\link[=structural_se_columns]{structural_se_columns()}}

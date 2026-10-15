@@ -24,40 +24,44 @@ changes nothing for a continuous family.}
 \item{...}{Unused.}
 }
 \value{
-A numeric vector with one entry per observation. Standard normal
-under a correct model for \code{"quantile"}; approximately standardized for
-\code{"pearson"}; on the response's own scale for \code{"response"}.
+A numeric vector with one entry per row of the data. Standard
+normal under a correct model for \code{"quantile"}; approximately
+standardized for \code{"pearson"}; on the response's own scale for
+\code{"response"}.
 }
 \description{
-One residual per observation, comparing it with the whole distribution the
-model puts on it rather than with any one of that distribution's
-parameters.
+One residual per observation, comparing the observation with the whole
+distribution that the model assigns to it and not with any single
+parameter of that distribution.
 }
 \section{One residual per observation}{
-A residual asks whether an observation is consistent with the law its row
-was given, and that law is one object carrying every parameter at once. So
-there is one residual per observation, however many parameters the model
-develops over covariates.
+A residual measures whether an observation is consistent with the law that
+was given to its row, and that law is one object that carries every
+parameter at once. There is therefore one residual per observation,
+however many parameters the model develops over covariates.
 
-A per-parameter quantity exists and is a different thing: the contribution
-\eqn{\partial \ell_i / \partial \eta_{ip}} says which equation an
-observation strains, and the partial residuals of one equation are what a
-term's effect is drawn against.
+A per-parameter quantity is a different object: the contribution
+\eqn{\partial \ell_i / \partial \eta_{ip}} identifies which equation an
+observation strains, and the partial residuals of one equation are the
+quantities against which a term's effect is drawn.
 }
 
 \section{The quantile residual, and why it is the default}{
 \deqn{r_i = \Phi^{-1}(F(y_i; \hat\theta_i))}
 
-Under a correct model \eqn{F(y_i; \theta_i)} is exactly uniform, so
-\eqn{r_i} is exactly standard normal: whatever the family, and whichever
-of its parameters are modeled. It privileges no parameter, and its
-reference distribution needs no asymptotics (Dunn and Smyth, 1996).
+Under a correct model \eqn{F(y_i; \theta_i)} is uniform where the
+distribution function is continuous, so \eqn{r_i} is standard normal, for
+any such family and whichever of its parameters are modeled. The residual
+does not single out any parameter, and its reference distribution needs no
+asymptotics (Dunn and Smyth, 1996). Where the distribution function
+jumps, the residual is randomized as described next.
 }
 
 \section{Where the distribution function jumps}{
 The construction is randomized: \eqn{u_i} is drawn uniformly on
-\eqn{(F(y_i^-), F(y_i))} and the residual is \eqn{\Phi^{-1}(u_i)}. Exact
-again, at the price of being random, so two calls give two answers.
+\eqn{(F(y_i^-), F(y_i))} and the residual is \eqn{\Phi^{-1}(u_i)}. The
+residual is again exactly standard normal under a correct model, but it is
+random, so that two calls give two answers.
 
 Where \eqn{F(y_i)} exceeds one half the residual is read from the survival
 function, \eqn{\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)} with \eqn{1 - u_i}
@@ -66,18 +70,20 @@ computed as \eqn{1 - F} directly, so a count far in the upper tail, where
 distribution function does not take \code{lower.tail} keeps the lower-tail
 reading.
 
-This applies to every discrete family, and at the atom alone to a mixed
-one, which is the zero-adjusted wrapper of a continuous parent. \code{seed}
-makes a call reproducible without disturbing the caller's stream; left
-\code{NULL}, the ambient state is used and nothing is set.
+The randomization applies to every discrete family, and at the declared
+atoms alone to a mixed family such as the zero-adjusted wrapper of a
+continuous parent. \code{seed} makes a call reproducible without disturbing
+the caller's stream; left \code{NULL}, the ambient state is used and nothing
+is set.
 }
 
 \section{Pearson and response residuals}{
-\eqn{(y_i - \mathbb{E}[Y_i]) / \mathrm{sd}(Y_i)} and its numerator alone.
-Both are defined against the mean, and for a skewed family the Pearson
-residual is not standard normal even where the model is right, so its
-quantile-quantile plot misleads in exactly the case a distributional model
-is for. They are here because they are familiar.
+The Pearson residual is \eqn{(y_i - \mathbb{E}[Y_i]) / \mathrm{sd}(Y_i)},
+and the response residual is its numerator. Both are defined against the
+mean, and for a skewed family the Pearson residual is not standard normal
+even where the model is right, so its quantile-quantile plot can mislead.
+They are included for comparison with the residuals that other modeling
+packages report.
 }
 
 \examples{

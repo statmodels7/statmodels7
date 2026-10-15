@@ -4,7 +4,7 @@ NULL
 #' The Within-Group Rows of a Random-Effect Term
 #'
 #' @description
-#' The row of the within-group design each observation carries, at the new
+#' The row of the within-group design that each observation carries, at the new
 #' data where the specification has some and at the fitting rows otherwise.
 #'
 #' @param spec A [StatmodSpec()].
@@ -33,12 +33,12 @@ random_within <- function(spec, param, key) {
 #'
 #' @description
 #' The covariance of one new group's effects, block by block: a term with a
-#' prior of its own is one block, and the terms a label ties together are one
-#' block over all of them.
+#' prior of its own is one block, and the terms that a label ties together are
+#' one block over all of them.
 #'
 #' @details
-#' A new group's effect is drawn from the prior the fit estimated, so its
-#' variance is that prior's, at the hyperparameters the fit reached; the
+#' A new group's effect is drawn from the prior that the fit estimated, so its
+#' variance is that prior's, at the hyperparameters that the fit reached; the
 #' uncertainty of those hyperparameters is not propagated, which the page of
 #' [predict.StatmodFit()] states. A prior that is not Gaussian has no
 #' covariance to read here and is rejected by name; a group interval and a
@@ -109,8 +109,8 @@ random_blocks <- function(spec, design, fit, aside) {
     mem <- do.call(rbind, lapply(cl$pieces, function(pc) {
       if (!is.null(pc$within)) {
         stop(sprintf(paste0("'%s' shares a covariance with an effect written ",
-                            "inside a subformula,\n  whose coordinates a new ",
-                            "group's interval cannot read."), k),
+                            "inside a subformula,\n  whose coordinates cannot be ",
+                            "read by a new group's interval."), k),
              call. = FALSE)
       }
       data.frame(param = pc$param, key = pc$term, dim = as.integer(pc$dim),
@@ -146,12 +146,12 @@ random_blocks <- function(spec, design, fit, aside) {
 #' @description
 #' For each observation, the covariance over the distribution's parameters of
 #' their linear predictors: the estimation uncertainty of the fixed part, from
-#' the variance matrix, plus the variance a new group's effects add.
+#' the variance matrix, plus the variance that a new group's effects add.
 #'
 #' @details
 #' The fixed part is \eqn{x_{ip}^\top V_{pq} x_{iq}}, read with the columns
 #' of the effects set aside at zero, so it is the uncertainty of the typical
-#' group's predictor; the part the effects add is
+#' group's predictor; the part that the effects add is
 #' \eqn{z_{ip}^\top \Sigma_{pq} z_{iq}}, summed over the blocks of
 #' [random_blocks()].
 #'
@@ -218,24 +218,25 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
 #' Each component \eqn{c} gives, at row \eqn{i}, the predictors' mean
 #' \eqn{\eta_{ci}} and their covariance \eqn{C_{ci}}, the predictors being
 #' taken jointly Gaussian within it. The distribution of \eqn{Y} is the
-#' equally weighted mixture of the family over the components and, within
-#' each, over the predictors,
-#' \deqn{G_i(y) = \frac{1}{B}\sum_{c=1}^{B} E_{\eta \sim
+#' mixture of the family over the components, with weights \eqn{w_c} that
+#' sum to one (equal where a component carries none), and, within each
+#' component, over the predictors,
+#' \deqn{G_i(y) = \sum_{c} w_c E_{\eta \sim
 #'   \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))],}
 #' each expectation evaluated at the single node \eqn{\eta_{ci}} where
 #' \eqn{C_{ci}} is zero at every row. Otherwise \eqn{C_{ci} = LL^\top} is
-#' split by its eigenvectors: the directions after the first are a
-#' Gauss-Hermite product grid of at most 64 nodes, and the first, the one of
-#' largest variance, a 20-node Gauss-Hermite rule. Where that variance is
-#' large against the spread of the conditional law, the law's distribution
-#' function turns from 0 to 1 between two adjacent nodes, which the rule
-#' integrates badly: with \eqn{r} the ratio of the two standard deviations of
-#' a Gaussian law, its error in probability is 2e-11 at \eqn{r = 1}, 1.5e-03
-#' at \eqn{r = 3} and 1.8e-02 at \eqn{r = 5}. A direction whose values at two
-#' adjacent nodes differ by more than 0.3 is therefore integrated by
-#' [numericals7::quad_vec()] instead, at its default tolerances. A
-#' direction cell is left to Gauss-Hermite whatever its values when it is
-#' among the lightest, whose weights add up to at most 1e-8. One
+#' split by its eigenvectors, and \eqn{r} directions carry variance. The
+#' directions after the first are a Gauss-Hermite product grid with
+#' \eqn{k^{r-1}} nodes, where
+#' \eqn{k = \max(2, \min(8, \lfloor 64^{1/(r-1)} \rfloor))}, and the first,
+#' the one of largest variance, a 20-node Gauss-Hermite rule. Where that
+#' variance is large against the spread of the conditional law, the law's
+#' distribution function turns from 0 to 1 between two adjacent nodes, which
+#' the rule integrates badly. A direction cell whose distribution function
+#' differs by more than 0.3 between two adjacent nodes is therefore
+#' integrated by [numericals7::quad_vec()] instead, at its default
+#' tolerances. A direction cell is left to Gauss-Hermite whatever its values
+#' when it is among the lightest, whose weights add up to at most 1e-8. One
 #' component carries the default interval, two sources of variation being
 #' folded into its covariance; the parametric bootstrap gives one component
 #' per replica. A quantile of \eqn{G_i} lies between the smallest and the
@@ -245,9 +246,10 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
 #' density as the derivative, started at the weighted median of those
 #' quantiles and kept inside a bracket every evaluation shrinks; for a
 #' discrete one by bisection on the integers, as the smallest value at which
-#' \eqn{G_i} reaches the level. Only the family's distribution function,
-#' density and quantile are read, so no location parameter is needed. The
-#' standard deviation is
+#' \eqn{G_i} reaches the level. The quantiles read the family's distribution
+#' function and quantile function, and the density for a continuous family,
+#' so no location parameter is needed. The standard deviation reads the
+#' family's mean and variance, and is
 #' \eqn{\sqrt{E[\mathrm{Var}(Y\mid\eta)] + \mathrm{Var}(E[Y\mid\eta])}},
 #' `NA` where the family's mean or variance does not exist.
 #'
@@ -499,8 +501,9 @@ predictive_response <- function(spec, comps, level) {
 #'
 #' @param v A vector of parameter values.
 #'
-#' @return The first finite value of `v`, so a row with no covariance is
-#'   carried through the vectorized arithmetic and blanked afterwards.
+#' @return The first finite value of `v`, or 1 where no value of `v` is
+#'   finite, so that a row with no covariance is carried through the
+#'   vectorized arithmetic and blanked afterwards.
 #'
 #' @keywords internal
 theta_fill <- function(v) {
@@ -518,12 +521,12 @@ theta_fill <- function(v) {
 #' its coefficient in \eqn{x_b} are non-zero.
 #'
 #' @details
-#' A coefficient a kinked prior holds at its kink, such as a random effect
-#' under a Laplace prior estimated at exactly zero, has no variance, and
-#' [vcov.StatmodFit()] reports `NA` there. A prediction whose design does not
-#' reach that coefficient, the typical group's under `random = "zero"` for
-#' one, has a standard error all the same; requiring every entry of the block
-#' to be finite made it `NA` as well.
+#' A coefficient that a kinked prior holds at its kink, such as a random
+#' effect under a Laplace prior estimated at exactly zero, has no variance,
+#' and [vcov.StatmodFit()] reports `NA` there. A prediction whose design does
+#' not reach that coefficient, the typical group's under `random = "zero"` for
+#' one, has a standard error all the same, so that only the rows whose design
+#' reaches a missing entry are `NA`.
 #'
 #' @param Xa,Xb Matrices with a row per observation and a column per
 #'   coefficient of the two blocks.

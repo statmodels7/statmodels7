@@ -13,15 +13,16 @@ hyper(fit, scale = c("parameter", "link"))
 \code{\link[=match.arg]{match.arg()}}.}
 }
 \value{
-A data frame with one row per hyperparameter and seven columns:
+A data frame with one row per hyperparameter and the columns:
 \describe{
 \item{\code{parameter}}{the distribution parameter whose equation the
-penalized term sits in.}
+penalized term sits in. For a covariance class that spans several
+equations, the names of all of them, separated by commas.}
 \item{\code{term}}{the term's key, its call as written.}
 \item{\code{name}}{the hyperparameter's own name, as the penalty names it.}
-\item{\code{estimate}}{its value, on the scale asked for.}
+\item{\code{estimate}}{its value, on the requested scale.}
 \item{\code{held}}{a logical: whether the term fixed it.}
-\item{\code{source}}{what put the value there, as above.}
+\item{\code{source}}{what produced the value, as above.}
 \item{\code{id}}{the sharing label, \code{NA} where the hyperparameter is not
 shared.}
 }
@@ -29,7 +30,7 @@ A data frame of no rows, with those columns, where the model carries no
 penalty at all.
 }
 \description{
-Reports every hyperparameter of every penalty the model carries: one row
+Reports every hyperparameter of every penalty that the model carries: one row
 each, with the value, whether it was held, and what put it there. A
 smoothing parameter, a prior scale, a lasso's \eqn{\lambda} and an elastic
 net's \eqn{\alpha} all appear here.
@@ -37,46 +38,53 @@ net's \eqn{\alpha} all appear here.
 \section{A hyperparameter is not a coefficient}{
 It governs the coefficients under it instead of sitting beside them, and
 the two are estimated by different routes and reported with different
-qualifications. \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} holds the coefficients and this holds
-the hyperparameters; neither holds the other.
+qualifications. \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} reports the coefficients, and this
+function reports the hyperparameters.
 }
 
 \section{The two scales}{
-\code{scale = "parameter"}, the default, is the scale the penalty is written
-on: a smoothing parameter is a positive number, and a gaussian prior's
-\code{sigma} is a scale. That is what a reader wants.
+\code{scale = "parameter"}, the default, is the scale on which the penalty is
+written: a smoothing parameter is a positive number, and the \code{sigma} of a
+gaussian prior is a scale.
 
-\code{scale = "link"} is the free scale the outer search runs on, through each
-hyperparameter's own link. That is what a caller comparing two fits'
-searches wants. Where a hyperparameter carries no link the two coincide.
+\code{scale = "link"} is the free scale on which the outer search runs,
+obtained through each hyperparameter's own link, and it is the scale on
+which the searches of two fits are compared. Where a hyperparameter
+carries no link, the two scales coincide.
 }
 
-\section{What \code{source} says that \code{held} cannot}{
-\code{held} is a logical and says only whether the value moved. \code{source} says
-what put it there:
+\section{The columns \code{held} and \code{source}}{
+\code{held} is a logical that records whether a term fixed the value, directly
+or through the label that the hyperparameter shares. \code{source} records what
+produced the value:
 \itemize{
-\item \code{"fixed"} for one the term itself held, as \code{s(x, bspline_smooth(), hyper = c(lambda = 2))}.
-\item the criterion's name, \code{"reml"} or \code{"ml"}, for one a marginal criterion
-maximized.
-\item the criterion that scored the path, \code{"bic"} and so on, for one chosen
-along a path over its own values.
+\item \code{"fixed"} for a hyperparameter that a term holds, as in
+\code{s(x, bspline_smooth(), hyper = c(lambda = 2))}.
+\item the name of the outer criterion (\code{"reml"}, \code{"ml"}, \code{"aic"} or \code{"bic"})
+for a hyperparameter that the outer search chose.
+\item the name of the sparse criterion (\code{"aic"}, \code{"bic"} or \code{"cv"}) for a
+hyperparameter of a kinked penalty chosen along a path over its own
+values.
+\item \code{""} where no criterion ran, so that the value stayed at the starting
+value of its term.
 }
 
-The distinction has a consequence a reader needs. A value chosen along a
-path is the argument of a minimum over a grid, not the root of a
-derivative, so no standard error follows from it. One a marginal criterion
-reached carries one, from the curvature of that criterion, and
-\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints it.
+The distinction matters for inference. A value chosen by \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}}
+or \code{\link[=cv]{cv()}}, whether by the outer search or along a path, is the argument of
+a minimum of a prediction-error criterion and not the root of the
+derivative of a likelihood, so no standard error follows from it. A value
+that \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} estimated carries a standard error, computed from
+the curvature of that criterion, and \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints it.
 }
 
 \section{Why two rows may carry the same number}{
 Terms whose \code{\link[modelterms7:term_ids]{modelterms7::term_ids()}} give the same label estimate one
-value, and that value is written under each of their own keys. So a shared
-hyperparameter appears once per term, with the same estimate and the same
-\code{source}, and the \code{id} column is what says the agreement is the model
-rather than a coincidence. The penalties are not merged, which is why each
-still has a row of its own and why the effective degrees of freedom are
-still counted term by term.
+value, and that value is written under each of their own keys. A shared
+hyperparameter therefore appears once per term, with the same estimate and
+the same \code{source}, and the \code{id} column marks the agreement as part of the
+model and not as a coincidence. The penalties are not merged, so each term
+still has a row of its own and the effective degrees of freedom are still
+counted term by term.
 }
 
 \examples{
@@ -84,8 +92,9 @@ set.seed(1)
 d <- data.frame(x = runif(80, 0, 1))
 d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 
-# Estimated by REML, which is what source says.
-fit <- statmod(y ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(), d)
+# Estimated by REML, which the source column records.
+fit <- statmod(y ~ s(x, bspline_smooth(k = 6)),
+               distributions7::gaussian1_distrib(), d)
 hyper(fit)
 
 # The same value on the scale the outer search ran on.

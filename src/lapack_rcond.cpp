@@ -6,9 +6,11 @@
 // information is real curvature or a flat direction used to cost a full
 // eigendecomposition -- 1.18 s at p = 1022 against 0.25 s for the Cholesky
 // the inverse needs anyway. The estimator returns 1/(||A||_1 ||A^-1||_1),
-// so the caller reads the smallest eigenvalue off it as rcond * ||A||_1;
-// see solve_pd() for which way that estimate errs and why the slack does
-// not reach the two cases it has to keep apart.
+// so the caller reads the smallest eigenvalue off it as rcond * ||A||_1.
+// The exact value of that product lies between lambda_min / sqrt(p) and
+// lambda_min. The estimator of ||A^-1||_1 is a lower bound, so the returned
+// value can exceed the exact product, and can exceed lambda_min by a small
+// factor. See solve_pd() for how the acceptance test uses it.
 
 #define USE_FC_LEN_T
 #include <Rcpp.h>

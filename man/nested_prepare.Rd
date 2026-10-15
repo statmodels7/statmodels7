@@ -16,8 +16,9 @@ nested_prepare(fit, spec, nest, unseen)
 \item{unseen}{As in \code{\link[=statmod_design]{statmod_design()}}.}
 }
 \value{
-A list with \code{spec}, \code{design}, \code{coef} and \code{cols}, the latter from
-\code{\link[=nested_columns]{nested_columns()}}.
+A list with \code{spec}, \code{design}, \code{coef}, \code{cols} (from
+\code{\link[=nested_columns]{nested_columns()}}) and \code{terms}, the distinct pairs of \code{param} and \code{term}
+among the rows of \code{nest}.
 }
 \description{
 Prepares the specification, the design and the coefficients of a
@@ -25,7 +26,7 @@ prediction in which random effects written inside a subformula are read
 at zero or averaged over their prior.
 }
 \details{
-Every term holding such an effect is replaced by the copy
+Every term holding such an effect is replaced by the copy that
 \code{\link[=pool_nested_random]{pool_nested_random()}} returns, its effects' coefficients are set to zero
 and its columns are recomputed there. The columns of the effects
 themselves are then set to zero, so that the delta method of the

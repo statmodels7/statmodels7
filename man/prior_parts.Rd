@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict_prior.R
 \name{prior_parts}
 \alias{prior_parts}
-\title{The Priors of the Effects a Prediction Sets Aside, by Kind}
+\title{The Priors of the Effects That a Prediction Sets Aside, by Kind}
 \usage{
 prior_parts(spec, design, fit, aside)
 }
@@ -19,8 +19,9 @@ A list with \code{gaussian} (blocks in the shape of \code{\link[=random_blocks]{
 (each with \code{members}, \code{penalty} and \code{theta}).
 }
 \description{
-Sorts the terms \code{random} sets aside into Gaussian blocks, Student t
-scale mixtures and other priors. See \code{\link[=predictive_mixture]{predictive_mixture()}}.
+Sorts the random-effect terms that a prediction sets aside into Gaussian
+blocks, Student t scale mixtures and other priors. See
+\code{\link[=predictive_mixture]{predictive_mixture()}}.
 }
 \examples{
 set.seed(3)

@@ -7,13 +7,13 @@
 predict_moments()
 }
 \value{
-A named list of five functions, keyed \code{"mean"}, \code{"variance"},
+A named list of functions, keyed \code{"mean"}, \code{"variance"},
 \code{"std_dev"}, \code{"skewness"} and \code{"kurtosis"}. Each takes a distribution
 and a parameter list and returns one value per observation.
 }
 \description{
-The table \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} resolves a moment name against: the five
-names it understands, each mapped to the \pkg{distributions7} generic that
+The table \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} resolves a moment name against: the
+recognized names, each mapped to the \pkg{distributions7} generic that
 computes it.
 }
 \details{

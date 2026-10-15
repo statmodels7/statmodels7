@@ -9,41 +9,37 @@ pd_logdet(M, scale = NULL)
 \arguments{
 \item{M}{A symmetric matrix.}
 
-\item{scale}{A reference magnitude, as \code{\link[=solve_pd]{solve_pd()}} takes: the
-unpenalized information's own scale, so that a hyperparameter legitimately
-sent to 1e15 is told apart from a flat direction.}
+\item{scale}{A reference magnitude: the unpenalized information's own scale,
+so that a hyperparameter legitimately sent to 1e15 is told apart from a
+flat direction. \code{NULL} uses the 1-norm of \code{M}, and a larger value is
+capped at that norm.}
 }
 \value{
 A list with \code{logdet} and \code{ok}, or \code{ok = FALSE} where
 the matrix is not positive definite.
 }
 \description{
-\eqn{\log|M|} for a matrix a Laplace approximation needs to be positive
-definite, by the cheap route where that is safe and a costlier one where
-it is not.
+\eqn{\log|M|} for a matrix that a Laplace approximation requires to be
+positive definite, by the cheap route where that is safe and a more
+expensive one where it is not.
 }
 \details{
-\strong{Why not \code{chol()} alone.} A marginal criterion read the
-determinant off \code{chol(M)} and reported the criterion as nonexistent
-whenever the factorization raised. At a condition number near the rounding
-floor, whether it raises is decided by the arithmetic and never by the
-matrix:
-measured on a hierarchical score-driven panel, \eqn{K+S} had a smallest
-eigenvalue of 4.3e-11 against a condition number of 8.0e15, and the outer
-search then backtracked through a dozen points reported unavailable towards
-one that had been available a moment earlier. The same doubt this package
-already records for \code{\link[=solve_pd]{solve_pd()}} and for basis7's rank tests.
+\strong{Why not \code{chol()} alone.} At a condition number near the rounding floor,
+whether the factorization raises an error is decided by the arithmetic and
+not by the matrix. Reading the determinant off \code{chol(M)} alone would
+therefore report the criterion as nonexistent at points where it exists,
+and the outer search would backtrack from them. The same consideration
+applies to \code{\link[=solve_pd]{solve_pd()}} and to the rank tests of basis7.
 
 \strong{The three routes.} The factorization is tried first, being O(p^3/3)
 and the common case. Where it succeeds, LAPACK's condition estimator reads
 the smallest eigenvalue off the factor already in hand for O(p^2), and a
-matrix comfortably away from the floor is accepted with the determinant the
-factor gives. The eigendecomposition is computed only where that test is
-inconclusive, or where the factorization raised at all. It costs more and
-answers about the matrix: a factorization that failed by rounding luck on
-a
-matrix that is in fact positive definite is recovered there, and one that
-is genuinely rank deficient is refused deterministically rather than
+matrix comfortably away from the floor is accepted with the determinant that
+the factor gives. The eigendecomposition is computed only where that test is
+inconclusive, or where the factorization raised an error. It costs more and
+answers about the matrix: a factorization that failed by rounding on a
+matrix that is in fact positive definite is recovered there, and a matrix
+that is genuinely rank deficient is rejected deterministically and not
 according to the platform.
 }
 \seealso{

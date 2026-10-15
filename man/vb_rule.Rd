@@ -19,16 +19,14 @@ vb_rule(title, method = NULL, indent = 0L, char = "-")
 Invisibly \code{NULL}; prints.
 }
 \description{
-One blank line, then a titled rule with the method that will do the work
-named on the right, so that a reader of a running fit can see where one
+One blank line, then a titled rule with the name of the method that does
+the work on the right, so that a reader of a running fit can see where one
 step ends and the next begins.
 }
 \details{
-The trace has three nested things to say -- which outer step, which pass
-of the alternation inside it, and what each block did -- and printed as
-undifferentiated lines they are unreadable, as a panel fit with
-three hyperparameters and 130 outer evaluations demonstrated. Naming the
-method on every rule answers the question a reader of a slow fit actually
-has, and that is the one running now.
+A verbose trace reports three nested levels: the outer step, the pass of
+the alternation inside it, and the work of each block. The rule separates
+these levels, and naming the method on every rule shows which method runs
+at that step.
 }
 \keyword{internal}

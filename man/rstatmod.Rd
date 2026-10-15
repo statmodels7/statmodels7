@@ -25,10 +25,12 @@ how many equations there are and what is drawn from.}
 
 \item{data}{A data frame of covariates, or \code{NULL} where \code{n} is given.}
 
-\item{n}{The number of observations, where \code{data} is \code{NULL}. One of the
-two is required.}
+\item{n}{The number of observations, a positive whole number. It is
+required where \code{data} is \code{NULL}, and where \code{data} is given it must equal
+the number of rows.}
 
-\item{n_sim}{How many data sets to draw. \code{1} by default.}
+\item{n_sim}{How many data sets to draw, a positive whole number. \code{1} by
+default.}
 
 \item{par}{Optional named list of what to hold, over the whole model: a
 distribution parameter, one of its coefficients or a group of them, a
@@ -37,8 +39,8 @@ numeric vector, a single number or a function of the count. See the
 details. \code{NULL}, the default, draws everything.}
 
 \item{sd}{The width of the draws, \code{1} by default. A quantity that rides a
-chart -- a structural parameter, a prior's own scale -- is drawn at half
-of it, the chart carrying a width of one onto most of its parameter's
+chart (a structural parameter, a prior's own scale) is drawn at half of
+it, the chart carrying a width of one onto most of its parameter's
 range.}
 
 \item{offsets}{Optional named list of offsets, one per parameter, as
@@ -46,10 +48,11 @@ range.}
 
 \item{covariates}{Optional named list of functions of the observation
 count, one per covariate, drawn afresh at every replicate. A drawn
-factor must have its levels fixed.}
+factor should have its levels fixed, since a replicate that loses a
+level stops the simulation with an error.}
 }
 \value{
-An object of class \code{"StatmodSim"}, a list of seven:
+An object of class \code{"StatmodSim"}, a list with the elements:
 \describe{
 \item{\code{data}}{the data frame with the response column added, named
 after the formula's left-hand side.}
@@ -57,17 +60,21 @@ after the formula's left-hand side.}
 design names them.}
 \item{\code{theta}}{the distribution's parameters at every observation, a
 named list with one vector per parameter.}
-\item{\code{latent}}{what a term with state drew, or \code{NULL}.}
+\item{\code{latent}}{what a term with state drew (the filtered level of a
+score-driven term, the states of a latent chain, or the positions of
+a marginal break-point term), or \code{NULL}.}
 \item{\code{structural}}{such a term's own parameters, or \code{NULL}.}
 \item{\code{hyper}}{a data frame of the hyperparameters, one row per
 penalty and name, with the value drawn or held. Its columns are
-those of \code{\link[=hyper]{hyper()}} as far as they mean the same thing, so a study
-compares the two directly.}
-\item{\code{n_sim}}{as supplied.}
+those of \code{\link[=hyper]{hyper()}} as far as they mean the same thing, \code{value}
+taking the place of \code{estimate}, so a study compares the two
+directly.}
+\item{\code{n_sim}}{the number of data sets, as an integer.}
 \item{\code{call}}{the matched call.}
 }
-With \code{n_sim > 1} the fields \code{data}, \code{theta} and \code{latent} are lists of
-that length.
+With \code{n_sim > 1} the fields \code{data} and \code{theta} are lists of that length,
+and \code{latent} is such a list when the model has a term with state and
+\code{NULL} otherwise; \code{par}, \code{structural} and \code{hyper} stay single.
 }
 \description{
 Takes a formula and a distribution, draws coefficients or uses the ones
@@ -77,37 +84,36 @@ behind it.
 \section{What it is for}{
 Data whose truth is known: write the model, draw from it, fit it back, and
 see whether the fit recovers what was put in. That is the shape of a
-simulation study, and of a check on a term one has just written.
+simulation study, and of a check on a term that has just been written.
 
 This is not \code{\link[stats:simulate]{stats::simulate()}}, which draws from a model already fitted.
-The \code{r} prefix is R's own for a random draw, so the two names stay apart.
+The \code{r} prefix is the one that R uses for a random draw, so the two names
+stay apart.
 
-A covariate needs no declaring. A factor becomes its contrasts and a
-numeric stays itself, the design coming from the same interpreter a fit
-uses.
+A covariate needs no declaration. A factor becomes its contrasts and a
+numeric variable stays as it is, the design being built by the interpreter
+that a fit uses.
 }
 
-\section{The truth comes back beside the data}{
-A simulation study compares against the coefficients, the parameters they
-gave and whatever a term with state drew, so the result is a list holding
-all of them. Pass \code{sim$data} where a data frame is wanted.
+\section{The returned truth}{
+A simulation study compares against the coefficients, the parameters that
+they gave and whatever a term with state drew, so the result is a list
+holding all of them. Pass \code{sim$data} where a data frame is wanted.
 
-They were attributes of the data frame until version 0.88.0, and that was
-worse than it looks: an attribute survives a row subset without being
-subset itself, so \code{sim[1:10, ]} silently kept a \code{theta} of the original
-length, while \code{subset()} and \code{merge()} dropped it altogether.
+The truth is kept as elements of a list and not as attributes of the data
+frame, because an attribute is not subset with the rows: \code{sim[1:10, ]}
+would keep a \code{theta} of the original length, while \code{subset()} and
+\code{merge()} drop it.
 }
 
-\section{The predictor is assembled as a fit assembles it}{
-Through \code{\link[=statmod_design_at]{statmod_design_at()}}, so the simulated data come from the model
-that was written, never from a linearization of it.
+\section{Assembly of the predictor}{
+The predictor is built through \code{\link[=statmod_design_at]{statmod_design_at()}}, so the simulated data
+come from the model that was written and not from a linearization of it.
 
 A term whose block moves with its coefficients, \code{\link[modelterms7:seg]{modelterms7::seg()}},
 \code{\link[modelterms7:jseg]{modelterms7::jseg()}} or \code{\link[modelterms7:nl]{modelterms7::nl()}}, contributes
 \code{term_value()} at the coefficients supplied, not its block times them. The
-two differ by the whole nonlinearity, and an earlier version of this
-function used the second: measured, the gap is 3 on a \code{seg()}, 4.05 on an
-\code{nl()} and a missing value on a \code{jseg()}.
+two differ by the whole nonlinearity, and the simulation uses the first.
 }
 
 \section{Data, or a row count}{
@@ -117,129 +123,128 @@ they must agree.
 }
 
 \section{Fixed covariates or drawn ones}{
-\code{covariates} takes one function of the observation count per column, as
-\code{par} takes one per equation, and they are drawn afresh at every
-replicate.
+\code{covariates} takes one function of the observation count per column, as an
+entry of \code{par} may be, and the columns are drawn afresh at every replicate.
+A column of \code{data} under the same name is overwritten, and the columns of
+\code{data} that are not drawn are the same in every replicate.
 
 The choice decides what a study measures. With \code{data} the covariates are
-the same throughout, so what is measured is the estimator's behavior
-\strong{conditional} on that design; with \code{covariates} it is measured over the
-design as well. Neither is more correct, and a study should say which it
-ran. Measured on a simple regression at \eqn{n = 40}, the slope's standard
-deviation is 0.1465 under the first and 0.1443 under the second, so the
-distinction is about what a study claims, never about a large numerical
-difference.
+the same throughout, so the study measures the behavior of the estimator
+conditional on that design; with \code{covariates} it measures that behavior
+over the design as well. Neither is more correct, and a study should state
+which one it ran.
 
-A drawn factor is refused unless its levels are fixed. Drawn freely it
-loses a level on some replicate, and the coefficients drawn against the
-first design would then be recycled into a different model.
+A drawn factor should have its levels fixed. A factor drawn with free
+levels can lose a level at some replicate. The design then has another
+shape than the one that the coefficients were drawn for, and the
+simulation stops at that replicate with an error.
 }
 
 \section{Several replicates}{
-\code{n_sim} draws that many data sets. The truth is drawn \strong{once} and shared:
-a study over replicates measures the variability of an estimator at a set
-of parameters, so the replicates differ in what is random, never in what
-is being estimated. Varying the truth as well is a loop over calls and
-reads differently.
+\code{n_sim} draws that many data sets. The truth is drawn once and shared by
+the replicates: a study over replicates measures the variability of an
+estimator at a given set of parameters, so the replicates differ in what is
+random and not in what is being estimated. Varying the truth as well
+requires a loop over calls and reads differently.
 
-With \code{n_sim > 1} the per-replicate fields, \code{data}, \code{theta} and \code{latent},
-come back as lists of that length, while \code{par} and \code{structural} stay
+With \code{n_sim > 1} the per-replicate fields \code{data} and \code{theta} come back as
+lists of that length, and \code{latent} does so when the model has a term with
+state (otherwise it is \code{NULL}), while \code{par}, \code{structural} and \code{hyper} stay
 single.
 }
 
-\section{Everything is drawn}{
+\section{The quantities that are drawn}{
 A call that names nothing draws the whole truth, so writing the model is
-the whole of what getting data from it takes. The rule is that whoever
-knows what a quantity means draws it:
+all that getting data from it requires. Each quantity is drawn by the
+component that defines its meaning:
 \itemize{
 \item a coefficient of a design column has no other owner and comes from
 \code{rnorm(1, 0, sd)}, which on the link scale gives predictors of order
 one;
-\item a coordinate some penalty covers is drawn from that penalty read as a
-prior, through \code{\link[penalties7:penalty_draw]{penalties7::penalty_draw()}}. A Gaussian random effect
+\item a coordinate that some penalty covers is drawn from that penalty read as
+a prior, through \code{\link[penalties7:penalty_draw]{penalties7::penalty_draw()}}. A Gaussian random effect
 gives Gaussian effects, a lasso Laplace ones and a heavy-tailed prior
 heavy-tailed ones. The prior's own scale is drawn as well, on the chart
-the penalty carries for it, and comes back in \code{hyper};
+that the penalty carries for it, and comes back in \code{hyper};
 \item a structural term's own parameters are drawn by the term, through
-\code{\link[modelterms7:term_draw]{modelterms7::term_draw()}}, which knows the chart each one rides. A
-loading stays positive and a persistence stationary whatever comes out;
-\item a coefficient of a design column whose meaning only the term knows is
+\code{\link[modelterms7:term_draw]{modelterms7::term_draw()}}, on the chart that each one rides. A loading
+stays positive and a persistence stationary whatever comes out;
+\item a coefficient of a design column whose meaning only the term defines is
 drawn by the term, through \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}}, last of all
 so that what it writes is what survives. A break-point is the case: it
 is a position on the covariate's own axis, so a normal of width \code{sd}
-lands outside the data as often as not and the confinement then pins it
-to the interval's edge, where one of the two segments holds a twentieth
-of the rows. Measured over fifty groups with the covariate uniform on
-\eqn{(0, 1)}, thirty-eight of the fifty came back pinned and twelve
-strictly interior.
+often lands outside the data, and the confinement then pins it to an edge
+of the interval, where one of the two segments holds a small share of the
+rows.
 }
 
-A hyperparameter the term holds is used rather than drawn, so
-\code{s(x, bspline_smooth(), hyper = c(lambda = 2))} simulates at the smoothing it names. A prior whose
-coordinates a term drew is reported at the width the term used, the values
-there no longer being that prior's own draw -- and drawn Gaussian at that
+A hyperparameter that the term holds is used and not drawn, so
+\code{s(x, bspline_smooth(), hyper = c(lambda = 2))} simulates at the smoothing
+parameter that it names. If a term draws the coordinates that a prior
+covers, the prior is reported at the width that the term used, since those
+values are no longer the prior's own draw. They are drawn Gaussian at that
 width, so a heavy-tailed prior over a break-point keeps its family for the
-fitting and not for the simulation.
+fitting but not for the simulation.
 
-What no prior reaches falls back to the plain draw, and it is a short
-list: SCAD and MCP are improper by construction, an anisotropic tensor
-smooth is flat along its null space, and a covariance class spanning a
-filter and an equation at once is in neither vector on its own.
+What no prior reaches falls back to the plain draw. The cases are SCAD and
+MCP, which are improper by construction; an anisotropic tensor smooth,
+which is flat along its null space; a covariance class spanning a filter
+and an equation at once, which is in neither vector on its own; and a
+coordinate for which the draw of the penalty is missing.
 }
 
-\section{Holding what you care about}{
+\section{Fixing quantities by name}{
 \code{par} is one named list over the whole model, and a key may be
 \itemize{
 \item a distribution parameter, \code{mu}, which is that whole equation;
 \item one of its coefficients or a group of them, \code{mu.(Intercept)} or
-\code{mu.random}, a group being a name the members extend at a dot;
+\code{mu.random}, a group being a name that the members extend at a dot;
 \item a structural term's own parameter, \code{kappa1}, or a group of those,
 \code{omega.random}.
 }
 
 A value is a vector of that key's own length, a single number used for all
-of them, or a \strong{function} of the count. The function is how a structured
+of them, or a function of the count. The function is how a structured
 truth is written without a vocabulary of its own:
-\code{function(k) rnorm(k, 0, 0.4)} is a random effect at a scale one chose and
-\code{function(k) c(1.5, -2, rep(0, k - 2))} is a sparse truth for a lasso to
-find. A function answering with the wrong count is refused, R being
-willing to recycle it into a different model, and a key that reaches
-nothing is refused with what the model does carry.
+\code{function(k) rnorm(k, 0, 0.4)} is a random effect at a scale chosen by the
+caller and \code{function(k) c(1.5, -2, rep(0, k - 2))} is a sparse truth for a
+lasso to find. A function that returns the wrong number of values or a
+missing value is rejected, because R would recycle a vector of the wrong
+length into a different model. A key that addresses nothing is rejected
+with a message that lists what the model does carry.
 
-A structural parameter is named on the scale a reader knows, which is
-\code{\link[modelterms7:term_params]{modelterms7::term_params()}}'s: a loading is the loading and not its
-logarithm, a persistence the partial autocorrelation its chart carries.
-A parameter a subformula DEVELOPS is different, and it has to be: its
+A structural parameter is named on the scale of
+\code{\link[modelterms7:term_params]{modelterms7::term_params()}}: a loading is the loading and not its
+logarithm, and a persistence is the partial autocorrelation that its chart
+carries. A parameter that a subformula develops is different. Its
 coordinates are the coefficients of that development, which act on the
 unconstrained scale of the parameter's own chart, so \code{kappa1} is a loading
-and \code{kappa1.random.3} is a group's departure on the log scale that
-loading rides. That is what keeps every group's loading positive whatever
-the departure is.
+and \code{kappa1.random.3} is a group's departure on the log scale that the
+loading rides. This keeps every group's loading positive whatever the
+departure is.
 }
 
 \section{A term with state}{
-Simulated through \code{\link[modelterms7:term_simulate]{modelterms7::term_simulate()}}, so the recursion that
-generates is the term's own. A score-driven term draws the response as it
-runs, its level at one time driven by the score at the time before; a
-latent chain draws its path from the stationary law the likelihood is
-written with; a marginal break-point term draws each group's positions
-from their prior. What each drew comes back in \code{latent}, and that is what
-a recovery check compares against.
+The simulation runs through \code{\link[modelterms7:term_simulate]{modelterms7::term_simulate()}}, so the
+recursion that generates the data is the term's own. A score-driven term
+draws the response as it runs, its level at one time being driven by the
+score at the time before; a latent chain draws its path from the stationary
+law that the likelihood is written with; a marginal break-point term draws
+each group's positions from their prior. What each drew comes back in
+\code{latent}, which is what a recovery check compares against.
 
-Such a term's own parameters are not coefficients of any equation and are
-named in \code{par} alongside them, a formula holding at most one such term so
-that no key is needed. They are drawn like everything else, which they
-were not until version 0.111.0: a filter whose level was developed over a
-hundred groups took its starting values, and those are zero for every
-deviation, so the panel came out with no heterogeneity between groups at
-all -- three distinct values of the mean over six hundred observations.
+The parameters of such a term are not coefficients of any equation. They
+are named in \code{par} beside the equations' coefficients, and since a formula
+holds at most one such term, the names carry no term key. They are drawn
+like every other coefficient.
 }
 
 \section{The response's name}{
-The formula's left-hand side, which must be a symbol. \code{log(y) ~ x} is
-refused: the model generates values of \code{log(y)}, and no column could
-honestly be called either name. A censored response is refused too, for
-the reason \code{\link[=statmod]{statmod()}} refuses one.
+The left-hand side of the formula must be a symbol. \code{log(y) ~ x} is
+rejected because the model generates values of \code{log(y)}, which cannot be
+stored in a column under either name. A censored response is rejected too,
+for the reason that \code{\link[=statmod]{statmod()}} rejects one: there is no censored
+likelihood.
 }
 
 \examples{

@@ -7,7 +7,7 @@
 unknown_what(what, params)
 }
 \arguments{
-\item{what}{What was asked for, for the message.}
+\item{what}{The name that was passed, for the message.}
 
 \item{params}{The family's parameter names, in the family's order.}
 }
@@ -17,14 +17,13 @@ A single string, ready for \code{\link[=stop]{stop()}}.
 \description{
 Builds the error \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} signals when \code{what} names
 nothing it can compute, listing this family's own parameter names, the
-five moments and the two collective targets.
+moments and the collective targets.
 }
 \details{
 The family's parameters are listed by name rather than described, since
-they differ from family to family and are the commonest thing a caller
-means. A data frame passed where \code{what} belongs, which is the mistake
-\code{\link[stats:predict]{stats::predict()}}'s argument order invites, is recognized and named
-separately.
+they differ from family to family. A data frame passed where \code{what}
+belongs, which is the mistake \code{\link[stats:predict]{stats::predict()}}'s argument order
+invites, is recognized and named separately.
 }
 \seealso{
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, the caller,

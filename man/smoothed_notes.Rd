@@ -7,7 +7,7 @@
 smoothed_notes(spec, object)
 }
 \arguments{
-\item{spec}{The fitted specification, whose terms are the ones the fit
+\item{spec}{The fitted specification, whose terms are those that the fit
 left.}
 
 \item{object}{The fit.}
@@ -16,22 +16,21 @@ left.}
 A character vector, possibly empty.
 }
 \description{
-One note per smoothed term, naming the smoother and the width the build
-resolved, the width of the transition being part of the model, and, where
-a break-point carries a random development
-under a Gaussian precision and the smoother declares a scale correction,
-the corrected scale beside the apparent one.
+A note for each smoothed break-point term that names the smoother and the
+width that was resolved at build, and a second note for each random
+development of a break-point under a Gaussian prior, when the smoother
+declares a scale correction, that gives the corrected scale beside the
+apparent one.
 }
 \details{
-The correction is the smoother's own: the probit satisfies the exact
+The correction is declared by the smoother. The probit satisfies the exact
 convolution identity \eqn{\tau^2_{\mathrm{apparent}} = \tau^2 + h^2}, so
-the corrected scale is \eqn{\sqrt{\tau^2 - h^2}}; a smoother declaring
-none (the hyperbolic, the quintic) gets the apparent scale alone, which
-the random effect's own block already reports. The apparent scale is
-read off the ridge precision as \eqn{1/\sqrt{\lambda}}, which is only a
-scale where the penalty is the quadratic branch with that
-hyperparameter; any other development is left without the note rather
-than given a number of the wrong meaning.
+the corrected scale is \eqn{\sqrt{\tau^2 - h^2}}. A smoother that declares
+no correction (the hyperbolic and the quintic) receives only the first
+note. The apparent scale is the standard deviation parameter of a Gaussian
+prior written by its scale, or \eqn{1/\sqrt{\lambda}} for a quadratic
+penalty with the single hyperparameter \eqn{\lambda}. A development with
+any other prior receives no scale note.
 }
 \seealso{
 \code{\link[numericals7:abs_smoother]{numericals7::abs_smoother()}}

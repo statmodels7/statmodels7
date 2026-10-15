@@ -22,26 +22,26 @@
 \item{level}{The confidence level.}
 
 \item{type}{Which variance matrix: passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. The
-\code{"unconditional"} one carries the hyperparameters' own uncertainty into
+\code{"unconditional"} one carries the uncertainty of the hyperparameters into
 every standard error under it, where \code{correct} carries the same
 uncertainty into the degrees of freedom; the two are the same quantity
-read on two surfaces and can be asked for together.}
+read on two surfaces, and both can be used in one call.}
 
-\item{expected}{Which information the standard errors are read off, passed
+\item{expected}{Which information the standard errors are read from, passed
 to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the default, takes the expected one where
 the fit inverted it and the family writes it out, and the observed
-Hessian otherwise; \code{TRUE} or \code{FALSE} names one.}
+Hessian otherwise; \code{TRUE} or \code{FALSE} selects one.}
 
 \item{approx}{How the expected information is approximated for a family
 with no closed form, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{"opg"} (the
 default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 
-\item{correct}{Whether the degrees of freedom carry what the estimation
-of the hyperparameters cost. The ordinary count reads them as known,
-and they were chosen from the same data, so a criterion built on it is
-too generous. See \code{\link[=statmod_edf_correction]{statmod_edf_correction()}}. Defaults to
-\code{FALSE} because it changes a number a reader may be comparing with
-an earlier fit; it is zero where no hyperparameter was estimated.}
+\item{correct}{Whether the degrees of freedom include the cost of
+estimating the hyperparameters. The ordinary count treats them as known
+although they were estimated from the same data, so a criterion built on
+it is too generous. See \code{\link[=statmod_edf_correction]{statmod_edf_correction()}}. The default is
+\code{FALSE}, which leaves the count unchanged; the correction is zero where no
+hyperparameter was estimated by a marginal criterion.}
 
 \item{test}{Which statistic the coefficient tables report: \code{"wald"}, the
 default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, each of which costs one
@@ -63,100 +63,115 @@ A \code{\link[=StatmodSummary]{StatmodSummary()}}.
 }
 \description{
 One coefficient table per distribution parameter, carrying the estimate,
-its standard error, the Wald statistic, its p-value and an interval,
-together with the degrees of freedom, the information criteria and the
-qualifications the numbers carry.
+its standard error, the statistic of the test named by \code{test} (Wald's by
+default), its p-value and an interval, together with the degrees of
+freedom, the information criteria and the notes that qualify the numbers.
 }
 \details{
 \strong{Each distribution parameter is read as blocks, not as one list of
-coefficients}, because most of a fitted model's coefficients are not
-quantities anybody reads. The blocks are
+coefficients}, because most coefficients of a fitted model are not
+quantities of interest in themselves. The blocks are
 \describe{
 \item{the parametric terms}{every unpenalized term together, one row per
 coefficient, which is the ordinary table.}
 \item{one block per smooth}{the linear component's coefficient where the
 construction carries one, the smoothing parameter, and the effective
 degrees of freedom. The coefficients of the wiggly part are not shown:
-they are coordinates in an orthonormal basis and say nothing one at a
-time, while what they say together is the edf.}
-\item{one block per random effect}{the parameters of the effects'
-distribution, usually called the variance component, and the
-edf. Not the effects themselves, of which there is one per level.}
+they are coordinates in an orthonormal basis, a single one of them has
+no interpretation, and together they determine the edf.}
+\item{one block per random effect}{the parameters of the distribution of
+the effects, usually called the variance components, the edf and a
+summary of the predicted effects. The effects themselves, of which there
+is one per level, are not listed.}
 \item{one block per selection}{a lasso, a SCAD or an MCP: its
 hyperparameters, how many coefficients survived, and those coefficients.
 The ones set exactly to zero are counted, not listed.}
 \item{one block per other penalized term}{its coefficients, which stay
 interpretable under a ridge, together with its hyperparameters.}
+\item{one block per break-point term}{the quantities that the term reports
+(slopes, changes and positions), with standard errors from the delta
+method applied to the coefficients through which the term is fitted. A
+position carries no test.}
+\item{one block per structural term}{the term's own parameters (a
+filter's level, loadings and persistences, or the transition
+probabilities of a regime chain), with a level that an intercept holds
+marked as held.}
 }
 
 \strong{A hyperparameter is the first row of its block}, since it governs
-every coefficient under it, and the cell where its standard error would be
-says what put the value there. One estimated by \code{\link[=reml]{reml()}} or
-\code{\link[=ml]{ml()}} maximizes a twice differentiable criterion, so it carries
-a standard error and an interval, both read on the free scale its link
-defines and mapped back (\code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}}). One chosen by
-\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}} over a kinked
-penalty is the argument of a minimum over a grid, so the row names the
-criterion and leaves the remaining columns empty: there is no curvature at
-such a point to read a standard error from. One the caller set is marked
-fixed.
+every coefficient under it, and its name carries a mark in square brackets
+that gives the source of the value. A hyperparameter estimated by \code{\link[=reml]{reml()}}
+or \code{\link[=ml]{ml()}} maximizes a twice differentiable criterion, so it carries a
+standard error and an interval, both read on the free scale that its link
+defines and mapped back (\code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}}). One chosen by \code{\link[=aic]{aic()}},
+\code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}} along a path over a kinked penalty is the argument of a
+minimum over a grid, so the row names the criterion and leaves the
+remaining columns empty: there is no curvature at such a point from which
+to read a standard error. A smooth penalty under \code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}} is
+minimized over its free scale, and its row also has no standard error,
+because the criterion is not a likelihood. A hyperparameter that the term
+holds is marked fixed, and one that stayed at the starting value of its
+term because no outer criterion was run is marked start.
 
-\strong{Which test the statistic column reports is \code{test}'s answer.} By default
-it is Wald's, the estimate over its standard error, which is the only one
-of the four that needs no refit and is read off the unrestricted fit
-alone. The other three -- the likelihood ratio, Rao's score and Terrell's
-gradient -- hold the coefficient at the null value and refit, one refit
-per row, and are reported as the SIGNED ROOT of their \eqn{\chi^2_1}
-statistic with the sign of \eqn{\hat\beta_j - b}, so that the column
-carries one kind of quantity whatever was asked for and Wald's own
-\eqn{z} is the case where that root is exact. The p-value is the
-\eqn{\chi^2_1} one either way, and for Wald the two readings agree
-identically.
+\strong{The statistic column reports the test named by \code{test}.} By default it is
+Wald's, the estimate over its standard error, which is the only one of the
+four that needs no refit and is read from the unrestricted fit alone. The
+other three -- the likelihood ratio, Rao's score and Terrell's gradient --
+hold the coefficient at the null value and refit, one refit per row, and
+are reported as the signed root of their \eqn{\chi^2_1} statistic with the
+sign of \eqn{\hat\beta_j - b}, so that the column carries one kind of
+quantity whichever test was requested and Wald's own \eqn{z} is the case
+where that root is exact. The p-value is the \eqn{\chi^2_1} one in every
+case, and for Wald the two readings agree identically.
 
-Only the statistic and its p-value move with \code{test}: the interval stays
-the Wald one, an inverted interval being some six times the cost of a
-statistic per row. \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} takes \code{method} for that, one
-coefficient at a time. A row the restricted fit is not defined for -- a
-coefficient under a KINKED penalty, an aliased one, any coefficient of a
-model carrying a structural term -- reports \code{NA} rather than falling back
-on Wald's, so the column never carries two tests at once. Every other row
-is tested, a smooth's own coordinates and a random effect's among them,
-on the penalized objective and with the reading \code{\link[=statmod_stat_at]{statmod_stat_at()}} states.
+Only the statistic and its p-value change with \code{test}: the interval stays
+the Wald one, since inverting a test requires many refits for each
+coefficient. \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} inverts the same test through its
+\code{test} argument, one coefficient at a time. A row for which the restricted
+fit is not defined -- a coefficient under a kinked penalty, an aliased one,
+any coefficient of a model carrying a structural term -- reports \code{NA}
+instead of the Wald value, so the column never carries two tests at once.
+Every other row is tested, a smooth's own coordinates and a random effect's
+among them, on the penalized objective and with the reading described in
+\code{\link[=statmod_stat_at]{statmod_stat_at()}}. A quantity of a break-point term that is one
+coefficient carries the restricted statistic of that coefficient; a
+quantity that combines several coefficients, and the position of a
+break-point, carry none.
 
-\strong{What a Wald p-value means here depends on the row}, and the summary
-says which is which, in place of printing one column and leaving it at
-that.
-For an unpenalized coefficient it is the usual thing. For a coefficient in a
-penalized block it is conditional on the smoothing parameter, which was not
-estimated jointly with it, and it does not account for the shrinkage of the
-estimate towards zero. For a coefficient a kinked penalty selected, the row
+\strong{The meaning of a Wald p-value depends on the row.} For an unpenalized
+coefficient it is the ordinary p-value. For a coefficient in a penalized
+block it is conditional on the smoothing parameter, which was not estimated
+jointly with it, and it does not account for the shrinkage of the estimate
+toward zero. For a coefficient that a kinked penalty selected, the row
 exists only because that coefficient survived the selection, and a naive
 interval there under-covers.
 
-\strong{The degrees of freedom} are the effective ones, summed over the
-terms, so a penalized term counts what it spends instead of how many
-columns it has. The information criteria are built on that count.
+\strong{The degrees of freedom} are the effective ones, summed over the terms,
+so a penalized term counts the degrees of freedom that it uses instead of
+the number of its columns. The information criteria are built on that
+count: \code{aic} is \eqn{-2\ell + 2\,\mathrm{df}} and \code{bic} replaces the factor
+2 by the logarithm of the sum of the prior weights, which are frequency
+weights.
 }
 \section{Reading the foot}{
-Below the criteria the summary describes the point the fit stopped at with
-up to five numbers from \code{\link[=statmod_certificate]{statmod_certificate()}}. No verdict is printed:
-the numbers are the point itself, and each is dimensionless, so it does
-not move with the units of a coefficient or with the sample size.
+Below the criteria the summary describes the point at which the fit stopped
+with a few numbers from \code{\link[=statmod_certificate]{statmod_certificate()}}. No verdict is printed. Each
+number is dimensionless, so it does not change with the units of a
+coefficient.
 \describe{
 \item{\verb{inner   max |grad|/se}}{the largest
 \eqn{|g_j|/\sqrt{A_{jj}}} over the coefficients, where \eqn{g} is the
 gradient of the penalized objective and \eqn{A} its curvature, the
 penalized information. \eqn{1/\sqrt{A_{jj}}} is the standard error of
-coefficient \eqn{j} CONDITIONAL on the others, which is smaller than
-the marginal one the tables print, and the ratio equals
-\eqn{\sqrt{2\Delta_j}} with \eqn{\Delta_j = g_j^2/(2A_{jj})} the
-log-likelihood a Newton step in that coordinate alone would still buy.
-At a mode it is small: fits located to their optimum read between
-1e-11 and 1e-2, a fit stopped after one iteration 0.84. For a model
-carrying a score-driven filter it covers the filter's own parameters
-as well. It leaves out a coefficient a kinked penalty set to zero, a
-frozen working block of \code{\link[modelterms7:jump]{modelterms7::jump()}} or
-\code{\link[modelterms7:jseg]{modelterms7::jseg()}}, and an aliased column.}
+coefficient \eqn{j} conditional on the others, which is smaller than
+the marginal one that the tables print, and the ratio equals
+\eqn{\sqrt{2\Delta_j}} with \eqn{\Delta_j = g_j^2/(2A_{jj})} the gain
+in log-likelihood of a Newton step in that coordinate alone. At a mode
+it is small. For a model carrying a score-driven filter it covers the
+filter's own parameters as well. It leaves out a coefficient that a
+kinked penalty has set to zero, a frozen working block, and an aliased
+column, and it is read on the directions that the kinks of a
+break-point sitting on an observation leave free.}
 \item{\verb{inner   min eigen}}{the smallest eigenvalue of
 \eqn{D^{-1/2}AD^{-1/2}} with \eqn{D = \mathrm{diag}(A)}, the curvature
 rescaled to a unit diagonal. It is at most one. Near one the
@@ -171,15 +186,15 @@ is \eqn{|s_j| \le \kappa_j}: the derivative of the log-likelihood in
 that coefficient within the size of the kink, \eqn{\lambda} for a
 lasso. The number is the largest \eqn{|s_j|/\kappa_j}. At or below one
 every zero is an optimum; above one a coefficient would improve the
-objective by leaving zero. A reading of 0.89 says the coefficient the
-data pull hardest is held by the kink with 11 per cent to spare, so
-with the other coefficients fixed it would leave zero at a
-\eqn{\lambda} about 11 per cent smaller; along a path the others move
-too, and the threshold moves with them. It is not a test of
-significance, only of whether the zeros agree with the \eqn{\lambda}
-of the fit, and values close to one are ordinary where \eqn{\lambda}
-was chosen on a grid, the next coefficient to enter being close to its
-threshold by construction.}
+objective by leaving zero. A reading \eqn{r} below one means that the
+coefficient with the largest ratio is held by the kink with a margin of
+\eqn{1 - r}; with the other coefficients fixed it would leave zero at a
+\eqn{\lambda} smaller by the factor \eqn{r}. Along a path the others
+move too, and the threshold moves with them. The number is not a test
+of significance, only a check on whether the zeros agree with the
+\eqn{\lambda} of the fit, and values close to one are ordinary where
+\eqn{\lambda} was chosen on a grid, the next coefficient to enter being
+close to its threshold by construction.}
 \item{\verb{outer   max |grad|/se} and \verb{min eigen}}{the same two readings for
 the criterion that estimated the hyperparameters, on the free scale
 their links define, printed only where \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} ran. The
@@ -200,7 +215,8 @@ summary(statmod(y ~ x | sigma ~ x,
 }
 \seealso{
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}},
-\code{\link[=statmod_test]{statmod_test()}}, which asks the same four of ONE coefficient against a
-value that need not be zero, and \code{\link[=statmod_stat_at]{statmod_stat_at()}}
+\code{\link[=statmod_test]{statmod_test()}}, which computes the same four statistics for one
+coefficient against a value that need not be zero, and
+\code{\link[=statmod_stat_at]{statmod_stat_at()}}
 }
 \keyword{internal}

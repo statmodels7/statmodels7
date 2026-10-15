@@ -27,8 +27,8 @@ takes them.}
 }
 \value{
 A list with \code{A}, the symmetric negated Hessian or \code{NULL};
-\code{source}, \code{"analytic"} or \code{"differenced"}; and \code{why}, the reason where
-there is no \code{A}.
+\code{source}, \code{"analytic"} or \code{"differenced"}, or \code{NA} where there is no \code{A};
+and \code{why}, the reason where there is no \code{A}.
 }
 \description{
 \eqn{A = -(H + H^\top)/2}, the matrix a Newton decrement is read against,
@@ -36,47 +36,34 @@ from the analytic Hessian where the form has one and from one central
 difference of the \strong{exact} gradient where it does not.
 }
 \details{
-\code{\link[=statmod_certificate]{statmod_certificate()}} reads the rise the criterion would still buy, which
-needs a curvature and not only a gradient. The analytic route is
-\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}, gated by \code{\link[=outer_gradient_ok]{outer_gradient_ok()}} at order 2 --
-the gate is load-bearing rather than defensive, since the assembly returns
-a number wherever it is called and the wrong one where the order is not
-covered.
+\code{\link[=statmod_certificate]{statmod_certificate()}} reads the rise that the criterion would still buy,
+which needs a curvature and not only a gradient. The analytic route is
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}, gated by \code{\link[=outer_gradient_ok]{outer_gradient_ok()}} at order 2. The
+gate is required for correctness, since the assembly returns a number
+wherever it is called and a wrong one where the order is not covered.
 
-\strong{Where the order is not covered the gradient is differenced instead},
-which is \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} and the same route
-\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} already takes for a model carrying a filter. The
-two forms that reach it are a criterion asked for on the \strong{expected}
-information, where order 2 is refused because the criterion's own second
-derivative would want the next order of \eqn{\partial\mathbb{E}[\ell'']/
-\partial\eta}, and a penalty whose Hessian moves with the coefficients --
-a heavy-tailed prior on a random effect -- placed beside a structural term,
-where \code{\link[=statmod_structural_hess]{statmod_structural_hess()}} reads no movement of that Hessian. The
-same prior without a structural term is analytic since 0.130.0, through
-\code{\link[=statmod_penalty_second]{statmod_penalty_second()}}. Both forms carry an exact gradient, which is
-what the difference is taken of.
+Where the order is not covered, the exact gradient is differenced instead
+by \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}}, which is also the route that
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} takes for a model carrying a filter. The forms
+that reach it are a criterion on the \strong{expected} information for a family
+that does not supply the second derivative of its expected information (or
+for a model with a refreshable block or a structural term), and a penalty
+whose Hessian moves with the coefficients, such as a heavy-tailed prior on
+a random effect, placed beside a structural term, where
+\code{\link[=statmod_structural_hess]{statmod_structural_hess()}} reads no movement of that Hessian. The same
+prior without a structural term is analytic, through
+\code{\link[=statmod_penalty_second]{statmod_penalty_second()}}. Both kinds of form carry an exact gradient,
+which is the quantity that the difference is taken of.
 
-The two routes agree where both exist: on a gaussian smooth the decrement
-reads \code{3.01e-10} by either. What the difference costs is measured and is
-not nothing -- it is \eqn{4(n_h + n_\gamma)} refits, \eqn{n_\gamma} the
-coefficients that the criterion estimates, 0.05 to 0.13 seconds on the three
-shapes tried, 5 to 37 per cent of the fit itself, where the analytic route
-is below the clock's own resolution. So a fit whose form carries the
-analytic Hessian refits nothing, and one that does not pays for its
-verdict once, at the summary.
+The two routes agree where both exist. The difference costs
+\eqn{4(n_h + n_\gamma)} refits, \eqn{n_\gamma} being the number of
+coefficients that the criterion estimates; the analytic route refits
+nothing.
 
-⚠️ The difference is a stopgap and not the destination. One gap is a
-quantity nobody has written -- the second derivative of an expected
-information -- and the other is an assembly written under an assumption
-one penalty does not satisfy; until both are closed, a certificate on those
-forms rests on a stencil where every other reading in this package rests on
-algebra.
-
-⚠️ \code{source} is informative and is not load-bearing, and one case can
-mislabel: for a model carrying a filter \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} falls
-back to \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} itself where the analytic assembly fails,
-and that is reported here as \code{"analytic"}, this function having asked only
-whether the order was covered. Nothing reads \code{source} to decide anything.
+\code{source} is informative only. For a model carrying a filter
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} falls back to \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} where the
+analytic assembly fails, and \code{source} then still reads \code{"analytic"},
+because this function has checked only whether the order was covered.
 }
 \seealso{
 \code{\link[=statmod_certificate]{statmod_certificate()}}, \code{\link[=joint_decrement]{joint_decrement()}}

@@ -6,34 +6,34 @@ NULL
 #' @description
 #' The components [predictive_response()] reads for one set of estimates:
 #' the predictors' mean `eta` and the covariance `C0` of their estimation
-#' error, widened by the effects of a new group for every term `random` sets
-#' aside.
+#' error, widened by the effects of a new group for every term that is set
+#' aside through the argument `random` of [predict.StatmodFit()].
 #'
 #' @details
 #' A Gaussian prior adds \eqn{z^\top\Sigma_b z} to the covariance, so one
-#' component carries it. A Student t prior, univariate on one coefficient a
-#' group or multivariate, is a scale mixture of Gaussians,
+#' component carries it. A Student t prior, univariate on one coefficient or
+#' multivariate over a group, is a scale mixture of Gaussians,
 #' \deqn{b \mid w \sim \mathrm{N}(0, \Sigma/w), \qquad
 #'   w \sim \mathrm{Gamma}(\nu/2, \nu/2),}
 #' so it gives one component per node of a trapezoidal rule in
 #' \eqn{\log w} ([gamma_nodes()]), each with the Gaussian covariance
 #' \eqn{z^\top\Sigma z/w} and the
 #' node's weight; two such terms give the product of the two rules. One
-#' univariate prior of another family (a logistic, a Laplace, a Cauchy) gives
-#' one component per quantile node, \eqn{b_k = Q((k - 1/2)/K)} with
-#' \eqn{K = 1000} ([group_quantile_nodes()]), so the result does not depend on
-#' the random seed: measured on a logistic prior the ends of the interval are
-#' 3.5e-6 from the exact ones, against 0.12 for 5000 draws, and on a Cauchy
-#' 1e-11 against 0.61. Any other prior (several such terms, a prior over
-#' several coordinates, a prior shared by a label that is not Gaussian), or
-#' more than two Student t terms, is averaged by Monte Carlo: `n_draw` draws of a
-#' new group's effects, from [penalties7::penalty_draw()] or from the scale
-#' mixture, each with a draw of the estimation error, so the interval
-#' depends on the random seed. The quantiles of the mixture exist whatever the
-#' prior; its standard deviation does not under a Student t with
-#' \eqn{\nu \le 2} or a univariate prior whose family reports no finite
-#' variance (a Cauchy), and the result carries the attribute
-#' `infinite_variance` to say so.
+#' univariate prior of another family (a logistic, a Laplace, a Cauchy), when
+#' no Student t term is set aside as well, gives one component per quantile
+#' node, \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000}
+#' ([group_quantile_nodes()]), so the result does not depend on the random
+#' seed. Any other prior (several such terms, a Student t term beside such a
+#' term, a prior over several coordinates, a prior shared by a label that is
+#' not Gaussian), or more than two Student t terms, is averaged by Monte
+#' Carlo: `n_draw` draws of a new group's effects, from
+#' [penalties7::penalty_draw()] or from the scale mixture, each with a draw of
+#' the estimation error, so the interval depends on the random seed. The
+#' quantiles of the mixture exist for every prior. Its standard deviation does
+#' not exist under a Student t with \eqn{\nu \le 2} or under a univariate
+#' prior whose family reports no finite variance (a Cauchy). The result
+#' carries the logical attribute `infinite_variance`, which is `TRUE` in those
+#' cases.
 #'
 #' @param fit The [StatmodFit()] whose hyperparameters give the priors.
 #' @param spec,design The specification and design at the rows predicted.
@@ -47,7 +47,7 @@ NULL
 #'   is neither Gaussian nor a Student t ([group_quantile_nodes()]).
 #'
 #' @return A list of components, each a list with `eta`, `C` (an array or
-#'   `NULL`) and `weight`, with the attribute `infinite_variance`.
+#'   `NULL`) and `weight`, with the logical attribute `infinite_variance`.
 #'
 #' @seealso [predictive_response()], which reads the components,
 #'   [predict.StatmodFit()], the caller.
@@ -113,11 +113,12 @@ predictive_mixture <- function(fit, spec, design, aside, eta, C0,
 }
 
 
-#' The Priors of the Effects a Prediction Sets Aside, by Kind
+#' The Priors of the Effects That a Prediction Sets Aside, by Kind
 #'
 #' @description
-#' Sorts the terms `random` sets aside into Gaussian blocks, Student t
-#' scale mixtures and other priors. See [predictive_mixture()].
+#' Sorts the random-effect terms that a prediction sets aside into Gaussian
+#' blocks, Student t scale mixtures and other priors. See
+#' [predictive_mixture()].
 #'
 #' @param spec,design The specification and design.
 #' @param fit The [StatmodFit()].
@@ -202,9 +203,10 @@ prior_parts <- function(spec, design, fit, aside) {
 #' Whether a Prior Is Gaussian
 #'
 #' @description
-#' A penalty whose Hessian in the coefficients does not move with them and
-#' has no kink is a Gaussian prior. The second condition matters: a Laplace
-#' prior also has a constant Hessian, zero away from its kink.
+#' A penalty is read as a Gaussian prior when its Hessian in the coefficients
+#' is constant and the penalty has no kink. The second condition is needed
+#' because a Laplace prior also has a constant Hessian, which is zero away
+#' from its kink.
 #'
 #' @param pen A penalty.
 #' @param th Its hyperparameters.
@@ -226,10 +228,10 @@ prior_is_gaussian <- function(pen, th) {
 #'
 #' @param pen A penalty.
 #' @param th Its hyperparameters, a named list.
-#' @param d The number of coefficients a group carries.
+#' @param d The number of coefficients that a group carries.
 #'
 #' @return A list with `Sigma` and `nu` where the penalty is a Student t prior
-#'   with one mixing variable a group (a multivariate t, or a univariate one
+#'   with one mixing variable per group (a multivariate t, or a univariate one
 #'   on a single coefficient), and `NULL` otherwise.
 #'
 #' @examples
@@ -271,18 +273,12 @@ prior_student <- function(pen, th, d) {
 #' its tails come from small \eqn{w}. A Gauss-Laguerre rule in \eqn{w}
 #' converges slowly there; in \eqn{\log w} the integrand decays
 #' exponentially at both ends and the trapezoidal rule converges
-#' exponentially. Measured on the probability that a Gaussian measurement
-#' around a Student t effect falls below the 2.5 per cent quantile, against
-#' adaptive quadrature: at \eqn{\nu = 1} the error is 1e-04 with 40 nodes and
-#' 2e-08 with 80, against 1.2e-02 for Gauss-Laguerre with 96; at
-#' \eqn{\nu = 2.54} it is 1e-07 and 4e-13, against 5e-05.
+#' exponentially.
 #'
-#' The range widens as \eqn{\nu} falls (25 units of \eqn{\log w} at
-#' \eqn{\nu = 2.54}, 62 at 0.95, 190 at 0.3), so the rule fixes the spacing
-#' of the nodes rather than their number. At a spacing of 0.6 the error is at
-#' most 2e-08 from \eqn{\nu = 0.3} to 2.54, against 7e-05 with 64 nodes at
-#' \eqn{\nu = 0.5}; at least 40 nodes are used, which covers a large
-#' \eqn{\nu}, where the range is short.
+#' The range of \eqn{\log w} widens as \eqn{\nu} falls, so the rule fixes the
+#' spacing `h` of the nodes and not their number. At least `k_min` nodes are
+#' used, so that a large \eqn{\nu}, where the range is short, is still
+#' covered.
 #'
 #' @param a The shape, \eqn{\nu/2}.
 #' @param h The spacing of the nodes in \eqn{\log w}.
@@ -324,8 +320,9 @@ gamma_nodes <- function(a, h = 0.6, k_min = 40L) {
 #'
 #' @examples
 #' set.seed(8)
-#' gg <- data.frame(g = factor(rep(1:12, each = 5)), x = rnorm(60))
-#' gg$y <- 1 + gg$x + rlogis(12)[gg$g] + rnorm(60, sd = 0.4)
+#' gg <- data.frame(g = factor(rep(1:30, each = 5)), x = rnorm(150))
+#' gg$y <- 1 + gg$x + (rexp(30) * sample(c(-1, 1), 30, TRUE))[gg$g] +
+#'   rnorm(150, sd = 0.4)
 #' lp <- distributions7::fixed(distributions7::laplace_distrib(), mu = 0)
 #' fit <- statmod(y ~ x + random(~ 1 | g, distrib = lp),
 #'                distributions7::gaussian1_distrib(), gg)
@@ -382,7 +379,7 @@ prior_mc <- function(spec, eta, base, heavy, weight, n_draw) {
 #'
 #' @param pen The penalty read as a prior.
 #' @param th Its hyperparameters.
-#' @param D The coordinates one group carries.
+#' @param D The number of coordinates that one group carries.
 #' @param n_draw The number of draws.
 #'
 #' @return A matrix with `n_draw` rows and `D` columns, a group's coordinates
@@ -416,9 +413,9 @@ prior_draw_groups <- function(pen, th, D, n_draw) {
 #'
 #' @param ob An entry of `other` from [prior_parts()].
 #'
-#' @return `TRUE` where the prior is univariate and the variance its family
-#'   reports is infinite or not a number (a Cauchy); `FALSE` otherwise,
-#'   including where no variance can be read.
+#' @return `TRUE` where the prior is univariate and the variance that its
+#'   family reports is infinite or not a number (a Cauchy); `FALSE`
+#'   otherwise, including where no variance can be read.
 #'
 #' @keywords internal
 prior_infinite_variance <- function(ob) {

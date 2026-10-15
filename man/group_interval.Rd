@@ -24,30 +24,35 @@ them.}
 }
 \value{
 \code{su}, with \code{se_eta}, \code{eta_lower}, \code{eta_upper}, \code{se}, \code{lower} and
-\code{upper} replaced for every parameter a new group's effects reach.
+\code{upper} replaced for every parameter that a new group's effects reach.
 }
 \description{
 For \code{interval = "group"}: the distribution of a new group's parameter
 \eqn{\theta^* = h^{-1}(\eta^*)}, with
 \eqn{\eta^* = \eta_0 + e + z^\top b}, where \eqn{e} is the estimation
 error of the fixed part and \eqn{b} the effects of a new group, drawn from
-the prior the fit estimated. Returns the ends of its interval and its
+the prior that the fit estimated. Returns the ends of its interval and its
 standard deviation, on the predictor's scale and on the parameter's.
 }
 \details{
-The inverse link is monotone, so a quantile of \eqn{\theta^*} is the
-inverse link of the same quantile of \eqn{\eta^*}, and the interval is
-exact whatever the link. Under Gaussian priors \eqn{\eta^*} is Gaussian
+Where the inverse link is monotone over the whole line, a quantile of
+\eqn{\theta^*} is the inverse link of the same quantile of
+\eqn{\eta^*}, and the interval is exact. For a link whose predictor is
+restricted to a half line (square root, inverse, inverse square, power),
+the ends of the interval are \code{NA} at the rows where the interval of
+\eqn{\eta^*} leaves the link's domain, and a warning gives their number.
+Under Gaussian priors \eqn{\eta^*} is Gaussian
 with variance \eqn{s^2 = \mathrm{se}_0^2 + z^\top\Sigma_b z}, and the ends
 are \eqn{h^{-1}(\eta_0 \pm z_{(1+\ell)/2}\, s)}. Under any other prior
 \eqn{\eta^*} is a mixture of Gaussians: a scale mixture over the nodes
-of \code{\link[=gamma_nodes]{gamma_nodes()}} for a Student t, the prior's own quantiles for one
-univariate prior of another family (\code{\link[=group_quantile_nodes]{group_quantile_nodes()}}), and the
-Monte Carlo draws of \code{\link[=predictive_mixture]{predictive_mixture()}} for anything else. Each end is
-found by bisection on the mixture's distribution function.
+of \code{\link[=gamma_nodes]{gamma_nodes()}} for one or two Student t priors, the prior's own
+quantiles for one univariate prior of another family
+(\code{\link[=group_quantile_nodes]{group_quantile_nodes()}}), and the Monte Carlo draws of
+\code{\link[=predictive_mixture]{predictive_mixture()}} for anything else. Each end is found by bisection on
+the mixture's distribution function (\code{\link[=mixture_quantile]{mixture_quantile()}}).
 
-The standard deviation is that of \eqn{\theta^*}, not the delta method,
-which under a log link and \eqn{s = 0.85} is 42 per cent too small. Under
+The standard deviation is that of \eqn{\theta^*} and not the delta method,
+which does not equal it under a nonlinear link. Under
 a Gaussian \eqn{\eta^*} it is \eqn{s} for the identity link,
 \eqn{e^{\eta_0 + s^2/2}\sqrt{e^{s^2} - 1}} for the log link and a
 40-node Gauss-Hermite rule for any other link. It is reported only where

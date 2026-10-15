@@ -19,6 +19,6 @@ has no grouping.
 }
 \seealso{
 \code{\link[=class_coords]{class_coords()}} for the same question about a shared block,
-\code{\link[=entry_owner]{entry_owner()}} for the term this is asked of.
+\code{\link[=entry_owner]{entry_owner()}} for the term to which this applies.
 }
 \keyword{internal}

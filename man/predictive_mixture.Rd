@@ -37,39 +37,39 @@ is neither Gaussian nor a Student t (\code{\link[=group_quantile_nodes]{group_qu
 }
 \value{
 A list of components, each a list with \code{eta}, \code{C} (an array or
-\code{NULL}) and \code{weight}, with the attribute \code{infinite_variance}.
+\code{NULL}) and \code{weight}, with the logical attribute \code{infinite_variance}.
 }
 \description{
 The components \code{\link[=predictive_response]{predictive_response()}} reads for one set of estimates:
 the predictors' mean \code{eta} and the covariance \code{C0} of their estimation
-error, widened by the effects of a new group for every term \code{random} sets
-aside.
+error, widened by the effects of a new group for every term that is set
+aside through the argument \code{random} of \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}.
 }
 \details{
 A Gaussian prior adds \eqn{z^\top\Sigma_b z} to the covariance, so one
-component carries it. A Student t prior, univariate on one coefficient a
-group or multivariate, is a scale mixture of Gaussians,
+component carries it. A Student t prior, univariate on one coefficient or
+multivariate over a group, is a scale mixture of Gaussians,
 \deqn{b \mid w \sim \mathrm{N}(0, \Sigma/w), \qquad
   w \sim \mathrm{Gamma}(\nu/2, \nu/2),}
 so it gives one component per node of a trapezoidal rule in
 \eqn{\log w} (\code{\link[=gamma_nodes]{gamma_nodes()}}), each with the Gaussian covariance
 \eqn{z^\top\Sigma z/w} and the
 node's weight; two such terms give the product of the two rules. One
-univariate prior of another family (a logistic, a Laplace, a Cauchy) gives
-one component per quantile node, \eqn{b_k = Q((k - 1/2)/K)} with
-\eqn{K = 1000} (\code{\link[=group_quantile_nodes]{group_quantile_nodes()}}), so the result does not depend on
-the random seed: measured on a logistic prior the ends of the interval are
-3.5e-6 from the exact ones, against 0.12 for 5000 draws, and on a Cauchy
-1e-11 against 0.61. Any other prior (several such terms, a prior over
-several coordinates, a prior shared by a label that is not Gaussian), or
-more than two Student t terms, is averaged by Monte Carlo: \code{n_draw} draws of a
-new group's effects, from \code{\link[penalties7:penalty_draw]{penalties7::penalty_draw()}} or from the scale
-mixture, each with a draw of the estimation error, so the interval
-depends on the random seed. The quantiles of the mixture exist whatever the
-prior; its standard deviation does not under a Student t with
-\eqn{\nu \le 2} or a univariate prior whose family reports no finite
-variance (a Cauchy), and the result carries the attribute
-\code{infinite_variance} to say so.
+univariate prior of another family (a logistic, a Laplace, a Cauchy), when
+no Student t term is set aside as well, gives one component per quantile
+node, \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000}
+(\code{\link[=group_quantile_nodes]{group_quantile_nodes()}}), so the result does not depend on the random
+seed. Any other prior (several such terms, a Student t term beside such a
+term, a prior over several coordinates, a prior shared by a label that is
+not Gaussian), or more than two Student t terms, is averaged by Monte
+Carlo: \code{n_draw} draws of a new group's effects, from
+\code{\link[penalties7:penalty_draw]{penalties7::penalty_draw()}} or from the scale mixture, each with a draw of
+the estimation error, so the interval depends on the random seed. The
+quantiles of the mixture exist for every prior. Its standard deviation does
+not exist under a Student t with \eqn{\nu \le 2} or under a univariate
+prior whose family reports no finite variance (a Cauchy). The result
+carries the logical attribute \code{infinite_variance}, which is \code{TRUE} in those
+cases.
 }
 \examples{
 set.seed(8)

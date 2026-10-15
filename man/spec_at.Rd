@@ -20,9 +20,9 @@ A \code{\link[=StatmodSpec]{StatmodSpec()}}: \code{fit@spec} itself when \code{d
 \code{\link[=statmod_respec]{statmod_respec()}}'s result otherwise.
 }
 \description{
-Returns the fit's own specification when \code{data} is \code{NULL}, and one carrying
-the fitted terms reapplied to the new rows otherwise. This is the one place
-the two cases are told apart, so every route that accepts a \code{data}
-argument treats \code{NULL} alike.
+Returns the fit's own specification when \code{data} is \code{NULL}, and a
+specification with the fitted terms reapplied to the new rows otherwise.
+The two cases are distinguished here only, so that every route that
+accepts a \code{data} argument treats \code{NULL} alike.
 }
 \keyword{internal}

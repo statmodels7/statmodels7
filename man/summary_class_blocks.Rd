@@ -30,29 +30,27 @@ do.}
 }
 \value{
 A list of block records, in the shape \code{\link[=print_block]{print_block()}} reads, each
-carrying its coordinates in \code{coords}. Empty where no class spans more
-than one term.
+carrying its coordinates in \code{coords}. Empty where no class has two or
+more members.
 }
 \description{
-One block record per covariance class spanning more than one term: the
+One block record per covariance class shared by more than one member: the
 standard deviations and correlations of the shared prior, with each
-coordinate named for the equation, the term and the column it belongs to.
+coordinate named for the equation, the term and the column to which it belongs.
 }
 \details{
-A shared block is the property of no single term. Printed inside one
-member's block -- which is where it was, under whichever member the walk
-reached first -- it reports the standard deviation of an effect on \code{sigma}
-under a term of \code{mu}, and the other member's block says there is nothing to
-report on its own. Both statements are true of the term and neither is what
-a reader wants, so the block is lifted out and printed once, before the
-equations, where its coordinates can be given names.
+A shared block belongs to no single member. Printed inside the block of one
+member, it would report the standard deviation of an effect on \code{sigma}
+under a term of \code{mu}, and the block of the other member would state that
+there is nothing to report on its own. The block is therefore printed once,
+before the equations, where its coordinates can be given names.
 
-The rows are the ones \code{\link[=summary_blocks]{summary_blocks()}} held apart, so the numbers are
-produced in exactly one place; what is added here is the class's own
-heading and the legend saying which term each coordinate came from.
+The rows are those that \code{\link[=summary_blocks]{summary_blocks()}} held apart, so the numbers are
+produced in one place; this function adds the heading of the class and the
+legend that gives the term of each coordinate.
 }
 \seealso{
 \code{\link[=class_coords]{class_coords()}} for the naming, \code{\link[=class_notes]{class_notes()}} for the note that
-says the same thing in prose.
+gives the same information in prose.
 }
 \keyword{internal}

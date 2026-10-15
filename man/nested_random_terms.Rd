@@ -21,9 +21,10 @@ another term, such as \code{Asym ~ 1 + random(~ 1 | Tree)} inside
 \code{\link[modelterms7:seg]{modelterms7::seg()}}.
 }
 \details{
-The terms are read through \code{\link[modelterms7:term_components]{modelterms7::term_components()}}, which every
-term carrying developed parameters answers. The key of a row is the outer
-term's key, the parameter and the sub-term joined by \code{"::"}, which is the
-key \code{\link[=hyper]{hyper()}} reports where a term carries more than one penalty.
+The terms are read through \code{\link[modelterms7:term_components]{modelterms7::term_components()}}, which returns
+the developed parameters of a term that carries any and an empty list
+otherwise. The key of a row is the outer term's key, the parameter and the
+sub-term joined by \code{"::"}, which is the key that \code{\link[=hyper]{hyper()}} reports where a
+term carries more than one penalty.
 }
 \keyword{internal}

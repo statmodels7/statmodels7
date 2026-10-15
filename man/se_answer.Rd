@@ -9,7 +9,7 @@ se_answer(su, what, params, spec)
 \arguments{
 \item{su}{The per-parameter tables.}
 
-\item{what}{What was asked for.}
+\item{what}{The quantity requested, as in \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}.}
 
 \item{params}{The distribution's parameters.}
 
@@ -19,13 +19,12 @@ se_answer(su, what, params, spec)
 A data frame, or a named list of them.
 }
 \description{
-The rows \code{\link[=predict_se]{predict_se()}} computed, reduced to what was asked for.
+The rows \code{\link[=predict_se]{predict_se()}} computed, reduced to the quantity requested.
 }
 \details{
-The vocabulary is the one a prediction without uncertainty answers, minus
-the moments: a moment's delta method needs its derivative in every
-parameter, which \pkg{distributions7} does not offer as a generic, and an
-interval assembled from what is at hand instead would be a number nobody
-could check.
+The vocabulary is the one that a prediction without uncertainty answers,
+minus the moments: a moment's delta method needs its derivative in every
+parameter, which \pkg{distributions7} does not offer as a generic, so a
+moment signals an error.
 }
 \keyword{internal}

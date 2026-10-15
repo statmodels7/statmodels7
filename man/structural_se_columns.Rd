@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.R
 \name{structural_se_columns}
 \alias{structural_se_columns}
-\title{The Derivative Row of an Equation Carrying a Filter}
+\title{The Derivative Row of an Equation Carrying a Structural Term}
 \usage{
 structural_se_columns(spec, design, ep, p, coef)
 }
@@ -20,13 +20,15 @@ structural_se_columns(spec, design, ep, p, coef)
 \value{
 A list with \code{X} (the derivative rows) and \code{key} (the names of
 their columns in the variance matrix), or \code{NULL} where the equation
-carries no filter.
+carries no structural term.
 }
 \description{
-The derivative of the predictor of the equation carrying a score-driven
+The derivative of the predictor of the equation carrying a structural
 term, one row per observation, in every coordinate of the variance matrix
 it moves with: the coefficients of every equation and the term's free
-parameters on their unconstrained scale.
+parameters on their unconstrained scale. A score-driven term is read
+through \code{\link[=filter_joint_jacobian]{filter_joint_jacobian()}} and a term of the likelihood shape
+through \code{\link[=loglik_shift_jacobian]{loglik_shift_jacobian()}}.
 }
 \details{
 A filter's level is a recursion, not a column, so it has no row of a
@@ -35,13 +37,12 @@ design. Its derivative is the forward Jacobian of the recursion, which
 not only those of the filter's own equation: the scores that drive the
 recursion are read at the predictors of every equation, so a coefficient
 of the scale moves the level of a filter in the mean. Leaving those
-columns out, on the gaussian score-driven model of the Nile flow, gave a
-standard error of the filtered mean up to 12 per cent too large.
+columns out gives a wrong standard error for the filtered mean.
 
 A parameter that an intercept in the same equation holds is not estimated
 and is not in that matrix, so it is not here either.
 }
 \seealso{
-\code{\link[=predict_se]{predict_se()}}, \code{\link[=filter_joint_jacobian]{filter_joint_jacobian()}}
+\code{\link[=predict_se]{predict_se()}}, \code{\link[=filter_joint_jacobian]{filter_joint_jacobian()}}, \code{\link[=loglik_shift_jacobian]{loglik_shift_jacobian()}}
 }
 \keyword{internal}

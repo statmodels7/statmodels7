@@ -27,9 +27,9 @@ writes the two limits back, leaving the rest of the table as it was.
 \details{
 A row the restricted fit cannot hold keeps \code{NA} limits rather than the
 Wald ones it arrived with, so that one column never carries two different
-intervals. Which rows those are is \code{\link[=testable_coords]{testable_coords()}}'s answer, asked
-once; where it is none of them the request is refused, a table of nothing
-but missing values being a worse answer than the reason for it.
+intervals. \code{\link[=testable_coords]{testable_coords()}} determines which rows those are; if it names
+none of the rows of the table, the function signals an error, since a table
+of missing values alone is less informative than the reason.
 }
 \seealso{
 \code{\link[=statmod_invert]{statmod_invert()}}, which does the search.

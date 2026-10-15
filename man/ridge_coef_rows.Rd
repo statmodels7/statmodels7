@@ -29,9 +29,10 @@ the inner fit move with the ridge through the mode, and the variance
 matrix carries that: the change of coefficient \eqn{j} per unit along the
 combination \eqn{x'\gamma} is \eqn{b_j = (Vx)_j / (x'Vx)}, and a
 coefficient with \eqn{|b_j| \ge 10^{-2}} is taken too, the direction being
-scaled so that its largest entry is one. Where the variance matrix has no
-finite entries for the ridge's coordinates (the mode reading already held
-one of them), the named coefficients alone are taken.
+scaled so that its largest entry is one. Where the variance matrix lacks a
+row for one of the ridge's coefficients or has a non-finite entry among
+them (the mode reading already held one of them), only the coefficients
+that the ridge names are taken.
 }
 \seealso{
 \code{\link[=certificate_ridges]{certificate_ridges()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}

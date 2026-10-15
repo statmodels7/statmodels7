@@ -12,34 +12,40 @@ NULL
 #' @details
 #' A replica draws the response from the family at the fitted model. The
 #' effects of a [modelterms7::random()] term that `random` sets aside are
-#' drawn afresh from the prior the fit estimated, so the groups of the data
-#' are new groups in every replica, as they are in the sampling distribution
-#' of the population-level estimates a new group's prediction rests on. The
+#' drawn afresh from the prior that the fit estimated, so the groups of the
+#' data are new groups in every replica, as they are in the sampling
+#' distribution of the population-level estimates on which a new group's
+#' prediction rests. The
 #' effects of a term read `"conditional"` keep their estimates: the
 #' prediction is about those groups, and their effects are the quantity
 #' predicted rather than a source of variation. Every other coefficient keeps
 #' its estimate. The replica is then refitted in one of two ways:
 #' \describe{
-#'   \item{`"coefficients"`}{at the hyperparameters the fit reached, every
-#'     coefficient re-estimated. A coefficient the fit estimated on its
-#'     criterion (a dispersion under [reml()]) is estimated there again, the
-#'     hyperparameters held, so the replica's estimator is the fit's.}
+#'   \item{`"coefficients"`}{at the hyperparameters that the fit reached, every
+#'     coefficient re-estimated. A coefficient that the fit estimated on its
+#'     criterion (a dispersion under [reml()]) is estimated there again, with
+#'     the hyperparameters held, so the replica's estimator is the fit's.}
 #'   \item{`"full"`}{with the hyperparameters chosen again by the fit's own
-#'     criteria, so their uncertainty enters the interval too. A
-#'     cross-validated criterion needs the data's folds and is rejected.}
+#'     criteria, so their uncertainty enters the interval too, and the path
+#'     of a kinked penalty is walked again, warm started from the fit's
+#'     coefficients. A cross-validated criterion needs the data's folds and
+#'     is rejected.}
 #' }
-#' Every refit starts at the optimum the fit found: its coefficients, the
-#' criterion's own coefficients among them, and its hyperparameters. A
-#' kinked penalty's path is the one search that walks its own grid, warm
-#' started from the fit's coefficients.
+#' Every refit starts at the optimum that the fit found: its coefficients,
+#' the criterion's own coefficients among them, and its hyperparameters.
+#' The bootstrap is rejected for a model with a block that moves with its
+#' coefficients ([modelterms7::seg()], [modelterms7::jump()],
+#' [modelterms7::jseg()], [modelterms7::nl()]) and for a response that is not
+#' one number per observation.
+#'
 #' Each replica gives the component \eqn{(\hat\eta^*_b, C^*_b)}: its
-#' predictors at the rows predicted and the covariance the effects set aside
-#' add, at its own hyperparameters. The interval is the mixture's, which is
-#' the parametric bootstrap predictive distribution of Harris (1989); the
+#' predictors at the rows predicted and the covariance that the effects set
+#' aside add, at its own hyperparameters. The interval is the mixture's, which
+#' is the parametric bootstrap predictive distribution of Harris (1989); the
 #' default `predictive = "averaged"` is its normal approximation, the
 #' sampling distribution of the estimates replaced by \eqn{\mathrm{N}(\hat
-#' \beta, \widehat{V})}. A replica whose refit fails is left out, and a
-#' warning says how many were.
+#' \beta, \widehat{V})}. A replica whose refit fails is left out, and the
+#' warning reports how many were.
 #'
 #' @param object The [StatmodFit()].
 #' @param spec,design The specification and design at the rows predicted,
@@ -48,7 +54,9 @@ NULL
 #' @param n_boot The number of replicas.
 #' @param refit `"coefficients"` or `"full"`.
 #'
-#' @return A list of components, each a list with `eta` and `C`.
+#' @return A list of components, each a list with `eta`, `C` and `weight`,
+#'   with the attribute `infinite_variance` set to `TRUE` where a prior has
+#'   no variance. The weights of the components add up to one.
 #'
 #' @references Harris, I. R. (1989). Predictive fit for natural exponential
 #'   families. *Biometrika*, 76, 675--684.
@@ -130,7 +138,7 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
     comps <- c(comps, cb)
   }
   if (!length(comps)) {
-    stop("No bootstrap replica could be refitted.", call. = FALSE)
+    stop("Every bootstrap replica failed to refit.", call. = FALSE)
   }
   if (failed) {
     warning(sprintf(paste0("%d of %d bootstrap replicas could not be ",

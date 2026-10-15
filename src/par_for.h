@@ -8,10 +8,10 @@
 // The parallel driver of the assembly kernels. The decomposition is over
 // the elements of the OUTPUT: each element is accumulated in full by one
 // thread, so no reduction is ever split and the result is bit-identical to
-// the sequential order at any thread count (piano_parallel.txt, section 0,
-// where the difference was measured at exactly zero). At threads <= 1
-// nothing parallel is entered; the thresholds below which a caller stays
-// sequential are internal and measured, not arguments.
+// the sequential order at any thread count (the difference was measured at
+// exactly zero). At threads <= 1 nothing parallel is entered; the thresholds
+// below which a caller stays sequential are internal and measured, not
+// arguments.
 //
 // The shape is distributions7's d7::par_for(), which arrived at it the
 // expensive way, and this header did not follow until 2026-08-21. Two

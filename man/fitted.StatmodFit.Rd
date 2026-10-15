@@ -12,25 +12,24 @@
 \item{what}{Which distribution parameter, a string naming one of the
 family's, or \code{NULL} for the first.}
 
-\item{...}{Unused.}
+\item{...}{Not used. Any further argument signals an error, since the
+values at new data are given by \code{predict(fit, what, newdata = new_data)}.}
 }
 \value{
-A numeric vector of length \code{nobs(object)}, that parameter's fitted
-values on its own scale.
+A numeric vector with one value per row of the fitting data, that
+parameter's fitted values on its own scale.
 }
 \description{
-One distribution parameter's fitted values, as a vector of the data's
-length.
+One distribution parameter's fitted values, as a vector with one value per
+row of the fitting data.
 }
 \details{
 The result is one vector, never the whole set, so that this and
 \code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}} are a matched pair and a diagnostic drawn from
 them needs no unpacking.
 
-The default is the \strong{first} parameter, never the mean. A family may
-have
-no mean, a Cauchy being one, and a default that fails on a legitimate
-family is worse than one that always answers.
+The default is the first parameter, not the mean. A family may have no
+mean, a Cauchy being one, whereas every family has a first parameter.
 
 The whole set at once is \code{predict(fit, "parameter")}, and the mean, where
 it exists, is \code{predict(fit, "mean")}.

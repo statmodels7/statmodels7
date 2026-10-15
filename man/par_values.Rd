@@ -21,9 +21,10 @@ A numeric vector of the length the key addresses, from a vector, a single
 number or a function of the count.
 }
 \details{
-A function answering with the wrong count is reported rather than
-recycled: R would recycle it without a word and the simulation would be of
-another model.
+A function that returns the wrong number of values is reported and not
+recycled: R would recycle the vector without a message and the simulation
+would be of another model. A function that returns a missing value is
+reported as well.
 }
 \seealso{
 \code{\link[=rstatmod_named]{rstatmod_named()}}

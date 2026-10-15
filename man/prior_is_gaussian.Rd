@@ -15,9 +15,10 @@ prior_is_gaussian(pen, th)
 \code{TRUE} or \code{FALSE}.
 }
 \description{
-A penalty whose Hessian in the coefficients does not move with them and
-has no kink is a Gaussian prior. The second condition matters: a Laplace
-prior also has a constant Hessian, zero away from its kink.
+A penalty is read as a Gaussian prior when its Hessian in the coefficients
+is constant and the penalty has no kink. The second condition is needed
+because a Laplace prior also has a constant Hessian, which is zero away
+from its kink.
 }
 \examples{
 lp <- distributions7::fixed(distributions7::laplace_distrib(), mu = 0)

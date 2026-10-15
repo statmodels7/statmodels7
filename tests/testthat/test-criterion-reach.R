@@ -79,6 +79,6 @@ test_that("the certificate says which case a fit without an outer gradient is", 
   expect_match(statmod_certificate(fh)$reason, "every hyperparameter here was held")
 
   fn <- statmod(form, g1, ds, outer_criterion = NULL)
-  expect_match(statmod_certificate(fn)$reason, "no criterion was asked for")
+  expect_match(statmod_certificate(fn)$reason, "the fit ran no outer criterion")
   expect_false(grepl("kink", statmod_certificate(fn)$reason))
 })

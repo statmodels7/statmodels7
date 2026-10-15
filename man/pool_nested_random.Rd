@@ -11,8 +11,8 @@ pool_nested_random(tm, rows, coef)
 
 \item{rows}{The rows of \code{\link[=nested_random_terms]{nested_random_terms()}} for this term.}
 
-\item{coef}{The term's coefficients to record as the ones it was last
-committed at, so that its block at new rows is the Jacobian there.}
+\item{coef}{The term's coefficients to record as the ones at which it was
+last committed, so that its block at new rows is the Jacobian there.}
 }
 \value{
 The modified term.
@@ -25,15 +25,15 @@ other levels.
 }
 \details{
 A random effect set aside contributes \eqn{z_i^\top u} at every row, with
-\eqn{z_i} the row's within-group design and \eqn{u} the value it is read
-at: zero for \code{random = "zero"}, a node of the prior for \code{"marginal"}.
+\eqn{z_i} the row's within-group design and \eqn{u} the value at which it
+is read: zero for \code{random = "zero"}, a node of the prior for \code{"marginal"}.
 Inside a nonlinear term the effect enters the parameter, and the
 contribution of the term is not linear in it, so the columns cannot
 simply be set to zero as they are for a term written in an equation. With
 every row in the first level, writing \eqn{u} into that level's
 coefficients gives every row the effect \eqn{z_i^\top u}, and the term is
-evaluated at those coefficients by its own methods. A group the fit never
-saw is read the same way, so it needs no effect of its own.
+evaluated at those coefficients by its own methods. A group that the fit
+never saw is read the same way, so it needs no effect of its own.
 
 Two places are rewritten. At the fitting rows the term reads the stored
 design of the developed parameter, \code{blueprint$Z}, whose columns for the

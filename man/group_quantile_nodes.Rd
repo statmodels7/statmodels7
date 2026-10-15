@@ -23,14 +23,12 @@ A list of components in the shape \code{\link[=predictive_response]{predictive_r
 or \code{NULL} where the priors are of another kind.
 }
 \description{
-Where the only prior a new group's interval sets aside that is not
-Gaussian is one univariate prior of a family other than the Student t,
-the mixture over its effect is built from the prior's own quantiles,
+Where one univariate prior of a family other than the Student t is the
+only prior that is not Gaussian among those a new group's interval sets
+aside, the mixture over its effect is built from the prior's own quantiles,
 \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000} and equal weights, each
 node a Gaussian component carrying the estimation error and the Gaussian
-effects. The result does not depend on the random seed, where the Monte
-Carlo draws of \code{\link[=predictive_mixture]{predictive_mixture()}} give the ends of a group interval
-with a standard deviation of 0.030 to 0.037 over 20 seeds on a logistic
-prior.
+effects. The result does not depend on the random seed, whereas the Monte
+Carlo draws of \code{\link[=predictive_mixture]{predictive_mixture()}} do.
 }
 \keyword{internal}

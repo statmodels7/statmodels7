@@ -30,8 +30,9 @@ for every term in \code{heavy}. See \code{\link[=predictive_mixture]{predictive_
 }
 \examples{
 set.seed(8)
-gg <- data.frame(g = factor(rep(1:12, each = 5)), x = rnorm(60))
-gg$y <- 1 + gg$x + rlogis(12)[gg$g] + rnorm(60, sd = 0.4)
+gg <- data.frame(g = factor(rep(1:30, each = 5)), x = rnorm(150))
+gg$y <- 1 + gg$x + (rexp(30) * sample(c(-1, 1), 30, TRUE))[gg$g] +
+  rnorm(150, sd = 0.4)
 lp <- distributions7::fixed(distributions7::laplace_distrib(), mu = 0)
 fit <- statmod(y ~ x + random(~ 1 | g, distrib = lp),
                distributions7::gaussian1_distrib(), gg)

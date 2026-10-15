@@ -21,12 +21,11 @@ carry, where \code{what} names one parameter.
 }
 \details{
 A prediction of one parameter reads that parameter's equation alone, so
-the covariates of the other equations need not be in \code{newdata}. They used
-to be required all the same, the design being rebuilt for every equation:
-\code{predict(fit, what = "mu", newdata)} on \code{accel ~ s(times) | sigma ~ z}
-stopped with "object 'z' not found". Nothing is left out where every
-equation can be built, where \code{what} asks for every parameter or a moment,
-or where the model carries a structural term, whose recursion reads the
-predictors of every equation.
+the covariates of the other equations need not be in \code{newdata}: on
+\code{accel ~ s(times) | sigma ~ z}, \code{predict(fit, what = "mu", newdata)} does
+not need \code{z}. Nothing is left out where \code{what} is not the name of a
+parameter (\code{"parameter"}, \code{"link"}, \code{"link:<parameter>"} or a moment),
+where \code{interval} is not \code{"confidence"}, or where the model carries a
+structural term, whose recursion reads the predictors of every equation.
 }
 \keyword{internal}

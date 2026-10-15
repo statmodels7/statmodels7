@@ -18,10 +18,11 @@ A classed warning, so a caller can catch the one raised when
 uncertainty and returns the conditional variance instead.
 }
 \details{
-It carries a class of its own for the same reason the other two do:
-\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} calls \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} more than once, so
-without one the same message would reach the reader several times, and
-muffling it by position would swallow whatever else was raised on the way.
+It carries a class of its own for the same reason as the condition of a
+frozen block (\code{\link[=frozen_condition]{frozen_condition()}}): \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} calls
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} more than once, so without a class the same message
+would reach the reader several times, and muffling it by position would
+suppress whatever else was raised on the way.
 }
 \seealso{
 \code{\link[=hyper_correction]{hyper_correction()}}, which decides whether it fires, and

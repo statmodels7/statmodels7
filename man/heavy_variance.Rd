@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict_group.R
 \name{heavy_variance}
 \alias{heavy_variance}
-\title{The Variance the Priors That Are Not Gaussian Add to Each Predictor}
+\title{The Variance Added to Each Predictor by Priors Other Than Gaussian}
 \usage{
 heavy_variance(spec, parts)
 }
@@ -17,10 +17,10 @@ variance is infinite or not read.
 }
 \description{
 \eqn{z^\top \mathrm{Var}(b)\, z} for every Student t and every other
-prior \code{\link[=prior_parts]{prior_parts()}} lists, in each parameter's equation. A Student t
+prior that \code{\link[=prior_parts]{prior_parts()}} lists, in each parameter's equation. A Student t
 with scale \eqn{\Sigma} has variance \eqn{\Sigma\nu/(\nu - 2)}, infinite
 for \eqn{\nu \le 2}; a univariate prior of another family has the
-variance its family reports; a prior over several coordinates that is not
-a Student t has none read here.
+variance that its family reports; the variance of a prior over several
+coordinates that is not a Student t is not read and is returned as \code{NA}.
 }
 \keyword{internal}

@@ -9,8 +9,8 @@ NULL
 #' @description The number of observations that entered the likelihood: the
 #'   sum of the prior weights, which are frequency weights.
 #' @details A weight of two counts its row twice, so a fit with weights is
-#'   counted as the fit of the data with every row repeated as often as its
-#'   weight says. Without weights the result is the number of rows of the
+#'   counted as the fit of the data with every row repeated as many times as
+#'   its weight. Without weights the result is the number of rows of the
 #'   data, since [statmod()] drops no rows (a missing value in the response or
 #'   in a variable of an equation is an error). [bic()], the cBIC of
 #'   [summary.StatmodFit()], [logLik.StatmodFit()]'s `"nobs"` attribute and
@@ -284,10 +284,10 @@ S7::method(model.matrix, StatmodFit) <- model.matrix.StatmodFit
 #' dim(simulate(fit, nsim = 3))
 #' @keywords internal
 simulate.StatmodFit <- function(object, nsim = 1, seed = NULL, ...) {
-  nsim <- as.integer(nsim)
-  if (length(nsim) != 1L || is.na(nsim) || nsim < 1L) {
+  if (!is_count(nsim)) {
     stop("'nsim' must be a positive whole number.", call. = FALSE)
   }
+  nsim <- as.integer(nsim)
   if (!is.null(seed)) {
     if (!exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
       stats::runif(1)

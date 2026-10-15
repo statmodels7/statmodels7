@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{joint_decrement}
 \alias{joint_decrement}
-\title{The Rise a Criterion Would Still Buy at a Point}
+\title{The Newton Decrement of a Criterion at a Point}
 \usage{
 joint_decrement(g, A)
 }
@@ -20,40 +20,13 @@ own units.
 }
 \details{
 Under a quadratic model of the criterion at the reported point, taking the
-step \eqn{A^{-1}g} raises it by exactly this, so the decrement answers
-"how much is left here" in the units a reader compares criteria in. That is
-what a gradient cannot do: measured over 1350 fits of eight shapes at five
-sample sizes, against an independently located optimum, the 838 of them
-whose gap exceeds \code{1e-6} give
-\deqn{\log_{10}(\mathrm{decrement}) = 0.0161 + 1.0018
-  \log_{10}(\mathrm{gap}),\qquad R^2 = 0.9980}
-over a gap running from \code{1.3e-06} to 137 -- \strong{eight} orders of magnitude
--- where the gradient at those same points spans 3.9e-04 to 0.81 on healthy
-fits of one shape alone as \eqn{n} runs from 300 to 30000.
-
-As a reading it separates the two classes completely where the gradient
-does not. On 663 fits within \code{1e-3} of their optimum and 552 stopped more
-than \code{1e-2} short of it:\tabular{lll}{
-   reading \tab flagged among the healthy \tab found among the short \cr
-   `max \tab g \tab > 1e-2` \cr
-   `max \tab g \tab > 1e-2 * sqrt(n)` \cr
-   `max \tab g \tab > 1e-2 * n` \cr
-   \strong{decrement > 1e-2} \tab \strong{0 of 663} \tab \strong{552 of 552} \cr
-}
-
-
-⚠️ The premise that the gradient grows with \eqn{n}, which the two middle
-rows were written for, does not reproduce: at a fixed model structure its
-slope in \eqn{\log_{10} n} is -0.42, -0.46 and +0.06 on the three shapes
-that have one, and the control is the pair of shapes with the same formula
-whose group count is fixed at 40 and proportional to \eqn{n} -- the first
-falls at -0.46 where the second rises at 1.24. What makes the gradient
-grow is the number of penalized coefficients.
-
-⚠️ And the perfect separation rests partly on the margin between the two
-classes, healthy at or under \code{1e-3} against short by more than \code{1e-2},
-where the decrement's own spread within a class is about 1.5 orders. What
-is solid is the calibration above.
+step \eqn{A^{-1}g} raises it by exactly this amount. The decrement is
+therefore the part of the criterion that remains to be gained at the point,
+in the units in which criteria are compared, and it approximates the gap
+between the criterion at the point and at the optimum. A gradient does not
+have that scale: its size depends on the number of penalized coefficients
+and on the shape of the model, so that no single threshold on it serves
+every model.
 
 \code{NA} where \eqn{A} is not positive definite, the point then not being a
 maximum in those directions and no rise following from it.

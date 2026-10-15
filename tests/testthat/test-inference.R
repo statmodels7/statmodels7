@@ -163,11 +163,12 @@ test_that("a penalized term is a block of its own, with its hyperparameter", {
   expect_true("penalized" %in% kinds)
   b <- s@tables$mu[[which(kinds == "penalized")]]
   # a ridge's coefficients stay interpretable, so they are shown, and the
-  # hyperparameter is a row of its own marked as held rather than estimated
+  # hyperparameter is a row of its own, not estimated: with no criterion it
+  # stays at the term's starting value and is marked start
   expect_true(any(b$table$role == "coefficient"))
   expect_true(any(b$table$role == "fixed"))
   expect_true(all(is.na(b$table$se[b$table$role == "fixed"])))
-  expect_true(any(grepl("held at the value", s@notes)))
+  expect_true(any(grepl("marked start", s@notes)))
 })
 
 test_that("a smooth shows its linear part and its edf, not its basis", {

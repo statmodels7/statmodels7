@@ -8,23 +8,28 @@ NULL
 #' \eqn{\theta^* = h^{-1}(\eta^*)}, with
 #' \eqn{\eta^* = \eta_0 + e + z^\top b}, where \eqn{e} is the estimation
 #' error of the fixed part and \eqn{b} the effects of a new group, drawn from
-#' the prior the fit estimated. Returns the ends of its interval and its
+#' the prior that the fit estimated. Returns the ends of its interval and its
 #' standard deviation, on the predictor's scale and on the parameter's.
 #'
 #' @details
-#' The inverse link is monotone, so a quantile of \eqn{\theta^*} is the
-#' inverse link of the same quantile of \eqn{\eta^*}, and the interval is
-#' exact whatever the link. Under Gaussian priors \eqn{\eta^*} is Gaussian
+#' Where the inverse link is monotone over the whole line, a quantile of
+#' \eqn{\theta^*} is the inverse link of the same quantile of
+#' \eqn{\eta^*}, and the interval is exact. For a link whose predictor is
+#' restricted to a half line (square root, inverse, inverse square, power),
+#' the ends of the interval are `NA` at the rows where the interval of
+#' \eqn{\eta^*} leaves the link's domain, and a warning gives their number.
+#' Under Gaussian priors \eqn{\eta^*} is Gaussian
 #' with variance \eqn{s^2 = \mathrm{se}_0^2 + z^\top\Sigma_b z}, and the ends
 #' are \eqn{h^{-1}(\eta_0 \pm z_{(1+\ell)/2}\, s)}. Under any other prior
 #' \eqn{\eta^*} is a mixture of Gaussians: a scale mixture over the nodes
-#' of [gamma_nodes()] for a Student t, the prior's own quantiles for one
-#' univariate prior of another family ([group_quantile_nodes()]), and the
-#' Monte Carlo draws of [predictive_mixture()] for anything else. Each end is
-#' found by bisection on the mixture's distribution function.
+#' of [gamma_nodes()] for one or two Student t priors, the prior's own
+#' quantiles for one univariate prior of another family
+#' ([group_quantile_nodes()]), and the Monte Carlo draws of
+#' [predictive_mixture()] for anything else. Each end is found by bisection on
+#' the mixture's distribution function ([mixture_quantile()]).
 #'
-#' The standard deviation is that of \eqn{\theta^*}, not the delta method,
-#' which under a log link and \eqn{s = 0.85} is 42 per cent too small. Under
+#' The standard deviation is that of \eqn{\theta^*} and not the delta method,
+#' which does not equal it under a nonlinear link. Under
 #' a Gaussian \eqn{\eta^*} it is \eqn{s} for the identity link,
 #' \eqn{e^{\eta_0 + s^2/2}\sqrt{e^{s^2} - 1}} for the log link and a
 #' 40-node Gauss-Hermite rule for any other link. It is reported only where
@@ -55,7 +60,7 @@ NULL
 #' @param ... Passed to [vcov.StatmodFit()].
 #'
 #' @return `su`, with `se_eta`, `eta_lower`, `eta_upper`, `se`, `lower` and
-#'   `upper` replaced for every parameter a new group's effects reach.
+#'   `upper` replaced for every parameter that a new group's effects reach.
 #'
 #' @keywords internal
 group_interval <- function(object, spec, design, aside, ep, su, level, ...) {
@@ -112,6 +117,20 @@ group_interval <- function(object, spec, design, aside, ep, su, level, ...) {
     su[[p]]$eta_upper <- hi
     ends <- cbind(linkfunctions7::linkinv(g, lo),
                   linkfunctions7::linkinv(g, hi))
+    # an interval of eta* that leaves the link's domain has no image under
+    # the inverse link (under the square root a negative predictor maps back
+    # onto positive values), so its ends are NA there, as on the marginal
+    # route
+    eb <- linkfunctions7::eta_bounds(g)
+    out <- !is.na(lo) & !is.na(hi) & (lo < eb[1L] | hi > eb[2L])
+    if (any(out)) {
+      warning(sprintf(paste0("The interval of a new group's predictor leaves ",
+                             "the domain of the %s link at %d row%s, so ",
+                             "the interval of the parameter is NA there."),
+                      g@link_name, sum(out), if (sum(out) == 1L) "" else "s"),
+              call. = FALSE)
+      ends[out, ] <- NA_real_
+    }
     su[[p]]$lower <- pmin(ends[, 1L], ends[, 2L])
     su[[p]]$upper <- pmax(ends[, 1L], ends[, 2L])
     su[[p]]$se <- sd_theta
@@ -187,8 +206,8 @@ group_sd_mixture <- function(g, M, S, W, s) {
 #' The First Two Moments of h^-1(eta) Under a Mixture of Gaussians
 #'
 #' @description
-#' Each component is integrated by a 40-node Gauss-Hermite rule, or read at
-#' its mean where its standard deviation is zero (a Monte Carlo draw).
+#' Each component is integrated by a 40-node Gauss-Hermite rule, and a
+#' component with a zero standard deviation gives its value at the mean.
 #'
 #' @param g The link.
 #' @param M,S,W As in [group_sd_mixture()].
@@ -213,15 +232,15 @@ gh_moments <- function(g, M, S, W) {
 }
 
 
-#' The Variance the Priors That Are Not Gaussian Add to Each Predictor
+#' The Variance Added to Each Predictor by Priors Other Than Gaussian
 #'
 #' @description
 #' \eqn{z^\top \mathrm{Var}(b)\, z} for every Student t and every other
-#' prior [prior_parts()] lists, in each parameter's equation. A Student t
+#' prior that [prior_parts()] lists, in each parameter's equation. A Student t
 #' with scale \eqn{\Sigma} has variance \eqn{\Sigma\nu/(\nu - 2)}, infinite
 #' for \eqn{\nu \le 2}; a univariate prior of another family has the
-#' variance its family reports; a prior over several coordinates that is not
-#' a Student t has none read here.
+#' variance that its family reports; the variance of a prior over several
+#' coordinates that is not a Student t is not read and is returned as `NA`.
 #'
 #' @param spec The specification at the rows predicted.
 #' @param parts What [prior_parts()] returns.
@@ -274,18 +293,27 @@ heavy_variance <- function(spec, parts) {
 #' The value at which \eqn{\sum_c w_c \Phi((e - m_c)/s_c)} reaches `p`, one
 #' a row, a component with \eqn{s_c = 0} being a point mass at \eqn{m_c}.
 #' Found by bisection, which needs no derivative and is exact to the
-#' tolerance for a step function as well.
+#' tolerance for a step function as well. A row in which some mean or
+#' standard deviation is not finite (a missing covariate) is `NA`, and the
+#' bisection runs over the other rows.
 #'
 #' @param M,S Matrices with a row per observation and a column per
 #'   component.
-#' @param W The components' weights, summing to one.
+#' @param W The components' weights, rescaled to sum to one.
 #' @param p The probability.
 #'
-#' @return One value a row.
+#' @return One value a row, `NA` for a row that has no finite mixture.
 #'
 #' @keywords internal
 mixture_quantile <- function(M, S, W, p) {
   W <- W / sum(W)
+  # a row with a missing covariate has no mixture to invert: it is NA, as on
+  # the Gaussian route, and the bisection runs over the other rows
+  ok <- rowSums(!is.finite(M) | !is.finite(S)) == 0
+  out <- rep(NA_real_, nrow(M))
+  if (!any(ok)) return(out)
+  M <- M[ok, , drop = FALSE]
+  S <- S[ok, , drop = FALSE]
   lo <- apply(M - 12 * S, 1L, min) - 1e-8
   hi <- apply(M + 12 * S, 1L, max) + 1e-8
   cdf <- function(e) {
@@ -300,22 +328,21 @@ mixture_quantile <- function(M, S, W, p) {
     lo[!up] <- mid[!up]
     if (all(hi - lo <= 1e-12 * pmax(1, abs(mid)))) break
   }
-  hi
+  out[ok] <- hi
+  out
 }
 
 
 #' Quantile Nodes for One Univariate Prior That Is Not Gaussian
 #'
 #' @description
-#' Where the only prior a new group's interval sets aside that is not
-#' Gaussian is one univariate prior of a family other than the Student t,
-#' the mixture over its effect is built from the prior's own quantiles,
+#' Where one univariate prior of a family other than the Student t is the
+#' only prior that is not Gaussian among those a new group's interval sets
+#' aside, the mixture over its effect is built from the prior's own quantiles,
 #' \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000} and equal weights, each
 #' node a Gaussian component carrying the estimation error and the Gaussian
-#' effects. The result does not depend on the random seed, where the Monte
-#' Carlo draws of [predictive_mixture()] give the ends of a group interval
-#' with a standard deviation of 0.030 to 0.037 over 20 seeds on a logistic
-#' prior.
+#' effects. The result does not depend on the random seed, whereas the Monte
+#' Carlo draws of [predictive_mixture()] do.
 #'
 #' @param spec The specification at the rows predicted.
 #' @param eta A named list of the predictors' means.

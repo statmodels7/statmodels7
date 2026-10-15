@@ -12,7 +12,7 @@ flat_directions(A, labels)
 \item{labels}{Its coefficient names.}
 }
 \value{
-A single string, empty when nothing can be said.
+A single string, empty when no direction can be named.
 }
 \description{
 The eigenvector of the smallest eigenvalue, reported as the coefficients
