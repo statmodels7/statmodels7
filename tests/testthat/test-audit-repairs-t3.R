@@ -240,17 +240,19 @@ test_that("the marginal log-likelihood counts what it estimates", {
   expect_identical(attr(logLik(fm, type = "marginal"), "df"), 4)
   fh <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = 3)) +
                   s(z, bspline_smooth(k = 6)), g1, d, outer_criterion = ml())
-  # two intercepts' worth: mu's, the two straight lines, sigma's, one lambda
+  # mu's intercept, the two straight lines, sigma's intercept and the one
+  # lambda that is estimated
   expect_identical(attr(logLik(fh, type = "marginal"), "df"), 5)
-  if (requireNamespace("lme4", quietly = TRUE)) {
-    set.seed(2)
-    dr <- data.frame(g = factor(rep(1:20, each = 6)), x = rnorm(120))
-    dr$y <- 1 + dr$x + rnorm(20)[dr$g] + rnorm(120)
-    fr <- statmod(y ~ x + random(~1 | g), g1, dr, outer_criterion = ml())
-    ref <- logLik(lme4::lmer(y ~ x + (1 | g), dr, REML = FALSE))
-    expect_identical(attr(logLik(fr, type = "marginal"), "df"),
-                     as.numeric(attr(ref, "df")))
-  }
+  # a random intercept counts as lme4 counts it: two fixed effects, the
+  # residual scale and one variance (lme4::lmer(y ~ x + (1 | g), REML =
+  # FALSE) gives df 4 and the same log-likelihood, -190.6884, on these data)
+  set.seed(2)
+  dr <- data.frame(g = factor(rep(1:20, each = 6)), x = rnorm(120))
+  dr$y <- 1 + dr$x + rnorm(20)[dr$g] + rnorm(120)
+  fr <- statmod(y ~ x + random(~1 | g), g1, dr, outer_criterion = ml())
+  expect_identical(attr(logLik(fr, type = "marginal"), "df"), 4)
+  expect_equal(as.numeric(logLik(fr, type = "marginal")), -190.6884,
+               tolerance = 1e-6)
 })
 
 test_that("the inner reading leaves out the direction a kink holds", {
