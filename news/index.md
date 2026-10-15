@@ -1,5 +1,17 @@
 # Changelog
 
+## statmodels7 0.200.1
+
+- The second start of a score loading (0.1/I) is fitted where the first
+  start’s fit is not converged or where its Newton decrement over the
+  coefficients and the filter’s own parameters exceeds
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md),
+  not on the optimizer’s flag alone. Where the filter explodes the
+  likelihood is flat to rounding and the flag is noise: on ubuntu’s R
+  4.5.3 the beta share of Seatbelts stopped at -3299.1 with the flag
+  TRUE and a decrement of 3e51, and the second start, which reaches
+  450.48, was never tried.
+
 ## statmodels7 0.200.0
 
 The documentation of every page was checked against the code and

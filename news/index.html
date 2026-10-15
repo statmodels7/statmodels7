@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.200.1" id="statmodels7-02001">statmodels7 0.200.1<a class="anchor" aria-label="anchor" href="#statmodels7-02001"></a></h2>
+<ul><li>The second start of a score loading (0.1/I) is fitted where the first start’s fit is not converged or where its Newton decrement over the coefficients and the filter’s own parameters exceeds <code><a href="../reference/mode_error_limit.html">mode_error_limit()</a></code>, not on the optimizer’s flag alone. Where the filter explodes the likelihood is flat to rounding and the flag is noise: on ubuntu’s R 4.5.3 the beta share of Seatbelts stopped at -3299.1 with the flag TRUE and a decrement of 3e51, and the second start, which reaches 450.48, was never tried.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.200.0" id="statmodels7-02000">statmodels7 0.200.0<a class="anchor" aria-label="anchor" href="#statmodels7-02000"></a></h2>
 <p>The documentation of every page was checked against the code and rewritten in the register of the toolkit, and the defects that the check found were repaired. Requires modelterms7 0.98.0.</p>

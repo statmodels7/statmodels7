@@ -773,6 +773,9 @@ helper functions. None of it is needed to use the package.
 - [`filter_curvature()`](https://statmodels7.github.io/statmodels7/reference/filter_curvature.md)
   : A Filter's Second-Order Recursion at the Fitted Point
 
+- [`filter_decrement()`](https://statmodels7.github.io/statmodels7/reference/filter_decrement.md)
+  : How Far Above Its Mode a Filter Fit Stopped
+
 - [`filter_driving()`](https://statmodels7.github.io/statmodels7/reference/filter_driving.md)
   : The Driving Quantity of a Filter and Its Derivatives
 
