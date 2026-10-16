@@ -1,3 +1,23 @@
+# statmodels7 0.203.0
+
+* The free values of a matrix prior (a covariance, precision or scale matrix
+  on a parameters7 chart, such as the `log_cholesky()` default of a
+  correlated random effect or an `ar1()` covariance) start at a matrix scaled
+  to the data, where before they started at the identity. At the start the
+  effects have half the variance of the equation's working response at the
+  intercept-only fit, and their correlations are zero. Univariate priors keep
+  their start. With a latent AR(1) process on the Nile series (one group,
+  modelterms7 0.99.1) the REML search ended on the ridge at rho near 1
+  without converging (criterion -640.58), and it now converges to the exact
+  REML maximum (rho 0.913, criterion -632.157); ML reaches the log-likelihood
+  of `arima(Nile, order = c(1, 0, 1))` (-637.039). A correlated random
+  intercept and slope fitted to a response multiplied by 1000 reaches the
+  scaled optimum (criterion -1417.94, where the search stopped at -1436.50).
+  On the reference battery one case of 43 changes, by 5e-8 in the criterion.
+* `summary()` of a random-effect term with an aliased effect no longer
+  signals an error. The six statistics of the predicted effects are taken
+  over the finite effects.
+
 # statmodels7 0.202.0
 
 * `summary()` reports no standard error, test or interval for a coefficient

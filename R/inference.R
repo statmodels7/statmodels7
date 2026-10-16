@@ -4802,10 +4802,13 @@ effect_spread <- function(term, est) {
   d <- gr$dim
   if (m * d != length(est)) return(NULL)
   M <- matrix(est, nrow = m, ncol = d, byrow = TRUE)
+  # an aliased effect is NA, and summary() would add an "NA's" column to its
+  # row only; the six statistics are taken over the finite effects
+  six <- c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max.")
   tb <- do.call(rbind, lapply(seq_len(d), function(j) {
-    s <- summary(M[, j])
-    as.data.frame(as.list(as.numeric(s)), col.names = names(s),
-                  check.names = FALSE)
+    z <- M[, j][is.finite(M[, j])]
+    v <- if (length(z)) as.numeric(summary(z)) else rep(NA_real_, 6L)
+    as.data.frame(as.list(v), col.names = six, check.names = FALSE)
   }))
   rownames(tb) <- gr$names
   list(table = tb, levels = m,

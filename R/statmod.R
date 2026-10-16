@@ -436,6 +436,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   }
   design <- statmod_design(spec)
   hyper <- statmod_hyper_start(spec, design)
+  if (!is.null(outer_criterion)) {
+    hyper <- statmod_hyper_scale_start(spec, design, hyper)
+  }
   blocks <- statmod_blocks(spec, design)
 
   # an iwls() left at "auto" is settled against the family once, here, so the

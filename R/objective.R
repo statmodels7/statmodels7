@@ -1280,6 +1280,157 @@ penalty_theta_start <- function(pen, unit = 1) {
 }
 
 
+#' Start the Matrix Prior of a Random Effect at the Scale of the Data
+#'
+#' @description
+#' Moves the starting free values of every estimated matrix parameter (a
+#' covariance, precision or scale matrix carried by a \pkg{parameters7} chart)
+#' so that the matrix describes effects whose variance is half the variance of
+#' the equation's working response at the intercept-only fit. The pattern of
+#' the matrix at the neutral start (the correlations, which are zero there)
+#' is kept, and only its scale changes.
+#'
+#' @details
+#' The neutral start of a chart is the identity matrix, a variance of one on
+#' the link scale. On a response measured in thousands that is a prior under
+#' which the effects are negligible, the marginal criterion is flat in the
+#' scale there, and an outer search started there can leave along a ridge
+#' instead of reaching the interior optimum.
+#'
+#' The working response of equation \eqn{p} is
+#' \eqn{z_i = \eta_p + U_{ip} / I_{ip}}, with \eqn{U_{ip}} the score and
+#' \eqn{I_{ip}} the expected information of observation \eqn{i} on the link
+#' scale, both at the intercept-only fit of [statmod_intercepts()]. For a
+#' gaussian location on the identity link it is the response itself. Half its
+#' weighted variance \eqn{v} is given to the effects: the target matrix is
+#' \eqn{c M_0} for a covariance or a scale matrix and \eqn{M_0 / c} for a
+#' precision, with \eqn{M_0} the matrix at the neutral start and \eqn{c} chosen
+#' so that the mean variance of the effects is \eqn{v}. The free values are
+#' [parameters7::param_free()] of that target.
+#'
+#' A matrix parameter is left at its neutral start when any of its free values
+#' is held, when the unit belongs to a structural term or to a covariance
+#' class, when the response is multivariate, and when any step above fails or
+#' returns a value that is not finite.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design, as [statmod_design()] returns it.
+#' @param hyper The hyperparameters as [statmod_hyper_start()] returns them.
+#'
+#' @return `hyper`, with the free values of each matrix parameter moved.
+#'
+#' @seealso [statmod_hyper_start()], which supplies the neutral start.
+#'
+#' @keywords internal
+statmod_hyper_scale_start <- function(spec, design, hyper) {
+  if (identical(spec@distrib@dimension, "multivariate")) return(hyper)
+  units <- Filter(function(u) is.null(u$class) && !isTRUE(u$structural) &&
+                    S7::S7_inherits(u$penalty, penalties7::DistribPenalty),
+                  statmod_penalized(spec, design))
+  if (!length(units)) return(hyper)
+  vz <- NULL
+  for (u in units) {
+    mp <- hyper_matrix_param(u$penalty@parent)
+    if (is.null(mp)) next
+    nm <- mp$names
+    th <- hyper[[u$param]][[u$key]]
+    if (!all(nm %in% names(th)) || any(nm %in% names(u$fixed)) ||
+        length(u$ids)) next
+    if (is.null(vz)) vz <- working_response_variance(spec)
+    v <- vz[[u$param]] / 2
+    if (!length(v) || !is.finite(v) || v <= 0) next
+    eta <- tryCatch({
+      M0 <- parameters7::param_value(mp$chart, as.numeric(th[nm]))
+      if (mp$inverted) {
+        cc <- v / mean(diag(solve(M0)))
+        parameters7::param_free(mp$chart, M0 / cc)
+      } else {
+        cc <- v / mean(diag(M0))
+        parameters7::param_free(mp$chart, M0 * cc)
+      }
+    }, error = function(e) NULL)
+    if (is.null(eta) || length(eta) != length(nm) || !all(is.finite(eta))) next
+    th[nm] <- as.numeric(eta)
+    hyper[[u$param]][[u$key]] <- th
+  }
+  hyper
+}
+
+
+#' The Matrix Parameter of a Multivariate Prior
+#'
+#' @description
+#' The chart, the names of its free values among the family's parameters, and
+#' whether the matrix is a precision, read from a multivariate family under
+#' any number of [distributions7::fixed()] wrappers.
+#'
+#' @param d A \pkg{distributions7} object.
+#'
+#' @return A list with `chart`, `names` and `inverted`, or `NULL` when `d` is
+#'   not a multivariate family that carries one matrix parameter.
+#'
+#' @keywords internal
+hyper_matrix_param <- function(d) {
+  if (!identical(d@dimension, "multivariate")) return(NULL)
+  interp <- d@params_interpretation
+  nm <- names(interp)[interp %in% c("covariance", "precision", "scale")]
+  base <- d
+  while (!"param" %in% S7::prop_names(base) &&
+         "parent_distrib" %in% S7::prop_names(base)) {
+    base <- base@parent_distrib
+  }
+  if (!all(c("param", "inverted") %in% S7::prop_names(base))) return(NULL)
+  ch <- base@param
+  if (!S7::S7_inherits(ch, parameters7::matrix_parameter) ||
+      length(nm) != ch@n_free) return(NULL)
+  list(chart = ch, names = nm, inverted = isTRUE(base@inverted))
+}
+
+
+#' The Variance of Each Equation's Working Response
+#'
+#' @description
+#' One number per distribution parameter: the weighted variance of
+#' \eqn{z_i = \eta_p + U_{ip} / I_{ip} - o_{ip}}, the working response at the
+#' intercept-only fit less the offset, as [statmod_hyper_scale_start()]
+#' defines it.
+#'
+#' @param spec A [StatmodSpec()].
+#'
+#' @return A named list, one entry per parameter; an entry is `NULL` where
+#'   the intercept-only fit, the score or the information is not available.
+#'
+#' @keywords internal
+working_response_variance <- function(spec) {
+  d <- spec@distrib
+  params <- d@params
+  none <- stats::setNames(vector("list", length(params)), params)
+  e <- statmod_intercepts(spec)
+  if (any(vapply(e, is.null, logical(1)))) return(none)
+  th <- stats::setNames(lapply(params, function(p)
+    linkfunctions7::linkinv(d@link_params[[p]], e[[p]])), params)
+  y <- spec@response
+  U <- tryCatch(distributions7::distrib_gradient(d, y, th, scale = "link"),
+                error = function(e) NULL)
+  H <- tryCatch(distributions7::distrib_expected_hessian(d, y, th,
+                                                         scale = "link"),
+                error = function(e) NULL)
+  if (is.null(U) || is.null(H)) return(none)
+  w <- spec@weights
+  if (is.null(w)) w <- rep(1, spec@n_obs)
+  stats::setNames(lapply(params, function(p) {
+    info <- -H[[paste0(p, "_", p)]]
+    if (is.null(info) || is.null(U[[p]])) return(NULL)
+    z <- e[[p]] + U[[p]] / info
+    o <- spec@offsets[[p]]
+    if (length(o)) z <- z - o
+    if (length(z) != length(w) || !all(is.finite(z))) return(NULL)
+    mz <- sum(w * z) / sum(w)
+    sum(w * (z - mz)^2) / sum(w)
+  }), params)
+}
+
+
 #' The Objective, Its Gradient and Its Hessian, Stacked
 #'
 #' @description

@@ -826,6 +826,20 @@ test_that("a developed parameter is reported as a compartment of its own", {
   expect_false(grepl("random.1", out, fixed = TRUE))
 })
 
+test_that("an aliased effect does not break the summary of the predictions", {
+  # an aliased coefficient is NA, and summary() of a column holding it added
+  # an "NA's" entry to that row only, so the rows could not be bound
+  d <- data.frame(f = factor(rep(1:2, 3)), g = factor(rep(1:3, each = 2)))
+  tm <- modelterms7::term_build(modelterms7::random(~ 0 + f | g), d)
+  sp <- effect_spread(tm, c(1, 2, 3, NA, 5, 6))
+  expect_identical(colnames(sp$table),
+                   c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max."))
+  expect_equal(sp$table[, "Mean"], c(3, 4))
+  expect_equal(sp$table[, "Max."], c(5, 6))
+  sp2 <- effect_spread(tm, c(NA, 2, NA, 4, NA, 6))
+  expect_true(all(is.na(unlist(sp2$table[1L, ]))))
+})
+
 test_that("a term that develops nothing keeps the flat table it had", {
   set.seed(4)
   dd <- data.frame(x = runif(200, 0, 10))
