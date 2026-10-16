@@ -26,6 +26,9 @@ slope.
 The coefficients of one group are adjacent in the block, so the
 predictions are read as a matrix with one row per level and one column per
 coordinate, the coordinates named as \code{\link[modelterms7:term_group]{modelterms7::term_group()}} names
-them.
+them. A term with one level and several coordinates is a single draw of a
+vector, and its table has one row, the summary across the coordinates.
+The statistics are taken over the finite effects, an aliased effect being
+\code{NA}.
 }
 \keyword{internal}

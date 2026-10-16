@@ -1,3 +1,18 @@
+# statmodels7 0.203.1
+
+* `statmod_certificate()` reads the curvature of a matrix prior's free value
+  in units of the matrix's scale when that free value scales with the
+  matrix, as the off-diagonal entries of `log_cholesky()` do. A correlated
+  random intercept and slope fitted to a response multiplied by 1000 was
+  reported at a boundary, since the curvature in the off-diagonal entry
+  falls by the square of the scale, and it is now reported as converged, as
+  at the original scale. The criterion of every fit is unchanged, and on the
+  reference battery no case changes its state.
+* `summary()` of a random-effect term with one level and several
+  within-group columns, such as a latent process over a single series,
+  reports the statistics of the predicted effects in one row over the
+  level's coordinates, and the heading reads "1 level".
+
 # statmodels7 0.203.0
 
 * The free values of a matrix prior (a covariance, precision or scale matrix

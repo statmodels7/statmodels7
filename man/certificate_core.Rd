@@ -15,7 +15,9 @@ point may still have available; see \code{\link[=joint_decrement]{joint_decremen
 \item{flat}{The largest curvature \eqn{\lvert A_{jj}\rvert} of the outer
 criterion in a hyperparameter's free value at which that hyperparameter
 is reported as sitting at a boundary; for a coefficient the criterion
-estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It is also the
+estimates, the curvature times \eqn{\max(1, \gamma_j^2)}, and for a free
+value of a matrix prior that scales with the matrix, the curvature in
+units of the matrix's scale (\code{\link[=hyper_unit_scale]{hyper_unit_scale()}}). It is also the
 largest eigenvalue, in absolute value, of a flat direction of the
 equilibrated curvature. It decides the label alone and never the
 verdict; see the details.}

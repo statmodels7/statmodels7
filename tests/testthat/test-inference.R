@@ -838,6 +838,15 @@ test_that("an aliased effect does not break the summary of the predictions", {
   expect_equal(sp$table[, "Max."], c(5, 6))
   sp2 <- effect_spread(tm, c(NA, 2, NA, 4, NA, 6))
   expect_true(all(is.na(unlist(sp2$table[1L, ]))))
+  # one level is one draw of a vector: one row across its coordinates
+  d1 <- data.frame(f = factor(1:4), g = factor(rep(1, 4)))
+  t1 <- modelterms7::term_build(modelterms7::random(~ 0 + f | g), d1)
+  s1 <- effect_spread(t1, c(4, 1, 3, 2))
+  expect_identical(rownames(s1$table), "4 coordinates")
+  expect_equal(unlist(s1$table[1L, ]), as.numeric(summary(c(4, 1, 3, 2))),
+               ignore_attr = TRUE)
+  out <- utils::capture.output(print_effect_spread(s1))
+  expect_match(out[1L], "(1 level of g)", fixed = TRUE)
 })
 
 test_that("a term that develops nothing keeps the flat table it had", {

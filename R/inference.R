@@ -4784,7 +4784,10 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
 #' The coefficients of one group are adjacent in the block, so the
 #' predictions are read as a matrix with one row per level and one column per
 #' coordinate, the coordinates named as [modelterms7::term_group()] names
-#' them.
+#' them. A term with one level and several coordinates is a single draw of a
+#' vector, and its table has one row, the summary across the coordinates.
+#' The statistics are taken over the finite effects, an aliased effect being
+#' `NA`.
 #'
 #' @param term A built random-effect term.
 #' @param est Its predicted effects, in the order of its coefficients.
@@ -4805,12 +4808,20 @@ effect_spread <- function(term, est) {
   # an aliased effect is NA, and summary() would add an "NA's" column to its
   # row only; the six statistics are taken over the finite effects
   six <- c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max.")
-  tb <- do.call(rbind, lapply(seq_len(d), function(j) {
-    z <- M[, j][is.finite(M[, j])]
+  row6 <- function(z) {
+    z <- z[is.finite(z)]
     v <- if (length(z)) as.numeric(summary(z)) else rep(NA_real_, 6L)
     as.data.frame(as.list(v), col.names = six, check.names = FALSE)
-  }))
-  rownames(tb) <- gr$names
+  }
+  if (m == 1L && d > 1L) {
+    # one group is one draw of a vector (a latent process over the levels of
+    # a within-group factor), and the spread is read across its coordinates
+    tb <- row6(M[1L, ])
+    rownames(tb) <- sprintf("%d coordinates", d)
+  } else {
+    tb <- do.call(rbind, lapply(seq_len(d), function(j) row6(M[, j])))
+    rownames(tb) <- gr$names
+  }
   list(table = tb, levels = m,
        group = paste(deparse(gr$expr, width.cutoff = 500L), collapse = " "))
 }
@@ -4832,7 +4843,8 @@ effect_spread <- function(term, est) {
 print_effect_spread <- function(sp, indent = 2L, digits = 4L) {
   if (is.null(sp)) return(invisible(NULL))
   cat(strrep(" ", indent),
-      sprintf("predicted effects (%d levels of %s)\n", sp$levels, sp$group),
+      sprintf("predicted effects (%d %s of %s)\n", sp$levels,
+              if (sp$levels == 1L) "level" else "levels", sp$group),
       sep = "")
   tb <- sp$table
   # each number on its own, a mean that is zero up to rounding printed as 0
@@ -5068,7 +5080,9 @@ drop_common_prefix <- function(nms) {
 #' @param flat The largest curvature \eqn{\lvert A_{jj}\rvert} of the outer
 #'   criterion in a hyperparameter's free value at which that hyperparameter
 #'   is reported as sitting at a boundary; for a coefficient the criterion
-#'   estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It is also the
+#'   estimates, the curvature times \eqn{\max(1, \gamma_j^2)}, and for a free
+#'   value of a matrix prior that scales with the matrix, the curvature in
+#'   units of the matrix's scale ([hyper_unit_scale()]). It is also the
 #'   largest eigenvalue, in absolute value, of a flat direction of the
 #'   equilibrated curvature. It decides the label alone and never the
 #'   verdict; see the details.
@@ -5497,7 +5511,17 @@ certificate_core <- function(fit, tol, flat, edge) {
   # in meters was not. Its curvature is multiplied by max(1, gamma^2), which
   # reads the standard error against the size of the coefficient and is the
   # same in any units.
+  #
+  # ⚠️ SO DOES A FREE VALUE OF A MATRIX PRIOR THAT SCALES WITH THE MATRIX.
+  # The off-diagonal free values of log_cholesky() are entries of a Cholesky
+  # factor, in the units of the effects: a correlated random intercept and
+  # slope with the response multiplied by 1000 read 1.77e-5 where the same
+  # fit read 17.71, and was named a boundary at the same optimum. Such a
+  # curvature is read in units of the matrix's own scale (hyper_unit_scale());
+  # a log-scale or a correlation coordinate keeps its bare curvature, so the
+  # edges measured above are read as before.
   rel_scale <- rep(1, length(g))
+  rel_scale[seq_len(nrow(idx))] <- hyper_unit_scale(spec, design, hy, idx)
   if (ng) rel_scale[nrow(idx) + seq_len(ng)] <- pmax(1, beta_all[gam$where]^2)
   reported <- which(abs(diag(cv$A)) * rel_scale <= flat)
   rep_h <- reported[reported <= nrow(idx)]

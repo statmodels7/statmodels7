@@ -40,4 +40,18 @@ test_that("a correlated random effect is fitted equivariantly in the response sc
   h1 <- unlist(f1@hyper); h3 <- unlist(f3@hyper)
   expect_equal(unname(h3[1:2] - h1[1:2]), rep(log(1000), 2), tolerance = 1e-4)
   expect_equal(unname(h3[3] / h1[3]), 1000, tolerance = 1e-3)
+  # the off-diagonal free value carries the units of the effects, and the
+  # certificate reads its curvature in units of the matrix's scale
+  c1 <- statmod_certificate(f1); c3 <- statmod_certificate(f3)
+  expect_identical(c3$state, c1$state)
+  expect_identical(c3$boundary, c1$boundary)
+})
+
+test_that("the degree of a chart's free values in the scale of its matrix", {
+  expect_identical(chart_homogeneity(parameters7::log_cholesky(3)),
+                   c(0L, 0L, 0L, 1L, 1L, 1L))
+  expect_identical(chart_homogeneity(parameters7::inverse_of(
+    parameters7::log_cholesky(2))), c(0L, 0L, -1L))
+  expect_identical(chart_homogeneity(parameters7::ar1(4)), c(0L, 0L))
+  expect_identical(chart_homogeneity(parameters7::dr_prod(3)), rep(0L, 6))
 })

@@ -1387,6 +1387,90 @@ hyper_matrix_param <- function(d) {
 }
 
 
+#' The Units of the Free Values of a Matrix Prior
+#'
+#' @description
+#' One multiplier per row of `idx`: the factor that turns the outer curvature
+#' in a hyperparameter's free value into the curvature in a free value
+#' without units. It is 1 except for a free value of a matrix prior that
+#' scales with the matrix.
+#'
+#' @details
+#' A free value of a chart is homogeneous of degree \eqn{k} in the scale of
+#' the matrix when multiplying the matrix by \eqn{\lambda^2} multiplies it by
+#' \eqn{\lambda^k}. The off-diagonal free values of [parameters7::log_cholesky()]
+#' have \eqn{k = 1} for a covariance, so they carry the units of the effects,
+#' while a log-scale or a correlation coordinate has \eqn{k = 0}. The degree
+#' is read from the chart, at a test point, with
+#' [parameters7::param_free()] at \eqn{\lambda = 2}. The free value divided by
+#' \eqn{c^k}, with \eqn{c^2} the mean diagonal of the fitted matrix, has no
+#' units, and the curvature in it is \eqn{A_{jj} (c^2)^k}.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design, as [statmod_design()] returns it.
+#' @param hy The fitted hyperparameters.
+#' @param idx The hyperparameter index of [outer_hyper_index()].
+#'
+#' @return A numeric vector of length `nrow(idx)`.
+#'
+#' @seealso [statmod_certificate()], which reads a boundary on the curvature
+#'   multiplied by it.
+#'
+#' @keywords internal
+hyper_unit_scale <- function(spec, design, hy, idx) {
+  out <- rep(1, nrow(idx))
+  if (!nrow(idx)) return(out)
+  units <- Filter(function(u) is.null(u$class) && !isTRUE(u$structural) &&
+                    S7::S7_inherits(u$penalty, penalties7::DistribPenalty),
+                  tryCatch(statmod_penalized(spec, design),
+                           error = function(e) list()))
+  for (u in units) {
+    mp <- hyper_matrix_param(u$penalty@parent)
+    if (is.null(mp)) next
+    rows <- which(idx$parameter == u$param & idx$term == u$key &
+                    idx$name %in% mp$names)
+    th <- hy[[u$param]][[u$key]]
+    if (!length(rows) || !all(mp$names %in% names(th))) next
+    s <- tryCatch({
+      k <- chart_homogeneity(mp$chart)
+      M <- parameters7::param_value(mp$chart, as.numeric(th[mp$names]))
+      mean(diag(M))^k
+    }, error = function(e) NULL)
+    if (is.null(s) || !all(is.finite(s)) || any(s <= 0)) next
+    out[rows] <- s[match(idx$name[rows], mp$names)]
+  }
+  out
+}
+
+
+#' The Degree of Each Free Value of a Chart in the Scale of Its Matrix
+#'
+#' @description
+#' \eqn{k_j \in \{-1, 0, 1\}} for each free value: 1 when multiplying the
+#' matrix by \eqn{\lambda^2} multiplies the free value by \eqn{\lambda}, -1
+#' when it divides it by \eqn{\lambda}, and 0 otherwise (a log-scale
+#' coordinate, which shifts, or a correlation, which does not move).
+#'
+#' @param chart A \pkg{parameters7} matrix chart.
+#'
+#' @return An integer vector of length `chart@n_free`.
+#'
+#' @keywords internal
+chart_homogeneity <- function(chart) {
+  n <- chart@n_free
+  # a test point with no coordinate at zero, where a ratio could not be read
+  e <- 0.3 + 0.137 * seq_len(n)
+  e <- e * rep_len(c(1, -1), n) / n
+  M <- parameters7::param_value(chart, e)
+  e2 <- as.numeric(parameters7::param_free(chart, 4 * M))
+  r <- e2 / e
+  k <- integer(n)
+  k[abs(r - 2) < 1e-6] <- 1L
+  k[abs(r - 0.5) < 1e-6] <- -1L
+  k
+}
+
+
 #' The Variance of Each Equation's Working Response
 #'
 #' @description
