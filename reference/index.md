@@ -238,6 +238,9 @@ helper functions. None of it is needed to use the package.
 - [`certificate_ridges()`](https://statmodels7.github.io/statmodels7/reference/certificate_ridges.md)
   : The Flat Directions of the Outer Curvature
 
+- [`chart_homogeneity()`](https://statmodels7.github.io/statmodels7/reference/chart_homogeneity.md)
+  : The Degree of Each Free Value of a Chart in the Scale of Its Matrix
+
 - [`check_covariates()`](https://statmodels7.github.io/statmodels7/reference/check_covariates.md)
   : The Covariate Generators of a Simulation
 
@@ -631,6 +634,9 @@ helper functions. None of it is needed to use the package.
 - [`hyper_key()`](https://statmodels7.github.io/statmodels7/reference/hyper_key.md)
   : Resolve a Term's Name Against a Specification
 
+- [`hyper_matrix_param()`](https://statmodels7.github.io/statmodels7/reference/hyper_matrix_param.md)
+  : The Matrix Parameter of a Multivariate Prior
+
 - [`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)
   : The Mixed Derivative of the Penalty in the Coefficients and the
   Hyperparameters
@@ -644,6 +650,9 @@ helper functions. None of it is needed to use the package.
 - [`hyper_to_eta()`](https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.md)
   [`eta_to_hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.md)
   : Move Between the Hyperparameters and the Free Vector
+
+- [`hyper_unit_scale()`](https://statmodels7.github.io/statmodels7/reference/hyper_unit_scale.md)
+  : The Units of the Free Values of a Matrix Prior
 
 - [`hyper_value()`](https://statmodels7.github.io/statmodels7/reference/hyper_value.md)
   : One Hyperparameter of an Index
@@ -1428,6 +1437,9 @@ helper functions. None of it is needed to use the package.
 - [`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md)
   : Override the Starting Hyperparameters
 
+- [`statmod_hyper_scale_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_scale_start.md)
+  : Start the Matrix Prior of a Random Effect at the Scale of the Data
+
 - [`statmod_hyper_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.md)
   : The Hyperparameters a Specification Starts From
 
@@ -1788,6 +1800,9 @@ helper functions. None of it is needed to use the package.
 
 - [`working_exact()`](https://statmodels7.github.io/statmodels7/reference/working_exact.md)
   : Is the Working Profile of an Equation Its Objective?
+
+- [`working_response_variance()`](https://statmodels7.github.io/statmodels7/reference/working_response_variance.md)
+  : The Variance of Each Equation's Working Response
 
 - [`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md)
   : When a Matrix Is Factorized Sparsely

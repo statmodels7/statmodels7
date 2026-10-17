@@ -13,7 +13,7 @@ slope."><meta property="og:image" content="https://statmodels7.github.io/statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.202.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,10 @@ grouping expression; <code>NULL</code> where the term carries no grouping.</p>
     <p>The coefficients of one group are adjacent in the block, so the
 predictions are read as a matrix with one row per level and one column per
 coordinate, the coordinates named as <code><a href="https://statmodels7.github.io/modelterms7/reference/term_group.html" class="external-link">modelterms7::term_group()</a></code> names
-them.</p>
+them. A term with one level and several coordinates is a single draw of a
+vector, and its table has one row, the summary across the coordinates.
+The statistics are taken over the finite effects, an aliased effect being
+<code>NA</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

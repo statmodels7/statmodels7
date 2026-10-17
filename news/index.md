@@ -1,5 +1,44 @@
 # Changelog
 
+## statmodels7 0.203.1
+
+- [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  reads the curvature of a matrix prior’s free value in units of the
+  matrix’s scale when that free value scales with the matrix, as the
+  off-diagonal entries of `log_cholesky()` do. A correlated random
+  intercept and slope fitted to a response multiplied by 1000 was
+  reported at a boundary, since the curvature in the off-diagonal entry
+  falls by the square of the scale, and it is now reported as converged,
+  as at the original scale. The criterion of every fit is unchanged, and
+  on the reference battery no case changes its state.
+- [`summary()`](https://rdrr.io/r/base/summary.html) of a random-effect
+  term with one level and several within-group columns, such as a latent
+  process over a single series, reports the statistics of the predicted
+  effects in one row over the level’s coordinates, and the heading reads
+  “1 level”.
+
+## statmodels7 0.203.0
+
+- The free values of a matrix prior (a covariance, precision or scale
+  matrix on a parameters7 chart, such as the `log_cholesky()` default of
+  a correlated random effect or an `ar1()` covariance) start at a matrix
+  scaled to the data, where before they started at the identity. At the
+  start the effects have half the variance of the equation’s working
+  response at the intercept-only fit, and their correlations are zero.
+  Univariate priors keep their start. With a latent AR(1) process on the
+  Nile series (one group, modelterms7 0.99.1) the REML search ended on
+  the ridge at rho near 1 without converging (criterion -640.58), and it
+  now converges to the exact REML maximum (rho 0.913, criterion
+  -632.157); ML reaches the log-likelihood of
+  `arima(Nile, order = c(1, 0, 1))` (-637.039). A correlated random
+  intercept and slope fitted to a response multiplied by 1000 reaches
+  the scaled optimum (criterion -1417.94, where the search stopped at
+  -1436.50). On the reference battery one case of 43 changes, by 5e-8 in
+  the criterion.
+- [`summary()`](https://rdrr.io/r/base/summary.html) of a random-effect
+  term with an aliased effect no longer signals an error. The six
+  statistics of the predicted effects are taken over the finite effects.
+
 ## statmodels7 0.202.0
 
 - [`summary()`](https://rdrr.io/r/base/summary.html) reports no standard

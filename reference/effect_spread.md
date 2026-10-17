@@ -34,4 +34,7 @@ The coefficients of one group are adjacent in the block, so the
 predictions are read as a matrix with one row per level and one column
 per coordinate, the coordinates named as
 [`modelterms7::term_group()`](https://statmodels7.github.io/modelterms7/reference/term_group.html)
-names them.
+names them. A term with one level and several coordinates is a single
+draw of a vector, and its table has one row, the summary across the
+coordinates. The statistics are taken over the finite effects, an
+aliased effect being `NA`.

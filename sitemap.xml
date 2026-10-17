@@ -42,6 +42,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/certificate_core.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/certificate_readings.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/certificate_ridges.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/chart_homogeneity.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_covariates.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_filter_scaling.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_marginal_arg.html</loc></url>
@@ -171,10 +172,12 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_correction.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_key.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_matrix_param.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_plain.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_set.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_unit_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_value.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_variance.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/index.html</loc></url>
@@ -445,6 +448,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hold.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_scale_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_information_at.html</loc></url>
@@ -567,6 +571,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/weights.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/worker_map.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/working_exact.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/working_response_variance.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/worth_sparse.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/x_times_b.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/xtv.html</loc></url>

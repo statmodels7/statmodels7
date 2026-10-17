@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.202.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,19 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.203.1" id="statmodels7-02031">statmodels7 0.203.1<a class="anchor" aria-label="anchor" href="#statmodels7-02031"></a></h2>
+<ul><li>
+<code><a href="../reference/statmod_certificate.html">statmod_certificate()</a></code> reads the curvature of a matrix prior’s free value in units of the matrix’s scale when that free value scales with the matrix, as the off-diagonal entries of <code>log_cholesky()</code> do. A correlated random intercept and slope fitted to a response multiplied by 1000 was reported at a boundary, since the curvature in the off-diagonal entry falls by the square of the scale, and it is now reported as converged, as at the original scale. The criterion of every fit is unchanged, and on the reference battery no case changes its state.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> of a random-effect term with one level and several within-group columns, such as a latent process over a single series, reports the statistics of the predicted effects in one row over the level’s coordinates, and the heading reads “1 level”.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.203.0" id="statmodels7-02030">statmodels7 0.203.0<a class="anchor" aria-label="anchor" href="#statmodels7-02030"></a></h2>
+<ul><li>The free values of a matrix prior (a covariance, precision or scale matrix on a parameters7 chart, such as the <code>log_cholesky()</code> default of a correlated random effect or an <code>ar1()</code> covariance) start at a matrix scaled to the data, where before they started at the identity. At the start the effects have half the variance of the equation’s working response at the intercept-only fit, and their correlations are zero. Univariate priors keep their start. With a latent AR(1) process on the Nile series (one group, modelterms7 0.99.1) the REML search ended on the ridge at rho near 1 without converging (criterion -640.58), and it now converges to the exact REML maximum (rho 0.913, criterion -632.157); ML reaches the log-likelihood of <code>arima(Nile, order = c(1, 0, 1))</code> (-637.039). A correlated random intercept and slope fitted to a response multiplied by 1000 reaches the scaled optimum (criterion -1417.94, where the search stopped at -1436.50). On the reference battery one case of 43 changes, by 5e-8 in the criterion.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> of a random-effect term with an aliased effect no longer signals an error. The six statistics of the predicted effects are taken over the finite effects.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.202.0" id="statmodels7-02020">statmodels7 0.202.0<a class="anchor" aria-label="anchor" href="#statmodels7-02020"></a></h2>
 <ul><li>
