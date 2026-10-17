@@ -19,13 +19,13 @@ outer_gradient_ok(spec, design, idx, method, order = 1L, gamma = FALSE)
 
 \item{gamma}{\code{TRUE} where the outer vector also carries coefficients that the
 criterion estimates (\code{\link[=marginal_coords]{marginal_coords()}}), so an empty index is not a
-reason to answer \code{FALSE}.}
+reason to return \code{FALSE}.}
 }
 \value{
 \code{TRUE} or \code{FALSE}.
 }
 \description{
-\code{TRUE} when the exact gradient of the marginal criterion in the
+Returns \code{TRUE} when the exact gradient of the marginal criterion in the
 hyperparameters under estimation (\code{order = 1}), or the exact gradient and
 Hessian (\code{order = 2}), can be assembled for the model.
 }
@@ -34,7 +34,7 @@ The family must carry the derivatives that the order needs
 (\code{\link[=order_available]{order_available()}}): the third derivative of the log-likelihood for the
 gradient and the fourth for the Hessian.
 
-\strong{The information.} \eqn{K} enters the criterion through its determinant,
+For the information, \eqn{K} enters the criterion through its determinant,
 so the gradient needs \eqn{\partial K/\partial\beta}. With the observed
 information that is the third derivative of the log-likelihood in the
 link-scale predictors. With the expected information it is the derivative in
@@ -49,19 +49,19 @@ The expected route is not admitted at either order where a penalty covers
 the parameters of a structural term, because the criterion is then assembled
 from the observed joint curvature.
 
-\strong{The structural terms.} A term of the likelihood shape (\code{regime()} and the
+For structural terms, a term of the likelihood shape (\code{regime()} and the
 marginal break-point term) has no exact derivatives at either order. For a
 term of the filter shape, order 2 requires a penalty over the term's own
 parameters and a term that implements \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}. Where a
 penalty covers the term's parameters, the term must also implement
 \code{\link[modelterms7:term_third]{modelterms7::term_third()}}.
 
-\strong{The moving blocks.} A block that moves with its coefficients (\code{nl()},
+For moving blocks, a block that moves with its coefficients (\code{nl()},
 \code{seg()}, \code{jump()} and \code{jseg()}) is admitted at order 1 on either route and
 at order 2 on the observed route. Its contribution is read from the term
 (\code{\link[=u_refresh]{u_refresh()}}, \code{\link[=mode_curvature]{mode_curvature()}}) and is never differenced.
 
-\strong{The penalties.} \eqn{\partial S/\partial\theta} and its second
+For penalties, \eqn{\partial S/\partial\theta} and its second
 derivative are given by the generics of \pkg{penalties7}
 (\code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}}, \code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}} and
 \code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}}). The function calls the derivative methods
@@ -70,8 +70,8 @@ supply them, so that a penalty is admitted according to what its methods
 return and not according to its class. The check has two parts. Every
 penalized unit of the model is examined, because the movement of the mode
 reaches the determinant through each penalty whose Hessian moves with the
-coefficients (a Student t prior, for instance). A penalty that
-\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} calls quadratic passes, and so does a penalty
+coefficients (a Student t prior, for instance). A penalty for which
+\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} returns \code{TRUE} passes, and so does a penalty
 with a kink (a lasso, a SCAD or an MCP). Any other penalty must supply
 \code{\link[penalties7:penalty_dhessian_beta]{penalties7::penalty_dhessian_beta()}}, and a mixed covariance class of this
 kind is not admitted. Beside a structural term such a penalty is not

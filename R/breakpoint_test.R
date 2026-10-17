@@ -7,14 +7,15 @@
 #'
 #' @description
 #' Tests the hypothesis that a model has no break-point against the
-#' alternative of the break-point term that the model carries: no change of
-#' slope for a [modelterms7::seg()], no change of level for a
-#' [modelterms7::jump()], and neither for a [modelterms7::jseg()]. The term
-#' can sit in the equation of any distribution parameter, beside any other
-#' term that is not structural, and inside a parameter of [modelterms7::nl()]
-#' when it is a change of slope or a smoothed step. A model that carries a
-#' structural term ([modelterms7::gas()], [modelterms7::regime()] or the
-#' marginal break-point term) has no break-point test.
+#' alternative of the break-point term that the model carries. The null
+#' hypothesis is that the change of slope is zero for a [modelterms7::seg()],
+#' that the change of level is zero for a [modelterms7::jump()], and that both
+#' are zero for a [modelterms7::jseg()]. The term can sit in the equation of any
+#' distribution parameter, beside any other term that is not structural, and
+#' inside a parameter of [modelterms7::nl()] when it is a change of slope or a
+#' smoothed step. A model that carries a structural term ([modelterms7::gas()],
+#' [modelterms7::regime()] or the marginal break-point term) has no break-point
+#' test.
 #'
 #' @details
 #' Under the null hypothesis the position \eqn{\psi} of the break-point does
@@ -24,10 +25,10 @@
 #' score statistic for the change at a fixed position \eqn{q},
 #' \deqn{S(q) = U_c(q)' \, [K(q)^{-1}]_{cc} \, U_c(q),}
 #' where \eqn{U_c(q)} is the score of the change coefficients at the fit of
-#' the null model and \eqn{K(q)} the penalized information of the model with
-#' the break-point held at \eqn{q}. One fit of the null model serves every
-#' \eqn{q}: the process costs one gradient and one Hessian per position. The
-#' statistic of the test is \eqn{M = \sup_q S(q)}.
+#' the null model and \eqn{K(q)} the penalized information of the model in
+#' which the break-point is held at \eqn{q}. One fit of the null model serves
+#' every \eqn{q}: the process costs one gradient and one Hessian per position.
+#' The statistic of the test is \eqn{M = \sup_q S(q)}.
 #'
 #' Where the position moves the model continuously (a change of slope, or a
 #' smoothed step), \eqn{S(q)} is evaluated at `k` positions equally spaced
@@ -53,8 +54,8 @@
 #'
 #' The hyperparameters are held at the values of the fit, so the test is
 #' conditional on the smoothing that the data chose. The term must carry one
-#' break-point, and none of its coefficients (the position, the change of
-#' slope or the change of level) may have a development on covariates. For a
+#' break-point, and its coefficients (the position, the change of slope or the
+#' change of level) must not have a development on covariates. For a
 #' choice between one and several break-points, the fits can be compared by an
 #' information criterion.
 #'
@@ -62,8 +63,8 @@
 #' @param param The distribution parameter whose equation carries the term,
 #'   or `NULL` to find it.
 #' @param term The label of the term (`"seg"`, `"jump"`, `"jseg"` by
-#'   default), or `NULL` to find it. Needed only where the model carries
-#'   more than one break-point term.
+#'   default), or `NULL` to find it. The label is needed only where the model
+#'   carries more than one break-point term.
 #' @param k The number of positions at which a continuous process is read, a
 #'   whole number of at least 3. It is not used for a sharp step.
 #' @param n_boot The number of bootstrap replicates for a sharp step, a
@@ -246,7 +247,8 @@ statmod_breakpoint_test <- function(fit, param = NULL, term = NULL, k = 10L,
     }
     ok <- is.finite(Mb)
     if (!any(ok)) {
-      stop("No bootstrap replicate could be refitted.", call. = FALSE)
+      stop("Every bootstrap replicate failed, in the refit or in the statistic.",
+           call. = FALSE)
     }
     pv <- (1 + sum(Mb[ok] >= M)) / (1 + sum(ok))
     meth <- sprintf("Test for a break-point (score process, parametric bootstrap, %d replicates)",

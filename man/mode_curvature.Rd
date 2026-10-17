@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_gradient.R
 \name{mode_curvature}
 \alias{mode_curvature}
-\title{The Curvature the Mode Actually Moves By}
+\title{The Curvature by Which the Mode Actually Moves}
 \usage{
 mode_curvature(spec, design, coef, params, npar, offs, total)
 }
@@ -20,9 +20,9 @@ A symmetric matrix over the stacked coefficients, with nonzero
 entries only on the blocks of refreshable terms.
 }
 \description{
-What separates the true Hessian of the penalized log-likelihood from the
-Gauss-Newton matrix that \code{\link[=statmod_information_at]{statmod_information_at()}} returns, where a
-term's block moves with its coefficients.
+Computes the difference between the true Hessian of the penalized
+log-likelihood and the Gauss-Newton matrix that \code{\link[=statmod_information_at]{statmod_information_at()}}
+returns, where a term's block moves with its coefficients.
 }
 \details{
 \eqn{v = \partial\hat\beta/\partial\theta} solves
@@ -32,11 +32,11 @@ term's block moves with its coefficients.
 \deqn{\sum_i\sum_{a,b}\ell_{ab}\frac{\partial\eta_a}{\partial\beta}
   \frac{\partial\eta_b}{\partial\beta}
   + \sum_i\sum_a \ell_a\frac{\partial^2\eta_a}{\partial\beta^2}.}
-The first sum is what the design gives; the second is zero for every fixed
+The design gives the first sum; the second is zero for every fixed
 block and is not for a refreshable one, where \eqn{X} is the Jacobian and so
 \eqn{\partial^2\eta_i/\partial\beta_c\partial\beta_d =
 \partial X_{id}/\partial\beta_c}. It is supported on the term's own block,
-and that is what keeps this cheap: one call of
+which keeps the computation cheap: one call of
 \code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}} per column, weighted by the
 score where \code{\link[=u_refresh]{u_refresh()}} weights by \eqn{M}.
 

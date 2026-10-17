@@ -2,17 +2,17 @@
 #' @importFrom stats predict fitted
 NULL
 
-#' The Quantities a Fit Can Predict
+#' The Quantities That a Fit Can Predict
 #'
 #' @description
-#' The table [predict.StatmodFit()] resolves a moment name against: the
-#' recognized names, each mapped to the \pkg{distributions7} generic that
-#' computes it.
+#' Returns the table against which [predict.StatmodFit()] resolves a moment
+#' name. The table maps each recognized name to the \pkg{distributions7}
+#' generic that computes it.
 #'
 #' @details
-#' Written once as a table so that the recognized names and the functions
-#' they call cannot disagree, and so that [unknown_what()] can list them in
-#' its message.
+#' The table is written once so that the recognized names and the functions
+#' that they call cannot disagree, and so that [unknown_what()] can list the
+#' names in its message.
 #'
 #' @return A named list of functions, keyed `"mean"`, `"variance"`,
 #'   `"std_dev"`, `"skewness"` and `"kurtosis"`. Each takes a distribution
@@ -44,24 +44,24 @@ predict_moments <- function() {
 #'
 #' `what` takes
 #' \describe{
-#'   \item{a parameter's name}{`"mu"`, `"sigma"`, `"alpha"` --
-#'     whatever the family calls them. Always available, whatever the family:
-#'     a parameter is what the model fits, and it exists even where a moment
-#'     does not.}
+#'   \item{a parameter's name}{`"mu"`, `"sigma"` or `"alpha"`, whatever the
+#'     family calls them. A parameter is available for every family, because
+#'     the model fits it, and it exists even where a moment does not.}
 #'   \item{a moment's name}{`"mean"`, `"variance"`, `"std_dev"`,
-#'     `"skewness"`, `"kurtosis"`. Available where the family has one, and
-#'     answering `NaN` or `NA` where it does not exist. A Cauchy's mean is
+#'     `"skewness"`, `"kurtosis"`. A moment is available where the family has
+#'     one, and the result is `NaN` or `NA` where the moment does not exist.
+#'     A Cauchy's mean is
 #'     `NaN`, which is the correct answer for it. A moment has no standard
 #'     error. For a binomial fitted with `cbind()`, a moment needs the
 #'     number of trials of each row, so `newdata` has to carry the variables
-#'     that the response is written with.}
-#'   \item{`"parameter"`}{every parameter at once, as a named list. The
-#'     default.}
+#'     with which the response is written.}
+#'   \item{`"parameter"`}{every parameter at once, as a named list. This is
+#'     the default.}
 #'   \item{`"link"`}{every linear predictor at once, before the inverse
 #'     link.}
 #'   \item{`"response"`}{the response itself, with `interval =
 #'     "prediction"`, which it requires: its median and the ends of an
-#'     interval that a new observation falls in. See the section on
+#'     interval in which a new observation falls. See the section on
 #'     intervals.}
 #' }
 #' A parameter's name may be prefixed by `"link:"` to return its
@@ -79,7 +79,7 @@ predict_moments <- function() {
 #' # New data
 #'
 #' New data is passed through each term's blueprint, so a factor keeps the
-#' levels and contrasts that it was fitted with, a spline its knots, and a
+#' levels and contrasts with which it was fitted, a spline its knots, and a
 #' basis its reparametrization. The new frame supplies the values at which the
 #' terms are evaluated and does not change how they are built. Offsets are
 #' evaluated again at the new rows.
@@ -98,17 +98,17 @@ predict_moments <- function() {
 #' of being read on their own. Each row is placed by its own time within its
 #' own group, and must come after every observed time of that group. A row
 #' that falls inside the observed series is rejected, since there the response
-#' is known and the filter has to be run, not continued. A group that the fit
-#' never saw is rejected as well, and a term built without `time` cannot be
-#' continued, because the place of a row in the series is then its position in
-#' the data frame.
+#' is known and the filter has to be run, not continued. A group that is
+#' absent from the fitting data is rejected as well, and a term built without
+#' `time` cannot be continued, because the place of a row in the series is
+#' then its position in the data frame.
 #'
 #' New rows that carry the response are a series of their own: the
 #' structural term is rebuilt on them with the fitted parameters, and they
-#' are read as the fitting rows are, standard errors included. With the
-#' fitting data as `newdata` the result is `predict(fit)`'s; this holds for a
-#' [modelterms7::regime()] term as well, whose prediction is the
-#' posterior-weighted predictor. A frame that carries the response on some
+#' are read as the fitting rows are, including the standard errors. If the
+#' fitting data are passed as `newdata`, the result is that of `predict(fit)`;
+#' this holds for a [modelterms7::regime()] term as well, whose prediction is
+#' the posterior-weighted predictor. A frame that carries the response on some
 #' rows only is rejected. A [modelterms7::regime()] term cannot be continued
 #' past the series, since what it reports at an observed row is a posterior
 #' over states.
@@ -119,9 +119,10 @@ predict_moments <- function() {
 #'
 #' # A new group, and the typical one
 #'
-#' A random-effect term predicts a group that the fit saw with that group's
-#' estimated effect. A group that it never saw has none, and `random`
-#' determines what is put in its place. `"zero"` sets every effect of the
+#' A random-effect term predicts a group that is present in the fitting data
+#' with that group's estimated effect. A group that is absent from the
+#' fitting data has none, and what is put in
+#' its place depends on `random`. `"zero"` sets every effect of the
 #' term to zero, at every row, which is the prediction for the typical group
 #' (lme4's and glmmTMB's `re.form = NA`). `"marginal"` averages over the prior
 #' instead,
@@ -167,17 +168,17 @@ predict_moments <- function() {
 #' that average, whose gradient sums the design at each node, and its
 #' interval is the delta method's on the link scale carried through the
 #' link. `interval = "group"` and `"prediction"` are not available for such
-#' an effect, and neither is a standard error where effects of both kinds
-#' are averaged over.
+#' an effect, and a standard error is not available where an average is taken
+#' over effects of both kinds.
 #'
 #' # Three intervals
 #'
 #' The value of `interval` selects the uncertainty that the interval describes.
 #' \describe{
-#'   \item{`"confidence"`}{the default, with `se = TRUE`: the uncertainty of
-#'     the estimates alone. For a term set aside by `random` it is the
-#'     interval of the typical group's value, which a new group's value
-#'     falls outside of far more often than the level implies.}
+#'   \item{`"confidence"`}{the default, with `se = TRUE`: only the uncertainty
+#'     of the estimates. For a term set aside by `random` it is the
+#'     interval of the typical group's value, and the value of a new group
+#'     falls outside that interval far more often than the level implies.}
 #'   \item{`"group"`}{the interval of a new group's parameter, with `random =
 #'     "zero"` or `"marginal"`. A new group's parameter is
 #'     \eqn{\theta^* = h^{-1}(\eta^*)}, with \eqn{\eta^*} the typical
@@ -186,29 +187,32 @@ predict_moments <- function() {
 #'     equation, so a random effect on `sigma` widens the interval for
 #'     `sigma`. Under Gaussian priors the variance of \eqn{\eta^*} is
 #'     \eqn{se^2 + z^\top \Sigma_b z}, the standard error that glmmTMB
-#'     reports at a new level on the link scale. The interval's ends are quantiles of
+#'     reports at a new level on the link scale. The interval's ends are
+#'     quantiles of
 #'     \eqn{\eta^*} carried through the inverse link, which is monotone, so
 #'     they are the quantiles of \eqn{\theta^*} under any link; under a prior
 #'     that is not Gaussian they are the quantiles of the mixture of
 #'     [predictive_mixture()]. Where the interval of \eqn{\eta^*} leaves
 #'     the domain of the link (a square root link and a negative predictor),
 #'     the ends are `NA` at that row, with a warning. The standard error is
-#'     the standard deviation of \eqn{\theta^*}, not the delta method, and is `NA` where it is not
+#'     the standard deviation of \eqn{\theta^*}, not the delta method, and is
+#'     `NA` where it is not
 #'     known to exist (see [group_interval()]). The fit is the typical
 #'     group's value under `random = "zero"` and the population average
 #'     under `"marginal"`. Implies `se = TRUE`.}
 #'   \item{`"prediction"`}{an interval for a new observation of the response,
 #'     with `what = "response"`. The family is averaged over the predictors of
-#'     every parameter, taken jointly Gaussian -- correlated across equations
-#'     where a label ties them -- and the interval's ends are quantiles of that
-#'     average and the fit is its median, which every family has, so no
-#'     location parameter is needed; `se` is the standard deviation of the
-#'     average, `NA` where the family's variance does not exist. For a
-#'     discrete family the ends are values of the support, so the coverage is
-#'     at least the level rather than equal to it. Effects read
-#'     `"conditional"` enter with their own estimates, so this is also the
-#'     interval of a new observation of a group the fit saw. What the average
-#'     is over is `predictive`, below.}
+#'     every parameter, which are taken to be jointly Gaussian (correlated
+#'     across equations where a label ties them). The interval's ends are
+#'     quantiles of that average, and the fit is its median, which every
+#'     family has, so the family does not need a location parameter. `se` is
+#'     the standard deviation of the average, and is `NA` where the family's
+#'     variance does not exist. For a discrete family the ends are values of
+#'     the support, so the coverage is at least the level rather than equal
+#'     to it. Effects read `"conditional"` enter with their own estimates, so
+#'     this is also the interval of a new observation of a group that is
+#'     present in the fitting data. The quantities over which the average is
+#'     taken are set by `predictive`, described below.}
 #' }
 #'
 #' `interval = "group"` and `interval = "prediction"` are rejected for a
@@ -222,9 +226,9 @@ predict_moments <- function() {
 #' A new observation varies for three reasons: the family itself, the effects
 #' of a new group where `random` sets them aside, and the error in the
 #' estimates. The first two are random in the model and always enter. The
-#' third is what `predictive` decides. It does so for every parameter alike,
-#' whether the family has one parameter (a Poisson) or several, and whether or
-#' not a parameter has covariates.
+#' third enters according to `predictive`, for every parameter alike, whether
+#' the family has one parameter (a Poisson) or several, and whether or not a
+#' parameter has covariates.
 #' \describe{
 #'   \item{`"averaged"`}{the default. The family is averaged over the
 #'     predictors at the fit's estimates with the covariance of the estimates
@@ -234,18 +238,19 @@ predict_moments <- function() {
 #'     over their approximate sampling distribution, centered at the fit. For
 #'     a Gaussian with a constant \eqn{\sigma = e^{\gamma_0}},
 #'     \eqn{\hat\gamma_0} of variance \eqn{v}, the variance of a new observation is
-#'     \eqn{\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}}, the
-#'     last term being the average of \eqn{\hat\sigma^{*2}} over that
+#'     \eqn{\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}}, where
+#'     the last term is the average of \eqn{\hat\sigma^{*2}} over that
 #'     distribution.}
-#'   \item{`"plugin"`}{the family at the estimates, averaged over the effects
-#'     alone: the estimative interval, which ignores the error in the
+#'   \item{`"plugin"`}{the family at the estimates, averaged only over the
+#'     effects: the estimative interval, which ignores the error in the
 #'     estimates and so covers less than the level in a small sample.}
 #'   \item{`"bootstrap"`}{the parametric bootstrap predictive distribution
-#'     itself: `n_boot` responses simulated from the fit, with the random
-#'     effects drawn afresh, each refitted, and the family at each refit
-#'     averaged over the effects. `boot_refit = "coefficients"` refits at the
-#'     fit's hyperparameters; `"full"` chooses them again on every replica, so
-#'     their uncertainty enters too, at the cost of a whole fit each. It is
+#'     itself: `n_boot` responses are simulated from the fit with the random
+#'     effects drawn afresh, each response is refitted, and the family at each
+#'     refit is averaged over the effects. `boot_refit = "coefficients"`
+#'     refits at the fit's hyperparameters; `"full"` chooses them again on
+#'     every replica, so their uncertainty enters too, at the cost of a whole
+#'     fit each. It is
 #'     rejected for a model with a block that moves with its coefficients
 #'     ([modelterms7::seg()], [modelterms7::jump()], [modelterms7::jseg()],
 #'     [modelterms7::nl()]), for a response that is not one number per
@@ -267,8 +272,8 @@ predict_moments <- function() {
 #' that shares a label with an effect read with its own estimate, or with one
 #' written inside a subformula, is rejected.
 #'
-#' A forecast's standard error, with `se = TRUE`, is the uncertainty of the
-#' estimated parameters alone, carried by the delta method through the
+#' A forecast's standard error, with `se = TRUE`, is only the uncertainty of
+#' the estimated parameters, carried by the delta method through the
 #' continued recursion, whose derivative is exact. A forecast also carries
 #' the uncertainty of the future scores, which the delta method does not
 #' reach, so the standard error and the interval leave it out, and a warning
@@ -289,32 +294,34 @@ predict_moments <- function() {
 #'   their own, and rows without it continue the fitted series. A data frame
 #'   with no rows signals an error.
 #' @param se `TRUE` to report the standard error and an interval as well.
-#'   `FALSE` by default. A moment has no standard error, and `se = TRUE` with
-#'   a moment signals an error. `interval = "group"` sets it to `TRUE`, and
-#'   `interval = "prediction"` does not read it, its result carrying its own
-#'   `se` column.
+#'   The default is `FALSE`. A moment has no standard error, and `se = TRUE`
+#'   with a moment signals an error. `interval = "group"` sets it to `TRUE`, and
+#'   `interval = "prediction"` does not read it, because its result carries
+#'   its own `se` column.
 #' @param level The interval's level, `0.95` by default, a single number
 #'   strictly between 0 and 1. It is read wherever an interval is returned:
 #'   with `se = TRUE`, with `interval = "group"` and with
 #'   `interval = "prediction"`, which gives its interval without `se`.
 #' @param random How a [modelterms7::random()] term is read:
 #'   `"conditional"` (the default) with each group's own estimated effect, so
-#'   a level the fit never saw signals an error; `"zero"` with every effect at
-#'   zero, the typical group; `"marginal"` averaged over the prior that the fit
-#'   estimated, the population average \eqn{E_b[h^{-1}(\eta + z^\top b)]}.
-#'   A single string applies to every such term; a character vector named by
-#'   the terms' keys chooses term by term, the rest staying conditional. See
-#'   the section on new groups.
+#'   a level that is absent from the fitting data signals an error; `"zero"`
+#'   with every effect at zero, the typical group; `"marginal"` averaged over
+#'   the prior that the fit estimated, the population average
+#'   \eqn{E_b[h^{-1}(\eta + z^\top b)]}. A single string applies to every such
+#'   term; a character vector named by the terms' keys sets the mode term by
+#'   term, and the terms that it does not name stay conditional. See the section
+#'   on new groups.
 #' @param interval `"confidence"` (the default), `"group"` or
 #'   `"prediction"`. See the section on intervals.
-#' @param predictive With `interval = "prediction"`, what the family is
-#'   averaged over: `"averaged"` (the default), `"plugin"` or `"bootstrap"`.
+#' @param predictive With `interval = "prediction"`, the quantities over
+#'   which the family is averaged: `"averaged"` (the default), `"plugin"` or
+#'   `"bootstrap"`.
 #'   See the section on the predictive distribution.
-#' @param n_boot The number of bootstrap replicas, `200` by default. Read only
-#'   where `predictive = "bootstrap"`.
+#' @param n_boot The number of bootstrap replicas, `200` by default. It is
+#'   read only where `predictive = "bootstrap"`.
 #' @param boot_refit `"coefficients"` (the default), refitting each replica
-#'   at the fit's hyperparameters, or `"full"`, choosing them again. Read only
-#'   where `predictive = "bootstrap"`.
+#'   at the fit's hyperparameters, or `"full"`, choosing them again. It is
+#'   read only where `predictive = "bootstrap"`.
 #' @param ... Only `type`, the variance type of [vcov.StatmodFit()]: the
 #'   Bayesian variance, the frequentist one or the unconditional one, which
 #'   also accounts for the estimated smoothing parameters. It is read where
@@ -322,8 +329,7 @@ predict_moments <- function() {
 #'   `interval = "prediction"` and `predictive = "averaged"`, and it signals an
 #'   error elsewhere. Any other argument signals an error that names it. The
 #'   unconditional variance differs most from the others in a band around a
-#'   penalized term, since it is the fitted values that a smoothing
-#'   parameter moves.
+#'   penalized term, since a smoothing parameter moves the fitted values.
 #' @return With `se = FALSE`, a numeric vector with one value per row of
 #'   `newdata` (of the fitting data where `newdata` is `NULL`) when `what`
 #'   names one quantity, and a named list of such vectors for `"parameter"`
@@ -340,32 +346,34 @@ predict_moments <- function() {
 #'   predictor reads a coefficient that has no variance.
 #' @seealso [fitted.StatmodFit()] for one parameter's fitted values,
 #'   [residuals.StatmodFit()] for the matched diagnostic,
-#'   [vcov.StatmodFit()] for the variance the standard errors come from.
+#'   [vcov.StatmodFit()] for the variance from which the standard errors are
+#'   computed.
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(60))
 #' dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
 #' fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #'
-#' # One parameter, and one of the family's moments.
+#' # One parameter and one of the family's moments are predicted.
 #' head(predict(fit, "mu"))
 #' head(predict(fit, "variance"))
 #'
-#' # A parameter's predictor instead of its value.
+#' # The predictor of a parameter is returned instead of its value.
 #' head(predict(fit, "link:sigma"))
 #'
-#' # For a Gaussian the mean is mu and the variance is sigma squared, which
-#' # is what the moments come to.
+#' # For a Gaussian the mean is mu and the variance is sigma squared, and the
+#' # moments of the fit return these values.
 #' all.equal(predict(fit, "mean"), predict(fit, "mu"))
 #' all.equal(predict(fit, "variance"), predict(fit, "sigma")^2)
 #'
-#' # With an interval.
+#' # The result carries an interval as well.
 #' head(predict(fit, "mu", se = TRUE))
 #'
-#' # Every parameter at once, on either scale.
+#' # Every parameter is returned at once, on either scale.
 #' str(predict(fit, "parameter"))
 #'
-#' # A new group: the typical one, and the population average.
+#' # For a new group, the prediction is the typical one or the population
+#' # average.
 #' gg <- data.frame(g = factor(rep(letters[1:12], each = 10)),
 #'                  x = rnorm(120))
 #' gg$y <- rpois(120, exp(0.5 + 0.3 * gg$x + rnorm(12, sd = 0.6)[gg$g]))
@@ -375,7 +383,8 @@ predict_moments <- function() {
 #' predict(fg, "mu", new, random = "zero")
 #' predict(fg, "mu", new, random = "marginal")
 #'
-#' # The interval of a new group's mean, and of a new count from it.
+#' # The calls return the interval of a new group's mean and of a new count
+#' # from it.
 #' predict(fg, "mu", new, random = "zero", interval = "group")
 #' predict(fg, "response", new, random = "zero", interval = "prediction",
 #'         predictive = "plugin")
@@ -447,7 +456,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   }
   if (!identical(predictive, "averaged") && !identical(interval, "prediction")) {
     stop(paste0("'predictive' is read only with interval = \"prediction\", ",
-                "where it names what\n  the interval averages over."),
+                "where it names the\n  quantities over which the interval is averaged."),
          call. = FALSE)
   }
   if (identical(predictive, "bootstrap") &&
@@ -468,8 +477,8 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   }
   if (identical(what, "response") && !identical(interval, "prediction")) {
     stop(paste0("The response is predicted with interval = \"prediction\": ",
-                "what it has is a\n  distribution, not a value to report ",
-                "alone."), call. = FALSE)
+                "it has a\n  distribution, not a single value ",
+                "to report."), call. = FALSE)
   }
   if (identical(interval, "prediction") && !identical(what, "response")) {
     stop(paste0("interval = \"prediction\" is an interval for a new ",
@@ -522,8 +531,8 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     error = function(e) {
       if (grepl("was not present at build time", conditionMessage(e),
                 fixed = TRUE)) {
-        stop(paste0(conditionMessage(e), "\n  A group the fit never saw ",
-                    "has no effect of its own. Where the model has no\n",
+        stop(paste0(conditionMessage(e), "\n  A group that was not in the ",
+                    "fitting data has no effect of its own. Where the model has no\n",
                     "  structural term, predict(random = \"zero\") reads it as ",
                     "the typical group and\n  random = \"marginal\" averages ",
                     "over the prior."),
@@ -641,7 +650,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
       if (nrow(mt)) {
         stop(paste0("se = TRUE is not available where random effects ",
                     "written in an equation and\n  inside a subformula are ",
-                    "both averaged over. Each kind alone is."),
+                    "both averaged over. Each kind is available on its own."),
              call. = FALSE)
       }
       for (p in unique(nest$param[nm])) {
@@ -706,18 +715,19 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
 }
 S7::method(predict, StatmodFit) <- predict.StatmodFit
 
-#' The Equations a Prediction Does Not Read
+#' The Equations That a Prediction Does Not Read
 #'
 #' @description
-#' The distribution parameters whose equations [predict.StatmodFit()] can
-#' leave unbuilt: those other than `what` whose variables `newdata` does not
-#' carry, where `what` names one parameter.
+#' Returns the distribution parameters whose equations
+#' [predict.StatmodFit()] can leave unbuilt. These are the parameters other
+#' than `what` whose variables `newdata` does not carry, where `what` names
+#' one parameter.
 #'
 #' @details
-#' A prediction of one parameter reads that parameter's equation alone, so
+#' A prediction of one parameter reads only that parameter's equation, so
 #' the covariates of the other equations need not be in `newdata`: on
 #' `accel ~ s(times) | sigma ~ z`, `predict(fit, what = "mu", newdata)` does
-#' not need `z`. Nothing is left out where `what` is not the name of a
+#' not need `z`. Every equation is built where `what` is not the name of a
 #' parameter (`"parameter"`, `"link"`, `"link:<parameter>"` or a moment),
 #' where `interval` is not `"confidence"`, or where the model carries a
 #' structural term, whose recursion reads the predictors of every equation.
@@ -753,15 +763,15 @@ predict_unread <- function(object, what, newdata, interval = "confidence") {
 #' The Message for an Unrecognized Prediction Target
 #'
 #' @description
-#' Builds the error [predict.StatmodFit()] signals when `what` names
-#' nothing it can compute, listing this family's own parameter names, the
-#' moments and the collective targets.
+#' Builds the error that [predict.StatmodFit()] signals when `what` names
+#' nothing that it can compute, listing this family's own parameter names,
+#' the moments and the collective targets.
 #'
 #' @details
 #' The family's parameters are listed by name rather than described, since
 #' they differ from family to family. A data frame passed where `what`
-#' belongs, which is the mistake [stats::predict()]'s argument order
-#' invites, is recognized and named separately.
+#' belongs, which is the mistake that the argument order of
+#' [stats::predict()] invites, is recognized and named separately.
 #'
 #' @param what The name that was passed, for the message.
 #' @param params The family's parameter names, in the family's order.
@@ -785,15 +795,15 @@ unknown_what <- function(what, params) {
 #' @title The Fitted Values of a Model
 #' @name fitted.StatmodFit
 #' @description
-#' One distribution parameter's fitted values, as a vector with one value per
-#' row of the fitting data.
+#' Returns one distribution parameter's fitted values, as a vector with one
+#' value per row of the fitting data.
 #' @details
 #' The result is one vector, never the whole set, so that this and
 #' [residuals.StatmodFit()] are a matched pair and a diagnostic drawn from
 #' them needs no unpacking.
 #'
 #' The default is the first parameter, not the mean. A family may have no
-#' mean, a Cauchy being one, whereas every family has a first parameter.
+#' mean (a Cauchy has none), whereas every family has a first parameter.
 #'
 #' The whole set at once is `predict(fit, "parameter")`, and the mean, where
 #' it exists, is `predict(fit, "mean")`.
@@ -830,8 +840,8 @@ S7::method(fitted, StatmodFit) <- fitted.StatmodFit
 #' The Uncertainty of a Predicted Predictor
 #'
 #' @description
-#' The standard error of each equation's linear predictor, and of the
-#' parameter it gives, with an interval.
+#' Computes the standard error of each equation's linear predictor, and of
+#' the parameter that the predictor gives, with an interval.
 #'
 #' @details
 #' # The delta method, equation by equation
@@ -841,17 +851,19 @@ S7::method(fitted, StatmodFit) <- fitted.StatmodFit
 #' coefficients as estimated: the coordinates, since the design is written in
 #' them, not the quantities that [coef.StatmodFit()] reports by default.
 #'
-#' The equations do not mix. One equation's predictor reads that equation's
-#' coefficients alone, whatever the covariance between the blocks. A
+#' The equations do not mix. One equation's predictor reads only the
+#' coefficients of that equation, whatever the covariance between the
+#' blocks. A
 #' predictor that reads no coefficient (an equation written as `~ 0`, or an
-#' offset alone) is a known constant, with a standard error of zero.
+#' equation with only an offset) is a known constant, with a standard error
+#' of zero.
 #'
 #' # A term whose block moves needs no special case
 #'
 #' Its block is the Jacobian \eqn{\partial\eta/\partial\beta} by
-#' construction, that being why a linear fit on it is a Gauss-Newton step,
-#' so the row already is the derivative and the delta method is exact to
-#' first order. That covers [modelterms7::seg()], [modelterms7::nl()] and a
+#' construction, which is why a linear fit on it is a Gauss-Newton step.
+#' The row is therefore already the derivative, and the delta method is exact
+#' to first order. That covers [modelterms7::seg()], [modelterms7::nl()] and a
 #' smoothed [modelterms7::jump()] or [modelterms7::jseg()], including the
 #' parameters of a nonlinear term developed over covariates. A sharp
 #' [modelterms7::jump()] or [modelterms7::jseg()] is fitted as an ordinary
@@ -860,14 +872,16 @@ S7::method(fitted, StatmodFit) <- fitted.StatmodFit
 #'
 #' # The interval
 #'
-#' Built on the scale on which the equation is written and mapped back through the
-#' link, as every interval in this toolkit is. A scale parameter under a log
-#' link, for example, cannot have a negative lower end.
+#' The interval is built on the scale on which the equation is written and
+#' mapped back through the link, as every interval in this toolkit is. A
+#' scale parameter under a log link, for example, cannot have a negative
+#' lower end.
 #'
 #' # A coefficient with no variance carries none forward
 #'
 #' An entry of the variance that is not finite blanks the standard error of
-#' the rows whose design reaches it, and of no other row. An aliased
+#' the rows whose design reaches it, and does not blank that of any other
+#' row. An aliased
 #' coefficient is such a case. The position of a sharp break-point term is
 #' held and has no variance either, but its column of the design is zero, so
 #' it blanks no row.
@@ -967,16 +981,16 @@ predict_se <- function(object, spec, design, ep, level = 0.95, ...) {
 }
 
 
-#' The Shape a Prediction With Its Uncertainty Comes Back In
+#' The Shape in Which a Prediction With Its Uncertainty Is Returned
 #'
 #' @description
-#' The rows [predict_se()] computed, reduced to the quantity requested.
+#' Reduces the rows that [predict_se()] computed to the quantity requested.
 #'
 #' @details
-#' The vocabulary is the one that a prediction without uncertainty answers,
-#' minus the moments: a moment's delta method needs its derivative in every
-#' parameter, which \pkg{distributions7} does not offer as a generic, so a
-#' moment signals an error.
+#' The accepted values of `what` are those of a prediction without
+#' uncertainty, minus the moments: a moment's delta method needs its
+#' derivative in every parameter, which \pkg{distributions7} does not provide
+#' as a generic, so a moment signals an error.
 #'
 #' @param su The per-parameter tables.
 #' @param what The quantity requested, as in [predict.StatmodFit()].
@@ -1013,12 +1027,12 @@ se_answer <- function(su, what, params, spec) {
 #' The Derivative Row of an Equation Carrying a Structural Term
 #'
 #' @description
-#' The derivative of the predictor of the equation carrying a structural
-#' term, one row per observation, in every coordinate of the variance matrix
-#' it moves with: the coefficients of every equation and the term's free
-#' parameters on their unconstrained scale. A score-driven term is read
-#' through [filter_joint_jacobian()] and a term of the likelihood shape
-#' through [loglik_shift_jacobian()].
+#' Returns the derivative of the predictor of the equation that carries a
+#' structural term, one row per observation, in every coordinate of the
+#' variance matrix on which the predictor depends: the coefficients of every
+#' equation and the term's free parameters on their unconstrained scale. A
+#' score-driven term is read through [filter_joint_jacobian()] and a term of
+#' the likelihood shape through [loglik_shift_jacobian()].
 #'
 #' @details
 #' A filter's level is a recursion, not a column, so it has no row of a
@@ -1036,7 +1050,7 @@ se_answer <- function(su, what, params, spec) {
 #' @param design Its design.
 #' @param ep The predictors, as [statmod_eta()] returns them.
 #' @param p The distribution parameter whose equation is being read.
-#' @param coef The coefficients the predictors were evaluated at.
+#' @param coef The coefficients at which the predictors were evaluated.
 #'
 #' @return A list with `X` (the derivative rows) and `key` (the names of
 #'   their columns in the variance matrix), or `NULL` where the equation
@@ -1065,11 +1079,11 @@ structural_se_columns <- function(spec, design, ep, p, coef) {
 #' The Derivative Row of an Equation Carrying a Likelihood Mixed Over States
 #'
 #' @description
-#' The derivative of the posterior-weighted predictor of the equation that a
-#' structural term of the likelihood shape (a regime term or a marginal
-#' break-point term) shifts, one row per observation, in the coefficients of
-#' every equation and the term's free parameters on their unconstrained
-#' scale.
+#' Returns the derivative of the posterior-weighted predictor of the equation
+#' that a structural term of the likelihood shape (a regime term or a
+#' marginal break-point term) shifts, one row per observation, in the
+#' coefficients of every equation and the term's free parameters on their
+#' unconstrained scale.
 #'
 #' @details
 #' The predictor is the static part plus the posterior mean of the term's
@@ -1154,13 +1168,13 @@ loglik_shift_jacobian <- function(spec, design, coef) {
 #' The Forward Jacobian of a Filter in Every Coordinate
 #'
 #' @description
-#' The derivative of the predictor that a score-driven term produces, in the
-#' coefficients of every equation followed by the term's free parameters on
-#' their unconstrained scale, at each observation, together with the static
-#' rows of every equation in the same columns.
+#' Returns the derivative of the predictor that a score-driven term produces,
+#' in the coefficients of every equation followed by the term's free
+#' parameters on their unconstrained scale, at each observation, together
+#' with the static rows of every equation in the same columns.
 #'
 #' @details
-#' The rows are the ones the joint information is assembled from
+#' The rows are those from which the joint information is assembled
 #' ([statmod_full_information()]): each equation's design placed in its own
 #' columns, and for the filter's equation the Jacobian that
 #' [modelterms7::term_curvature()] propagates beside the state. A model
@@ -1172,13 +1186,13 @@ loglik_shift_jacobian <- function(spec, design, coef) {
 #' @param coef The coefficients.
 #'
 #' @return `NULL` where the model carries no filter, otherwise a list with
-#'   `J` (the filter equation's rows), `V` (every equation's rows, the
-#'   filter's being `J`), `H` (the family's second derivatives on the link
+#'   `J` (the filter equation's rows), `V` (every equation's rows, of which
+#'   the filter's is `J`), `H` (the family's second derivatives on the link
 #'   scale), `Hd` (the derivatives of the filter's driving quantity, which
 #'   are `H` where the filter is not scaled), `ap` (the index of the filter's
 #'   parameter), `nb` (the number of coefficient columns), `key` (the names of
 #'   the columns in the variance matrix) and `free` (the term's free
-#'   parameters), all columns restricted to the free ones.
+#'   parameters). All columns are restricted to the free ones.
 #'
 #' @seealso [structural_se_columns()], [continued_deriv_inputs()]
 #'
@@ -1217,19 +1231,19 @@ filter_joint_jacobian <- function(spec, design, coef) {
 #' Predictors at Rows That Continue the Series
 #'
 #' @description
-#' The linear predictors and the parameters at new rows for a model carrying
-#' a structural term, with the term's own recursion carried forward from
-#' where the fitting data left it.
+#' Computes the linear predictors and the parameters at new rows for a model
+#' that carries a structural term, whose own recursion continues from where
+#' the fitting data left it.
 #'
 #' @details
-#' The static part is the ordinary assembly: each term's block reapplied at
-#' the new rows, the offsets re-evaluated there. What cannot be reapplied is
-#' the structural term, whose contribution at one row is the state that a
-#' recursion has reached over every row before it. The fit is therefore run
-#' once at the observed rows to recover that state -- the level and the
-#' driving quantity at each of them, the level being the difference between
-#' the filtered predictor and the static one -- and the term continues from
-#' there through [modelterms7::term_continue()].
+#' The static part is the ordinary assembly: each term's block is reapplied
+#' at the new rows, and the offsets are re-evaluated there. The structural
+#' term cannot be reapplied, because its contribution at one row is the state
+#' that a recursion has reached over every row before it. The fit is
+#' therefore run once at the observed rows to recover that state, which
+#' consists of the level and the driving quantity at each of them (the level
+#' is the difference between the filtered predictor and the static one), and
+#' the term continues from there through [modelterms7::term_continue()].
 #'
 #' Only rows without the response are continued, and they must come after
 #' the observed series. Rows that carry it are a series of their own, rebuilt
@@ -1237,14 +1251,14 @@ filter_joint_jacobian <- function(spec, design, coef) {
 #' `predict(fit, newdata = <the fitting data>)` returns the fitted values.
 #'
 #' A term whose contribution is a likelihood mixed over latent states is
-#' rejected: what such a term reports at an observed row is a posterior over
-#' states, which past the data is a predictive distribution, no single
-#' value.
+#' rejected, because such a term reports a posterior over states at an
+#' observed row, and past the data this posterior is a predictive
+#' distribution and not a single value.
 #'
 #' With `deriv = TRUE` the continuation is differentiated as well, in the
 #' coefficients of every equation and the term's free parameters
-#' ([continued_deriv_inputs()]), which is what a standard error of the
-#' forecast reads.
+#' ([continued_deriv_inputs()]), and a standard error of the forecast reads
+#' this derivative.
 #'
 #' @param fit The fitted model.
 #' @param spec The specification at the new data.
@@ -1332,16 +1346,16 @@ statmod_eta_continued <- function(fit, spec, design, deriv = FALSE) {
 }
 
 
-#' What the Derivative of a Continued Filter Starts From
+#' The Inputs to the Derivative of a Continued Filter
 #'
 #' @description
-#' The derivatives of the level and of the score at the observed rows, and of
-#' the term's parameters, in the coordinates the variance matrix of the fit
-#' is written in: the coefficients of every equation followed by the term's
-#' free parameters on their unconstrained scale.
+#' Returns the derivatives of the level and of the score at the observed
+#' rows, and of the term's parameters, in the coordinates in which the
+#' variance matrix of the fit is written: the coefficients of every equation
+#' followed by the term's free parameters on their unconstrained scale.
 #'
 #' @details
-#' The coordinates are the ones [structural_se_columns()] uses for a
+#' The coordinates are those that [structural_se_columns()] uses for a
 #' prediction at the observed rows, so a forecast and a fitted value are
 #' read against the same rows and columns of the variance. The derivative of
 #' the filtered predictor at an observed row is the forward Jacobian of
@@ -1354,9 +1368,9 @@ statmod_eta_continued <- function(fit, spec, design, deriv = FALSE) {
 #' filter is not scaled, the driving quantity is the score and
 #' \eqn{\ell_{pb,t}} is the family's second derivative on the link scale;
 #' where it is scaled, \eqn{\ell_{pb,t}} is the derivative that
-#' `filter_driving()` returns. A parameter's derivative in its own
-#' unconstrained coordinate is its link's, and one for a coefficient of a
-#' development.
+#' `filter_driving()` returns. The derivative of a parameter in its own
+#' unconstrained coordinate is that of its link, and for a coefficient of a
+#' development it is one.
 #'
 #' @param ospec,odesign The fit's specification and design.
 #' @param coef The coefficients.
@@ -1406,16 +1420,16 @@ continued_deriv_inputs <- function(ospec, odesign, coef, f, ost, tm) {
 #' Whether New Rows Carry the Response
 #'
 #' @description
-#' `TRUE` where every row has one, `FALSE` where none does, and an
-#' error where some do.
+#' Returns `TRUE` where every row has the response, `FALSE` where every row
+#' lacks it, and signals an error where some rows have it and others do not.
 #'
 #' @details
-#' It is what separates a re-reading of a model on another series from a
-#' continuation of the one it was fitted to, and the separation has to be
-#' all-or-nothing: a filter's recursion at one row reads the rows before it,
-#' so a frame carrying the response on some rows only describes neither
-#' operation, and answering it would mean choosing one of the two readings
-#' for the caller.
+#' The distinction separates a re-reading of a model on another series from a
+#' continuation of the series to which the model was fitted, and it has to be
+#' all-or-nothing. The recursion of a filter at one row reads the rows before
+#' it, so a frame that carries the response on some rows only describes
+#' neither operation, and any answer would require choosing one of the two
+#' readings for the caller.
 #'
 #' @param y The response as the specification carries it.
 #'

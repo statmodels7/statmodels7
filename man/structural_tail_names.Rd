@@ -15,7 +15,7 @@ structural_tail_names(spec, design)
 A character vector, empty where there is no structural term.
 }
 \description{
-The free parameters of every structural term, under the names a
+Returns the free parameters of every structural term, under the names that a
 coefficient of the same term would carry.
 }
 \details{

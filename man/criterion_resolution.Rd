@@ -27,8 +27,8 @@ available. Where the mode error exceeds \code{\link[=mode_error_limit]{mode_erro
 carries the attribute \code{mode_error}, which holds that error.
 }
 \description{
-The size of a difference in the criterion that carries no information,
-computed from the fit at the point.
+Computes the size of a difference in the criterion that carries no
+information, from the fit at the point.
 }
 \details{
 The criterion is read at the penalized mode, and the inner fit stops short
@@ -42,9 +42,9 @@ at given coefficients gives it, with no refit.
 
 The criterion carries \eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which
 is not stationary in \eqn{\beta}, so a mode error enters it at first order
-and the quadratic form \eqn{\tfrac{1}{2} g' K^{-1} g} alone does not bound
-the change. The criterion is therefore evaluated at the displaced
-coefficients.
+and the quadratic form \eqn{\tfrac{1}{2} g' K^{-1} g} does not bound
+the change by itself. The criterion is therefore
+evaluated at the displaced coefficients.
 
 The reading estimates the spread of the criterion across warm starts. It is
 usually below that spread, because the spread is a range over several paths

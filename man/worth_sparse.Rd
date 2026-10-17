@@ -18,9 +18,10 @@ sparse factorization is used.}
 A single logical.
 }
 \description{
-Whether a symmetric matrix is large enough and sparse enough that a sparse
-Cholesky factorization is used in place of a dense one. The decision depends
-on the matrix alone: no term, no model and no caller's preference enters.
+Returns whether a symmetric matrix is large enough and sparse enough that a
+sparse Cholesky factorization is used in place of a dense one. The decision
+depends only on the matrix, and not on any term, any model or any
+preference of the caller.
 }
 \details{
 A matrix is factorized sparsely when it is stored as an S4 sparse matrix,
@@ -30,7 +31,7 @@ slower, because its fixed cost is the coercion and the S4 dispatch around it,
 which does not shrink with the matrix. The size condition prevents this on
 the fully dense penalized information of a single smooth.
 
-\strong{Both quantities are read from the matrix, and the first is its storage.}
+Both quantities are read from the matrix, and the first is its storage.
 A matrix held as a base matrix is never factorized sparsely, whatever its
 zeros. This is not a test of the term that produced the matrix.
 \code{\link[=statmod_information_at]{statmod_information_at()}} accumulates into the design's own kind, so the

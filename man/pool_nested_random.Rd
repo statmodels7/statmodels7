@@ -29,16 +29,17 @@ A random effect set aside contributes \eqn{z_i^\top u} at every row, with
 is read: zero for \code{random = "zero"}, a node of the prior for \code{"marginal"}.
 Inside a nonlinear term the effect enters the parameter, and the
 contribution of the term is not linear in it, so the columns cannot
-simply be set to zero as they are for a term written in an equation. With
-every row in the first level, writing \eqn{u} into that level's
+simply be set to zero as they are for a term written in an equation.
+Because every row is in the first level, writing \eqn{u} into that level's
 coefficients gives every row the effect \eqn{z_i^\top u}, and the term is
-evaluated at those coefficients by its own methods. A group that the fit
-never saw is read the same way, so it needs no effect of its own.
+evaluated at those coefficients by its own methods. A group that was not
+among the fitting rows is read the same way, so it needs no effect of its
+own.
 
-Two places are rewritten. At the fitting rows the term reads the stored
-design of the developed parameter, \code{blueprint$Z}, whose columns for the
-sub-term become the within-group rows (the sum of the group's columns, a
-row being non-zero in its own group's alone). At new rows the term
+At the fitting rows the term reads the stored design of the developed
+parameter, \code{blueprint$Z}, whose columns for the sub-term become the
+within-group rows (the sum of the group's columns, because a row is
+non-zero only in the columns of its own group). At new rows the term
 reapplies each sub-term through \code{\link[modelterms7:term_predict]{modelterms7::term_predict()}}, so the
 sub-term's grouping expression becomes the first level repeated.
 }

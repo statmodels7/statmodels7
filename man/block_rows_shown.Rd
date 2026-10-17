@@ -23,8 +23,9 @@ and the option is not set.}
 An integer vector of row positions.
 }
 \description{
-Every row of a short table, and of a long one the hyperparameters
-together with the first few coefficients, the rest reported as a count.
+Selects every row of a short table and, of a long one, the
+hyperparameters together with the first few coefficients. The summary
+reports the remaining rows as a count.
 }
 \details{
 A block of a few coefficients is printed whole. A long block is abridged to

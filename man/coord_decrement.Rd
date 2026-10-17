@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{coord_decrement}
 \alias{coord_decrement}
-\title{What One Coordinate Alone Would Buy}
+\title{The Decrement of One Coordinate}
 \usage{
 coord_decrement(g, A)
 }
@@ -15,7 +15,8 @@ coord_decrement(g, A)
 A numeric vector as long as \code{g}.
 }
 \description{
-\eqn{g_j^2/(2A_{jj})}, the decrement of the one-coordinate problem.
+Computes \eqn{g_j^2/(2A_{jj})}, the decrement of the one-coordinate
+problem.
 }
 \details{
 \code{\link[=statmod_certificate]{statmod_certificate()}} reads it for the boundary label, because a verdict
@@ -26,8 +27,8 @@ calls settled has already passed the test that the verdict applies. This
 keeps \code{flat} a label and not a verdict. It is a weaker reading than the
 joint decrement and is not used as a verdict.
 
-\code{Inf} where the diagonal or the gradient entry is not finite or the
-diagonal is not positive, so that such a coordinate is never called
+The result is \code{Inf} where the diagonal or the gradient entry is not finite
+or the diagonal is not positive, so that such a coordinate is never called
 settled.
 }
 \seealso{

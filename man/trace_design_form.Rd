@@ -15,7 +15,7 @@ trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL, key = NULL)
 
 \item{params, npar}{The parameter names and block sizes.}
 
-\item{tv}{The direction the derivative is contracted in.}
+\item{tv}{The direction in which the derivative is contracted.}
 
 \item{tu}{A second direction, for a fourth derivative; \code{NULL} for a
 third.}
@@ -30,8 +30,8 @@ positions only, and carries its own builder.}
 A single number.
 }
 \description{
-\eqn{\mathrm{tr}(M\,T)} where \eqn{T} is the third derivative of the
-penalized objective contracted once, or the fourth contracted twice.
+Computes \eqn{\mathrm{tr}(M\,T)} where \eqn{T} is the third derivative of
+the penalized objective contracted once, or the fourth contracted twice.
 }
 \details{
 \code{\link[=contract3]{contract3()}} and \code{\link[=contract4]{contract4()}} assemble

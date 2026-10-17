@@ -17,12 +17,13 @@ the Cholesky route accepted the matrix; and \code{min_ev} and \code{max_ev} when
 eigendecomposition rejected it.
 }
 \description{
-The three routes described at \code{\link[=pd_logdet]{pd_logdet()}}, on a dense matrix.
+Applies the three routes described at \code{\link[=pd_logdet]{pd_logdet()}} to a dense matrix.
 }
 \details{
-Split out so that \code{\link[=pd_factor]{pd_factor()}} can reach it as the fallback of
-the sparse route without restating the verdict: there is one place that
-decides whether a matrix is positive definite, and one set of thresholds.
+This function is split out so that \code{\link[=pd_factor]{pd_factor()}} can reach it as the
+fallback of the sparse route without restating the verdict: it is the one
+place that determines whether a matrix is positive definite, and it holds
+the one set of thresholds.
 }
 \seealso{
 \code{\link[=pd_logdet]{pd_logdet()}}

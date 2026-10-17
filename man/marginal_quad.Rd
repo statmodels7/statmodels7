@@ -26,9 +26,9 @@ marginal_quad(spec, eta0, Z, param, prior, what, kind, inv)
 As \code{\link[=random_marginal]{random_marginal()}}.
 }
 \description{
-The average over a new group's effect when the only effect set aside is
-one coordinate with a prior that is not Gaussian: each quantity is
-\eqn{\int q(\eta_0 + z u)\, f_b(u)\, du}, with \eqn{f_b} the prior's own
+Computes the average over a new group's effect when the only effect set
+aside is one coordinate with a prior that is not Gaussian. Each quantity
+is \eqn{\int q(\eta_0 + z u)\, f_b(u)\, du}, with \eqn{f_b} the prior's own
 density, computed by \code{\link[numericals7:quad_vec]{numericals7::quad_vec()}} over the rows at once.
 }
 \details{

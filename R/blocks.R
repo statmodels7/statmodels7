@@ -421,7 +421,7 @@ statmod_penalized_units <- function(spec, design) {
 #' @param offs Where each parameter's coefficients start in the stacked vector.
 #'
 #' @return `class_pieces()` a list with one element per member: the member's
-#'   piece (see [label_pieces()]) with `cols` and `index` added;
+#'   piece (see [label_pieces()]), to which `cols` and `index` are added;
 #'   `class_index()` and `class_zeta_cols()` an integer vector of `m * dim`
 #'   positions.
 #'
@@ -504,7 +504,8 @@ class_zeta_cols <- function(cl) {
 #' @param params The distribution's parameters, in order.
 #' @param offs Where each parameter's coefficients start in the stacked vector.
 #'
-#' @return A list of lists, one per member, each the piece with `joint` added.
+#' @return A list of lists, one per member; each is the piece to which `joint`
+#'   is added.
 #'   A coefficient member also carries `cols` and `index`. A structural member
 #'   carries `zcols` (positions among the term's own parameters), and its
 #'   `cols` and `index` are `NULL`.

@@ -51,7 +51,7 @@ NULL
 #' `sparse_criterion`.
 #'
 #' For a smooth penalty both families apply. A marginal criterion selects the
-#' hyperparameter that makes the data most likely with the coefficients
+#' hyperparameter that makes the data most likely after the coefficients are
 #' integrated out, and these select the one that predicts best.
 #'
 #' # Exact derivatives
@@ -70,10 +70,10 @@ NULL
 #' # Which effective degrees of freedom
 #'
 #' The trace runs over the whole coefficient vector, so a term's contribution
-#' reads the full penalized information, its couplings with the other blocks
-#' included. [statmod_edf()] reads each term's share from the diagonal block
-#' of the same full smoother matrix \eqn{(H+S)^{-1}H}, so the per-term numbers
-#' add up to \eqn{\tau}.
+#' reads the full penalized information, including the term's couplings with
+#' the other blocks. [statmod_edf()] reads each term's share from the diagonal
+#' block of the same full smoother matrix \eqn{(H+S)^{-1}H}, so the per-term
+#' numbers add up to \eqn{\tau}.
 #'
 #' Where a penalty has a kink the trace is restricted to the active
 #' coordinates, so for a lasso \eqn{\tau} is the number of surviving
@@ -83,10 +83,10 @@ NULL
 #'
 #' Classical GCV divides a residual sum of squares by \eqn{(n-\tau)^2}, which
 #' estimates an unknown scale. Here every distribution parameter carries its
-#' own equation and nothing is profiled, so there is no unknown scale for
-#' that ratio to estimate and the criterion degenerates to `aic()`. That is
-#' the substitution Wood (2008) makes in the other direction when the scale
-#' is known.
+#' own equation and the fit profiles no parameter, so there is no unknown
+#' scale for that ratio to estimate and the criterion degenerates to `aic()`.
+#' That is the substitution that Wood (2008) makes in the other direction when
+#' the scale is known.
 #'
 #' A GCV on the squared error of the fitted mean is a different and
 #' well-defined object. It would need the derivative of that mean in the
@@ -104,15 +104,17 @@ NULL
 #'
 #' @param k The price of one degree of freedom, a single non-negative finite
 #'   number. Defaults to 2, which is Akaike's. `k = log(n)` by hand is `bic()`.
-#'   A value that is not a single non-negative finite number is an error. `bic()` does not take it: its \eqn{\kappa} is
-#'   `NA` on the object and resolved to \eqn{\log n} when the model is fitted,
-#'   the sample size being unknown until then.
-#' @param hessian Which information the criterion is built on, `"observed"`
-#'   (the default) or `"expected"`. Matched with [match.arg()]. The exact
+#'   A value that is not a single non-negative finite number is an error.
+#'   `bic()` does not take it: its \eqn{\kappa} is `NA` on the object and is
+#'   resolved to \eqn{\log n} when the model is fitted, because the sample
+#'   size is unknown until then.
+#' @param hessian The information on which the criterion is built,
+#'   `"observed"` (the default) or `"expected"`. The argument is matched with
+#'   [match.arg()]. The exact
 #'   gradient is available on either wherever the family writes its expected
 #'   information out; the Hessian is exact on the observed one and is not
 #'   available on the expected one, where the search uses an optimizer that
-#'   needs the gradient alone. A family that does not write it out would read the
+#'   needs only the gradient. A family that does not write it out would read the
 #'   outer product of its scores at the data under the default
 #'   `iwls(approx = "opg")`, and [statmod()] rejects `"expected"` there: see
 #'   [assert_criterion_information()].
@@ -177,18 +179,19 @@ bic <- function(hessian = c("observed", "expected")) {
 #' [reml()] and [ml()], which are log-likelihoods and are maximized.
 #'
 #' @details
-#' The outer search always minimizes, so this decides whether the criterion
-#' goes in as it stands or with its sign turned. Reading the orientation from
-#' the method, and not from a list of kinds written into the search, lets a
-#' criterion added later declare its own orientation in one place.
+#' The outer search always minimizes, so the value returned here determines
+#' whether the criterion enters as it stands or after a change of sign. Reading
+#' the orientation from the method, and not from a list of kinds written into
+#' the search, lets a criterion added later declare its own orientation in one
+#' place.
 #'
 #' @param method An [OuterMethod()], as [reml()], [ml()], [aic()], [bic()] or
 #'   [cv()] returns it. Only its `kind` is read.
 #'
 #' @return A single logical.
 #'
-#' @seealso [outer_k()] for the other property of a criterion the search
-#'   reads, [aic()] for the criteria this answers `TRUE` for.
+#' @seealso [outer_k()] for the other property of a criterion that the search
+#'   reads, [aic()] for the criteria for which this returns `TRUE`.
 #'
 #' @keywords internal
 outer_minimize <- function(method) {
@@ -199,10 +202,11 @@ outer_minimize <- function(method) {
 #' The Price of One Degree of Freedom
 #'
 #' @description
-#' Returns \eqn{\kappa}, the price a prediction-error criterion charges for
+#' Returns \eqn{\kappa}, the price that a prediction-error criterion charges for
 #' one effective degree of freedom, resolved against the sample size where
-#' the method left it open. [bic()] stores `NA` and gets \eqn{\log n} here;
-#' every other criterion returns the `k` it was constructed with.
+#' the method left it open. [bic()] stores `NA`, which this function replaces
+#' by \eqn{\log n}; every other criterion returns the `k` with which it was
+#' constructed.
 #'
 #' @details
 #' The resolution happens at fit time because [bic()] takes no data, so
@@ -215,7 +219,7 @@ outer_minimize <- function(method) {
 #'
 #' @return A single number: \eqn{\log n} for [bic()], and `method@k` for
 #'   anything else, which is `NA_real_` for [reml()], [ml()] and [cv()],
-#'   none of which charges per degree of freedom.
+#'   and these three criteria charge nothing per degree of freedom.
 #'
 #' @seealso [aic()] for where `k` is set, [outer_minimize()] for the other
 #'   property read at the same point.
@@ -233,8 +237,8 @@ outer_k <- function(method, n) {
 #'
 #' @description
 #' Computes \eqn{\tau = \mathrm{tr}[(H+S)^{-1}H]}, the trace of the influence
-#' matrix, which is the effective degrees of freedom a prediction-error
-#' criterion charges for. An unpenalized fit has \eqn{S = 0} and
+#' matrix, which is the number of effective degrees of freedom charged by a
+#' prediction-error criterion. An unpenalized fit has \eqn{S = 0} and
 #' \eqn{\tau = p}; shrinkage lowers it, and \eqn{\tau} falls to the dimension
 #' of the penalty's null space as the hyperparameter grows.
 #'
@@ -244,7 +248,7 @@ outer_k <- function(method, n) {
 #' A penalty with a kink is not twice differentiable everywhere, and the mode
 #' of such a fit sits on the kink for every coefficient that it sets to zero. It
 #' is twice differentiable away from the kink, so the trace is taken over the
-#' active coordinates alone, which is the submodel the fit has selected.
+#' active coordinates only, which form the submodel that the fit has selected.
 #'
 #' For a penalty that is linear there, the lasso, \eqn{S_{AA}} vanishes and
 #' \eqn{\tau} is exactly the number of coefficients that survived, the
@@ -258,14 +262,15 @@ outer_k <- function(method, n) {
 #'
 #' # The inverse
 #'
-#' Through a Cholesky of \eqn{J}, and `NA_real_` when that fails, which is
-#' what a caller reads as an unusable point. Both matrices are densified
+#' The inverse is computed through a Cholesky factorization of \eqn{J}, and
+#' the result is `NA_real_` when that fails, which a caller reads as an
+#' unusable point. Both matrices are densified
 #' first: the trace needs the full inverse, which is dense whatever \eqn{J}
 #' was.
 #'
 #' @param J The penalized information \eqn{H + S}, a `p x p` symmetric
 #'   matrix, dense or sparse.
-#' @param H The likelihood's information alone, the same shape as `J`.
+#' @param H The likelihood's own information, of the same shape as `J`.
 #' @param active A logical vector over the stacked coefficients marking the
 #'   ones away from a kink, or `NULL` (the default) for all of them. Both
 #'   matrices are subset to it before the trace.
@@ -273,7 +278,7 @@ outer_k <- function(method, n) {
 #' @return A single number: the trace, `0` when `active` selects nothing, and
 #'   `NA_real_` when `J` has no Cholesky factor.
 #'
-#' @seealso [aic()] for the criterion this feeds,
+#' @seealso [aic()] for the criterion that this function feeds,
 #'   [statmod_edf()] for the per-term reading, which splits the same trace
 #'   by term.
 #'
@@ -300,21 +305,21 @@ outer_tau <- function(J, H, active = NULL) {
 #'
 #' @description
 #' Evaluates \eqn{-2\ell + \kappa\tau} at one set of coefficients and
-#' hyperparameters. The coefficients are taken as given and no fitting
-#' happens here, so the criterion at the penalized mode is obtained by passing
-#' the mode.
+#' hyperparameters. The coefficients are taken as given and the function does
+#' not fit the model, so the criterion at the penalized mode is obtained by
+#' passing the mode.
 #'
 #' @details
-#' The pieces are assembled once each: the weighted log-likelihood, the
-#' penalized information \eqn{H + S} and the information \eqn{H} alone, then
-#' [outer_tau()] for the trace and [outer_k()] for \eqn{\kappa}.
+#' Each piece is assembled once: the weighted log-likelihood, the
+#' penalized information \eqn{H + S} and the likelihood's own information
+#' \eqn{H}, then [outer_tau()] for the trace and [outer_k()] for \eqn{\kappa}.
 #'
 #' The penalty's own value is reported alongside but does not enter the
 #' criterion. A prediction-error criterion prices the fit's complexity
 #' through \eqn{\tau}, not through the size of the penalty.
 #'
-#' Where the penalty's Hessian is exactly zero on the active coordinates --
-#' a lasso and nothing else penalizing them -- the trace is
+#' Where the penalty's Hessian is exactly zero on the active coordinates, as
+#' happens when only a lasso penalizes them, the trace is
 #' \eqn{\mathrm{tr}(H_{AA}^{-1}H_{AA}) = |A|}, the count of Zou, Hastie and
 #' Tibshirani (2007), and it is returned as that count without forming
 #' \eqn{H_{AA}}. The
@@ -329,7 +334,8 @@ outer_tau <- function(J, H, active = NULL) {
 #' own intercept beside a lasso over indicators that sum to it, as in
 #' `nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))`. The count is therefore taken
 #' only where [design_count_exact()] certifies that every active subset has
-#' full rank, and [active_rank()] answers everywhere else.
+#' full rank, and [active_rank()] supplies the degrees of freedom everywhere
+#' else.
 #'
 #' The certificate costs one pivoted decomposition per equation and is read
 #' once where the design stands still, so a lasso path pays it at its first
@@ -343,17 +349,18 @@ outer_tau <- function(J, H, active = NULL) {
 #' @param method An [OuterMethod()] of kind `"aic"` or `"bic"`, read for
 #'   `hessian` and for \eqn{\kappa}.
 #' @param approx How the expected information is approximated for a family
-#'   with no closed form. Read only when `method@hessian` is `"expected"`.
+#'   with no closed form. The argument is read only when `method@hessian` is
+#'   `"expected"`.
 #' @param active Which coefficients are away from a kink, as
-#'   [statmod_active()] reports them, or `NULL` where no penalty has one.
+#'   [statmod_active()] reports them, or `NULL` if no penalty has one.
 #'
 #' @return A list with the components below, or `NULL` when the penalized
 #'   information has no Cholesky factor or the trace is not finite:
 #'   \describe{
 #'     \item{`value`}{the criterion, \eqn{-2\ell + \kappa\tau}.}
 #'     \item{`loglik`}{the weighted log-likelihood at `coef`.}
-#'     \item{`penalty`}{the penalties' total value there. Reported for the
-#'       caller; it does not enter `value`.}
+#'     \item{`penalty`}{the penalties' total value there. It is reported for
+#'       the caller and does not enter `value`.}
 #'     \item{`edf`}{the trace \eqn{\tau}.}
 #'   }
 #'
@@ -397,26 +404,26 @@ statmod_pe <- function(spec, design, coef, hyper, method,
 #' Is the Count of the Active Coordinates Their Rank?
 #'
 #' @description
-#' `TRUE` where every equation's design has full column rank, which is
+#' Returns `TRUE` where every equation's design has full column rank, which is
 #' sufficient for every subset of the active coordinates to have full rank as
 #' well, so that \eqn{|A|} is \eqn{\mathrm{rank}(X_A)} whatever the active set
 #' turns out to be.
 #'
 #' @details
-#' The question that [statmod_pe()] answers concerns one active set at one
-#' point, and answering it there would cost a decomposition per evaluation. Full column
-#' rank of the whole design answers it for every active set at once, so it is
-#' read once and reused, which is what keeps the count free on the path it was
-#' introduced for.
+#' The rank condition that [statmod_pe()] needs concerns one active set at one
+#' point, and checking it there would cost a decomposition per evaluation.
+#' Full column rank of the whole design implies the condition for every
+#' active set at once. The result is therefore computed once and reused, which
+#' keeps the count free on the path for which it was introduced.
 #'
 #' The answer is kept in the design's `eta_memo` environment, keyed on the
 #' column counts, which is safe because that environment is built fresh with
 #' each design. A term registering `modelterms7::term_refresh()` recomputes
 #' its block as the coefficients move, so the same column counts do not imply
-#' the same columns and a memo that cannot see the refresh must not answer;
-#' there the certificate is declined outright and [active_rank()] runs
-#' instead. That route is a decomposition of \eqn{X_A}, where the trace needs
-#' the cross product of the same columns.
+#' the same columns, and a memo cannot detect the refresh and must not be
+#' used; for such a design the function returns `FALSE` and [active_rank()]
+#' runs instead. That route is a decomposition of \eqn{X_A}, where the trace
+#' needs the cross product of the same columns.
 #'
 #' A design carrying a structural term has no `eta_memo` either, so there the
 #' certificate is recomputed at each call and costs one decomposition per
@@ -428,8 +435,9 @@ statmod_pe <- function(spec, design, coef, hyper, method,
 #'
 #' @return A single logical.
 #'
-#' @seealso [active_rank()], which answers for one active set where this
-#'   declines, and [block_column_rank()] for the decomposition both read.
+#' @seealso [active_rank()], which computes the rank for one active set where
+#'   this function returns `FALSE`, and [block_column_rank()] for the
+#'   decomposition that both read.
 #'
 #' @keywords internal
 design_count_exact <- function(design) {
@@ -455,9 +463,9 @@ design_count_exact <- function(design) {
 #' The Rank of the Active Columns
 #'
 #' @description
-#' \eqn{\mathrm{rank}(X_A)}, the degrees of freedom of a fit whose penalty is
-#' flat on the active block (Tibshirani and Taylor, 2012), summed over the
-#' equations the active coordinates belong to.
+#' Computes \eqn{\mathrm{rank}(X_A)}, the degrees of freedom of a fit whose
+#' penalty is flat on the active block (Tibshirani and Taylor, 2012), summed
+#' over the equations to which the active coordinates belong.
 #'
 #' @details
 #' The information is block diagonal over the equations wherever the family's
@@ -493,19 +501,19 @@ active_rank <- function(design, act) {
 #' The Column Rank of One Design Block
 #'
 #' @description
-#' The number of linearly independent columns, by the pivoted decomposition
-#' that the fit's own solve uses, so that the two agree on which columns a
-#' model identifies.
+#' Returns the number of linearly independent columns, computed by the pivoted
+#' decomposition that the fit's own solve uses, so that the two agree on which
+#' columns a model identifies.
 #'
 #' @details
-#' A dense block goes through `qr()`, at `dqrdc2`'s own tolerance, which is
-#' what [augmented_solve()] reads. A sparse one goes through `Matrix::qr()`
-#' and its rank is counted on the JACOBI-EQUILIBRATED diagonal of the
-#' triangular factor, which is the correction [sparse_augmented_solve()]
-#' already carries: since \eqn{R'R = A'A}, scaling the columns by their norms
-#' scales that diagonal by the same factors, so a block whose columns differ
-#' in size is not read as deficient while an exact dependence stays exactly
-#' singular.
+#' A dense block goes through `qr()`, at the tolerance of `dqrdc2`, which is
+#' the tolerance that [augmented_solve()] uses. A sparse one goes through
+#' `Matrix::qr()` and its rank is counted on the JACOBI-EQUILIBRATED diagonal
+#' of the triangular factor, which is the correction that
+#' [sparse_augmented_solve()] already carries: since \eqn{R'R = A'A}, scaling
+#' the columns by their norms scales that diagonal by the same factors, so a
+#' block whose columns differ in size is not read as deficient while an exact
+#' dependence stays exactly singular.
 #'
 #' @param X A design block, dense or sparse.
 #'
@@ -542,8 +550,8 @@ block_column_rank <- function(X) {
 #' The Exact Derivatives of a Prediction-Error Criterion
 #'
 #' @description
-#' The gradient and, at order 2, the Hessian of \eqn{-2\ell + \kappa\tau} over
-#' the free scale of the hyperparameters.
+#' Computes the gradient and, at order 2, the Hessian of
+#' \eqn{-2\ell + \kappa\tau} over the free scale of the hyperparameters.
 #'
 #' @details
 #' Writing \eqn{P = J^{-1}}, \eqn{A_m = \partial J/\partial\theta_m = S_m +
@@ -571,7 +579,8 @@ block_column_rank <- function(X) {
 #' @param idx The outer index.
 #' @param order `1` for the gradient alone, `2` for both.
 #' @param approx How the expected information is approximated for a family
-#'   with no closed form. Read only when `method@hessian` is `"expected"`.
+#'   with no closed form. The argument is read only when `method@hessian` is
+#'   `"expected"`.
 #'
 #' @return A list with `grad` and, at order 2, `hess`; or
 #'   `NULL` where the information is not invertible.
@@ -760,8 +769,9 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
 #' Carry a Hyperparameter Derivative onto the Free Scale
 #'
 #' @description
-#' The diagonal chain rule that each hyperparameter's own link induces, at
-#' first order for a gradient and at second order for a Hessian.
+#' Carries a hyperparameter derivative onto the free scale by the diagonal
+#' chain rule that each hyperparameter's own link induces, at first order for
+#' a gradient and at second order for a Hessian.
 #'
 #' @param g A gradient on the parameter scale.
 #' @param M A Hessian on the parameter scale.

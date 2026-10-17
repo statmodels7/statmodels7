@@ -20,10 +20,11 @@ parameter.}
 \code{hessian} and for \eqn{\kappa}.}
 
 \item{approx}{How the expected information is approximated for a family
-with no closed form. Read only when \code{method@hessian} is \code{"expected"}.}
+with no closed form. The argument is read only when \code{method@hessian} is
+\code{"expected"}.}
 
 \item{active}{Which coefficients are away from a kink, as
-\code{\link[=statmod_active]{statmod_active()}} reports them, or \code{NULL} where no penalty has one.}
+\code{\link[=statmod_active]{statmod_active()}} reports them, or \code{NULL} if no penalty has one.}
 }
 \value{
 A list with the components below, or \code{NULL} when the penalized
@@ -31,28 +32,28 @@ information has no Cholesky factor or the trace is not finite:
 \describe{
 \item{\code{value}}{the criterion, \eqn{-2\ell + \kappa\tau}.}
 \item{\code{loglik}}{the weighted log-likelihood at \code{coef}.}
-\item{\code{penalty}}{the penalties' total value there. Reported for the
-caller; it does not enter \code{value}.}
+\item{\code{penalty}}{the penalties' total value there. It is reported for
+the caller and does not enter \code{value}.}
 \item{\code{edf}}{the trace \eqn{\tau}.}
 }
 }
 \description{
 Evaluates \eqn{-2\ell + \kappa\tau} at one set of coefficients and
-hyperparameters. The coefficients are taken as given and no fitting
-happens here, so the criterion at the penalized mode is obtained by passing
-the mode.
+hyperparameters. The coefficients are taken as given and the function does
+not fit the model, so the criterion at the penalized mode is obtained by
+passing the mode.
 }
 \details{
-The pieces are assembled once each: the weighted log-likelihood, the
-penalized information \eqn{H + S} and the information \eqn{H} alone, then
-\code{\link[=outer_tau]{outer_tau()}} for the trace and \code{\link[=outer_k]{outer_k()}} for \eqn{\kappa}.
+Each piece is assembled once: the weighted log-likelihood, the
+penalized information \eqn{H + S} and the likelihood's own information
+\eqn{H}, then \code{\link[=outer_tau]{outer_tau()}} for the trace and \code{\link[=outer_k]{outer_k()}} for \eqn{\kappa}.
 
 The penalty's own value is reported alongside but does not enter the
 criterion. A prediction-error criterion prices the fit's complexity
 through \eqn{\tau}, not through the size of the penalty.
 
-Where the penalty's Hessian is exactly zero on the active coordinates --
-a lasso and nothing else penalizing them -- the trace is
+Where the penalty's Hessian is exactly zero on the active coordinates, as
+happens when only a lasso penalizes them, the trace is
 \eqn{\mathrm{tr}(H_{AA}^{-1}H_{AA}) = |A|}, the count of Zou, Hastie and
 Tibshirani (2007), and it is returned as that count without forming
 \eqn{H_{AA}}. The
@@ -67,7 +68,8 @@ overstates by the deficiency. It happens where a development carries its
 own intercept beside a lasso over indicators that sum to it, as in
 \code{nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))}. The count is therefore taken
 only where \code{\link[=design_count_exact]{design_count_exact()}} certifies that every active subset has
-full rank, and \code{\link[=active_rank]{active_rank()}} answers everywhere else.
+full rank, and \code{\link[=active_rank]{active_rank()}} supplies the degrees of freedom everywhere
+else.
 
 The certificate costs one pivoted decomposition per equation and is read
 once where the design stands still, so a lasso path pays it at its first

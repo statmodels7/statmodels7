@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{targets_written}
 \alias{targets_written}
-\title{Whether \code{par} Wrote Every Coordinate a Prior Drew}
+\title{Whether \code{par} Wrote Every Coordinate That a Prior Drew}
 \usage{
 targets_written(tg, ok, written)
 }
@@ -17,7 +17,7 @@ targets_written(tg, ok, written)
 A single logical.
 }
 \description{
-\code{TRUE} where every coordinate that a penalty's draw reached was then
+Returns \code{TRUE} where every coordinate that a penalty's draw reached was then
 written by \code{par}, so that the penalty's hyperparameters govern nothing in
 the truth.
 }

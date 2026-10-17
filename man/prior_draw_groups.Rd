@@ -16,8 +16,9 @@ prior_draw_groups(pen, th, D, n_draw)
 \item{n_draw}{The number of draws.}
 }
 \value{
-A matrix with \code{n_draw} rows and \code{D} columns, a group's coordinates
-side by side, each row an independent draw.
+A matrix with \code{n_draw} rows and \code{D} columns, in which the columns
+hold a group's coordinates side by side and each row is an independent
+draw.
 }
 \description{
 Draws of One Group's Effects From a Prior

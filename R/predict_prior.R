@@ -4,10 +4,11 @@ NULL
 #' The Predictive Mixture Over a New Group's Effects
 #'
 #' @description
-#' The components [predictive_response()] reads for one set of estimates:
-#' the predictors' mean `eta` and the covariance `C0` of their estimation
-#' error, widened by the effects of a new group for every term that is set
-#' aside through the argument `random` of [predict.StatmodFit()].
+#' Returns the components that [predictive_response()] reads for one set of
+#' estimates: the predictors' mean `eta` and the covariance `C0` of their
+#' estimation error, widened by the effects of a new group for every term
+#' that is set aside through the argument `random` of
+#' [predict.StatmodFit()].
 #'
 #' @details
 #' A Gaussian prior adds \eqn{z^\top\Sigma_b z} to the covariance, so one
@@ -20,20 +21,19 @@ NULL
 #' \eqn{z^\top\Sigma z/w} and the
 #' node's weight; two such terms give the product of the two rules. One
 #' univariate prior of another family (a logistic, a Laplace, a Cauchy), when
-#' no Student t term is set aside as well, gives one component per quantile
-#' node, \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000}
-#' ([group_quantile_nodes()]), so the result does not depend on the random
-#' seed. Any other prior (several such terms, a Student t term beside such a
-#' term, a prior over several coordinates, a prior shared by a label that is
-#' not Gaussian), or more than two Student t terms, is averaged by Monte
-#' Carlo: `n_draw` draws of a new group's effects, from
-#' [penalties7::penalty_draw()] or from the scale mixture, each with a draw of
-#' the estimation error, so the interval depends on the random seed. The
-#' quantiles of the mixture exist for every prior. Its standard deviation does
-#' not exist under a Student t with \eqn{\nu \le 2} or under a univariate
-#' prior whose family reports no finite variance (a Cauchy). The result
-#' carries the logical attribute `infinite_variance`, which is `TRUE` in those
-#' cases.
+#' the terms set aside with it carry no Student t prior, gives one component per
+#' quantile node, \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000}
+#' ([group_quantile_nodes()]), so the result does not depend on the random seed.
+#' Any other prior (several such terms, a Student t term beside such a term, a
+#' prior over several coordinates, a prior shared by a label that is not
+#' Gaussian), or more than two Student t terms, is averaged by Monte Carlo:
+#' `n_draw` draws of a new group's effects, from [penalties7::penalty_draw()] or
+#' from the scale mixture, each with a draw of the estimation error, so the
+#' interval depends on the random seed. The quantiles of the mixture exist for
+#' every prior. Its standard deviation does not exist under a Student t with
+#' \eqn{\nu \le 2} or under a univariate prior whose family reports no finite
+#' variance (a Cauchy). The result carries the logical attribute
+#' `infinite_variance`, which is `TRUE` in those cases.
 #'
 #' @param fit The [StatmodFit()] whose hyperparameters give the priors.
 #' @param spec,design The specification and design at the rows predicted.
@@ -263,9 +263,10 @@ prior_student <- function(pen, th, d) {
 #' Nodes and Weights for a Gamma(a, a) Mixing Variable
 #'
 #' @description
-#' A trapezoidal rule in \eqn{v = \log w} for the \eqn{\mathrm{Gamma}(a, a)}
-#' density, over the range between its quantiles \eqn{10^{-12}} and
-#' \eqn{1 - 10^{-12}}, the weights normalized to sum to one.
+#' Returns a trapezoidal rule in \eqn{v = \log w} for the
+#' \eqn{\mathrm{Gamma}(a, a)} density, over the range between its quantiles
+#' \eqn{10^{-12}} and \eqn{1 - 10^{-12}}. The weights are normalized to sum
+#' to one.
 #'
 #' @details
 #' A prediction's distribution function, averaged over \eqn{w}, depends on
@@ -304,9 +305,9 @@ gamma_nodes <- function(a, h = 0.6, k_min = 40L) {
 #' The Predictive Mixture by Monte Carlo
 #'
 #' @description
-#' `n_draw` point components: each a draw of the estimation error from
-#' \eqn{\mathrm{N}(0, C)} at every row and a draw of a new group's effects
-#' for every term in `heavy`. See [predictive_mixture()].
+#' Returns `n_draw` point components. Each component is a draw of the
+#' estimation error from \eqn{\mathrm{N}(0, C)} at every row and a draw of a
+#' new group's effects for every term in `heavy`. See [predictive_mixture()].
 #'
 #' @param spec The specification at the rows predicted.
 #' @param eta A named list of the predictors' means.
@@ -382,8 +383,9 @@ prior_mc <- function(spec, eta, base, heavy, weight, n_draw) {
 #' @param D The number of coordinates that one group carries.
 #' @param n_draw The number of draws.
 #'
-#' @return A matrix with `n_draw` rows and `D` columns, a group's coordinates
-#'   side by side, each row an independent draw.
+#' @return A matrix with `n_draw` rows and `D` columns, in which the columns
+#'   hold a group's coordinates side by side and each row is an independent
+#'   draw.
 #'
 #' @examples
 #' lp <- distributions7::fixed(distributions7::laplace_distrib(), mu = 0)
@@ -415,7 +417,7 @@ prior_draw_groups <- function(pen, th, D, n_draw) {
 #'
 #' @return `TRUE` where the prior is univariate and the variance that its
 #'   family reports is infinite or not a number (a Cauchy); `FALSE`
-#'   otherwise, including where no variance can be read.
+#'   otherwise, including where the variance cannot be read.
 #'
 #' @keywords internal
 prior_infinite_variance <- function(ob) {

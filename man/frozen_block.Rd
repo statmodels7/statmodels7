@@ -15,11 +15,11 @@ frozen_block(spec, lab)
 A logical vector over the coefficients.
 }
 \description{
-The positions of every coefficient of a term whose design block is a
-working linearization with a frozen weight.
+Returns the positions of every coefficient of a term whose design block is
+a working linearization with a frozen weight.
 }
 \details{
-A block whose term answers \code{FALSE} to
+A block whose term yields \code{FALSE} from
 \code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}} is a working linearization with a
 weight held at the previous iterate, so the curvature that the block carries
 is that of the working model and not that of the model. The standard errors
@@ -29,6 +29,6 @@ those coefficients are left missing.
 The check reads the term through \code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}} and
 never through its class, so a construction whose block is a Jacobian keeps
 its inference: a continuous \code{\link[modelterms7:seg]{modelterms7::seg()}}, and a discontinuous one
-smoothed by an \code{\link[numericals7:abs_smoother]{numericals7::abs_smoother()}}, both answer \code{TRUE}.
+smoothed by an \code{\link[numericals7:abs_smoother]{numericals7::abs_smoother()}}, both return \code{TRUE}.
 }
 \keyword{internal}

@@ -13,9 +13,9 @@ answers_term_third(term)
 A single logical.
 }
 \description{
-Whether the term implements \code{\link[modelterms7:term_third]{modelterms7::term_third()}}, read
-from the class the method is registered on, never from a list of
-class names, so a term written later is covered without an edit here.
+Determines whether the term implements \code{\link[modelterms7:term_third]{modelterms7::term_third()}} from the
+class on which the method is registered, never from a list of class names,
+so a term written later is covered without an edit here.
 }
 \details{
 A structural term that has not implemented the method inherits one that

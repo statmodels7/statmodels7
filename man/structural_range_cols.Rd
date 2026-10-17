@@ -13,21 +13,21 @@ structural_range_cols(spec, design, key, free)
 
 \item{key}{The term's key in the specification, its call as written.}
 
-\item{free}{The term's free parameter names, in the order the term holds
-them.}
+\item{free}{The term's free parameter names, in the order in which the term
+holds them.}
 }
 \value{
 An integer vector of positions into \code{free}, sorted and without
-repeats. Empty where no penalty covers the term.
+repeats. The vector is empty if the term is not covered by any penalty.
 }
 \description{
 Returns the positions, among a structural term's free parameters, that
-some penalty of the model shrinks. Those are the directions \code{\link[=ml]{ml()}}
-integrates over; the rest are profiled.
+some penalty of the model shrinks. Those are the directions over which
+\code{\link[=ml]{ml()}} integrates; the rest are profiled.
 }
 \details{
 A term declares its penalties through \code{modelterms7::term_penalties()},
-each entry naming a subset of the term's own parameters. This collects
+and each entry names a subset of the term's own parameters. This collects
 those subsets and maps them onto positions in \code{free}.
 }
 \seealso{

@@ -19,17 +19,17 @@ estimates, the curvature times \eqn{\max(1, \gamma_j^2)}, and for a free
 value of a matrix prior that scales with the matrix, the curvature in
 units of the matrix's scale (\code{\link[=hyper_unit_scale]{hyper_unit_scale()}}). It is also the
 largest eigenvalue, in absolute value, of a flat direction of the
-equilibrated curvature. It decides the label alone and never the
+equilibrated curvature. It determines only the label and never the
 verdict; see the details.}
 
 \item{edge}{The free value beyond which a hyperparameter is reported as
 sitting at a boundary where no curvature can be read, and only there.}
 }
 \value{
-The list \code{\link[=statmod_certificate]{statmod_certificate()}} returns.
+The list that \code{\link[=statmod_certificate]{statmod_certificate()}} returns.
 }
 \description{
-Everything \code{\link[=statmod_certificate]{statmod_certificate()}} computes except the check at the edge
-of a chart, which that function applies to the result.
+Computes everything that \code{\link[=statmod_certificate]{statmod_certificate()}} computes except the check
+at the edge of a chart, which that function applies to the result.
 }
 \keyword{internal}

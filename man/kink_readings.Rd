@@ -20,8 +20,8 @@ kink_readings(g, A, keep = seq_along(g), kc = NULL)
 The two readings, as \code{\link[=certificate_readings]{certificate_readings()}} returns them.
 }
 \description{
-\code{\link[=certificate_readings]{certificate_readings()}} over the null space of the linear constraints
-that a break-point sitting on an observation imposes
+Computes \code{\link[=certificate_readings]{certificate_readings()}} over the null space of the linear
+constraints that a break-point sitting on an observation imposes
 (\code{\link[=kink_constraints]{kink_constraints()}}), restricted to the coordinates in \code{keep}.
 }
 \details{

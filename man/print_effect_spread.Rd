@@ -14,7 +14,7 @@ print_effect_spread(sp, indent = 2L, digits = 4L)
 \item{digits}{Significant digits.}
 }
 \value{
-\code{NULL}, invisibly. Called for the printing.
+\code{NULL}, invisibly. The function is called for the printing.
 }
 \description{
 Prints what \code{\link[=effect_spread]{effect_spread()}} returns under the heading

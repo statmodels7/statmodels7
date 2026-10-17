@@ -16,7 +16,7 @@ name nor a kind.}
 A single string.
 }
 \description{
-An optimizer's own name, a criterion's kind, or a short description of a
-step that is not an optimizer.
+Returns an optimizer's own name, a criterion's kind, or a short description
+of a step that is not an optimizer.
 }
 \keyword{internal}

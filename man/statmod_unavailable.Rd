@@ -27,7 +27,7 @@ use instead.
 }
 \description{
 Three generics of \pkg{stats} and the generic \code{\link[base:plot]{base::plot()}} signal an
-error on a statmod fit, each naming the function to use instead.
+error on a statmod fit, and each error names the function to use instead.
 }
 \details{
 \code{terms()} has no single answer where a fit has one set of terms per
@@ -36,19 +36,19 @@ because the bars separating the equations are not \code{stats} syntax.
 \code{\link[=formula.StatmodFit]{formula.StatmodFit()}} gives what was written and \code{\link[=statmod_design]{statmod_design()}} gives
 what it produced.
 
-\code{model.frame()} would have to return the data frame the model was fitted
-to, which a fit does not keep. A fit keeps the response, the weights, the
+\code{model.frame()} would have to return the data frame used to fit the model,
+which a fit does not keep. A fit keeps the response, the weights, the
 offsets and each term's blueprint, so that a basis, a set of levels or a
 set of contrasts is reapplied to new data and not learned from it again.
 
 \code{anova()} would have to compare models by a test, and a penalized fit
 whose hyperparameters were chosen from the same data has no null
-distribution to compare against. \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}, \code{AIC()} and \code{BIC()}
-report the fit with the sum of the effective degrees of freedom of its
-terms, which is not corrected for the smoothing parameters having been
-estimated; \code{summary(fit, correct = TRUE)} applies that correction.
+distribution against which to compare. \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}, \code{AIC()} and
+\code{BIC()} report the fit with the sum of the effective degrees of freedom of
+its terms, which is not corrected for the estimation of the smoothing
+parameters; \code{summary(fit, correct = TRUE)} applies that correction.
 
-\code{plot()} would have to choose one picture for a model with an equation
+\code{plot()} has no single picture to draw for a model with an equation
 per parameter, any number of terms and any number of covariates. The
 fitted curves come from \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} on a grid of new data, and
 the residuals from \code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}}.

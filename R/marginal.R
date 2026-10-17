@@ -354,7 +354,7 @@ zero_kinked <- function(spec, design, coef) {
 #' @param design Its design.
 #' @param coef The coefficients, a named list.
 #'
-#' @return `score`, with those entries set to zero.
+#' @return `score`, in which those entries are set to zero.
 #'
 #' @keywords internal
 free_of_kinks <- function(score, spec, design, coef) {
@@ -374,8 +374,8 @@ free_of_kinks <- function(score, spec, design, coef) {
 #' @param coords The result of [marginal_coords()].
 #' @param values The values, one per position in `coords$where`.
 #'
-#' @return `spec` with `held_coef` set. The holds already present are kept
-#'   for coefficients that `coords` does not name.
+#' @return `spec`, in which `held_coef` is set. The holds already present are
+#'   kept for coefficients that `coords` does not name.
 #'
 #' @keywords internal
 statmod_hold <- function(spec, coords, values) {
@@ -593,7 +593,7 @@ marginal_blocks <- function(mc, coef, hyper, method, A, keep, full = TRUE) {
 #'
 #' @param V A variance matrix.
 #'
-#' @return `V` with those rows and columns set to zero.
+#' @return `V`, in which those rows and columns are set to zero.
 #'
 #' @keywords internal
 zero_unread <- function(V) {

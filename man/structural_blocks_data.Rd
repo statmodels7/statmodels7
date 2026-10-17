@@ -27,12 +27,12 @@ A list with \code{H}, \code{D3}, \code{Vs} and \code{ap}, and \code{D4} and \cod
 they were given.
 }
 \description{
-The quantities that the callback of \code{.structural_blocks()} reads, laid out
-as matrices so that the compiled routes of \code{modelterms7} can read
-them without calling back into R: the mixed second derivatives one column
-per distribution parameter (the filter's own column zero, the loop skips
-it), the third derivatives one column per parameter pair with pair
-\eqn{(r, r_2)} at column \eqn{(r-1)\,n_p + r_2}, the static jacobian rows
-densified, and the filter's parameter index.
+Lays out the quantities that the callback of \code{.structural_blocks()} reads
+as matrices, so that the compiled routes of \code{modelterms7} can read
+them without calling back into R. The mixed second derivatives have one
+column per distribution parameter (the filter's own column is zero and the
+loop skips it). The third derivatives have one column per parameter pair,
+and the pair \eqn{(r, r_2)} is at column \eqn{(r-1)\,n_p + r_2}. The static
+jacobian rows are densified, and the filter's parameter index is included.
 }
 \keyword{internal}

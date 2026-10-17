@@ -11,26 +11,26 @@ format_block_cells(tb, digits = 4L, stat = "z")
 
 \item{digits}{Significant digits.}
 
-\item{stat}{What to head the statistic column with.}
+\item{stat}{The label at the head of the statistic column.}
 }
 \value{
 A list with \code{cells}, a character matrix of six columns, and
 \code{name}, the row labels.
 }
 \description{
-The six numeric columns of a summary table rendered as strings, with the
-cells that have no number for a hyperparameter row left empty and the name
-of each such row carrying the origin of its value.
+Renders the six numeric columns of a summary table as strings. The cells
+that have no number for a hyperparameter row are left empty, and the name
+of each such row carries the origin of its value.
 }
 \details{
 A hyperparameter row prints numbers where there are any: one estimated by
 a marginal criterion carries a standard error and an interval. Where there
-is none the columns are blank. What put the value there goes in the name
-of every hyperparameter row, in square brackets (the role \code{"fixed"} or the
+is none the columns are blank. The name of every hyperparameter row carries,
+in square brackets, the origin of its value (the role \code{"fixed"} or the
 criterion that chose the value).
 
 The whole block is formatted in one call, its own rows and every
-compartment's together, so that the widths to which a column is padded are the
-same throughout and the compartments line up with the table above them.
+compartment's together, so that the widths to which a column is padded are
+the same throughout and the compartments line up with the table above them.
 }
 \keyword{internal}

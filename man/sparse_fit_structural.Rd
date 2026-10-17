@@ -52,8 +52,8 @@ residual, and a structural term contributes no column; the proximal branch
 reads \code{beta[block$index]}, and such a penalty covers no entry of the
 stacked vector. The parameters are in the design's structural state
 instead, so the iteration is written on that subvector: the smooth part is
-the negative log-likelihood with this penalty taken back out, its gradient
-is \code{\link[=statmod_structural_score]{statmod_structural_score()}}'s with the same correction, and the
+the negative log-likelihood from which this penalty is taken back out, its
+gradient is \code{\link[=statmod_structural_score]{statmod_structural_score()}}'s with the same correction, and the
 operator is the penalty's own.
 
 The iteration stops when the gradient criterion \code{crit_grad(tol)} is met. A

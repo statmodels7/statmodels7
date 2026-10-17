@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{statmod_certificate}
 \alias{statmod_certificate}
-\title{What the Fit Certifies About the Point It Reports}
+\title{The Certificate of the Reported Point}
 \usage{
 statmod_certificate(fit, tol = 0.01, flat = 0.002, edge = 8)
 }
@@ -19,7 +19,7 @@ estimates, the curvature times \eqn{\max(1, \gamma_j^2)}, and for a free
 value of a matrix prior that scales with the matrix, the curvature in
 units of the matrix's scale (\code{\link[=hyper_unit_scale]{hyper_unit_scale()}}). It is also the
 largest eigenvalue, in absolute value, of a flat direction of the
-equilibrated curvature. It decides the label alone and never the
+equilibrated curvature. It determines only the label and never the
 verdict; see the details.}
 
 \item{edge}{The free value beyond which a hyperparameter is reported as
@@ -31,21 +31,19 @@ A list with \code{state} (\code{"converged"}, \code{"boundary"},
 \code{mode_error}, \code{curvature}, \code{boundary}, \code{boundary_key}, \code{ridge} and
 \code{reason}. \code{ridge} is a list with one named vector per flat direction of
 the outer curvature, over the coordinates that move along it.
-\code{decrement} is what the verdict is made on and \code{gradient} is reported
-beside it. \code{curvature} is \code{"analytic"} when the decrement was read
-against an analytic Hessian, \code{"differenced"} against one differenced from
-the exact gradient, \code{"differenced criterion"} when the criterion itself
-was differenced by refits, and \code{NA} when no curvature was read.
-\code{boundary_key} names the hyperparameters among the coordinates of
-\code{boundary}, in the key that \code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}} labels its rows by;
-\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads it to leave a standard error off a
-hyperparameter pinned at an edge. \code{boundary_coef} names the
-coefficients estimated on the outer criterion among the coordinates of
-\code{boundary}, as \code{parameter:name}, and \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads it to
-leave their standard errors, tests and intervals off. The state is
-\code{"not converged"} also
-when the fit recorded a coordinate at the edge of its chart whose return
-raises the log-likelihood.
+The verdict uses \code{decrement}, and \code{gradient} is reported beside it.
+\code{curvature} is \code{"analytic"} when the decrement was read against an analytic
+Hessian, \code{"differenced"} against one differenced from the exact gradient,
+\code{"differenced criterion"} when the criterion itself was differenced by
+refits, and \code{NA} when no curvature was read. \code{boundary_key} names the
+hyperparameters among the coordinates of \code{boundary}, in the key by which
+\code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}} labels its rows; \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads it to
+leave a standard error off a hyperparameter pinned at an edge.
+\code{boundary_coef} names the coefficients estimated on the outer criterion
+among the coordinates of \code{boundary}, as \code{parameter:name}, and
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads it to leave their standard errors, tests and
+intervals off. The state is \code{"not converged"} also when the fit recorded a
+coordinate at the edge of its chart whose return raises the log-likelihood.
 
 Three further fields are those that \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints, and its
 page describes how they are read: \code{inner} and \code{outer}, each a named vector
@@ -57,10 +55,10 @@ otherwise a named vector with \code{ratio} and \code{n} from \code{\link[=zero_r
 \description{
 Reads the outer criterion at the reported point, independently of the path
 of the search, and returns a state (\code{"converged"}, \code{"boundary"},
-\code{"not converged"} or \code{"unknown"}) decided by the Newton decrement of the
-criterion. The result also holds the mode error of the coefficients, the
-hyperparameters and flat directions at a boundary, and the dimensionless
-readings that \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints.
+\code{"not converged"} or \code{"unknown"}) that is determined by the Newton
+decrement of the criterion. The result also holds the mode error of the
+coefficients, the hyperparameters and flat directions at a boundary, and the
+dimensionless readings that \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints.
 }
 \details{
 The flag of an optimizer records whether a search stopped on its own rule,
@@ -68,93 +66,93 @@ which describes the search and does not order fits by quality. The
 certificate describes the reported point and does not depend on the path
 that led to it.
 
-\strong{The state comes from the rise that the criterion would still buy, and the
-mode error is reported beside it.} That rise is the Newton decrement
+The state comes from the rise that the criterion would still buy, and the
+mode error is reported beside it. That rise is the Newton decrement
 \eqn{\tfrac{1}{2}g^\top A^{-1}g} of \code{\link[=joint_decrement]{joint_decrement()}}, in the criterion's
 own units, and \code{tol} is a threshold on it. The mode error is the number of
 log-likelihood units by which the coefficients lie above the penalized
 mode. Where an outer criterion exists, the mode error does not enter the
 verdict; for a model with no penalty and no coefficient estimated on a
-criterion there is no other reading, and the state is decided by the mode
-error against \code{\link[=mode_error_limit]{mode_error_limit()}} (see below).
+criterion there is no other reading, and the mode error against
+\code{\link[=mode_error_limit]{mode_error_limit()}} determines the state (see below).
 
 The verdict is a threshold on the Newton decrement and not on the gradient,
 because the gradient of a criterion summed over \eqn{n} observations and
-\eqn{p} penalized coefficients depends on the model, so that no single
-threshold serves every model. See \code{\link[=joint_decrement]{joint_decrement()}}. The default \code{tol} is
-1e-2. A report of \code{"not converged"} at a good point can be seen and
-checked, whereas the certification of a point that is not a maximum cannot,
-so the threshold is set low.
+\eqn{p} penalized coefficients depends on the model, so that a single
+threshold cannot serve every model. See \code{\link[=joint_decrement]{joint_decrement()}}. The default
+\code{tol} is 1e-2. A user can see and check a report of \code{"not converged"} at a
+good point, whereas a user cannot check the certification of a point that
+is not a maximum, so the threshold is set low.
 
-\strong{Cost.} The certificate needs one outer gradient, one curvature and one
+The cost of the certificate is one outer gradient, one curvature and one
 solve, at a point that the fit already holds. The criterion is reconstructed
 from \code{fit@spec}, so the reading refers to the fitted model. Where the form
-carries an analytic outer Hessian nothing is refitted. Where it does not (a
-criterion on the expected information for a family that does not supply the
-second derivative of its expected information, a model with a refreshable
-block or a structural term, or a penalty whose Hessian moves with the
-coefficients beside a structural term), the curvature is obtained by central
-differences of the \strong{exact} gradient over the hyperparameters and the
-coefficients that the criterion estimates, which takes
+carries an analytic outer Hessian, the certificate does not refit. Where it
+does not (a criterion on the expected information for a family that does
+not supply the second derivative of its expected information, a model with
+a refreshable block or a structural term, or a penalty whose Hessian moves
+with the coefficients beside a structural term), the curvature is obtained
+by central differences of the exact gradient over the hyperparameters and
+the coefficients that the criterion estimates, which takes
 \eqn{4(n_h + n_\gamma)} refits. \code{\link[=outer_curvature]{outer_curvature()}} records which route was
 taken, and the result reports it in \code{curvature}.
 
-\strong{Where there is no outer gradient to read, the answer depends on the
-case.} A model with \strong{no penalty} and no coefficient that the criterion
-estimates (a family of one parameter, or \code{marginal} empty), as with \code{linpar},
-\code{nl}, \code{seg}, \code{jump} and \code{jseg}, has no coordinate for an outer gradient to
-be about, so the only question left is whether the inner fit reached its
-mode. The state is
-\code{"converged"} when the mode error is at most \code{\link[=mode_error_limit]{mode_error_limit()}} and
-\code{"not converged"} otherwise. In every other case without an outer gradient
-the state is \code{"unknown"} and \code{reason} names the case: a model whose only
-hyperparameters are \strong{kinked} (\code{lasso}, \code{scad}, \code{mcp}), which are chosen
-along a path because a Laplace approximation at a mode that sits on the
-kink has no meaning, so that the hyperparameter is the argument of a
-minimum over a grid; hyperparameters that are all held; hyperparameters
-chosen by \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}}; and a model fitted with no outer
-criterion. \code{"unknown"} states that the certificate has no outer gradient to
-read and is not a report of failure to converge. With a kinked penalty the
-mode error is reported over the coordinates that the kink leaves free
-(\code{\link[=free_of_kinks]{free_of_kinks()}}): at a coefficient that the penalty has set to zero the
-score does not vanish but lies in the subdifferential, so that reading the
-score there would give a false mode error. A model that also carries a smooth
-penalty estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} has an outer gradient, which the
-certificate reads as usual.
+Where there is no outer gradient to read, the state depends on the case. A
+model with no penalty and no coefficient that the criterion estimates (a
+family of one parameter, or \code{marginal} empty), as with \code{linpar}, \code{nl},
+\code{seg}, \code{jump} and \code{jseg}, has no coordinate for which an outer gradient
+could be read, so the only question left is whether the inner fit reached
+its mode. The state is \code{"converged"} when the mode error is at most
+\code{\link[=mode_error_limit]{mode_error_limit()}} and \code{"not converged"} otherwise. In every other case
+without an outer gradient the state is \code{"unknown"} and \code{reason} names the
+case: a model whose only hyperparameters are kinked (\code{lasso}, \code{scad},
+\code{mcp}), which are chosen along a path because a Laplace approximation at a
+mode that sits on the kink has no meaning, so that the hyperparameter is
+the argument of a minimum over a grid; hyperparameters that are all held;
+hyperparameters chosen by \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}}; and a model fitted
+with no outer criterion. \code{"unknown"} states that the certificate has no
+outer gradient to read and is not a report of failure to converge. With a
+kinked penalty the mode error is reported over the coordinates that the
+kink leaves free (\code{\link[=free_of_kinks]{free_of_kinks()}}): at a coefficient that the penalty has
+set to zero the score does not vanish but lies in the subdifferential, so
+that reading the score there would give a false mode error. A model that
+also carries a smooth penalty estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} has an outer
+gradient, which the certificate reads as usual.
 
 A form whose criterion has no exact gradient (\code{\link[=outer_gradient_ok]{outer_gradient_ok()}} at
 order 1) has the criterion itself differenced by refits when it has at most
 two hyperparameters and no coefficient estimated on the criterion (three
 refits for one coordinate, nine for two), and \code{curvature} is then
 \code{"differenced criterion"}. Otherwise the state is \code{"unknown"}, and \code{reason}
-gives the cause. This does not conflict with \code{\link[=outer_curvature]{outer_curvature()}}
-differencing a Hessian where the analytic one is missing, because there it
-is the exact gradient that is differenced.
+gives the cause. This is consistent with \code{\link[=outer_curvature]{outer_curvature()}}, which
+differences a Hessian where the analytic one is missing, because that
+function differences the exact gradient.
 
-\strong{The boundary label.} A hyperparameter may run to an edge and belong
-there: on a covariate with no effect the smoothing parameter grows without
-bound, the criterion is flat in it, and the fit is not unconverged. A
-coordinate is \strong{reported} as sitting at a boundary where the criterion no
-longer moves with it, that is where its own curvature
-\eqn{\lvert A_{jj}\rvert} is at most \code{flat}. Such a hyperparameter has no
-meaningful interval, \eqn{1/\sqrt{A_{jj}}} being the conditional standard
-error of its free value, and \code{boundary_key} gives \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
-the keys of these hyperparameters, so that it leaves their standard errors
-out.
+A hyperparameter may run to an edge and belong there: on a covariate with
+no effect the smoothing parameter grows without bound, the criterion is
+flat in it, and the fit has not failed to converge. A coordinate is
+reported as sitting at a boundary where the criterion no longer moves with
+it, that is where its own curvature \eqn{\lvert A_{jj}\rvert} is at most
+\code{flat}. Such a hyperparameter has no meaningful interval, because
+\eqn{1/\sqrt{A_{jj}}} is the conditional standard error of its free value,
+and \code{boundary_key} gives \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} the keys of these
+hyperparameters, so that it leaves their standard errors out.
 
 The label is read from the curvature and not from the free value, because
 the size of a smoothing parameter depends on how its penalty is normalized
 and on the units of the response. The default \code{flat} of 2e-3 corresponds to
 a conditional standard error of the free value above 22.
 
-What is \strong{excluded from the verdict} is narrower: a coordinate that is
-reported at a boundary and whose \code{\link[=coord_decrement]{coord_decrement()}}, the rise that the
-coordinate alone would still give, is at most \code{tol}. The second condition
-keeps \code{flat} from deciding the state: restricting a decrement to a subset of
-the coordinates is that same maximum under a constraint and so no larger,
-hence a coordinate moved out of the interior set cannot raise what decides
-the state. A coordinate at an edge that has not settled stays under test
-and is also named. Both \code{"converged"} and \code{"boundary"} are certified.
+The set of coordinates excluded from the verdict is narrower: a coordinate
+belongs to it exactly when it is reported at a boundary and its
+\code{\link[=coord_decrement]{coord_decrement()}}, the rise that the coordinate would still give if it
+were the only one to move, is at most \code{tol}. The second condition prevents
+\code{flat} from determining the state: restricting a decrement to a subset of the
+coordinates is that same maximum under a constraint and so no larger, hence a
+coordinate moved out of the interior set cannot raise the quantity that
+determines the state. A coordinate at an edge that has not settled stays
+under test and is also named. Both \code{"converged"} and \code{"boundary"} are
+certified.
 
 The set of reported coordinates and the set excluded from the verdict can
 differ: at a boundary the curvature collapses along with the gradient, so
@@ -162,9 +160,9 @@ the one-coordinate reading \eqn{g_j^2/(2A_{jj})} is a ratio of two
 quantities going to zero and can be large. Such a coordinate is named and
 stays under test.
 
-A \strong{coefficient} that the criterion estimates beside the hyperparameters
-(the argument \code{marginal} of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}) is read the same way, with
-its curvature multiplied by \eqn{\max(1, \gamma_j^2)}: it is reported at a
+A coefficient that the criterion estimates beside the hyperparameters
+(the argument \code{marginal} of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}) is read the same way, but
+its curvature is multiplied by \eqn{\max(1, \gamma_j^2)}: it is reported at a
 boundary where its conditional standard error exceeds \eqn{22} times
 \eqn{\max(1, \lvert\gamma_j\rvert)}. A coefficient carries the units of
 its parameter and of its covariate, which a hyperparameter's free value
@@ -173,19 +171,21 @@ coefficient to its conditional standard error does not. The degrees of
 freedom of a Student \eqn{t} at their gaussian limit are an example of such
 a coordinate.
 
-Where no curvature can be read at all (neither route produces one, and the
-state is then \code{"unknown"}) the label falls back on the free value, \code{edge}.
+Where no curvature can be read at all (both routes fail to produce one, and
+the state is then \code{"unknown"}) the label falls back on the free value,
+\code{edge}.
 
-A \strong{ridge} is a direction along which several coordinates move together
-while the criterion does not change, each of them alone being curved. It is
+A ridge is a direction along which several coordinates move together
+while the criterion does not change, although the criterion is curved in
+each of those coordinates separately. It is
 read on the equilibrated curvature \eqn{A/(ss')},
 \eqn{s_j = \sqrt{|A_{jj}|}}, whose eigenvalues are dimensionless. An
 eigenvalue of at most \code{flat} in absolute value names its eigenvector,
 written on the original coordinates in \code{boundary} and in \code{ridge} (see
 \code{\link[=certificate_ridges]{certificate_ridges()}}). A ridge whose own decrement is within \code{tol} leaves
 the verdict and the state is \code{"boundary"}. A Burr XII shape that runs to its
-Weibull limit in one level of a factor is an example: the eigenvector is the
-change of that level alone.
+Weibull limit in one level of a factor is an example: the eigenvector moves
+only that level.
 
 A fit that \code{\link[=statmod]{statmod()}} has recorded with a coordinate at the edge of its
 chart whose return raises the log-likelihood has the state \code{"not converged"}

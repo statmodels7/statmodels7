@@ -112,8 +112,8 @@ as_sparse <- function(A) {
 #'
 #' @return A list of two:
 #'   \describe{
-#'     \item{`formula`}{`eq` with the offset terms removed. The formula is
-#'       `~ 1` where the equation held nothing else.}
+#'     \item{`formula`}{`eq`, from which the offset terms are removed. The
+#'       formula is `~ 1` where the equation held nothing else.}
 #'     \item{`offsets`}{a list of the expressions taken out, unevaluated.
 #'       The list is empty when there were none.}
 #'   }
@@ -1176,10 +1176,10 @@ reject_duplicate_names <- function(terms) {
 #' @param data The data frame against which the term is built.
 #' @param response The evaluated left-hand side, or `NULL`.
 #'
-#' @return `tm`, with `psi` set to the grid's choice where the rule applies,
-#'   and unchanged where it does not: a term of another kind, a term whose
-#'   `psi` the caller named, or a response against which the rule cannot
-#'   score.
+#' @return `tm`, in which `psi` is set to the grid's choice where the rule
+#'   applies, and `tm` unchanged where it does not: a term of another kind, a
+#'   term whose `psi` the caller named, or a response against which the rule
+#'   cannot score.
 #'
 #' @seealso [modelterms7::seg_start()],
 #'   [statmod_terms()]

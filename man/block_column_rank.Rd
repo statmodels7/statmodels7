@@ -13,19 +13,19 @@ block_column_rank(X)
 A single number, or \code{NA_integer_} where the decomposition fails.
 }
 \description{
-The number of linearly independent columns, by the pivoted decomposition
-that the fit's own solve uses, so that the two agree on which columns a
-model identifies.
+Returns the number of linearly independent columns, computed by the pivoted
+decomposition that the fit's own solve uses, so that the two agree on which
+columns a model identifies.
 }
 \details{
-A dense block goes through \code{qr()}, at \code{dqrdc2}'s own tolerance, which is
-what \code{\link[=augmented_solve]{augmented_solve()}} reads. A sparse one goes through \code{Matrix::qr()}
-and its rank is counted on the JACOBI-EQUILIBRATED diagonal of the
-triangular factor, which is the correction \code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}
-already carries: since \eqn{R'R = A'A}, scaling the columns by their norms
-scales that diagonal by the same factors, so a block whose columns differ
-in size is not read as deficient while an exact dependence stays exactly
-singular.
+A dense block goes through \code{qr()}, at the tolerance of \code{dqrdc2}, which is
+the tolerance that \code{\link[=augmented_solve]{augmented_solve()}} uses. A sparse one goes through
+\code{Matrix::qr()} and its rank is counted on the JACOBI-EQUILIBRATED diagonal
+of the triangular factor, which is the correction that
+\code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}} already carries: since \eqn{R'R = A'A}, scaling
+the columns by their norms scales that diagonal by the same factors, so a
+block whose columns differ in size is not read as deficient while an exact
+dependence stays exactly singular.
 }
 \seealso{
 \code{\link[=design_count_exact]{design_count_exact()}}, \code{\link[=active_rank]{active_rank()}}.

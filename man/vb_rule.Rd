@@ -19,9 +19,9 @@ vb_rule(title, method = NULL, indent = 0L, char = "-")
 Invisibly \code{NULL}; prints.
 }
 \description{
-One blank line, then a titled rule with the name of the method that does
-the work on the right, so that a reader of a running fit can see where one
-step ends and the next begins.
+Prints one blank line, then a titled rule with the name of the method that
+does the work on the right, so that a reader of a running fit can see where
+one step ends and the next begins.
 }
 \details{
 A verbose trace reports three nested levels: the outer step, the pass of

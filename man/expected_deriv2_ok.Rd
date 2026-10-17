@@ -13,8 +13,8 @@ expected_deriv2_ok(distrib)
 A single logical.
 }
 \description{
-Whether \code{\link[distributions7:distrib_d2expected_hessian]{distributions7::distrib_d2expected_hessian()}} returns a value for
-this family. The generic is called once, at a probe value.
+Determines whether \code{\link[distributions7:distrib_d2expected_hessian]{distributions7::distrib_d2expected_hessian()}} returns a
+value for this family. The generic is called once, at a probe value.
 }
 \details{
 The default method in \pkg{distributions7} signals an error, because

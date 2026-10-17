@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.R
 \name{predict_unread}
 \alias{predict_unread}
-\title{The Equations a Prediction Does Not Read}
+\title{The Equations That a Prediction Does Not Read}
 \usage{
 predict_unread(object, what, newdata, interval = "confidence")
 }
@@ -15,15 +15,16 @@ predict_unread(object, what, newdata, interval = "confidence")
 A character vector of parameter names, possibly empty.
 }
 \description{
-The distribution parameters whose equations \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} can
-leave unbuilt: those other than \code{what} whose variables \code{newdata} does not
-carry, where \code{what} names one parameter.
+Returns the distribution parameters whose equations
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}} can leave unbuilt. These are the parameters other
+than \code{what} whose variables \code{newdata} does not carry, where \code{what} names
+one parameter.
 }
 \details{
-A prediction of one parameter reads that parameter's equation alone, so
+A prediction of one parameter reads only that parameter's equation, so
 the covariates of the other equations need not be in \code{newdata}: on
 \code{accel ~ s(times) | sigma ~ z}, \code{predict(fit, what = "mu", newdata)} does
-not need \code{z}. Nothing is left out where \code{what} is not the name of a
+not need \code{z}. Every equation is built where \code{what} is not the name of a
 parameter (\code{"parameter"}, \code{"link"}, \code{"link:<parameter>"} or a moment),
 where \code{interval} is not \code{"confidence"}, or where the model carries a
 structural term, whose recursion reads the predictors of every equation.

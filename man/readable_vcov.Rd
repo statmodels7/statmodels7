@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{readable_vcov}
 \alias{readable_vcov}
-\title{The Variance of the Quantities a Fit Reports}
+\title{The Variance of the Quantities That a Fit Reports}
 \usage{
 readable_vcov(spec, design, fit, V)
 }
@@ -19,7 +19,7 @@ readable_vcov(spec, design, fit, V)
 The variance over the quantities.
 }
 \description{
-The delta method over the joint variance, with the Jacobian
+Applies the delta method to the joint variance, with the Jacobian that
 \code{\link[=readable_joint]{readable_joint()}} supplies.
 }
 \details{

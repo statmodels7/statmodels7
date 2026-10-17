@@ -16,7 +16,7 @@ hess_stencil_inner_tol()
 A single number.
 }
 \description{
-The step at which \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} differences, the largest
+Return the step at which \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} differences, the largest
 relative disagreement between its two readings, and the tolerance of the
 probes' inner fit.
 }

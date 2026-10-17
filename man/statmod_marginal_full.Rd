@@ -20,29 +20,29 @@ statmod_marginal_full(spec, design, coef, hyper, basis = NULL)
 }
 \value{
 A square symmetric matrix spanning the integrated coefficients
-followed by the integrated structural parameters. \code{NULL} where the
-structural term could not be run at the given point, which a caller
-reads as an unusable hyperparameter.
+followed by the integrated structural parameters. The value is \code{NULL}
+where the structural term could not be run at the given point, which a
+caller reads as an unusable hyperparameter.
 }
 \description{
-The matrix whose determinant the Laplace approximation reads, where a
-penalty covers a structural term's own parameters instead of a block of
+Returns the matrix whose determinant the Laplace approximation reads, where
+a penalty covers a structural term's own parameters instead of a block of
 design columns.
 }
 \section{Why the determinant has to span them}{
-A marginal criterion integrates the quantities its penalty shrinks. Where
-the penalty is a structural term's own, as with the deviations of a panel,
-those quantities are not coefficients.
+A marginal criterion integrates the quantities that its penalty shrinks.
+Where the penalty is a structural term's own, as with the deviations of a
+panel, those quantities are not coefficients.
 
-Taken over the coefficients alone the determinant then does not depend on
+Taken over the coefficients only, the determinant then does not depend on
 the hyperparameter at all, and the criterion reduces to the penalized
 likelihood, whose maximum in a shrinkage parameter is at no shrinkage. The
-criterion then answers a different question from the marginal likelihood.
+criterion then differs from the marginal likelihood.
 }
 
 \section{The matrix}{
 \code{\link[=statmod_full_information]{statmod_full_information()}} spans the coefficients followed by the term's
-free parameters, which is the order the joint fit uses, and
+free parameters, which is the order that the joint fit uses, and
 \code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} gives the Hessian of the penalty in those same
 parameters. A covariance class split between the two halves is placed by
 \code{\link[=joint_penalty_at]{joint_penalty_at()}}.
@@ -54,10 +54,10 @@ enters the expectation.
 }
 
 \section{Under ML}{
-The tail is integrated over the penalized coordinates alone, through the
-penalty's own range basis, so a parameter the penalty does not cover, such
-as a population value, is profiled instead of integrated. That is what
-happens to an unpenalized coefficient too.
+The tail is integrated only over the penalized coordinates, through the
+penalty's own range basis, so a parameter that the penalty does not cover,
+such as a population value, is profiled instead of integrated. An
+unpenalized coefficient is profiled too.
 }
 
 \seealso{

@@ -26,10 +26,10 @@ summary_blocks(
 
 \item{p}{The distribution parameter.}
 
-\item{ci}{The flat interval table, as \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}
-returns it with the statistic and the p-value added.}
+\item{ci}{The flat interval table that \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} returns,
+to which the statistic and the p-value have been added.}
 
-\item{level}{The confidence level the intervals are built at.}
+\item{level}{The confidence level at which the intervals are built.}
 
 \item{V}{The variance matrix over the stacked coefficients, or
 \code{NULL}. It is needed only by a term reported through
@@ -45,10 +45,9 @@ else.}
 
 \item{at_edge}{The \code{boundary_key} of \code{\link[=statmod_certificate]{statmod_certificate()}}:
 the hyperparameter coordinates that have run to an edge of their range
-with their own gradient already met. Such a coordinate reports no
-standard error and no interval, and neither does any quantity that
-depends on it; the variance matrix around it is computed and reported
-as it always was.}
+and whose own gradient is already met. Such a coordinate reports no
+standard error and no interval, like every quantity that depends on it;
+the variance matrix around it is computed and reported as it always was.}
 
 \item{test}{Which test the statistic column reports. Under a test other
 than \code{"wald"}, a quantity of a break-point term that is one coefficient

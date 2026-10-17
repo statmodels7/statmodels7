@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{rstatmod_term_draw}
 \alias{rstatmod_term_draw}
-\title{Let Every Term Draw the Coefficients Only It Can}
+\title{Let Every Term Draw the Coefficients That Only It Can Draw}
 \usage{
 rstatmod_term_draw(spec, design, coef, params, fixed_eq, sd)
 }
@@ -15,14 +15,15 @@ rstatmod_term_draw(spec, design, coef, params, fixed_eq, sd)
 
 \item{params}{The distribution parameter names.}
 
-\item{fixed_eq}{The parameters \code{par} fixes whole.}
+\item{fixed_eq}{The parameters that \code{par} fixes whole.}
 
 \item{sd}{The width of the draws.}
 }
 \value{
-A list with \code{coef}, the coefficients with each term's own
-replaced, and \code{owned}, a list by parameter of named numeric vectors
-carrying one width per replaced position, the names being the positions.
+A list with \code{coef}, the coefficients in which each term's own have
+been replaced, and \code{owned}, a list by parameter of named numeric vectors
+carrying one width per replaced position, where the names are the
+positions.
 }
 \description{
 Walks the terms of every equation and hands each the slice of the drawn
@@ -31,21 +32,21 @@ coefficients that its block owns, taking back whatever it replaced.
 \details{
 Almost every term replaces nothing: a slope is measured in the response's
 units against a covariate's and a normal of the caller's width is as good
-a truth as any. A break-point is the exception, being a position on the
-covariate's own axis, and \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}} is the method by
-which a term declares such coordinates.
+a truth as any. A break-point is the exception, because it is a position on
+the covariate's own axis, and \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}} is the method
+by which a term declares such coordinates.
 
 It runs last, after the plain draw and after the priors, because those
 describe a coordinate that a term owns incorrectly. The coordinates
 replaced are returned, so that a prior covering them is reported at the
 width that the term used and not at the one that it drew.
 
-An equation \code{par} fixes whole is skipped: its coefficients are the
+An equation that \code{par} fixes whole is skipped: its coefficients are the
 caller's and are written over everything afterwards anyway.
 
 The walk is over the design's blocks and does not descend into a term's
-subformulas, so a break-point developing another term's own parameter --
-\code{nl(a ~ 0 + seg(x))} -- is drawn by the plain rule. The sub-terms in a
+subformulas, so a break-point developing another term's own parameter
+(\code{nl(a ~ 0 + seg(x))}) is drawn by the plain rule. The sub-terms in a
 break-point's own development are \code{linpar()} and \code{random()}, which replace
 no coordinates, so the shapes that reach one are covered by the block
 walk.

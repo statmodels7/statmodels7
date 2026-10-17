@@ -17,9 +17,9 @@ coefficient of the two blocks.}
 A numeric vector, one value a row.
 }
 \description{
-\eqn{x_{ia}^\top V x_{ib}} for every row \eqn{i}, with the entries of
-\eqn{V} that are not finite read as missing: a row is \code{NA} only where it
-reaches one of them, that is where both its coefficient in \eqn{x_a} and
+Computes \eqn{x_{ia}^\top V x_{ib}} for every row \eqn{i}, reading the
+entries of \eqn{V} that are not finite as missing: a row is \code{NA} only where
+it reaches one of them, that is where both its coefficient in \eqn{x_a} and
 its coefficient in \eqn{x_b} are non-zero.
 }
 \details{

@@ -10,7 +10,7 @@ zero_unread(V)
 \item{V}{A variance matrix.}
 }
 \value{
-\code{V} with those rows and columns set to zero.
+\code{V}, in which those rows and columns are set to zero.
 }
 \description{
 Sets to zero the rows and columns of a variance matrix whose diagonal is

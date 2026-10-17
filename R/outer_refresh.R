@@ -31,27 +31,27 @@ NULL
 #' The Terms Whose Block Moves With Their Coefficients
 #'
 #' @description
-#' One entry per refreshable term, carrying everything its derivative needs:
-#' the distribution parameter it sits in, its columns within that equation
-#' and in the stacked coefficient vector, its own coefficients and the term
-#' rebuilt at them.
+#' Returns one entry per refreshable term, carrying everything that its
+#' derivative needs: the distribution parameter of the equation in which the
+#' term sits, its columns within that equation and in the stacked coefficient
+#' vector, its own coefficients and the term rebuilt at them.
 #'
 #' @details
-#' Resolved once and passed to every consumer, so the gradient's contraction
-#' and the Hessian's three corrections cannot disagree about which terms move
-#' or where their columns are.
+#' The entries are resolved once and passed to every consumer, so the
+#' gradient's contraction and the Hessian's three corrections cannot disagree
+#' about which terms move or where their columns are.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design, already refreshed at `coef`.
 #' @param coef The coefficients.
 #' @param params,npar,offs The block bookkeeping.
 #'
-#' @return A list, empty where no block moves. Each element is a list with
-#'   `a`, the index of the term's equation; `param`, the distribution
-#'   parameter of that equation; `term`, the name of the term within the
-#'   equation; `cols`, its columns within the equation; `ra`, the same columns
-#'   in the stacked coefficient vector; `bt`, the term's coefficients; and
-#'   `built`, the term refreshed at `bt`.
+#' @return A list, which is empty if the design has no block that moves. Each
+#'   element is a list with `a`, the index of the term's equation; `param`, the
+#'   distribution parameter of that equation; `term`, the name of the term
+#'   within the equation; `cols`, its columns within the equation; `ra`, the
+#'   same columns in the stacked coefficient vector; `bt`, the term's
+#'   coefficients; and `built`, the term refreshed at `bt`.
 #'
 #' @seealso [u_refresh()], [contract3_refresh()]
 #'
@@ -106,7 +106,7 @@ refresh_units <- function(spec, design, coef, params, npar, offs) {
 #' @param total The length of the stacked vector.
 #'
 #' @return A numeric matrix with `total` columns and one row per constraint,
-#'   with no rows where no term has a kink.
+#'   with no rows if the design has no term with a kink.
 #'
 #' @seealso [iwls_fit()], [mode_solver()], [refresh_units()].
 #'
@@ -134,8 +134,8 @@ kink_constraints <- function(spec, design, coef, split, total) {
 #' A Basis of the Directions That a Set of Linear Constraints Leaves Free
 #'
 #' @description
-#' The columns of a `p x r` matrix \eqn{N} with \eqn{B N = 0} and
-#' \eqn{N^\top N = I}, spanning the null space of `B`.
+#' Returns a `p x r` matrix \eqn{N} with \eqn{B N = 0} and
+#' \eqn{N^\top N = I}, whose columns span the null space of `B`.
 #'
 #' @details
 #' Where every row of `B` is a multiple of a unit vector, the constraints hold
@@ -184,15 +184,15 @@ null_basis <- function(B, p = ncol(B)) {
 #' ([kink_constraints()]): there the one-sided slopes have opposite signs, so
 #' a small perturbation leaves the break-point on the observation, as a lasso
 #' leaves a coefficient at zero. Where the break-point's position is a single
-#' coefficient that coefficient does not move; where it is developed over a
-#' design the mode moves along the hyperplane on which the break-point stays
+#' coefficient, that coefficient does not move; where it is developed over a
+#' design, the mode moves along the hyperplane on which the break-point stays
 #' on the observation. The solve is the bordered system of the equality
 #' constrained problem, written in the basis of its null space. The
 #' criterion's own determinant is not affected: it keeps the side convention
 #' of the break-point term.
 #'
-#' Where \eqn{N^\top (K + D_m) N} is not positive definite, \eqn{K} alone
-#' replaces \eqn{K + D_m}.
+#' Where \eqn{N^\top (K + D_m) N} is not positive definite, the solve uses
+#' \eqn{K} in place of \eqn{K + D_m}.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design at the mode.
@@ -203,10 +203,10 @@ null_basis <- function(B, p = ncol(B)) {
 #' @param Dm The block's own curvature from [mode_curvature()], or `NULL`.
 #' @param npar,offs The coefficient counts and offsets per parameter.
 #'
-#' @return A list with `solve`, a function of \eqn{c} returning \eqn{v}
-#'   without the sign; `J`, the curvature solved with; `Dm`, the curvature
-#'   with the held rows and columns set to zero; and `hold`, the held
-#'   positions.
+#' @return A list with `solve`, a function of \eqn{c} that returns \eqn{v}
+#'   without the sign; `J`, the curvature used in the solve; `Dm`, the
+#'   curvature in which the held rows and columns are set to zero; and
+#'   `hold`, the held positions.
 #'
 #' @seealso [statmod_marginal_grad()], [statmod_marginal_hess()],
 #'   [null_basis()]
@@ -267,8 +267,8 @@ mode_solver <- function(spec, design, coef, K, Kinv, Dm, npar, offs) {
 #' The Log-Density's Curvature Used by the Refresh Corrections
 #'
 #' @description
-#' \eqn{\ell_{ab}} on the link scale, from whichever route the criterion's
-#' \eqn{K} was assembled on.
+#' Returns \eqn{\ell_{ab}} on the link scale, from whichever route was used to
+#' assemble the criterion's \eqn{K}.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -295,8 +295,8 @@ refresh_hessian <- function(spec, design, coef, expected = FALSE,
 #' The Weight for Contracting a Refreshable Block
 #'
 #' @description
-#' \eqn{A_a[i,j] = w_i\sum_b c_{ab}(i)\,(X_b M_{ab}^\top)[i,j]}, the matrix
-#' with which a term's own derivative is paired.
+#' Computes \eqn{A_a[i,j] = w_i\sum_b c_{ab}(i)\,(X_b M_{ab}^\top)[i,j]}, the
+#' matrix with which a term's own derivative is paired.
 #'
 #' @details
 #' The same shape serves three quantities and differs only in \eqn{c_{ab}}: the
@@ -332,9 +332,8 @@ refresh_amat <- function(spec, design, M, params, npar, offs, ra, cw) {
 #' A Refreshable Block's Derivative Along One Direction
 #'
 #' @description
-#' [modelterms7::term_block_deriv()] on one unit, with the shape of the
-#' result checked. A block of another shape signals an error that names the
-#' term.
+#' Calls [modelterms7::term_block_deriv()] on one unit and checks the shape of
+#' the result. A block of another shape signals an error that names the term.
 #'
 #' @param un One entry of [refresh_units()].
 #' @param v The direction, as long as the term's coefficients.
@@ -358,20 +357,20 @@ refresh_dblock <- function(un, v, n) {
 #' A Refreshable Block's Second Derivative Along Two Directions
 #'
 #' @description
-#' [modelterms7::term_block_deriv2()] on one unit, with the shape of the
-#' result checked. A block of another shape signals an error that names the
-#' term.
+#' Calls [modelterms7::term_block_deriv2()] on one unit and checks the shape of
+#' the result. A block of another shape signals an error that names the term.
 #'
 #' @details
-#' The base method on `model_term` answers zeros, which is exact for a design
-#' that does not move. A sharp [modelterms7::seg()] answers zeros because its
+#' The base method on `model_term` returns zeros, which is exact for a design
+#' that does not move. A sharp [modelterms7::seg()] returns zeros because its
 #' second derivative vanishes away from the break-points, and a sharp
-#' [modelterms7::jump()] or [modelterms7::jseg()] answers zeros because its
+#' [modelterms7::jump()] or [modelterms7::jseg()] returns zeros because its
 #' block is a working linearization with a frozen weight and not a Jacobian.
-#' Nothing is differenced here in any case.
+#' The function does not difference in any case.
 #'
 #' @param un One entry of [refresh_units()].
-#' @param v,u The two directions, each as long as the term's coefficients.
+#' @param v,u The two directions, each of which is as long as the term's
+#'   coefficients.
 #' @param n The number of observations.
 #'
 #' @return A numeric matrix, `n` by the term's coefficient count.
@@ -395,10 +394,10 @@ refresh_dblock2 <- function(un, v, u, n) {
 #' The Weight for the Second Derivative of a Block
 #'
 #' @description
-#' [refresh_amat()] with the curvature, one matrix per unit.
+#' Computes [refresh_amat()] with the curvature, one matrix per unit.
 #'
 #' @details
-#' It is the same weight [u_refresh()] builds for the gradient, and
+#' It is the same weight that [u_refresh()] builds for the gradient, and
 #' it depends on neither direction, so it is built once per Hessian rather
 #' than once per pair of hyperparameters.
 #'
@@ -429,8 +428,8 @@ refresh_curv_amat <- function(spec, design, M, params, npar, offs, units, Hl) {
 #' The Third Derivative Already Contracted in One Direction
 #'
 #' @description
-#' \eqn{\sum_k \ell_{abk}(X_k v_k)_i}, the per-observation weight
-#' [contract3()] builds for the \eqn{(a,b)} block.
+#' Computes \eqn{\sum_k \ell_{abk}(X_k v_k)_i}, the per-observation weight
+#' that [contract3()] builds for the \eqn{(a,b)} block.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param d3 The third derivatives on the link scale.
@@ -456,19 +455,19 @@ d3_direction <- function(spec, d3, params, npar, a, b, tv) {
 #' How a Moving Block Enters the Contracted Third Derivative
 #'
 #' @description
-#' The part of \eqn{T[v] = (\partial K/\partial\beta)\cdot v} that
+#' Returns the part of \eqn{T[v] = (\partial K/\partial\beta)\cdot v} that
 #' [contract3()] does not compute, as a matrix over the stacked
 #' coefficients.
 #'
 #' @details
 #' Differentiating \eqn{H} in \eqn{\beta} and contracting with \eqn{v} leaves,
-#' beside the third derivative [contract3()] carries, two terms in
+#' beside the third derivative that [contract3()] carries, two terms in
 #' \eqn{\partial X/\partial\beta}: with \eqn{D_a = (\partial X_a/\partial\beta)v},
 #' \deqn{R[(a,j),(b,k)] = -\sum_i w_i\,\ell_{ab,i}\,D_a[i,j]\,X_b[i,k],}
 #' and the other is its transpose, so the correction is \eqn{R + R^\top}. The
 #' derivative is read from the term through
 #' [modelterms7::term_block_deriv()] and is never differenced here, for
-#' the reason [u_refresh()] records: a break-point column is a step
+#' the reason that [u_refresh()] records: a break-point column is a step
 #' function in its break-point.
 #'
 #' @param spec A [StatmodSpec()].
@@ -507,15 +506,15 @@ contract3_refresh <- function(spec, design, params, npar, offs, total, dir, Hl,
 #' The Derivatives of a Moving Block Along One Direction
 #'
 #' @description
-#' The two quantities every consumer of \eqn{\partial X/\partial\beta} reads
-#' for a given direction: the block's own derivative along it, and the third
-#' derivative already contracted in it and carried onto the term's columns.
+#' Returns the two quantities that every consumer of
+#' \eqn{\partial X/\partial\beta} reads for a given direction: the block's own
+#' derivative along it, and the third derivative already contracted in it and
+#' carried onto the term's columns.
 #'
 #' @details
-#' Both depend on one direction alone, never on a pair, so they are built
-#' once per
-#' hyperparameter and combined in the Hessian's pair loop: computing them
-#' inside that loop would repeat an \eqn{O(np^2)} product for every pair.
+#' Both depend on a single direction, never on a pair, so they are built
+#' once per hyperparameter and combined in the Hessian's pair loop: computing
+#' them inside that loop would repeat an \eqn{O(np^2)} product for every pair.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -548,18 +547,18 @@ refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
 #' How a Moving Block Enters the Twice-Contracted Fourth Derivative
 #'
 #' @description
-#' The part of \eqn{\mathrm{tr}(M\,U[v,u])} that [trace_design_form()]
+#' Returns the part of \eqn{\mathrm{tr}(M\,U[v,u])} that [trace_design_form()]
 #' does not compute, where \eqn{U} is the second derivative of \eqn{K} in the
 #' coefficients contracted in two directions.
 #'
 #' @details
 #' Differentiating the three contributions of \eqn{\partial K/\partial\beta}
-#' once more leaves five terms. Writing \eqn{D_a = (\partial X_a/\partial\beta)v}
-#' and \eqn{E_a = (\partial X_a/\partial\beta)u}, three of them read the first
-#' derivative alone,
+#' once more leaves five terms. With \eqn{D_a = (\partial X_a/\partial\beta)v}
+#' and \eqn{E_a = (\partial X_a/\partial\beta)u}, three of them read only the
+#' first derivative,
 #' \deqn{N_1[(a,j),(b,k)] = -\sum_i w_i\Big(\sum_m \ell_{abm}(X_mv_m)_i\Big)
 #'     E_a[i,j]X_b[i,k],}
-#' \eqn{N_2} the same with the two directions exchanged, and
+#' \eqn{N_2} is the same expression when the two directions are exchanged, and
 #' \eqn{N_3[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}D_a[i,j]E_b[i,k]}, which is
 #' supported where both blocks move. A fourth reads the second,
 #' \eqn{N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]} with
@@ -569,15 +568,15 @@ refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
 #' \eqn{N_4} are read off [refresh_amat()], with the third derivative for the
 #' first two and the curvature for the fourth, and \eqn{N_3} is summed from
 #' the two blocks' derivatives with the rows of \eqn{M} between them, so that
-#' neither \eqn{N} nor any contraction is assembled.
+#' the function assembles neither \eqn{N} nor any contraction.
 #'
 #' The fifth is of another shape and is added separately. The
 #' third-derivative contraction carries the direction's predictor
-#' \eqn{(X_mv_m)_i}, which where \eqn{X_m} is a Jacobian moves with
-#' \eqn{\beta} as everything else does, and differentiating it leaves
+#' \eqn{(X_mv_m)_i}, which moves with \eqn{\beta} as everything else does where
+#' \eqn{X_m} is a Jacobian, and differentiating it leaves
 #' \deqn{-\sum_i w_i\Big(\sum_m \ell_{abm}\,\dot v_m(i)\Big)X_a[i,j]X_b[i,k],
 #'   \qquad \dot v_m = (\partial X_m/\partial\beta[u])\,v_m.}
-#' That is the shape [trace_design_form()] already computes, so the
+#' That is the shape that [trace_design_form()] already computes, so the
 #' piece is one further call of it with \eqn{\dot v} in place of the
 #' predictors. \eqn{\dot v} is the predictor's own second derivative
 #' contracted in both directions and is therefore symmetric in them, which is
@@ -627,7 +626,7 @@ trace_refresh4 <- function(spec, M, params, npar, Hl, dv, du, units, G, d3,
 #' How a Moving Block Enters the Mode's Second Movement
 #'
 #' @description
-#' The part of \eqn{\partial^3L/\partial\beta^3[v,u]} that
+#' Returns the part of \eqn{\partial^3L/\partial\beta^3[v,u]} that
 #' [contract3()] and [contract3_refresh()] do not carry,
 #' as a vector over the stacked coefficients.
 #'
@@ -635,18 +634,19 @@ trace_refresh4 <- function(spec, M, params, npar, Hl, dv, du, units, G, d3,
 #' \eqn{b_{ml}} solves \eqn{J b_{ml} = -[(S_l + T[b_l])b_m + S_m b_l + c_{ml}]}
 #' with \eqn{T} the third derivative of the penalized objective in \eqn{\beta}.
 #' Where a block moves, the objective's second derivative is not \eqn{K} but
-#' \eqn{K + D}, with \eqn{D} the term [mode_curvature()] builds, so
-#' its third derivative is not \eqn{\partial K/\partial\beta} either. What is
-#' missing is \eqn{\partial D/\partial\beta}, and differentiating
+#' \eqn{K + D}, with \eqn{D} the term that [mode_curvature()] builds, so
+#' its third derivative is not \eqn{\partial K/\partial\beta} either. The term
+#' \eqn{\partial D/\partial\beta} is missing, and differentiating
 #' \eqn{D_{cd} = -\sum_i w_i\ell_a\,\Xi_a[i,c,d]} once and contracting gives two
 #' pieces,
 #' \deqn{-\sum_i w_i\Big(\sum_k \ell_{ak}(X_kv_k)_i\Big)\,
 #'   \big[(\partial X_a/\partial\beta)u\big][i,c]
 #'   \;-\;\sum_i w_i\,\ell_a(i)\,F_a[i,c],}
-#' the first reading the block's first derivative and the second its second,
-#' \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]}. Both are one
-#' `crossprod` against a per-observation weight, so neither the
-#' third-derivative array of the predictor nor any contraction of it is formed.
+#' of which the first reads the block's first derivative and the second reads
+#' its second derivative \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]}. Both
+#' are one `crossprod` against a per-observation weight, so the function forms
+#' neither the third-derivative array of the predictor nor any contraction of
+#' it.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param params,npar,total The block bookkeeping.

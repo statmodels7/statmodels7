@@ -20,9 +20,9 @@ outer_newton_ok(spec, design, exact2, method = NULL)
 \code{TRUE} or \code{FALSE}.
 }
 \description{
-Whether a search this package chooses should take \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}'s
-order-2 answer as its direction, which is a narrower question than whether
-the Hessian exists.
+Returns whether a search that \code{\link[=outer_fit]{outer_fit()}} selects by default should take
+\code{\link[=outer_gradient_ok]{outer_gradient_ok()}}'s order-2 answer as its direction, which is a narrower
+question than whether the Hessian exists.
 }
 \details{
 The two are separated because a criterion may have an exact second
@@ -39,9 +39,9 @@ In the first two cases the cost of the Hessian at each evaluation outweighs
 the saving in evaluations.
 
 The availability of the Hessian still governs the rest: it is supplied to an
-optimizer that the caller names, it is what \code{statmod_hyper_vcov()} and
-\code{vcov(type = "unconditional")} read, and it is recorded as \code{exact_hessian}.
-Only the default direction is held back.
+optimizer that the caller names, \code{statmod_hyper_vcov()} and
+\code{vcov(type = "unconditional")} read it, and it is recorded as
+\code{exact_hessian}. Only the default direction is held back.
 
 The block width is read from the \code{block} property of the penalty where it
 has one; a penalty without that property is treated as univariate.

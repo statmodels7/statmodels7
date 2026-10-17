@@ -20,7 +20,7 @@ statmod_settle_breakpoints(
 )
 }
 \arguments{
-\item{spec}{The specification, holds included.}
+\item{spec}{The specification, including the holds.}
 
 \item{design}{The design, carrying the terms in its state.}
 
@@ -34,8 +34,8 @@ read again after a refit, 5 by default.}
 }
 \value{
 A list: \code{res}, the settled fit, \code{moved}, \code{TRUE} where a
-polished position replaced the one the iteration reached, and \code{settled},
-\code{TRUE} where a term was held.
+polished position replaced the one that the iteration reached, and
+\code{settled}, \code{TRUE} where a term was held.
 }
 \description{
 After the working phase and the restarts, every sharp \code{\link[modelterms7:jump]{modelterms7::jump()}}
@@ -43,7 +43,7 @@ or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} term is moved to the mini
 profile of its working response (\code{\link[modelterms7:seg_polish_exact]{modelterms7::seg_polish_exact()}}), which
 is exact only for the location of a gaussian family, held there
 (\code{\link[modelterms7:seg_hold]{modelterms7::seg_hold()}}), and the coefficients of the model are refitted
-with the positions held.
+while the positions are held.
 }
 \details{
 The working construction of Fasola, Muggeo and Kuchenhoff stops at a fixed
@@ -59,8 +59,9 @@ model.
 Held, a break-point term contributes a linear function of its remaining
 coefficients, so the refit is an ordinary fit, and the coordinate that
 carried the position is held in the solve and left out of the information
-(\code{\link[=term_held_stack]{term_held_stack()}}). This is how \code{segmented} and \code{stepmented} report
-their coefficients: at the estimated positions, conditional on them.
+(\code{\link[=term_held_stack]{term_held_stack()}}). \code{segmented} and \code{stepmented} report their
+coefficients in this way, at the estimated positions and conditional on
+them.
 
 The profile is weighted least squares of the working response of the
 term's own equation, net of the rest of that equation, on the term's own
@@ -75,10 +76,10 @@ A term whose break-point or per-break-point coefficients carry a development
 is held and polished like any other term, with the exact line searches of
 \code{\link[modelterms7:seg_polish_exact]{modelterms7::seg_polish_exact()}} in the coefficients of the development.
 In an equation whose working profile is only a model of the objective, the
-five deepest local minima of the profile are also refitted with the
-positions held, and so are the neighboring intervals of the best position;
-these two searches skip a developed term, whose positions are one per
-observation.
+five deepest local minima of the profile are also refitted while the
+positions are held, and so are the neighboring intervals of the best
+position; these two searches skip a developed term, whose positions are one
+per observation.
 }
 \references{
 Fasola, S., Muggeo, V. M. R. and Kuchenhoff, H. (2018). A heuristic,

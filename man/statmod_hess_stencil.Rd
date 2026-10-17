@@ -33,7 +33,7 @@ statmod_hess_stencil(
 \item{basis}{The integrated basis, or \code{NULL}.}
 
 \item{inner}{The inner optimizer with which the probes refit; \code{iwls()} where
-none is given.}
+the argument is \code{NULL}.}
 
 \item{h}{The step, on the free scale on which the search runs. For a
 coefficient that the criterion estimates the step is
@@ -49,9 +49,9 @@ by the coefficients in \code{gam}, or \code{NULL} where a probe could not be
 evaluated or the two steps disagree.
 }
 \description{
-The criterion's second derivative in the hyperparameters where no analytic
-route exists: one central difference of \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}, with the
-coefficients refitted at every probe.
+Returns the criterion's second derivative in the hyperparameters where there
+is no analytic route: one central difference of \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}},
+in which the coefficients are refitted at every probe.
 }
 \details{
 \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} uses this function for a model with a structural
@@ -73,7 +73,7 @@ it with its transpose.
 \section{Probes}{
 Each probe refits the coefficients from the coefficients supplied and from
 the structural state as it stands, which is restored before each probe, so
-that the two probes of a column differ in the hyperparameter alone. The
+that the two probes of a column differ only in the hyperparameter. The
 location error of the mode is nearly the same at \eqn{+h} and \eqn{-h} and
 cancels in the difference. Where the inner optimizer is \code{\link[=iwls]{iwls()}}, the probes
 use its tolerance \code{min(tol, hess_stencil_inner_tol())}, a budget of at

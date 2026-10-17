@@ -14,7 +14,7 @@ nested_design_at(spec, design, coef, terms)
 \item{terms}{A data frame with columns \code{param} and \code{term}.}
 }
 \value{
-The design with those columns replaced.
+The design, in which those columns are replaced.
 }
 \description{
 Recomputes the columns of every term holding a nested random effect at

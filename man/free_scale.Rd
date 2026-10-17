@@ -27,7 +27,8 @@ For \code{free_scale()} a vector, for \code{free_scale2()} a matrix, and for
 second derivatives of each hyperparameter's inverse link at its value.
 }
 \description{
-The diagonal chain rule that each hyperparameter's own link induces, at
-first order for a gradient and at second order for a Hessian.
+Carries a hyperparameter derivative onto the free scale by the diagonal
+chain rule that each hyperparameter's own link induces, at first order for
+a gradient and at second order for a Hessian.
 }
 \keyword{internal}

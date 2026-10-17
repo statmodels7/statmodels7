@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{class_unit_of}
 \alias{class_unit_of}
-\title{The Covariance Class One Term Belongs To}
+\title{The Covariance Class to Which One Term Belongs}
 \usage{
 class_unit_of(spec, design, param, nm)
 }
@@ -11,7 +11,7 @@ class_unit_of(spec, design, param, nm)
 
 \item{design}{The design.}
 
-\item{param}{The distribution parameter the term sits in.}
+\item{param}{The distribution parameter in which the term sits.}
 
 \item{nm}{The term's name in the formula.}
 }
@@ -19,14 +19,14 @@ class_unit_of(spec, design, param, nm)
 One unit, as \code{\link[=statmod_penalized]{statmod_penalized()}} returns it, or \code{NULL}.
 }
 \description{
-The penalized unit of the covariance class that covers a term's
+Returns the penalized unit of the covariance class that covers a term's
 coefficients, or \code{NULL} where the term has no label.
 }
 \details{
 A term with a label declares no penalty of its own, because the class
 carries it, so the hyperparameters of such a term are read from the class.
-The lookup is by the pair of the equation and the term's name, which is what
-a class's pieces record.
+A class's pieces record the pair of the equation and the term's name, and
+the lookup uses that pair.
 }
 \seealso{
 \code{\link[=statmod_classes]{statmod_classes()}} for the classes, \code{\link[=summary_blocks]{summary_blocks()}} for the

@@ -13,9 +13,10 @@ answers_term_fourth(term)
 A single logical.
 }
 \description{
-\code{\link[=answers_term_third]{answers_term_third()}}'s question one order up, and read the same
-way: from the class the method is registered on, never from a list of
-class names.
+Determines whether the term implements \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}, which
+is the question of \code{\link[=answers_term_third]{answers_term_third()}} one order up, and reads it the
+same way: from the class on which the method is registered, never from a
+list of class names.
 }
 \details{
 The criterion's own second derivative reads a fourth order through the

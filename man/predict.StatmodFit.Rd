@@ -38,10 +38,10 @@ their own, and rows without it continue the fitted series. A data frame
 with no rows signals an error.}
 
 \item{se}{\code{TRUE} to report the standard error and an interval as well.
-\code{FALSE} by default. A moment has no standard error, and \code{se = TRUE} with
-a moment signals an error. \code{interval = "group"} sets it to \code{TRUE}, and
-\code{interval = "prediction"} does not read it, its result carrying its own
-\code{se} column.}
+The default is \code{FALSE}. A moment has no standard error, and \code{se = TRUE}
+with a moment signals an error. \code{interval = "group"} sets it to \code{TRUE}, and
+\code{interval = "prediction"} does not read it, because its result carries
+its own \code{se} column.}
 
 \item{level}{The interval's level, \code{0.95} by default, a single number
 strictly between 0 and 1. It is read wherever an interval is returned:
@@ -50,26 +50,28 @@ with \code{se = TRUE}, with \code{interval = "group"} and with
 
 \item{random}{How a \code{\link[modelterms7:random]{modelterms7::random()}} term is read:
 \code{"conditional"} (the default) with each group's own estimated effect, so
-a level the fit never saw signals an error; \code{"zero"} with every effect at
-zero, the typical group; \code{"marginal"} averaged over the prior that the fit
-estimated, the population average \eqn{E_b[h^{-1}(\eta + z^\top b)]}.
-A single string applies to every such term; a character vector named by
-the terms' keys chooses term by term, the rest staying conditional. See
-the section on new groups.}
+a level that is absent from the fitting data signals an error; \code{"zero"}
+with every effect at zero, the typical group; \code{"marginal"} averaged over
+the prior that the fit estimated, the population average
+\eqn{E_b[h^{-1}(\eta + z^\top b)]}. A single string applies to every such
+term; a character vector named by the terms' keys sets the mode term by
+term, and the terms that it does not name stay conditional. See the section
+on new groups.}
 
 \item{interval}{\code{"confidence"} (the default), \code{"group"} or
 \code{"prediction"}. See the section on intervals.}
 
-\item{predictive}{With \code{interval = "prediction"}, what the family is
-averaged over: \code{"averaged"} (the default), \code{"plugin"} or \code{"bootstrap"}.
+\item{predictive}{With \code{interval = "prediction"}, the quantities over
+which the family is averaged: \code{"averaged"} (the default), \code{"plugin"} or
+\code{"bootstrap"}.
 See the section on the predictive distribution.}
 
-\item{n_boot}{The number of bootstrap replicas, \code{200} by default. Read only
-where \code{predictive = "bootstrap"}.}
+\item{n_boot}{The number of bootstrap replicas, \code{200} by default. It is
+read only where \code{predictive = "bootstrap"}.}
 
 \item{boot_refit}{\code{"coefficients"} (the default), refitting each replica
-at the fit's hyperparameters, or \code{"full"}, choosing them again. Read only
-where \code{predictive = "bootstrap"}.}
+at the fit's hyperparameters, or \code{"full"}, choosing them again. It is
+read only where \code{predictive = "bootstrap"}.}
 
 \item{...}{Only \code{type}, the variance type of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: the
 Bayesian variance, the frequentist one or the unconditional one, which
@@ -78,8 +80,7 @@ also accounts for the estimated smoothing parameters. It is read where
 \code{interval = "prediction"} and \code{predictive = "averaged"}, and it signals an
 error elsewhere. Any other argument signals an error that names it. The
 unconditional variance differs most from the others in a band around a
-penalized term, since it is the fitted values that a smoothing
-parameter moves.}
+penalized term, since a smoothing parameter moves the fitted values.}
 }
 \value{
 With \code{se = FALSE}, a numeric vector with one value per row of
@@ -106,23 +107,23 @@ standard errors and intervals on request.
 \section{Quantities that can be predicted}{
 \code{what} takes
 \describe{
-\item{a parameter's name}{\code{"mu"}, \code{"sigma"}, \code{"alpha"} --
-whatever the family calls them. Always available, whatever the family:
-a parameter is what the model fits, and it exists even where a moment
-does not.}
+\item{a parameter's name}{\code{"mu"}, \code{"sigma"} or \code{"alpha"}, whatever the
+family calls them. A parameter is available for every family, because
+the model fits it, and it exists even where a moment does not.}
 \item{a moment's name}{\code{"mean"}, \code{"variance"}, \code{"std_dev"},
-\code{"skewness"}, \code{"kurtosis"}. Available where the family has one, and
-answering \code{NaN} or \code{NA} where it does not exist. A Cauchy's mean is
+\code{"skewness"}, \code{"kurtosis"}. A moment is available where the family has
+one, and the result is \code{NaN} or \code{NA} where the moment does not exist.
+A Cauchy's mean is
 \code{NaN}, which is the correct answer for it. A moment has no standard
 error. For a binomial fitted with \code{cbind()}, a moment needs the
 number of trials of each row, so \code{newdata} has to carry the variables
-that the response is written with.}
-\item{\code{"parameter"}}{every parameter at once, as a named list. The
-default.}
+with which the response is written.}
+\item{\code{"parameter"}}{every parameter at once, as a named list. This is
+the default.}
 \item{\code{"link"}}{every linear predictor at once, before the inverse
 link.}
 \item{\code{"response"}}{the response itself, with \code{interval = "prediction"}, which it requires: its median and the ends of an
-interval that a new observation falls in. See the section on
+interval in which a new observation falls. See the section on
 intervals.}
 }
 A parameter's name may be prefixed by \code{"link:"} to return its
@@ -140,7 +141,7 @@ order.
 
 \section{New data}{
 New data is passed through each term's blueprint, so a factor keeps the
-levels and contrasts that it was fitted with, a spline its knots, and a
+levels and contrasts with which it was fitted, a spline its knots, and a
 basis its reparametrization. The new frame supplies the values at which the
 terms are evaluated and does not change how they are built. Offsets are
 evaluated again at the new rows.
@@ -159,17 +160,17 @@ has reached, so new rows without the response continue the series instead
 of being read on their own. Each row is placed by its own time within its
 own group, and must come after every observed time of that group. A row
 that falls inside the observed series is rejected, since there the response
-is known and the filter has to be run, not continued. A group that the fit
-never saw is rejected as well, and a term built without \code{time} cannot be
-continued, because the place of a row in the series is then its position in
-the data frame.
+is known and the filter has to be run, not continued. A group that is
+absent from the fitting data is rejected as well, and a term built without
+\code{time} cannot be continued, because the place of a row in the series is
+then its position in the data frame.
 
 New rows that carry the response are a series of their own: the
 structural term is rebuilt on them with the fitted parameters, and they
-are read as the fitting rows are, standard errors included. With the
-fitting data as \code{newdata} the result is \code{predict(fit)}'s; this holds for a
-\code{\link[modelterms7:regime]{modelterms7::regime()}} term as well, whose prediction is the
-posterior-weighted predictor. A frame that carries the response on some
+are read as the fitting rows are, including the standard errors. If the
+fitting data are passed as \code{newdata}, the result is that of \code{predict(fit)};
+this holds for a \code{\link[modelterms7:regime]{modelterms7::regime()}} term as well, whose prediction is
+the posterior-weighted predictor. A frame that carries the response on some
 rows only is rejected. A \code{\link[modelterms7:regime]{modelterms7::regime()}} term cannot be continued
 past the series, since what it reports at an observed row is a posterior
 over states.
@@ -180,9 +181,10 @@ deterministic recursion and involves no simulation.
 }
 
 \section{A new group, and the typical one}{
-A random-effect term predicts a group that the fit saw with that group's
-estimated effect. A group that it never saw has none, and \code{random}
-determines what is put in its place. \code{"zero"} sets every effect of the
+A random-effect term predicts a group that is present in the fitting data
+with that group's estimated effect. A group that is absent from the
+fitting data has none, and what is put in
+its place depends on \code{random}. \code{"zero"} sets every effect of the
 term to zero, at every row, which is the prediction for the typical group
 (lme4's and glmmTMB's \code{re.form = NA}). \code{"marginal"} averages over the prior
 instead,
@@ -228,17 +230,17 @@ at the nodes. The standard error of a marginal parameter is the delta method of
 that average, whose gradient sums the design at each node, and its
 interval is the delta method's on the link scale carried through the
 link. \code{interval = "group"} and \code{"prediction"} are not available for such
-an effect, and neither is a standard error where effects of both kinds
-are averaged over.
+an effect, and a standard error is not available where an average is taken
+over effects of both kinds.
 }
 
 \section{Three intervals}{
 The value of \code{interval} selects the uncertainty that the interval describes.
 \describe{
-\item{\code{"confidence"}}{the default, with \code{se = TRUE}: the uncertainty of
-the estimates alone. For a term set aside by \code{random} it is the
-interval of the typical group's value, which a new group's value
-falls outside of far more often than the level implies.}
+\item{\code{"confidence"}}{the default, with \code{se = TRUE}: only the uncertainty
+of the estimates. For a term set aside by \code{random} it is the
+interval of the typical group's value, and the value of a new group
+falls outside that interval far more often than the level implies.}
 \item{\code{"group"}}{the interval of a new group's parameter, with \code{random = "zero"} or \code{"marginal"}. A new group's parameter is
 \eqn{\theta^* = h^{-1}(\eta^*)}, with \eqn{\eta^*} the typical
 group's predictor plus its estimation error plus \eqn{z^\top b}, the
@@ -246,29 +248,32 @@ effects of a new group drawn from the prior, in the parameter's own
 equation, so a random effect on \code{sigma} widens the interval for
 \code{sigma}. Under Gaussian priors the variance of \eqn{\eta^*} is
 \eqn{se^2 + z^\top \Sigma_b z}, the standard error that glmmTMB
-reports at a new level on the link scale. The interval's ends are quantiles of
+reports at a new level on the link scale. The interval's ends are
+quantiles of
 \eqn{\eta^*} carried through the inverse link, which is monotone, so
 they are the quantiles of \eqn{\theta^*} under any link; under a prior
 that is not Gaussian they are the quantiles of the mixture of
 \code{\link[=predictive_mixture]{predictive_mixture()}}. Where the interval of \eqn{\eta^*} leaves
 the domain of the link (a square root link and a negative predictor),
 the ends are \code{NA} at that row, with a warning. The standard error is
-the standard deviation of \eqn{\theta^*}, not the delta method, and is \code{NA} where it is not
+the standard deviation of \eqn{\theta^*}, not the delta method, and is
+\code{NA} where it is not
 known to exist (see \code{\link[=group_interval]{group_interval()}}). The fit is the typical
 group's value under \code{random = "zero"} and the population average
 under \code{"marginal"}. Implies \code{se = TRUE}.}
 \item{\code{"prediction"}}{an interval for a new observation of the response,
 with \code{what = "response"}. The family is averaged over the predictors of
-every parameter, taken jointly Gaussian -- correlated across equations
-where a label ties them -- and the interval's ends are quantiles of that
-average and the fit is its median, which every family has, so no
-location parameter is needed; \code{se} is the standard deviation of the
-average, \code{NA} where the family's variance does not exist. For a
-discrete family the ends are values of the support, so the coverage is
-at least the level rather than equal to it. Effects read
-\code{"conditional"} enter with their own estimates, so this is also the
-interval of a new observation of a group the fit saw. What the average
-is over is \code{predictive}, below.}
+every parameter, which are taken to be jointly Gaussian (correlated
+across equations where a label ties them). The interval's ends are
+quantiles of that average, and the fit is its median, which every
+family has, so the family does not need a location parameter. \code{se} is
+the standard deviation of the average, and is \code{NA} where the family's
+variance does not exist. For a discrete family the ends are values of
+the support, so the coverage is at least the level rather than equal
+to it. Effects read \code{"conditional"} enter with their own estimates, so
+this is also the interval of a new observation of a group that is
+present in the fitting data. The quantities over which the average is
+taken are set by \code{predictive}, described below.}
 }
 
 \code{interval = "group"} and \code{interval = "prediction"} are rejected for a
@@ -282,9 +287,9 @@ move the recursion as well.
 A new observation varies for three reasons: the family itself, the effects
 of a new group where \code{random} sets them aside, and the error in the
 estimates. The first two are random in the model and always enter. The
-third is what \code{predictive} decides. It does so for every parameter alike,
-whether the family has one parameter (a Poisson) or several, and whether or
-not a parameter has covariates.
+third enters according to \code{predictive}, for every parameter alike, whether
+the family has one parameter (a Poisson) or several, and whether or not a
+parameter has covariates.
 \describe{
 \item{\code{"averaged"}}{the default. The family is averaged over the
 predictors at the fit's estimates with the covariance of the estimates
@@ -294,18 +299,19 @@ predictive distribution of Harris (1989): the estimates are averaged
 over their approximate sampling distribution, centered at the fit. For
 a Gaussian with a constant \eqn{\sigma = e^{\gamma_0}},
 \eqn{\hat\gamma_0} of variance \eqn{v}, the variance of a new observation is
-\eqn{\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}}, the
-last term being the average of \eqn{\hat\sigma^{*2}} over that
+\eqn{\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}}, where
+the last term is the average of \eqn{\hat\sigma^{*2}} over that
 distribution.}
-\item{\code{"plugin"}}{the family at the estimates, averaged over the effects
-alone: the estimative interval, which ignores the error in the
+\item{\code{"plugin"}}{the family at the estimates, averaged only over the
+effects: the estimative interval, which ignores the error in the
 estimates and so covers less than the level in a small sample.}
 \item{\code{"bootstrap"}}{the parametric bootstrap predictive distribution
-itself: \code{n_boot} responses simulated from the fit, with the random
-effects drawn afresh, each refitted, and the family at each refit
-averaged over the effects. \code{boot_refit = "coefficients"} refits at the
-fit's hyperparameters; \code{"full"} chooses them again on every replica, so
-their uncertainty enters too, at the cost of a whole fit each. It is
+itself: \code{n_boot} responses are simulated from the fit with the random
+effects drawn afresh, each response is refitted, and the family at each
+refit is averaged over the effects. \code{boot_refit = "coefficients"}
+refits at the fit's hyperparameters; \code{"full"} chooses them again on
+every replica, so their uncertainty enters too, at the cost of a whole
+fit each. It is
 rejected for a model with a block that moves with its coefficients
 (\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:jseg]{modelterms7::jseg()}},
 \code{\link[modelterms7:nl]{modelterms7::nl()}}), for a response that is not one number per
@@ -327,8 +333,8 @@ of priors by Monte Carlo, which does (see \code{\link[=predictive_mixture]{predi
 that shares a label with an effect read with its own estimate, or with one
 written inside a subformula, is rejected.
 
-A forecast's standard error, with \code{se = TRUE}, is the uncertainty of the
-estimated parameters alone, carried by the delta method through the
+A forecast's standard error, with \code{se = TRUE}, is only the uncertainty of
+the estimated parameters, carried by the delta method through the
 continued recursion, whose derivative is exact. A forecast also carries
 the uncertainty of the future scores, which the delta method does not
 reach, so the standard error and the interval leave it out, and a warning
@@ -341,25 +347,26 @@ dd <- data.frame(x = runif(60))
 dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
 fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 
-# One parameter, and one of the family's moments.
+# One parameter and one of the family's moments are predicted.
 head(predict(fit, "mu"))
 head(predict(fit, "variance"))
 
-# A parameter's predictor instead of its value.
+# The predictor of a parameter is returned instead of its value.
 head(predict(fit, "link:sigma"))
 
-# For a Gaussian the mean is mu and the variance is sigma squared, which
-# is what the moments come to.
+# For a Gaussian the mean is mu and the variance is sigma squared, and the
+# moments of the fit return these values.
 all.equal(predict(fit, "mean"), predict(fit, "mu"))
 all.equal(predict(fit, "variance"), predict(fit, "sigma")^2)
 
-# With an interval.
+# The result carries an interval as well.
 head(predict(fit, "mu", se = TRUE))
 
-# Every parameter at once, on either scale.
+# Every parameter is returned at once, on either scale.
 str(predict(fit, "parameter"))
 
-# A new group: the typical one, and the population average.
+# For a new group, the prediction is the typical one or the population
+# average.
 gg <- data.frame(g = factor(rep(letters[1:12], each = 10)),
                  x = rnorm(120))
 gg$y <- rpois(120, exp(0.5 + 0.3 * gg$x + rnorm(12, sd = 0.6)[gg$g]))
@@ -369,7 +376,8 @@ new <- data.frame(g = "new", x = 0)
 predict(fg, "mu", new, random = "zero")
 predict(fg, "mu", new, random = "marginal")
 
-# The interval of a new group's mean, and of a new count from it.
+# The calls return the interval of a new group's mean and of a new count
+# from it.
 predict(fg, "mu", new, random = "zero", interval = "group")
 predict(fg, "response", new, random = "zero", interval = "prediction",
         predictive = "plugin")
@@ -386,6 +394,7 @@ families. \emph{Biometrika}, 76, 675--684.
 \seealso{
 \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} for one parameter's fitted values,
 \code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}} for the matched diagnostic,
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the variance the standard errors come from.
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the variance from which the standard errors are
+computed.
 }
 \keyword{internal}

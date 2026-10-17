@@ -12,10 +12,10 @@ outer_resolve(method, distrib)
 \item{distrib}{The response family.}
 }
 \value{
-\code{method}, with \code{hessian} settled.
+\code{method}, in which \code{hessian} is settled.
 }
 \description{
-Replaces \code{hessian = "auto"} by the information the criterion uses for
+Replaces \code{hessian = "auto"} by the information that the criterion uses for
 \code{distrib}: \code{"expected"} for a Student t, a skew t or a Cauchy response,
 wrapped or not, and \code{"observed"} for every other family. Any other value
 is returned unchanged.

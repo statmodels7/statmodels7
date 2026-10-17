@@ -26,12 +26,12 @@ is symmetric in all three positions.}
 A square matrix.
 }
 \description{
-\eqn{T[v] = (\partial K/\partial\beta)\cdot v}, a matrix over the stacked
-coefficients.
+Returns \eqn{T[v] = (\partial K/\partial\beta)\cdot v}, a matrix over the
+stacked coefficients.
 }
 \details{
-Each block is minus a weighted crossproduct of the two designs, the weight
-being \eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}, so that the third
+Each block is minus a weighted crossproduct of the two designs, where the
+weight is \eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}, so that the third
 derivative is never formed as an array over the coefficients. The sign makes
 \eqn{T[v]} the derivative of \eqn{K = -\ell'' + S}.
 

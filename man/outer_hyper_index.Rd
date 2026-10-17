@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer.R
 \name{outer_hyper_index}
 \alias{outer_hyper_index}
-\title{The Hyperparameters an Outer Method Estimates}
+\title{The Hyperparameters That an Outer Method Estimates}
 \usage{
 outer_hyper_index(spec, blocks)
 }
@@ -18,28 +18,28 @@ and \code{name}. The links that carry each onto the whole line are in the
 \code{"links"} attribute, a list with one element per row of the frame (a list
 column would not survive the subsetting that the search does). The
 \code{"members"} attribute is a data frame of the same three columns plus
-\code{row}, which lists the hyperparameters that each row stands for.
+\code{row}, which lists the hyperparameters that each row represents.
 }
 \description{
-One row per hyperparameter of a penalized term that is fitted in the joint
-system, with the link that carries it onto the whole line.
+Returns one row per hyperparameter of a penalized term that is fitted in the
+joint system, with the link that carries it onto the whole line.
 }
 \details{
 A term whose penalty has a kink is left out. Its coefficients are
-estimated by a coordinate descent with everything else held fixed, and the
-criterion is a Laplace approximation, which needs a second derivative
+estimated by a coordinate descent while everything else is held fixed, and
+the criterion is a Laplace approximation, which needs a second derivative
 that does not exist at a kink. Those hyperparameters are chosen by a path
 instead.
 
-A hyperparameter that its own term holds is left out too, whatever kind of
-penalty it belongs to, and so is every member of a shared label when one
-member holds it.
+A hyperparameter that its own term holds is left out too, whatever the kind
+of penalty to which it belongs, and so is every member of a shared label
+when one member holds it.
 
 The result is the index of the hyperparameters on the outer search. The
 search also moves the coefficients that the criterion estimates (see
 \code{\link[=marginal_coords]{marginal_coords()}}), so its dimension is the number of rows plus the number
-of those coefficients. With no rows and no such coefficients the criterion
-does not run.
+of those coefficients. If there are no rows and no such coefficients, the
+criterion does not run.
 }
 \section{Shared hyperparameters}{
 Hyperparameters carrying the same label through
@@ -47,12 +47,13 @@ Hyperparameters carrying the same label through
 row: the search has one coordinate for the group. The row is identified by
 its first member, so that every lookup that reads \code{parameter}, \code{term} and
 \code{name} keeps working, and the \code{"members"} attribute lists the
-hyperparameters that the row stands for.
+hyperparameters that the row represents.
 
 Sharing does not merge the penalties, which remain two objects estimated at
 one value, so the derivative of the row is the sum of the derivatives of its
-members and the value is written back under the key of each member. Where
-nothing is shared the member table is the index itself, one line per row.
+members and the value is written back under the key of each member. If no
+hyperparameter is shared, the member table is the index itself, one line per
+row.
 
 Two members must carry the same link, since one free value has to lie in
 both of their domains, and a label may not span a smooth penalty and a
@@ -62,7 +63,7 @@ are visible.
 }
 
 \seealso{
-\code{\link[=hyper_to_eta]{hyper_to_eta()}} for the map those links define,
+\code{\link[=hyper_to_eta]{hyper_to_eta()}} for the map that those links define,
 \code{\link[=statmod_held_ids]{statmod_held_ids()}} for the shared labels that a term holds,
 \code{\link[=index_members]{index_members()}} for the member table.
 }

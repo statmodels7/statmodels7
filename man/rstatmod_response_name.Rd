@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{rstatmod_response_name}
 \alias{rstatmod_response_name}
-\title{The Column a Simulated Response Is Written To}
+\title{The Column to Which a Simulated Response Is Written}
 \usage{
 rstatmod_response_name(response)
 }
@@ -13,15 +13,15 @@ rstatmod_response_name(response)
 A single string.
 }
 \description{
-The name on the formula's left-hand side, which must be a symbol.
+Returns the name on the formula's left-hand side, which must be a symbol.
 }
 \details{
 A transformed response is rejected. Under \code{log(y) ~ x} the model
 generates values of \code{log(y)}, so a column called \code{y} would hold the wrong
 quantity and one called \code{"log(y)"} would not be the name that the formula
 reads back. A censored response is rejected for the reason that
-\code{\link[=statmod]{statmod()}} rejects one: there is no censored likelihood to fit it back
-with.
+\code{\link[=statmod]{statmod()}} rejects one: there is no censored likelihood with which to fit
+it back.
 }
 \seealso{
 \code{\link[=rstatmod]{rstatmod()}}

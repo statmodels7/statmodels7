@@ -189,7 +189,7 @@ test_that("a failed edf correction is reported as not computed", {
   s <- summary(fit, correct = TRUE)
   nt <- paste(s@notes, collapse = "\n")
   expect_match(nt, "could not be")
-  expect_no_match(nt, "No hyperparameter here was estimated")
+  expect_no_match(nt, "estimated no hyperparameter here")
 })
 
 test_that("the edf correction reads the information that the fit used", {

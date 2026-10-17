@@ -11,8 +11,9 @@ A data frame of zero rows with columns \code{parameter}, \code{term} and
 \code{name}, and the attributes \code{links} and \code{members}.
 }
 \description{
-The empty index \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns where nothing is estimated,
-with the same columns and attributes as a full one.
+Returns the empty index that \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns where no
+hyperparameter is estimated, with the same columns and attributes as a full
+one.
 }
 \examples{
 nrow(statmodels7:::outer_hyper_index_none())

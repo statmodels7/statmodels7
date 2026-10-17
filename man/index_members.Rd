@@ -13,12 +13,13 @@ index_members(idx)
 A data frame with columns \code{row}, \code{parameter}, \code{term} and \code{name}.
 }
 \description{
-The member table: one line per estimated hyperparameter, with the row of
-the index that stands for it.
+Returns the member table: one line per estimated hyperparameter, with the
+row of the index that stands for it.
 }
 \details{
-Where nothing is shared it is the index itself with a \code{row} column counting
-up. Where a label ties several, they carry the same \code{row}, and a quantity
-accumulated over members lands on the coordinate of the group.
+If no hyperparameter is shared, the member table is the index itself with a
+\code{row} column counting up. Where a label ties several hyperparameters, they
+carry the same \code{row}, and a quantity accumulated over members lands on the
+coordinate of the group.
 }
 \keyword{internal}

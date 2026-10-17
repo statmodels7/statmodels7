@@ -15,7 +15,7 @@ flat_directions(A, labels)
 A single string, empty when no direction can be named.
 }
 \description{
-The eigenvector of the smallest eigenvalue, reported as the coefficients
-that load on it.
+Returns a string that names the coefficients that load on the eigenvector
+of the smallest eigenvalue.
 }
 \keyword{internal}

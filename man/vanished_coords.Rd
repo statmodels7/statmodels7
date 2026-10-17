@@ -11,7 +11,7 @@ vanished_coords(spec, coef, design, K)
 
 \item{coef}{The coefficients, one vector per distribution parameter.}
 
-\item{design}{The design \code{\link[=statmod_design]{statmod_design()}} built.}
+\item{design}{The design that \code{\link[=statmod_design]{statmod_design()}} built.}
 
 \item{K}{The penalized information at \code{coef}, as \code{\link[=deficient_coords]{deficient_coords()}}
 reads it.}
@@ -21,34 +21,36 @@ An integer vector of coordinates of the stacked coefficient
 vector, possibly empty.
 }
 \description{
-The coordinates of the stacked coefficient vector whose column of the
-design, read at the fitted coefficients, has vanished: its norm is at most
-\code{eps} times the largest column norm of its own equation, and the penalized
-information carries nothing on its diagonal either.
+Returns the coordinates of the stacked coefficient vector whose column of
+the design, read at the fitted coefficients, has vanished: its norm is at
+most \code{eps} times the largest column norm of its own equation, and the
+penalized information carries nothing on its diagonal either.
 }
 \details{
-It answers the one case that \code{\link[=deficient_coords]{deficient_coords()}} leaves unnamed by design. That
-function reads \eqn{K} alone, and an empty row of \eqn{K} is two different
-things a matrix cannot tell apart. At a parameter's boundary the design
-column is alive and the working weight vanishes: the estimate stands and
-only its variance does not, which is \code{\link[=uninformative_coords]{uninformative_coords()}}' business.
-Where a coefficient's own column vanishes, nothing in the data moves with it
+This function covers the one case that \code{\link[=deficient_coords]{deficient_coords()}} leaves unnamed
+by design. That function reads only \eqn{K}, and an empty row of \eqn{K} can
+arise in two different ways, which the matrix does not distinguish. At a
+parameter's boundary the design column is alive and the working weight
+vanishes: the estimate stands and only its variance does not, a case that
+\code{\link[=uninformative_coords]{uninformative_coords()}} handles.
+Where a coefficient's own column vanishes, the data do not move with it
 and it is not identified at all: a break-point run out of the data has
 change and position columns that are identically zero there. A sharp step
 or a truncated line written into \code{\link[modelterms7:nl]{modelterms7::nl()}} can park a break-point
-beyond the data in this way, and without this rule one of the two
-coordinates, or neither, would be named.
+beyond the data in this way, and without this rule the function would name
+one of the two coordinates, or would name none.
 
-Both conditions are required. The design column alone would name a
-penalized coordinate whose column is empty -- a level of a random effect
-with no observations, which its prior identifies -- and the diagonal alone
-would name a coordinate at a boundary. The column is compared with its own
+Both conditions are required. If only the design column were used, the
+function would name a penalized coordinate whose column is empty (a level of
+a random effect with no observations, which its prior identifies), and if
+only the diagonal were used, it would name a coordinate at a boundary. The
+column is compared with its own
 equation's largest, since two equations' designs need not share a scale,
 and the diagonal with \eqn{\epsilon^2} times the largest, the square of the
 same resolution.
 }
 \seealso{
-\code{\link[=deficient_coords]{deficient_coords()}} for a column the others span,
+\code{\link[=deficient_coords]{deficient_coords()}} for a column that the others span,
 \code{\link[=uninformative_coords]{uninformative_coords()}} for a coordinate at a boundary.
 }
 \keyword{internal}

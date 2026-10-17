@@ -11,26 +11,26 @@
 
 \item{nsim}{How many replicates.}
 
-\item{seed}{Passed to \code{\link[base:Random]{base::set.seed()}} if given, the caller's
-stream being restored afterwards.}
+\item{seed}{Passed to \code{\link[base:Random]{base::set.seed()}} if given; the stream of the caller
+is restored afterwards.}
 
 \item{...}{Unused.}
 }
 \value{
-A data frame with \code{nobs(object)} rows and \code{nsim} columns, each
-column one draw of the whole response vector.
+A data frame with \code{nobs(object)} rows and \code{nsim} columns, where
+each column is one draw of the whole response vector.
 }
 \description{
-Responses drawn from the fitted distribution, one column per replicate.
+Draws responses from the fitted distribution, one column per replicate.
 }
 \details{
-The draws are taken at the fitted parameters, so what they carry is the
-variation of the response alone. The uncertainty of the estimates is not
+The draws are taken at the fitted parameters, so they carry only the
+variation of the response. The uncertainty of the estimates is not
 in them; a parametric bootstrap adds it by refitting each column.
 
 For a model carrying a structural term the fitted parameters are the ones
-the filter reached along the observed series, so the draws are conditional
-on that series and are not a fresh path of the process.
+that the filter reached along the observed series, so the draws are
+conditional on that series and are not a fresh path of the process.
 }
 \examples{
 set.seed(1)
@@ -41,6 +41,7 @@ dim(simulate(fit, nsim = 3))
 }
 \seealso{
 \code{\link[=rstatmod]{rstatmod()}} to simulate from a model that was never fitted,
-\code{\link[=predict.StatmodFit]{predict.StatmodFit()}} for the fitted parameters the draws come from
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}} for the fitted parameters from which the draws
+come
 }
 \keyword{internal}

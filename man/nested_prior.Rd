@@ -17,16 +17,16 @@ nested_prior(spec, design, fit, row)
 A list with \code{gaussian = TRUE}, \code{dim} and \code{chol}.
 }
 \description{
-The Gaussian prior of a random-effect sub-term, as \code{\link[=random_prior]{random_prior()}}
-returns it for a term written in an equation.
+Returns the Gaussian prior of a random-effect sub-term in the form in which
+\code{\link[=random_prior]{random_prior()}} returns it for a term written in an equation.
 }
 \details{
 The penalty unit is the outer term's, keyed by the outer term where it
 carries one penalty and by the row's key where it carries several. Only a
 Gaussian prior is integrated: inside a nonlinear term the average is taken
-over the nodes of \code{\link[=random_nodes]{random_nodes()}} at which the term is evaluated, those of
-a product grid up to three coordinates in all and Monte Carlo draws
-beyond that. A prior of another family signals an error naming
+over the nodes of \code{\link[=random_nodes]{random_nodes()}} at which the term is evaluated, which
+are the nodes of a product grid up to three coordinates in all and Monte
+Carlo draws beyond that. A prior of another family signals an error naming
 \code{random = "zero"}; the Gaussian test is \code{\link[=prior_is_gaussian]{prior_is_gaussian()}}, which
 excludes a prior with a kink.
 }

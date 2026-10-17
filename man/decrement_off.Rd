@@ -18,8 +18,8 @@ A single number, \code{NA} where the reduced curvature is not
 positive definite.
 }
 \description{
-The joint decrement over the coordinates \code{interior}, maximized over the
-steps that have no component along the directions \code{dirs} in the
+Computes the joint decrement over the coordinates \code{interior}, maximized
+over the steps that have no component along the directions \code{dirs} in the
 equilibrated coordinates.
 }
 \details{

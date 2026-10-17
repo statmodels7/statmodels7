@@ -16,13 +16,13 @@ penalty_range_basis(pen, k, p, nm)
 \item{nm}{The term's name, named in the error message.}
 }
 \value{
-A \verb{k x r} matrix with orthonormal columns, \code{r} being the penalty's
-rank. The \verb{k x k} identity for a proper penalty.
+A \verb{k x r} matrix with orthonormal columns, where \code{r} is the
+penalty's rank. It is the \verb{k x k} identity for a proper penalty.
 }
 \description{
-Returns an orthonormal basis of the directions a penalty constrains, which
-are the ones \code{\link[=ml]{ml()}} integrates over and \code{\link[=reml]{reml()}} integrates together with
-the others.
+Returns an orthonormal basis of the directions that a penalty constrains.
+\code{\link[=ml]{ml()}} integrates over these directions, and \code{\link[=reml]{reml()}} integrates them
+together with the others.
 }
 \details{
 A proper penalty constrains every direction, so the basis is the identity
@@ -31,7 +31,7 @@ penalty with a null space supplies it through
 \code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}}, and the range basis is the orthogonal
 complement.
 
-A penalty that answers neither is rejected by name, because integrating
+A penalty that supplies neither is rejected by name, because integrating
 over a guessed subspace would not give the marginal likelihood.
 }
 \seealso{

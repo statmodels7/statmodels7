@@ -13,13 +13,13 @@ boundary_coords(K)
 An integer vector of positions, empty where there are none.
 }
 \description{
-The positions whose curvature is not finite, as left by a parameter
-sitting at the clamp that its link keeps it strictly inside.
+Returns the positions whose curvature is not finite, as left by a parameter
+sitting at the clamp of its link, which keeps it strictly inside its bounds.
 }
 \details{
 The test is on the diagonal. A frozen coordinate makes its whole row
-non-finite, cross terms included, so a test over whole columns marks its
-neighbors too.
+non-finite, including the cross terms, so a test over whole columns marks
+its neighbors too.
 }
 \seealso{
 \code{\link[=pin_boundary]{pin_boundary()}}, \code{\link[=iwls_solve]{iwls_solve()}}

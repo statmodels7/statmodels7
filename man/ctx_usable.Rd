@@ -9,9 +9,9 @@ ctx_usable(ctx, coef, hyper)
 \arguments{
 \item{ctx}{A context, or \code{NULL}.}
 
-\item{coef}{The coefficients the caller is reading.}
+\item{coef}{The coefficients that the caller is reading.}
 
-\item{hyper}{The hyperparameters the caller is reading.}
+\item{hyper}{The hyperparameters that the caller is reading.}
 }
 \value{
 \code{TRUE} when the context is usable, \code{FALSE} when it is

@@ -17,6 +17,6 @@ hyper_value(hyper, idx, j)
 A single number.
 }
 \description{
-The value the \code{j}-th row of an outer index points at.
+Returns the value to which the \code{j}-th row of an outer index points.
 }
 \keyword{internal}

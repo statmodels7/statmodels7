@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{rstatmod_data}
 \alias{rstatmod_data}
-\title{The Data Frame a Simulation Runs Against}
+\title{The Data Frame Against Which a Simulation Runs}
 \usage{
 rstatmod_data(data, n, covariates = NULL)
 }
@@ -21,12 +21,12 @@ A data frame.
 Resolves \code{data} and \code{n} into one data frame of covariates.
 }
 \details{
-A model may have no covariates at all (a pure time series is the case),
+A model may have no covariates at all (a pure time series is an example),
 and then a row count is all that a simulation needs, so \code{data} and \code{n} are
 alternatives and one of them must be given. Where both are given they must
-agree, which is checked and not resolved by preferring one, since a
-disagreement points to a mistake of the caller. \code{n} must be a positive
-whole number.
+agree. The function checks this and does not resolve a disagreement in
+favor of one of them, since a disagreement points to a mistake of the
+caller. \code{n} must be a positive whole number.
 }
 \seealso{
 \code{\link[=rstatmod]{rstatmod()}}

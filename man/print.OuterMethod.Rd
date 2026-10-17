@@ -15,9 +15,9 @@
 \code{x}, invisibly.
 }
 \description{
-Prints one line naming the criterion and the information it is built on,
-as \verb{<REML>  observed information}, and for \code{\link[=cv]{cv()}} the number of folds and
-the selection rule.
+Prints one line naming the criterion and the information on which it is
+built, as \verb{<REML>  observed information}, and for \code{\link[=cv]{cv()}} the number of
+folds and the selection rule.
 }
 \seealso{
 \code{\link[=reml]{reml()}}, \code{\link[=aic]{aic()}} and \code{\link[=cv]{cv()}} for the objects printed.

@@ -142,13 +142,13 @@ test_that("a fit that did not converge says where its parameters ended up", {
   skip_if(fit@converged, "the runaway did not happen on this platform")
   # the note is summary()'s, print() carrying none
   out <- paste(summary(fit)@notes, collapse = "\n")
-  expect_match(out, "The parameters it reached")
+  expect_match(out, "The parameters that it reached")
   expect_match(out, "sigma")
   # and a fit that converged says nothing of the kind
   ok <- statmod(y ~ x1, distributions7::gaussian1_distrib(),
                 data.frame(y = stats::rnorm(50), x1 = stats::rnorm(50)))
   expect_true(ok@converged)
-  expect_false(grepl("The parameters it reached",
+  expect_false(grepl("The parameters that it reached",
                      paste(summary(ok)@notes, collapse = "\n")))
 })
 

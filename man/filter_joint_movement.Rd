@@ -30,11 +30,11 @@ coefficients returning the joint solve over every estimated coordinate;
 or \code{NULL} where the joint curvature cannot be formed or solved.
 }
 \description{
-The pieces that \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} reads on the joint vector of
-coefficients and a filter's own parameters where no penalty covers those
-parameters: a solve with the joint penalized curvature, which is how the
-mode moves, and the derivative of every equation's predictor over that
-vector, which is what the determinant's movement is read along.
+Computes the pieces that \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} reads on the joint vector
+of coefficients and a filter's own parameters when no penalty covers those
+parameters: a solve with the joint penalized curvature, which gives the
+movement of the mode, and the derivative of every equation's predictor over
+that vector, along which the movement of the determinant is read.
 }
 \details{
 The mode is where the penalized objective's gradient in the coefficients
@@ -43,15 +43,15 @@ in a hyperparameter gives
 \deqn{(J + S)\,v = -\partial^2\rho/\partial u\,\partial\theta,}
 with \eqn{J} the joint observed information of
 \code{\link[=statmod_full_information]{statmod_full_information()}} and \eqn{S} the penalty's Hessian placed on the
-coefficients, the only coordinates it covers. A block that moves with its
-coefficients adds its own second derivative on those coordinates, as it
+coefficients, the only coordinates that it covers. A block that moves with
+its coefficients adds its own second derivative on those coordinates, as it
 does on the coefficient route.
 
-The rows are the static design of every equation, with the equation
-carrying the filter replaced by the forward Jacobian of the recursion, read
-from \code{\link[=filter_curvature]{filter_curvature()}} at the same memo slot the joint information fills,
-so the recursion runs once at a point. A held level is dropped from both,
-exactly as the information drops it.
+The rows are the static design of every equation, except that the equation
+carrying the filter is replaced by the forward Jacobian of the recursion,
+which is read from \code{\link[=filter_curvature]{filter_curvature()}} at the same memo slot that the joint
+information fills, so the recursion runs once at a point. A held level is
+dropped from both, exactly as the information drops it.
 }
 \seealso{
 \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}, \code{\link[=filter_curvature]{filter_curvature()}},

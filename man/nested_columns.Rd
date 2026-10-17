@@ -15,7 +15,8 @@ nested_columns(spec, design, rows)
 A list, one entry per row, with \code{param}, \code{cols} and \code{first}.
 }
 \description{
-For each row of \code{\link[=nested_random_terms]{nested_random_terms()}}, the positions of the sub-term's
-coefficients in its equation's design, and those of the first level.
+Returns, for each row of \code{\link[=nested_random_terms]{nested_random_terms()}}, the positions of the
+sub-term's coefficients in its equation's design and those of the first
+level.
 }
 \keyword{internal}

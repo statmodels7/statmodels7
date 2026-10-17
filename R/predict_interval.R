@@ -4,8 +4,9 @@ NULL
 #' The Within-Group Rows of a Random-Effect Term
 #'
 #' @description
-#' The row of the within-group design that each observation carries, at the new
-#' data where the specification has some and at the fitting rows otherwise.
+#' Returns the row of the within-group design that each observation carries,
+#' at the new data where the specification has some and at the fitting rows
+#' otherwise.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param param The distribution parameter.
@@ -29,12 +30,12 @@ random_within <- function(spec, param, key) {
 }
 
 
-#' The Gaussian Prior of the Effects a Prediction Sets Aside
+#' The Gaussian Prior of the Effects That a Prediction Sets Aside
 #'
 #' @description
-#' The covariance of one new group's effects, block by block: a term with a
-#' prior of its own is one block, and the terms that a label ties together are
-#' one block over all of them.
+#' Returns the covariance of one new group's effects, block by block: a term
+#' with a prior of its own is one block, and the terms that a label ties
+#' together are one block over all of them.
 #'
 #' @details
 #' A new group's effect is drawn from the prior that the fit estimated, so its
@@ -49,7 +50,7 @@ random_within <- function(spec, param, key) {
 #' over the coordinates of all of them, and every member has to be set aside:
 #' a member read with its own estimated effect would condition the others on
 #' it, which is a different question. A member written inside another term's
-#' subformula is rejected as well, its coordinates not being a row of a
+#' subformula is rejected as well, because its coordinates are not a row of a
 #' random-effect design.
 #'
 #' @param spec A [StatmodSpec()].
@@ -86,8 +87,8 @@ random_blocks <- function(spec, design, fit, aside) {
         stop(sprintf(paste0("The prior of '%s' is not Gaussian, so a new ",
                             "group's interval has no\n  covariance to read. ",
                             "interval = \"confidence\" is available, and a ",
-                            "group the fit\n  saw is predicted with random = ",
-                            "\"conditional\"."), k),
+                            "group that was in the fitting data is\n  predicted ",
+                            "with random = \"conditional\"."), k),
              call. = FALSE)
       }
       out[[length(out) + 1L]] <- list(
@@ -144,14 +145,15 @@ random_blocks <- function(spec, design, fit, aside) {
 #' The Covariance of Every Predictor at One Row, for a New Group
 #'
 #' @description
-#' For each observation, the covariance over the distribution's parameters of
-#' their linear predictors: the estimation uncertainty of the fixed part, from
-#' the variance matrix, plus the variance that a new group's effects add.
+#' Returns, for each observation, the covariance over the distribution's
+#' parameters of their linear predictors: the estimation uncertainty of the
+#' fixed part, from the variance matrix, plus the variance that a new group's
+#' effects add.
 #'
 #' @details
-#' The fixed part is \eqn{x_{ip}^\top V_{pq} x_{iq}}, read with the columns
-#' of the effects set aside at zero, so it is the uncertainty of the typical
-#' group's predictor; the part that the effects add is
+#' The fixed part is \eqn{x_{ip}^\top V_{pq} x_{iq}}, evaluated after the
+#' columns of the effects set aside are set to zero, so it is the uncertainty
+#' of the typical group's predictor; the part that the effects add is
 #' \eqn{z_{ip}^\top \Sigma_{pq} z_{iq}}, summed over the blocks of
 #' [random_blocks()].
 #'
@@ -211,25 +213,26 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
 #' The Predictive Distribution of the Response
 #'
 #' @description
-#' The median, the ends of an interval and the standard deviation of the
-#' response at each row, under a mixture of the family over the predictors.
+#' Returns the median, the ends of an interval and the standard deviation of
+#' the response at each row, under a mixture of the family over the
+#' predictors.
 #'
 #' @details
 #' Each component \eqn{c} gives, at row \eqn{i}, the predictors' mean
-#' \eqn{\eta_{ci}} and their covariance \eqn{C_{ci}}, the predictors being
+#' \eqn{\eta_{ci}} and their covariance \eqn{C_{ci}}, and the predictors are
 #' taken jointly Gaussian within it. The distribution of \eqn{Y} is the
 #' mixture of the family over the components, with weights \eqn{w_c} that
 #' sum to one (equal where a component carries none), and, within each
-#' component, over the predictors,
+#' component, over the predictors:
 #' \deqn{G_i(y) = \sum_{c} w_c E_{\eta \sim
-#'   \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))],}
-#' each expectation evaluated at the single node \eqn{\eta_{ci}} where
+#'   \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))].}
+#' Each expectation is evaluated at the single node \eqn{\eta_{ci}} where
 #' \eqn{C_{ci}} is zero at every row. Otherwise \eqn{C_{ci} = LL^\top} is
 #' split by its eigenvectors, and \eqn{r} directions carry variance. The
 #' directions after the first are a Gauss-Hermite product grid with
 #' \eqn{k^{r-1}} nodes, where
 #' \eqn{k = \max(2, \min(8, \lfloor 64^{1/(r-1)} \rfloor))}, and the first,
-#' the one of largest variance, a 20-node Gauss-Hermite rule. Where that
+#' the one of largest variance, is a 20-node Gauss-Hermite rule. Where that
 #' variance is large against the spread of the conditional law, the law's
 #' distribution function turns from 0 to 1 between two adjacent nodes, which
 #' the rule integrates badly. A direction cell whose distribution function
@@ -237,28 +240,28 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
 #' integrated by [numericals7::quad_vec()] instead, at its default
 #' tolerances. A direction cell is left to Gauss-Hermite whatever its values
 #' when it is among the lightest, whose weights add up to at most 1e-8. One
-#' component carries the default interval, two sources of variation being
+#' component carries the default interval, and two sources of variation are
 #' folded into its covariance; the parametric bootstrap gives one component
 #' per replica. A quantile of \eqn{G_i} lies between the smallest and the
-#' largest quantile of the conditional laws at the nodes, a mixture's
-#' distribution function being an average of theirs. For a continuous family
+#' largest quantile of the conditional laws at the nodes, because a mixture's
+#' distribution function is an average of theirs. For a continuous family
 #' it is found by Newton's method on \eqn{G_i(y) = p} with the mixture's
 #' density as the derivative, started at the weighted median of those
-#' quantiles and kept inside a bracket every evaluation shrinks; for a
-#' discrete one by bisection on the integers, as the smallest value at which
-#' \eqn{G_i} reaches the level. The quantiles read the family's distribution
-#' function and quantile function, and the density for a continuous family,
-#' so no location parameter is needed. The standard deviation reads the
-#' family's mean and variance, and is
-#' \eqn{\sqrt{E[\mathrm{Var}(Y\mid\eta)] + \mathrm{Var}(E[Y\mid\eta])}},
-#' `NA` where the family's mean or variance does not exist.
+#' quantiles and kept inside a bracket that every evaluation shrinks; for a
+#' discrete family it is found by bisection on the integers, as the smallest
+#' value at which \eqn{G_i} reaches the level. The quantiles read the family's
+#' distribution function and quantile function, and the density for a continuous
+#' family, so the family does not need a location parameter. The standard
+#' deviation reads the family's mean and variance, and is
+#' \eqn{\sqrt{E[\mathrm{Var}(Y\mid\eta)] + \mathrm{Var}(E[Y\mid\eta])}}, `NA`
+#' where the family's mean or variance does not exist.
 #'
 #' @param spec The specification at the rows predicted.
 #' @param comps A list of components, each a list with `eta`, a named list of
 #'   the predictors' means, `C`, their covariance as an array `P x P x n` or
-#'   `NULL` for none, and optionally `weight`, equal weights otherwise. An
-#'   attribute `infinite_variance` set to `TRUE` reports the standard
-#'   deviation as `NA`.
+#'   `NULL` for none, and optionally `weight`, equal weights otherwise. If
+#'   the list has the attribute `infinite_variance` equal to `TRUE`, the
+#'   standard deviation is reported as `NA`.
 #' @param level The interval's level.
 #'
 #' @return A data frame with `fit` (the median), `se`, `lower` and `upper`.
@@ -501,9 +504,9 @@ predictive_response <- function(spec, comps, level) {
 #'
 #' @param v A vector of parameter values.
 #'
-#' @return The first finite value of `v`, or 1 where no value of `v` is
-#'   finite, so that a row with no covariance is carried through the
-#'   vectorized arithmetic and blanked afterwards.
+#' @return The first finite value of `v`, or 1 where `v` has no finite value,
+#'   so that a row with no covariance is carried through the vectorized
+#'   arithmetic and blanked afterwards.
 #'
 #' @keywords internal
 theta_fill <- function(v) {
@@ -515,9 +518,9 @@ theta_fill <- function(v) {
 #' A Quadratic Form Row by Row, Where the Variance Has Missing Entries
 #'
 #' @description
-#' \eqn{x_{ia}^\top V x_{ib}} for every row \eqn{i}, with the entries of
-#' \eqn{V} that are not finite read as missing: a row is `NA` only where it
-#' reaches one of them, that is where both its coefficient in \eqn{x_a} and
+#' Computes \eqn{x_{ia}^\top V x_{ib}} for every row \eqn{i}, reading the
+#' entries of \eqn{V} that are not finite as missing: a row is `NA` only where
+#' it reaches one of them, that is where both its coefficient in \eqn{x_a} and
 #' its coefficient in \eqn{x_b} are non-zero.
 #'
 #' @details

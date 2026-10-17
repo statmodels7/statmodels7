@@ -21,8 +21,8 @@ rstatmod_named(coef, psi, design, params, par)
 A list with \code{coef} and \code{psi}.
 }
 \description{
-Writes the entries of \code{par} over the drawn truth, each addressed by a name
-the result reports it under.
+Writes the entries of \code{par} over the drawn truth, and each entry is
+addressed by the name under which the result reports it.
 }
 \details{
 A single namespace covers the whole model, so the caller names the
@@ -34,8 +34,8 @@ that its members extend at a dot, so \code{omega.random} is every deviation in
 a development of \code{omega} and \code{mu.s(x)} is every coordinate of that smooth.
 
 A value may be a vector of the group's own length, a single number used
-for all of them, or a function of the count. The function is how a
-structured truth is written: \code{function(k) rnorm(k, 0, 0.4)} is a random
+for all of them, or a function of the count. A function writes a
+structured truth: \code{function(k) rnorm(k, 0, 0.4)} is a random
 effect at a scale of its own and \code{function(k) c(2, -1.5, rep(0, k - 2))}
 is a sparse truth for a lasso to find.
 

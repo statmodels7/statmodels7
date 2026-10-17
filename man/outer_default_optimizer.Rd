@@ -15,7 +15,7 @@ is not the same question as whether one exists: see \code{\link[=outer_newton_ok
 \item{mixed}{Whether the model carries a covariance class spanning the
 coefficients and a structural term's own parameters.}
 
-\item{n}{The number of coordinates the search moves.}
+\item{n}{The number of coordinates that the search moves.}
 }
 \value{
 An \pkg{optimizers7} optimizer.

@@ -16,9 +16,9 @@ a note of \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} and not a line
 describing it.
 }
 \description{
-A single string that gives, for each parameter of the distribution, the
-range of its fitted values. \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} adds it as a note where
-the fit did not converge.
+Returns a single string that gives, for each parameter of the distribution,
+the range of its fitted values. \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} adds it as a note
+where the fit did not converge.
 }
 \details{
 The note is written for a lasso at a fixed hyperparameter, with a free

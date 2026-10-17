@@ -18,11 +18,11 @@ the coordinates on the unconstrained scale.}
 }
 \value{
 A named numeric vector of that term's own parameters.
-\code{numeric(0)} where the equation carries no structural term.
+The result is \code{numeric(0)} where the equation carries no structural term.
 }
 \description{
-The own parameters of a structural term of one equation, as quantities or
-as the coordinates on which they were estimated.
+Returns the own parameters of a structural term of one equation, as
+quantities or as the coordinates on which they were estimated.
 }
 \details{
 A structural term rewrites the likelihood and adds no columns to a design,
@@ -30,7 +30,7 @@ so its parameters sit in no block. \code{\link[=coef.StatmodFit]{coef.StatmodFit
 vector of the equation under both readings, named from the term's label as
 every other coefficient of that term is.
 
-A \strong{held} parameter is one that an intercept in the same equation
+A held parameter is one that an intercept in the same equation
 carries, so it is not estimated. It is reported under either reading, at
 the value at which it is held. Leaving it out would make the vector
 shorter than the term's own parameter count, and the readable vector would

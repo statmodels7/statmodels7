@@ -14,23 +14,26 @@
 \item{...}{Unused.}
 }
 \value{
-An \verb{n x p} matrix, \code{p} being the width of that equation's design,
-carrying the coefficient names as its column names. A \pkg{Matrix}
-object where the equation's own blocks are sparse, a base matrix
-otherwise. Zero columns for an equation carrying only a structural term.
+An \verb{n x p} matrix, where \code{p} is the width of the design of that
+equation, with the coefficient names as its column names. The result is a
+\pkg{Matrix} object where the blocks of the equation are sparse and a
+base matrix otherwise. The matrix has zero columns for an equation that
+carries only a structural term.
 }
 \description{
-The block of columns a distribution parameter's equation was fitted with.
+Returns the block of columns used to fit the equation of a distribution
+parameter.
 }
 \details{
 A fit has one design per parameter, and \code{what} selects the parameter.
 \code{NULL} selects the first, as \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} does. A term whose block
 moves with its coefficients is returned at the fitted coefficients, which
-is the block the fit ended on.
+is the block on which the fit ended.
 
-A structural term contributes no columns at all, so an equation carrying
-one alone gives a matrix of no columns; what such a term contributes is a
-recursion, reported by \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}.
+A structural term contributes no columns at all, so an equation that
+carries only a structural term gives a matrix of no columns. The
+contribution of such a term is a recursion, reported by
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}.
 }
 \examples{
 set.seed(1)
@@ -42,6 +45,6 @@ colnames(model.matrix(fit, "sigma"))
 }
 \seealso{
 \code{\link[=statmod_design]{statmod_design()}} for every equation at once,
-\code{\link[=coef.StatmodFit]{coef.StatmodFit()}} for the coefficients these columns multiply
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}} for the coefficients that these columns multiply
 }
 \keyword{internal}

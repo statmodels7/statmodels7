@@ -13,9 +13,9 @@ expected_deriv_ok(distrib)
 A single logical.
 }
 \description{
-Whether \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} returns a value for
-this family. The generic is called once, at a probe value, and the result is
-not inferred from the family's class.
+Determines whether \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} returns a
+value for this family. The generic is called once, at a probe value, and the
+result is not inferred from the family's class.
 }
 \details{
 The default method in \pkg{distributions7} is one central difference of the

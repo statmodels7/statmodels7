@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer.R
 \name{outer_path_defaults}
 \alias{outer_path_defaults}
-\title{The Properties Every Criterion Carries}
+\title{The Properties That Every Criterion Carries}
 \usage{
 outer_path_defaults()
 }
@@ -11,12 +11,12 @@ A named list with \code{nfolds}, \code{rule} and \code{folds}, to be spliced int
 an \code{\link[=OuterMethod]{OuterMethod()}} call.
 }
 \description{
-The defaults for \code{nfolds}, \code{rule} and \code{folds}, which only \code{\link[=cv]{cv()}} reads,
-so that one class can serve every criterion and each constructor names only
-what it needs.
+Returns the defaults for \code{nfolds}, \code{rule} and \code{folds}, which only \code{\link[=cv]{cv()}}
+reads, so that one class can serve every criterion and each constructor
+names only what it needs.
 }
 \details{
-The settings of a \strong{path} are not among them. How many values a path
+The settings of a path are not among them. How many values a path
 visits, how far down it reaches, and whether a term's own hyperparameters
 are combined or swept one at a time all belong to the term. \code{\link[=aic]{aic()}} and
 \code{\link[=bic]{bic()}} are also used for a model's smooth hyperparameters, which are read
@@ -24,8 +24,8 @@ at the mode and not swept, so a path setting on the criterion would not
 apply to them. \code{\link[=cv]{cv()}} is accepted only as a \code{sparse_criterion}.
 }
 \seealso{
-\code{\link[=path_fallbacks]{path_fallbacks()}} for the settings a term that declares a kinked
-penalty without offering a grid argument falls back to,
+\code{\link[=path_fallbacks]{path_fallbacks()}} for the settings to which a term falls back
+when it declares a kinked penalty without offering a grid argument,
 \code{\link[modelterms7:term_search]{modelterms7::term_search()}} for where a path's shape is set.
 }
 \keyword{internal}

@@ -9,14 +9,14 @@ hyper(fit, scale = c("parameter", "link"))
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{scale}{\code{"parameter"} (the default) or \code{"link"}. Matched with
-\code{\link[=match.arg]{match.arg()}}.}
+\item{scale}{\code{"parameter"} (the default) or \code{"link"}. The argument is
+matched with \code{\link[=match.arg]{match.arg()}}.}
 }
 \value{
 A data frame with one row per hyperparameter and the columns:
 \describe{
-\item{\code{parameter}}{the distribution parameter whose equation the
-penalized term sits in. For a covariance class that spans several
+\item{\code{parameter}}{the distribution parameter whose equation contains
+the penalized term. For a covariance class that spans several
 equations, the names of all of them, separated by commas.}
 \item{\code{term}}{the term's key, its call as written.}
 \item{\code{name}}{the hyperparameter's own name, as the penalty names it.}
@@ -26,8 +26,8 @@ equations, the names of all of them, separated by commas.}
 \item{\code{id}}{the sharing label, \code{NA} where the hyperparameter is not
 shared.}
 }
-A data frame of no rows, with those columns, where the model carries no
-penalty at all.
+The result is a data frame of no rows, with those columns, where the
+model carries no penalty at all.
 }
 \description{
 Reports every hyperparameter of every penalty that the model carries: one row
@@ -72,9 +72,9 @@ value of its term.
 The distinction matters for inference. A value chosen by \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}}
 or \code{\link[=cv]{cv()}}, whether by the outer search or along a path, is the argument of
 a minimum of a prediction-error criterion and not the root of the
-derivative of a likelihood, so no standard error follows from it. A value
-that \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} estimated carries a standard error, computed from
-the curvature of that criterion, and \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints it.
+derivative of a likelihood, so the value does not yield a standard error.
+A value that \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} estimated carries a standard error, computed
+from the curvature of that criterion, and \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints it.
 }
 
 \section{Why two rows may carry the same number}{
@@ -92,15 +92,15 @@ set.seed(1)
 d <- data.frame(x = runif(80, 0, 1))
 d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 
-# Estimated by REML, which the source column records.
+# The hyperparameter is estimated by REML, which the source column records.
 fit <- statmod(y ~ s(x, bspline_smooth(k = 6)),
                distributions7::gaussian1_distrib(), d)
 hyper(fit)
 
-# The same value on the scale the outer search ran on.
+# The same value is shown on the scale on which the outer search ran.
 hyper(fit, scale = "link")
 
-# Held by the term instead, and reported as fixed.
+# Here the term holds the value instead, and it is reported as fixed.
 held <- statmod(y ~ s(x, bspline_smooth(k = 6), hyper = c(lambda = 2)),
                 distributions7::gaussian1_distrib(), d)
 hyper(held)[, c("name", "estimate", "held", "source")]

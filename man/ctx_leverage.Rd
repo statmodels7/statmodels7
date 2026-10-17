@@ -11,7 +11,7 @@ ctx_leverage(ctx, design, M, params, npar, offs, threads = 1L)
 
 \item{design}{The design.}
 
-\item{M}{The matrix the traces are taken against.}
+\item{M}{The matrix against which the traces are taken.}
 
 \item{params, npar, offs}{The block bookkeeping.}
 
@@ -21,7 +21,7 @@ ctx_leverage(ctx, design, M, params, npar, offs, threads = 1L)
 A list of lists of vectors.
 }
 \description{
-\code{\link[=block_leverage]{block_leverage()}}, computed once and read by the gradient's
-contraction and by every pair of the Hessian.
+Returns the result of \code{\link[=block_leverage]{block_leverage()}}, computed once and read by the
+gradient's contraction and by every pair of the Hessian.
 }
 \keyword{internal}

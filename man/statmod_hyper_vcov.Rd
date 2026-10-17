@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_hessian.R
 \name{statmod_hyper_vcov}
 \alias{statmod_hyper_vcov}
-\title{The Variance of the Hyperparameters a Marginal Criterion Estimated}
+\title{The Variance of the Hyperparameters That a Marginal Criterion Estimated}
 \usage{
 statmod_hyper_vcov(
   spec,
@@ -27,7 +27,7 @@ statmod_hyper_vcov(
 \item{method}{The outer method that estimated them, or \code{NULL}.}
 
 \item{inner}{The inner optimizer that the fit used, with which the stencil
-route refits its probes; \code{iwls()} where none is given.}
+route refits its probes; \code{iwls()} where the argument is \code{NULL}.}
 
 \item{pinned}{The coordinates that the fit left out of the criterion's
 determinant, as it records them in \code{methods$pinned}.}
@@ -39,15 +39,15 @@ so that the others carry the variance conditional on them.}
 \value{
 A square matrix, one row per estimated hyperparameter, whose
 dimnames join the distribution parameter, the term and the
-hyperparameter's own name with a carriage return, a character that no
-name can contain, so that the three are recoverable from the key. The
+hyperparameter's own name with a carriage return, a character that cannot
+occur in a name, so that the three are recoverable from the key. The
 index is stored in the attribute \code{"idx"}. The rows and columns of held
 coordinates are \code{NA} (see \code{\link[=hyper_variance]{hyper_variance()}}). The value is \code{NULL} where
 there is nothing to report.
 }
 \description{
-The asymptotic variance matrix of the estimated hyperparameters, on the free
-scale their links carry them onto.
+Returns the asymptotic variance matrix of the estimated hyperparameters, on
+the free scale onto which their links carry them.
 }
 \details{
 A hyperparameter estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} is the maximizer of a
@@ -64,13 +64,13 @@ the scale of the hyperparameter itself would describe a shape that the
 criterion does not have where the estimate is far from zero and the
 criterion is asymmetric.
 
-\strong{Where it does not apply.} The function returns \code{NULL} for every outer
+The function returns \code{NULL} for every outer
 criterion other than \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, including \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}
 used as the outer criterion for a smooth penalty. A hyperparameter that a
 path selects (the penalty of a kinked term, chosen by \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or
 \code{\link[=cv]{cv()}} over a grid) is the argument of a minimum, not a root of a
-derivative, so no Hessian exists to invert. Its uncertainty can be assessed
-by resampling.
+derivative, so the criterion has no Hessian to invert. Its uncertainty can
+be assessed by resampling.
 }
 \seealso{
 \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}

@@ -11,7 +11,7 @@ par_at(fit, par, design)
 
 \item{par}{A named list of coefficient vectors, or \code{NULL}.}
 
-\item{design}{The design to validate the lengths against.}
+\item{design}{The design against which the lengths are validated.}
 }
 \value{
 A named list of coefficient vectors, one per distribution
@@ -25,8 +25,9 @@ a supplied structure against the design before returning it.
 Three things are checked: that \code{par} is a named list, that every name of
 \code{par} is a distribution parameter, and that the vector given for each is
 as long as that equation's design is wide. Each failure signals an error.
-The messages for a name and for a length name the parameter, so that a
-short vector is not recycled into a different model. A distribution
+The message for a wrong name and the message for a wrong length both give
+the name of the parameter, so that a short vector is not recycled into a
+different model. A distribution
 parameter that \code{par} omits keeps its fitted coefficients.
 }
 \seealso{

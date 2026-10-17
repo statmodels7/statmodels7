@@ -21,9 +21,9 @@ A list with \code{coef}, one numeric vector per distribution parameter;
 the structural term's own parameters or \code{NULL}.
 }
 \description{
-Every coefficient, every hyperparameter and, where the formula carries a
-structural term, that term's own parameters: drawn once, then overwritten
-by whatever \code{par} names.
+Draws every coefficient, every hyperparameter and, where the formula
+carries a structural term, that term's own parameters, once, and then
+overwrites them with the values that \code{par} supplies.
 }
 \details{
 Each quantity is drawn by the component that defines its meaning. A

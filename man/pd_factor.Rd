@@ -17,9 +17,9 @@ A list with \code{logdet}, \code{ok}, \code{factor} and
 eigendecomposition.
 }
 \description{
-The Cholesky factor of a matrix that a Laplace approximation requires to be
-positive definite, together with its log-determinant, in the storage of the
-matrix itself.
+Returns the Cholesky factor of a matrix that a Laplace approximation
+requires to be positive definite, together with its log-determinant, in the
+storage of the matrix itself.
 }
 \details{
 This function is the single place where the penalized matrix is factorized.
@@ -27,12 +27,12 @@ The criterion needs its log-determinant, the gradient needs the movement of
 the mode and the Hessian needs both and the inverse, so one factorization
 serves all three.
 
-\strong{Definiteness.} Whether the matrix is accepted never depends on whether a
-factorization raised an error: where the cheap test is inconclusive, the
-eigendecomposition answers about the matrix. The sparse route carries its
-own condition estimate (\code{\link[=sparse_lmin]{sparse_lmin()}}) in place of the dense one, and falls
-back to the dense route where that estimate cannot be formed, so the matrix
-is judged by the same criterion on either storage.
+Whether the matrix is accepted never depends on whether a factorization
+raised an error: where the cheap test is inconclusive, the
+eigendecomposition of the matrix settles the question. The sparse route
+carries its own condition estimate (\code{\link[=sparse_lmin]{sparse_lmin()}}) in place of the dense
+one, and falls back to the dense route where that estimate cannot be formed,
+so the matrix is judged by the same criterion on either storage.
 }
 \seealso{
 \code{\link[=pd_logdet]{pd_logdet()}}, \code{\link[=ctx_penalized]{ctx_penalized()}}

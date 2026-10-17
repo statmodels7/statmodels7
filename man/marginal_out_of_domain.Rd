@@ -31,6 +31,6 @@ number; above it the row is reported as \code{NA}, with a warning.
 \details{
 The variance of the effects' contribution at each row is read off the
 nodes, \eqn{\sum_k w_k (z^\top b_k)^2}, which a Gauss-Hermite grid gives
-exactly, the effects having mean zero.
+exactly because the effects have mean zero.
 }
 \keyword{internal}

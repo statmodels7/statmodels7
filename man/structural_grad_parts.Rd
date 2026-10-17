@@ -3,7 +3,7 @@
 \name{structural_grad_parts}
 \alias{structural_grad_parts}
 \alias{structural_grad_parts_impl}
-\title{What the Joint Chain Term Needs Before a Direction Is Known}
+\title{The Direction-Free Quantities of the Joint Chain Term}
 \usage{
 structural_grad_parts(spec, design, coef, jd, M)
 
@@ -30,14 +30,14 @@ and curvature that drive the recursion, the seed of the recursion, the
 \code{blocks} callback with its data, and the observation weights.
 }
 \description{
-The quantities of \code{\link[=statmod_structural_grad]{statmod_structural_grad()}} that do not depend
+Computes the quantities of \code{\link[=statmod_structural_grad]{statmod_structural_grad()}} that do not depend
 on which hyperparameter is being differentiated: the family's derivatives,
 the filter's forward Jacobian, the per-observation diagonal of \eqn{M} and
 the contraction \eqn{u}.
 }
 \details{
-Computing them once is what keeps a model with several hyperparameters
-affordable: only the two pieces that read the direction are repeated, and
-each of those is one pass of the recursion.
+Computing them once keeps a model with several hyperparameters affordable,
+because only the two pieces that read the direction are repeated, and each
+of those is one pass of the recursion.
 }
 \keyword{internal}

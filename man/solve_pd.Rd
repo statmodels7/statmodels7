@@ -17,8 +17,8 @@ solve_pd(A, what, labels = NULL)
 The inverse.
 }
 \description{
-An inverse through the Cholesky factor, signaling an error naming the
-matrix when a direction is flat.
+Returns the inverse through the Cholesky factor, and signals an error naming
+the matrix when a direction is flat.
 }
 \details{
 A failure here is a statement about the fit and not about the arithmetic:
@@ -48,9 +48,10 @@ matrix the exact value of this product lies between
 of \eqn{\lVert A^{-1}\rVert_1} is a lower bound, so the value read can
 exceed the exact product, and can exceed \eqn{\lambda_{\min}} by a small
 factor. The two cases to be separated differ by many
-orders of magnitude, so neither reaches the other. The estimate replaces a
-full eigendecomposition, which answers the same question exactly and costs
-\eqn{O(p^3)} with a larger constant than the Cholesky factorization.
+orders of magnitude, so the error of the estimator does not move either case
+into the range of the other. The estimate replaces a full
+eigendecomposition, which gives the exact answer to the same question and
+costs \eqn{O(p^3)} with a larger constant than the Cholesky factorization.
 
 The message names the coefficients that load on the eigenvector of the
 smallest eigenvalue, and no cause. A flat direction can arise from a run

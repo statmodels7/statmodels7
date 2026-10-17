@@ -44,8 +44,8 @@ u_refresh(
 A numeric vector as long as the stacked coefficients.
 }
 \description{
-The part of \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)} that
-\code{\link[=u_vector]{u_vector()}} does not compute: everything coming from
+Computes the part of \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)}
+that \code{\link[=u_vector]{u_vector()}} does not compute: everything that comes from
 \eqn{\partial X/\partial\beta} where a term's block depends on its own
 coefficients.
 }
@@ -64,8 +64,8 @@ carries its own chain rule, the links on its parameters and a subformula's
 design. A break-point column is a step function of its break-point, so a
 difference quotient of it diverges as the step shrinks. A term that does not
 implement the contraction inherits zeros, which is correct for a fixed
-design. A sharp \code{jump()} or \code{jseg()} returns zeros as well, its block being a
-working linearization with a frozen weight.
+design. A sharp \code{jump()} or \code{jseg()} returns zeros as well, because its
+block is a working linearization with a frozen weight.
 }
 \seealso{
 \code{\link[=u_vector]{u_vector()}}, \code{\link[=refresh_amat]{refresh_amat()}},

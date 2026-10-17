@@ -28,8 +28,9 @@ coordinate whose own curvature cannot produce a variance.
 \details{
 At a maximum the criterion's Hessian is negative definite and its negative
 inverts to a variance. A hyperparameter driven to the edge of its range,
-or one the search left before reaching a maximum, has a curvature there
-that is zero or of the wrong sign, and no variance follows from it.
+or one that the search left before reaching a maximum, has a curvature
+there that is zero or of the wrong sign, and that curvature yields no
+variance.
 
 Such a coordinate is held, and the remaining coordinates are inverted. The
 result is the variance conditional on the held coordinates, which is the
@@ -42,9 +43,9 @@ with the kept diagonal. Above \code{schur} times the kept diagonal, the function
 returns \code{NULL}.
 
 A variance is returned only where the inverted matrix is positive definite,
-which is decided from the smallest eigenvalue of the matrix equilibrated to
-a unit diagonal. A positive diagonal of the inverse does not suffice,
-because an indefinite matrix can have one.
+which the function determines from the smallest eigenvalue of the matrix
+equilibrated to a unit diagonal. A positive diagonal of the inverse does
+not suffice, because an indefinite matrix can have one.
 
 A coordinate that the certificate places at the edge of its range is held
 whatever its curvature, and the Schur test is not applied to it, because

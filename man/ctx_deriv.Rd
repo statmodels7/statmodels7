@@ -17,7 +17,7 @@ ctx_deriv(ctx, spec, design, coef, hyper, order)
 A named list of vectors.
 }
 \description{
-The third or fourth derivative on the link scale, which the gradient's
-contraction and the Hessian's two contractions all read.
+Returns the third or fourth derivative on the link scale, which the
+gradient's contraction and the Hessian's two contractions all read.
 }
 \keyword{internal}

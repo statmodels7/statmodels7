@@ -13,7 +13,7 @@ coord_legend(cd)
 A character vector.
 }
 \description{
-One line per coordinate, giving its label and the term from which it comes, for
-the head of the block that a summary prints.
+Returns one line per coordinate, giving its label and the term from which
+it comes, for the head of the block that a summary prints.
 }
 \keyword{internal}

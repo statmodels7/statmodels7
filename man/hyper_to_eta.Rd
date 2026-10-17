@@ -13,8 +13,8 @@ eta_to_hyper(eta, idx, hyper)
 \item{hyper}{The hyperparameter structure, keyed by distribution parameter
 and then by term.}
 
-\item{idx}{The index, as \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns it, whose rows say
-which hyperparameters are on the search and whose \code{"links"} attribute
+\item{idx}{The index, as \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns it, whose rows
+identify the hyperparameters on the search and whose \code{"links"} attribute
 gives the link that carries each.}
 
 \item{eta}{A free vector, as long as \code{idx} has rows.}
@@ -22,22 +22,23 @@ gives the link that carries each.}
 \value{
 \code{hyper_to_eta()} gives an unnamed numeric vector with one entry
 per row of \code{idx}. \code{eta_to_hyper()} gives the hyperparameter structure,
-with the estimated entries replaced and every other one as it was.
+in which the estimated entries are replaced and every other entry is as
+it was.
 }
 \description{
 \code{hyper_to_eta()} carries the estimated hyperparameters onto the whole
 line through their links; \code{eta_to_hyper()} puts a free vector back.
 }
 \details{
-The outer search runs on the free scale for the reason every other search
-in the toolkit does: a smoothing parameter is positive, and an optimizer
-that has no information about the domain can step outside it. The link of
-each hyperparameter is read from the \code{"links"} attribute of the index that
-\code{\link[=outer_hyper_index]{outer_hyper_index()}} returns.
+The outer search runs on the free scale for the reason that every other
+search in the toolkit does: a smoothing parameter is positive, and an
+optimizer that has no information about the domain can step outside it. The
+link of each hyperparameter is read from the \code{"links"} attribute of the
+index that \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns.
 
 The two are inverses over the estimated hyperparameters:
 \code{eta_to_hyper(hyper_to_eta(h, idx), idx, h)} returns \code{h}. The
-hyperparameters \code{idx} does not name are untouched by both.
+hyperparameters that \code{idx} does not name are untouched by both.
 }
 \seealso{
 \code{\link[=outer_hyper_index]{outer_hyper_index()}} for the index and its links,

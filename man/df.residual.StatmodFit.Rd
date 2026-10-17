@@ -13,20 +13,21 @@
 }
 \value{
 A single number, \code{nobs(object)} less the total effective degrees
-of freedom. Not an integer in general. Where the effective degrees of
-freedom of a term could not be computed, \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}} uses the
-number of coefficients of that term (the number of free parameters, for a
-structural term) in its place, so the result is always a number.
+of freedom. The result is not an integer in general. Where the effective
+degrees of freedom of a term could not be computed, \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}
+uses the number of coefficients of that term (the number of free
+parameters, for a structural term) in its place, so the result is always a
+number.
 }
 \description{
-The number of observations, \code{\link[=nobs.StatmodFit]{nobs.StatmodFit()}}, less the effective
-degrees of freedom of the model.
+Returns the number of observations, \code{\link[=nobs.StatmodFit]{nobs.StatmodFit()}}, less the
+effective degrees of freedom of the model.
 }
 \details{
 The count subtracted is the effective one, the sum over the terms of their
 effective degrees of freedom, as \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}} reports it. A
 penalized block has fewer effective degrees of freedom than the number of
-coefficients it carries, so the result is not an integer in general.
+coefficients that it carries, so the result is not an integer in general.
 }
 \examples{
 set.seed(1)
@@ -36,7 +37,7 @@ fit <- statmod(y ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distri
 df.residual(fit)
 }
 \seealso{
-\code{\link[=statmod_edf]{statmod_edf()}} for the per-term counts this sums,
+\code{\link[=statmod_edf]{statmod_edf()}} for the per-term counts that this function sums,
 \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}
 }
 \keyword{internal}

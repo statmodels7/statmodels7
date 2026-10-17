@@ -20,11 +20,11 @@ whose observed information is not positive definite at an outlier, and
 the observed information otherwise. The default is \code{"observed"}; the
 expected information is used where the caller names it, as for a Student t
 whose degrees of freedom are modeled. The fitted model records the
-information used. Matched with \code{\link[=match.arg]{match.arg()}}. On the expected route the
-outer gradient is exact wherever the family writes its expected
-information out, as every shipped family does, and the outer Hessian is
-exact wherever the family also supplies the derivative of that information
-that the Hessian reads (every shipped family except
+information used. The argument is matched with \code{\link[=match.arg]{match.arg()}}. On the
+expected route the outer gradient is exact wherever the family writes its
+expected information out, as every shipped family does, and the outer
+Hessian is exact wherever the family also supplies the derivative of that
+information that the Hessian reads (every shipped family except
 \code{\link[distributions7:enet_distrib]{distributions7::enet_distrib()}}). A family that does not write its
 expected information out reads the outer product of its scores at the data
 under the default \code{iwls(approx = "opg")}, which is not an expectation, and
@@ -46,18 +46,19 @@ the path that chooses the kinked penalty scores the model at the joint
 mode, and the fit returned is the model that it scored. A parameter
 named explicitly is still estimated on the criterion, at the value that
 the path chose. Where the family lacks the two derivatives that the
-criterion reads in some parameter (a Laplace response) and the model carries no smooth
-hyperparameter, the default criterion is not run at all, and a
-\code{reml()} or \code{ml()} passed by name is rejected.}
+criterion reads in some parameter (a Laplace response) and the model
+carries no smooth hyperparameter, the default criterion is not run at
+all, and a \code{reml()} or \code{ml()} passed by name is rejected.}
 }
 \value{
-An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \code{"ml"}, with
-\code{hessian} and \code{marginal} as supplied and the path settings unused.
+An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \code{"ml"}, whose
+\code{hessian} and \code{marginal} are as supplied and whose path settings are
+unused.
 }
 \description{
 Build the criterion object that \code{\link[=statmod]{statmod()}} uses to choose a model's smooth
 hyperparameters by a marginal likelihood: the coefficients are integrated
-out by a Laplace approximation at the penalized mode, and what is left is
+out by a Laplace approximation at the penalized mode, and the remainder is
 maximized in the hyperparameters. Pass the result as \code{outer_criterion}.
 
 \code{reml()} integrates every coefficient that \code{marginal} does not name. \code{ml()}
@@ -86,8 +87,8 @@ value of \eqn{\gamma}, the coefficients \eqn{u} are set to the penalized
 mode.
 
 \code{reml()} integrates every coefficient in \eqn{u}. An unpenalized one is
-integrated under a flat prior, which is what the absence of a penalty
-amounts to. \code{ml()} integrates only the directions in the range space of the
+integrated under a flat prior; the absence of a penalty amounts to a flat
+prior. \code{ml()} integrates only the directions in the range space of the
 penalty, so an unpenalized coefficient in \eqn{u} is read at the mode. An
 ordinary covariate is unpenalized. The linear component of a
 Demmler-Reinsch smooth is unpenalized too, because the penalty of that
@@ -113,7 +114,7 @@ the mean are integrated, and \eqn{\sigma} is maximized on the criterion.
 Without any penalty, \code{reml()} returns the \eqn{\sigma} of \code{\link[stats:lm]{stats::lm()}},
 \eqn{\sqrt{\mathrm{rss}/(n-p)}}, and its criterion equals
 \code{logLik(lm(...), REML = TRUE)}. \code{ml()} returns \eqn{\sqrt{\mathrm{rss}/n}}.
-With \code{agec} defined as \code{age - 11}, the model
+If \code{agec} is defined as \code{age - 11}, the model
 \code{distance ~ agec + random(~ agec | Subject)} on \code{nlme::Orthodont} gives the
 estimates and the criterion of \code{lme}.
 
@@ -140,19 +141,19 @@ null space is not spanned by coordinates. In each case a parameter that the
 default names keeps the convention of \code{"none"}, and a parameter named
 explicitly is rejected. Beside a penalty with a kink the default names no
 parameter, and a parameter named explicitly is estimated on the criterion,
-with the coordinates that the kinked penalty covers excluded. For a
+and the coordinates that the kinked penalty covers are excluded. For a
 multivariate family the default names no parameter, and an explicit
 \code{marginal} other than \code{"none"} is an error.
 }
 
 \section{Which hyperparameters}{
-Those of the terms fitted in one system, meaning those whose penalty is
-twice differentiable. A lasso, a SCAD or an MCP has a kink, its
-coefficients are estimated by a method of their own, and a Laplace
-approximation is undefined at a point where the second derivative does not
-exist. Those hyperparameters are not on the outer search. \code{\link[=statmod]{statmod()}}
-chooses them by a path under \code{sparse_criterion}, which is \code{\link[=bic]{bic()}} by default
-and can also be \code{\link[=aic]{aic()}} or \code{\link[=cv]{cv()}}.
+The criterion estimates the hyperparameters of the terms fitted in one
+system, meaning the terms whose penalty is twice differentiable. A lasso, a
+SCAD or an MCP has a kink, its coefficients are estimated by a method of
+their own, and a Laplace approximation is undefined at a point where the
+second derivative does not exist. Those hyperparameters are not on the outer
+search. \code{\link[=statmod]{statmod()}} chooses them by a path under \code{sparse_criterion}, which is
+\code{\link[=bic]{bic()}} by default and can also be \code{\link[=aic]{aic()}} or \code{\link[=cv]{cv()}}.
 }
 
 \section{The exact gradient}{
@@ -171,11 +172,12 @@ criterion evaluations once there are two or more hyperparameters.
 }
 
 \section{ML needs a null basis}{
-\code{ml()} reads the null space of every penalty that it integrates over,
-because the null space determines which directions are profiled. \code{\link[penalties7:is_proper]{penalties7::is_proper()}} identifies a penalty with
-no null space, and \code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}} returns the null space
-of a quadratic, structured, additive or separable penalty. A penalty that
-offers neither is rejected by name, and no subspace is guessed.
+\code{ml()} reads the null space of every penalty over which it integrates,
+because the null space determines which directions are profiled.
+\code{\link[penalties7:is_proper]{penalties7::is_proper()}} identifies a penalty with no null space, and
+\code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}} returns the null space of a quadratic,
+structured, additive or separable penalty. A penalty that provides neither
+is rejected by name, and the criterion does not assume a subspace for it.
 }
 
 \examples{
@@ -197,7 +199,7 @@ fml <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distr
 c(reml = hyper(fit)$estimate, ml = hyper(fml)$estimate)
 c(reml = sum(fit@edf$edf), ml = sum(fml@edf$edf))
 
-# The marginal log-likelihood is what these maximize, and it is only
+# The marginal log-likelihood, which these criteria maximize, is only
 # available where one of them ran.
 logLik(fit, type = "marginal")
 

@@ -10,8 +10,9 @@ outer_backtracks()
 A single number, 12.
 }
 \description{
-How many backtracks a line search inside \code{\link[=outer_fit]{outer_fit()}} may take
-before it gives up, where the optimizer is the one this package chose.
+Returns the number of backtracks that a line search inside \code{\link[=outer_fit]{outer_fit()}}
+may take before it stops, where the optimizer is the one that
+\code{\link[=outer_default_optimizer]{outer_default_optimizer()}} selects.
 }
 \details{
 \pkg{optimizers7} defaults to 30, which suits an objective that costs
@@ -21,9 +22,9 @@ fails spends its whole budget before it stops.
 Every trial warm-starts from the incumbent, the best usable point found so
 far, so as the step shrinks the refit begins near its own answer and a
 rejected backtrack costs less than an average evaluation. The budget applies
-only to the line search of an optimizer that this package chose; the
-resolution that \code{\link[=criterion_resolution]{criterion_resolution()}} supplies ends the search before the
-budget on most shapes.
+only to the line search of an optimizer selected by
+\code{\link[=outer_default_optimizer]{outer_default_optimizer()}}; the resolution that \code{\link[=criterion_resolution]{criterion_resolution()}}
+supplies ends the search before the budget on most shapes.
 
 An optimizer that the caller named keeps its own budget, as it keeps its own
 stopping rule.

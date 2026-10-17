@@ -11,16 +11,16 @@ NULL
 #' @details
 #' # What it is for
 #'
-#' Data whose truth is known: write the model, draw from it, fit it back, and
-#' see whether the fit recovers what was put in. That is the shape of a
-#' simulation study, and of a check on a term that has just been written.
+#' Simulated data have a known truth: write the model, draw from it, fit it
+#' back, and see whether the fit recovers what was put in. That is the shape
+#' of a simulation study, and of a check on a term that has just been written.
 #'
 #' This is not [stats::simulate()], which draws from a model already fitted.
 #' The `r` prefix is the one that R uses for a random draw, so the two names
 #' stay apart.
 #'
 #' A covariate needs no declaration. A factor becomes its contrasts and a
-#' numeric variable stays as it is, the design being built by the interpreter
+#' numeric variable stays as it is, and the design is built by the interpreter
 #' that a fit uses.
 #'
 #' # The returned truth
@@ -57,15 +57,15 @@ NULL
 #' A column of `data` under the same name is overwritten, and the columns of
 #' `data` that are not drawn are the same in every replicate.
 #'
-#' The choice decides what a study measures. With `data` the covariates are
+#' The choice determines what a study measures. With `data` the covariates are
 #' the same throughout, so the study measures the behavior of the estimator
 #' conditional on that design; with `covariates` it measures that behavior
-#' over the design as well. Neither is more correct, and a study should state
-#' which one it ran.
+#' over the design as well. The two choices are equally correct, and a study
+#' should state which one it ran.
 #'
 #' A drawn factor should have its levels fixed. A factor drawn with free
 #' levels can lose a level at some replicate. The design then has another
-#' shape than the one that the coefficients were drawn for, and the
+#' shape than the one for which the coefficients were drawn, and the
 #' simulation stops at that replicate with an error.
 #'
 #' # Several replicates
@@ -83,8 +83,8 @@ NULL
 #'
 #' # The quantities that are drawn
 #'
-#' A call that names nothing draws the whole truth, so writing the model is
-#' all that getting data from it requires. Each quantity is drawn by the
+#' If the user names no quantity, the call draws the whole truth, so writing
+#' the model is enough to get data from it. Each quantity is drawn by the
 #' component that defines its meaning:
 #'
 #' - a coefficient of a design column has no other owner and comes from
@@ -99,12 +99,12 @@ NULL
 #'   [modelterms7::term_draw()], on the chart that each one rides. A loading
 #'   stays positive and a persistence stationary whatever comes out;
 #' - a coefficient of a design column whose meaning only the term defines is
-#'   drawn by the term, through [modelterms7::term_coef_draw()], last of all
-#'   so that what it writes is what survives. A break-point is the case: it
-#'   is a position on the covariate's own axis, so a normal of width `sd`
-#'   often lands outside the data, and the confinement then pins it to an edge
-#'   of the interval, where one of the two segments holds a small share of the
-#'   rows.
+#'   drawn by the term, through [modelterms7::term_coef_draw()], last of all,
+#'   so that the values that it writes survive. A break-point is such a
+#'   coordinate: it is a position on the covariate's own axis, so a normal of
+#'   width `sd` often lands outside the data, and the term then confines it,
+#'   which pins it to an edge of the interval, where one of the two segments
+#'   holds a small share of the rows.
 #'
 #' A hyperparameter that the term holds is used and not drawn, so
 #' `s(x, bspline_smooth(), hyper = c(lambda = 2))` simulates at the smoothing
@@ -114,11 +114,11 @@ NULL
 #' width, so a heavy-tailed prior over a break-point keeps its family for the
 #' fitting but not for the simulation.
 #'
-#' What no prior reaches falls back to the plain draw. The cases are SCAD and
-#' MCP, which are improper by construction; an anisotropic tensor smooth,
-#' which is flat along its null space; a covariance class spanning a filter
-#' and an equation at once, which is in neither vector on its own; and a
-#' coordinate for which the draw of the penalty is missing.
+#' A coordinate that a prior does not reach falls back to the plain draw. The
+#' cases are SCAD and MCP, which are improper by construction; an anisotropic
+#' tensor smooth, which is flat along its null space; a covariance class
+#' spanning a filter and an equation at once, which is in neither vector on
+#' its own; and a coordinate for which the draw of the penalty is missing.
 #'
 #' # Fixing quantities by name
 #'
@@ -126,13 +126,13 @@ NULL
 #'
 #' - a distribution parameter, `mu`, which is that whole equation;
 #' - one of its coefficients or a group of them, `mu.(Intercept)` or
-#'   `mu.random`, a group being a name that the members extend at a dot;
+#'   `mu.random`, where a group is a name that the members extend at a dot;
 #' - a structural term's own parameter, `kappa1`, or a group of those,
 #'   `omega.random`.
 #'
 #' A value is a vector of that key's own length, a single number used for all
-#' of them, or a function of the count. The function is how a structured
-#' truth is written without a vocabulary of its own:
+#' of them, or a function of the count. A function writes a structured
+#' truth without a vocabulary of its own:
 #' `function(k) rnorm(k, 0, 0.4)` is a random effect at a scale chosen by the
 #' caller and `function(k) c(1.5, -2, rep(0, k - 2))` is a sparse truth for a
 #' lasso to find. A function that returns the wrong number of values or a
@@ -154,11 +154,11 @@ NULL
 #'
 #' The simulation runs through [modelterms7::term_simulate()], so the
 #' recursion that generates the data is the term's own. A score-driven term
-#' draws the response as it runs, its level at one time being driven by the
+#' draws the response as it runs, and its level at one time is driven by the
 #' score at the time before; a latent chain draws its path from the stationary
-#' law that the likelihood is written with; a marginal break-point term draws
-#' each group's positions from their prior. What each drew comes back in
-#' `latent`, which is what a recovery check compares against.
+#' law with which the likelihood is written; a marginal break-point term draws
+#' each group's positions from their prior. The values that each term drew
+#' come back in `latent`, and a recovery check compares a fit with them.
 #'
 #' The parameters of such a term are not coefficients of any equation. They
 #' are named in `par` beside the equations' coefficients, and since a formula
@@ -175,14 +175,15 @@ NULL
 #'
 #' @param formula The model formula, as [statmod()] takes it, with the
 #'   equations separated by `|`. Its left-hand side must be a symbol.
-#' @param distrib A \pkg{distributions7} distribution object, which decides
-#'   how many equations there are and what is drawn from.
+#' @param distrib A \pkg{distributions7} distribution object, which
+#'   determines how many equations there are and the distribution from which
+#'   the data are drawn.
 #' @param data A data frame of covariates, or `NULL` where `n` is given.
 #' @param n The number of observations, a positive whole number. It is
 #'   required where `data` is `NULL`, and where `data` is given it must equal
 #'   the number of rows.
-#' @param n_sim How many data sets to draw, a positive whole number. `1` by
-#'   default.
+#' @param n_sim How many data sets to draw, a positive whole number. The
+#'   default is `1`.
 #' @param par Optional named list of what to hold, over the whole model: a
 #'   distribution parameter, one of its coefficients or a group of them, a
 #'   structural term's own parameter or a group of those. Each entry is a
@@ -190,7 +191,7 @@ NULL
 #'   details. `NULL`, the default, draws everything.
 #' @param sd The width of the draws, `1` by default. A quantity that rides a
 #'   chart (a structural parameter, a prior's own scale) is drawn at half of
-#'   it, the chart carrying a width of one onto most of its parameter's
+#'   it, because a chart carries a width of one onto most of its parameter's
 #'   range.
 #' @param offsets Optional named list of offsets, one per parameter, as
 #'   [statmod()] takes them.
@@ -201,8 +202,8 @@ NULL
 #'
 #' @return An object of class `"StatmodSim"`, a list with the elements:
 #'   \describe{
-#'     \item{`data`}{the data frame with the response column added, named
-#'       after the formula's left-hand side.}
+#'     \item{`data`}{the data frame, to which the response column has been
+#'       added under the name of the formula's left-hand side.}
 #'     \item{`par`}{the coefficients used, drawn or given, named as the
 #'       design names them.}
 #'     \item{`theta`}{the distribution's parameters at every observation, a
@@ -211,10 +212,10 @@ NULL
 #'       score-driven term, the states of a latent chain, or the positions of
 #'       a marginal break-point term), or `NULL`.}
 #'     \item{`structural`}{such a term's own parameters, or `NULL`.}
-#'     \item{`hyper`}{a data frame of the hyperparameters, one row per
-#'       penalty and name, with the value drawn or held. Its columns are
-#'       those of [hyper()] as far as they mean the same thing, `value`
-#'       taking the place of `estimate`, so a study compares the two
+#'     \item{`hyper`}{a data frame of the hyperparameters, with one row per
+#'       penalty and name; each row gives the value drawn or held. Its columns
+#'       are those of [hyper()] as far as they mean the same thing, and `value`
+#'       takes the place of `estimate`, so a study compares the two
 #'       directly.}
 #'     \item{`n_sim`}{the number of data sets, as an integer.}
 #'     \item{`call`}{the matched call.}
@@ -231,16 +232,16 @@ NULL
 #' set.seed(1)
 #' dd <- data.frame(x = runif(50), g = factor(rep(c("a", "b"), 25)))
 #'
-#' # coefficients drawn
+#' # The coefficients are drawn.
 #' sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd)
 #' sim$par
 #'
-#' # or given, and recovered by a fit
+#' # The coefficients are given, and a fit recovers them.
 #' sim2 <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
 #'                  par = list(mu = c(1, 2), sigma = log(0.3)))
 #' coef(statmod(y ~ x, distributions7::gaussian1_distrib(), sim2$data))
 #'
-#' # a sparse truth, written as a function of the coefficient count
+#' # A sparse truth is written as a function of the coefficient count.
 #' dd2 <- as.data.frame(matrix(rnorm(50 * 6), 50, 6))
 #' sim3 <- rstatmod(y ~ lasso(~ V1 + V2 + V3 + V4 + V5 + V6),
 #'                  distributions7::gaussian1_distrib(), dd2,
@@ -248,11 +249,11 @@ NULL
 #'                             sigma = log(0.3)))
 #' head(sim3$data$y, 3)
 #'
-#' # a model with no covariates at all
+#' # This model has no covariates at all.
 #' sim4 <- rstatmod(y ~ 1, distributions7::gaussian1_distrib(), n = 20)
 #' nrow(sim4$data)
 #'
-#' # a study over replicates, the covariates drawn afresh at each one
+#' # A study over replicates draws the covariates afresh at each one.
 #' study <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), n = 80,
 #'                   n_sim = 5, par = list(mu = c(1, 2), sigma = log(0.5)),
 #'                   covariates = list(x = function(n) runif(n, -2, 2)))
@@ -261,7 +262,8 @@ NULL
 #'   y ~ x, distributions7::gaussian1_distrib(), d),
 #'   readable = FALSE)$mu[[2L]], numeric(1))
 #'
-#' # a score-driven series, its own parameters named beside the equations'
+#' # In a score-driven series, the term's own parameters are named beside the
+#' # equations'.
 #' sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
 #'                  distributions7::gaussian1_distrib(),
 #'                  data.frame(t = 1:100),
@@ -269,8 +271,8 @@ NULL
 #'                             pacf1 = 0.6))
 #' head(sim5$latent, 3)
 #'
-#' # and a panel whose level varies by group: naming nothing draws the
-#' # deviations from the prior random() declares, at a scale drawn too
+#' # In a panel whose level varies by group, naming nothing draws the
+#' # deviations from the prior that random() declares, at a scale drawn too.
 #' pan <- data.frame(id = factor(rep(1:6, each = 10)), t = rep(1:10, 6))
 #' sim6 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, omega ~ 1 + random(~1 | id),
 #'                              by = id, time = t),
@@ -429,7 +431,7 @@ check_covariates <- function(covariates) {
 #'
 #' @param covariates The generators.
 #' @param n The observation count.
-#' @param data The frame to write into.
+#' @param data The frame into which the columns are written.
 #'
 #' @return A data frame.
 #'
@@ -454,7 +456,7 @@ draw_covariates <- function(covariates, n, data) {
 #' @title Printing a Simulation
 #' @name print.StatmodSim
 #' @description
-#' The model that was written, the size of what came out, and the truth
+#' Prints the model that was written, the size of what came out, and the truth
 #' behind it.
 #' @param x A [rstatmod()] result.
 #' @param ... Unused.
@@ -514,8 +516,8 @@ print.StatmodSim <- function(x, ...) {
 #' A Vector of a Simulated Truth, Short Enough to Read
 #'
 #' @description
-#' The values where there are six or fewer, and otherwise the first two
-#' values with the count and the standard deviation.
+#' Returns the values where there are six or fewer, and otherwise the first
+#' two values with the count and the standard deviation.
 #'
 #' @details
 #' A random effect over a hundred groups is a hundred numbers, and printing
@@ -539,18 +541,18 @@ sim_values <- function(v) {
 }
 
 
-#' The Groups a Printed Truth Collapses
+#' The Groups That a Printed Truth Collapses
 #'
 #' @description
-#' One entry per scalar parameter and one per family of names that share a
-#' stem, in the order the names arrive.
+#' Returns one entry per scalar parameter and one per family of names that
+#' share a stem, in the order in which the names arrive.
 #'
 #' @details
-#' A structural term's parameters are `omega`, `kappa1` and the like where
-#' nothing is developed, and `omega.(Intercept)`, `omega.random.1` and so on
-#' where something is. The first are read one by one and the second are a
-#' block, so the printed form is grouped at the first dot, the scalars coming
-#' out as groups of one and needing no special case.
+#' A structural term's parameters are `omega`, `kappa1` and the like where a
+#' parameter is not developed, and `omega.(Intercept)`, `omega.random.1` and
+#' so on where it is. The first are read one by one and the second are a
+#' block, so the printed form is grouped at the first dot. The scalars then
+#' come out as groups of one and need no special case.
 #'
 #' @param nm The names.
 #'
@@ -589,18 +591,18 @@ is_count <- function(v) {
 }
 
 
-#' The Data Frame a Simulation Runs Against
+#' The Data Frame Against Which a Simulation Runs
 #'
 #' @description
 #' Resolves `data` and `n` into one data frame of covariates.
 #'
 #' @details
-#' A model may have no covariates at all (a pure time series is the case),
+#' A model may have no covariates at all (a pure time series is an example),
 #' and then a row count is all that a simulation needs, so `data` and `n` are
 #' alternatives and one of them must be given. Where both are given they must
-#' agree, which is checked and not resolved by preferring one, since a
-#' disagreement points to a mistake of the caller. `n` must be a positive
-#' whole number.
+#' agree. The function checks this and does not resolve a disagreement in
+#' favor of one of them, since a disagreement points to a mistake of the
+#' caller. `n` must be a positive whole number.
 #'
 #' @param data A data frame or `NULL`.
 #' @param n A row count or `NULL`.
@@ -640,18 +642,18 @@ rstatmod_data <- function(data, n, covariates = NULL) {
 }
 
 
-#' The Column a Simulated Response Is Written To
+#' The Column to Which a Simulated Response Is Written
 #'
 #' @description
-#' The name on the formula's left-hand side, which must be a symbol.
+#' Returns the name on the formula's left-hand side, which must be a symbol.
 #'
 #' @details
 #' A transformed response is rejected. Under `log(y) ~ x` the model
 #' generates values of `log(y)`, so a column called `y` would hold the wrong
 #' quantity and one called `"log(y)"` would not be the name that the formula
 #' reads back. A censored response is rejected for the reason that
-#' [statmod()] rejects one: there is no censored likelihood to fit it back
-#' with.
+#' [statmod()] rejects one: there is no censored likelihood with which to fit
+#' it back.
 #'
 #' @param response The formula's left-hand side.
 #'
@@ -664,14 +666,14 @@ rstatmod_response_name <- function(response) {
   if (is.name(response)) return(as.character(response))
   if (is.call(response) && identical(as.character(response[[1L]]), "cens")) {
     stop("a censored response is not simulated: this package has no ",
-         "censored likelihood\n  to fit it back with, so the data would be ",
-         "of a model it cannot read. Simulate\n  the uncensored response ",
+         "censored likelihood\n  with which to fit it back, so the data would be ",
+         "of a model that it cannot read. Simulate\n  the uncensored response ",
          "and censor it yourself.", call. = FALSE)
   }
   stop(sprintf(paste0("the left-hand side must be a symbol, and it is '%s'.",
                       "\n  The model generates that quantity, so there is ",
-                      "no column to write it to:\n  write the model in the ",
-                      "variable you want simulated."),
+                      "no column to which it can be written:\n  write the ",
+                      "model in the variable that you want simulated."),
                deparse(response)), call. = FALSE)
 }
 
@@ -679,8 +681,9 @@ rstatmod_response_name <- function(response) {
 #' The Predictor and Parameters of a Simulation
 #'
 #' @description
-#' The linear predictors, the distribution's parameters, and -- where a term
-#' has state -- the response that it drew and the latent quantity behind it.
+#' Returns the linear predictors, the distribution's parameters and, where a
+#' term has state, the response that it drew and the latent quantity behind
+#' it.
 #'
 #' @details
 #' With no structural term the result is that of [statmod_eta()]: the
@@ -790,9 +793,9 @@ rstatmod_eta <- function(spec, design, coef, psi = NULL) {
 #' Draw the Whole Truth of a Simulation
 #'
 #' @description
-#' Every coefficient, every hyperparameter and, where the formula carries a
-#' structural term, that term's own parameters: drawn once, then overwritten
-#' by whatever `par` names.
+#' Draws every coefficient, every hyperparameter and, where the formula
+#' carries a structural term, that term's own parameters, once, and then
+#' overwrites them with the values that `par` supplies.
 #'
 #' @details
 #' Each quantity is drawn by the component that defines its meaning. A
@@ -927,7 +930,7 @@ rstatmod_truth <- function(spec, design, par, sd) {
 }
 
 
-#' The Coordinates a Simulation's `par` Writes
+#' The Coordinates That a Simulation's `par` Writes
 #'
 #' @description
 #' Marks, for every distribution parameter and for the structural term's own
@@ -935,8 +938,8 @@ rstatmod_truth <- function(spec, design, par, sd) {
 #'
 #' @details
 #' It reads the keys through [resolve_par_key()], the function that
-#' [rstatmod_named()] uses to write them, so the two cannot disagree about
-#' what a key reaches. A key that reaches nothing signals the same error
+#' [rstatmod_named()] uses to write them, so a key reaches the same positions
+#' in both. A key that reaches nothing signals the same error
 #' here that it would signal there.
 #'
 #' @param par A named list, or `NULL`.
@@ -972,10 +975,10 @@ par_written <- function(par, design, params, snm) {
 }
 
 
-#' Whether `par` Wrote Every Coordinate a Prior Drew
+#' Whether `par` Wrote Every Coordinate That a Prior Drew
 #'
 #' @description
-#' `TRUE` where every coordinate that a penalty's draw reached was then
+#' Returns `TRUE` where every coordinate that a penalty's draw reached was then
 #' written by `par`, so that the penalty's hyperparameters govern nothing in
 #' the truth.
 #'
@@ -998,7 +1001,7 @@ targets_written <- function(tg, ok, written) {
 }
 
 
-#' Let Every Term Draw the Coefficients Only It Can
+#' Let Every Term Draw the Coefficients That Only It Can Draw
 #'
 #' @description
 #' Walks the terms of every equation and hands each the slice of the drawn
@@ -1007,21 +1010,21 @@ targets_written <- function(tg, ok, written) {
 #' @details
 #' Almost every term replaces nothing: a slope is measured in the response's
 #' units against a covariate's and a normal of the caller's width is as good
-#' a truth as any. A break-point is the exception, being a position on the
-#' covariate's own axis, and [modelterms7::term_coef_draw()] is the method by
-#' which a term declares such coordinates.
+#' a truth as any. A break-point is the exception, because it is a position on
+#' the covariate's own axis, and [modelterms7::term_coef_draw()] is the method
+#' by which a term declares such coordinates.
 #'
 #' It runs last, after the plain draw and after the priors, because those
 #' describe a coordinate that a term owns incorrectly. The coordinates
 #' replaced are returned, so that a prior covering them is reported at the
 #' width that the term used and not at the one that it drew.
 #'
-#' An equation `par` fixes whole is skipped: its coefficients are the
+#' An equation that `par` fixes whole is skipped: its coefficients are the
 #' caller's and are written over everything afterwards anyway.
 #'
 #' The walk is over the design's blocks and does not descend into a term's
-#' subformulas, so a break-point developing another term's own parameter --
-#' `nl(a ~ 0 + seg(x))` -- is drawn by the plain rule. The sub-terms in a
+#' subformulas, so a break-point developing another term's own parameter
+#' (`nl(a ~ 0 + seg(x))`) is drawn by the plain rule. The sub-terms in a
 #' break-point's own development are `linpar()` and `random()`, which replace
 #' no coordinates, so the shapes that reach one are covered by the block
 #' walk.
@@ -1030,12 +1033,13 @@ targets_written <- function(tg, ok, written) {
 #' @param design The design, read for each term's columns.
 #' @param coef The coefficients drawn so far, a list by parameter.
 #' @param params The distribution parameter names.
-#' @param fixed_eq The parameters `par` fixes whole.
+#' @param fixed_eq The parameters that `par` fixes whole.
 #' @param sd The width of the draws.
 #'
-#' @return A list with `coef`, the coefficients with each term's own
-#'   replaced, and `owned`, a list by parameter of named numeric vectors
-#'   carrying one width per replaced position, the names being the positions.
+#' @return A list with `coef`, the coefficients in which each term's own have
+#'   been replaced, and `owned`, a list by parameter of named numeric vectors
+#'   carrying one width per replaced position, where the names are the
+#'   positions.
 #'
 #' @seealso [rstatmod_truth()], [modelterms7::term_coef_draw()]
 #'
@@ -1061,18 +1065,19 @@ rstatmod_term_draw <- function(spec, design, coef, params, fixed_eq, sd) {
 }
 
 
-#' The Width a Term Drew a Penalty's Coordinates At
+#' The Width at Which a Term Drew a Penalty's Coordinates
 #'
 #' @description
-#' One number where every coordinate that a penalty covers was written by the
-#' term that owns it, and `NULL` otherwise.
+#' Returns one number where every coordinate that a penalty covers was written
+#' by the term that owns it, and `NULL` otherwise.
 #'
 #' @details
-#' A penalty whose coordinates a term overwrote no longer describes them, so
-#' the truth reported for it is the width the term drew at. The test is that
-#' every covered coordinate was owned: a penalty spanning owned and unowned
-#' ones together is described by neither width, and reporting either would
-#' name a truth that part of the coefficients do not have.
+#' A penalty whose coordinates were overwritten by a term no longer describes
+#' them, so the truth reported for it is the width at which the term drew.
+#' The test is that every covered coordinate was owned: a penalty spanning
+#' owned and unowned ones together is described by neither width, and
+#' reporting either would name a truth that part of the coefficients do not
+#' have.
 #'
 #' @param tg The unit's targets, as [unit_draw_targets()] returns them.
 #' @param ok Which of them the prior's draw reached.
@@ -1098,25 +1103,25 @@ term_drawn_scale <- function(tg, ok, owned) {
 }
 
 
-#' Where a Penalty's Coordinates Sit in the Vectors a Simulation Draws
+#' Where a Penalty's Coordinates Sit in the Vectors That a Simulation Draws
 #'
 #' @description
-#' One target per coordinate that the penalty covers, in the penalty's own
-#' order:
-#' which vector it belongs to, which parameter's coefficients, and the
-#' position within them.
+#' Returns one target per coordinate that the penalty covers, in the penalty's
+#' own order. Each target holds the vector to which the coordinate belongs,
+#' the parameter whose coefficients contain it and its position within them.
 #'
 #' @details
 #' A penalty over a structural term's own parameters is read among those
 #' parameters, on the unconstrained scale, and a penalty over an equation's
 #' coefficients among those coefficients. A covariance class spans several
-#' members and its penalty reads them interleaved group by group, which is
-#' what its `index` already records, so the stacked positions are turned back
-#' into a parameter and a column with the offsets that the design gives.
+#' members and its penalty reads them interleaved group by group, in the
+#' order that its `index` already records, so the stacked positions are
+#' turned back into a parameter and a column with the offsets that the design
+#' gives.
 #'
 #' A class whose halves are in both vectors at once is not drawn from its
 #' prior: those coordinates fall back to the plain draw, which is
-#' [rstatmod()]'s rule for everything that no prior reaches.
+#' [rstatmod()]'s rule for every coordinate that a prior does not reach.
 #'
 #' @param u One entry of [statmod_penalized()].
 #' @param design The design.
@@ -1152,21 +1157,21 @@ unit_draw_targets <- function(u, design, params) {
 #' Draw One Penalty's Hyperparameters
 #'
 #' @description
-#' A value per hyperparameter, drawn on the chart that the penalty carries for
-#' it around the neutral point that [penalty_theta_start()] gives.
+#' Draws a value per hyperparameter on the chart that the penalty carries for
+#' it, around the neutral point that [penalty_theta_start()] gives.
 #'
 #' @details
 #' The draw is on the unconstrained scale so that whatever comes out is
 #' admissible: a scale stays positive, a correlation stays inside its
 #' interval, and a log-Cholesky coordinate is free on the line already. The
-#' width is half of `sd` for the reason [modelterms7::term_draw()] halves it,
-#' a chart mapping a width of one onto most of its parameter's range.
+#' width is half of `sd` for the reason that [modelterms7::term_draw()] halves
+#' it: a chart maps a width of one onto most of its parameter's range.
 #'
 #' `unit` moves the center away from a one-sided bound and affects nothing
 #' else, so a hyperparameter that is unbounded on both sides (a coordinate of
 #' a multivariate prior's own chart) is drawn around the neutral point of that
-#' chart whatever the term is. This is also the point that a fit starts from;
-#' on `dr_prod` it corresponds to unit standard deviations and no
+#' chart whatever the term is. This is also the point from which a fit
+#' starts; on `dr_prod` it corresponds to unit standard deviations and no
 #' correlation.
 #'
 #' @param pen A \pkg{penalties7} penalty.
@@ -1197,8 +1202,8 @@ rstatmod_hyper <- function(pen, sd, unit = 1) {
 #' Hold What a Simulation's Caller Named
 #'
 #' @description
-#' Writes the entries of `par` over the drawn truth, each addressed by a name
-#' the result reports it under.
+#' Writes the entries of `par` over the drawn truth, and each entry is
+#' addressed by the name under which the result reports it.
 #'
 #' @details
 #' A single namespace covers the whole model, so the caller names the
@@ -1210,8 +1215,8 @@ rstatmod_hyper <- function(pen, sd, unit = 1) {
 #' a development of `omega` and `mu.s(x)` is every coordinate of that smooth.
 #'
 #' A value may be a vector of the group's own length, a single number used
-#' for all of them, or a function of the count. The function is how a
-#' structured truth is written: `function(k) rnorm(k, 0, 0.4)` is a random
+#' for all of them, or a function of the count. A function writes a
+#' structured truth: `function(k) rnorm(k, 0, 0.4)` is a random
 #' effect at a scale of its own and `function(k) c(2, -1.5, rep(0, k - 2))`
 #' is a sparse truth for a lasso to find.
 #'
@@ -1235,7 +1240,8 @@ rstatmod_named <- function(coef, psi, design, params, par) {
   if (!is.list(par) || is.null(names(par)) || !all(nzchar(names(par)))) {
     stop("'par' must be a named list. Name a distribution parameter, one of ",
          "its\n  coefficients as 'parameter.coefficient', or a structural ",
-         "term's own\n  parameter; what is not named is drawn.", call. = FALSE)
+         "term's own\n  parameter; a quantity that is not named is drawn.",
+         call. = FALSE)
   }
   cn <- lapply(params, function(p) design[[p]]$coef_names)
   names(cn) <- params
@@ -1350,11 +1356,11 @@ resolve_par_key <- function(key, params, cn, snm) {
 }
 
 
-#' The Values One Entry of `par` Stands For
+#' The Values Represented by One Entry of `par`
 #'
 #' @description
-#' A numeric vector of the length the key addresses, from a vector, a single
-#' number or a function of the count.
+#' Returns a numeric vector of the length that the key addresses, from a
+#' vector, a single number or a function of the count.
 #'
 #' @details
 #' A function that returns the wrong number of values is reported and not

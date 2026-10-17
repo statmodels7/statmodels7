@@ -127,7 +127,7 @@ test_that("a flat direction the coefficients do not span is said to be one", {
   # "carried by: , "
   A <- diag(c(1, 1, 1e-14))
   expect_match(flat_directions(A, c("mu:x", "mu:z", "")),
-               "none of the coefficients carry", fixed = TRUE)
+               "lies outside the coefficients", fixed = TRUE)
   expect_false(grepl("carried by", flat_directions(A, c("mu:x", "mu:z", ""))))
   # where it is spanned, the coefficients are named as before
   expect_match(flat_directions(diag(c(1e-14, 1, 1)), c("mu:x", "mu:z", "")),

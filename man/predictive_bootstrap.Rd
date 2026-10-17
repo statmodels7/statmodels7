@@ -10,7 +10,7 @@ predictive_bootstrap(object, spec, design, aside, n_boot, refit)
 \item{object}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{spec, design}{The specification and design at the rows predicted,
-with the columns of the effects set aside at zero.}
+in which the columns of the effects set aside are zero.}
 
 \item{aside}{The rows of \code{\link[=random_modes]{random_modes()}} that are not \code{"conditional"}.}
 
@@ -19,15 +19,16 @@ with the columns of the effects set aside at zero.}
 \item{refit}{\code{"coefficients"} or \code{"full"}.}
 }
 \value{
-A list of components, each a list with \code{eta}, \code{C} and \code{weight},
-with the attribute \code{infinite_variance} set to \code{TRUE} where a prior has
-no variance. The weights of the components add up to one.
+A list of components, each a list with \code{eta}, \code{C} and \code{weight}.
+The list has the attribute \code{infinite_variance}, which is \code{TRUE} where a
+prior has no variance. The weights of the components add up to one.
 }
 \description{
-The components of the predictive mixture \code{\link[=predictive_response]{predictive_response()}} reads
-for \code{predictive = "bootstrap"}: one per replica, each the fit refitted on a
-response simulated from the fitted model, read at the rows predicted with
-no estimation uncertainty of its own.
+Returns the components of the predictive mixture that
+\code{\link[=predictive_response]{predictive_response()}} reads for \code{predictive = "bootstrap"}. There is one
+component per replica, which is the fit refitted on a response simulated
+from the fitted model and read at the rows predicted with no estimation
+uncertainty of its own.
 }
 \details{
 A replica draws the response from the family at the fitted model. The
@@ -41,18 +42,20 @@ prediction is about those groups, and their effects are the quantity
 predicted rather than a source of variation. Every other coefficient keeps
 its estimate. The replica is then refitted in one of two ways:
 \describe{
-\item{\code{"coefficients"}}{at the hyperparameters that the fit reached, every
-coefficient re-estimated. A coefficient that the fit estimated on its
-criterion (a dispersion under \code{\link[=reml]{reml()}}) is estimated there again, with
-the hyperparameters held, so the replica's estimator is the fit's.}
-\item{\code{"full"}}{with the hyperparameters chosen again by the fit's own
+\item{\code{"coefficients"}}{every coefficient is re-estimated at the
+hyperparameters that the fit reached. A coefficient that the fit
+estimated on its criterion (a dispersion under \code{\link[=reml]{reml()}}) is estimated
+there again while the hyperparameters are held, so the replica's
+estimator is the fit's.}
+\item{\code{"full"}}{the hyperparameters are chosen again by the fit's own
 criteria, so their uncertainty enters the interval too, and the path
 of a kinked penalty is walked again, warm started from the fit's
 coefficients. A cross-validated criterion needs the data's folds and
 is rejected.}
 }
 Every refit starts at the optimum that the fit found: its coefficients,
-the criterion's own coefficients among them, and its hyperparameters.
+including those that the fit estimated on its criterion, and its
+hyperparameters.
 The bootstrap is rejected for a model with a block that moves with its
 coefficients (\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}},
 \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}}) and for a response that is not
@@ -62,8 +65,8 @@ Each replica gives the component \eqn{(\hat\eta^*_b, C^*_b)}: its
 predictors at the rows predicted and the covariance that the effects set
 aside add, at its own hyperparameters. The interval is the mixture's, which
 is the parametric bootstrap predictive distribution of Harris (1989); the
-default \code{predictive = "averaged"} is its normal approximation, the
-sampling distribution of the estimates replaced by \eqn{\mathrm{N}(\hat
+default \code{predictive = "averaged"} is its normal approximation, in which the
+sampling distribution of the estimates is replaced by \eqn{\mathrm{N}(\hat
 \beta, \widehat{V})}. A replica whose refit fails is left out, and the
 warning reports how many were.
 }

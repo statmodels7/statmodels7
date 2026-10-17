@@ -23,10 +23,10 @@ refresh_curv_amat(spec, design, M, params, npar, offs, units, Hl)
 A list of matrices, one per unit.
 }
 \description{
-\code{\link[=refresh_amat]{refresh_amat()}} with the curvature, one matrix per unit.
+Computes \code{\link[=refresh_amat]{refresh_amat()}} with the curvature, one matrix per unit.
 }
 \details{
-It is the same weight \code{\link[=u_refresh]{u_refresh()}} builds for the gradient, and
+It is the same weight that \code{\link[=u_refresh]{u_refresh()}} builds for the gradient, and
 it depends on neither direction, so it is built once per Hessian rather
 than once per pair of hyperparameters.
 }

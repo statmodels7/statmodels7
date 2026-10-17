@@ -12,16 +12,18 @@ bic(hessian = c("observed", "expected"))
 \arguments{
 \item{k}{The price of one degree of freedom, a single non-negative finite
 number. Defaults to 2, which is Akaike's. \code{k = log(n)} by hand is \code{bic()}.
-A value that is not a single non-negative finite number is an error. \code{bic()} does not take it: its \eqn{\kappa} is
-\code{NA} on the object and resolved to \eqn{\log n} when the model is fitted,
-the sample size being unknown until then.}
+A value that is not a single non-negative finite number is an error.
+\code{bic()} does not take it: its \eqn{\kappa} is \code{NA} on the object and is
+resolved to \eqn{\log n} when the model is fitted, because the sample
+size is unknown until then.}
 
-\item{hessian}{Which information the criterion is built on, \code{"observed"}
-(the default) or \code{"expected"}. Matched with \code{\link[=match.arg]{match.arg()}}. The exact
+\item{hessian}{The information on which the criterion is built,
+\code{"observed"} (the default) or \code{"expected"}. The argument is matched with
+\code{\link[=match.arg]{match.arg()}}. The exact
 gradient is available on either wherever the family writes its expected
 information out; the Hessian is exact on the observed one and is not
 available on the expected one, where the search uses an optimizer that
-needs the gradient alone. A family that does not write it out would read the
+needs only the gradient. A family that does not write it out would read the
 outer product of its scores at the data under the default
 \code{iwls(approx = "opg")}, and \code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
 \code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
@@ -56,7 +58,7 @@ penalty. These two criteria select it, and \code{bic()} is \code{statmod()}'s de
 \code{sparse_criterion}.
 
 For a smooth penalty both families apply. A marginal criterion selects the
-hyperparameter that makes the data most likely with the coefficients
+hyperparameter that makes the data most likely after the coefficients are
 integrated out, and these select the one that predicts best.
 }
 
@@ -75,10 +77,10 @@ The gradient is exact with either information. The Hessian is exact with
 
 \section{Which effective degrees of freedom}{
 The trace runs over the whole coefficient vector, so a term's contribution
-reads the full penalized information, its couplings with the other blocks
-included. \code{\link[=statmod_edf]{statmod_edf()}} reads each term's share from the diagonal block
-of the same full smoother matrix \eqn{(H+S)^{-1}H}, so the per-term numbers
-add up to \eqn{\tau}.
+reads the full penalized information, including the term's couplings with
+the other blocks. \code{\link[=statmod_edf]{statmod_edf()}} reads each term's share from the diagonal
+block of the same full smoother matrix \eqn{(H+S)^{-1}H}, so the per-term
+numbers add up to \eqn{\tau}.
 
 Where a penalty has a kink the trace is restricted to the active
 coordinates, so for a lasso \eqn{\tau} is the number of surviving
@@ -88,10 +90,10 @@ coefficients, the unbiased count of Zou, Hastie and Tibshirani (2007).
 \section{GCV is not offered}{
 Classical GCV divides a residual sum of squares by \eqn{(n-\tau)^2}, which
 estimates an unknown scale. Here every distribution parameter carries its
-own equation and nothing is profiled, so there is no unknown scale for
-that ratio to estimate and the criterion degenerates to \code{aic()}. That is
-the substitution Wood (2008) makes in the other direction when the scale
-is known.
+own equation and the fit profiles no parameter, so there is no unknown
+scale for that ratio to estimate and the criterion degenerates to \code{aic()}.
+That is the substitution that Wood (2008) makes in the other direction when
+the scale is known.
 
 A GCV on the squared error of the fitted mean is a different and
 well-defined object. It would need the derivative of that mean in the

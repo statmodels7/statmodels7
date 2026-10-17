@@ -23,10 +23,10 @@ it with \code{laplace = FALSE}.}
 \item{npar, offs}{The coefficient counts and offsets per parameter.}
 }
 \value{
-A list with \code{solve}, a function of \eqn{c} returning \eqn{v}
-without the sign; \code{J}, the curvature solved with; \code{Dm}, the curvature
-with the held rows and columns set to zero; and \code{hold}, the held
-positions.
+A list with \code{solve}, a function of \eqn{c} that returns \eqn{v}
+without the sign; \code{J}, the curvature used in the solve; \code{Dm}, the
+curvature in which the held rows and columns are set to zero; and
+\code{hold}, the held positions.
 }
 \description{
 Builds the solve that gives the movement of the penalized mode under a
@@ -42,15 +42,15 @@ kinks are the break-points that sit on an observation at the mode
 (\code{\link[=kink_constraints]{kink_constraints()}}): there the one-sided slopes have opposite signs, so
 a small perturbation leaves the break-point on the observation, as a lasso
 leaves a coefficient at zero. Where the break-point's position is a single
-coefficient that coefficient does not move; where it is developed over a
-design the mode moves along the hyperplane on which the break-point stays
+coefficient, that coefficient does not move; where it is developed over a
+design, the mode moves along the hyperplane on which the break-point stays
 on the observation. The solve is the bordered system of the equality
 constrained problem, written in the basis of its null space. The
 criterion's own determinant is not affected: it keeps the side convention
 of the break-point term.
 
-Where \eqn{N^\top (K + D_m) N} is not positive definite, \eqn{K} alone
-replaces \eqn{K + D_m}.
+Where \eqn{N^\top (K + D_m) N} is not positive definite, the solve uses
+\eqn{K} in place of \eqn{K + D_m}.
 }
 \seealso{
 \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}, \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}},

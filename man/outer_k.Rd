@@ -15,13 +15,14 @@ passes the total of the weights, which are frequencies.}
 \value{
 A single number: \eqn{\log n} for \code{\link[=bic]{bic()}}, and \code{method@k} for
 anything else, which is \code{NA_real_} for \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}} and \code{\link[=cv]{cv()}},
-none of which charges per degree of freedom.
+and these three criteria charge nothing per degree of freedom.
 }
 \description{
-Returns \eqn{\kappa}, the price a prediction-error criterion charges for
+Returns \eqn{\kappa}, the price that a prediction-error criterion charges for
 one effective degree of freedom, resolved against the sample size where
-the method left it open. \code{\link[=bic]{bic()}} stores \code{NA} and gets \eqn{\log n} here;
-every other criterion returns the \code{k} it was constructed with.
+the method left it open. \code{\link[=bic]{bic()}} stores \code{NA}, which this function replaces
+by \eqn{\log n}; every other criterion returns the \code{k} with which it was
+constructed.
 }
 \details{
 The resolution happens at fit time because \code{\link[=bic]{bic()}} takes no data, so

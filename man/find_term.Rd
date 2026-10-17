@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_gradient.R
 \name{find_term}
 \alias{find_term}
-\title{A Term by Its Key, Whichever Equation It Sits In}
+\title{A Term by Its Key in Any Equation}
 \usage{
 find_term(spec, key)
 }
@@ -12,16 +12,17 @@ find_term(spec, key)
 \item{key}{A term's key, its call as written.}
 }
 \value{
-The term, or \code{NULL} where no equation carries that key.
+The term, or \code{NULL} if no equation carries that key.
 }
 \description{
-The term a key names, searched over every distribution parameter.
+Returns the term that a key names, searching over every distribution
+parameter.
 }
 \details{
 A unit records the parameter under which its penalty is filed. For a
 covariance class that is the parameter by which the class is keyed, which is
-not necessarily the parameter carrying the structural term that the class
-reaches into. A caller that has a term's key and needs the term should use
+not necessarily the parameter carrying the structural term into which the
+class reaches. A caller that has a term's key and needs the term should use
 this function instead of assuming that the two agree.
 }
 \keyword{internal}

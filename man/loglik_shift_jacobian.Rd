@@ -19,11 +19,11 @@ their columns in the variance matrix), restricted to the free columns,
 or \code{NULL} where the model carries no such term.
 }
 \description{
-The derivative of the posterior-weighted predictor of the equation that a
-structural term of the likelihood shape (a regime term or a marginal
-break-point term) shifts, one row per observation, in the coefficients of
-every equation and the term's free parameters on their unconstrained
-scale.
+Returns the derivative of the posterior-weighted predictor of the equation
+that a structural term of the likelihood shape (a regime term or a
+marginal break-point term) shifts, one row per observation, in the
+coefficients of every equation and the term's free parameters on their
+unconstrained scale.
 }
 \details{
 The predictor is the static part plus the posterior mean of the term's

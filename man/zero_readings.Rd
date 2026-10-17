@@ -17,10 +17,10 @@ objective, coefficients and hyperparameters.}
 named vector with \code{ratio} and \code{n}, the number of coefficients at zero.
 }
 \description{
-The largest ratio \eqn{|s_j|/\kappa_j} over the coefficients that a penalty
-with a kink sets exactly to zero, where \eqn{s_j} is the derivative of the
-log-likelihood in that coefficient and \eqn{\kappa_j} the size of the
-kink there.
+Computes the largest ratio \eqn{|s_j|/\kappa_j} over the coefficients that
+a penalty with a kink sets exactly to zero, where \eqn{s_j} is the
+derivative of the log-likelihood in that coefficient and \eqn{\kappa_j} is
+the size of the kink there.
 }
 \details{
 At a zero the penalty has no derivative, and the condition for an optimum
@@ -32,10 +32,11 @@ The standard error does not enter, because a coefficient at zero has none.
 
 With the other coefficients fixed and a kink proportional to \eqn{\lambda},
 the coefficient with the largest ratio \eqn{r < 1} leaves zero at a
-\eqn{\lambda} that is the fraction \eqn{r} of the fitted one, while along a path the other coefficients move and the
-threshold moves with them. The ratio is not a test of significance, and
-values close to one are ordinary where \eqn{\lambda} was chosen on a grid,
-the next coefficient to enter being close to its threshold by construction.
+\eqn{\lambda} that is the fraction \eqn{r} of the fitted one, while along a
+path the other coefficients move and the threshold moves with them. The
+ratio is not a test of significance, and values close to one are ordinary
+where \eqn{\lambda} was chosen on a grid, because the next coefficient to
+enter is close to its threshold by construction.
 
 The kink is read from the penalty's own gradient just to the right of
 zero, so it is \eqn{\lambda} for a lasso, \eqn{\lambda\alpha} for an

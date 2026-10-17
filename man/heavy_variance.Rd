@@ -16,10 +16,10 @@ A named list of numeric vectors, one value a row, \code{NA} where the
 variance is infinite or not read.
 }
 \description{
-\eqn{z^\top \mathrm{Var}(b)\, z} for every Student t and every other
-prior that \code{\link[=prior_parts]{prior_parts()}} lists, in each parameter's equation. A Student t
-with scale \eqn{\Sigma} has variance \eqn{\Sigma\nu/(\nu - 2)}, infinite
-for \eqn{\nu \le 2}; a univariate prior of another family has the
+Returns \eqn{z^\top \mathrm{Var}(b)\, z} for every Student t and every
+other prior that \code{\link[=prior_parts]{prior_parts()}} lists, in each parameter's equation. A
+Student t with scale \eqn{\Sigma} has variance \eqn{\Sigma\nu/(\nu - 2)},
+infinite for \eqn{\nu \le 2}; a univariate prior of another family has the
 variance that its family reports; the variance of a prior over several
 coordinates that is not a Student t is not read and is returned as \code{NA}.
 }

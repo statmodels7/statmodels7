@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_gradient.R
 \name{structural_term_of}
 \alias{structural_term_of}
-\title{Which Structural Term a Model Carries, If Any}
+\title{The Structural Term of a Model, If Any}
 \usage{
 structural_term_of(spec, design)
 }
@@ -15,7 +15,7 @@ structural_term_of(spec, design)
 A built term, or \code{NULL}.
 }
 \description{
-The single term of the structural branch, or \code{NULL} where the model
+Returns the single term of the structural branch, or \code{NULL} where the model
 carries none.
 }
 \details{

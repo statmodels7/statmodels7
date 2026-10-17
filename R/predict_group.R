@@ -4,12 +4,12 @@ NULL
 #' The Interval and Standard Deviation of a New Group's Parameter
 #'
 #' @description
-#' For `interval = "group"`: the distribution of a new group's parameter
-#' \eqn{\theta^* = h^{-1}(\eta^*)}, with
-#' \eqn{\eta^* = \eta_0 + e + z^\top b}, where \eqn{e} is the estimation
-#' error of the fixed part and \eqn{b} the effects of a new group, drawn from
-#' the prior that the fit estimated. Returns the ends of its interval and its
-#' standard deviation, on the predictor's scale and on the parameter's.
+#' Returns, for `interval = "group"`, the ends of the interval and the
+#' standard deviation of a new group's parameter
+#' \eqn{\theta^* = h^{-1}(\eta^*)}, on the predictor's scale and on the
+#' parameter's. Here \eqn{\eta^* = \eta_0 + e + z^\top b}, where \eqn{e} is
+#' the estimation error of the fixed part and \eqn{b} are the effects of a new
+#' group, drawn from the prior that the fit estimated.
 #'
 #' @details
 #' Where the inverse link is monotone over the whole line, a quantile of
@@ -235,10 +235,10 @@ gh_moments <- function(g, M, S, W) {
 #' The Variance Added to Each Predictor by Priors Other Than Gaussian
 #'
 #' @description
-#' \eqn{z^\top \mathrm{Var}(b)\, z} for every Student t and every other
-#' prior that [prior_parts()] lists, in each parameter's equation. A Student t
-#' with scale \eqn{\Sigma} has variance \eqn{\Sigma\nu/(\nu - 2)}, infinite
-#' for \eqn{\nu \le 2}; a univariate prior of another family has the
+#' Returns \eqn{z^\top \mathrm{Var}(b)\, z} for every Student t and every
+#' other prior that [prior_parts()] lists, in each parameter's equation. A
+#' Student t with scale \eqn{\Sigma} has variance \eqn{\Sigma\nu/(\nu - 2)},
+#' infinite for \eqn{\nu \le 2}; a univariate prior of another family has the
 #' variance that its family reports; the variance of a prior over several
 #' coordinates that is not a Student t is not read and is returned as `NA`.
 #'
@@ -290,12 +290,12 @@ heavy_variance <- function(spec, parts) {
 #' A Quantile of a Mixture of Gaussians and Point Masses
 #'
 #' @description
-#' The value at which \eqn{\sum_c w_c \Phi((e - m_c)/s_c)} reaches `p`, one
-#' a row, a component with \eqn{s_c = 0} being a point mass at \eqn{m_c}.
-#' Found by bisection, which needs no derivative and is exact to the
-#' tolerance for a step function as well. A row in which some mean or
-#' standard deviation is not finite (a missing covariate) is `NA`, and the
-#' bisection runs over the other rows.
+#' Returns the value at which \eqn{\sum_c w_c \Phi((e - m_c)/s_c)} reaches
+#' `p`, one value per row; a component with \eqn{s_c = 0} is a point mass at
+#' \eqn{m_c}. The value is found by bisection, which needs no derivative and
+#' is exact to the tolerance for a step function as well. A row in which some
+#' mean or standard deviation is not finite (a missing covariate) is `NA`, and
+#' the bisection runs over the other rows.
 #'
 #' @param M,S Matrices with a row per observation and a column per
 #'   component.
@@ -337,12 +337,12 @@ mixture_quantile <- function(M, S, W, p) {
 #'
 #' @description
 #' Where one univariate prior of a family other than the Student t is the
-#' only prior that is not Gaussian among those a new group's interval sets
-#' aside, the mixture over its effect is built from the prior's own quantiles,
-#' \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000} and equal weights, each
-#' node a Gaussian component carrying the estimation error and the Gaussian
-#' effects. The result does not depend on the random seed, whereas the Monte
-#' Carlo draws of [predictive_mixture()] do.
+#' only prior that is not Gaussian among those set aside for a new group's
+#' interval, the mixture over its effect is built from the prior's own
+#' quantiles, \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000} and equal
+#' weights, and each node is a Gaussian component that carries the estimation
+#' error and the Gaussian effects. The result does not depend on the random
+#' seed, whereas the Monte Carlo draws of [predictive_mixture()] do.
 #'
 #' @param spec The specification at the rows predicted.
 #' @param eta A named list of the predictors' means.
@@ -351,7 +351,7 @@ mixture_quantile <- function(M, S, W, p) {
 #' @param parts What [prior_parts()] returns.
 #' @param K The number of nodes.
 #'
-#' @return A list of components in the shape [predictive_response()] reads,
+#' @return A list of components in the shape that [predictive_response()] reads,
 #'   or `NULL` where the priors are of another kind.
 #'
 #' @keywords internal

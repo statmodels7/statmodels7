@@ -14,16 +14,17 @@ print_block(b, digits = 4L, max_coef = NULL, stat = "z")
 \item{max_coef}{How many coefficient rows a long block keeps, as
 \code{\link[=block_rows_shown]{block_rows_shown()}} takes it.}
 
-\item{stat}{What to head the statistic column with: \code{"z"} for the estimate
-over its standard error, \code{"r"} for the signed root of a restricted test.}
+\item{stat}{The label at the head of the statistic column: \code{"z"} for the
+estimate over its standard error, \code{"r"} for the signed root of a
+restricted test.}
 }
 \value{
-\code{NULL}, invisibly. Called for the printing.
+\code{NULL}, invisibly. The function is called for the printing.
 }
 \description{
-The heading of a block, the term read at a glance where it is written in
-parameters of its own, its own coefficients, and one indented compartment
-per parameter developed over covariates.
+Prints the heading of a block, the term read at a glance where it is
+written in parameters of its own, its own coefficients, and one indented
+compartment per parameter developed over covariates.
 }
 \details{
 A term that develops one of its own parameters carries columns that mean

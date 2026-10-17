@@ -19,16 +19,16 @@ effects, an array \verb{P x P x n}.}
 \item{K}{The number of nodes.}
 }
 \value{
-A list of components in the shape \code{\link[=predictive_response]{predictive_response()}} reads,
+A list of components in the shape that \code{\link[=predictive_response]{predictive_response()}} reads,
 or \code{NULL} where the priors are of another kind.
 }
 \description{
 Where one univariate prior of a family other than the Student t is the
-only prior that is not Gaussian among those a new group's interval sets
-aside, the mixture over its effect is built from the prior's own quantiles,
-\eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000} and equal weights, each
-node a Gaussian component carrying the estimation error and the Gaussian
-effects. The result does not depend on the random seed, whereas the Monte
-Carlo draws of \code{\link[=predictive_mixture]{predictive_mixture()}} do.
+only prior that is not Gaussian among those set aside for a new group's
+interval, the mixture over its effect is built from the prior's own
+quantiles, \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000} and equal
+weights, and each node is a Gaussian component that carries the estimation
+error and the Gaussian effects. The result does not depend on the random
+seed, whereas the Monte Carlo draws of \code{\link[=predictive_mixture]{predictive_mixture()}} do.
 }
 \keyword{internal}

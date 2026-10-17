@@ -24,9 +24,9 @@ effects, an array \verb{P x P x n}.}
 A list of \code{n_draw} components, each with \code{C = NULL}.
 }
 \description{
-\code{n_draw} point components: each a draw of the estimation error from
-\eqn{\mathrm{N}(0, C)} at every row and a draw of a new group's effects
-for every term in \code{heavy}. See \code{\link[=predictive_mixture]{predictive_mixture()}}.
+Returns \code{n_draw} point components. Each component is a draw of the
+estimation error from \eqn{\mathrm{N}(0, C)} at every row and a draw of a
+new group's effects for every term in \code{heavy}. See \code{\link[=predictive_mixture]{predictive_mixture()}}.
 }
 \examples{
 set.seed(8)

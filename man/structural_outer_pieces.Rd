@@ -21,16 +21,16 @@ structural_outer_pieces(spec, design, coef, hyper, idx, jd)
 }
 \value{
 A list with \code{S}, \code{c}, \code{S2}, \code{c2}, \code{rho2}
-and \code{pair}, in the shape \code{\link[=outer_pieces]{outer_pieces()}} returns them.
+and \code{pair}, in the shape in which \code{\link[=outer_pieces]{outer_pieces()}} returns them.
 }
 \description{
-\code{\link[=outer_pieces]{outer_pieces()}} for the vector that consists of the coefficients and the
-own parameters of a filter. The determinant of a marginal criterion spans
-that vector where a penalty covers those parameters.
+Computes \code{\link[=outer_pieces]{outer_pieces()}} for the vector that consists of the coefficients
+and the own parameters of a filter. The determinant of a marginal criterion
+spans that vector where a penalty covers those parameters.
 }
 \details{
-The arithmetic is that of \code{\link[=outer_pieces]{outer_pieces()}}; the difference is where the
-coordinates of each unit are placed. An ordinary unit is matched into the
+The arithmetic is that of \code{\link[=outer_pieces]{outer_pieces()}}. The coordinates of each unit
+are placed differently. An ordinary unit is matched into the
 kept coefficients, a penalty over the own parameters of a structural term is
 placed among the free parameters of the filter, and a mixed covariance
 class is read where each of its coordinates lives and put back in the

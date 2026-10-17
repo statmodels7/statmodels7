@@ -27,10 +27,10 @@ every standard error under it, where \code{correct} carries the same
 uncertainty into the degrees of freedom; the two are the same quantity
 read on two surfaces, and both can be used in one call.}
 
-\item{expected}{Which information the standard errors are read from, passed
-to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the default, takes the expected one where
-the fit inverted it and the family writes it out, and the observed
-Hessian otherwise; \code{TRUE} or \code{FALSE} selects one.}
+\item{expected}{The information from which the standard errors are computed,
+passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the default, takes the expected
+one where the fit inverted it and the family writes it out, and the
+observed Hessian otherwise; \code{TRUE} or \code{FALSE} selects one.}
 
 \item{approx}{How the expected information is approximated for a family
 with no closed form, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{"opg"} (the
@@ -62,14 +62,14 @@ already in hand.}
 A \code{\link[=StatmodSummary]{StatmodSummary()}}.
 }
 \description{
-One coefficient table per distribution parameter, carrying the estimate,
-its standard error, the statistic of the test named by \code{test} (Wald's by
-default), its p-value and an interval, together with the degrees of
-freedom, the information criteria and the notes that qualify the numbers.
+Returns one coefficient table per distribution parameter, carrying the
+estimate, its standard error, the statistic of the test named by \code{test}
+(Wald's by default), its p-value and an interval, together with the degrees
+of freedom, the information criteria and the notes that qualify the numbers.
 }
 \details{
-\strong{Each distribution parameter is read as blocks, not as one list of
-coefficients}, because most coefficients of a fitted model are not
+Each distribution parameter is read as blocks, not as one list of
+coefficients, because most coefficients of a fitted model are not
 quantities of interest in themselves. The blocks are
 \describe{
 \item{the parametric terms}{every unpenalized term together, one row per
@@ -98,7 +98,7 @@ probabilities of a regime chain), with a level that an intercept holds
 marked as held.}
 }
 
-\strong{A hyperparameter is the first row of its block}, since it governs
+A hyperparameter is the first row of its block, since it governs
 every coefficient under it, and its name carries a mark in square brackets
 that gives the source of the value. A hyperparameter estimated by \code{\link[=reml]{reml()}}
 or \code{\link[=ml]{ml()}} maximizes a twice differentiable criterion, so it carries a
@@ -111,11 +111,11 @@ to read a standard error. A smooth penalty under \code{\link[=aic]{aic()}} or \c
 minimized over its free scale, and its row also has no standard error,
 because the criterion is not a likelihood. A hyperparameter that the term
 holds is marked fixed, and one that stayed at the starting value of its
-term because no outer criterion was run is marked start.
+term because the outer criterion was not run is marked start.
 
-\strong{The statistic column reports the test named by \code{test}.} By default it is
+The statistic column reports the test named by \code{test}. By default it is
 Wald's, the estimate over its standard error, which is the only one of the
-four that needs no refit and is read from the unrestricted fit alone. The
+four that needs no refit and is read only from the unrestricted fit. The
 other three -- the likelihood ratio, Rao's score and Terrell's gradient --
 hold the coefficient at the null value and refit, one refit per row, and
 are reported as the signed root of their \eqn{\chi^2_1} statistic with the
@@ -131,14 +131,14 @@ coefficient. \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} inverts the
 fit is not defined -- a coefficient under a kinked penalty, an aliased one,
 any coefficient of a model carrying a structural term -- reports \code{NA}
 instead of the Wald value, so the column never carries two tests at once.
-Every other row is tested, a smooth's own coordinates and a random effect's
-among them, on the penalized objective and with the reading described in
+Every other row is tested, including a smooth's own coordinates and a random
+effect's, on the penalized objective and with the reading described in
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}. A quantity of a break-point term that is one
 coefficient carries the restricted statistic of that coefficient; a
 quantity that combines several coefficients, and the position of a
 break-point, carry none.
 
-\strong{The meaning of a Wald p-value depends on the row.} For an unpenalized
+The meaning of a Wald p-value depends on the row. For an unpenalized
 coefficient it is the ordinary p-value. For a coefficient in a penalized
 block it is conditional on the smoothing parameter, which was not estimated
 jointly with it, and it does not account for the shrinkage of the estimate
@@ -146,7 +146,7 @@ toward zero. For a coefficient that a kinked penalty selected, the row
 exists only because that coefficient survived the selection, and a naive
 interval there under-covers.
 
-\strong{The degrees of freedom} are the effective ones, summed over the terms,
+The degrees of freedom are the effective ones, summed over the terms,
 so a penalized term counts the degrees of freedom that it uses instead of
 the number of its columns. The information criteria are built on that
 count: \code{aic} is \eqn{-2\ell + 2\,\mathrm{df}} and \code{bic} replaces the factor
@@ -155,10 +155,9 @@ weights.
 }
 \section{Reading the foot}{
 Below the criteria the summary describes the point at which the fit stopped
-with a few numbers from \code{\link[=statmod_certificate]{statmod_certificate()}}. No verdict is printed. Each
-number is dimensionless, so it does not change with the units of a
-coefficient.
-\describe{
+with a few numbers from \code{\link[=statmod_certificate]{statmod_certificate()}}. The summary prints no
+verdict. Each number is dimensionless, so it does not change with the units
+of a coefficient. \describe{
 \item{\verb{inner   max |grad|/se}}{the largest
 \eqn{|g_j|/\sqrt{A_{jj}}} over the coefficients, where \eqn{g} is the
 gradient of the penalized objective and \eqn{A} its curvature, the
@@ -188,19 +187,19 @@ lasso. The number is the largest \eqn{|s_j|/\kappa_j}. At or below one
 every zero is an optimum; above one a coefficient would improve the
 objective by leaving zero. A reading \eqn{r} below one means that the
 coefficient with the largest ratio is held by the kink with a margin of
-\eqn{1 - r}; with the other coefficients fixed it would leave zero at a
-\eqn{\lambda} smaller by the factor \eqn{r}. Along a path the others
+\eqn{1 - r}; if the other coefficients were fixed it would leave zero
+at a \eqn{\lambda} smaller by the factor \eqn{r}. Along a path the others
 move too, and the threshold moves with them. The number is not a test
 of significance, only a check on whether the zeros agree with the
 \eqn{\lambda} of the fit, and values close to one are ordinary where
-\eqn{\lambda} was chosen on a grid, the next coefficient to enter being
-close to its threshold by construction.}
+\eqn{\lambda} was chosen on a grid, because the next coefficient to
+enter is close to its threshold by construction.}
 \item{\verb{outer   max |grad|/se} and \verb{min eigen}}{the same two readings for
 the criterion that estimated the hyperparameters, on the free scale
-their links define, printed only where \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} ran. The
+that their links define, printed only where \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} ran. The
 curvature is the negated Hessian of the criterion. A hyperparameter
-that ran to the edge of its chart is left out, its curvature
-collapsing with its gradient; where every one did the line reads
+that ran to the edge of its chart is left out, because its curvature
+collapses with its gradient; where every one did the line reads
 \verb{not available: at a boundary}. A hyperparameter chosen along a path
 has no gradient, and there is no outer line.}
 }

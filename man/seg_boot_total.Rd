@@ -24,15 +24,15 @@ number as the maximum number of proposals that it tries.
 \details{
 The number is set in the term. \code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}}
 and \code{\link[modelterms7:jseg]{modelterms7::jseg()}} each take \code{n_boot}, with a default of 10,
-because the objective of these terms has spurious local optima that the
-restarts search for. The restarts are run by this package, which can refit
-the model.
+because the objective of these terms has spurious local optima, and the
+restarts search for a better one. The restarts are run by this package, which
+can refit the model.
 
-A model with two break-point terms that set \code{n_boot} to 10 and to 25 gets
-25. The restart loop works on all of the terms together, since a proposal
-is a configuration of positions for every break-point term in the model,
-so the budget is a single number and the largest of the set values is
-used.
+A model with two break-point terms that set \code{n_boot} to 10 and to 25 has a
+budget of 25. The restart loop works on all of the terms together, since a
+proposal is a configuration of positions for every break-point term in the
+model, so the budget is a single number and the largest of the set values
+is used.
 }
 \seealso{
 \code{\link[=statmod_boot_restart]{statmod_boot_restart()}}, which spends this budget,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{drop_common_prefix}
 \alias{drop_common_prefix}
-\title{Drop the Prefix a Set of Coefficient Names Share}
+\title{Drop the Prefix That a Set of Coefficient Names Share}
 \usage{
 drop_common_prefix(nms)
 }
@@ -13,14 +13,14 @@ drop_common_prefix(nms)
 The names, shortened where they share a prefix.
 }
 \description{
-The first dotted piece, where every name carries the same one and
+Removes the first dotted piece where every name carries the same one and
 removing it leaves every name non-empty.
 }
 \details{
 A term composes its coefficients' names from its own and its parameters',
 so inside the block of one term the leading piece repeats on every row
-and repeats what the heading has already stated. It is dropped for the
-printing alone; \code{\link[=coef]{coef()}} and the summary's own tables keep the
+and repeats what the heading has already stated. It is dropped only for
+printing; \code{\link[=coef]{coef()}} and the summary's own tables keep the
 names with which the fit was built, which are the names that another call
 can use as an index.
 

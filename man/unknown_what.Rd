@@ -15,15 +15,15 @@ unknown_what(what, params)
 A single string, ready for \code{\link[=stop]{stop()}}.
 }
 \description{
-Builds the error \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} signals when \code{what} names
-nothing it can compute, listing this family's own parameter names, the
-moments and the collective targets.
+Builds the error that \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} signals when \code{what} names
+nothing that it can compute, listing this family's own parameter names,
+the moments and the collective targets.
 }
 \details{
 The family's parameters are listed by name rather than described, since
 they differ from family to family. A data frame passed where \code{what}
-belongs, which is the mistake \code{\link[stats:predict]{stats::predict()}}'s argument order
-invites, is recognized and named separately.
+belongs, which is the mistake that the argument order of
+\code{\link[stats:predict]{stats::predict()}} invites, is recognized and named separately.
 }
 \seealso{
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, the caller,

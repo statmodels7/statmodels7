@@ -53,8 +53,9 @@ p-value.
 All four read the penalized objective, which is the function that the fit
 maximizes. Writing \eqn{\ell_p(\beta) = \ell(\beta) - \rho(\beta;\theta)}
 for it, \eqn{\hat\beta} for the unrestricted estimates, \eqn{\tilde\beta}
-for those with \eqn{\beta_j} held at \eqn{b}, \eqn{U = \partial\ell_p} for
-its score and \eqn{K} for the penalized information, the four are
+for the estimates in which \eqn{\beta_j} is held at \eqn{b},
+\eqn{U = \partial\ell_p} for its score and \eqn{K} for the penalized
+information, the four are
 \deqn{W = (\hat\beta_j - b)^2 / \widehat{\mathrm{Var}}(\hat\beta_j),
 \qquad LR = 2\{\ell_p(\hat\beta) - \ell_p(\tilde\beta)\},}
 \deqn{S = U_j(\tilde\beta)^2 \, [K(\tilde\beta)^{-1}]_{jj}, \qquad

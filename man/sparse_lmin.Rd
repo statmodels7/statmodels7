@@ -15,8 +15,8 @@ sparse_lmin(L, p)
 A single number, or \code{NA_real_} where the estimate failed.
 }
 \description{
-\eqn{1/\lVert A^{-1}\rVert_1} from a sparse Cholesky factor, the same
-quantity LAPACK's \code{dpocon} produces from a dense one.
+Returns \eqn{1/\lVert A^{-1}\rVert_1} from a sparse Cholesky factor, which is
+the same quantity that LAPACK's \code{dpocon} produces from a dense one.
 }
 \details{
 The sparse route needs a condition estimate of its own, because

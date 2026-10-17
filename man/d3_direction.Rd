@@ -21,7 +21,7 @@ d3_direction(spec, d3, params, npar, a, b, tv)
 A numeric vector as long as the sample.
 }
 \description{
-\eqn{\sum_k \ell_{abk}(X_k v_k)_i}, the per-observation weight
-\code{\link[=contract3]{contract3()}} builds for the \eqn{(a,b)} block.
+Computes \eqn{\sum_k \ell_{abk}(X_k v_k)_i}, the per-observation weight
+that \code{\link[=contract3]{contract3()}} builds for the \eqn{(a,b)} block.
 }
 \keyword{internal}

@@ -22,16 +22,16 @@ coefficient labels, composed from each term's own label, so two terms of
 one kind in one formula stay apart.
 }
 \description{
-One named vector per distribution parameter: the quantities in which the
-model is written, or the coordinates on which it was estimated.
+Returns one named vector per distribution parameter: the quantities in
+which the model is written, or the coordinates on which it was estimated.
 }
 \section{What \code{readable} moves, and what it does not}{
 Most coefficients are the same under either reading: the coefficient of a
 linear predictor is reported as it is estimated. Three kinds of term
-report quantities that differ from the coordinates they are carried on,
-and those are the parameters that this argument moves.
+report quantities that differ from the coordinates on which they are
+carried, and those are the parameters that this argument moves.
 
-A \strong{break-point} term is fitted through a working block, and its
+A break-point term is fitted through a working block, and its
 quantities are read from that block. A continuous term holds each quantity
 as a coefficient, and the two readings coincide. A discontinuous term
 carries \eqn{g} and \eqn{\delta}; where its position is not held, it
@@ -40,17 +40,17 @@ holds \eqn{g}, which is no quantity of the model. Where the term holds its
 position, as a sharp \code{jump()} or \code{jseg()} does after the fit has settled
 it, the reported position is the held one.
 
-A \strong{score-driven} term carries its level and its loadings
+A score-driven term carries its level and its loadings
 \eqn{\kappa_j} through their own links, the log for a loading, and its
-persistence on partial autocorrelations, the stationary region not being a
-box. Each partial autocorrelation is carried on the unconstrained scale of
-its link, the inverse hyperbolic tangent by default. What the literature
-calls \eqn{\xi_j} is the autoregressive coefficient that the whole chart
-produces. With one persistence, \eqn{\xi_1} is the partial
+persistence on partial autocorrelations, because the stationary region is
+not a box. Each partial autocorrelation is carried on the unconstrained
+scale of its link, the inverse hyperbolic tangent by default. The quantity
+\eqn{\xi_j} of the literature is the autoregressive coefficient that the
+whole chart produces. With one persistence, \eqn{\xi_1} is the partial
 autocorrelation. With two, \eqn{\xi_1 = \mathrm{pacf}_1 (1 -
 \mathrm{pacf}_2)} and \eqn{\xi_2 = \mathrm{pacf}_2}.
 
-A \strong{regime} term is estimated on the additive log-ratios of each row of
+A regime term is estimated on the additive log-ratios of each row of
 its transition matrix, and it reports the transition probabilities
 \eqn{p_{ij}} in their place. Its levels and gaps are reported through
 their own links.
@@ -91,16 +91,16 @@ fit <- statmod(y ~ modelterms7::seg(x, psi = 4),
 # The break-point is a quantity of the model, near the true 6.
 coef(fit)$mu
 
-# The coordinates the fit ran on are the same numbers here, seg() being
-# continuous, and vcov() has one row for each of them.
+# The coordinates on which the fit ran are the same numbers here, because
+# seg() is continuous, and vcov() has one row for each of them.
 coef(fit, readable = FALSE)$mu
 rownames(vcov(fit, readable = FALSE))
 
 }
 \seealso{
 \code{\link[=hyper]{hyper()}} for the hyperparameters, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the
-variance matrix, whose rows with \code{readable = FALSE} are the unheld
-coordinates of \code{coef(object, readable = FALSE)},
+variance matrix, whose rows with \code{readable = FALSE} are the coordinates
+of \code{coef(object, readable = FALSE)} that are not held,
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the two together,
 \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}} for what a term declares.
 }

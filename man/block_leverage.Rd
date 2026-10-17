@@ -22,11 +22,11 @@ A list of lists, \code{G[[a]][[b]]} a vector as long as the sample, or
 \code{NULL} where equation \code{a} or equation \code{b} has no coefficients.
 }
 \description{
-\eqn{G_{ab,i} = x_{ia}'M_{[a][b]}x_{ib}}, the diagonal of \eqn{X_a M_{ab}
-X_b'} taken one observation at a time.
+Computes \eqn{G_{ab,i} = x_{ia}'M_{[a][b]}x_{ib}}, the diagonal of
+\eqn{X_a M_{ab} X_b'} taken one observation at a time.
 }
 \details{
-This is the one quantity every trace against \eqn{M} reduces to. For a
+This is the one quantity to which every trace against \eqn{M} reduces. For a
 matrix of the design's own form,
 \deqn{\mathrm{tr}(M\,X'WX) = \sum_i w_i\,(XMX')_{ii},}
 so a contraction of a third or fourth derivative never has to be assembled
@@ -38,9 +38,9 @@ contraction and by every pair of the Hessian.
 Where both blocks are sparse, the product of their densities is below
 \eqn{10^{-3}} and the number of pairs is below \eqn{2 \times 10^{7}}, the
 diagonal is computed by \code{\link[=leverage_pairs]{leverage_pairs()}} from the nonzeros of each row.
-The pair count bounds the work in absolute terms, which the density alone
-does not. Otherwise the diagonal is read off the dense product that has the
-fewer columns.
+The pair count bounds the work in absolute terms, which the density by
+itself does not. Otherwise the diagonal is read off the dense product that
+has the fewer columns.
 }
 \seealso{
 \code{\link[=u_vector]{u_vector()}}, \code{\link[=trace_design_form]{trace_design_form()}}

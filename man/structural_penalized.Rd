@@ -15,11 +15,11 @@ mixed_penalized(spec, design)
 \item{design}{The design, whose structural state holds the terms.}
 }
 \value{
-A single logical. \code{TRUE} where a penalty covers a structural term's
-own parameters, or a covariance class spans both the coefficients and
-those parameters. \code{FALSE} for a model with no structural term, and for
-one whose structural term has no such penalty. \code{mixed_penalized()}
-answers \code{TRUE} for the second case alone.
+A single logical. It is \code{TRUE} where a penalty covers a structural
+term's own parameters, or a covariance class spans both the coefficients
+and those parameters, and \code{FALSE} for a model with no structural term and
+for one whose structural term has no such penalty. \code{mixed_penalized()}
+returns \code{TRUE} for the second case only.
 }
 \description{
 Reports whether any penalty of the model covers the own parameters of a
@@ -28,13 +28,13 @@ deviations of a score-driven filter over a panel. A covariance class that
 spans both the coefficients and those parameters counts as well.
 }
 \details{
-The answer decides which matrix the Laplace determinant is taken over.
-\code{TRUE} sends the criterion to \code{\link[=statmod_marginal_full]{statmod_marginal_full()}}, which spans the
-coefficients \strong{and} the term's free parameters; \code{FALSE} leaves it over
-the coefficients alone.
+The answer determines the matrix over which the Laplace determinant is
+taken. \code{TRUE} sends the criterion to \code{\link[=statmod_marginal_full]{statmod_marginal_full()}}, which spans
+the coefficients and the term's free parameters; \code{FALSE} leaves it over
+the coefficients only.
 }
 \seealso{
 \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} for the matrix that it selects,
-\code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} for the penalties that it looks for.
+\code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} for the penalties that it seeks.
 }
 \keyword{internal}

@@ -26,13 +26,14 @@ derivative, as \code{\link[=.structural_blocks]{.structural_blocks()}} builds it
 A single number.
 }
 \description{
-\eqn{\mathrm{tr}(M\,\partial^2 K/\partial u^2[v, w])}: the quantity
-\code{\link[=structural_chain_extra]{structural_chain_extra()}} gives at the first order, one order up
-and contracted against a second direction.
+Returns \eqn{\mathrm{tr}(M\,\partial^2 K/\partial u^2[v, w])}: the quantity
+that \code{\link[=structural_chain_extra]{structural_chain_extra()}} returns at the first order, taken one order
+up and contracted against a second direction.
 }
 \details{
-The terms are listed in the comments of the code. None of them assembles a
-matrix over the coefficients: a term in \eqn{V_a^\top V_b} traces as a
+The terms are listed in the comments of the code. Each of them is traced
+without assembling a matrix over the coefficients: a term in
+\eqn{V_a^\top V_b} traces as a
 weighted sum of the per-observation diagonal \eqn{G}, a term carrying
 \eqn{\mathrm{d}\varphi} traces against the rows to which \eqn{M} has
 already been applied, and the terms that carry the derivatives of the

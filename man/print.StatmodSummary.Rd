@@ -18,13 +18,13 @@ values that the fit reached, so they can differ between models. The
 notes are on the summary's \code{notes} property in either case.}
 
 \item{max_coef}{How many coefficient rows a block shows, \code{Inf} or \code{NA}
-for all of them. \code{NULL}, the default, reads what \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
-was told; failing that the option \code{statmodels7.summary_max_coef}, and
-failing that 10. A hyperparameter row is shown whatever \code{max_coef} is:
-it governs the coefficients under it, and every one of them is
-conditional on the value that it reached. A block short enough to fit in
-twelve rows is never abridged, so raising \code{max_coef} changes nothing
-for a parametric block of ordinary size.}
+for all of them. \code{NULL}, the default, uses the value that was given to
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}}; if there is none, it uses the option
+\code{statmodels7.summary_max_coef}, and otherwise 10. A hyperparameter row is
+shown whatever \code{max_coef} is: it governs the coefficients under it, and
+every one of them is conditional on the value that it reached. A block
+short enough to fit in twelve rows is never abridged, so raising \code{max_coef}
+changes nothing for a parametric block of ordinary size.}
 
 \item{...}{Unused.}
 }
@@ -32,9 +32,9 @@ for a parametric block of ordinary size.}
 \code{x}, invisibly.
 }
 \description{
-The call, then the covariance blocks shared between equations, then each
-distribution parameter's blocks, then the degrees of freedom, the criteria
-and the notes.
+Prints the call, then the covariance blocks shared between equations, then
+each distribution parameter's blocks, then the degrees of freedom, the
+criteria and the notes.
 
 Below the criteria the point is described by dimensionless numbers from
 \code{\link[=statmod_certificate]{statmod_certificate()}}: for the inner fit, and for the outer criterion
@@ -42,10 +42,10 @@ where there is one, the largest gradient in conditional standard errors
 and the smallest eigenvalue of the equilibrated curvature
 (\code{\link[=certificate_readings]{certificate_readings()}}), and for the coefficients that a kinked penalty
 has set to zero the largest ratio of the pull of the likelihood to the kink
-(\code{\link[=zero_readings]{zero_readings()}}). No verdict is printed. How each is read is on the
-page of \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, under "Reading the foot". The line of the
-observations also gives the sum of the prior weights where they are not
-all 1.
+(\code{\link[=zero_readings]{zero_readings()}}). The foot does not include a verdict. How each is read
+is on the page of \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, under "Reading the foot". The
+line of the observations also gives the sum of the prior weights where they
+are not all 1.
 }
 \seealso{
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}

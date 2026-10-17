@@ -36,18 +36,18 @@ statmod_penalty_second(
 \item{total}{The stacked width.}
 }
 \value{
-A \code{total} square matrix, or \code{NULL} where no penalty's Hessian
+A \code{total} square matrix, or \code{NULL} if no penalty's Hessian
 moves with the coefficients.
 }
 \description{
-The part of \eqn{\partial K_m/\partial t_l} that a penalty whose Hessian
-depends on the coefficients contributes, placed in the stacked coefficient
-space, where \eqn{K_m = S_m + T[b_m]} is the determinant's matrix
-differentiated in hyperparameter \eqn{m}.
+Computes the part of \eqn{\partial K_m/\partial t_l} that a penalty whose
+Hessian depends on the coefficients contributes, placed in the stacked
+coefficient space, where \eqn{K_m = S_m + T[b_m]} is the determinant's
+matrix differentiated in hyperparameter \eqn{m}.
 }
 \details{
 Differentiating \eqn{S_m(\beta, t) + \partial S/\partial\beta\,[b_m]} once
-more along \eqn{t_l}, with \eqn{\beta} moving by \eqn{b_l}, gives
+more along \eqn{t_l}, while \eqn{\beta} moves by \eqn{b_l}, gives
 \deqn{\frac{\partial S_m}{\partial\beta}[b_l]
   + \frac{\partial S_l}{\partial\beta}[b_m]
   + \frac{\partial^2 S}{\partial\beta^2}[b_l, b_m]
@@ -58,11 +58,11 @@ taken along two directions, \eqn{b_l} for the hyperparameters of row \eqn{m}
 and \eqn{b_m} for those of row \eqn{l}; each is read from
 \code{\link[penalties7:penalty_d2hessian_beta]{penalties7::penalty_dhessian_beta_theta()}} for the hyperparameters that the
 penalty owns. The third is \code{\link[penalties7:penalty_d2hessian_beta]{penalties7::penalty_d2hessian_beta()}} and the
-fourth \code{\link[penalties7:penalty_dhessian_beta]{penalties7::penalty_dhessian_beta()}}. A penalty that
-\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} calls quadratic contributes nothing, and
-neither do a kinked penalty, a mixed covariance class and a penalty over a
-structural term's own parameters, so a model carrying only those gets \code{NULL}
-and its Hessian is untouched.
+fourth \code{\link[penalties7:penalty_dhessian_beta]{penalties7::penalty_dhessian_beta()}}. A penalty for which
+\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} returns \code{TRUE} does not contribute, and a
+kinked penalty, a mixed covariance class and a penalty over a structural
+term's own parameters do not contribute either, so for a model carrying
+only those the function returns \code{NULL} and the Hessian is left untouched.
 }
 \seealso{
 \code{\link[=statmod_penalty_dbeta]{statmod_penalty_dbeta()}}, \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}},

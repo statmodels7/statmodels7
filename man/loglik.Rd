@@ -19,18 +19,18 @@ hessian(object, par = NULL, data = NULL, expected = FALSE, ...)
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{par}{A named list of coefficient vectors, each as long as the
-design of the equation that it names. A distribution parameter that the list
-omits keeps its fitted coefficients, so a list may change one equation
+design of the equation that it names. A distribution parameter that the
+list omits keeps its fitted coefficients, so a list may change one equation
 and leave the others at the fit. Defaults to the fitted coefficients. A
 \code{par} that is not a named list, a name that is not a distribution
 parameter, or a vector of the wrong length is an error. The own
 parameters of a structural term are not among the arguments.}
 
-\item{data}{A data frame with the columns that the model names. Defaults to the
-data the model was fitted to. New data must carry the response, since a
+\item{data}{A data frame with the columns that the model names. Defaults to
+the data used to fit the model. New data must carry the response, since a
 likelihood needs one.}
 
-\item{...}{Passed to methods. No shipped method reads it.}
+\item{...}{Passed to methods. The shipped methods do not read it.}
 
 \item{expected}{\code{hessian()} only: \code{TRUE} for the expected information,
 \code{FALSE} (the default) for the observed Hessian.}
@@ -38,18 +38,18 @@ likelihood needs one.}
 \value{
 \code{loglik()} gives a single number. \code{gradient()} gives a named list
 of numeric vectors, one per distribution parameter. \code{hessian()} gives a
-symmetric \verb{p x p} matrix over the stacked regression coefficients, \code{p}
-being their total count. The own parameters of a structural term are not
+symmetric \verb{p x p} matrix over the stacked regression coefficients, where
+\code{p} is their total count. The own parameters of a structural term are not
 among them and have no entry in the gradient or in the Hessian.
 }
 \description{
 Turn a fitted model back into a function. \code{loglik()}, \code{gradient()} and
 \code{hessian()} evaluate the model's log-likelihood and its first two
 derivatives at coefficients and data of the caller's choosing, so a fit
-can be profiled, differenced or handed to an optimizer of one's own.
+can be profiled, differenced or handed to a user-written optimizer.
 
-With no arguments beyond the fit they read at the fitted coefficients and
-the fitting data.
+If only the fit is given, these functions evaluate the model at the fitted
+coefficients and on the fitting data.
 }
 \section{The name}{
 The generic is \code{loglik}, not \code{logLik}. R's \code{\link[stats:logLik]{stats::logLik()}} returns the
@@ -72,8 +72,8 @@ reparametrization are therefore reapplied to the new rows and not
 estimated again.
 }
 
-\section{No penalty enters}{
-All three functions evaluate the likelihood alone, without the penalty.
+\section{Likelihood without the penalty}{
+All three functions evaluate the likelihood without the penalty.
 The penalized objective at given coefficients is a different quantity,
 and the hyperparameters are not arguments of these functions.
 }

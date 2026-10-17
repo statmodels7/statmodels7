@@ -27,15 +27,15 @@ refresh_direction(spec, design, M, params, npar, offs, d3, tv, v, units)
 A list, one entry per unit, with \code{D} and \code{A}.
 }
 \description{
-The two quantities every consumer of \eqn{\partial X/\partial\beta} reads
-for a given direction: the block's own derivative along it, and the third
-derivative already contracted in it and carried onto the term's columns.
+Returns the two quantities that every consumer of
+\eqn{\partial X/\partial\beta} reads for a given direction: the block's own
+derivative along it, and the third derivative already contracted in it and
+carried onto the term's columns.
 }
 \details{
-Both depend on one direction alone, never on a pair, so they are built
-once per
-hyperparameter and combined in the Hessian's pair loop: computing them
-inside that loop would repeat an \eqn{O(np^2)} product for every pair.
+Both depend on a single direction, never on a pair, so they are built
+once per hyperparameter and combined in the Hessian's pair loop: computing
+them inside that loop would repeat an \eqn{O(np^2)} product for every pair.
 }
 \seealso{
 \code{\link[=contract3_refresh]{contract3_refresh()}}, \code{\link[=trace_refresh4]{trace_refresh4()}}

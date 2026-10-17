@@ -16,8 +16,8 @@ The matrix \eqn{N}, with zero columns where \code{B} has full column
 rank.
 }
 \description{
-The columns of a \verb{p x r} matrix \eqn{N} with \eqn{B N = 0} and
-\eqn{N^\top N = I}, spanning the null space of \code{B}.
+Returns a \verb{p x r} matrix \eqn{N} with \eqn{B N = 0} and
+\eqn{N^\top N = I}, whose columns span the null space of \code{B}.
 }
 \details{
 Where every row of \code{B} is a multiple of a unit vector, the constraints hold

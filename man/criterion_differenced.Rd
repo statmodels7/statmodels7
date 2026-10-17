@@ -25,10 +25,10 @@ Hessian). An error is signaled where a refit gives no finite
 criterion; the caller reads it as \code{NULL}.
 }
 \description{
-The gradient and the curvature of the outer criterion in its free
-coordinates, read by central differences of the criterion itself: the
-model is refitted at each displaced point, warm-started at the fitted
-coefficients, and the criterion is read at the refitted mode.
+Computes the gradient and the curvature of the outer criterion in its free
+coordinates by central differences of the criterion itself: the model is
+refitted at each displaced point, warm-started at the fitted coefficients,
+and the criterion is read at the refitted mode.
 }
 \details{
 With one coordinate the readings are

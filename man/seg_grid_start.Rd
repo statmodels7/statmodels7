@@ -14,10 +14,10 @@ seg_grid_start(tm, data, response)
 \item{response}{The evaluated left-hand side, or \code{NULL}.}
 }
 \value{
-\code{tm}, with \code{psi} set to the grid's choice where the rule applies,
-and unchanged where it does not: a term of another kind, a term whose
-\code{psi} the caller named, or a response against which the rule cannot
-score.
+\code{tm}, in which \code{psi} is set to the grid's choice where the rule
+applies, and \code{tm} unchanged where it does not: a term of another kind, a
+term whose \code{psi} the caller named, or a response against which the rule
+cannot score.
 }
 \description{
 Runs \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} on a

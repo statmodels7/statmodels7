@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_hessian.R
 \name{block_predictors}
 \alias{block_predictors}
-\title{The Predictors a Coefficient Direction Induces}
+\title{The Predictors That a Coefficient Direction Induces}
 \usage{
 block_predictors(design, params, npar, offs, v)
 }
@@ -21,7 +21,7 @@ vector with one value per observation, or \code{NULL} for a parameter whose
 equation has no coefficients.
 }
 \description{
-\eqn{(X_k v_k)_i} for each distribution parameter, which is how a movement
-of the coefficients is felt by the log-density.
+Returns \eqn{(X_k v_k)_i} for each distribution parameter, which is how a
+movement of the coefficients is felt by the log-density.
 }
 \keyword{internal}

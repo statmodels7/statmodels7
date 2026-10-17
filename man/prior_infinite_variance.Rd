@@ -12,7 +12,7 @@ prior_infinite_variance(ob)
 \value{
 \code{TRUE} where the prior is univariate and the variance that its
 family reports is infinite or not a number (a Cauchy); \code{FALSE}
-otherwise, including where no variance can be read.
+otherwise, including where the variance cannot be read.
 }
 \description{
 Whether a Prior Has No Finite Variance

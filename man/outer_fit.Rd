@@ -47,7 +47,7 @@ by the function.}
 \item{vb}{The resolved verbosity.}
 
 \item{hold_hyper}{\code{TRUE} to hold the hyperparameters at \code{hyper} and
-search over the criterion's own coefficients alone.}
+search over the criterion's own coefficients only.}
 }
 \value{
 A list with \code{par}, \code{hyper}, \code{value}, \code{criterion}, \code{converged},

@@ -36,7 +36,7 @@ statmod_marginal_hess(
 
 \item{inner}{The inner optimizer, read by the differenced route.}
 
-\item{gam}{The coefficients the criterion estimates, from
+\item{gam}{The coefficients that the criterion estimates, from
 \code{\link[=marginal_coords]{marginal_coords()}}, or \code{NULL}. Their rows and columns follow those of
 the hyperparameters.}
 }
@@ -47,8 +47,8 @@ information or the matrix of the determinant cannot be formed or, on a
 differenced route, where the two steps disagree.
 }
 \description{
-\eqn{\partial^2 V/\partial\eta^2} at the penalized mode, over the free scale
-of the hyperparameters under estimation.
+Computes \eqn{\partial^2 V/\partial\eta^2} at the penalized mode, over the
+free scale of the hyperparameters under estimation.
 }
 \details{
 The pieces are those of the gradient differentiated once more: the
@@ -56,7 +56,7 @@ hyperparameter Hessian of the penalty, the movement of the mode read
 through the penalized curvature, and two contributions from the
 determinant, one from \eqn{M} moving and one from \eqn{K_m} moving.
 
-\strong{Contributions of the penalty.} Every contribution of the penalty comes
+Every contribution of the penalty comes
 from a generic of \pkg{penalties7}: \code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_hess_theta()}},
 \code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_cross()}}, \code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}},
 \code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}} and \code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}}, with
@@ -65,20 +65,20 @@ penalty whose Hessian depends on the coefficients. The assembly therefore
 contains no branch for a particular penalty class (a ridge, a random
 effect, a structured prior).
 
-\strong{Onto the free scale} the chain rule is second order and diagonal,
-each hyperparameter having its own link: with \eqn{\theta = h(\eta)},
+Onto the free scale the chain rule is second order and diagonal,
+because each hyperparameter has its own link: with \eqn{\theta = h(\eta)},
 \deqn{\partial^2 V/\partial\eta_m\partial\eta_l =
   h_m'h_l'\,\partial^2 V/\partial\theta_m\partial\theta_l
   + \delta_{ml}\,h_m''\,\partial V/\partial\theta_m.}
 
-\strong{Routes.} For a model with a structural term the function returns
+For a model with a structural term the function returns
 \code{\link[=statmod_structural_hess]{statmod_structural_hess()}} where the term implements
 \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}} and a penalty covers the term's own parameters,
 and \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} otherwise, including the case where that
 assembly returns no finite matrix. On the expected information the
 assembly runs only where \code{\link[=outer_gradient_ok]{outer_gradient_ok()}} admits order 2, and the
-stencil is used elsewhere. Any other model is answered by the assembly
-described above.
+stencil is used elsewhere. Any other model uses the assembly described
+above.
 }
 \seealso{
 \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}, \code{\link[=reml]{reml()}}

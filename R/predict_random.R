@@ -8,11 +8,12 @@ NULL
 #' with the mode that `predict()` applies to each.
 #'
 #' @details
-#' `random` is a single string, applied to every such term, or a character
-#' vector named by the terms' keys, one mode per key named, applying to every
-#' term with that key in any equation, and the rest staying conditional. A key
-#' is matched with its white space removed, so `"random(~1|g)"` finds the
-#' term written `random(~ 1 | g)`. A name that matches no term signals an
+#' `random` is a single string, which applies to every such term, or a
+#' character vector named by the terms' keys, which gives one mode per key
+#' named and applies to every term with that key in any equation. The terms
+#' that it does not name stay conditional. A key is matched after its white
+#' space is removed, so `"random(~1|g)"` finds the term written
+#' `random(~ 1 | g)`. A name that matches no term signals an
 #' error that lists the terms of the model.
 #'
 #' Only a term written in an equation is listed. One written inside a
@@ -83,18 +84,19 @@ random_modes <- function(spec, random) {
 #' The Prior of One Random-Effect Term, for Integrating a New Group
 #'
 #' @description
-#' The description of the prior that the fit estimated for one random-effect
-#' term: a Cholesky factor for a Gaussian prior, and the penalty with its
-#' hyperparameters otherwise. [random_nodes()] turns it into nodes or draws.
+#' Returns the description of the prior that the fit estimated for one
+#' random-effect term: a Cholesky factor for a Gaussian prior, and the
+#' penalty with its hyperparameters otherwise. [random_nodes()] turns it into
+#' nodes or draws.
 #'
 #' @details
 #' A term whose penalty is quadratic in the coefficients and has no kink
 #' carries a Gaussian prior, read off the penalty's Hessian: its first
-#' \eqn{d\times d} block is one group's precision \eqn{\Omega}, the block
-#' being \eqn{I_m \otimes \Omega}. For any other prior the function returns
+#' \eqn{d\times d} block is one group's precision \eqn{\Omega}, and the full
+#' block is \eqn{I_m \otimes \Omega}. For any other prior the function returns
 #' the penalty and its hyperparameters, and [random_nodes()] integrates over
 #' it by quadrature (one univariate prior) or by [penalties7::penalty_draw()],
-#' one draw of the block giving \eqn{m} independent groups. A prior that is
+#' where one draw of the block gives \eqn{m} independent groups. A prior that is
 #' not Gaussian is rejected under an inverse link whose range is not bounded.
 #' A term that shares a covariance with other terms through a label has no
 #' prior of its own and is rejected.
@@ -113,14 +115,14 @@ random_prior <- function(spec, design, fit, param, key) {
   if (!is.na(modelterms7::term_tag(tm))) {
     stop(sprintf(paste0("'%s' shares a covariance with other terms, so its ",
                         "prior is not its own\n  and a marginal prediction ",
-                        "cannot integrate it alone. Set it aside with ",
+                        "cannot integrate it separately. Set it aside with ",
                         "random = \"zero\"."),
                  key), call. = FALSE)
   }
   units <- Filter(function(u) identical(u$param, param) &&
                     identical(u$term, key), statmod_penalized(spec, design))
   if (!length(units)) {
-    stop(sprintf("'%s' has no prior to integrate over.", key),
+    stop(sprintf("'%s' has no prior over which to integrate.", key),
          call. = FALSE)
   }
   gr <- modelterms7::term_group(tm)
@@ -189,7 +191,7 @@ random_prior_joint <- function(units, fit, param, key, d) {
     if (!prior_is_gaussian(u$penalty, th)) {
       stop(sprintf(paste0("'%s' has several priors and not all of them are ",
                           "Gaussian, so random = \"marginal\"\n  cannot ",
-                          "integrate it. random = \"zero\" can."), key),
+                          "integrate it. random = \"zero\" is available."), key),
            call. = FALSE)
     }
     pos <- (as.integer(u$within) - 1L) %% d + 1L
@@ -206,10 +208,10 @@ random_prior_joint <- function(units, fit, param, key, d) {
 #' Nodes and Weights for the Effects That a Marginal Prediction Integrates
 #'
 #' @description
-#' A product Gauss-Hermite grid where every prior is Gaussian and the total
-#' dimension is at most three; the prior itself, for [marginal_quad()], where
-#' the only prior is univariate, not Gaussian and has a parent family; Monte
-#' Carlo draws otherwise.
+#' Returns a product Gauss-Hermite grid where every prior is Gaussian and the
+#' total dimension is at most three, the prior itself (for [marginal_quad()])
+#' where the only prior is univariate, not Gaussian and has a parent family,
+#' and Monte Carlo draws otherwise.
 #'
 #' @details
 #' The grid has \eqn{\min(40, \lfloor 8000^{1/D}\rfloor)} nodes per
@@ -225,8 +227,8 @@ random_prior_joint <- function(units, fit, param, key, d) {
 #'
 #' @return A list with `b`, one matrix per prior with a row per node and a
 #'   column per coordinate, and `w`, the weights, summing to one.
-#'   For one univariate prior that is not Gaussian, a list with `quad`, that
-#'   prior.
+#'   For one univariate prior that is not Gaussian, the list has `quad`,
+#'   which is that prior.
 #'
 #' @keywords internal
 random_nodes <- function(priors, nsim = 10000L) {
@@ -281,8 +283,9 @@ random_nodes <- function(priors, nsim = 10000L) {
 #' Gauss-Hermite Nodes and Weights
 #'
 #' @description
-#' For \eqn{\int f(x) e^{-x^2} dx}, by the eigendecomposition of the Jacobi
-#' matrix of the Hermite polynomials (Golub and Welsch 1969).
+#' Returns the nodes and weights of the rule for
+#' \eqn{\int f(x) e^{-x^2} dx}, computed by the eigendecomposition of the
+#' Jacobi matrix of the Hermite polynomials (Golub and Welsch 1969).
 #'
 #' @param k The number of nodes.
 #'
@@ -313,22 +316,22 @@ gauss_hermite <- function(k) {
 #' \eqn{E_b[\mathrm{Var}(Y\mid b)] + \mathrm{Var}_b(E[Y\mid b])}, which is
 #' where a random effect on the scale enters. A predictor, `"link"` or
 #' `"link:p"`, is not computed here: [predict.StatmodFit()] returns
-#' \eqn{\eta_0} itself for it, the effects having mean zero.
+#' \eqn{\eta_0} itself for it, because the effects have mean zero.
 #'
-#' @param spec,design The specification at the new rows and its design, with
-#'   the marginal terms' columns set to zero.
+#' @param spec,design The specification at the new rows and its design, whose
+#'   columns for the marginal terms are set to zero.
 #' @param ep The predictors at the fixed part, as [statmod_eta()] returns
 #'   them.
 #' @param mt The marginal terms, rows of [random_modes()].
 #' @param nodes What [random_nodes()] returns, in the order of `mt`.
 #' @param what The quantity predicted: a parameter name, `"parameter"`,
 #'   `"mean"`, `"variance"` or `"std_dev"`.
-#' @param eta_at A named list of predictors to integrate at in place of
+#' @param eta_at A named list of predictors at which to integrate, in place of
 #'   `ep$eta`, for the ends of an interval; `NULL` for `ep$eta`.
 #' @param deriv `TRUE` to average the derivative of the inverse link instead
-#'   of the inverse link, which is what the delta method of a marginal
-#'   parameter multiplies the predictor's standard error by. Read only for a
-#'   parameter.
+#'   of the inverse link. The delta method of a marginal parameter multiplies
+#'   the standard error of the predictor by this average. It is read only for
+#'   a parameter.
 #' @param eta_node For random effects written inside a subformula, a function
 #'   of the node index returning the predictors at that node, where the term
 #'   holding them is evaluated at the node's values. It takes the place of
@@ -434,7 +437,7 @@ random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
 #' @details
 #' The variance of the effects' contribution at each row is read off the
 #' nodes, \eqn{\sum_k w_k (z^\top b_k)^2}, which a Gauss-Hermite grid gives
-#' exactly, the effects having mean zero.
+#' exactly because the effects have mean zero.
 #'
 #' @param link The parameter's link.
 #' @param eta0 The predictor at the fixed part, one value per row.
@@ -475,9 +478,9 @@ marginal_out_of_domain <- function(link, eta0, Zs, nodes, idx) {
 #' A Marginal Prediction by Adaptive Quadrature Over One Univariate Prior
 #'
 #' @description
-#' The average over a new group's effect when the only effect set aside is
-#' one coordinate with a prior that is not Gaussian: each quantity is
-#' \eqn{\int q(\eta_0 + z u)\, f_b(u)\, du}, with \eqn{f_b} the prior's own
+#' Computes the average over a new group's effect when the only effect set
+#' aside is one coordinate with a prior that is not Gaussian. Each quantity
+#' is \eqn{\int q(\eta_0 + z u)\, f_b(u)\, du}, with \eqn{f_b} the prior's own
 #' density, computed by [numericals7::quad_vec()] over the rows at once.
 #'
 #' @details

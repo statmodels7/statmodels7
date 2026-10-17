@@ -2,7 +2,7 @@
 % Please edit documentation in R/accessors.R
 \name{sigma.StatmodFit}
 \alias{sigma.StatmodFit}
-\title{The Standard Deviation a Fitted Model Implies}
+\title{The Standard Deviation Implied by a Fitted Model}
 \usage{
 \method{sigma}{StatmodFit}(object, ...)
 }
@@ -19,8 +19,8 @@ does not depend on the location; for a Poisson family, for example, it
 varies with the fitted mean.
 }
 \description{
-The fitted standard deviation at each observation, where the family has
-one.
+Returns the fitted standard deviation at each observation, where the family
+has one.
 }
 \details{
 The result is a vector with one entry per observation, because a scale may

@@ -15,7 +15,7 @@ structural_se_columns(spec, design, ep, p, coef)
 
 \item{p}{The distribution parameter whose equation is being read.}
 
-\item{coef}{The coefficients the predictors were evaluated at.}
+\item{coef}{The coefficients at which the predictors were evaluated.}
 }
 \value{
 A list with \code{X} (the derivative rows) and \code{key} (the names of
@@ -23,12 +23,12 @@ their columns in the variance matrix), or \code{NULL} where the equation
 carries no structural term.
 }
 \description{
-The derivative of the predictor of the equation carrying a structural
-term, one row per observation, in every coordinate of the variance matrix
-it moves with: the coefficients of every equation and the term's free
-parameters on their unconstrained scale. A score-driven term is read
-through \code{\link[=filter_joint_jacobian]{filter_joint_jacobian()}} and a term of the likelihood shape
-through \code{\link[=loglik_shift_jacobian]{loglik_shift_jacobian()}}.
+Returns the derivative of the predictor of the equation that carries a
+structural term, one row per observation, in every coordinate of the
+variance matrix on which the predictor depends: the coefficients of every
+equation and the term's free parameters on their unconstrained scale. A
+score-driven term is read through \code{\link[=filter_joint_jacobian]{filter_joint_jacobian()}} and a term of
+the likelihood shape through \code{\link[=loglik_shift_jacobian]{loglik_shift_jacobian()}}.
 }
 \details{
 A filter's level is a recursion, not a column, so it has no row of a

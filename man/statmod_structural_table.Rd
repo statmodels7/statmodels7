@@ -23,8 +23,8 @@ structural term.
 }
 \description{
 Returns the estimated parameters of every structural term, on their own
-scale, with standard errors and intervals taken from the joint observed
-information.
+scale, together with standard errors and intervals that are taken from
+the joint observed information.
 }
 \details{
 A structural term contributes no design block, so the coefficient tables

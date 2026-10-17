@@ -22,10 +22,10 @@ A list with \code{statistic}, \code{p_value} and \code{note}, the last a
 character vector of the notes that qualify the column.
 }
 \description{
-The likelihood-ratio, score or gradient statistic for each coefficient that
-a restricted fit can hold, against the null that it is zero, reported as
-the signed root of the \eqn{\chi^2_1} value together with the p-value of
-that value.
+Computes the likelihood-ratio, score or gradient statistic for each
+coefficient that a restricted fit can hold, against the null that it is
+zero, and reports it as the signed root of the \eqn{\chi^2_1} value
+together with the p-value of that value.
 }
 \details{
 The root carries the sign of the estimate, so the column holds one kind of
@@ -34,8 +34,8 @@ case where the root is exact. The p-value is the \eqn{\chi^2_1} one and is
 not recomputed from the root.
 
 A row that \code{\link[=testable_coords]{testable_coords()}} does not name keeps \code{NA} in both columns
-instead of the Wald value that it arrived with, so that no column carries
-two different tests.
+instead of the Wald value with which it arrived, so that each column
+carries a single test.
 }
 \seealso{
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}, which computes one of them.

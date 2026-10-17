@@ -63,7 +63,7 @@ correction for estimated hyperparameters where it was requested.}
 
 \item{elapsed}{The elapsed time, in seconds.}
 
-\item{level}{The confidence level the intervals were built at.}
+\item{level}{The confidence level at which the intervals were built.}
 
 \item{type}{Which variance convention was used.}
 
@@ -71,7 +71,7 @@ correction for estimated hyperparameters where it was requested.}
 \code{"lr"}, \code{"score"} or \code{"gradient"}.}
 
 \item{max_coef}{The number of coefficient rows that each block prints, or
-\code{NULL} where the option \code{statmodels7.summary_max_coef} decides.}
+\code{NULL} where the option \code{statmodels7.summary_max_coef} determines it.}
 
 \item{notes}{A character vector of the notes that qualify the numbers.}
 
@@ -82,7 +82,7 @@ where it could not be computed.}
 An object of class \code{StatmodSummary}.
 }
 \description{
-What \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} returns: the blocks of each
+Holds what \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} returns: the blocks of each
 distribution parameter, the degrees of freedom, the information criteria
 and the notes that qualify the numbers.
 }

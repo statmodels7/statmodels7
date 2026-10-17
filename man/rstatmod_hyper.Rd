@@ -19,21 +19,21 @@ term's own parameters, which ride charts.}
 A named list, empty for a penalty with no hyperparameters.
 }
 \description{
-A value per hyperparameter, drawn on the chart that the penalty carries for
-it around the neutral point that \code{\link[=penalty_theta_start]{penalty_theta_start()}} gives.
+Draws a value per hyperparameter on the chart that the penalty carries for
+it, around the neutral point that \code{\link[=penalty_theta_start]{penalty_theta_start()}} gives.
 }
 \details{
 The draw is on the unconstrained scale so that whatever comes out is
 admissible: a scale stays positive, a correlation stays inside its
 interval, and a log-Cholesky coordinate is free on the line already. The
-width is half of \code{sd} for the reason \code{\link[modelterms7:term_draw]{modelterms7::term_draw()}} halves it,
-a chart mapping a width of one onto most of its parameter's range.
+width is half of \code{sd} for the reason that \code{\link[modelterms7:term_draw]{modelterms7::term_draw()}} halves
+it: a chart maps a width of one onto most of its parameter's range.
 
 \code{unit} moves the center away from a one-sided bound and affects nothing
 else, so a hyperparameter that is unbounded on both sides (a coordinate of
 a multivariate prior's own chart) is drawn around the neutral point of that
-chart whatever the term is. This is also the point that a fit starts from;
-on \code{dr_prod} it corresponds to unit standard deviations and no
+chart whatever the term is. This is also the point from which a fit
+starts; on \code{dr_prod} it corresponds to unit standard deviations and no
 correlation.
 }
 \seealso{

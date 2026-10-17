@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_context.R
 \name{resolution_summary}
 \alias{resolution_summary}
-\title{The Resolution the Search Is Given, Out of the Readings Taken So Far}
+\title{The Resolution That the Search Is Given, Out of the Readings Taken So Far}
 \usage{
 resolution_summary(x)
 }
@@ -13,23 +13,23 @@ resolution_summary(x)
 A single positive number, or \code{NA_real_} where there is none.
 }
 \description{
-The largest of the usable readings \code{\link[=criterion_resolution]{criterion_resolution()}} has
-returned during this search.
+Returns the largest of the usable readings that \code{\link[=criterion_resolution]{criterion_resolution()}}
+has returned during this search.
 }
 \details{
 A reading is taken at every usable evaluation, and each one measures how
-far the criterion moves when the mode is displaced by the error that
-evaluation's inner fit stopped at. The displacement varies across
-evaluations by far more than the quantity that it stands for does, so the choice
-of which reading to keep decides the answer.
+far the criterion moves when the mode is displaced by the error at which
+that evaluation's inner fit stopped. The displacement varies across
+evaluations by far more than the quantity that it represents does, so the
+answer depends on which reading is kept.
 
-The readings are already filtered to acceptable modes, which is why the
-largest of them is the one to keep: \code{\link[=criterion_resolution]{criterion_resolution()}} returns \code{NA}
-where the mode error exceeds \code{\link[=mode_error_limit]{mode_error_limit()}}, so every reading that
-reaches this function comes from a mode that the layer accepts. A
-resolution has to bound how far the criterion can move between two such
-modes, and not how little it moved at the evaluation whose inner score
-happened to stop lowest.
+The readings are already filtered to acceptable modes, because
+\code{\link[=criterion_resolution]{criterion_resolution()}} returns \code{NA} where the mode error exceeds
+\code{\link[=mode_error_limit]{mode_error_limit()}}, so every reading that reaches this function comes
+from a mode that the layer accepts. The largest of them is therefore the
+one to keep. A resolution has to bound how far the criterion can move
+between two such modes, and not how little it moved at the evaluation
+whose inner score happened to stop lowest.
 
 The inner score at which a Newton step stops varies by orders of magnitude
 across evaluations, and a minimum over such a sequence reads the luckiest

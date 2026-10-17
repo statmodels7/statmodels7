@@ -11,7 +11,7 @@ draw_covariates(covariates, n, data)
 
 \item{n}{The observation count.}
 
-\item{data}{The frame to write into.}
+\item{data}{The frame into which the columns are written.}
 }
 \value{
 A data frame.

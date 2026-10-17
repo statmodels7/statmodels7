@@ -46,8 +46,8 @@ A numeric vector, one entry per row of \code{idx} followed by one per
 position of \code{gam$where}, or \code{NULL} where the determinant does not exist.
 }
 \description{
-\eqn{\partial V/\partial\eta} at the penalized mode, over the free scale of
-the hyperparameters under estimation.
+Computes \eqn{\partial V/\partial\eta} at the penalized mode, over the free
+scale of the hyperparameters under estimation.
 }
 \details{
 The gradient is the sum of the envelope term
@@ -61,16 +61,16 @@ the determinant reads that movement, and \eqn{M} is \eqn{K^{-1}} under
 \code{\link[=reml]{reml()}} and the inverse of \eqn{K} on the integrated subspace under
 \code{\link[=ml]{ml()}}.
 
-The matrix \eqn{J} is the curvature of the penalized likelihood at the mode,
-the observed information plus the penalty's Hessian, with the second
-derivative of a block that moves with its coefficients added
+The matrix \eqn{J} is the curvature of the penalized likelihood at the mode:
+the observed information plus the penalty's Hessian, plus the second
+derivative of a block that moves with its coefficients
 (\code{\link[=mode_curvature]{mode_curvature()}}). It differs from \eqn{K} when the criterion reads the
 expected information. A coefficient that the criterion estimates, a
 direction that the model does not identify and a coordinate that a kink of a
-break-point term holds do not move with \eqn{\theta}, and the solve is made
-on the directions that they leave free (\code{\link[=mode_solver]{mode_solver()}}). Where a penalty
-covers the parameters of a structural term, the function delegates to
-\code{\link[=statmod_structural_grad]{statmod_structural_grad()}}.
+break-point term holds do not move with \eqn{\theta}, and the function
+solves on the directions that they leave free (\code{\link[=mode_solver]{mode_solver()}}). Where a
+penalty covers the parameters of a structural term, the function delegates
+to \code{\link[=statmod_structural_grad]{statmod_structural_grad()}}.
 
 \eqn{u} is assembled without forming any third-derivative array. Writing
 \eqn{G_{ab,i} = x_{ia}'M_{[a][b]}x_{ib}} for the per-observation diagonal of

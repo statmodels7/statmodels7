@@ -2,7 +2,7 @@
 % Please edit documentation in R/accessors.R
 \name{weight_total}
 \alias{weight_total}
-\title{The Number of Observations the Weights Count}
+\title{The Number of Observations Counted by the Weights}
 \usage{
 weight_total(spec)
 }
@@ -13,8 +13,8 @@ weight_total(spec)
 A single number.
 }
 \description{
-The sum of the prior weights, which are frequency weights: a weight of two
-counts the row twice. Without weights it is the number of rows.
+Returns the sum of the prior weights, which are frequency weights: a weight
+of two counts the row twice. Without weights it is the number of rows.
 }
 \seealso{
 \code{\link[=nobs.StatmodFit]{nobs.StatmodFit()}}, \code{\link[=bic]{bic()}}

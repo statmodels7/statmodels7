@@ -28,12 +28,12 @@ or \code{"unconditional"}.}
 
 \item{readable}{Whether to report the quantities in which the model is written
 (a term's own parameters under the names of the literature) and not the
-raw coordinates. Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, and necessarily \code{FALSE}
-for the three restricted tests.}
+raw coordinates. The value is passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} and must be
+\code{FALSE} for the three restricted tests.}
 
-\item{test}{Which test the interval is the acceptance region of:
-\code{"wald"}, the default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, each
-inverted by \code{\link[=statmod_invert]{statmod_invert()}}.}
+\item{test}{The test whose acceptance region is the interval: \code{"wald"}, the
+default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, which \code{\link[=statmod_invert]{statmod_invert()}}
+inverts.}
 
 \item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 }
@@ -42,21 +42,21 @@ A data frame with the parameter, the term, the coefficient, the
 estimate, its standard error and the two limits.
 }
 \description{
-Confidence intervals for the coefficients of every distribution parameter,
-by default the Wald ones and otherwise by inverting a likelihood test.
+Returns confidence intervals for the coefficients of every distribution
+parameter, by default the Wald ones and otherwise by inverting a likelihood
+test.
 }
 \details{
 With \code{readable = FALSE}, the interval for a coefficient of a linear
 predictor is symmetric about the estimate and needs no mapping back. Such a
-coefficient is unbounded whatever the distribution parameter it belongs to,
-the link having already carried that parameter onto the whole line, so the
-scale on which the interval is built is the scale on which the quantity
-lives. The interval does not respect a bound on the distribution parameter
-itself; for that, map an interval for the predictor through the inverse link
-at the covariate values of interest. With the default \code{readable = TRUE}, each
-quantity that a structural term declares (a loading or a persistence, for
-example) has an interval built on the link scale of that quantity and mapped
-back, so that interval is not symmetric.
+coefficient is unbounded whatever the distribution parameter to which it
+belongs, because the link has already carried that parameter onto the whole
+line, so the scale on which the interval is built is the scale on which the
+quantity lives. The interval does not respect a bound on the distribution
+parameter itself; for that, map an interval for the predictor through the
+inverse link at the covariate values of interest. With the default \code{readable = TRUE}, each quantity that a structural term declares (a loading or a
+persistence, for example) has an interval built on the link scale of that
+quantity and mapped back, so that interval is not symmetric.
 
 The variance comes from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so the same three
 conventions apply, and a coefficient that a kinked penalty has set to zero
@@ -64,10 +64,10 @@ has \code{NA} in place of an interval. For an interval around a penalized term,
 \code{type = "unconditional"} does not treat the smoothing parameter as known.
 }
 \section{Inverting a test instead}{
-\code{test} chooses which statistic the interval is the acceptance region of.
-The Wald interval is the set of \eqn{b} that the Wald statistic does not
-reject, and it is symmetric by construction: that statistic is a parabola
-in \eqn{b}, the curvature having been read once at \eqn{\hat\beta}. The
+The argument \code{test} selects the statistic whose acceptance region is the
+interval. The Wald interval is the set of \eqn{b} that the Wald statistic
+does not reject, and it is symmetric by construction: that statistic is a
+parabola in \eqn{b}, since the curvature is read once at \eqn{\hat\beta}. The
 other three read the likelihood at each \eqn{b} in turn, so their
 intervals follow its shape and are not symmetric where it is not. Where the
 likelihood is nearly quadratic the four intervals agree; with a small sample

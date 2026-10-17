@@ -14,13 +14,13 @@ set.seed(1)
 ```
 
 An ordinary regression models the mean and treats everything else about the
-distribution as a nuisance held constant. A distributional model gives **every
-parameter its own equation**, so the scale, the shape and a zero-inflation
+distribution as a nuisance held constant. A distributional model gives every
+parameter its own equation, so the scale, the shape and a zero-inflation
 probability may each depend on covariates, and each may be a smooth, a random
 effect or a penalized block.
 
-`statmod()` reads one formula carrying all of them, the equations separated by
-a bar, and fits it. This vignette walks through a fit and then through the
+`statmod()` reads one formula that carries all of them, in which a bar
+separates the equations, and fits it. This vignette walks through a fit and then through the
 functions that read it.
 
 ```{r}
@@ -43,7 +43,7 @@ f1 <- statmod(y ~ x, distrib = gaussian1_distrib(), data = da)
 coef(f1)
 ```
 
-`coef()` returns **one compartment per parameter**, because the coefficients of
+`coef()` returns one compartment per parameter, because the coefficients of
 the mean and of the scale are different quantities on different scales, and a
 single flat vector would run them together. For this model the compartment of
 the mean holds the coefficients of an ordinary regression, which the following
@@ -64,9 +64,9 @@ lapply(coef(f2), round, digits = 3)
 ```
 
 The truth is $\mu = 1 + 0.8x$ and $\log\sigma = -0.6 + 0.35x$. The equation of
-the scale is on the **log scale**, which is the link of that parameter: an
+the scale is on the log scale, which is the link of that parameter: an
 equation is fitted on the scale that keeps its parameter inside its domain, so
-no combination of covariates can produce a negative standard deviation.
+a combination of covariates cannot produce a negative standard deviation.
 
 The log-likelihoods of the two fits show the gain from the second equation:
 
@@ -89,9 +89,9 @@ f3 <- statmod(y ~ s(z, bspline_smooth(k = 8)),
 f3@edf
 ```
 
-The smooth has `r f3@edf$coefficients[2]` coefficients and **spends** about
+The smooth has `r f3@edf$coefficients[2]` coefficients and uses about
 `r round(f3@edf$edf[2], 1)` of them. This effective number of degrees of
-freedom is the one a criterion counts, in place of the number of coefficients.
+freedom is the one that a criterion counts, in place of the number of coefficients.
 `hyper()` reports the hyperparameters and the source of each:
 
 ```{r}
@@ -99,7 +99,7 @@ hyper(f3)
 ```
 
 A random effect is written the same way and is fitted by the same machinery,
-its penalty being a Gaussian prior over the group effects:
+and its penalty is a Gaussian prior over the group effects:
 
 ```{r}
 f4 <- statmod(y ~ s(z, bspline_smooth(k = 8)) + random(~ 1 | g),
@@ -110,13 +110,14 @@ hyper(f4)
 
 The 20 group effects spend about `r round(f4@edf$edf[3], 1)` degrees of freedom
 here, and the estimated prior scale is `r round(hyper(f4)$estimate[2], 2)`,
-against the 0.6 that the groups were drawn with. A random intercept is a ridge
+against the 0.6 used to draw the groups. A random intercept is a ridge
 penalty on an indicator block, so it is fitted like a smooth.
 
 ## Who chooses the hyperparameters
 
-Every hyperparameter is estimated unless the term holds it. Two arguments of
-`statmod()` choose the criterion. The argument `outer_criterion` applies to the
+Every hyperparameter is estimated unless the term holds it. The criterion
+is set by the arguments `outer_criterion` and `sparse_criterion` of
+`statmod()`. The argument `outer_criterion` applies to the
 hyperparameters of a penalty that is twice differentiable, such as a smooth or a
 random effect:
 
@@ -125,7 +126,7 @@ random effect:
   where it exists, an exact Hessian. `reml()` is the default.
 * `aic()` and `bic()` score an estimate of prediction error instead.
 
-A penalty with a **kink** (`lasso()`, `enet()`, `scad()` and `mcp()`) is chosen
+A penalty with a kink (`lasso()`, `enet()`, `scad()` and `mcp()`) is chosen
 along a path of its own values, from the value that empties the block
 downwards, and the path is scored by `sparse_criterion`. This argument is
 `bic()` by default and may be `aic()` or `cv()`, and a marginal criterion is
@@ -150,8 +151,8 @@ hyper(f5)
 summary(f3)
 ```
 
-The output has three features that need explanation. The log-likelihood is the
-**conditional** one, read at the fitted coefficients, and the effective degrees
+The log-likelihood is the
+conditional one, read at the fitted coefficients, and the effective degrees
 of freedom go with it: `cAIC` and `cBIC` are built from that pair, and comparing
 a conditional log-likelihood with a marginal one from another package compares
 two different quantities. The interval of a hyperparameter, such as a smoothing
@@ -160,7 +161,7 @@ positive and mapped back, so it cannot contain a negative number, while the
 interval of a coefficient is on the link scale of its equation. The last lines,
 headed `inner` and `outer`, give the largest gradient in standard errors and the
 smallest eigenvalue of the curvature for the coefficients and for the
-hyperparameters, both read at the point the fit reached.
+hyperparameters, and both are read at the point that the fit reached.
 
 ## The certificate
 
@@ -192,10 +193,10 @@ nd <- data.frame(z = c(-1, 0, 1),
 predict(f4, newdata = nd, se = TRUE)$mu
 ```
 
-Prediction **reapplies** each term's blueprint instead of rebuilding it, so the
+Prediction reapplies each term's blueprint instead of rebuilding it, so the
 knots of a smooth and the levels of a factor are those of the fitted model. As a
-consequence, predicting at rows that the model saw returns the fitted values
-there.
+consequence, predicting at rows that were used to fit the model returns the
+fitted values there.
 
 The generics of `stats` apply to a fit:
 
@@ -205,15 +206,16 @@ length(sigma(f4))
 ```
 
 `sigma()` returns the standard deviation of the response at each observation, so
-it is a **vector** wherever the scale is modeled or the variance depends on the
+it is a vector wherever the scale is modeled or the variance depends on the
 mean. `df.residual()` subtracts the *effective* count of degrees of freedom from
 the number of observations, so it is not an integer.
 
-Three generics signal an error, each naming the function to use instead.
+Three generics signal an error, and each error message names the function to
+use instead.
 `terms()` fails because a fit has one set of terms per distribution parameter,
 `model.frame()` fails because a fit keeps the blueprint of each term and not the
 data, and `anova()` fails because a penalized fit whose hyperparameters were
-chosen from the same data has no null distribution to test against.
+chosen from the same data has no null distribution against which to test.
 
 ## Simulating from a model
 
@@ -235,10 +237,10 @@ would be misaligned with the rows kept.
 
 ## Summary
 
-* One formula, the equations separated by a bar, one per distribution
-  parameter; an equation omitted is an intercept.
-* Each equation is fitted on the link scale of its parameter, so no combination
-  of covariates leaves the domain of the parameter.
+* One formula, in which the equations are separated by a bar, one per
+  distribution parameter; an equation that is omitted is an intercept.
+* Each equation is fitted on the link scale of its parameter, so a combination
+  of covariates cannot leave the domain of the parameter.
 * `coef()`, `predict()` and `summary()` return one compartment per parameter.
 * Any `modelterms7` term goes in any equation, and its penalty travels with it.
 * Hyperparameters are estimated unless a term holds one: by `reml()` or `ml()`

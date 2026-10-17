@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_gradient.R
 \name{structural_joint_basis}
 \alias{structural_joint_basis}
-\title{The Subspace a Marginal Criterion Integrates Over, Jointly}
+\title{The Joint Subspace over Which a Marginal Criterion Integrates}
 \usage{
 structural_joint_basis(spec, design, key, free, nb, basis)
 }
@@ -23,13 +23,14 @@ structural_joint_basis(spec, design, key, free, nb, basis)
 A matrix with \code{nb} plus \code{length(free)} rows.
 }
 \description{
-The basis onto which \code{\link[=ml]{ml()}} projects the joint curvature: the
-coefficients' own range basis, with one column per penalized parameter of
-the structural term appended.
+Returns the basis onto which \code{\link[=ml]{ml()}} projects the joint curvature: the
+coefficients' own range basis, to which one column per penalized parameter
+of the structural term is appended.
 }
 \details{
 It is written once because \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} and
 \code{\link[=statmod_structural_grad]{statmod_structural_grad()}} must project onto the same subspace,
-and two callers composing it separately would agree only by accident.
+and a separate composition in each of the two callers would agree only by
+accident.
 }
 \keyword{internal}

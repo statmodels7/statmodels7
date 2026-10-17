@@ -12,8 +12,8 @@ split_offsets(eq)
 \value{
 A list of two:
 \describe{
-\item{\code{formula}}{\code{eq} with the offset terms removed. The formula is
-\code{~ 1} where the equation held nothing else.}
+\item{\code{formula}}{\code{eq}, from which the offset terms are removed. The
+formula is \code{~ 1} where the equation held nothing else.}
 \item{\code{offsets}}{a list of the expressions taken out, unevaluated.
 The list is empty when there were none.}
 }

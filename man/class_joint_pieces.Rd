@@ -16,7 +16,8 @@ class_joint_pieces(cl, design, params, offs)
 \item{offs}{Where each parameter's coefficients start in the stacked vector.}
 }
 \value{
-A list of lists, one per member, each the piece with \code{joint} added.
+A list of lists, one per member; each is the piece to which \code{joint}
+is added.
 A coefficient member also carries \code{cols} and \code{index}. A structural member
 carries \code{zcols} (positions among the term's own parameters), and its
 \code{cols} and \code{index} are \code{NULL}.

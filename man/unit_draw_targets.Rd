@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{unit_draw_targets}
 \alias{unit_draw_targets}
-\title{Where a Penalty's Coordinates Sit in the Vectors a Simulation Draws}
+\title{Where a Penalty's Coordinates Sit in the Vectors That a Simulation Draws}
 \usage{
 unit_draw_targets(u, design, params)
 }
@@ -18,22 +18,22 @@ A list with \code{space}, \code{param} and \code{pos}, or \code{NULL} where the 
 cannot be addressed.
 }
 \description{
-One target per coordinate that the penalty covers, in the penalty's own
-order:
-which vector it belongs to, which parameter's coefficients, and the
-position within them.
+Returns one target per coordinate that the penalty covers, in the penalty's
+own order. Each target holds the vector to which the coordinate belongs,
+the parameter whose coefficients contain it and its position within them.
 }
 \details{
 A penalty over a structural term's own parameters is read among those
 parameters, on the unconstrained scale, and a penalty over an equation's
 coefficients among those coefficients. A covariance class spans several
-members and its penalty reads them interleaved group by group, which is
-what its \code{index} already records, so the stacked positions are turned back
-into a parameter and a column with the offsets that the design gives.
+members and its penalty reads them interleaved group by group, in the
+order that its \code{index} already records, so the stacked positions are
+turned back into a parameter and a column with the offsets that the design
+gives.
 
 A class whose halves are in both vectors at once is not drawn from its
 prior: those coordinates fall back to the plain draw, which is
-\code{\link[=rstatmod]{rstatmod()}}'s rule for everything that no prior reaches.
+\code{\link[=rstatmod]{rstatmod()}}'s rule for every coordinate that a prior does not reach.
 }
 \seealso{
 \code{\link[=rstatmod_truth]{rstatmod_truth()}}

@@ -9,11 +9,11 @@
 #' @details
 #' # Where the packages come from
 #'
-#' None of the toolkit is on CRAN, so the install path is GitHub, at
-#' `statmodels7/<package>` for each member [statmodels7_packages()] names.
-#' The work is handed to \pkg{pak}, which resolves the dependencies among the
-#' members itself and installs only what is missing or behind. The order the
-#' names are passed in therefore does not matter.
+#' The members of the toolkit are not on CRAN, so the install path is GitHub,
+#' at `statmodels7/<package>` for each member that [statmodels7_packages()]
+#' names. The work is handed to \pkg{pak}, which resolves the dependencies
+#' among the members itself and installs only what is missing or behind. The
+#' order in which the names are passed therefore does not matter.
 #'
 #' \pkg{pak} is not a dependency of this package. When `action = "install"`
 #' is given and \pkg{pak} is not installed, the call stops with a message
@@ -31,20 +31,21 @@
 #'
 #' # Printing
 #'
-#' Both actions print, and no argument suppresses the output. The return value
-#' of the report is the result of [statmodels7_versions()], so a caller who
-#' wants the versions without the console output calls that function instead.
-#' The installation is carried out by \pkg{pak}, which prints its own progress
-#' and has no `quiet` argument.
+#' Both actions print, and an argument cannot suppress the output. The return
+#' value of the report is the result of [statmodels7_versions()], so a caller
+#' who wants the versions without the console output calls that function
+#' instead. The installation is carried out by \pkg{pak}, which prints its own
+#' progress and has no `quiet` argument.
 #'
 #' @param action `"report"` (the default) to print the installed versions and
 #'   the calls that would update them, or `"install"` to install and update.
-#'   Matched with [match.arg()], so an unambiguous prefix such as `"i"` is
-#'   accepted and anything else is an error.
+#'   The argument is matched with [match.arg()], so an unambiguous prefix such
+#'   as `"i"` is accepted and anything else is an error.
 #'
 #' @return A data frame as [statmodels7_versions()] returns, with columns
-#'   `package` and `version`. Returned invisibly under both actions: the
-#'   report prints to the console with [cat()] and is not the return value.
+#'   `package` and `version`. The data frame is returned invisibly under both
+#'   actions: the report prints to the console with [cat()] and is not the
+#'   return value.
 #'   Under `"install"` the versions are read after the installation, so the
 #'   result is the state that the call left behind.
 #'

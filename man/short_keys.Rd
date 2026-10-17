@@ -13,14 +13,14 @@ short_keys(x)
 A character vector the same length.
 }
 \description{
-The key with the arguments of its leading call reduced to the first one,
-so that a trace line names the term instead of repeating its whole
-specification.
+Returns the key in which the arguments of its leading call are reduced to
+the first one, so that a trace line names the term instead of repeating its
+whole specification.
 }
 \details{
 A key is the call that produced the term, and for a penalty over a
-sub-term it is that call followed by \verb{::parameter::sub-term}. The call is
-what grows when a term has many arguments, so that printing it in full
+sub-term it is that call followed by \verb{::parameter::sub-term}. The call
+grows when a term has many arguments, so that printing it in full
 makes a line of an outer trace unreadable. Only the leading call is
 shortened, and only past its first argument, so that
 \code{s(x, bspline_smooth(k = 20))} and \code{s(z, bspline_smooth(k = 8))} stay

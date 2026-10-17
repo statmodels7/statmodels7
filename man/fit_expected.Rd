@@ -13,9 +13,9 @@ fit_expected(object)
 A single logical.
 }
 \description{
-\code{TRUE} when \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} inverts the expected information: when the
-fit itself inverted it, which only \code{\link[=iwls]{iwls()}} does and only with
-\code{hessian = "expected"}, and the family writes that information out in
+Returns \code{TRUE} when \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} inverts the expected information:
+when the fit itself inverted it, which only \code{\link[=iwls]{iwls()}} does and only with
+\code{hessian = "expected"}, and when the family writes that information out in
 closed form.
 }
 \details{
@@ -27,13 +27,13 @@ The second condition does not concern the fit. Where a family has no closed
 expected information, the scoring step is driven by an approximation of it,
 the outer product of the observed scores, which costs one gradient and is
 positive semidefinite by construction. That matrix is adequate for taking a
-step, the score being exact, but it is a poor basis for a standard error,
-which it can place far from the one given by the exact expectation. The
-report therefore falls back to the observed information there, which every
-family has and which is exact.
+step, because the score is exact, but it is a poor basis for a standard
+error, which it can place far from the one given by the exact expectation.
+The report therefore falls back to the observed information there, which
+every family has and which is exact.
 }
 \seealso{
-\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}, the predicate this
-reads, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which follows it.
+\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}, the predicate that this
+function reads, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which follows it.
 }
 \keyword{internal}

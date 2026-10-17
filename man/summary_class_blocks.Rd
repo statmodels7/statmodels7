@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{summary_class_blocks}
 \alias{summary_class_blocks}
-\title{The Covariance Blocks a Summary Prints Ahead of the Equations}
+\title{The Covariance Blocks That a Summary Prints Ahead of the Equations}
 \usage{
 summary_class_blocks(
   spec,
@@ -29,14 +29,15 @@ do.}
 \item{hyper}{The hyperparameters, or \code{NULL}.}
 }
 \value{
-A list of block records, in the shape \code{\link[=print_block]{print_block()}} reads, each
-carrying its coordinates in \code{coords}. Empty where no class has two or
-more members.
+A list of block records in the shape that \code{\link[=print_block]{print_block()}} reads.
+Each record carries its coordinates in \code{coords}. The list is empty where
+every class has fewer than two members.
 }
 \description{
-One block record per covariance class shared by more than one member: the
-standard deviations and correlations of the shared prior, with each
-coordinate named for the equation, the term and the column to which it belongs.
+Returns one block record per covariance class shared by more than one
+member: the standard deviations and correlations of the shared prior, in
+which each coordinate is named for the equation, the term and the column to
+which it belongs.
 }
 \details{
 A shared block belongs to no single member. Printed inside the block of one

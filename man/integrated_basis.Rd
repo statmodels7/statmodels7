@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer.R
 \name{integrated_basis}
 \alias{integrated_basis}
-\title{The Subspace a Marginal Criterion Integrates Over}
+\title{The Subspace Over Which a Marginal Criterion Integrates}
 \usage{
 integrated_basis(spec, design, kind, gamma = FALSE)
 }
@@ -14,29 +14,31 @@ integrated_basis(spec, design, kind, gamma = FALSE)
 \item{kind}{\code{"reml"} or \code{"ml"}.}
 
 \item{gamma}{\code{TRUE} where the criterion also estimates coefficients
-(\code{\link[=marginal_coords]{marginal_coords()}}); a model with no penalized direction then gets an
-empty basis in place of an error.}
+(\code{\link[=marginal_coords]{marginal_coords()}}); the function then returns an empty basis, instead
+of an error, for a model with no penalized direction.}
 }
 \value{
 \code{NULL} for \code{"reml"}, which integrates every direction and needs no
-basis. For \code{"ml"}, a \verb{p x r} matrix with orthonormal columns spanning
-the range space of the penalties, \code{p} the total coefficient count and \code{r}
-the total rank. The matrix has no columns (\eqn{r = 0}) where nothing is
-penalized and the criterion estimates coefficients or a structural term
-is penalized. Where neither holds, an error is signaled.
+basis. For \code{"ml"}, it is a \verb{p x r} matrix with orthonormal columns
+spanning the range space of the penalties, where \code{p} is the total
+coefficient count and \code{r} is the total rank. The matrix has no columns
+(\eqn{r = 0}) if no direction of the design is penalized and either the
+criterion estimates coefficients or a structural term is penalized.
+Otherwise an error is signaled.
 }
 \description{
-\code{NULL} for REML, which integrates everything, and an orthonormal basis
-of the penalty's range space for ML.
+Returns \code{NULL} for REML, which integrates everything, and an orthonormal
+basis of the penalty's range space for ML.
 }
 \details{
-The total penalty is block diagonal over the terms, each owning its own
-columns, so its null space is the direct sum of the unpenalized columns
-and each penalty's own null space. The basis is assembled that way.
+The total penalty is block diagonal over the terms, and each term owns its
+own columns, so the null space of the total penalty is the direct sum of the
+unpenalized columns and each penalty's own null space. The basis is
+assembled that way.
 
 It is not read off the eigenvalues of the assembled matrix. A count of
 eigenvalues above a tolerance depends on the scale of the smoothing
-parameters: with two smoothing parameters many orders of magnitude apart
+parameters: if two smoothing parameters are many orders of magnitude apart,
 the small contributions fall below the tolerance, while the null space
 itself does not change. A penalty with a kink contributes no column, and a
 penalty over the own parameters of a structural term is appended by
@@ -44,6 +46,6 @@ penalty over the own parameters of a structural term is appended by
 }
 \seealso{
 \code{\link[=penalty_range_basis]{penalty_range_basis()}} for one penalty's contribution,
-\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} for the distinction this implements.
+\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} for the distinction that this implements.
 }
 \keyword{internal}

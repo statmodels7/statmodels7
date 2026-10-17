@@ -15,8 +15,8 @@ joint_decrement(g, A)
 A single number, or \code{NA_real_}.
 }
 \description{
-The Newton decrement \eqn{\tfrac{1}{2}g^\top A^{-1} g}, in the criterion's
-own units.
+Computes the Newton decrement \eqn{\tfrac{1}{2}g^\top A^{-1} g}, in the
+criterion's own units.
 }
 \details{
 Under a quadratic model of the criterion at the reported point, taking the
@@ -25,11 +25,12 @@ therefore the part of the criterion that remains to be gained at the point,
 in the units in which criteria are compared, and it approximates the gap
 between the criterion at the point and at the optimum. A gradient does not
 have that scale: its size depends on the number of penalized coefficients
-and on the shape of the model, so that no single threshold on it serves
-every model.
+and on the shape of the model, so that a single threshold on it cannot
+serve every model.
 
-\code{NA} where \eqn{A} is not positive definite, the point then not being a
-maximum in those directions and no rise following from it.
+The result is \code{NA} where \eqn{A} is not positive definite, because the
+point is then not a maximum in those directions and no rise follows from
+it.
 }
 \seealso{
 \code{\link[=statmod_certificate]{statmod_certificate()}}, \code{\link[=outer_curvature]{outer_curvature()}}, \code{\link[=coord_decrement]{coord_decrement()}}

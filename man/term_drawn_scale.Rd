@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{term_drawn_scale}
 \alias{term_drawn_scale}
-\title{The Width a Term Drew a Penalty's Coordinates At}
+\title{The Width at Which a Term Drew a Penalty's Coordinates}
 \usage{
 term_drawn_scale(tg, ok, owned)
 }
@@ -17,15 +17,16 @@ term_drawn_scale(tg, ok, owned)
 A single number, or \code{NULL}.
 }
 \description{
-One number where every coordinate that a penalty covers was written by the
-term that owns it, and \code{NULL} otherwise.
+Returns one number where every coordinate that a penalty covers was written
+by the term that owns it, and \code{NULL} otherwise.
 }
 \details{
-A penalty whose coordinates a term overwrote no longer describes them, so
-the truth reported for it is the width the term drew at. The test is that
-every covered coordinate was owned: a penalty spanning owned and unowned
-ones together is described by neither width, and reporting either would
-name a truth that part of the coefficients do not have.
+A penalty whose coordinates were overwritten by a term no longer describes
+them, so the truth reported for it is the width at which the term drew.
+The test is that every covered coordinate was owned: a penalty spanning
+owned and unowned ones together is described by neither width, and
+reporting either would name a truth that part of the coefficients do not
+have.
 }
 \seealso{
 \code{\link[=rstatmod_term_draw]{rstatmod_term_draw()}}

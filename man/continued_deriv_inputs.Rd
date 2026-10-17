@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.R
 \name{continued_deriv_inputs}
 \alias{continued_deriv_inputs}
-\title{What the Derivative of a Continued Filter Starts From}
+\title{The Inputs to the Derivative of a Continued Filter}
 \usage{
 continued_deriv_inputs(ospec, odesign, coef, f, ost, tm)
 }
@@ -24,13 +24,13 @@ it), \code{col} (the columns of the filter equation's coefficients) and
 where the fit carries no filter.
 }
 \description{
-The derivatives of the level and of the score at the observed rows, and of
-the term's parameters, in the coordinates the variance matrix of the fit
-is written in: the coefficients of every equation followed by the term's
-free parameters on their unconstrained scale.
+Returns the derivatives of the level and of the score at the observed
+rows, and of the term's parameters, in the coordinates in which the
+variance matrix of the fit is written: the coefficients of every equation
+followed by the term's free parameters on their unconstrained scale.
 }
 \details{
-The coordinates are the ones \code{\link[=structural_se_columns]{structural_se_columns()}} uses for a
+The coordinates are those that \code{\link[=structural_se_columns]{structural_se_columns()}} uses for a
 prediction at the observed rows, so a forecast and a fitted value are
 read against the same rows and columns of the variance. The derivative of
 the filtered predictor at an observed row is the forward Jacobian of
@@ -43,9 +43,9 @@ quantity with respect to the predictor of equation \eqn{b}. Where the
 filter is not scaled, the driving quantity is the score and
 \eqn{\ell_{pb,t}} is the family's second derivative on the link scale;
 where it is scaled, \eqn{\ell_{pb,t}} is the derivative that
-\code{filter_driving()} returns. A parameter's derivative in its own
-unconstrained coordinate is its link's, and one for a coefficient of a
-development.
+\code{filter_driving()} returns. The derivative of a parameter in its own
+unconstrained coordinate is that of its link, and for a coefficient of a
+development it is one.
 }
 \seealso{
 \code{\link[=statmod_eta_continued]{statmod_eta_continued()}}, \code{\link[=structural_se_columns]{structural_se_columns()}}

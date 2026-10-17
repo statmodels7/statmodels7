@@ -27,12 +27,12 @@ them.}
 \code{upper} replaced for every parameter that a new group's effects reach.
 }
 \description{
-For \code{interval = "group"}: the distribution of a new group's parameter
-\eqn{\theta^* = h^{-1}(\eta^*)}, with
-\eqn{\eta^* = \eta_0 + e + z^\top b}, where \eqn{e} is the estimation
-error of the fixed part and \eqn{b} the effects of a new group, drawn from
-the prior that the fit estimated. Returns the ends of its interval and its
-standard deviation, on the predictor's scale and on the parameter's.
+Returns, for \code{interval = "group"}, the ends of the interval and the
+standard deviation of a new group's parameter
+\eqn{\theta^* = h^{-1}(\eta^*)}, on the predictor's scale and on the
+parameter's. Here \eqn{\eta^* = \eta_0 + e + z^\top b}, where \eqn{e} is
+the estimation error of the fixed part and \eqn{b} are the effects of a new
+group, drawn from the prior that the fit estimated.
 }
 \details{
 Where the inverse link is monotone over the whole line, a quantile of

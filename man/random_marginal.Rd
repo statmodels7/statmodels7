@@ -17,8 +17,8 @@ random_marginal(
 )
 }
 \arguments{
-\item{spec, design}{The specification at the new rows and its design, with
-the marginal terms' columns set to zero.}
+\item{spec, design}{The specification at the new rows and its design, whose
+columns for the marginal terms are set to zero.}
 
 \item{ep}{The predictors at the fixed part, as \code{\link[=statmod_eta]{statmod_eta()}} returns
 them.}
@@ -30,13 +30,13 @@ them.}
 \item{what}{The quantity predicted: a parameter name, \code{"parameter"},
 \code{"mean"}, \code{"variance"} or \code{"std_dev"}.}
 
-\item{eta_at}{A named list of predictors to integrate at in place of
+\item{eta_at}{A named list of predictors at which to integrate, in place of
 \code{ep$eta}, for the ends of an interval; \code{NULL} for \code{ep$eta}.}
 
 \item{deriv}{\code{TRUE} to average the derivative of the inverse link instead
-of the inverse link, which is what the delta method of a marginal
-parameter multiplies the predictor's standard error by. Read only for a
-parameter.}
+of the inverse link. The delta method of a marginal parameter multiplies
+the standard error of the predictor by this average. It is read only for
+a parameter.}
 
 \item{eta_node}{For random effects written inside a subformula, a function
 of the node index returning the predictors at that node, where the term
@@ -60,6 +60,6 @@ total expectation; the variance adds the variance of the conditional mean,
 \eqn{E_b[\mathrm{Var}(Y\mid b)] + \mathrm{Var}_b(E[Y\mid b])}, which is
 where a random effect on the scale enters. A predictor, \code{"link"} or
 \code{"link:p"}, is not computed here: \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} returns
-\eqn{\eta_0} itself for it, the effects having mean zero.
+\eqn{\eta_0} itself for it, because the effects have mean zero.
 }
 \keyword{internal}

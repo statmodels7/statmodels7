@@ -23,8 +23,9 @@ bootstrap_refit(object, spec_b, refit, method, cfg, beta0)
 A list with \code{coefficients} and \code{hyper}.
 }
 \description{
-Re-estimates the coefficients of a fit on a simulated response, at its
-hyperparameters or with them chosen again. See \code{\link[=predictive_bootstrap]{predictive_bootstrap()}}.
+Re-estimates the coefficients of a fit on a simulated response, either at
+the fit's hyperparameters or after choosing the hyperparameters again. See
+\code{\link[=predictive_bootstrap]{predictive_bootstrap()}}.
 }
 \examples{
 set.seed(4)

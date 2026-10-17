@@ -9,13 +9,14 @@ statmodels7_update(action = c("report", "install"))
 \arguments{
 \item{action}{\code{"report"} (the default) to print the installed versions and
 the calls that would update them, or \code{"install"} to install and update.
-Matched with \code{\link[=match.arg]{match.arg()}}, so an unambiguous prefix such as \code{"i"} is
-accepted and anything else is an error.}
+The argument is matched with \code{\link[=match.arg]{match.arg()}}, so an unambiguous prefix such
+as \code{"i"} is accepted and anything else is an error.}
 }
 \value{
 A data frame as \code{\link[=statmodels7_versions]{statmodels7_versions()}} returns, with columns
-\code{package} and \code{version}. Returned invisibly under both actions: the
-report prints to the console with \code{\link[=cat]{cat()}} and is not the return value.
+\code{package} and \code{version}. The data frame is returned invisibly under both
+actions: the report prints to the console with \code{\link[=cat]{cat()}} and is not the
+return value.
 Under \code{"install"} the versions are read after the installation, so the
 result is the state that the call left behind.
 }
@@ -26,11 +27,11 @@ and stops. The default is to print: installing packages is a side effect,
 so the installation runs only when \code{action = "install"} is given.
 }
 \section{Where the packages come from}{
-None of the toolkit is on CRAN, so the install path is GitHub, at
-\verb{statmodels7/<package>} for each member \code{\link[=statmodels7_packages]{statmodels7_packages()}} names.
-The work is handed to \pkg{pak}, which resolves the dependencies among the
-members itself and installs only what is missing or behind. The order the
-names are passed in therefore does not matter.
+The members of the toolkit are not on CRAN, so the install path is GitHub,
+at \verb{statmodels7/<package>} for each member that \code{\link[=statmodels7_packages]{statmodels7_packages()}}
+names. The work is handed to \pkg{pak}, which resolves the dependencies
+among the members itself and installs only what is missing or behind. The
+order in which the names are passed therefore does not matter.
 
 \pkg{pak} is not a dependency of this package. When \code{action = "install"}
 is given and \pkg{pak} is not installed, the call stops with a message
@@ -48,11 +49,11 @@ member can fail partway and leave that member in a state in which
 }
 
 \section{Printing}{
-Both actions print, and no argument suppresses the output. The return value
-of the report is the result of \code{\link[=statmodels7_versions]{statmodels7_versions()}}, so a caller who
-wants the versions without the console output calls that function instead.
-The installation is carried out by \pkg{pak}, which prints its own progress
-and has no \code{quiet} argument.
+Both actions print, and an argument cannot suppress the output. The return
+value of the report is the result of \code{\link[=statmodels7_versions]{statmodels7_versions()}}, so a caller
+who wants the versions without the console output calls that function
+instead. The installation is carried out by \pkg{pak}, which prints its own
+progress and has no \code{quiet} argument.
 }
 
 \examples{

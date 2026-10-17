@@ -20,7 +20,7 @@ statmod_settle_seg(
 )
 }
 \arguments{
-\item{spec}{The specification, holds included.}
+\item{spec}{The specification, including the holds.}
 
 \item{design}{The design, carrying the terms in its state.}
 
@@ -34,14 +34,14 @@ read again after a refit, 5 by default.}
 }
 \value{
 A list: \code{res}, the fit, and \code{moved}, \code{TRUE} where a polished
-position replaced the one the iteration reached.
+position replaced the one that the iteration reached.
 }
 \description{
 After the working phase and the restarts, every \code{\link[modelterms7:seg]{modelterms7::seg()}} term
 that is not smoothed, not developed and not marginal is moved to the
 minimum of the least-squares profile of its working response over every
 interval of the covariate (\code{\link[modelterms7:seg_polish_exact]{modelterms7::seg_polish_exact()}}), and the
-model is refitted from there with the positions free.
+model is refitted from there while the positions are free.
 }
 \details{
 The profile of a change of slope is smooth inside each interval between

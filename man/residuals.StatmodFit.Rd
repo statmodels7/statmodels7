@@ -15,30 +15,30 @@
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{type}{\code{"quantile"} (the default), \code{"pearson"} or \code{"response"}.
-Matched with \code{\link[=match.arg]{match.arg()}}.}
+The argument is matched with \code{\link[=match.arg]{match.arg()}}.}
 
-\item{seed}{An integer to seed the randomization with, or \code{NULL} for the
+\item{seed}{An integer used to seed the randomization, or \code{NULL} for the
 ambient state. Read only where the distribution function jumps, so it
 changes nothing for a continuous family.}
 
 \item{...}{Unused.}
 }
 \value{
-A numeric vector with one entry per row of the data. Standard
-normal under a correct model for \code{"quantile"}; approximately
-standardized for \code{"pearson"}; on the response's own scale for
-\code{"response"}.
+A numeric vector with one entry per row of the data. The residuals
+are standard normal under a correct model for \code{"quantile"};
+approximately standardized for \code{"pearson"}; on the response's own scale
+for \code{"response"}.
 }
 \description{
-One residual per observation, comparing the observation with the whole
-distribution that the model assigns to it and not with any single
+Returns one residual per observation, which compares the observation with
+the whole distribution that the model assigns to it and not with any single
 parameter of that distribution.
 }
 \section{One residual per observation}{
 A residual measures whether an observation is consistent with the law that
 was given to its row, and that law is one object that carries every
 parameter at once. There is therefore one residual per observation,
-however many parameters the model develops over covariates.
+however many parameters that the model develops over covariates.
 
 A per-parameter quantity is a different object: the contribution
 \eqn{\partial \ell_i / \partial \eta_{ip}} identifies which equation an
@@ -63,18 +63,18 @@ The construction is randomized: \eqn{u_i} is drawn uniformly on
 residual is again exactly standard normal under a correct model, but it is
 random, so that two calls give two answers.
 
-Where \eqn{F(y_i)} exceeds one half the residual is read from the survival
-function, \eqn{\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)} with \eqn{1 - u_i}
+Where \eqn{F(y_i)} exceeds one half, the residual is read from the survival
+function, \eqn{\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)}, and \eqn{1 - u_i} is
 computed as \eqn{1 - F} directly, so a count far in the upper tail, where
-\eqn{F} rounds to one, gets a finite residual. A family whose
+\eqn{F} rounds to one, has a finite residual. A family whose
 distribution function does not take \code{lower.tail} keeps the lower-tail
 reading.
 
-The randomization applies to every discrete family, and at the declared
-atoms alone to a mixed family such as the zero-adjusted wrapper of a
-continuous parent. \code{seed} makes a call reproducible without disturbing
-the caller's stream; left \code{NULL}, the ambient state is used and nothing
-is set.
+The randomization applies to every discrete family and, for a mixed family
+such as the zero-adjusted wrapper of a continuous parent, only at the
+declared atoms. \code{seed} makes a call reproducible without disturbing the
+stream of the caller. If \code{seed} is \code{NULL}, the ambient state is used and
+the seed is not set.
 }
 
 \section{Pearson and response residuals}{
@@ -112,6 +112,6 @@ Dunn, P. K. and Smyth, G. K. (1996). Randomized quantile residuals.
 }
 \seealso{
 \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} and \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} for the fitted
-parameters these are read against.
+parameters against which these are read.
 }
 \keyword{internal}

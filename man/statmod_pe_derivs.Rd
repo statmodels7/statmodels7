@@ -31,15 +31,16 @@ statmod_pe_derivs(
 \item{order}{\code{1} for the gradient alone, \code{2} for both.}
 
 \item{approx}{How the expected information is approximated for a family
-with no closed form. Read only when \code{method@hessian} is \code{"expected"}.}
+with no closed form. The argument is read only when \code{method@hessian} is
+\code{"expected"}.}
 }
 \value{
 A list with \code{grad} and, at order 2, \code{hess}; or
 \code{NULL} where the information is not invertible.
 }
 \description{
-The gradient and, at order 2, the Hessian of \eqn{-2\ell + \kappa\tau} over
-the free scale of the hyperparameters.
+Computes the gradient and, at order 2, the Hessian of
+\eqn{-2\ell + \kappa\tau} over the free scale of the hyperparameters.
 }
 \details{
 Writing \eqn{P = J^{-1}}, \eqn{A_m = \partial J/\partial\theta_m = S_m +

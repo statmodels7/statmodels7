@@ -23,8 +23,8 @@ structural_chain_extra(spec, design, jd, M, st, v)
 A single number.
 }
 \description{
-The contributions to \eqn{\mathrm{tr}(M\,\partial K/\partial u[v])} that
-come from the recursion and not from the design: the derivative of the
+Computes the contributions to \eqn{\mathrm{tr}(M\,\partial K/\partial u[v])}
+that come from the recursion and not from the design: the derivative of the
 term's curvature along \eqn{v}, the curvature re-weighted by the derivative
 of the score along \eqn{v}, and the movement of the filter's Jacobian, which
 enters through every cross derivative of the filter's equation.

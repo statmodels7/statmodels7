@@ -18,7 +18,8 @@ A numeric matrix with one row per observation and one column per
 within-group coordinate.
 }
 \description{
-The row of the within-group design that each observation carries, at the new
-data where the specification has some and at the fitting rows otherwise.
+Returns the row of the within-group design that each observation carries,
+at the new data where the specification has some and at the fitting rows
+otherwise.
 }
 \keyword{internal}

@@ -13,7 +13,8 @@ gauss_hermite(k)
 A list with \code{x} and \code{w}.
 }
 \description{
-For \eqn{\int f(x) e^{-x^2} dx}, by the eigendecomposition of the Jacobi
-matrix of the Hermite polynomials (Golub and Welsch 1969).
+Returns the nodes and weights of the rule for
+\eqn{\int f(x) e^{-x^2} dx}, computed by the eigendecomposition of the
+Jacobi matrix of the Hermite polynomials (Golub and Welsch 1969).
 }
 \keyword{internal}

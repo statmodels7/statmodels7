@@ -13,7 +13,8 @@ observed_indefinite(distrib)
 A single logical.
 }
 \description{
-\code{TRUE} for a Student t, a skew t or a Cauchy response, its parents
-included, whose log-density is not concave in the location.
+Returns \code{TRUE} for a Student t, a skew t or a Cauchy response, including a
+family that has one of them as its parent. The log-density of these
+families is not concave in the location.
 }
 \keyword{internal}

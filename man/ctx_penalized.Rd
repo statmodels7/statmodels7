@@ -23,38 +23,38 @@ ctx_penalized(
 criterion carries under \code{reml(hessian = "expected")}, or the observed one.
 The two give different matrices and keep separate cache entries.}
 
-\item{laplace}{Whether the matrix is the criterion's, with the kinked
-coordinates left out, or the mode's.}
+\item{laplace}{Whether the matrix is the criterion's, which leaves out the
+kinked coordinates, or the mode's.}
 }
 \value{
 A list with \code{K}, \code{inv} and \code{logdet}, or \code{NULL}.
 }
 \description{
-\eqn{K = H + S} with the criterion's own information, and its inverse, which
-the gradient and the Hessian both read.
+Builds \eqn{K = H + S} with the criterion's own information, and its
+inverse, which the gradient and the Hessian both read.
 }
 \details{
-\strong{The storage is the matrix's own.} \eqn{H} is sparse wherever the design
+The storage is the matrix's own. \eqn{H} is sparse wherever the design
 is, which covers a grouping indicator, a factor \code{by} and a \code{linpar} over
 many levels. Where the sum \eqn{H + S} is large enough and sparse enough
 (\code{\link[=worth_sparse]{worth_sparse()}}) it is kept sparse and factorized as such. The decision
-reads the matrix alone and does not depend on which term produced it. The
+depends only on the matrix and not on which term produced it. The
 penalized matrix is a new object at every point, so a factorization stored
 on an earlier matrix is never reused.
 
-\strong{The inverse stays dense whatever the factor is.} Its readers take full
+The inverse stays dense whatever the factor is. Its readers take full
 matrix products against it, \code{\link[=block_leverage]{block_leverage()}} and the Hessian's pair loop
 among them, so a dense inverse of a sparse matrix costs nothing that
-sparsity could have kept. What the sparse factor saves is the cost of
-producing it.
+sparsity could have kept. The sparse factor saves the cost of producing the
+inverse.
 
 \code{NULL} is returned where the matrix is not positive definite. For the
 mode's matrix (\code{laplace = FALSE}) the directions that \code{\link[=deficient_coords]{deficient_coords()}}
 reports as unidentified are pinned and the factorization is attempted once
 more before \code{NULL} is returned.
 
-\strong{Two matrices, where a penalty has a kink.} The criterion's determinant
-leaves out every coordinate that a kinked penalty covers
+Where a penalty has a kink, there are two matrices. The criterion's
+determinant leaves out every coordinate that a kinked penalty covers
 (\code{\link[=laplace_pinned]{laplace_pinned()}}), which is the matrix that \code{laplace = TRUE} selects. The
 default is the mode's own curvature, which leaves out the coordinates that
 the marginal criterion holds or does not identify (\code{\link[=pinned_coords]{pinned_coords()}}), the

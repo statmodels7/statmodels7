@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{block_label}
 \alias{block_label}
-\title{The Heading a Block of Each Kind Is Printed Under}
+\title{The Heading Under Which a Block of Each Kind Is Printed}
 \usage{
 block_label(kind)
 }
@@ -13,7 +13,7 @@ block_label(kind)
 A single string.
 }
 \description{
-The name that a summary gives a block, from the kind that
+Returns the name that a summary gives a block, from the kind that
 \code{\link[=term_block_kind]{term_block_kind()}} returns.
 }
 \keyword{internal}

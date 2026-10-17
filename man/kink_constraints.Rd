@@ -22,7 +22,7 @@ stacked vector.}
 }
 \value{
 A numeric matrix with \code{total} columns and one row per constraint,
-with no rows where no term has a kink.
+with no rows if the design has no term with a kink.
 }
 \description{
 Reads, through \code{\link[modelterms7:term_kink_constraints]{modelterms7::term_kink_constraints()}}, the linear

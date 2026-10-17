@@ -20,20 +20,21 @@ of rows where the weights are all 1). \code{\link[stats:AIC]{stats::AIC()}} and 
 read it, so \code{AIC(fit)} is the conditional AIC.
 }
 \description{
-The value that R's convention expects, with the degrees of freedom and the
-number of observations as attributes. \code{\link[=loglik]{loglik()}} is a different function:
-it evaluates the model at parameters and data chosen by the caller.
+Returns the value that R's convention expects, with the degrees of freedom
+and the number of observations as attributes. \code{\link[=loglik]{loglik()}} is a different
+function: it evaluates the model at parameters and data chosen by the
+caller.
 }
 \section{Which likelihood, and why it matters}{
-The default is the \strong{conditional} one: the log-density at the fitted
-coefficients, a penalized coefficient among them, paired with the
+The default is the conditional one: the log-density at the fitted
+coefficients, including the penalized coefficients, paired with the
 effective degrees of freedom \eqn{\mathrm{tr}[(H+S)^{-1}H]}. A criterion
 built on that pair is the conditional AIC, which measures how well the
 model describes the groups, curves and states actually observed.
 
-A mixed-model package reports the \strong{marginal} likelihood instead: the
+A mixed-model package reports the marginal likelihood instead: the
 random effects are integrated out and the count is the number of estimated
-parameters, variance components among them. That likelihood concerns the
+parameters, including the variance components. That likelihood concerns the
 population, and the AIC built on it is a different number, not comparable
 with the conditional one.
 
@@ -45,10 +46,11 @@ two conventions (Vaida and Blanchard, 2005).
 \section{When the marginal one is available}{
 \code{type = "marginal"} returns the value of the outer criterion at the fit.
 Its degrees of freedom count the parameters that the marginal model
-estimates: the coefficients that no penalty covers, the dimension of the
-null space of each penalty without a kink (the straight line of a
-smooth), the hyperparameters that the outer search or a path estimated,
-and the free parameters of a structural term. A held hyperparameter is not
+estimates: the coefficients that are not covered by any penalty, the
+dimension of the null space of each penalty without a kink (the straight
+line of a smooth), the hyperparameters that the outer search or a path
+estimated, and the free parameters of a structural term. A held
+hyperparameter is not
 counted, and a hyperparameter shared by several terms is counted once. The
 other coefficients of a penalized term are integrated out and are not
 counted.

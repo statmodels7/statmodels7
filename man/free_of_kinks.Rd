@@ -16,7 +16,7 @@ free_of_kinks(score, spec, design, coef)
 \item{coef}{The coefficients, a named list.}
 }
 \value{
-\code{score}, with those entries set to zero.
+\code{score}, in which those entries are set to zero.
 }
 \description{
 Zeroes the entries of a score at the coordinates that \code{\link[=zero_kinked]{zero_kinked()}}

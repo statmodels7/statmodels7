@@ -19,13 +19,14 @@ Reports whether a criterion is to be made small: \code{TRUE} for \code{\link[=ai
 \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, which are log-likelihoods and are maximized.
 }
 \details{
-The outer search always minimizes, so this decides whether the criterion
-goes in as it stands or with its sign turned. Reading the orientation from
-the method, and not from a list of kinds written into the search, lets a
-criterion added later declare its own orientation in one place.
+The outer search always minimizes, so the value returned here determines
+whether the criterion enters as it stands or after a change of sign. Reading
+the orientation from the method, and not from a list of kinds written into
+the search, lets a criterion added later declare its own orientation in one
+place.
 }
 \seealso{
-\code{\link[=outer_k]{outer_k()}} for the other property of a criterion the search
-reads, \code{\link[=aic]{aic()}} for the criteria this answers \code{TRUE} for.
+\code{\link[=outer_k]{outer_k()}} for the other property of a criterion that the search
+reads, \code{\link[=aic]{aic()}} for the criteria for which this returns \code{TRUE}.
 }
 \keyword{internal}

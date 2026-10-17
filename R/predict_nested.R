@@ -62,16 +62,17 @@ nested_random_terms <- function(spec) {
 #' is read: zero for `random = "zero"`, a node of the prior for `"marginal"`.
 #' Inside a nonlinear term the effect enters the parameter, and the
 #' contribution of the term is not linear in it, so the columns cannot
-#' simply be set to zero as they are for a term written in an equation. With
-#' every row in the first level, writing \eqn{u} into that level's
+#' simply be set to zero as they are for a term written in an equation.
+#' Because every row is in the first level, writing \eqn{u} into that level's
 #' coefficients gives every row the effect \eqn{z_i^\top u}, and the term is
-#' evaluated at those coefficients by its own methods. A group that the fit
-#' never saw is read the same way, so it needs no effect of its own.
+#' evaluated at those coefficients by its own methods. A group that was not
+#' among the fitting rows is read the same way, so it needs no effect of its
+#' own.
 #'
-#' Two places are rewritten. At the fitting rows the term reads the stored
-#' design of the developed parameter, `blueprint$Z`, whose columns for the
-#' sub-term become the within-group rows (the sum of the group's columns, a
-#' row being non-zero in its own group's alone). At new rows the term
+#' At the fitting rows the term reads the stored design of the developed
+#' parameter, `blueprint$Z`, whose columns for the sub-term become the
+#' within-group rows (the sum of the group's columns, because a row is
+#' non-zero only in the columns of its own group). At new rows the term
 #' reapplies each sub-term through [modelterms7::term_predict()], so the
 #' sub-term's grouping expression becomes the first level repeated.
 #'
@@ -120,8 +121,9 @@ pool_nested_random <- function(tm, rows, coef) {
 #' The Coordinates of the Nested Random Effects Set Aside
 #'
 #' @description
-#' For each row of [nested_random_terms()], the positions of the sub-term's
-#' coefficients in its equation's design, and those of the first level.
+#' Returns, for each row of [nested_random_terms()], the positions of the
+#' sub-term's coefficients in its equation's design and those of the first
+#' level.
 #'
 #' @param spec,design The specification and its design.
 #' @param rows Rows of [nested_random_terms()].
@@ -146,16 +148,16 @@ nested_columns <- function(spec, design, rows) {
 #' The Prior of One Nested Random-Effect Term
 #'
 #' @description
-#' The Gaussian prior of a random-effect sub-term, as [random_prior()]
-#' returns it for a term written in an equation.
+#' Returns the Gaussian prior of a random-effect sub-term in the form in which
+#' [random_prior()] returns it for a term written in an equation.
 #'
 #' @details
 #' The penalty unit is the outer term's, keyed by the outer term where it
 #' carries one penalty and by the row's key where it carries several. Only a
 #' Gaussian prior is integrated: inside a nonlinear term the average is taken
-#' over the nodes of [random_nodes()] at which the term is evaluated, those of
-#' a product grid up to three coordinates in all and Monte Carlo draws
-#' beyond that. A prior of another family signals an error naming
+#' over the nodes of [random_nodes()] at which the term is evaluated, which
+#' are the nodes of a product grid up to three coordinates in all and Monte
+#' Carlo draws beyond that. A prior of another family signals an error naming
 #' `random = "zero"`; the Gaussian test is [prior_is_gaussian()], which
 #' excludes a prior with a kink.
 #'
@@ -176,7 +178,7 @@ nested_prior <- function(spec, design, fit, row) {
                     units)
   }
   if (length(units) != 1L) {
-    stop(sprintf("'%s' has no single prior to integrate over.", row$key),
+    stop(sprintf("'%s' has no single prior over which to integrate.", row$key),
          call. = FALSE)
   }
   u <- units[[1L]]
@@ -208,7 +210,7 @@ nested_prior <- function(spec, design, fit, row) {
 #' @param coef The coefficients, a named list.
 #' @param terms A data frame with columns `param` and `term`.
 #'
-#' @return The design with those columns replaced.
+#' @return The design, in which those columns are replaced.
 #'
 #' @keywords internal
 nested_design_at <- function(spec, design, coef, terms) {
@@ -247,7 +249,7 @@ nested_design_at <- function(spec, design, coef, terms) {
 #' [pool_nested_random()] returns, its effects' coefficients are set to zero
 #' and its columns are recomputed there. The columns of the effects
 #' themselves are then set to zero, so that the delta method of the
-#' prediction carries the uncertainty of the other coefficients alone, as it
+#' prediction carries only the uncertainty of the other coefficients, as it
 #' does for a term written in an equation.
 #'
 #' @param fit The fitted model.
@@ -290,7 +292,7 @@ nested_prepare <- function(fit, spec, nest, unseen) {
 #' The Standard Error of a Marginal Parameter With Nested Effects
 #'
 #' @description
-#' The delta method of \eqn{\bar\theta = \sum_k w_k h^{-1}(\eta(\beta,
+#' Applies the delta method to \eqn{\bar\theta = \sum_k w_k h^{-1}(\eta(\beta,
 #' u_k))}, whose gradient in the coefficients is
 #' \eqn{\sum_k w_k\, (h^{-1})'(\eta_k)\, J_k} with \eqn{J_k} the design at
 #' the coefficients of node \eqn{k}.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.R
 \name{predict_moments}
 \alias{predict_moments}
-\title{The Quantities a Fit Can Predict}
+\title{The Quantities That a Fit Can Predict}
 \usage{
 predict_moments()
 }
@@ -12,14 +12,14 @@ A named list of functions, keyed \code{"mean"}, \code{"variance"},
 and a parameter list and returns one value per observation.
 }
 \description{
-The table \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} resolves a moment name against: the
-recognized names, each mapped to the \pkg{distributions7} generic that
-computes it.
+Returns the table against which \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} resolves a moment
+name. The table maps each recognized name to the \pkg{distributions7}
+generic that computes it.
 }
 \details{
-Written once as a table so that the recognized names and the functions
-they call cannot disagree, and so that \code{\link[=unknown_what]{unknown_what()}} can list them in
-its message.
+The table is written once so that the recognized names and the functions
+that they call cannot disagree, and so that \code{\link[=unknown_what]{unknown_what()}} can list the
+names in its message.
 }
 \seealso{
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, the only caller.

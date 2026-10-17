@@ -31,7 +31,7 @@ A data frame with \code{fit}, \code{se}, \code{lower} and \code{upper}; the inte
 is the delta method's on the link scale, carried through the link.
 }
 \description{
-The delta method of \eqn{\bar\theta = \sum_k w_k h^{-1}(\eta(\beta,
+Applies the delta method to \eqn{\bar\theta = \sum_k w_k h^{-1}(\eta(\beta,
 u_k))}, whose gradient in the coefficients is
 \eqn{\sum_k w_k\, (h^{-1})'(\eta_k)\, J_k} with \eqn{J_k} the design at
 the coefficients of node \eqn{k}.

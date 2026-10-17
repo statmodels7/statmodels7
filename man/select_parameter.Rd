@@ -17,6 +17,6 @@ select_parameter(V, parameter, spec)
 The submatrix.
 }
 \description{
-The rows and columns of the named distribution parameters.
+Returns the rows and columns of the named distribution parameters.
 }
 \keyword{internal}

@@ -13,26 +13,26 @@ design_count_exact(design)
 A single logical.
 }
 \description{
-\code{TRUE} where every equation's design has full column rank, which is
+Returns \code{TRUE} where every equation's design has full column rank, which is
 sufficient for every subset of the active coordinates to have full rank as
 well, so that \eqn{|A|} is \eqn{\mathrm{rank}(X_A)} whatever the active set
 turns out to be.
 }
 \details{
-The question that \code{\link[=statmod_pe]{statmod_pe()}} answers concerns one active set at one
-point, and answering it there would cost a decomposition per evaluation. Full column
-rank of the whole design answers it for every active set at once, so it is
-read once and reused, which is what keeps the count free on the path it was
-introduced for.
+The rank condition that \code{\link[=statmod_pe]{statmod_pe()}} needs concerns one active set at one
+point, and checking it there would cost a decomposition per evaluation.
+Full column rank of the whole design implies the condition for every
+active set at once. The result is therefore computed once and reused, which
+keeps the count free on the path for which it was introduced.
 
 The answer is kept in the design's \code{eta_memo} environment, keyed on the
 column counts, which is safe because that environment is built fresh with
 each design. A term registering \code{modelterms7::term_refresh()} recomputes
 its block as the coefficients move, so the same column counts do not imply
-the same columns and a memo that cannot see the refresh must not answer;
-there the certificate is declined outright and \code{\link[=active_rank]{active_rank()}} runs
-instead. That route is a decomposition of \eqn{X_A}, where the trace needs
-the cross product of the same columns.
+the same columns, and a memo cannot detect the refresh and must not be
+used; for such a design the function returns \code{FALSE} and \code{\link[=active_rank]{active_rank()}}
+runs instead. That route is a decomposition of \eqn{X_A}, where the trace
+needs the cross product of the same columns.
 
 A design carrying a structural term has no \code{eta_memo} either, so there the
 certificate is recomputed at each call and costs one decomposition per
@@ -41,7 +41,8 @@ a kink is present and the penalty's Hessian vanishes on the active
 coordinates.
 }
 \seealso{
-\code{\link[=active_rank]{active_rank()}}, which answers for one active set where this
-declines, and \code{\link[=block_column_rank]{block_column_rank()}} for the decomposition both read.
+\code{\link[=active_rank]{active_rank()}}, which computes the rank for one active set where
+this function returns \code{FALSE}, and \code{\link[=block_column_rank]{block_column_rank()}} for the
+decomposition that both read.
 }
 \keyword{internal}

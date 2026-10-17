@@ -16,7 +16,7 @@ OuterMethod(
 )
 }
 \arguments{
-\item{kind}{\code{"reml"}, \code{"ml"}, \code{"aic"}, \code{"bic"} or \code{"cv"}. Decides which
+\item{kind}{\code{"reml"}, \code{"ml"}, \code{"aic"}, \code{"bic"} or \code{"cv"}. Determines which
 criterion is evaluated and, through \code{\link[=outer_minimize]{outer_minimize()}}, whether it is
 made small or large.}
 
@@ -25,31 +25,31 @@ enters the Laplace determinant. \code{\link[=statmod]{statmod()}} settles \code{
 family through \code{\link[=outer_resolve]{outer_resolve()}}.}
 
 \item{k}{The price of one effective degree of freedom, for a
-prediction-error criterion. \code{NA_real_} for \code{\link[=bic]{bic()}}, which resolves it to
-\eqn{\log n} at fit time, and for the criteria that do not charge per
-degree of freedom.}
+prediction-error criterion. It is \code{NA_real_} for \code{\link[=bic]{bic()}}, which resolves
+it to \eqn{\log n} at fit time, and for the criteria that do not charge
+per degree of freedom.}
 
-\item{nfolds}{How many folds \code{\link[=cv]{cv()}} uses. Read by \code{"cv"} alone.}
+\item{nfolds}{How many folds \code{\link[=cv]{cv()}} uses. Only \code{"cv"} reads it.}
 
-\item{rule}{\code{"min"} or \code{"1se"}. Read by \code{"cv"} alone.}
+\item{rule}{\code{"min"} or \code{"1se"}. Only \code{"cv"} reads it.}
 
 \item{folds}{A fold number per observation, or \code{integer(0)} for folds
-drawn at fit time. Read by \code{"cv"} alone.}
+drawn at fit time. Only \code{"cv"} reads it.}
 
 \item{marginal}{Which distribution parameters have their unpenalized
 coefficients estimated on the marginal criterion: \code{NULL} for every
 parameter except the position, \code{"none"}, \code{"all"}, or a vector of
-names. Read by \code{"reml"} and \code{"ml"} alone; see \code{\link[=reml]{reml()}}.}
+names. Only \code{"reml"} and \code{"ml"} read it; see \code{\link[=reml]{reml()}}.}
 }
 \value{
 An object of class \code{OuterMethod} with one property per argument
 above.
 }
 \description{
-The class every outer criterion is an instance of: \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}},
+Every outer criterion is an instance of this class: \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}},
 \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}} all return one. It carries which subspace of
 the coefficients is integrated over, which information matrix enters the
-determinant, and the settings a path or a cross-validation needs.
+determinant, and the settings that a path or a cross-validation needs.
 
 One class serves every criterion, so a property that a given criterion does
 not read is present and unused. The class validates the values of its

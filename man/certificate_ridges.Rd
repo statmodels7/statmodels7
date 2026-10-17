@@ -24,25 +24,26 @@ A list with \code{dirs}, the flat directions as vectors over every
 coordinate, and \code{settled}, those whose own decrement is at most \code{tol}.
 }
 \description{
-The directions along which the equilibrated outer curvature
+Computes the directions along which the equilibrated outer curvature
 \eqn{A/(ss')}, \eqn{s_j = \sqrt{|A_{jj}|}}, has an eigenvalue of at most
 \code{flat} in absolute value, over the coordinates \code{keep}.
 }
 \details{
-A coordinate the curvature does not resolve shows on the diagonal, which
-\code{\link[=statmod_certificate]{statmod_certificate()}} reads one coordinate at a time. A direction along
-which several coordinates move together can be flat while every coordinate
-alone is curved, and the equilibrated matrix is what reads it: its
-diagonal is one, so its smallest eigenvalue measures how far the
-coordinates are from a linear dependence in the curvature, whatever their
-scales. A direction is returned on the original coordinates, scaled so
-that its largest entry is one in absolute value, with entries below 1e-3
-set to zero. Its own decrement is \eqn{(q'\tilde g)^2/(2|\lambda|)}, with
-\eqn{q} the equilibrated eigenvector and \eqn{\tilde g = g/s}; the
-absolute value is taken because the sign of an eigenvalue as small as this is
-the sign of rounding. No direction is returned when any eigenvalue is
-below \code{-flat}: the point is then not a maximum, and a flat direction there
-is not a ridge of one.
+A coordinate that the curvature does not resolve shows on the diagonal,
+which \code{\link[=statmod_certificate]{statmod_certificate()}} reads one coordinate at a time. A direction
+along which several coordinates move together can be flat while the
+criterion is curved in every coordinate separately, and the equilibrated
+matrix reads such a direction: its diagonal is one, so its smallest
+eigenvalue measures how far the coordinates are from a linear dependence in
+the curvature, whatever their scales. A direction is returned on the
+original coordinates, scaled so that its largest entry is one in absolute
+value, and entries below 1e-3 are set to zero. Its own decrement is
+\eqn{(q'\tilde g)^2/(2|\lambda|)}, with \eqn{q} the equilibrated
+eigenvector and \eqn{\tilde g = g/s}; the absolute value is taken because
+the sign of an eigenvalue as small as this is the sign of rounding. The
+function returns no direction when any eigenvalue is below \code{-flat}: the
+point is then not a maximum, and a flat direction there is not a ridge of
+one.
 }
 \seealso{
 \code{\link[=statmod_certificate]{statmod_certificate()}}, \code{\link[=decrement_off]{decrement_off()}}

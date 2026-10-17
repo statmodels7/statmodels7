@@ -15,22 +15,22 @@ filter_joint_jacobian(spec, design, coef)
 }
 \value{
 \code{NULL} where the model carries no filter, otherwise a list with
-\code{J} (the filter equation's rows), \code{V} (every equation's rows, the
-filter's being \code{J}), \code{H} (the family's second derivatives on the link
+\code{J} (the filter equation's rows), \code{V} (every equation's rows, of which
+the filter's is \code{J}), \code{H} (the family's second derivatives on the link
 scale), \code{Hd} (the derivatives of the filter's driving quantity, which
 are \code{H} where the filter is not scaled), \code{ap} (the index of the filter's
 parameter), \code{nb} (the number of coefficient columns), \code{key} (the names of
 the columns in the variance matrix) and \code{free} (the term's free
-parameters), all columns restricted to the free ones.
+parameters). All columns are restricted to the free ones.
 }
 \description{
-The derivative of the predictor that a score-driven term produces, in the
-coefficients of every equation followed by the term's free parameters on
-their unconstrained scale, at each observation, together with the static
-rows of every equation in the same columns.
+Returns the derivative of the predictor that a score-driven term produces,
+in the coefficients of every equation followed by the term's free
+parameters on their unconstrained scale, at each observation, together
+with the static rows of every equation in the same columns.
 }
 \details{
-The rows are the ones the joint information is assembled from
+The rows are those from which the joint information is assembled
 (\code{\link[=statmod_full_information]{statmod_full_information()}}): each equation's design placed in its own
 columns, and for the filter's equation the Jacobian that
 \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} propagates beside the state. A model

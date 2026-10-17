@@ -20,8 +20,8 @@ A numeric vector with one value per row of the fitting data, that
 parameter's fitted values on its own scale.
 }
 \description{
-One distribution parameter's fitted values, as a vector with one value per
-row of the fitting data.
+Returns one distribution parameter's fitted values, as a vector with one
+value per row of the fitting data.
 }
 \details{
 The result is one vector, never the whole set, so that this and
@@ -29,7 +29,7 @@ The result is one vector, never the whole set, so that this and
 them needs no unpacking.
 
 The default is the first parameter, not the mean. A family may have no
-mean, a Cauchy being one, whereas every family has a first parameter.
+mean (a Cauchy has none), whereas every family has a first parameter.
 
 The whole set at once is \code{predict(fit, "parameter")}, and the mean, where
 it exists, is \code{predict(fit, "mean")}.

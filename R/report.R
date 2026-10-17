@@ -23,7 +23,7 @@ NULL
 #' the printed output depend on the timer resolution of the platform.
 #'
 #' @param seconds A number of seconds. Vectorized: a vector in gives a vector
-#'   out, each element in its own unit.
+#'   out, and each element is in its own unit.
 #' @param digits How many significant digits to keep, passed to [signif()].
 #'   Defaults to 3.
 #'
@@ -152,10 +152,10 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #' Turn a fitted model back into a function. `loglik()`, `gradient()` and
 #' `hessian()` evaluate the model's log-likelihood and its first two
 #' derivatives at coefficients and data of the caller's choosing, so a fit
-#' can be profiled, differenced or handed to an optimizer of one's own.
+#' can be profiled, differenced or handed to a user-written optimizer.
 #'
-#' With no arguments beyond the fit they read at the fitted coefficients and
-#' the fitting data.
+#' If only the fit is given, these functions evaluate the model at the fitted
+#' coefficients and on the fitting data.
 #'
 #' @details
 #' # The name
@@ -179,31 +179,31 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #' reparametrization are therefore reapplied to the new rows and not
 #' estimated again.
 #'
-#' # No penalty enters
+#' # Likelihood without the penalty
 #'
-#' All three functions evaluate the likelihood alone, without the penalty.
+#' All three functions evaluate the likelihood without the penalty.
 #' The penalized objective at given coefficients is a different quantity,
 #' and the hyperparameters are not arguments of these functions.
 #'
 #' @param object A [StatmodFit()].
 #' @param par A named list of coefficient vectors, each as long as the
-#'   design of the equation that it names. A distribution parameter that the list
-#'   omits keeps its fitted coefficients, so a list may change one equation
+#'   design of the equation that it names. A distribution parameter that the
+#'   list omits keeps its fitted coefficients, so a list may change one equation
 #'   and leave the others at the fit. Defaults to the fitted coefficients. A
 #'   `par` that is not a named list, a name that is not a distribution
 #'   parameter, or a vector of the wrong length is an error. The own
 #'   parameters of a structural term are not among the arguments.
-#' @param data A data frame with the columns that the model names. Defaults to the
-#'   data the model was fitted to. New data must carry the response, since a
+#' @param data A data frame with the columns that the model names. Defaults to
+#'   the data used to fit the model. New data must carry the response, since a
 #'   likelihood needs one.
 #' @param expected `hessian()` only: `TRUE` for the expected information,
 #'   `FALSE` (the default) for the observed Hessian.
-#' @param ... Passed to methods. No shipped method reads it.
+#' @param ... Passed to methods. The shipped methods do not read it.
 #'
 #' @return `loglik()` gives a single number. `gradient()` gives a named list
 #'   of numeric vectors, one per distribution parameter. `hessian()` gives a
-#'   symmetric `p x p` matrix over the stacked regression coefficients, `p`
-#'   being their total count. The own parameters of a structural term are not
+#'   symmetric `p x p` matrix over the stacked regression coefficients, where
+#'   `p` is their total count. The own parameters of a structural term are not
 #'   among them and have no entry in the gradient or in the Hessian.
 #'
 #' @seealso [logLik.StatmodFit()] for the log-likelihood of the fit with its
@@ -257,10 +257,10 @@ hessian <- S7::new_generic("hessian", "object",
 #' accepts a `data` argument treats `NULL` alike.
 #'
 #' @param fit A [StatmodFit()].
-#' @param data A data frame, or `NULL` for the data the model was fitted to.
+#' @param data A data frame, or `NULL` for the data used to fit the model.
 #' @param need_response `TRUE` where the response must be present, as for a
-#'   log-likelihood; `FALSE` for a prediction, new data routinely having no
-#'   response column.
+#'   log-likelihood; `FALSE` for a prediction, because new data routinely has
+#'   no response column.
 #'
 #' @return A [StatmodSpec()]: `fit@spec` itself when `data` is `NULL`, and
 #'   [statmod_respec()]'s result otherwise.
@@ -281,13 +281,14 @@ spec_at <- function(fit, data, need_response = TRUE) {
 #' Three things are checked: that `par` is a named list, that every name of
 #' `par` is a distribution parameter, and that the vector given for each is
 #' as long as that equation's design is wide. Each failure signals an error.
-#' The messages for a name and for a length name the parameter, so that a
-#' short vector is not recycled into a different model. A distribution
+#' The message for a wrong name and the message for a wrong length both give
+#' the name of the parameter, so that a short vector is not recycled into a
+#' different model. A distribution
 #' parameter that `par` omits keeps its fitted coefficients.
 #'
 #' @param fit A [StatmodFit()], read for its fitted coefficients.
 #' @param par A named list of coefficient vectors, or `NULL`.
-#' @param design The design to validate the lengths against.
+#' @param design The design against which the lengths are validated.
 #'
 #' @return A named list of coefficient vectors, one per distribution
 #'   parameter in the family's order.
@@ -358,21 +359,22 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @title The Log-Likelihood of a Fit
 #' @name logLik.StatmodFit
 #' @description
-#' The value that R's convention expects, with the degrees of freedom and the
-#' number of observations as attributes. [loglik()] is a different function:
-#' it evaluates the model at parameters and data chosen by the caller.
+#' Returns the value that R's convention expects, with the degrees of freedom
+#' and the number of observations as attributes. [loglik()] is a different
+#' function: it evaluates the model at parameters and data chosen by the
+#' caller.
 #' @details
 #' # Which likelihood, and why it matters
 #'
-#' The default is the **conditional** one: the log-density at the fitted
-#' coefficients, a penalized coefficient among them, paired with the
+#' The default is the conditional one: the log-density at the fitted
+#' coefficients, including the penalized coefficients, paired with the
 #' effective degrees of freedom \eqn{\mathrm{tr}[(H+S)^{-1}H]}. A criterion
 #' built on that pair is the conditional AIC, which measures how well the
 #' model describes the groups, curves and states actually observed.
 #'
-#' A mixed-model package reports the **marginal** likelihood instead: the
+#' A mixed-model package reports the marginal likelihood instead: the
 #' random effects are integrated out and the count is the number of estimated
-#' parameters, variance components among them. That likelihood concerns the
+#' parameters, including the variance components. That likelihood concerns the
 #' population, and the AIC built on it is a different number, not comparable
 #' with the conditional one.
 #'
@@ -384,10 +386,11 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #'
 #' `type = "marginal"` returns the value of the outer criterion at the fit.
 #' Its degrees of freedom count the parameters that the marginal model
-#' estimates: the coefficients that no penalty covers, the dimension of the
-#' null space of each penalty without a kink (the straight line of a
-#' smooth), the hyperparameters that the outer search or a path estimated,
-#' and the free parameters of a structural term. A held hyperparameter is not
+#' estimates: the coefficients that are not covered by any penalty, the
+#' dimension of the null space of each penalty without a kink (the straight
+#' line of a smooth), the hyperparameters that the outer search or a path
+#' estimated, and the free parameters of a structural term. A held
+#' hyperparameter is not
 #' counted, and a hyperparameter shared by several terms is counted once. The
 #' other coefficients of a penalized term are integrated out and are not
 #' counted.
@@ -490,18 +493,18 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #' @title The Coefficients of a Fitted Model
 #'
 #' @description
-#' One named vector per distribution parameter: the quantities in which the
-#' model is written, or the coordinates on which it was estimated.
+#' Returns one named vector per distribution parameter: the quantities in
+#' which the model is written, or the coordinates on which it was estimated.
 #'
 #' @details
 #' # What `readable` moves, and what it does not
 #'
 #' Most coefficients are the same under either reading: the coefficient of a
 #' linear predictor is reported as it is estimated. Three kinds of term
-#' report quantities that differ from the coordinates they are carried on,
-#' and those are the parameters that this argument moves.
+#' report quantities that differ from the coordinates on which they are
+#' carried, and those are the parameters that this argument moves.
 #'
-#' A **break-point** term is fitted through a working block, and its
+#' A break-point term is fitted through a working block, and its
 #' quantities are read from that block. A continuous term holds each quantity
 #' as a coefficient, and the two readings coincide. A discontinuous term
 #' carries \eqn{g} and \eqn{\delta}; where its position is not held, it
@@ -510,17 +513,17 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #' position, as a sharp `jump()` or `jseg()` does after the fit has settled
 #' it, the reported position is the held one.
 #'
-#' A **score-driven** term carries its level and its loadings
+#' A score-driven term carries its level and its loadings
 #' \eqn{\kappa_j} through their own links, the log for a loading, and its
-#' persistence on partial autocorrelations, the stationary region not being a
-#' box. Each partial autocorrelation is carried on the unconstrained scale of
-#' its link, the inverse hyperbolic tangent by default. What the literature
-#' calls \eqn{\xi_j} is the autoregressive coefficient that the whole chart
-#' produces. With one persistence, \eqn{\xi_1} is the partial
+#' persistence on partial autocorrelations, because the stationary region is
+#' not a box. Each partial autocorrelation is carried on the unconstrained
+#' scale of its link, the inverse hyperbolic tangent by default. The quantity
+#' \eqn{\xi_j} of the literature is the autoregressive coefficient that the
+#' whole chart produces. With one persistence, \eqn{\xi_1} is the partial
 #' autocorrelation. With two, \eqn{\xi_1 = \mathrm{pacf}_1 (1 -
 #' \mathrm{pacf}_2)} and \eqn{\xi_2 = \mathrm{pacf}_2}.
 #'
-#' A **regime** term is estimated on the additive log-ratios of each row of
+#' A regime term is estimated on the additive log-ratios of each row of
 #' its transition matrix, and it reports the transition probabilities
 #' \eqn{p_{ij}} in their place. Its levels and gaps are reported through
 #' their own links.
@@ -562,8 +565,8 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #'   one kind in one formula stay apart.
 #'
 #' @seealso [hyper()] for the hyperparameters, [vcov.StatmodFit()] for the
-#'   variance matrix, whose rows with `readable = FALSE` are the unheld
-#'   coordinates of `coef(object, readable = FALSE)`,
+#'   variance matrix, whose rows with `readable = FALSE` are the coordinates
+#'   of `coef(object, readable = FALSE)` that are not held,
 #'   [summary.StatmodFit()] for the two together,
 #'   [modelterms7::term_readable()] for what a term declares.
 #'
@@ -577,8 +580,8 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #' # The break-point is a quantity of the model, near the true 6.
 #' coef(fit)$mu
 #'
-#' # The coordinates the fit ran on are the same numbers here, seg() being
-#' # continuous, and vcov() has one row for each of them.
+#' # The coordinates on which the fit ran are the same numbers here, because
+#' # seg() is continuous, and vcov() has one row for each of them.
 #' coef(fit, readable = FALSE)$mu
 #' rownames(vcov(fit, readable = FALSE))
 #'
@@ -608,11 +611,11 @@ coef.StatmodFit <- function(object, readable = TRUE, ...) {
   }), params)
 }
 
-#' The Quantities a Term Reports in Place of Its Coordinates
+#' The Quantities Reported by a Term in Place of Its Coordinates
 #'
 #' @description
-#' The coefficient vector of one equation, with each term's declared
-#' quantities put in place of the coordinates from which they are computed.
+#' Returns the coefficient vector of one equation, in which each term's
+#' declared quantities replace the coordinates from which they are computed.
 #'
 #' @details
 #' A term declares its quantities through [modelterms7::term_readable()],
@@ -634,9 +637,9 @@ coef.StatmodFit <- function(object, readable = TRUE, ...) {
 #' @param p The distribution parameter naming the equation, a string.
 #' @param v The named coefficient vector of that equation.
 #'
-#' @return `v`, with each term's declared quantities in place of the
-#'   coordinates from which they are computed. `v` unchanged where no term of
-#'   the equation declares any.
+#' @return `v`, in which each term's declared quantities replace the
+#'   coordinates from which they are computed. The vector `v` is returned
+#'   unchanged where no term of the equation declares any.
 #'
 #' @seealso [coef.StatmodFit()], the caller,
 #'   [modelterms7::term_readable()] for what a term declares.
@@ -672,8 +675,8 @@ coef_readable <- function(spec, design, fit, p, v) {
 #' What a Structural Term Contributes to the Coefficients
 #'
 #' @description
-#' The own parameters of a structural term of one equation, as quantities or
-#' as the coordinates on which they were estimated.
+#' Returns the own parameters of a structural term of one equation, as
+#' quantities or as the coordinates on which they were estimated.
 #'
 #' @details
 #' A structural term rewrites the likelihood and adds no columns to a design,
@@ -681,7 +684,7 @@ coef_readable <- function(spec, design, fit, p, v) {
 #' vector of the equation under both readings, named from the term's label as
 #' every other coefficient of that term is.
 #'
-#' A **held** parameter is one that an intercept in the same equation
+#' A held parameter is one that an intercept in the same equation
 #' carries, so it is not estimated. It is reported under either reading, at
 #' the value at which it is held. Leaving it out would make the vector
 #' shorter than the term's own parameter count, and the readable vector would
@@ -695,7 +698,7 @@ coef_readable <- function(spec, design, fit, p, v) {
 #'   the coordinates on the unconstrained scale.
 #'
 #' @return A named numeric vector of that term's own parameters.
-#'   `numeric(0)` where the equation carries no structural term.
+#'   The result is `numeric(0)` where the equation carries no structural term.
 #'
 #' @seealso [coef.StatmodFit()], the caller,
 #'   [statmod_latent()] for a latent-state term's smoothed states.
@@ -729,8 +732,8 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #' @title The Residuals of a Fitted Model
 #' @name residuals.StatmodFit
 #' @description
-#' One residual per observation, comparing the observation with the whole
-#' distribution that the model assigns to it and not with any single
+#' Returns one residual per observation, which compares the observation with
+#' the whole distribution that the model assigns to it and not with any single
 #' parameter of that distribution.
 #'
 #' @details
@@ -739,7 +742,7 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #' A residual measures whether an observation is consistent with the law that
 #' was given to its row, and that law is one object that carries every
 #' parameter at once. There is therefore one residual per observation,
-#' however many parameters the model develops over covariates.
+#' however many parameters that the model develops over covariates.
 #'
 #' A per-parameter quantity is a different object: the contribution
 #' \eqn{\partial \ell_i / \partial \eta_{ip}} identifies which equation an
@@ -764,18 +767,18 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #' residual is again exactly standard normal under a correct model, but it is
 #' random, so that two calls give two answers.
 #'
-#' Where \eqn{F(y_i)} exceeds one half the residual is read from the survival
-#' function, \eqn{\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)} with \eqn{1 - u_i}
+#' Where \eqn{F(y_i)} exceeds one half, the residual is read from the survival
+#' function, \eqn{\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)}, and \eqn{1 - u_i} is
 #' computed as \eqn{1 - F} directly, so a count far in the upper tail, where
-#' \eqn{F} rounds to one, gets a finite residual. A family whose
+#' \eqn{F} rounds to one, has a finite residual. A family whose
 #' distribution function does not take `lower.tail` keeps the lower-tail
 #' reading.
 #'
-#' The randomization applies to every discrete family, and at the declared
-#' atoms alone to a mixed family such as the zero-adjusted wrapper of a
-#' continuous parent. `seed` makes a call reproducible without disturbing
-#' the caller's stream; left `NULL`, the ambient state is used and nothing
-#' is set.
+#' The randomization applies to every discrete family and, for a mixed family
+#' such as the zero-adjusted wrapper of a continuous parent, only at the
+#' declared atoms. `seed` makes a call reproducible without disturbing the
+#' stream of the caller. If `seed` is `NULL`, the ambient state is used and
+#' the seed is not set.
 #'
 #' # Pearson and response residuals
 #'
@@ -788,23 +791,23 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #'
 #' @param object A [StatmodFit()].
 #' @param type `"quantile"` (the default), `"pearson"` or `"response"`.
-#'   Matched with [match.arg()].
-#' @param seed An integer to seed the randomization with, or `NULL` for the
+#'   The argument is matched with [match.arg()].
+#' @param seed An integer used to seed the randomization, or `NULL` for the
 #'   ambient state. Read only where the distribution function jumps, so it
 #'   changes nothing for a continuous family.
 #' @param ... Unused.
 #'
-#' @return A numeric vector with one entry per row of the data. Standard
-#'   normal under a correct model for `"quantile"`; approximately
-#'   standardized for `"pearson"`; on the response's own scale for
-#'   `"response"`.
+#' @return A numeric vector with one entry per row of the data. The residuals
+#'   are standard normal under a correct model for `"quantile"`;
+#'   approximately standardized for `"pearson"`; on the response's own scale
+#'   for `"response"`.
 #'
 #' @references
 #' Dunn, P. K. and Smyth, G. K. (1996). Randomized quantile residuals.
 #' *Journal of Computational and Graphical Statistics* 5(3), 236--244.
 #'
 #' @seealso [fitted.StatmodFit()] and [predict.StatmodFit()] for the fitted
-#'   parameters these are read against.
+#'   parameters against which these are read.
 #'
 #' @examples
 #' set.seed(1)
@@ -835,7 +838,7 @@ residuals.StatmodFit <- function(object,
   y <- spec@response
   th <- object@fitted
   if (!length(th)) {
-    stop("The fit carries no fitted parameters to compare the response with.",
+    stop("The fit carries no fitted parameters against which to compare the response.",
          call. = FALSE)
   }
   if (identical(type, "response") || identical(type, "pearson")) {
@@ -978,9 +981,9 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #' The distinction matters for inference. A value chosen by [aic()], [bic()]
 #' or [cv()], whether by the outer search or along a path, is the argument of
 #' a minimum of a prediction-error criterion and not the root of the
-#' derivative of a likelihood, so no standard error follows from it. A value
-#' that [reml()] or [ml()] estimated carries a standard error, computed from
-#' the curvature of that criterion, and [summary.StatmodFit()] prints it.
+#' derivative of a likelihood, so the value does not yield a standard error.
+#' A value that [reml()] or [ml()] estimated carries a standard error, computed
+#' from the curvature of that criterion, and [summary.StatmodFit()] prints it.
 #'
 #' # Why two rows may carry the same number
 #'
@@ -993,13 +996,13 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #' counted term by term.
 #'
 #' @param fit A [StatmodFit()].
-#' @param scale `"parameter"` (the default) or `"link"`. Matched with
-#'   [match.arg()].
+#' @param scale `"parameter"` (the default) or `"link"`. The argument is
+#'   matched with [match.arg()].
 #'
 #' @return A data frame with one row per hyperparameter and the columns:
 #'   \describe{
-#'     \item{`parameter`}{the distribution parameter whose equation the
-#'       penalized term sits in. For a covariance class that spans several
+#'     \item{`parameter`}{the distribution parameter whose equation contains
+#'       the penalized term. For a covariance class that spans several
 #'       equations, the names of all of them, separated by commas.}
 #'     \item{`term`}{the term's key, its call as written.}
 #'     \item{`name`}{the hyperparameter's own name, as the penalty names it.}
@@ -1009,8 +1012,8 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #'     \item{`id`}{the sharing label, `NA` where the hyperparameter is not
 #'       shared.}
 #'   }
-#'   A data frame of no rows, with those columns, where the model carries no
-#'   penalty at all.
+#'   The result is a data frame of no rows, with those columns, where the
+#'   model carries no penalty at all.
 #'
 #' @seealso [coef.StatmodFit()] for the coefficients,
 #'   [summary.StatmodFit()] for the two printed together with standard
@@ -1021,15 +1024,15 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #' d <- data.frame(x = runif(80, 0, 1))
 #' d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 #'
-#' # Estimated by REML, which the source column records.
+#' # The hyperparameter is estimated by REML, which the source column records.
 #' fit <- statmod(y ~ s(x, bspline_smooth(k = 6)),
 #'                distributions7::gaussian1_distrib(), d)
 #' hyper(fit)
 #'
-#' # The same value on the scale the outer search ran on.
+#' # The same value is shown on the scale on which the outer search ran.
 #' hyper(fit, scale = "link")
 #'
-#' # Held by the term instead, and reported as fixed.
+#' # Here the term holds the value instead, and it is reported as fixed.
 #' held <- statmod(y ~ s(x, bspline_smooth(k = 6), hyper = c(lambda = 2)),
 #'                 distributions7::gaussian1_distrib(), d)
 #' hyper(held)[, c("name", "estimate", "held", "source")]
@@ -1100,9 +1103,9 @@ hyper <- function(fit, scale = c("parameter", "link")) {
 #' What Each Distribution Parameter Reached
 #'
 #' @description
-#' A single string that gives, for each parameter of the distribution, the
-#' range of its fitted values. [summary.StatmodFit()] adds it as a note where
-#' the fit did not converge.
+#' Returns a single string that gives, for each parameter of the distribution,
+#' the range of its fitted values. [summary.StatmodFit()] adds it as a note
+#' where the fit did not converge.
 #'
 #' @details
 #' The note is written for a lasso at a fixed hyperparameter, with a free
@@ -1139,7 +1142,7 @@ fitted_ranges <- function(x) {
               format(signif(max(v), 4)))
     }
   }, character(1))
-  paste0("The fit did not converge. The parameters it reached: ",
+  paste0("The fit did not converge. The parameters that it reached: ",
          paste(trimws(gsub("[ ]{2,}", " ", rows)), collapse = "; "), ".")
 }
 
@@ -1147,14 +1150,14 @@ fitted_ranges <- function(x) {
 #' A Term Key Shortened for Display
 #'
 #' @description
-#' The key with the arguments of its leading call reduced to the first one,
-#' so that a trace line names the term instead of repeating its whole
-#' specification.
+#' Returns the key in which the arguments of its leading call are reduced to
+#' the first one, so that a trace line names the term instead of repeating its
+#' whole specification.
 #'
 #' @details
 #' A key is the call that produced the term, and for a penalty over a
-#' sub-term it is that call followed by `::parameter::sub-term`. The call is
-#' what grows when a term has many arguments, so that printing it in full
+#' sub-term it is that call followed by `::parameter::sub-term`. The call
+#' grows when a term has many arguments, so that printing it in full
 #' makes a line of an outer trace unreadable. Only the leading call is
 #' shortened, and only past its first argument, so that
 #' `s(x, bspline_smooth(k = 20))` and `s(z, bspline_smooth(k = 8))` stay
@@ -1201,9 +1204,9 @@ short_keys <- function(x) {
 #' A Titled Rule for a Verbose Trace
 #'
 #' @description
-#' One blank line, then a titled rule with the name of the method that does
-#' the work on the right, so that a reader of a running fit can see where one
-#' step ends and the next begins.
+#' Prints one blank line, then a titled rule with the name of the method that
+#' does the work on the right, so that a reader of a running fit can see where
+#' one step ends and the next begins.
 #'
 #' @details
 #' A verbose trace reports three nested levels: the outer step, the pass of
@@ -1245,8 +1248,8 @@ vb_say <- function(..., indent = 5L) {
 #' The Name of Whatever Is About to Run
 #'
 #' @description
-#' An optimizer's own name, a criterion's kind, or a short description of a
-#' step that is not an optimizer.
+#' Returns an optimizer's own name, a criterion's kind, or a short description
+#' of a step that is not an optimizer.
 #'
 #' @param x An optimizer, a criterion, or `NULL`.
 #' @param default The string returned when `x` is `NULL` or carries neither a

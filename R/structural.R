@@ -1048,8 +1048,8 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
 #' reads `beta[block$index]`, and such a penalty covers no entry of the
 #' stacked vector. The parameters are in the design's structural state
 #' instead, so the iteration is written on that subvector: the smooth part is
-#' the negative log-likelihood with this penalty taken back out, its gradient
-#' is [statmod_structural_score()]'s with the same correction, and the
+#' the negative log-likelihood from which this penalty is taken back out, its
+#' gradient is [statmod_structural_score()]'s with the same correction, and the
 #' operator is the penalty's own.
 #'
 #' The iteration stops when the gradient criterion `crit_grad(tol)` is met. A
@@ -1577,8 +1577,8 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #'
 #' @description
 #' Returns the estimated parameters of every structural term, on their own
-#' scale, with standard errors and intervals taken from the joint observed
-#' information.
+#' scale, together with standard errors and intervals that are taken from
+#' the joint observed information.
 #'
 #' @details
 #' A structural term contributes no design block, so the coefficient tables

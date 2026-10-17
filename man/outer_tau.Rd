@@ -10,7 +10,7 @@ outer_tau(J, H, active = NULL)
 \item{J}{The penalized information \eqn{H + S}, a \verb{p x p} symmetric
 matrix, dense or sparse.}
 
-\item{H}{The likelihood's information alone, the same shape as \code{J}.}
+\item{H}{The likelihood's own information, of the same shape as \code{J}.}
 
 \item{active}{A logical vector over the stacked coefficients marking the
 ones away from a kink, or \code{NULL} (the default) for all of them. Both
@@ -22,8 +22,8 @@ A single number: the trace, \code{0} when \code{active} selects nothing, and
 }
 \description{
 Computes \eqn{\tau = \mathrm{tr}[(H+S)^{-1}H]}, the trace of the influence
-matrix, which is the effective degrees of freedom a prediction-error
-criterion charges for. An unpenalized fit has \eqn{S = 0} and
+matrix, which is the number of effective degrees of freedom charged by a
+prediction-error criterion. An unpenalized fit has \eqn{S = 0} and
 \eqn{\tau = p}; shrinkage lowers it, and \eqn{\tau} falls to the dimension
 of the penalty's null space as the hyperparameter grows.
 }
@@ -31,7 +31,7 @@ of the penalty's null space as the hyperparameter grows.
 A penalty with a kink is not twice differentiable everywhere, and the mode
 of such a fit sits on the kink for every coefficient that it sets to zero. It
 is twice differentiable away from the kink, so the trace is taken over the
-active coordinates alone, which is the submodel the fit has selected.
+active coordinates only, which form the submodel that the fit has selected.
 
 For a penalty that is linear there, the lasso, \eqn{S_{AA}} vanishes and
 \eqn{\tau} is exactly the number of coefficients that survived, the
@@ -45,8 +45,9 @@ a model that selects nothing and to one that selects everything.
 }
 
 \section{The inverse}{
-Through a Cholesky of \eqn{J}, and \code{NA_real_} when that fails, which is
-what a caller reads as an unusable point. Both matrices are densified
+The inverse is computed through a Cholesky factorization of \eqn{J}, and
+the result is \code{NA_real_} when that fails, which a caller reads as an
+unusable point. Both matrices are densified
 first: the trace needs the full inverse, which is dense whatever \eqn{J}
 was.
 }
@@ -56,7 +57,7 @@ Zou, H., Hastie, T. and Tibshirani, R. (2007). On the degrees of freedom of
 the lasso. \emph{The Annals of Statistics} 35(5), 2173--2192.
 }
 \seealso{
-\code{\link[=aic]{aic()}} for the criterion this feeds,
+\code{\link[=aic]{aic()}} for the criterion that this function feeds,
 \code{\link[=statmod_edf]{statmod_edf()}} for the per-term reading, which splits the same trace
 by term.
 }

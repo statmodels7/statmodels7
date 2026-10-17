@@ -21,7 +21,7 @@ refresh_hessian(spec, design, coef, expected = FALSE, approx = "opg")
 A named list of numeric vectors.
 }
 \description{
-\eqn{\ell_{ab}} on the link scale, from whichever route the criterion's
-\eqn{K} was assembled on.
+Returns \eqn{\ell_{ab}} on the link scale, from whichever route was used to
+assemble the criterion's \eqn{K}.
 }
 \keyword{internal}

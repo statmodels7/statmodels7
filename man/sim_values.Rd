@@ -13,8 +13,8 @@ sim_values(v)
 A single string.
 }
 \description{
-The values where there are six or fewer, and otherwise the first two
-values with the count and the standard deviation.
+Returns the values where there are six or fewer, and otherwise the first
+two values with the count and the standard deviation.
 }
 \details{
 A random effect over a hundred groups is a hundred numbers, and printing

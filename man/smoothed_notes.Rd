@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{smoothed_notes}
 \alias{smoothed_notes}
-\title{The Notes a Smoothed Break-Point Term Adds to a Summary}
+\title{The Notes That a Smoothed Break-Point Term Adds to a Summary}
 \usage{
 smoothed_notes(spec, object)
 }
@@ -16,8 +16,8 @@ left.}
 A character vector, possibly empty.
 }
 \description{
-A note for each smoothed break-point term that names the smoother and the
-width that was resolved at build, and a second note for each random
+Returns a note for each smoothed break-point term that names the smoother
+and the width that was resolved at build, and a second note for each random
 development of a break-point under a Gaussian prior, when the smoother
 declares a scale correction, that gives the corrected scale beside the
 apparent one.

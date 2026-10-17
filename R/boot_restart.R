@@ -13,15 +13,15 @@ NULL
 #' @details
 #' The number is set in the term. [modelterms7::seg()], [modelterms7::jump()]
 #' and [modelterms7::jseg()] each take `n_boot`, with a default of 10,
-#' because the objective of these terms has spurious local optima that the
-#' restarts search for. The restarts are run by this package, which can refit
-#' the model.
+#' because the objective of these terms has spurious local optima, and the
+#' restarts search for a better one. The restarts are run by this package, which
+#' can refit the model.
 #'
-#' A model with two break-point terms that set `n_boot` to 10 and to 25 gets
-#' 25. The restart loop works on all of the terms together, since a proposal
-#' is a configuration of positions for every break-point term in the model,
-#' so the budget is a single number and the largest of the set values is
-#' used.
+#' A model with two break-point terms that set `n_boot` to 10 and to 25 has a
+#' budget of 25. The restart loop works on all of the terms together, since a
+#' proposal is a configuration of positions for every break-point term in the
+#' model, so the budget is a single number and the largest of the set values
+#' is used.
 #'
 #' @param spec A [StatmodSpec()]. The terms of every equation are examined.
 #'
@@ -65,23 +65,23 @@ seg_boot_total <- function(spec) {
 #' fixed configuration of positions is one weighted linear fit of the working
 #' response of the term's equation. A proposal is therefore a configuration of
 #' positions, and two proposals are ranked by their profiles at the cost of
-#' one linear fit each. Only a proposal that the profile prefers leads to a
-#' refit of the whole model, and the refit is accepted or rejected on the true
-#' objective. A proposal that the profile rejects costs profile evaluations
+#' one linear fit each. Only a proposal that ranks higher on the profile leads
+#' to a refit of the whole model, and the refit is accepted or rejected on the
+#' true objective. A proposal that the profile rejects costs profile evaluations
 #' only, with no refit of the model.
 #'
 #' # The three proposal kinds
 #'
 #' The kinds are tried in this order.
 #'
-#' 1. **The deterministic sweep.** Each break-point in turn is swept over a
-#'    grid on the profile with the others held, which is
-#'    [modelterms7::seg_polish()]. This reaches a feature of the profile from
-#'    which the fitting iteration had moved a break-point away.
-#' 2. **The bootstrap sweep.** The same descent on the profile of a
-#'    resample, the multinomial counts entering as weights, which moves the
-#'    profile's optima the way refitting the resample would.
-#' 3. **The random sweep.** The same descent from positions drawn uniformly
+#' 1. The deterministic sweep. Each break-point in turn is swept over a
+#'    grid on the profile while the others are held, as
+#'    [modelterms7::seg_polish()] does. This reaches a feature of the profile
+#'    from which the fitting iteration had moved a break-point away.
+#' 2. The bootstrap sweep. The same descent on the profile of a
+#'    resample, in which the multinomial counts enter as weights. This moves
+#'    the profile's optima in the way that refitting the resample would.
+#' 3. The random sweep. The same descent from positions drawn uniformly
 #'    over the confinement interval.
 #'
 #' The two stochastic kinds alternate. Four consecutive proposals that do not
@@ -96,16 +96,16 @@ seg_boot_total <- function(spec) {
 #' the working weights of a scoring step. For the location parameter of a
 #' gaussian family on the identity link, this is the least-squares objective
 #' of the model. In every other equation, it is a quadratic model of the
-#' objective that ranks the candidates, and the acceptance is decided on the
-#' true objective. [modelterms7::seg_start()] uses the same profile to place
-#' starting values.
+#' objective that ranks the candidates, and each candidate is accepted or
+#' rejected on the true objective. [modelterms7::seg_start()] uses the same
+#' profile to place starting values.
 #'
 #' # Reproducibility
 #'
 #' The draws come from the session's generator, so a fit with restarts
 #' repeats under [set.seed()]. The refreshable and structural state of the
-#' design is snapshotted at the incumbent and restored whenever a candidate
-#' loses, so that a rejected proposal leaves the state unchanged.
+#' design is saved at the incumbent and restored whenever a candidate
+#' is rejected, so that a rejected proposal leaves the state unchanged.
 #'
 #' @param spec The [StatmodSpec()] being fitted.
 #' @param design The assembled design, as [statmod_design()] returns it.
@@ -126,8 +126,8 @@ seg_boot_total <- function(spec) {
 #'   [seg_boot_total()] reports it. The first proposal is the deterministic
 #'   sweep. A budget below one returns `res` unchanged.
 #'
-#' @return `res`, with `par`, `value`, `converged`, `obj` and the block
-#'   histories replaced when a restart improved the objective. Every other
+#' @return `res`, in which `par`, `value`, `converged`, `obj` and the block
+#'   histories are replaced when a restart improves the objective. Every other
 #'   element is carried over unchanged, including the history of an outer
 #'   search and its optimizer, so the result has the same structure either
 #'   way.
@@ -183,7 +183,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
     cfl <- obj_split(best$par)
     ep <- statmod_eta(spec, design, cfl)
     wk <- coord_working(spec, ep, cfl, design, r$param, TRUE, approx)
-    if (is.null(wk)) stop("no working response")
+    if (is.null(wk)) stop("there is no working response")
     eta <- rep_len(if (is.null(ep$eta_static)) ep$eta[[r$param]] else
       ep$eta_static[[r$param]], n)
     list(y = wk$z - (eta - as.numeric(modelterms7::term_value(tm))),
@@ -281,7 +281,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #' profile of its working response ([modelterms7::seg_polish_exact()]), which
 #' is exact only for the location of a gaussian family, held there
 #' ([modelterms7::seg_hold()]), and the coefficients of the model are refitted
-#' with the positions held.
+#' while the positions are held.
 #'
 #' @details
 #' The working construction of Fasola, Muggeo and Kuchenhoff stops at a fixed
@@ -297,8 +297,9 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #' Held, a break-point term contributes a linear function of its remaining
 #' coefficients, so the refit is an ordinary fit, and the coordinate that
 #' carried the position is held in the solve and left out of the information
-#' ([term_held_stack()]). This is how `segmented` and `stepmented` report
-#' their coefficients: at the estimated positions, conditional on them.
+#' ([term_held_stack()]). `segmented` and `stepmented` report their
+#' coefficients in this way, at the estimated positions and conditional on
+#' them.
 #'
 #' The profile is weighted least squares of the working response of the
 #' term's own equation, net of the rest of that equation, on the term's own
@@ -313,12 +314,12 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #' is held and polished like any other term, with the exact line searches of
 #' [modelterms7::seg_polish_exact()] in the coefficients of the development.
 #' In an equation whose working profile is only a model of the objective, the
-#' five deepest local minima of the profile are also refitted with the
-#' positions held, and so are the neighboring intervals of the best position;
-#' these two searches skip a developed term, whose positions are one per
-#' observation.
+#' five deepest local minima of the profile are also refitted while the
+#' positions are held, and so are the neighboring intervals of the best
+#' position; these two searches skip a developed term, whose positions are one
+#' per observation.
 #'
-#' @param spec The specification, holds included.
+#' @param spec The specification, including the holds.
 #' @param design The design, carrying the terms in its state.
 #' @param blocks,hyper,inner_optimizer,expected,approx,maxit,tol,vb As
 #'   [statmod_alternate()].
@@ -327,8 +328,8 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #'   read again after a refit, 5 by default.
 #'
 #' @return A list: `res`, the settled fit, `moved`, `TRUE` where a
-#'   polished position replaced the one the iteration reached, and `settled`,
-#'   `TRUE` where a term was held.
+#'   polished position replaced the one that the iteration reached, and
+#'   `settled`, `TRUE` where a term was held.
 #'
 #' @references
 #' Fasola, S., Muggeo, V. M. R. and Kuchenhoff, H. (2018). A heuristic,
@@ -552,7 +553,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
 #' that is not smoothed, not developed and not marginal is moved to the
 #' minimum of the least-squares profile of its working response over every
 #' interval of the covariate ([modelterms7::seg_polish_exact()]), and the
-#' model is refitted from there with the positions free.
+#' model is refitted from there while the positions are free.
 #'
 #' @details
 #' The profile of a change of slope is smooth inside each interval between
@@ -569,7 +570,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
 #' @inheritParams statmod_settle_breakpoints
 #'
 #' @return A list: `res`, the fit, and `moved`, `TRUE` where a polished
-#'   position replaced the one the iteration reached.
+#'   position replaced the one that the iteration reached.
 #'
 #' @references
 #' Muggeo, V. M. R. (2003). Estimating regression models with unknown

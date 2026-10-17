@@ -17,15 +17,16 @@ ctx_kmove(ctx, spec, design, coef, hyper, method)
 A list with \code{deriv} and \code{key}.
 }
 \description{
-The array \code{\link[=u_vector]{u_vector()}} contracts against the leverage diagonal,
-together with the builder that reads it: the third derivative of the
-log-density where the criterion uses the observed information, and the
+Returns the array that \code{\link[=u_vector]{u_vector()}} contracts against the leverage
+diagonal, together with the builder that reads it: the third derivative of
+the log-density where the criterion uses the observed information, and the
 derivative of the expected information where it uses the expected one.
 }
 \details{
 \eqn{K} enters the criterion through its determinant, so the gradient needs
-\eqn{\partial K/\partial\beta}. With the observed information that is
-\eqn{-\ell'''}, which every family carries in closed form. With the expected
+\eqn{\partial K/\partial\beta}. With the observed information, that
+derivative is \eqn{-\ell'''}, which every family carries in closed form.
+With the expected
 one it is \eqn{-\partial\,\mathbb{E}[\ell'']/\partial\eta}, which is not
 \eqn{-\mathbb{E}[\ell''']}: differentiating an expectation moves the measure
 as well as the integrand, so that
@@ -36,9 +37,9 @@ identity on its own, which relates only symmetrized sums of such moments.
 
 \pkg{distributions7} supplies it as
 \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}}. The two arrays are
-keyed differently, the observed one being symmetric in all three indices and
-the expected one in its first two only, so the key builder travels with
-the array and no consumer assumes one.
+keyed differently, because the observed one is symmetric in all three
+indices and the expected one in its first two only, so the key builder
+travels with the array and a consumer does not assume one key.
 }
 \seealso{
 \code{\link[=u_vector]{u_vector()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

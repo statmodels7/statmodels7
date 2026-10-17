@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{par_values}
 \alias{par_values}
-\title{The Values One Entry of \code{par} Stands For}
+\title{The Values Represented by One Entry of \code{par}}
 \usage{
 par_values(e, k, key)
 }
@@ -17,8 +17,8 @@ par_values(e, k, key)
 A numeric vector of length \code{k}.
 }
 \description{
-A numeric vector of the length the key addresses, from a vector, a single
-number or a function of the count.
+Returns a numeric vector of the length that the key addresses, from a
+vector, a single number or a function of the count.
 }
 \details{
 A function that returns the wrong number of values is reported and not

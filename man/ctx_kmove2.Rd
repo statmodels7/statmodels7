@@ -15,16 +15,17 @@ ctx_kmove2(ctx, spec, design, coef, hyper)
 A list with \code{deriv} and \code{key}.
 }
 \description{
-\eqn{\partial^2\,\mathbb{E}[\ell'']/\partial\eta^2}, the array the expected
-route's outer Hessian traces twice-contracted against the leverage diagonal,
-together with its key builder.
+Returns \eqn{\partial^2\,\mathbb{E}[\ell'']/\partial\eta^2}, the array that
+the expected route's outer Hessian traces, twice contracted against the
+leverage diagonal, together with its key builder.
 }
 \details{
 It is read only on the expected route, where \code{\link[=outer_gradient_ok]{outer_gradient_ok()}} has
-already checked \code{\link[=expected_deriv2_ok]{expected_deriv2_ok()}}. The components are symmetric in the
-information's pair and in the pair differentiated in, separately, so they are
-read through \code{\link[distributions7:d2expected_key]{distributions7::d2expected_key()}} and never through the
-observed route's sorted quadruple.
+already checked \code{\link[=expected_deriv2_ok]{expected_deriv2_ok()}}. The components are symmetric
+separately in the information's pair and in the pair with respect to which
+it is differentiated, so they are read through
+\code{\link[distributions7:d2expected_key]{distributions7::d2expected_key()}} and never through the observed route's
+sorted quadruple.
 }
 \seealso{
 \code{\link[=ctx_kmove]{ctx_kmove()}}, \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}

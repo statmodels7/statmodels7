@@ -1,9 +1,10 @@
 #' One Evaluation Point, Shared
 #'
 #' @description
-#' The quantities the marginal criterion, its gradient and its Hessian all
-#' read at one \eqn{(\beta, \theta)}: the linear predictors, the information,
-#' the penalty's Hessian, their sum and its factorization.
+#' Creates the environment that holds the quantities that the marginal
+#' criterion, its gradient and its Hessian all read at one
+#' \eqn{(\beta, \theta)}: the linear predictors, the information, the
+#' penalty's Hessian, their sum and its factorization.
 #'
 #' @details
 #' The criterion, its gradient and its Hessian read the same information, the
@@ -56,8 +57,8 @@ outer_context <- function(spec, design, coef, hyper, approx = "opg") {
 #' negligible beside the \eqn{O(np^2)} assembly that it guards.
 #'
 #' @param ctx A context, or `NULL`.
-#' @param coef The coefficients the caller is reading.
-#' @param hyper The hyperparameters the caller is reading.
+#' @param coef The coefficients that the caller is reading.
+#' @param hyper The hyperparameters that the caller is reading.
 #'
 #' @return `TRUE` when the context is usable, `FALSE` when it is
 #'   `NULL`; an error when it belongs to another point.
@@ -131,31 +132,31 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' The Penalized Matrix and Its Inverse
 #'
 #' @description
-#' \eqn{K = H + S} with the criterion's own information, and its inverse, which
-#' the gradient and the Hessian both read.
+#' Builds \eqn{K = H + S} with the criterion's own information, and its
+#' inverse, which the gradient and the Hessian both read.
 #'
 #' @details
-#' **The storage is the matrix's own.** \eqn{H} is sparse wherever the design
+#' The storage is the matrix's own. \eqn{H} is sparse wherever the design
 #' is, which covers a grouping indicator, a factor `by` and a `linpar` over
 #' many levels. Where the sum \eqn{H + S} is large enough and sparse enough
 #' ([worth_sparse()]) it is kept sparse and factorized as such. The decision
-#' reads the matrix alone and does not depend on which term produced it. The
+#' depends only on the matrix and not on which term produced it. The
 #' penalized matrix is a new object at every point, so a factorization stored
 #' on an earlier matrix is never reused.
 #'
-#' **The inverse stays dense whatever the factor is.** Its readers take full
+#' The inverse stays dense whatever the factor is. Its readers take full
 #' matrix products against it, [block_leverage()] and the Hessian's pair loop
 #' among them, so a dense inverse of a sparse matrix costs nothing that
-#' sparsity could have kept. What the sparse factor saves is the cost of
-#' producing it.
+#' sparsity could have kept. The sparse factor saves the cost of producing the
+#' inverse.
 #'
 #' `NULL` is returned where the matrix is not positive definite. For the
 #' mode's matrix (`laplace = FALSE`) the directions that [deficient_coords()]
 #' reports as unidentified are pinned and the factorization is attempted once
 #' more before `NULL` is returned.
 #'
-#' **Two matrices, where a penalty has a kink.** The criterion's determinant
-#' leaves out every coordinate that a kinked penalty covers
+#' Where a penalty has a kink, there are two matrices. The criterion's
+#' determinant leaves out every coordinate that a kinked penalty covers
 #' ([laplace_pinned()]), which is the matrix that `laplace = TRUE` selects. The
 #' default is the mode's own curvature, which leaves out the coordinates that
 #' the marginal criterion holds or does not identify ([pinned_coords()]), the
@@ -170,8 +171,8 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' @param expected Whether \eqn{H} is the expected information, as the
 #'   criterion carries under `reml(hessian = "expected")`, or the observed one.
 #'   The two give different matrices and keep separate cache entries.
-#' @param laplace Whether the matrix is the criterion's, with the kinked
-#'   coordinates left out, or the mode's.
+#' @param laplace Whether the matrix is the criterion's, which leaves out the
+#'   kinked coordinates, or the mode's.
 #'
 #' @return A list with `K`, `inv` and `logdet`, or `NULL`.
 #'
@@ -244,7 +245,7 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE,
 }
 
 
-#' Pin the Coordinates a Boundary Has Frozen
+#' Pin the Coordinates That a Boundary Has Frozen
 #'
 #' @description
 #' Replaces the row and column of every coordinate whose curvature is not
@@ -252,12 +253,12 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE,
 #' the rest of the matrix alone.
 #'
 #' @details
-#' A parameter that has reached the clamp that its link keeps it strictly
-#' inside leaves the family's curvature there at `NaN`, and one such entry is
-#' enough to deny the whole matrix a Cholesky factor. The coordinate is not
-#' one that the criterion integrates over, being held at a boundary where its
-#' own score is exactly zero, so it contributes nothing to the Laplace
-#' approximation. A unit diagonal contributes exactly that:
+#' A parameter that has reached the clamp of its link, which keeps it strictly
+#' inside its bounds, leaves the family's curvature there at `NaN`, and one
+#' such entry is enough to deny the whole matrix a Cholesky factor. The
+#' criterion does not integrate over the coordinate, because it is held at a
+#' boundary where its own score is exactly zero, so it contributes nothing to
+#' the Laplace approximation. A unit diagonal contributes exactly that:
 #' \eqn{\log\lvert K\rvert} gains \eqn{\log 1 = 0}, and
 #' \eqn{K^{-1}g} returns that coordinate's own score, which is zero.
 #'
@@ -267,13 +268,14 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE,
 #' @param K The penalized information.
 #' @param hold Integer positions to pin in addition to the coordinates with a
 #'   non-finite diagonal (the coefficients that the marginal criterion holds,
-#'   and the coordinates that a kinked penalty covers). None by default.
+#'   and the coordinates that a kinked penalty covers). The default is
+#'   `integer(0)`.
 #'
-#' @return `K` with the pinned coordinates replaced by the identity's rows and
-#'   columns, carrying the attributes `held` (their number), `held_at` (their
-#'   positions), `boundary_at` (the positions with a non-finite diagonal) and
-#'   `hold_at` (the positions pinned through `hold` alone). Where there are no
-#'   pinned coordinates the matrix is otherwise unchanged and the positions
+#' @return `K`, in which the pinned coordinates are replaced by the identity's
+#'   rows and columns, carrying the attributes `held` (their number), `held_at`
+#'   (their positions), `boundary_at` (the positions with a non-finite diagonal)
+#'   and `hold_at` (the positions pinned only through `hold`). Where there are
+#'   no pinned coordinates the matrix is otherwise unchanged and the positions
 #'   are empty.
 #'
 #' @seealso [ctx_penalized()], [iwls_solve()]
@@ -310,13 +312,13 @@ pin_boundary <- function(K, hold = integer(0)) {
 #' Which Coordinates a Boundary Has Frozen
 #'
 #' @description
-#' The positions whose curvature is not finite, as left by a parameter
-#' sitting at the clamp that its link keeps it strictly inside.
+#' Returns the positions whose curvature is not finite, as left by a parameter
+#' sitting at the clamp of its link, which keeps it strictly inside its bounds.
 #'
 #' @details
 #' The test is on the diagonal. A frozen coordinate makes its whole row
-#' non-finite, cross terms included, so a test over whole columns marks its
-#' neighbors too.
+#' non-finite, including the cross terms, so a test over whole columns marks
+#' its neighbors too.
 #'
 #' @param K A square matrix, the information or the penalized information.
 #'
@@ -336,8 +338,8 @@ boundary_coords <- function(K) {
 #' What the Outer Criterion Can Resolve at This Fit
 #'
 #' @description
-#' The size of a difference in the criterion that carries no information,
-#' computed from the fit at the point.
+#' Computes the size of a difference in the criterion that carries no
+#' information, from the fit at the point.
 #'
 #' @details
 #' The criterion is read at the penalized mode, and the inner fit stops short
@@ -351,9 +353,9 @@ boundary_coords <- function(K) {
 #'
 #' The criterion carries \eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which
 #' is not stationary in \eqn{\beta}, so a mode error enters it at first order
-#' and the quadratic form \eqn{\tfrac{1}{2} g' K^{-1} g} alone does not bound
-#' the change. The criterion is therefore evaluated at the displaced
-#' coefficients.
+#' and the quadratic form \eqn{\tfrac{1}{2} g' K^{-1} g} does not bound
+#' the change by itself. The criterion is therefore
+#' evaluated at the displaced coefficients.
 #'
 #' The reading estimates the spread of the criterion across warm starts. It is
 #' usually below that spread, because the spread is a range over several paths
@@ -440,26 +442,26 @@ criterion_resolution <- function(st, spec, design, method, criterion_at) {
 
 
 
-#' The Resolution the Search Is Given, Out of the Readings Taken So Far
+#' The Resolution That the Search Is Given, Out of the Readings Taken So Far
 #'
 #' @description
-#' The largest of the usable readings [criterion_resolution()] has
-#' returned during this search.
+#' Returns the largest of the usable readings that [criterion_resolution()]
+#' has returned during this search.
 #'
 #' @details
 #' A reading is taken at every usable evaluation, and each one measures how
-#' far the criterion moves when the mode is displaced by the error that
-#' evaluation's inner fit stopped at. The displacement varies across
-#' evaluations by far more than the quantity that it stands for does, so the choice
-#' of which reading to keep decides the answer.
+#' far the criterion moves when the mode is displaced by the error at which
+#' that evaluation's inner fit stopped. The displacement varies across
+#' evaluations by far more than the quantity that it represents does, so the
+#' answer depends on which reading is kept.
 #'
-#' The readings are already filtered to acceptable modes, which is why the
-#' largest of them is the one to keep: [criterion_resolution()] returns `NA`
-#' where the mode error exceeds [mode_error_limit()], so every reading that
-#' reaches this function comes from a mode that the layer accepts. A
-#' resolution has to bound how far the criterion can move between two such
-#' modes, and not how little it moved at the evaluation whose inner score
-#' happened to stop lowest.
+#' The readings are already filtered to acceptable modes, because
+#' [criterion_resolution()] returns `NA` where the mode error exceeds
+#' [mode_error_limit()], so every reading that reaches this function comes
+#' from a mode that the layer accepts. The largest of them is therefore the
+#' one to keep. A resolution has to bound how far the criterion can move
+#' between two such modes, and not how little it moved at the evaluation
+#' whose inner score happened to stop lowest.
 #'
 #' The inner score at which a Newton step stops varies by orders of magnitude
 #' across evaluations, and a minimum over such a sequence reads the luckiest
@@ -482,21 +484,21 @@ resolution_summary <- function(x) {
 }
 
 
-#' The Matrix the Traces Are Taken Against
+#' The Matrix Against Which the Traces Are Taken
 #'
 #' @description
-#' \eqn{M}, which is \eqn{K^{-1}} when nothing is projected away and the
-#' projected inverse otherwise.
+#' Returns \eqn{M}, which is the projected inverse when a subspace is projected
+#' away and \eqn{K^{-1}} otherwise.
 #'
 #' @param ctx A context, or `NULL`.
 #' @param pen The result of [ctx_penalized()].
 #' @param basis The integrated subspace, or `NULL`.
-#' @param expected Which information `pen` was built with, which is the
+#' @param expected The information with which `pen` was built, which is the
 #'   cache's key: the projection is of that matrix, so one entry cannot serve
 #'   both information types.
 #'
-#' @return A square matrix, with the rows and columns of the pinned
-#'   coordinates set to zero, or `NULL`.
+#' @return A square matrix in which the rows and columns of the pinned
+#'   coordinates are zero, or `NULL`.
 #'
 #' @keywords internal
 ctx_trace_matrix <- function(ctx, pen, basis, expected = FALSE) {
@@ -557,12 +559,12 @@ ctx_theta <- function(ctx, spec, design, coef, hyper) {
 #' The Per-Observation Diagonals at the Context's Point
 #'
 #' @description
-#' [block_leverage()], computed once and read by the gradient's
-#' contraction and by every pair of the Hessian.
+#' Returns the result of [block_leverage()], computed once and read by the
+#' gradient's contraction and by every pair of the Hessian.
 #'
 #' @param ctx A context, or `NULL`.
 #' @param design The design.
-#' @param M The matrix the traces are taken against.
+#' @param M The matrix against which the traces are taken.
 #' @param params,npar,offs The block bookkeeping.
 #' @param threads How many threads the sparse route's kernel may use.
 #'
@@ -583,15 +585,16 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
 #' How the Penalized Matrix Moves With the Coefficients
 #'
 #' @description
-#' The array [u_vector()] contracts against the leverage diagonal,
-#' together with the builder that reads it: the third derivative of the
-#' log-density where the criterion uses the observed information, and the
+#' Returns the array that [u_vector()] contracts against the leverage
+#' diagonal, together with the builder that reads it: the third derivative of
+#' the log-density where the criterion uses the observed information, and the
 #' derivative of the expected information where it uses the expected one.
 #'
 #' @details
 #' \eqn{K} enters the criterion through its determinant, so the gradient needs
-#' \eqn{\partial K/\partial\beta}. With the observed information that is
-#' \eqn{-\ell'''}, which every family carries in closed form. With the expected
+#' \eqn{\partial K/\partial\beta}. With the observed information, that
+#' derivative is \eqn{-\ell'''}, which every family carries in closed form.
+#' With the expected
 #' one it is \eqn{-\partial\,\mathbb{E}[\ell'']/\partial\eta}, which is not
 #' \eqn{-\mathbb{E}[\ell''']}: differentiating an expectation moves the measure
 #' as well as the integrand, so that
@@ -602,9 +605,9 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
 #'
 #' \pkg{distributions7} supplies it as
 #' [distributions7::distrib_dexpected_hessian()]. The two arrays are
-#' keyed differently, the observed one being symmetric in all three indices and
-#' the expected one in its first two only, so the key builder travels with
-#' the array and no consumer assumes one.
+#' keyed differently, because the observed one is symmetric in all three
+#' indices and the expected one in its first two only, so the key builder
+#' travels with the array and a consumer does not assume one key.
 #'
 #' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
@@ -641,16 +644,17 @@ ctx_kmove <- function(ctx, spec, design, coef, hyper, method) {
 #' How the Expected Information Moves With the Coefficients, Twice
 #'
 #' @description
-#' \eqn{\partial^2\,\mathbb{E}[\ell'']/\partial\eta^2}, the array the expected
-#' route's outer Hessian traces twice-contracted against the leverage diagonal,
-#' together with its key builder.
+#' Returns \eqn{\partial^2\,\mathbb{E}[\ell'']/\partial\eta^2}, the array that
+#' the expected route's outer Hessian traces, twice contracted against the
+#' leverage diagonal, together with its key builder.
 #'
 #' @details
 #' It is read only on the expected route, where [outer_gradient_ok()] has
-#' already checked [expected_deriv2_ok()]. The components are symmetric in the
-#' information's pair and in the pair differentiated in, separately, so they are
-#' read through [distributions7::d2expected_key()] and never through the
-#' observed route's sorted quadruple.
+#' already checked [expected_deriv2_ok()]. The components are symmetric
+#' separately in the information's pair and in the pair with respect to which
+#' it is differentiated, so they are read through
+#' [distributions7::d2expected_key()] and never through the observed route's
+#' sorted quadruple.
 #'
 #' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
@@ -678,7 +682,7 @@ ctx_kmove2 <- function(ctx, spec, design, coef, hyper) {
 }
 
 
-#' The Approximation a Context Was Built With
+#' The Approximation With Which a Context Was Built
 #'
 #' @param ctx A context, or `NULL`.
 #'
@@ -694,8 +698,8 @@ ctx_approx <- function(ctx) {
 #' A Higher Derivative of the Log-Density at the Context's Point
 #'
 #' @description
-#' The third or fourth derivative on the link scale, which the gradient's
-#' contraction and the Hessian's two contractions all read.
+#' Returns the third or fourth derivative on the link scale, which the
+#' gradient's contraction and the Hessian's two contractions all read.
 #'
 #' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
@@ -729,9 +733,9 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
 #' How Far Above Its Minimum an Inner Fit May Sit and Still Report a Resolution
 #'
 #' @description
-#' The limit that [criterion_resolution()] places on \eqn{g'K^{-1}g/2}, the
-#' decrease that the mode's own Newton correction predicts, above which no
-#' resolution is reported.
+#' Returns the limit that [criterion_resolution()] places on
+#' \eqn{g'K^{-1}g/2}, the decrease that the mode's own Newton correction
+#' predicts. Above this limit, [criterion_resolution()] reports no resolution.
 #'
 #' @details
 #' The resolution is read by displacing the coefficients to the mode implied
@@ -755,31 +759,32 @@ mode_error_limit <- function() 1e-3
 #' How Far Above Its Mode the Inner Fit Stopped
 #'
 #' @description
-#' \eqn{\tfrac12 g'K^{-1}g}, the decrease the penalized likelihood's own
-#' Newton correction predicts at the point the inner fit returned: how much
-#' log-likelihood is still on the table there.
+#' Returns \eqn{\tfrac12 g'K^{-1}g}, the decrease that the penalized
+#' likelihood's own Newton correction predicts at the point that the inner fit
+#' returned, which is the amount of log-likelihood still to be gained there.
 #'
 #' @details
-#' It decides whether a point is available, which is a different question from
-#' the one that the inner optimizer's flag answers. The flag reports whether a
+#' Its value determines whether a point is available. The inner optimizer's
+#' flag concerns a different question: it reports whether a
 #' stopping rule fired. Availability is whether the criterion, a Laplace
 #' expansion at the mode, is valid at this point.
 #'
 #' Availability is a matter of distance and has a natural scale, log-likelihood
 #' units. The flag is a boolean about a threshold on a score whose size depends
 #' on the model. The two can differ: an inner fit may stop on the
-#' objective-stall guard with the score slightly above the absolute tolerance
-#' and the penalized likelihood already at its mode to many digits. Such a
+#' objective-stall guard while the score is slightly above the absolute
+#' tolerance and the penalized likelihood is already at its mode to many
+#' digits. Such a
 #' point is available by this reading and unavailable by the flag.
 #'
 #' It is used to add points and not to remove any: a run whose flag reports
 #' convergence stays usable whatever this reads.
 #'
 #' @param ctx The evaluation context, so the penalized factorization is the
-#'   one the criterion will read rather than a second copy.
+#'   one that the criterion will read rather than a second copy.
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param coef The coefficients the inner fit returned.
+#' @param coef The coefficients that the inner fit returned.
 #' @param hyper The hyperparameters.
 #' @param score The inner objective's gradient at those coefficients.
 #' @param expected Whether the penalized information is the expected one.

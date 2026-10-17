@@ -17,9 +17,10 @@ gamma_nodes(a, h = 0.6, k_min = 40L)
 A list with \code{w}, the nodes, and \code{a}, the weights, which sum to one.
 }
 \description{
-A trapezoidal rule in \eqn{v = \log w} for the \eqn{\mathrm{Gamma}(a, a)}
-density, over the range between its quantiles \eqn{10^{-12}} and
-\eqn{1 - 10^{-12}}, the weights normalized to sum to one.
+Returns a trapezoidal rule in \eqn{v = \log w} for the
+\eqn{\mathrm{Gamma}(a, a)} density, over the range between its quantiles
+\eqn{10^{-12}} and \eqn{1 - 10^{-12}}. The weights are normalized to sum
+to one.
 }
 \details{
 A prediction's distribution function, averaged over \eqn{w}, depends on

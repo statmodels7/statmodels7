@@ -15,9 +15,9 @@ class_notes(spec, design)
 A character vector, possibly empty.
 }
 \description{
-One note per class with two or more pieces (terms, or developments of one
-term), naming the label, the grouping and the terms whose coefficients
-share the block.
+Returns one note per class with two or more pieces (terms, or developments
+of one term), naming the label, the grouping and the terms whose
+coefficients share the block.
 }
 \details{
 A class's hyperparameters are printed once, at the head of the summary,
@@ -25,7 +25,7 @@ where each coordinate is named by the equation and the column to which it
 belongs. The note gives the same information in one sentence, for a reader
 who has the summary object and not the printed page.
 
-A class of one member gets no note: there is nothing shared to report, and
+A class of one member has no note: there is nothing shared to report, and
 its block is the random effect that it would have been without a label.
 }
 \seealso{

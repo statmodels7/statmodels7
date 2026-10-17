@@ -19,7 +19,7 @@ outer_pieces(spec, design, coef, hyper, idx, offs, total, order = 2L)
 
 \item{offs, total}{The block offsets and the total width.}
 
-\item{order}{\code{1} for the first-order pieces alone, \code{2} for the
+\item{order}{\code{1} for the first-order pieces only, \code{2} for the
 second-order ones as well.}
 }
 \value{
@@ -29,8 +29,8 @@ keyed), \code{rho2} (the hyperparameter Hessian) and \code{pair} (the key
 of each pair).
 }
 \description{
-The penalty's contributions to the criterion's gradient and Hessian, placed
-in the stacked coefficient space.
+Returns the penalty's contributions to the criterion's gradient and
+Hessian, placed in the stacked coefficient space.
 }
 \details{
 At order 1 the function calls \code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}} and

@@ -19,8 +19,9 @@ leverage_pairs(ta, tb, Mab, n, threads = 1L)
 A numeric vector as long as the sample.
 }
 \description{
+Computes
 \eqn{G_i = \sum_{j\in J_i}\sum_{k\in K_i} X_a[i,j]X_b[i,k]M_{ab}[j,k]}, the
-same quantity \code{\link[=block_leverage]{block_leverage()}} otherwise reads off a dense
+same quantity that \code{\link[=block_leverage]{block_leverage()}} otherwise reads off a dense
 \eqn{n\times p_b} product.
 }
 \details{

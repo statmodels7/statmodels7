@@ -28,15 +28,16 @@ penalty_dbeta_blocks(spec, design, coef, hyper, v)
 \item{M}{The matrix against which the trace is taken, \code{total} square.}
 }
 \value{
-\code{statmod_penalty_dbeta()} a \code{total} square matrix, or \code{NULL} where
+\code{statmod_penalty_dbeta()} a \code{total} square matrix, or \code{NULL} if
 no penalty's Hessian moves; \code{penalty_dbeta_trace()} a single number;
 \code{penalty_dbeta_blocks()} a list of \code{pos} and \code{T} pairs.
 }
 \description{
-\eqn{\sum_u \partial S_u/\partial\beta\,[v]} over every penalty on the
-stacked coefficients whose Hessian depends on them, placed in the stacked
-coefficient space. \code{penalty_dbeta_trace()} is its trace against a matrix and
-\code{penalty_dbeta_blocks()} the per-penalty pieces both are assembled from.
+Computes \eqn{\sum_u \partial S_u/\partial\beta\,[v]} over every penalty on
+the stacked coefficients whose Hessian depends on them, placed in the
+stacked coefficient space. \code{penalty_dbeta_trace()} computes its trace
+against a matrix, and \code{penalty_dbeta_blocks()} returns the per-penalty
+pieces from which both are assembled.
 }
 \details{
 A marginal criterion's determinant is of \eqn{H + S}, so the mode's movement
@@ -47,12 +48,12 @@ prediction-error criterion reads the matrix itself inside its trace. Every
 such penalty contributes, not only the one owning the hyperparameter being
 differentiated, because the mode moves in all of the coefficients at once.
 
-A penalty that \code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} calls quadratic is skipped,
-which is every ridge, smooth and Gaussian random effect, so a model carrying
-only those assembles nothing: the matrix is \code{NULL} and the trace exactly
-\code{0}, which leaves the gradient unchanged. A kinked penalty and a mixed
-covariance class are skipped as well, and a penalty over a structural term's
-own parameters is read on the joint vector by
+A penalty for which \code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}} returns \code{TRUE} is
+skipped (this is every ridge, smooth and Gaussian random effect), so a
+model carrying only those assembles nothing: the matrix is \code{NULL} and
+the trace exactly \code{0}, which leaves the gradient unchanged. A kinked penalty
+and a mixed covariance class are skipped as well, and a penalty over a
+structural term's own parameters is read on the joint vector by
 \code{\link[=statmod_structural_grad]{statmod_structural_grad()}}.
 }
 \seealso{

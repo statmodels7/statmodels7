@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_context.R
 \name{pin_boundary}
 \alias{pin_boundary}
-\title{Pin the Coordinates a Boundary Has Frozen}
+\title{Pin the Coordinates That a Boundary Has Frozen}
 \usage{
 pin_boundary(K, hold = integer(0))
 }
@@ -11,14 +11,15 @@ pin_boundary(K, hold = integer(0))
 
 \item{hold}{Integer positions to pin in addition to the coordinates with a
 non-finite diagonal (the coefficients that the marginal criterion holds,
-and the coordinates that a kinked penalty covers). None by default.}
+and the coordinates that a kinked penalty covers). The default is
+\code{integer(0)}.}
 }
 \value{
-\code{K} with the pinned coordinates replaced by the identity's rows and
-columns, carrying the attributes \code{held} (their number), \code{held_at} (their
-positions), \code{boundary_at} (the positions with a non-finite diagonal) and
-\code{hold_at} (the positions pinned through \code{hold} alone). Where there are no
-pinned coordinates the matrix is otherwise unchanged and the positions
+\code{K}, in which the pinned coordinates are replaced by the identity's
+rows and columns, carrying the attributes \code{held} (their number), \code{held_at}
+(their positions), \code{boundary_at} (the positions with a non-finite diagonal)
+and \code{hold_at} (the positions pinned only through \code{hold}). Where there are
+no pinned coordinates the matrix is otherwise unchanged and the positions
 are empty.
 }
 \description{
@@ -27,12 +28,12 @@ finite, and of every coordinate named in \code{hold}, by the identity's, leaving
 the rest of the matrix alone.
 }
 \details{
-A parameter that has reached the clamp that its link keeps it strictly
-inside leaves the family's curvature there at \code{NaN}, and one such entry is
-enough to deny the whole matrix a Cholesky factor. The coordinate is not
-one that the criterion integrates over, being held at a boundary where its
-own score is exactly zero, so it contributes nothing to the Laplace
-approximation. A unit diagonal contributes exactly that:
+A parameter that has reached the clamp of its link, which keeps it strictly
+inside its bounds, leaves the family's curvature there at \code{NaN}, and one
+such entry is enough to deny the whole matrix a Cholesky factor. The
+criterion does not integrate over the coordinate, because it is held at a
+boundary where its own score is exactly zero, so it contributes nothing to
+the Laplace approximation. A unit diagonal contributes exactly that:
 \eqn{\log\lvert K\rvert} gains \eqn{\log 1 = 0}, and
 \eqn{K^{-1}g} returns that coordinate's own score, which is zero.
 

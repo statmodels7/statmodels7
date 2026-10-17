@@ -11,9 +11,9 @@ predictive_response(spec, comps, level)
 
 \item{comps}{A list of components, each a list with \code{eta}, a named list of
 the predictors' means, \code{C}, their covariance as an array \verb{P x P x n} or
-\code{NULL} for none, and optionally \code{weight}, equal weights otherwise. An
-attribute \code{infinite_variance} set to \code{TRUE} reports the standard
-deviation as \code{NA}.}
+\code{NULL} for none, and optionally \code{weight}, equal weights otherwise. If
+the list has the attribute \code{infinite_variance} equal to \code{TRUE}, the
+standard deviation is reported as \code{NA}.}
 
 \item{level}{The interval's level.}
 }
@@ -21,25 +21,26 @@ deviation as \code{NA}.}
 A data frame with \code{fit} (the median), \code{se}, \code{lower} and \code{upper}.
 }
 \description{
-The median, the ends of an interval and the standard deviation of the
-response at each row, under a mixture of the family over the predictors.
+Returns the median, the ends of an interval and the standard deviation of
+the response at each row, under a mixture of the family over the
+predictors.
 }
 \details{
 Each component \eqn{c} gives, at row \eqn{i}, the predictors' mean
-\eqn{\eta_{ci}} and their covariance \eqn{C_{ci}}, the predictors being
+\eqn{\eta_{ci}} and their covariance \eqn{C_{ci}}, and the predictors are
 taken jointly Gaussian within it. The distribution of \eqn{Y} is the
 mixture of the family over the components, with weights \eqn{w_c} that
 sum to one (equal where a component carries none), and, within each
-component, over the predictors,
+component, over the predictors:
 \deqn{G_i(y) = \sum_{c} w_c E_{\eta \sim
-  \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))],}
-each expectation evaluated at the single node \eqn{\eta_{ci}} where
+  \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))].}
+Each expectation is evaluated at the single node \eqn{\eta_{ci}} where
 \eqn{C_{ci}} is zero at every row. Otherwise \eqn{C_{ci} = LL^\top} is
 split by its eigenvectors, and \eqn{r} directions carry variance. The
 directions after the first are a Gauss-Hermite product grid with
 \eqn{k^{r-1}} nodes, where
 \eqn{k = \max(2, \min(8, \lfloor 64^{1/(r-1)} \rfloor))}, and the first,
-the one of largest variance, a 20-node Gauss-Hermite rule. Where that
+the one of largest variance, is a 20-node Gauss-Hermite rule. Where that
 variance is large against the spread of the conditional law, the law's
 distribution function turns from 0 to 1 between two adjacent nodes, which
 the rule integrates badly. A direction cell whose distribution function
@@ -47,20 +48,20 @@ differs by more than 0.3 between two adjacent nodes is therefore
 integrated by \code{\link[numericals7:quad_vec]{numericals7::quad_vec()}} instead, at its default
 tolerances. A direction cell is left to Gauss-Hermite whatever its values
 when it is among the lightest, whose weights add up to at most 1e-8. One
-component carries the default interval, two sources of variation being
+component carries the default interval, and two sources of variation are
 folded into its covariance; the parametric bootstrap gives one component
 per replica. A quantile of \eqn{G_i} lies between the smallest and the
-largest quantile of the conditional laws at the nodes, a mixture's
-distribution function being an average of theirs. For a continuous family
+largest quantile of the conditional laws at the nodes, because a mixture's
+distribution function is an average of theirs. For a continuous family
 it is found by Newton's method on \eqn{G_i(y) = p} with the mixture's
 density as the derivative, started at the weighted median of those
-quantiles and kept inside a bracket every evaluation shrinks; for a
-discrete one by bisection on the integers, as the smallest value at which
-\eqn{G_i} reaches the level. The quantiles read the family's distribution
-function and quantile function, and the density for a continuous family,
-so no location parameter is needed. The standard deviation reads the
-family's mean and variance, and is
-\eqn{\sqrt{E[\mathrm{Var}(Y\mid\eta)] + \mathrm{Var}(E[Y\mid\eta])}},
-\code{NA} where the family's mean or variance does not exist.
+quantiles and kept inside a bracket that every evaluation shrinks; for a
+discrete family it is found by bisection on the integers, as the smallest
+value at which \eqn{G_i} reaches the level. The quantiles read the family's
+distribution function and quantile function, and the density for a continuous
+family, so the family does not need a location parameter. The standard
+deviation reads the family's mean and variance, and is
+\eqn{\sqrt{E[\mathrm{Var}(Y\mid\eta)] + \mathrm{Var}(E[Y\mid\eta])}}, \code{NA}
+where the family's mean or variance does not exist.
 }
 \keyword{internal}

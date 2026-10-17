@@ -4,10 +4,11 @@ NULL
 #' The Parametric Bootstrap of a Prediction Interval
 #'
 #' @description
-#' The components of the predictive mixture [predictive_response()] reads
-#' for `predictive = "bootstrap"`: one per replica, each the fit refitted on a
-#' response simulated from the fitted model, read at the rows predicted with
-#' no estimation uncertainty of its own.
+#' Returns the components of the predictive mixture that
+#' [predictive_response()] reads for `predictive = "bootstrap"`. There is one
+#' component per replica, which is the fit refitted on a response simulated
+#' from the fitted model and read at the rows predicted with no estimation
+#' uncertainty of its own.
 #'
 #' @details
 #' A replica draws the response from the family at the fitted model. The
@@ -21,18 +22,20 @@ NULL
 #' predicted rather than a source of variation. Every other coefficient keeps
 #' its estimate. The replica is then refitted in one of two ways:
 #' \describe{
-#'   \item{`"coefficients"`}{at the hyperparameters that the fit reached, every
-#'     coefficient re-estimated. A coefficient that the fit estimated on its
-#'     criterion (a dispersion under [reml()]) is estimated there again, with
-#'     the hyperparameters held, so the replica's estimator is the fit's.}
-#'   \item{`"full"`}{with the hyperparameters chosen again by the fit's own
+#'   \item{`"coefficients"`}{every coefficient is re-estimated at the
+#'     hyperparameters that the fit reached. A coefficient that the fit
+#'     estimated on its criterion (a dispersion under [reml()]) is estimated
+#'     there again while the hyperparameters are held, so the replica's
+#'     estimator is the fit's.}
+#'   \item{`"full"`}{the hyperparameters are chosen again by the fit's own
 #'     criteria, so their uncertainty enters the interval too, and the path
 #'     of a kinked penalty is walked again, warm started from the fit's
 #'     coefficients. A cross-validated criterion needs the data's folds and
 #'     is rejected.}
 #' }
 #' Every refit starts at the optimum that the fit found: its coefficients,
-#' the criterion's own coefficients among them, and its hyperparameters.
+#' including those that the fit estimated on its criterion, and its
+#' hyperparameters.
 #' The bootstrap is rejected for a model with a block that moves with its
 #' coefficients ([modelterms7::seg()], [modelterms7::jump()],
 #' [modelterms7::jseg()], [modelterms7::nl()]) and for a response that is not
@@ -42,21 +45,21 @@ NULL
 #' predictors at the rows predicted and the covariance that the effects set
 #' aside add, at its own hyperparameters. The interval is the mixture's, which
 #' is the parametric bootstrap predictive distribution of Harris (1989); the
-#' default `predictive = "averaged"` is its normal approximation, the
-#' sampling distribution of the estimates replaced by \eqn{\mathrm{N}(\hat
+#' default `predictive = "averaged"` is its normal approximation, in which the
+#' sampling distribution of the estimates is replaced by \eqn{\mathrm{N}(\hat
 #' \beta, \widehat{V})}. A replica whose refit fails is left out, and the
 #' warning reports how many were.
 #'
 #' @param object The [StatmodFit()].
 #' @param spec,design The specification and design at the rows predicted,
-#'   with the columns of the effects set aside at zero.
+#'   in which the columns of the effects set aside are zero.
 #' @param aside The rows of [random_modes()] that are not `"conditional"`.
 #' @param n_boot The number of replicas.
 #' @param refit `"coefficients"` or `"full"`.
 #'
-#' @return A list of components, each a list with `eta`, `C` and `weight`,
-#'   with the attribute `infinite_variance` set to `TRUE` where a prior has
-#'   no variance. The weights of the components add up to one.
+#' @return A list of components, each a list with `eta`, `C` and `weight`.
+#'   The list has the attribute `infinite_variance`, which is `TRUE` where a
+#'   prior has no variance. The weights of the components add up to one.
 #'
 #' @references Harris, I. R. (1989). Predictive fit for natural exponential
 #'   families. *Biometrika*, 76, 675--684.
@@ -95,9 +98,9 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
   is_cv <- function(m) !is.null(m) && identical(m@kind, "cv")
   if (identical(refit, "full") &&
       (is_cv(sm$outer) || is_cv(sm$sparse_criterion))) {
-    stop(paste0("boot_refit = \"full\" chooses the hyperparameters again ",
-                "on every replica, and\n  a cross-validated criterion needs ",
-                "the data's folds, which a fit does not\n  keep. ",
+    stop(paste0("With boot_refit = \"full\" the hyperparameters are chosen ",
+                "again on every replica, and\n  a cross-validated criterion ",
+                "needs the data's folds, which a fit does not\n  keep. ",
                 "boot_refit = \"coefficients\" holds them at the fit's ",
                 "values."), call. = FALSE)
   }
@@ -161,22 +164,23 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
 #'
 #' @description
 #' Returns a function of no arguments that draws one response at the fitting
-#' rows: the effects of the [modelterms7::random()] terms in `aside` from the
-#' prior the fit estimated, every other coefficient at its estimate, and the
-#' response from the family at the parameters that gives.
+#' rows. The function draws the effects of the [modelterms7::random()] terms
+#' in `aside` from the prior that the fit estimated, keeps every other
+#' coefficient at its estimate, and draws the response from the family at the
+#' parameters that these coefficients give.
 #'
 #' @details
-#' The effects are drawn with [penalties7::penalty_draw()], the penalty read
-#' as a prior at the fit's hyperparameters, and placed by the map
-#' [rstatmod()] uses, so a structured covariance (an AR(1), a compound
-#' symmetry), a covariance a label shares between terms and a prior that is
-#' not Gaussian (a multivariate Student t, a Laplace) are drawn alike. A
-#' smooth or a ridge is not a random effect and keeps its estimate.
+#' The effects are drawn by reading the penalty as a prior at the fit's
+#' hyperparameters with [penalties7::penalty_draw()], and are placed by the
+#' map that [rstatmod()] uses, so a structured covariance (an AR(1), a
+#' compound symmetry), a covariance that a label shares between terms and a
+#' prior that is not Gaussian (a multivariate Student t, a Laplace) are drawn
+#' alike. A smooth or a ridge is not a random effect and keeps its estimate.
 #'
 #' @param object The [StatmodFit()].
 #' @param spec0,design0 Its specification and design at the fitting rows.
-#' @param aside The rows of [random_modes()] whose effects are redrawn, the
-#'   others keeping their estimates.
+#' @param aside The rows of [random_modes()] whose effects are redrawn; the
+#'   other effects keep their estimates.
 #'
 #' @return A function returning a numeric vector of `spec0@n_obs` values.
 #'
@@ -238,8 +242,9 @@ bootstrap_simulator <- function(object, spec0, design0, aside) {
 #' Refit One Bootstrap Replica
 #'
 #' @description
-#' Re-estimates the coefficients of a fit on a simulated response, at its
-#' hyperparameters or with them chosen again. See [predictive_bootstrap()].
+#' Re-estimates the coefficients of a fit on a simulated response, either at
+#' the fit's hyperparameters or after choosing the hyperparameters again. See
+#' [predictive_bootstrap()].
 #'
 #' @param object The [StatmodFit()].
 #' @param spec_b Its specification with the simulated response.

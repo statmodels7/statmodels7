@@ -7,7 +7,7 @@
 ridge_coef_rows(ridge, V, rows)
 }
 \arguments{
-\item{ridge}{The certificate's \code{ridge}, each element carrying the
+\item{ridge}{The certificate's \code{ridge}, in which each element carries the
 attribute \code{where}, the stacked positions of its coefficients (\code{NA} for a
 hyperparameter).}
 
@@ -19,8 +19,8 @@ hyperparameter).}
 The row indices, sorted.
 }
 \description{
-The rows of the coefficient table that lose their standard error to the
-ridges \code{\link[=statmod_certificate]{statmod_certificate()}} names.
+Returns the rows of the coefficient table whose standard errors are
+dropped because of the ridges that \code{\link[=statmod_certificate]{statmod_certificate()}} names.
 }
 \details{
 A ridge is written over the coordinates of the outer criterion; the
@@ -28,7 +28,7 @@ coefficients among them are taken as they are. The coefficients held in
 the inner fit move with the ridge through the mode, and the variance
 matrix carries that: the change of coefficient \eqn{j} per unit along the
 combination \eqn{x'\gamma} is \eqn{b_j = (Vx)_j / (x'Vx)}, and a
-coefficient with \eqn{|b_j| \ge 10^{-2}} is taken too, the direction being
+coefficient with \eqn{|b_j| \ge 10^{-2}} is taken too; the direction is
 scaled so that its largest entry is one. Where the variance matrix lacks a
 row for one of the ridge's coefficients or has a non-finite entry among
 them (the mode reading already held one of them), only the coefficients

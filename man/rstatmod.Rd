@@ -20,8 +20,9 @@ rstatmod(
 \item{formula}{The model formula, as \code{\link[=statmod]{statmod()}} takes it, with the
 equations separated by \code{|}. Its left-hand side must be a symbol.}
 
-\item{distrib}{A \pkg{distributions7} distribution object, which decides
-how many equations there are and what is drawn from.}
+\item{distrib}{A \pkg{distributions7} distribution object, which
+determines how many equations there are and the distribution from which
+the data are drawn.}
 
 \item{data}{A data frame of covariates, or \code{NULL} where \code{n} is given.}
 
@@ -29,8 +30,8 @@ how many equations there are and what is drawn from.}
 required where \code{data} is \code{NULL}, and where \code{data} is given it must equal
 the number of rows.}
 
-\item{n_sim}{How many data sets to draw, a positive whole number. \code{1} by
-default.}
+\item{n_sim}{How many data sets to draw, a positive whole number. The
+default is \code{1}.}
 
 \item{par}{Optional named list of what to hold, over the whole model: a
 distribution parameter, one of its coefficients or a group of them, a
@@ -40,7 +41,7 @@ details. \code{NULL}, the default, draws everything.}
 
 \item{sd}{The width of the draws, \code{1} by default. A quantity that rides a
 chart (a structural parameter, a prior's own scale) is drawn at half of
-it, the chart carrying a width of one onto most of its parameter's
+it, because a chart carries a width of one onto most of its parameter's
 range.}
 
 \item{offsets}{Optional named list of offsets, one per parameter, as
@@ -54,8 +55,8 @@ level stops the simulation with an error.}
 \value{
 An object of class \code{"StatmodSim"}, a list with the elements:
 \describe{
-\item{\code{data}}{the data frame with the response column added, named
-after the formula's left-hand side.}
+\item{\code{data}}{the data frame, to which the response column has been
+added under the name of the formula's left-hand side.}
 \item{\code{par}}{the coefficients used, drawn or given, named as the
 design names them.}
 \item{\code{theta}}{the distribution's parameters at every observation, a
@@ -64,10 +65,10 @@ named list with one vector per parameter.}
 score-driven term, the states of a latent chain, or the positions of
 a marginal break-point term), or \code{NULL}.}
 \item{\code{structural}}{such a term's own parameters, or \code{NULL}.}
-\item{\code{hyper}}{a data frame of the hyperparameters, one row per
-penalty and name, with the value drawn or held. Its columns are
-those of \code{\link[=hyper]{hyper()}} as far as they mean the same thing, \code{value}
-taking the place of \code{estimate}, so a study compares the two
+\item{\code{hyper}}{a data frame of the hyperparameters, with one row per
+penalty and name; each row gives the value drawn or held. Its columns
+are those of \code{\link[=hyper]{hyper()}} as far as they mean the same thing, and \code{value}
+takes the place of \code{estimate}, so a study compares the two
 directly.}
 \item{\code{n_sim}}{the number of data sets, as an integer.}
 \item{\code{call}}{the matched call.}
@@ -82,16 +83,16 @@ given, and returns the data drawn from that model together with the truth
 behind it.
 }
 \section{What it is for}{
-Data whose truth is known: write the model, draw from it, fit it back, and
-see whether the fit recovers what was put in. That is the shape of a
-simulation study, and of a check on a term that has just been written.
+Simulated data have a known truth: write the model, draw from it, fit it
+back, and see whether the fit recovers what was put in. That is the shape
+of a simulation study, and of a check on a term that has just been written.
 
 This is not \code{\link[stats:simulate]{stats::simulate()}}, which draws from a model already fitted.
 The \code{r} prefix is the one that R uses for a random draw, so the two names
 stay apart.
 
 A covariate needs no declaration. A factor becomes its contrasts and a
-numeric variable stays as it is, the design being built by the interpreter
+numeric variable stays as it is, and the design is built by the interpreter
 that a fit uses.
 }
 
@@ -128,15 +129,15 @@ entry of \code{par} may be, and the columns are drawn afresh at every replicate.
 A column of \code{data} under the same name is overwritten, and the columns of
 \code{data} that are not drawn are the same in every replicate.
 
-The choice decides what a study measures. With \code{data} the covariates are
+The choice determines what a study measures. With \code{data} the covariates are
 the same throughout, so the study measures the behavior of the estimator
 conditional on that design; with \code{covariates} it measures that behavior
-over the design as well. Neither is more correct, and a study should state
-which one it ran.
+over the design as well. The two choices are equally correct, and a study
+should state which one it ran.
 
 A drawn factor should have its levels fixed. A factor drawn with free
 levels can lose a level at some replicate. The design then has another
-shape than the one that the coefficients were drawn for, and the
+shape than the one for which the coefficients were drawn, and the
 simulation stops at that replicate with an error.
 }
 
@@ -154,8 +155,8 @@ single.
 }
 
 \section{The quantities that are drawn}{
-A call that names nothing draws the whole truth, so writing the model is
-all that getting data from it requires. Each quantity is drawn by the
+If the user names no quantity, the call draws the whole truth, so writing
+the model is enough to get data from it. Each quantity is drawn by the
 component that defines its meaning:
 \itemize{
 \item a coefficient of a design column has no other owner and comes from
@@ -170,12 +171,12 @@ that the penalty carries for it, and comes back in \code{hyper};
 \code{\link[modelterms7:term_draw]{modelterms7::term_draw()}}, on the chart that each one rides. A loading
 stays positive and a persistence stationary whatever comes out;
 \item a coefficient of a design column whose meaning only the term defines is
-drawn by the term, through \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}}, last of all
-so that what it writes is what survives. A break-point is the case: it
-is a position on the covariate's own axis, so a normal of width \code{sd}
-often lands outside the data, and the confinement then pins it to an edge
-of the interval, where one of the two segments holds a small share of the
-rows.
+drawn by the term, through \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}}, last of all,
+so that the values that it writes survive. A break-point is such a
+coordinate: it is a position on the covariate's own axis, so a normal of
+width \code{sd} often lands outside the data, and the term then confines it,
+which pins it to an edge of the interval, where one of the two segments
+holds a small share of the rows.
 }
 
 A hyperparameter that the term holds is used and not drawn, so
@@ -186,11 +187,11 @@ values are no longer the prior's own draw. They are drawn Gaussian at that
 width, so a heavy-tailed prior over a break-point keeps its family for the
 fitting but not for the simulation.
 
-What no prior reaches falls back to the plain draw. The cases are SCAD and
-MCP, which are improper by construction; an anisotropic tensor smooth,
-which is flat along its null space; a covariance class spanning a filter
-and an equation at once, which is in neither vector on its own; and a
-coordinate for which the draw of the penalty is missing.
+A coordinate that a prior does not reach falls back to the plain draw. The
+cases are SCAD and MCP, which are improper by construction; an anisotropic
+tensor smooth, which is flat along its null space; a covariance class
+spanning a filter and an equation at once, which is in neither vector on
+its own; and a coordinate for which the draw of the penalty is missing.
 }
 
 \section{Fixing quantities by name}{
@@ -198,14 +199,14 @@ coordinate for which the draw of the penalty is missing.
 \itemize{
 \item a distribution parameter, \code{mu}, which is that whole equation;
 \item one of its coefficients or a group of them, \code{mu.(Intercept)} or
-\code{mu.random}, a group being a name that the members extend at a dot;
+\code{mu.random}, where a group is a name that the members extend at a dot;
 \item a structural term's own parameter, \code{kappa1}, or a group of those,
 \code{omega.random}.
 }
 
 A value is a vector of that key's own length, a single number used for all
-of them, or a function of the count. The function is how a structured
-truth is written without a vocabulary of its own:
+of them, or a function of the count. A function writes a structured
+truth without a vocabulary of its own:
 \code{function(k) rnorm(k, 0, 0.4)} is a random effect at a scale chosen by the
 caller and \code{function(k) c(1.5, -2, rep(0, k - 2))} is a sparse truth for a
 lasso to find. A function that returns the wrong number of values or a
@@ -227,11 +228,11 @@ departure is.
 \section{A term with state}{
 The simulation runs through \code{\link[modelterms7:term_simulate]{modelterms7::term_simulate()}}, so the
 recursion that generates the data is the term's own. A score-driven term
-draws the response as it runs, its level at one time being driven by the
+draws the response as it runs, and its level at one time is driven by the
 score at the time before; a latent chain draws its path from the stationary
-law that the likelihood is written with; a marginal break-point term draws
-each group's positions from their prior. What each drew comes back in
-\code{latent}, which is what a recovery check compares against.
+law with which the likelihood is written; a marginal break-point term draws
+each group's positions from their prior. The values that each term drew
+come back in \code{latent}, and a recovery check compares a fit with them.
 
 The parameters of such a term are not coefficients of any equation. They
 are named in \code{par} beside the equations' coefficients, and since a formula
@@ -251,16 +252,16 @@ likelihood.
 set.seed(1)
 dd <- data.frame(x = runif(50), g = factor(rep(c("a", "b"), 25)))
 
-# coefficients drawn
+# The coefficients are drawn.
 sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd)
 sim$par
 
-# or given, and recovered by a fit
+# The coefficients are given, and a fit recovers them.
 sim2 <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
                  par = list(mu = c(1, 2), sigma = log(0.3)))
 coef(statmod(y ~ x, distributions7::gaussian1_distrib(), sim2$data))
 
-# a sparse truth, written as a function of the coefficient count
+# A sparse truth is written as a function of the coefficient count.
 dd2 <- as.data.frame(matrix(rnorm(50 * 6), 50, 6))
 sim3 <- rstatmod(y ~ lasso(~ V1 + V2 + V3 + V4 + V5 + V6),
                  distributions7::gaussian1_distrib(), dd2,
@@ -268,11 +269,11 @@ sim3 <- rstatmod(y ~ lasso(~ V1 + V2 + V3 + V4 + V5 + V6),
                             sigma = log(0.3)))
 head(sim3$data$y, 3)
 
-# a model with no covariates at all
+# This model has no covariates at all.
 sim4 <- rstatmod(y ~ 1, distributions7::gaussian1_distrib(), n = 20)
 nrow(sim4$data)
 
-# a study over replicates, the covariates drawn afresh at each one
+# A study over replicates draws the covariates afresh at each one.
 study <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), n = 80,
                   n_sim = 5, par = list(mu = c(1, 2), sigma = log(0.5)),
                   covariates = list(x = function(n) runif(n, -2, 2)))
@@ -281,7 +282,8 @@ vapply(study$data, function(d) coef(statmod(
   y ~ x, distributions7::gaussian1_distrib(), d),
   readable = FALSE)$mu[[2L]], numeric(1))
 
-# a score-driven series, its own parameters named beside the equations'
+# In a score-driven series, the term's own parameters are named beside the
+# equations'.
 sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
                  distributions7::gaussian1_distrib(),
                  data.frame(t = 1:100),
@@ -289,8 +291,8 @@ sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
                             pacf1 = 0.6))
 head(sim5$latent, 3)
 
-# and a panel whose level varies by group: naming nothing draws the
-# deviations from the prior random() declares, at a scale drawn too
+# In a panel whose level varies by group, naming nothing draws the
+# deviations from the prior that random() declares, at a scale drawn too.
 pan <- data.frame(id = factor(rep(1:6, each = 10)), t = rep(1:10, 6))
 sim6 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, omega ~ 1 + random(~1 | id),
                              by = id, time = t),

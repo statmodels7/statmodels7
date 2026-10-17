@@ -29,8 +29,9 @@ A list with \code{cross}, an \code{n} by \code{nrow(idx)} matrix, and \code{skip
 how many penalties contributed nothing to it.
 }
 \description{
-\eqn{\partial^2\rho / \partial\beta \partial\theta}, written into the
-stacked coefficient vector with one column per estimated hyperparameter.
+Returns \eqn{\partial^2\rho / \partial\beta \partial\theta}, written into
+the stacked coefficient vector with one column per estimated
+hyperparameter.
 }
 \details{
 This function computes the cross derivative of the penalty that the
@@ -47,9 +48,9 @@ accumulate. Where nothing is shared, each member has its own column.
 
 A penalty over the own parameters of a structural term covers positions among
 those parameters, which are not columns of a design. Where the matrix spans
-the coefficients alone, there is no position to write to and the penalty is
-skipped. The skipped penalties are counted in \code{skipped}, because a
-correction assembled without them is incomplete.
+the coefficients alone, there is no position in which the penalty can be
+written, and the penalty is skipped. The skipped penalties are counted in
+\code{skipped}, because a correction assembled without them is incomplete.
 
 With \code{joint} the matrix spans the vector in which the mode of such a model
 moves, the coefficients followed by the free parameters of the term, and

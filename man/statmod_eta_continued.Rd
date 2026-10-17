@@ -25,19 +25,19 @@ every equation and the term's free parameters) and \code{key} (the names of
 its columns in the variance matrix).
 }
 \description{
-The linear predictors and the parameters at new rows for a model carrying
-a structural term, with the term's own recursion carried forward from
-where the fitting data left it.
+Computes the linear predictors and the parameters at new rows for a model
+that carries a structural term, whose own recursion continues from where
+the fitting data left it.
 }
 \details{
-The static part is the ordinary assembly: each term's block reapplied at
-the new rows, the offsets re-evaluated there. What cannot be reapplied is
-the structural term, whose contribution at one row is the state that a
-recursion has reached over every row before it. The fit is therefore run
-once at the observed rows to recover that state -- the level and the
-driving quantity at each of them, the level being the difference between
-the filtered predictor and the static one -- and the term continues from
-there through \code{\link[modelterms7:term_continue]{modelterms7::term_continue()}}.
+The static part is the ordinary assembly: each term's block is reapplied
+at the new rows, and the offsets are re-evaluated there. The structural
+term cannot be reapplied, because its contribution at one row is the state
+that a recursion has reached over every row before it. The fit is
+therefore run once at the observed rows to recover that state, which
+consists of the level and the driving quantity at each of them (the level
+is the difference between the filtered predictor and the static one), and
+the term continues from there through \code{\link[modelterms7:term_continue]{modelterms7::term_continue()}}.
 
 Only rows without the response are continued, and they must come after
 the observed series. Rows that carry it are a series of their own, rebuilt
@@ -45,14 +45,14 @@ by \code{\link[=statmod_respec]{statmod_respec()}} and read as the fitting rows 
 \verb{predict(fit, newdata = <the fitting data>)} returns the fitted values.
 
 A term whose contribution is a likelihood mixed over latent states is
-rejected: what such a term reports at an observed row is a posterior over
-states, which past the data is a predictive distribution, no single
-value.
+rejected, because such a term reports a posterior over states at an
+observed row, and past the data this posterior is a predictive
+distribution and not a single value.
 
 With \code{deriv = TRUE} the continuation is differentiated as well, in the
 coefficients of every equation and the term's free parameters
-(\code{\link[=continued_deriv_inputs]{continued_deriv_inputs()}}), which is what a standard error of the
-forecast reads.
+(\code{\link[=continued_deriv_inputs]{continued_deriv_inputs()}}), and a standard error of the forecast reads
+this derivative.
 }
 \seealso{
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}

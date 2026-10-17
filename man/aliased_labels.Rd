@@ -27,8 +27,8 @@ repeat information already carried: only combinations are estimable, and
 the pivot determines which column is left out, as in \code{lm()} and \code{glm()}.
 Those columns come back from the solve as coordinates of the coefficient
 vector; this function converts them into the labels that \code{\link[=coef_labels]{coef_labels()}}
-supplies, so that no later step has to rebuild a design to identify a
-coefficient.
+supplies, so that a later step can identify a coefficient without rebuilding
+a design.
 
 A coordinate that a penalty covers is never among them, because the pivot
 runs on the augmented system (design and penalty factor together), in which

@@ -6,7 +6,7 @@ template:
 reference:
 - title: The toolkit
   desc: >
-    Which packages the toolkit is made of, at which versions, and whether any
+    The packages of which the toolkit is made, their versions, and whether any
     of their exports mask one another.
   contents:
   - statmodels7_packages
@@ -15,8 +15,9 @@ reference:
 
 - title: Specifying a model
   desc: >
-    One formula carries every parameter of the distribution, the equations
-    separated by a bar, and each equation's terms come from modelterms7.
+    One formula carries the equations of all the parameters of the
+    distribution, separated by a bar, and the terms of each equation come
+    from modelterms7.
   contents:
   - statmod_spec
   - statmod_equations
@@ -28,7 +29,7 @@ reference:
     differentiable penalty are fitted in one system, together with a
     score-driven term, and the terms with a kinked penalty and the regime
     terms are alternated with that system. The section also holds the inner
-    method, the criteria that choose the hyperparameters and the simulator.
+    method, the criteria for the hyperparameters and the simulator.
   contents:
   - statmod
   - linpar_options
@@ -71,10 +72,9 @@ reference:
 - title: Testing a coefficient
   desc: >
     One coefficient against one value, by Wald's statistic, the likelihood
-    ratio, Rao's score or Terrell's gradient. The same four are what
-    `summary(test =)` reports for every row against zero and what
-    `confint(test =)` inverts; `statmod_test()` also takes a null value other
-    than zero. The test that a break-point exists is a separate function, which
+    ratio, Rao's score or Terrell's gradient. `summary(test =)` reports the
+    same four for every row against zero, and `confint(test =)` inverts them;
+    `statmod_test()` also takes a null value other than zero. The test that a break-point exists is a separate function, which
     reads the supremum of a score process over the positions of the
     break-point.
   contents:
@@ -90,8 +90,8 @@ reference:
 
 - title: Internals
   desc: >
-    The machinery that the exported functions are built from: the classes
+    The machinery from which the exported functions are built: the classes
     behind a fit, the methods registered for the generics of stats, and the
-    helper functions. None of it is needed to use the package.
+    helper functions. Using the package does not require any of it.
   contents:
   - has_keyword("internal")

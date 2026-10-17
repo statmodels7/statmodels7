@@ -22,8 +22,9 @@ A list with \code{eta}, \code{theta}, \code{y}, \code{latent}
 and \code{structural}.
 }
 \description{
-The linear predictors, the distribution's parameters, and -- where a term
-has state -- the response that it drew and the latent quantity behind it.
+Returns the linear predictors, the distribution's parameters and, where a
+term has state, the response that it drew and the latent quantity behind
+it.
 }
 \details{
 With no structural term the result is that of \code{\link[=statmod_eta]{statmod_eta()}}: the

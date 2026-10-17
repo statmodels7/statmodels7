@@ -2,14 +2,14 @@
 % Please edit documentation in R/inference.R
 \name{deficient_coords}
 \alias{deficient_coords}
-\title{The Coordinates a Fit Does Not Identify, Found After the Fact}
+\title{The Coordinates That a Fit Does Not Identify, Found After the Fact}
 \usage{
 deficient_coords(K, held = integer(0))
 }
 \arguments{
 \item{K}{The penalized information at the mode, \eqn{H + S}.}
 
-\item{held}{The coordinates a kinked penalty holds at zero, from
+\item{held}{The coordinates that a kinked penalty holds at zero, from
 \code{\link[=zero_kinked]{zero_kinked()}}, which are not candidates.}
 }
 \value{
@@ -17,25 +17,25 @@ An integer vector of coordinates of the coefficient vector,
 possibly empty.
 }
 \description{
-The coordinates a pivoted decomposition of the penalized information at
-the mode leaves out, for a fit whose own solve named none.
+Returns the coordinates that a pivoted decomposition of the penalized
+information at the mode leaves out, for a fit whose own solve named none.
 }
 \details{
 Only \code{\link[=iwls]{iwls()}} on a pivoting decomposition reports which column it
-dropped, that being a by-product of the solve that fitted the model. An
-\code{optimizers7} method solves nothing by a pivot, and neither do the
-\code{chol} and \code{svd} routes, so a design of less than full
+dropped, which is a by-product of the solve that fitted the model. An
+\code{optimizers7} method does not solve by a pivot, and the \code{chol} and \code{svd}
+routes do not either, so a design of less than full
 rank left every coordinate unnamed and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} signaled an
-error for the whole matrix. The question that a pivot answers is answered
-here on the matrix that \code{vcov()} inverts, so the two agree on which model is
-being reported.
+error for the whole matrix. The question that a pivot settles during the
+fit is settled here on the matrix that \code{vcov()} inverts, so that the alias
+and the variance refer to the same model.
 
 The matrix is \eqn{K = H + S}, which makes a penalized coordinate safe
 without a clause of its own: the curvature of the penalty is in \eqn{S}, so
 a column that the design alone does not identify is identified in \eqn{K},
 as it is identified in the augmented system that the pivoted route
-factorizes. Under \code{ridge(~ 0 + x1 + x3)} with two identical columns, no
-coordinate is named.
+factorizes. Under \code{ridge(~ 0 + x1 + x3)} with two identical columns, the
+function names no coordinate.
 
 \eqn{K} is equilibrated to a unit diagonal before the pivot runs, as in
 \code{\link[=solve_pd]{solve_pd()}} and the sparse rank test: a smoothing parameter sent to 1e15
@@ -47,22 +47,22 @@ named.
 A coordinate is a candidate only where its own curvature is finite and
 positive, which is the rule of \code{\link[=boundary_coords]{boundary_coords()}}: a parameter at the clamp
 of its link makes its whole row non-finite, and a coordinate about which the
-information carries nothing has an empty row. Neither is an aliasing. There
-the estimate stands and only the variance does not, which is what
-\code{\link[=uninformative_coords]{uninformative_coords()}} handles; aliasing reports the coefficient itself as
-missing.
+information carries nothing has an empty row. Both cases differ from
+aliasing. In them the estimate stands and only the variance does not, a
+situation that \code{\link[=uninformative_coords]{uninformative_coords()}} handles, whereas aliasing reports
+the coefficient itself as missing.
 
-Whether there is anything to name is decided by \code{\link[=solve_pd]{solve_pd()}} and not by a
-tolerance of this function, so a fit whose information inverts is untouched
+\code{\link[=solve_pd]{solve_pd()}} determines whether there is anything to name, and a tolerance
+of this function does not, so a fit whose information inverts is untouched
 and the alias cannot disagree with the variance reported beside it. The gate
-is necessary. \eqn{K} is \eqn{X'X} up to the weights, so it squares the
-conditioning of the design, and a pivoted QR read at the tolerance of
+is necessary because \eqn{K} is \eqn{X'X} up to the weights, so it squares
+the conditioning of the design, and a pivoted QR read at the tolerance of
 \code{dqrdc2} is twice as strict here as it is on the augmented system. For two
 columns collinear to within 1e-4 (an ordinary pair of correlated
 covariates), the bare pivot would name one of them while \code{solve_pd()}
-inverts the matrix without difficulty. With the gate, such a case is
-untouched and the naming runs only where the whole matrix would otherwise
-have been rejected.
+inverts the matrix without difficulty. With the gate, the function leaves
+such a case untouched and names a coordinate only where the whole matrix
+would otherwise have been rejected.
 
 Which coordinate is then named is determined by the pivot, as in
 \code{\link[=augmented_solve]{augmented_solve()}}.
@@ -76,9 +76,9 @@ not in the objective, whose minimum over it is unique. Reading the pivot on
 the whole matrix would name the last level, so that coordinate is excluded.
 }
 \seealso{
-\code{\link[=uninformative_coords]{uninformative_coords()}}, which holds a coordinate the
-information carries nothing about rather than aliasing it, and
-\code{\link[=augmented_solve]{augmented_solve()}}, whose pivot answers the same question during the
+\code{\link[=uninformative_coords]{uninformative_coords()}}, which holds a coordinate about which the
+information carries nothing instead of aliasing it, and
+\code{\link[=augmented_solve]{augmented_solve()}}, whose pivot settles the same question during the
 fit.
 }
 \keyword{internal}

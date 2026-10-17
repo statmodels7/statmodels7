@@ -28,8 +28,8 @@ the link scale and \code{fit}, \code{se}, \code{lower} and \code{upper} on the p
 scale.
 }
 \description{
-The standard error of each equation's linear predictor, and of the
-parameter it gives, with an interval.
+Computes the standard error of each equation's linear predictor, and of
+the parameter that the predictor gives, with an interval.
 }
 \section{The delta method, equation by equation}{
 An equation's predictor is \eqn{\eta_{ip} = x_{ip}'\beta_p}, so its
@@ -37,17 +37,19 @@ variance is \eqn{x_{ip}' V_{pp} x_{ip}}, with \eqn{V} the variance of the
 coefficients as estimated: the coordinates, since the design is written in
 them, not the quantities that \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} reports by default.
 
-The equations do not mix. One equation's predictor reads that equation's
-coefficients alone, whatever the covariance between the blocks. A
+The equations do not mix. One equation's predictor reads only the
+coefficients of that equation, whatever the covariance between the
+blocks. A
 predictor that reads no coefficient (an equation written as \code{~ 0}, or an
-offset alone) is a known constant, with a standard error of zero.
+equation with only an offset) is a known constant, with a standard error
+of zero.
 }
 
 \section{A term whose block moves needs no special case}{
 Its block is the Jacobian \eqn{\partial\eta/\partial\beta} by
-construction, that being why a linear fit on it is a Gauss-Newton step,
-so the row already is the derivative and the delta method is exact to
-first order. That covers \code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}} and a
+construction, which is why a linear fit on it is a Gauss-Newton step.
+The row is therefore already the derivative, and the delta method is exact
+to first order. That covers \code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}} and a
 smoothed \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, including the
 parameters of a nonlinear term developed over covariates. A sharp
 \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} is fitted as an ordinary
@@ -56,14 +58,16 @@ that reads it is finite and is conditional on that position.
 }
 
 \section{The interval}{
-Built on the scale on which the equation is written and mapped back through the
-link, as every interval in this toolkit is. A scale parameter under a log
-link, for example, cannot have a negative lower end.
+The interval is built on the scale on which the equation is written and
+mapped back through the link, as every interval in this toolkit is. A
+scale parameter under a log link, for example, cannot have a negative
+lower end.
 }
 
 \section{A coefficient with no variance carries none forward}{
 An entry of the variance that is not finite blanks the standard error of
-the rows whose design reaches it, and of no other row. An aliased
+the rows whose design reaches it, and does not blank that of any other
+row. An aliased
 coefficient is such a case. The position of a sharp break-point term is
 held and has no variance either, but its column of the design is zero, so
 it blanks no row.

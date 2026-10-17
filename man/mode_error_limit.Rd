@@ -10,9 +10,9 @@ mode_error_limit()
 A single number.
 }
 \description{
-The limit that \code{\link[=criterion_resolution]{criterion_resolution()}} places on \eqn{g'K^{-1}g/2}, the
-decrease that the mode's own Newton correction predicts, above which no
-resolution is reported.
+Returns the limit that \code{\link[=criterion_resolution]{criterion_resolution()}} places on
+\eqn{g'K^{-1}g/2}, the decrease that the mode's own Newton correction
+predicts. Above this limit, \code{\link[=criterion_resolution]{criterion_resolution()}} reports no resolution.
 }
 \details{
 The resolution is read by displacing the coefficients to the mode implied

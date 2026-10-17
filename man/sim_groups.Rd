@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{sim_groups}
 \alias{sim_groups}
-\title{The Groups a Printed Truth Collapses}
+\title{The Groups That a Printed Truth Collapses}
 \usage{
 sim_groups(nm)
 }
@@ -13,15 +13,15 @@ sim_groups(nm)
 A list of entries, each with \code{label} and \code{idx}.
 }
 \description{
-One entry per scalar parameter and one per family of names that share a
-stem, in the order the names arrive.
+Returns one entry per scalar parameter and one per family of names that
+share a stem, in the order in which the names arrive.
 }
 \details{
-A structural term's parameters are \code{omega}, \code{kappa1} and the like where
-nothing is developed, and \code{omega.(Intercept)}, \code{omega.random.1} and so on
-where something is. The first are read one by one and the second are a
-block, so the printed form is grouped at the first dot, the scalars coming
-out as groups of one and needing no special case.
+A structural term's parameters are \code{omega}, \code{kappa1} and the like where a
+parameter is not developed, and \code{omega.(Intercept)}, \code{omega.random.1} and
+so on where it is. The first are read one by one and the second are a
+block, so the printed form is grouped at the first dot. The scalars then
+come out as groups of one and need no special case.
 }
 \seealso{
 \code{\link[=print.StatmodSim]{print.StatmodSim()}}

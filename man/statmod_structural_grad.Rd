@@ -37,17 +37,17 @@ A numeric vector, one entry per row of \code{idx}, or \code{NULL}
 where the determinant does not exist.
 }
 \description{
-The exact gradient of the marginal criterion where a penalty covers a
-structural term's own parameters, so that the determinant spans the joint
+Computes the exact gradient of the marginal criterion where a penalty covers
+a structural term's own parameters, so that the determinant spans the joint
 vector of the coefficients and those parameters.
 }
 \details{
-The criterion is the same and so are its three pieces; what changes is that
+The criterion is the same and so are its three pieces, except that
 \eqn{K} carries the recursion's own second derivative,
 \deqn{K = -\sum_t w_t\sum_{a,b}\ell_{ab,t}V_{a,t}^\top V_{b,t}
   - \sum_t w_t \ell_{p,t}E_t,}
-so differentiating it along the direction \eqn{v} the mode moves in gives
-three contributions instead of one:
+so differentiating it along the direction \eqn{v} in which the mode moves
+gives three contributions instead of one:
 \enumerate{
 \item the family's third derivative against the per-observation diagonal
 of \eqn{M}, which is \code{\link[=u_vector]{u_vector()}}'s formula with \eqn{V} in

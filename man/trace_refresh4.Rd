@@ -34,18 +34,18 @@ per unit, from \code{\link[=refresh_dblock2]{refresh_dblock2()}}.}
 A single number.
 }
 \description{
-The part of \eqn{\mathrm{tr}(M\,U[v,u])} that \code{\link[=trace_design_form]{trace_design_form()}}
+Returns the part of \eqn{\mathrm{tr}(M\,U[v,u])} that \code{\link[=trace_design_form]{trace_design_form()}}
 does not compute, where \eqn{U} is the second derivative of \eqn{K} in the
 coefficients contracted in two directions.
 }
 \details{
 Differentiating the three contributions of \eqn{\partial K/\partial\beta}
-once more leaves five terms. Writing \eqn{D_a = (\partial X_a/\partial\beta)v}
-and \eqn{E_a = (\partial X_a/\partial\beta)u}, three of them read the first
-derivative alone,
+once more leaves five terms. With \eqn{D_a = (\partial X_a/\partial\beta)v}
+and \eqn{E_a = (\partial X_a/\partial\beta)u}, three of them read only the
+first derivative,
 \deqn{N_1[(a,j),(b,k)] = -\sum_i w_i\Big(\sum_m \ell_{abm}(X_mv_m)_i\Big)
     E_a[i,j]X_b[i,k],}
-\eqn{N_2} the same with the two directions exchanged, and
+\eqn{N_2} is the same expression when the two directions are exchanged, and
 \eqn{N_3[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}D_a[i,j]E_b[i,k]}, which is
 supported where both blocks move. A fourth reads the second,
 \eqn{N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]} with
@@ -55,15 +55,15 @@ supported where both blocks move. A fourth reads the second,
 \eqn{N_4} are read off \code{\link[=refresh_amat]{refresh_amat()}}, with the third derivative for the
 first two and the curvature for the fourth, and \eqn{N_3} is summed from
 the two blocks' derivatives with the rows of \eqn{M} between them, so that
-neither \eqn{N} nor any contraction is assembled.
+the function assembles neither \eqn{N} nor any contraction.
 
 The fifth is of another shape and is added separately. The
 third-derivative contraction carries the direction's predictor
-\eqn{(X_mv_m)_i}, which where \eqn{X_m} is a Jacobian moves with
-\eqn{\beta} as everything else does, and differentiating it leaves
+\eqn{(X_mv_m)_i}, which moves with \eqn{\beta} as everything else does where
+\eqn{X_m} is a Jacobian, and differentiating it leaves
 \deqn{-\sum_i w_i\Big(\sum_m \ell_{abm}\,\dot v_m(i)\Big)X_a[i,j]X_b[i,k],
   \qquad \dot v_m = (\partial X_m/\partial\beta[u])\,v_m.}
-That is the shape \code{\link[=trace_design_form]{trace_design_form()}} already computes, so the
+That is the shape that \code{\link[=trace_design_form]{trace_design_form()}} already computes, so the
 piece is one further call of it with \eqn{\dot v} in place of the
 predictors. \eqn{\dot v} is the predictor's own second derivative
 contracted in both directions and is therefore symmetric in them, which is

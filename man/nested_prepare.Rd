@@ -30,7 +30,7 @@ Every term holding such an effect is replaced by the copy that
 \code{\link[=pool_nested_random]{pool_nested_random()}} returns, its effects' coefficients are set to zero
 and its columns are recomputed there. The columns of the effects
 themselves are then set to zero, so that the delta method of the
-prediction carries the uncertainty of the other coefficients alone, as it
+prediction carries only the uncertainty of the other coefficients, as it
 does for a term written in an equation.
 }
 \keyword{internal}

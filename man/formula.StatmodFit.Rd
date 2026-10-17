@@ -2,7 +2,7 @@
 % Please edit documentation in R/accessors.R
 \name{formula.StatmodFit}
 \alias{formula.StatmodFit}
-\title{The Formula a Model Was Written With}
+\title{The Formula of a Fitted Model}
 \usage{
 \method{formula}{StatmodFit}(x, ...)
 }
@@ -12,17 +12,18 @@
 \item{...}{Unused.}
 }
 \value{
-The formula object supplied to \code{\link[=statmod]{statmod()}}, with its bars and its
-original environment intact.
+The formula object supplied to \code{\link[=statmod]{statmod()}}, including its bars and
+its original environment.
 }
 \description{
-The formula as supplied, every distribution parameter's equation included.
+Returns the formula as supplied, including the equation of every
+distribution parameter.
 }
 \details{
-The formula is returned whole, bars included, because the bars are part of
-what was written. \code{\link[=statmod_equations]{statmod_equations()}} splits the formula into one equation
-per distribution parameter; it takes the formula and the names of the
-parameters.
+The formula is returned whole, including its bars, because the bars are part
+of what was written. \code{\link[=statmod_equations]{statmod_equations()}} splits the formula into one
+equation per distribution parameter; it takes the formula and the names of
+the parameters.
 }
 \examples{
 set.seed(1)

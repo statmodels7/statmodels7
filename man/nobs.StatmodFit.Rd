@@ -2,7 +2,7 @@
 % Please edit documentation in R/accessors.R
 \name{nobs.StatmodFit}
 \alias{nobs.StatmodFit}
-\title{The Number of Observations a Model Was Fitted To}
+\title{The Number of Observations in a Fitted Model}
 \usage{
 \method{nobs}{StatmodFit}(object, ...)
 }
@@ -16,8 +16,9 @@ A single number, the sum of the weights: an integer where that sum
 is a whole number, and a double otherwise.
 }
 \description{
-The number of observations that entered the likelihood: the
-sum of the prior weights, which are frequency weights.
+Returns the number of observations that entered the
+likelihood. This number is the sum of the prior weights, which are
+frequency weights.
 }
 \details{
 A weight of two counts its row twice, so a fit with weights is

@@ -18,11 +18,11 @@ component.}
 One value a row, \code{NA} for a row that has no finite mixture.
 }
 \description{
-The value at which \eqn{\sum_c w_c \Phi((e - m_c)/s_c)} reaches \code{p}, one
-a row, a component with \eqn{s_c = 0} being a point mass at \eqn{m_c}.
-Found by bisection, which needs no derivative and is exact to the
-tolerance for a step function as well. A row in which some mean or
-standard deviation is not finite (a missing covariate) is \code{NA}, and the
-bisection runs over the other rows.
+Returns the value at which \eqn{\sum_c w_c \Phi((e - m_c)/s_c)} reaches
+\code{p}, one value per row; a component with \eqn{s_c = 0} is a point mass at
+\eqn{m_c}. The value is found by bisection, which needs no derivative and
+is exact to the tolerance for a step function as well. A row in which some
+mean or standard deviation is not finite (a missing covariate) is \code{NA}, and
+the bisection runs over the other rows.
 }
 \keyword{internal}

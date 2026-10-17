@@ -21,12 +21,12 @@ contract4(spec, design, d4, params, npar, offs, total, tv, tu)
 A square matrix.
 }
 \description{
-\eqn{U[v, u] = (\partial^2 K/\partial\beta^2)\cdot(v, u)}, a matrix over the
-stacked coefficients.
+Returns \eqn{U[v, u] = (\partial^2 K/\partial\beta^2)\cdot(v, u)}, a matrix
+over the stacked coefficients.
 }
 \details{
 The blocks follow \code{\link[=contract3]{contract3()}}: each is minus a weighted crossproduct of the
-two designs, with the weight formed from the fourth derivatives and the
+two designs, and the weight is formed from the fourth derivatives and the
 predictors of the two directions.
 }
 \keyword{internal}

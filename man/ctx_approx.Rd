@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer_context.R
 \name{ctx_approx}
 \alias{ctx_approx}
-\title{The Approximation a Context Was Built With}
+\title{The Approximation With Which a Context Was Built}
 \usage{
 ctx_approx(ctx)
 }
@@ -14,6 +14,6 @@ A single string: the approximation that the context carries, or
 \code{"opg"} where \code{ctx} is \code{NULL} or carries none.
 }
 \description{
-The Approximation a Context Was Built With
+The Approximation With Which a Context Was Built
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/report.R
 \name{coef_readable}
 \alias{coef_readable}
-\title{The Quantities a Term Reports in Place of Its Coordinates}
+\title{The Quantities Reported by a Term in Place of Its Coordinates}
 \usage{
 coef_readable(spec, design, fit, p, v)
 }
@@ -18,13 +18,13 @@ coef_readable(spec, design, fit, p, v)
 \item{v}{The named coefficient vector of that equation.}
 }
 \value{
-\code{v}, with each term's declared quantities in place of the
-coordinates from which they are computed. \code{v} unchanged where no term of
-the equation declares any.
+\code{v}, in which each term's declared quantities replace the
+coordinates from which they are computed. The vector \code{v} is returned
+unchanged where no term of the equation declares any.
 }
 \description{
-The coefficient vector of one equation, with each term's declared
-quantities put in place of the coordinates from which they are computed.
+Returns the coefficient vector of one equation, in which each term's
+declared quantities replace the coordinates from which they are computed.
 }
 \details{
 A term declares its quantities through \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}},

@@ -23,19 +23,19 @@ contract3_refresh(spec, design, params, npar, offs, total, dir, Hl, units)
 A square matrix, whose transpose completes the correction.
 }
 \description{
-The part of \eqn{T[v] = (\partial K/\partial\beta)\cdot v} that
+Returns the part of \eqn{T[v] = (\partial K/\partial\beta)\cdot v} that
 \code{\link[=contract3]{contract3()}} does not compute, as a matrix over the stacked
 coefficients.
 }
 \details{
 Differentiating \eqn{H} in \eqn{\beta} and contracting with \eqn{v} leaves,
-beside the third derivative \code{\link[=contract3]{contract3()}} carries, two terms in
+beside the third derivative that \code{\link[=contract3]{contract3()}} carries, two terms in
 \eqn{\partial X/\partial\beta}: with \eqn{D_a = (\partial X_a/\partial\beta)v},
 \deqn{R[(a,j),(b,k)] = -\sum_i w_i\,\ell_{ab,i}\,D_a[i,j]\,X_b[i,k],}
 and the other is its transpose, so the correction is \eqn{R + R^\top}. The
 derivative is read from the term through
 \code{\link[modelterms7:term_block_deriv]{modelterms7::term_block_deriv()}} and is never differenced here, for
-the reason \code{\link[=u_refresh]{u_refresh()}} records: a break-point column is a step
+the reason that \code{\link[=u_refresh]{u_refresh()}} records: a break-point column is a step
 function in its break-point.
 }
 \seealso{

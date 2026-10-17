@@ -20,9 +20,9 @@ outer_curvature(
 \item{spec, design, coef, hyper, method, idx, basis}{As \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}
 takes them.}
 
-\item{inner}{The inner optimizer, which the differenced route refits with.}
+\item{inner}{The inner optimizer with which the differenced route refits.}
 
-\item{gam}{The coefficients the criterion estimates, from
+\item{gam}{The coefficients that the criterion estimates, from
 \code{\link[=marginal_coords]{marginal_coords()}}, or \code{NULL}.}
 }
 \value{
@@ -31,9 +31,9 @@ A list with \code{A}, the symmetric negated Hessian or \code{NULL};
 and \code{why}, the reason where there is no \code{A}.
 }
 \description{
-\eqn{A = -(H + H^\top)/2}, the matrix a Newton decrement is read against,
-from the analytic Hessian where the form has one and from one central
-difference of the \strong{exact} gradient where it does not.
+Computes \eqn{A = -(H + H^\top)/2}, the matrix against which a Newton
+decrement is read, from the analytic Hessian where the form has one and
+from one central difference of the exact gradient where it does not.
 }
 \details{
 \code{\link[=statmod_certificate]{statmod_certificate()}} reads the rise that the criterion would still buy,
@@ -45,7 +45,7 @@ wherever it is called and a wrong one where the order is not covered.
 Where the order is not covered, the exact gradient is differenced instead
 by \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}}, which is also the route that
 \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} takes for a model carrying a filter. The forms
-that reach it are a criterion on the \strong{expected} information for a family
+that reach it are a criterion on the expected information for a family
 that does not supply the second derivative of its expected information (or
 for a model with a refreshable block or a structural term), and a penalty
 whose Hessian moves with the coefficients, such as a heavy-tailed prior on
@@ -53,10 +53,10 @@ a random effect, placed beside a structural term, where
 \code{\link[=statmod_structural_hess]{statmod_structural_hess()}} reads no movement of that Hessian. The same
 prior without a structural term is analytic, through
 \code{\link[=statmod_penalty_second]{statmod_penalty_second()}}. Both kinds of form carry an exact gradient,
-which is the quantity that the difference is taken of.
+and the difference is taken of that gradient.
 
 The two routes agree where both exist. The difference costs
-\eqn{4(n_h + n_\gamma)} refits, \eqn{n_\gamma} being the number of
+\eqn{4(n_h + n_\gamma)} refits, where \eqn{n_\gamma} is the number of
 coefficients that the criterion estimates; the analytic route refits
 nothing.
 

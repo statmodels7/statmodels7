@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict_interval.R
 \name{random_blocks}
 \alias{random_blocks}
-\title{The Gaussian Prior of the Effects a Prediction Sets Aside}
+\title{The Gaussian Prior of the Effects That a Prediction Sets Aside}
 \usage{
 random_blocks(spec, design, fit, aside)
 }
@@ -21,9 +21,9 @@ A list of blocks, each a list with \code{members} (a data frame of
 coordinates in that order.
 }
 \description{
-The covariance of one new group's effects, block by block: a term with a
-prior of its own is one block, and the terms that a label ties together are
-one block over all of them.
+Returns the covariance of one new group's effects, block by block: a term
+with a prior of its own is one block, and the terms that a label ties
+together are one block over all of them.
 }
 \details{
 A new group's effect is drawn from the prior that the fit estimated, so its
@@ -38,7 +38,7 @@ Where a label ties terms together, the prior is one multivariate Gaussian
 over the coordinates of all of them, and every member has to be set aside:
 a member read with its own estimated effect would condition the others on
 it, which is a different question. A member written inside another term's
-subformula is rejected as well, its coordinates not being a row of a
+subformula is rejected as well, because its coordinates are not a row of a
 random-effect design.
 }
 \keyword{internal}

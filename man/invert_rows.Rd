@@ -9,7 +9,7 @@ invert_rows(fit, out, level, test, type)
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{out}{The table \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} has built, already subset.}
+\item{out}{The table that \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} has built, already subset.}
 
 \item{level}{The confidence level.}
 
@@ -18,18 +18,19 @@ invert_rows(fit, out, level, test, type)
 \item{type}{Which variance sets the starting bracket.}
 }
 \value{
-\code{out} with its \code{lower} and \code{upper} columns replaced.
+\code{out}, in which the \code{lower} and \code{upper} columns are replaced.
 }
 \description{
-Runs \code{\link[=statmod_invert]{statmod_invert()}} on each row a restricted fit is defined for and
-writes the two limits back, leaving the rest of the table as it was.
+Runs \code{\link[=statmod_invert]{statmod_invert()}} on each row for which a restricted fit is defined
+and writes the two limits back, leaving the rest of the table as it was.
 }
 \details{
-A row the restricted fit cannot hold keeps \code{NA} limits rather than the
-Wald ones it arrived with, so that one column never carries two different
-intervals. \code{\link[=testable_coords]{testable_coords()}} determines which rows those are; if it names
-none of the rows of the table, the function signals an error, since a table
-of missing values alone is less informative than the reason.
+A row that the restricted fit cannot hold keeps \code{NA} limits rather than the
+Wald limits that it carried on arrival, so that one column never carries two
+different intervals. \code{\link[=testable_coords]{testable_coords()}} determines which rows those are; if
+it names none of the rows of the table, the function signals an error, since
+a table that consists only of missing values is less informative than the
+reason.
 }
 \seealso{
 \code{\link[=statmod_invert]{statmod_invert()}}, which does the search.

@@ -32,9 +32,9 @@ is read as accumulated rounding, where the candidate does not.}
 An integer vector of positions in \code{A}, possibly empty.
 }
 \description{
-The positions whose row and column of a penalized information are empty,
-so that holding them and inverting the rest reports the variance of every
-other coordinate exactly.
+Returns the positions whose row and column of a penalized information are
+empty, so that holding them and inverting the rest reports the variance of
+every other coordinate exactly.
 }
 \details{
 A combination \eqn{c'\hat\beta} has a finite asymptotic variance exactly
@@ -47,9 +47,9 @@ from \eqn{\mathcal{N}} and report nothing on it, and this function is the
 second part.
 
 A candidate is a coordinate with no curvature of its own. Its diagonal is
-not finite, which is what a parameter run out of its range leaves behind;
+not finite, as a parameter that has run out of its range leaves it;
 or it is not positive, which is the reading of \code{\link[=solve_pd]{solve_pd()}} for that entry
-and is a statement about the coordinate whatever scale it is on; or, among
+and is a statement about the coordinate regardless of its scale; or, among
 the coordinates whose diagonal is positive, it carries the whole of a null
 direction of the Jacobi-equilibrated matrix. The equilibration
 distinguishes a flat direction from scale separation, and requiring one
@@ -57,10 +57,10 @@ coordinate to carry the whole direction excludes the collinear case, where
 the null vector is \eqn{(e_1 - e_2)/\sqrt{2}} and each of the two carries
 half of it.
 
-\strong{A candidate is held only where holding it disturbs nothing}, and the
-amount it disturbs is the Schur correction it removes from the others,
-\eqn{K_{Aj}K_{jj}^{-1}K_{jA}}. That test has two branches, because it has
-two scales.
+A candidate is held only where holding it disturbs nothing, and the
+amount that it disturbs is the Schur correction that it removes from the
+others, \eqn{K_{Aj}K_{jj}^{-1}K_{jA}}. That test has two branches, because it
+has two scales.
 
 Where \eqn{K_{jj}} is positive the coordinate has a scale of its own and
 the correction, read against \eqn{K_{AA}} in equilibrated units where that
@@ -70,7 +70,8 @@ block has a unit diagonal, is
 It is dimensionless and needs no reference: a coordinate measured a
 thousand times smaller than its neighbors has a small row and a small
 diagonal, and the ratio is unchanged by the scaling. Scaling one coordinate
-down by \eqn{10^{-14}} leaves the ratio unchanged, and nothing is held.
+down by \eqn{10^{-14}} leaves the ratio unchanged, and the function holds no
+coordinate.
 
 Where \eqn{K_{jj}} is not positive the coordinate has no scale of its own
 (the information in that direction is zero and not merely small), so that
@@ -81,13 +82,13 @@ to which its entries were accumulated:
 dispersion has left its range, \eqn{K_{jj}} is exactly zero and the entries
 of the row of that coordinate are at the rounding level of the matrix.
 
-Where neither branch passes, dropping the coordinate would leave
+Where both branches fail, dropping the coordinate would leave
 \eqn{K_{AA}^{-1}}, the variance conditional on that coefficient being
-known, which is smaller than the marginal one; nothing is held and the
-error signaled by the caller stands.
+known, which is smaller than the marginal one; the function holds no
+coordinate and the error signaled by the caller stands.
 }
 \seealso{
-\code{\link[=solve_pd]{solve_pd()}}, which signals an error for the matrix these come
-from, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which holds them.
+\code{\link[=solve_pd]{solve_pd()}}, which signals an error for the matrix from which
+these are taken, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which holds them.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{held_condition}
 \alias{held_condition}
-\title{The Condition a Held Coordinate Warns Through}
+\title{The Condition Through Which a Held Coordinate Warns}
 \usage{
 held_condition(msg)
 }
@@ -13,7 +13,8 @@ held_condition(msg)
 A condition of class \code{statmod_held_coord}.
 }
 \description{
-A classed warning, so that a caller can silence or catch the one raised when
+Returns a classed warning, so that a caller can silence or catch the one
+raised when
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} holds a coordinate about which the information carries
 nothing, without silencing every other warning of a fit.
 }

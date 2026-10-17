@@ -16,15 +16,15 @@ within-group column.}
 A character vector, possibly empty.
 }
 \description{
-The within-group column names of a random-effect term, which are what the
-coordinates of its own multivariate prior are, or nothing for a term that
-has no grouping.
+Returns the within-group column names of a random-effect term, which are
+the coordinates of its own multivariate prior, or an empty vector for a
+term that has no grouping.
 }
 \details{
 Where the prior covers some of the within-group columns and not all of
 them, as the null-space prior of a smooth random effect does, \code{ii} gives
 the entry's positions in the block and the labels are those of the columns
-it covers, in the order of the block.
+that it covers, in the order of the block.
 }
 \seealso{
 \code{\link[=class_coords]{class_coords()}} for the same question about a shared block,

@@ -3,7 +3,7 @@
 \name{class_coords}
 \alias{class_coords}
 \alias{coord_labels_of}
-\title{What Each Coordinate of a Covariance Block Is}
+\title{The Coordinates of a Covariance Block}
 \usage{
 class_coords(u)
 
@@ -20,31 +20,31 @@ A data frame with \code{param}, \code{term}, \code{column} and \code{label}, one
 per coordinate.
 }
 \description{
-One row per coordinate of a class's covariance, naming the equation it
-belongs to, the term that carries it, the within-group column it is, and
-the label that a summary prints for it.
+Returns one row per coordinate of a class's covariance, naming the equation
+to which it belongs, the term that carries it, the within-group column that
+it is, and the label that a summary prints for it.
 }
 \details{
-The prior of a covariance class describes the effects of \strong{one group} over
-every column the label collects, so its dimension is the sum of the members'
-within-group widths and its coordinates run over the members in order, each
-contributing its own columns in order -- which is exactly how
-\code{\link[=class_index]{class_index()}} interleaves them.
+The prior of a covariance class describes the effects of one group over
+every column that the label collects, so its dimension is the sum of the
+members' within-group widths. Its coordinates run over the members in
+order, and each member contributes its own columns in order, which is
+exactly how \code{\link[=class_index]{class_index()}} interleaves them.
 
-The multivariate family that carries the chart numbers those coordinates
-\code{v1}, \code{v2}, and so on, since it is a law on \eqn{\mathbb{R}^d} without
+The multivariate family that carries the chart gives those coordinates the
+names \code{v1}, \code{v2}, and so on, since it is a law on \eqn{\mathbb{R}^d} without
 reference to the model. The equation and the term to which a coordinate
 belongs are determined by this layer; without them a printed correlation
 between \code{v1} and \code{v3} cannot be attributed to any effect.
 
-The label is the shortest one that separates the coordinates: the column
-alone where every coordinate comes from one term, the equation and the
+The label is the shortest one that separates the coordinates: only the
+column where every coordinate comes from one term, the equation and the
 column where more than one term is involved, and the term as well where two
 terms of one equation write the same column name. If two labels are still
 equal, a running number \verb{#i} is appended. A coordinate reached
 through a subformula carries the parameter that it develops in front of its
 column, so that an effect on a break-point is not read as an effect on the
-equation the break-point sits in.
+equation in which the break-point sits.
 }
 \seealso{
 \code{\link[=class_notes]{class_notes()}}, \code{\link[=summary_class_blocks]{summary_class_blocks()}}, which print it;

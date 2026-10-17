@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{conditional_condition}
 \alias{conditional_condition}
-\title{The Condition an Unavailable Correction Warns Through}
+\title{The Condition Through Which an Unavailable Correction Warns}
 \usage{
 conditional_condition(msg)
 }
@@ -13,7 +13,7 @@ conditional_condition(msg)
 A condition of class \code{statmod_conditional_variance}.
 }
 \description{
-A classed warning, so a caller can catch the one raised when
+Returns a classed warning, so a caller can catch the one raised when
 \code{vcov(type = "unconditional")} cannot read the hyperparameters' own
 uncertainty and returns the conditional variance instead.
 }
@@ -25,7 +25,7 @@ would reach the reader several times, and muffling it by position would
 suppress whatever else was raised on the way.
 }
 \seealso{
-\code{\link[=hyper_correction]{hyper_correction()}}, which decides whether it fires, and
+\code{\link[=hyper_correction]{hyper_correction()}}, which determines whether it fires, and
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which raises it.
 }
 \keyword{internal}

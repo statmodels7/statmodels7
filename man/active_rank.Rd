@@ -15,9 +15,9 @@ active_rank(design, act)
 A single number.
 }
 \description{
-\eqn{\mathrm{rank}(X_A)}, the degrees of freedom of a fit whose penalty is
-flat on the active block (Tibshirani and Taylor, 2012), summed over the
-equations the active coordinates belong to.
+Computes \eqn{\mathrm{rank}(X_A)}, the degrees of freedom of a fit whose
+penalty is flat on the active block (Tibshirani and Taylor, 2012), summed
+over the equations to which the active coordinates belong.
 }
 \details{
 The information is block diagonal over the equations wherever the family's

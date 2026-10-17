@@ -22,7 +22,7 @@ coordinates that \code{keep} marks.}
 
 \item{keep}{A logical vector over the joint vector (the stacked
 coefficients followed by any structural tail) that marks the coordinates
-\code{Vb} spans. It is the whole vector of the caller and not its head,
+that \code{Vb} spans. It is the whole vector of the caller and not its head,
 because a tail coordinate dropped as a flat direction leaves \code{Vb} narrower
 than the count alone would indicate.}
 
@@ -31,11 +31,12 @@ than the count alone would indicate.}
 \value{
 A list with \code{C}, the correction or \code{NULL}, \code{n_hyper}, the number of
 hyperparameters that \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} estimated, and \code{complete},
-whether every one of them contributed and no penalty was skipped.
+whether every one of them contributed and the function skipped no
+penalty.
 }
 \description{
-\eqn{J V_\theta J'}, the movement of the penalized mode under the estimated
-hyperparameters, as a matrix to be added to \eqn{V_b}.
+Returns \eqn{J V_\theta J'}, the movement of the penalized mode under the
+estimated hyperparameters, as a matrix to be added to \eqn{V_b}.
 }
 \details{
 The matrices that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} returns for \code{type = "bayesian"} and
@@ -61,16 +62,16 @@ was estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}}. That in
 criterion is \code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}}, and a kinked penalty, whose hyperparameter
 is the argument of a minimum over a grid that \code{\link[=outer_hyper_index]{outer_hyper_index()}} skips.
 The map from that hyperparameter to the mode turns a corner whenever a
-coefficient joins or leaves the active set, so no derivative exists to
+coefficient joins or leaves the active set, so the map has no derivative to
 propagate.
 
-The correction is unavailable, with \code{n_hyper} positive and \code{C} \code{NULL}, where
-the criterion's own Hessian cannot be read, or where \code{\link[=hyper_variance]{hyper_variance()}}
-cannot invert it because the coupling of a held coordinate to the kept ones
-is too large to ignore.
+The correction is unavailable, and then \code{n_hyper} is positive and \code{C} is
+\code{NULL}, where the criterion's own Hessian cannot be read, or where
+\code{\link[=hyper_variance]{hyper_variance()}} cannot invert it because the coupling of a held
+coordinate to the kept ones is too large to ignore.
 
-The correction is partial, with \code{complete} false, where some of it could be
-read and some could not: a hyperparameter that \code{\link[=hyper_variance]{hyper_variance()}} held
+The correction is partial, and \code{complete} is false, where some of it could
+be read and some could not: a hyperparameter that \code{\link[=hyper_variance]{hyper_variance()}} held
 contributes nothing, and a penalty for which \code{\link[=hyper_mode_cross]{hyper_mode_cross()}} could not
 return a column (counted in its \code{skipped}) contributes nothing. The matrix
 returned then omits those contributions.

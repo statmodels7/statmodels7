@@ -15,7 +15,7 @@
 \code{x}, invisibly.
 }
 \description{
-The model that was written, the size of what came out, and the truth
+Prints the model that was written, the size of what came out, and the truth
 behind it.
 }
 \examples{

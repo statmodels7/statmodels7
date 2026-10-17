@@ -29,7 +29,7 @@ member's positions in the vector in which the class is addressed.}
 }
 \value{
 \code{class_pieces()} a list with one element per member: the member's
-piece (see \code{\link[=label_pieces]{label_pieces()}}) with \code{cols} and \code{index} added;
+piece (see \code{\link[=label_pieces]{label_pieces()}}), to which \code{cols} and \code{index} are added;
 \code{class_index()} and \code{class_zeta_cols()} an integer vector of \code{m * dim}
 positions.
 }

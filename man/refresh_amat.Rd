@@ -25,8 +25,8 @@ A numeric matrix, one row per observation and one column per
 coefficient of the term.
 }
 \description{
-\eqn{A_a[i,j] = w_i\sum_b c_{ab}(i)\,(X_b M_{ab}^\top)[i,j]}, the matrix
-with which a term's own derivative is paired.
+Computes \eqn{A_a[i,j] = w_i\sum_b c_{ab}(i)\,(X_b M_{ab}^\top)[i,j]}, the
+matrix with which a term's own derivative is paired.
 }
 \details{
 The same shape serves three quantities and differs only in \eqn{c_{ab}}: the

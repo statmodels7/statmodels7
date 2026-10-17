@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstatmod.R
 \name{par_written}
 \alias{par_written}
-\title{The Coordinates a Simulation's \code{par} Writes}
+\title{The Coordinates That a Simulation's \code{par} Writes}
 \usage{
 par_written(par, design, params, snm)
 }
@@ -25,8 +25,8 @@ parameters, the positions that some key of \code{par} addresses.
 }
 \details{
 It reads the keys through \code{\link[=resolve_par_key]{resolve_par_key()}}, the function that
-\code{\link[=rstatmod_named]{rstatmod_named()}} uses to write them, so the two cannot disagree about
-what a key reaches. A key that reaches nothing signals the same error
+\code{\link[=rstatmod_named]{rstatmod_named()}} uses to write them, so a key reaches the same positions
+in both. A key that reaches nothing signals the same error
 here that it would signal there.
 }
 \seealso{

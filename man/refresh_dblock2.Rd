@@ -9,7 +9,8 @@ refresh_dblock2(un, v, u, n)
 \arguments{
 \item{un}{One entry of \code{\link[=refresh_units]{refresh_units()}}.}
 
-\item{v, u}{The two directions, each as long as the term's coefficients.}
+\item{v, u}{The two directions, each of which is as long as the term's
+coefficients.}
 
 \item{n}{The number of observations.}
 }
@@ -17,17 +18,16 @@ refresh_dblock2(un, v, u, n)
 A numeric matrix, \code{n} by the term's coefficient count.
 }
 \description{
-\code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}} on one unit, with the shape of the
-result checked. A block of another shape signals an error that names the
-term.
+Calls \code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}} on one unit and checks the shape of
+the result. A block of another shape signals an error that names the term.
 }
 \details{
-The base method on \code{model_term} answers zeros, which is exact for a design
-that does not move. A sharp \code{\link[modelterms7:seg]{modelterms7::seg()}} answers zeros because its
+The base method on \code{model_term} returns zeros, which is exact for a design
+that does not move. A sharp \code{\link[modelterms7:seg]{modelterms7::seg()}} returns zeros because its
 second derivative vanishes away from the break-points, and a sharp
-\code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} answers zeros because its
+\code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} returns zeros because its
 block is a working linearization with a frozen weight and not a Jacobian.
-Nothing is differenced here in any case.
+The function does not difference in any case.
 }
 \seealso{
 \code{\link[=refresh_dblock]{refresh_dblock()}}, \code{\link[=trace_refresh4]{trace_refresh4()}}

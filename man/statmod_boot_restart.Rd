@@ -48,8 +48,8 @@ refit, with the meanings that they have there.}
 sweep. A budget below one returns \code{res} unchanged.}
 }
 \value{
-\code{res}, with \code{par}, \code{value}, \code{converged}, \code{obj} and the block
-histories replaced when a restart improved the objective. Every other
+\code{res}, in which \code{par}, \code{value}, \code{converged}, \code{obj} and the block
+histories are replaced when a restart improves the objective. Every other
 element is carried over unchanged, including the history of an outer
 search and its optimizer, so the result has the same structure either
 way.
@@ -67,23 +67,23 @@ positions, the coefficients of a term enter linearly, so the profile at a
 fixed configuration of positions is one weighted linear fit of the working
 response of the term's equation. A proposal is therefore a configuration of
 positions, and two proposals are ranked by their profiles at the cost of
-one linear fit each. Only a proposal that the profile prefers leads to a
-refit of the whole model, and the refit is accepted or rejected on the true
-objective. A proposal that the profile rejects costs profile evaluations
+one linear fit each. Only a proposal that ranks higher on the profile leads
+to a refit of the whole model, and the refit is accepted or rejected on the
+true objective. A proposal that the profile rejects costs profile evaluations
 only, with no refit of the model.
 }
 
 \section{The three proposal kinds}{
 The kinds are tried in this order.
 \enumerate{
-\item \strong{The deterministic sweep.} Each break-point in turn is swept over a
-grid on the profile with the others held, which is
-\code{\link[modelterms7:seg_polish]{modelterms7::seg_polish()}}. This reaches a feature of the profile from
-which the fitting iteration had moved a break-point away.
-\item \strong{The bootstrap sweep.} The same descent on the profile of a
-resample, the multinomial counts entering as weights, which moves the
-profile's optima the way refitting the resample would.
-\item \strong{The random sweep.} The same descent from positions drawn uniformly
+\item The deterministic sweep. Each break-point in turn is swept over a
+grid on the profile while the others are held, as
+\code{\link[modelterms7:seg_polish]{modelterms7::seg_polish()}} does. This reaches a feature of the profile
+from which the fitting iteration had moved a break-point away.
+\item The bootstrap sweep. The same descent on the profile of a
+resample, in which the multinomial counts enter as weights. This moves
+the profile's optima in the way that refitting the resample would.
+\item The random sweep. The same descent from positions drawn uniformly
 over the confinement interval.
 }
 
@@ -99,16 +99,16 @@ the term's equation, net of the other contributions to that equation, with
 the working weights of a scoring step. For the location parameter of a
 gaussian family on the identity link, this is the least-squares objective
 of the model. In every other equation, it is a quadratic model of the
-objective that ranks the candidates, and the acceptance is decided on the
-true objective. \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} uses the same profile to place
-starting values.
+objective that ranks the candidates, and each candidate is accepted or
+rejected on the true objective. \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} uses the same
+profile to place starting values.
 }
 
 \section{Reproducibility}{
 The draws come from the session's generator, so a fit with restarts
 repeats under \code{\link[=set.seed]{set.seed()}}. The refreshable and structural state of the
-design is snapshotted at the incumbent and restored whenever a candidate
-loses, so that a rejected proposal leaves the state unchanged.
+design is saved at the incumbent and restored whenever a candidate
+is rejected, so that a rejected proposal leaves the state unchanged.
 }
 
 \references{

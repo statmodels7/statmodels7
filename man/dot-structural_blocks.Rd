@@ -19,8 +19,8 @@
 \item{n}{The number of observations.}
 }
 \value{
-A function of the direction -- \code{NULL}, one vector, or a list
-of two -- returning a \code{blocks} callback.
+A function of the direction (\code{NULL}, one vector, or a list
+of two) returning a \code{blocks} callback.
 }
 \description{
 Builds the \code{blocks} callback that \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}},
@@ -41,8 +41,8 @@ With TWO directions the callback serves \code{\link[modelterms7:term_fourth]{mod
 instead, and carries three quantities more: \code{Q}, the fourth
 derivative with two of its indices on the filter's own equation;
 \code{P}, the FIFTH derivative contracted against both directions, which
-is the only place that order enters; and \code{cppp}, the scalar the
-level's own curvature moves by, which no contraction recovers.
+is the only place that order enters; and \code{cppp}, the scalar by which the
+level's own curvature moves, which a contraction cannot recover.
 \code{N} is then a list of two, one per direction.
 }
 \keyword{internal}

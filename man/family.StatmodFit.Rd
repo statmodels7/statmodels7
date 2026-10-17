@@ -2,7 +2,7 @@
 % Please edit documentation in R/accessors.R
 \name{family.StatmodFit}
 \alias{family.StatmodFit}
-\title{The Distribution a Model Was Fitted With}
+\title{The Distribution of a Fitted Model}
 \usage{
 \method{family}{StatmodFit}(object, ...)
 }
@@ -12,14 +12,15 @@
 \item{...}{Unused.}
 }
 \value{
-The \pkg{distributions7} distribution object the model was fitted
-with, links included. A binomial family fitted to a two-column response
-carries the row sums as its \code{size}, so in that case the object differs
-from the one supplied. Its \verb{@params} property names the parameters and
-\verb{@link_params} holds their links.
+The \pkg{distributions7} distribution object used to fit the
+model, including its links. A binomial family fitted to a two-column
+response carries the row sums as its \code{size}, so in that case the object
+differs from the one supplied. Its \verb{@params} property names the parameters
+and \verb{@link_params} holds their links.
 }
 \description{
-The \pkg{distributions7} object, with its links.
+Returns the \pkg{distributions7} object of the model, with its
+links.
 }
 \details{
 The object returned is the family itself, so its density, its derivatives,

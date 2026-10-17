@@ -17,18 +17,18 @@ the six summary columns, \code{levels}, the number of groups, and \code{group}, 
 grouping expression; \code{NULL} where the term carries no grouping.
 }
 \description{
-The six-number summary of \code{\link[base:summary]{base::summary()}} (minimum, quartiles, mean and
-maximum) of a random-effect term's predicted effects, one row per
-coordinate of the effect: the intercept, and each covariate of a random
+Computes the six-number summary of \code{\link[base:summary]{base::summary()}} (minimum, quartiles,
+mean and maximum) of a random-effect term's predicted effects, with one row
+per coordinate of the effect: the intercept, and each covariate of a random
 slope.
 }
 \details{
 The coefficients of one group are adjacent in the block, so the
 predictions are read as a matrix with one row per level and one column per
-coordinate, the coordinates named as \code{\link[modelterms7:term_group]{modelterms7::term_group()}} names
-them. A term with one level and several coordinates is a single draw of a
-vector, and its table has one row, the summary across the coordinates.
-The statistics are taken over the finite effects, an aliased effect being
+coordinate, and the coordinates are named as \code{\link[modelterms7:term_group]{modelterms7::term_group()}}
+names them. A term with one level and several coordinates is a single draw of
+a vector, and its table has one row, the summary across the coordinates. The
+statistics are taken over the finite effects, because an aliased effect is
 \code{NA}.
 }
 \keyword{internal}

@@ -21,11 +21,12 @@ Lists the \code{\link[modelterms7:random]{modelterms7::random()}} terms written 
 with the mode that \code{predict()} applies to each.
 }
 \details{
-\code{random} is a single string, applied to every such term, or a character
-vector named by the terms' keys, one mode per key named, applying to every
-term with that key in any equation, and the rest staying conditional. A key
-is matched with its white space removed, so \code{"random(~1|g)"} finds the
-term written \code{random(~ 1 | g)}. A name that matches no term signals an
+\code{random} is a single string, which applies to every such term, or a
+character vector named by the terms' keys, which gives one mode per key
+named and applies to every term with that key in any equation. The terms
+that it does not name stay conditional. A key is matched after its white
+space is removed, so \code{"random(~1|g)"} finds the term written
+\code{random(~ 1 | g)}. A name that matches no term signals an
 error that lists the terms of the model.
 
 Only a term written in an equation is listed. One written inside a

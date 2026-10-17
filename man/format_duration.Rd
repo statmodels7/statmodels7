@@ -8,7 +8,7 @@ format_duration(seconds, digits = 3L)
 }
 \arguments{
 \item{seconds}{A number of seconds. Vectorized: a vector in gives a vector
-out, each element in its own unit.}
+out, and each element is in its own unit.}
 
 \item{digits}{How many significant digits to keep, passed to \code{\link[=signif]{signif()}}.
 Defaults to 3.}

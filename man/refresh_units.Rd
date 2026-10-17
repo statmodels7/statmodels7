@@ -16,23 +16,23 @@ refresh_units(spec, design, coef, params, npar, offs)
 \item{params, npar, offs}{The block bookkeeping.}
 }
 \value{
-A list, empty where no block moves. Each element is a list with
-\code{a}, the index of the term's equation; \code{param}, the distribution
-parameter of that equation; \code{term}, the name of the term within the
-equation; \code{cols}, its columns within the equation; \code{ra}, the same columns
-in the stacked coefficient vector; \code{bt}, the term's coefficients; and
-\code{built}, the term refreshed at \code{bt}.
+A list, which is empty if the design has no block that moves. Each
+element is a list with \code{a}, the index of the term's equation; \code{param}, the
+distribution parameter of that equation; \code{term}, the name of the term
+within the equation; \code{cols}, its columns within the equation; \code{ra}, the
+same columns in the stacked coefficient vector; \code{bt}, the term's
+coefficients; and \code{built}, the term refreshed at \code{bt}.
 }
 \description{
-One entry per refreshable term, carrying everything its derivative needs:
-the distribution parameter it sits in, its columns within that equation
-and in the stacked coefficient vector, its own coefficients and the term
-rebuilt at them.
+Returns one entry per refreshable term, carrying everything that its
+derivative needs: the distribution parameter of the equation in which the
+term sits, its columns within that equation and in the stacked coefficient
+vector, its own coefficients and the term rebuilt at them.
 }
 \details{
-Resolved once and passed to every consumer, so the gradient's contraction
-and the Hessian's three corrections cannot disagree about which terms move
-or where their columns are.
+The entries are resolved once and passed to every consumer, so the
+gradient's contraction and the Hessian's three corrections cannot disagree
+about which terms move or where their columns are.
 }
 \seealso{
 \code{\link[=u_refresh]{u_refresh()}}, \code{\link[=contract3_refresh]{contract3_refresh()}}

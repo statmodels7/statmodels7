@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{frozen_condition}
 \alias{frozen_condition}
-\title{The Condition a Frozen Block Raises}
+\title{The Condition That a Frozen Block Raises}
 \usage{
 frozen_condition(msg)
 }
@@ -13,8 +13,8 @@ frozen_condition(msg)
 A condition.
 }
 \description{
-A warning of its own class, so that a caller reporting the same thing in
-its own channel can muffle it in place of repeating it.
+Returns a warning of its own class, so that a caller reporting the same
+thing in its own channel can muffle it in place of repeating it.
 }
 \details{
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} calls \code{\link[=vcov]{vcov()}} more than

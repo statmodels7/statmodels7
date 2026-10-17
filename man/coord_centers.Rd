@@ -26,7 +26,7 @@ free to move, in which case \code{\link[=coord_fit]{coord_fit()}} centers the bl
 the working weights and solves it with the intercept profiled out.
 }
 \details{
-The block is fitted with the other columns of its equation held, and the
+The block is fitted while the other columns of its equation are held, and the
 intercept is one of them. Where the columns are not centered, each change
 of a coefficient moves the mean of the fit, which only the intercept can
 take back, and the intercept is updated in another block. The alternation

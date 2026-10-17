@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.R
 \name{se_answer}
 \alias{se_answer}
-\title{The Shape a Prediction With Its Uncertainty Comes Back In}
+\title{The Shape in Which a Prediction With Its Uncertainty Is Returned}
 \usage{
 se_answer(su, what, params, spec)
 }
@@ -19,12 +19,12 @@ se_answer(su, what, params, spec)
 A data frame, or a named list of them.
 }
 \description{
-The rows \code{\link[=predict_se]{predict_se()}} computed, reduced to the quantity requested.
+Reduces the rows that \code{\link[=predict_se]{predict_se()}} computed to the quantity requested.
 }
 \details{
-The vocabulary is the one that a prediction without uncertainty answers,
-minus the moments: a moment's delta method needs its derivative in every
-parameter, which \pkg{distributions7} does not offer as a generic, so a
-moment signals an error.
+The accepted values of \code{what} are those of a prediction without
+uncertainty, minus the moments: a moment's delta method needs its
+derivative in every parameter, which \pkg{distributions7} does not provide
+as a generic, so a moment signals an error.
 }
 \keyword{internal}

@@ -22,8 +22,9 @@ two are conditional on the hyperparameters; the third carries their own
 uncertainty as well.}
 
 \item{expected}{Whether the expected information is used. Defaults to
-\code{\link[=fit_expected]{fit_expected()}}: the expected one where the fit inverted it and the
-family writes it out, the observed Hessian otherwise. A model that
+\code{\link[=fit_expected]{fit_expected()}}, which selects the expected information where the fit
+inverted it and the family writes it out, and the observed Hessian
+otherwise. A model that
 carries a structural term always uses the observed information.}
 
 \item{approx}{How the expected information is approximated for a family
@@ -51,19 +52,18 @@ the named equations. A coordinate that is held or not identified has \code{NA}
 in its row and column.
 }
 \description{
-The variance of the estimated coefficients, over every distribution
+Returns the variance of the estimated coefficients, over every distribution
 parameter's block at once.
 }
 \details{
-\strong{Three matrices.}
 Writing \eqn{H} for the information of the log-likelihood and \eqn{S} for
 the second derivative of the penalty,
 \deqn{V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}.}
-The first is the posterior variance under the prior whose negative
+\eqn{V_b} is the posterior variance under the prior whose negative
 logarithm is the penalty, and it is the matrix from which an interval around
 a penalized term should be built: it carries the smoothing bias as variance,
-and for that reason such intervals cover at about their nominal rate. The
-second is the sampling variance of the penalized estimator at a fixed
+and for that reason such intervals cover at about their nominal rate.
+\eqn{V_f} is the sampling variance of the penalized estimator at a fixed
 penalty, which is smaller and covers less. With no penalty \eqn{S = 0} and
 both are \eqn{H^{-1}}, for a coefficient that the outer criterion does not
 estimate. Under \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} with the default \code{marginal = NULL}, in a
@@ -74,7 +74,7 @@ deviation of a Gaussian) are estimated on the criterion, and \code{"bayesian"} a
 types then differ from \code{"frequentist"} for those coefficients even without a
 penalty.
 
-\strong{A prior that is not Gaussian.} \eqn{V_b} is computed in the same way for
+For a prior that is not Gaussian, \eqn{V_b} is computed in the same way for
 every penalty that is twice differentiable at the mode. \eqn{H + S} is then
 the curvature of the log-posterior at the mode, and \eqn{V_b} is the Laplace
 approximation of the posterior variance. The statement about coverage above
@@ -89,9 +89,9 @@ mode. Where \eqn{H + S} is not positive definite, a coordinate whose
 diagonal entry is not positive is held as described below, and otherwise an
 error is signaled.
 
-\strong{The first two matrices are conditional on the hyperparameters}, which
-they read at the value where the outer search stopped, as though it were
-known. That value was estimated from the same data, and the third matrix
+The first two matrices are conditional on the hyperparameters, which
+are evaluated at the value where the outer search stopped, as though that
+value were known. It was estimated from the same data, and the third matrix
 adds the variance that this estimation contributes:
 \deqn{V' = V_b + J V_\theta J', \qquad
   J = -(H + S)^{-1} \frac{\partial^2 \rho}{\partial\beta \partial\theta},}
@@ -102,8 +102,8 @@ matrix that mgcv returns as \code{unconditional = TRUE}. The correction is
 positive semi-definite, so \eqn{V'} is never narrower than \eqn{V_b}. It
 matters where a smoothing parameter is poorly determined, and it affects the
 penalized coordinates much more than the unpenalized ones. It requires the
-curvature of the outer criterion, which neither conditional matrix reads, so
-\code{"unconditional"} is more expensive than the other two types.
+curvature of the outer criterion, which the two conditional matrices do not
+read, so \code{"unconditional"} is more expensive than the other two types.
 
 Where no hyperparameter was estimated by a differentiable criterion there
 is nothing to propagate, the correction is exactly zero and \code{"unconditional"}
@@ -114,26 +114,26 @@ is not mistaken for the wider one. Where the curvature can be read for only
 some of the hyperparameters, the correction is a lower bound and a warning
 states it. See \code{\link[=hyper_correction]{hyper_correction()}}.
 
-\strong{A coefficient that a kinked penalty has set to zero has \code{NA} in its row and
-column.} At zero the penalty is not twice differentiable, so \eqn{S} does
-not exist there and no curvature can be read. The coefficients that a lasso
-or an MCP leaves non-zero have a variance, which is conditional on that
-selection; \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reports this in a note. Away from zero
-the lasso contributes nothing to \eqn{S}, and SCAD and MCP contribute a
-negative curvature on their concave part, which makes the variance of a
-coefficient there larger than that of the likelihood alone. For these
-penalties \eqn{V_b} is therefore not the posterior variance under the
-corresponding prior, because a curvature read at the mode does not see the
-mass that the prior puts near zero.
+A coefficient that a kinked penalty has set to zero has \code{NA} in its row and
+column. At zero the penalty is not twice differentiable, so \eqn{S} does
+not exist there and the curvature cannot be read. The coefficients that a
+lasso or an MCP leaves non-zero have a variance, which is conditional on that
+selection; \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reports this in a note. Away from zero the
+lasso contributes nothing to \eqn{S}, and SCAD and MCP contribute a negative
+curvature on their concave part, which makes the variance of a coefficient
+there larger than that of the likelihood alone. For these penalties \eqn{V_b}
+is therefore not the posterior variance under the corresponding prior,
+because a curvature read at the mode does not include the mass that the prior
+puts near zero.
 
-\strong{Which information.} \code{expected} selects the matrix used as \eqn{H}. Its
+The argument \code{expected} selects the matrix used as \eqn{H}. Its
 default is the expected information where the fit inverted it and the
 family writes it out in closed form, and the observed Hessian otherwise
 (\code{\link[=fit_expected]{fit_expected()}}). The two agree asymptotically and not in a sample: one
-is the information averaged over the model, the other the curvature of the
-likelihood at the data in hand. A model that carries a structural term is
-always inverted on the observed information, because neither a filter nor a
-mixture over states has an expected information.
+is the information averaged over the model, and the other is the curvature
+of the likelihood at the data in hand. A model that carries a structural
+term is always inverted on the observed information, because a filter and a
+mixture over states do not have an expected information.
 
 Where the family has no closed form, \code{expected = TRUE} reaches an
 approximation, and \code{approx} selects it. \code{"opg"}, the default, is the outer

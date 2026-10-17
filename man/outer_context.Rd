@@ -22,9 +22,10 @@ An environment carrying the point and, as they are requested, the
 quantities derived from it.
 }
 \description{
-The quantities the marginal criterion, its gradient and its Hessian all
-read at one \eqn{(\beta, \theta)}: the linear predictors, the information,
-the penalty's Hessian, their sum and its factorization.
+Creates the environment that holds the quantities that the marginal
+criterion, its gradient and its Hessian all read at one
+\eqn{(\beta, \theta)}: the linear predictors, the information, the
+penalty's Hessian, their sum and its factorization.
 }
 \details{
 The criterion, its gradient and its Hessian read the same information, the

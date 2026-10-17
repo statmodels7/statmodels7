@@ -21,14 +21,14 @@ structural_dk_matrix(spec, design, jd, st, v)
 A square symmetric matrix over the estimated coordinates.
 }
 \description{
-\eqn{\partial K/\partial u\,[v]} assembled as a matrix over the
+Returns \eqn{\partial K/\partial u\,[v]} assembled as a matrix over the
 coefficients and the filter's own parameters, where
 \code{\link[=structural_chain_extra]{structural_chain_extra()}} returns only its trace against \eqn{M}.
 }
 \details{
 The gradient uses only the trace of this matrix against \eqn{M} and does
 not form the matrix. The Hessian uses the matrix in two places: in
-\eqn{\mathrm{tr}(M K_l M K_m)}, which no contraction reduces, and as the
+\eqn{\mathrm{tr}(M K_l M K_m)}, which a contraction cannot reduce, and as the
 operator that carries the second movement of the mode. Write \eqn{V_a} for
 the rows of each equation, \eqn{\mathrm{d}\varphi = E v} for the movement of
 the filter's own parameters, and \eqn{E} for the second derivative of the

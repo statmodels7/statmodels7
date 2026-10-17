@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{entry_owner}
 \alias{entry_owner}
-\title{Which Sub-Term a Penalty Entry Belongs To}
+\title{The Sub-Term to Which a Penalty Entry Belongs}
 \usage{
 entry_owner(term, ii)
 }
@@ -15,17 +15,17 @@ entry_owner(term, ii)
 One built term.
 }
 \description{
-The term whose own columns an entry of
+Returns the term whose own columns an entry of
 \code{\link[modelterms7:term_penalties]{modelterms7::term_penalties()}} covers: the term itself where the
 entry is over its own block, and the sub-term developing one of its
 parameters where it is not.
 }
 \details{
 A term that develops a parameter over another term reports that term's
-penalties as its own, each entry naming the columns that it covers. Those
-columns are the sub-term's block, so a question about the penalty -- what
-its coordinates are, above all -- is a question about the sub-term, and
-answering it from the parent yields nothing: \code{nl()} has no grouping, and a
+penalties as its own, and each entry names the columns that it covers.
+Those columns are the sub-term's block, so a question about the penalty
+(above all, what its coordinates are) is a question about the sub-term, and
+reading it from the parent returns nothing: \code{nl()} has no grouping, and a
 correlated random effect inside it does.
 
 The walk recurses, translating the entry's positions into the sub-term's

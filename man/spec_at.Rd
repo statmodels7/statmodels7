@@ -9,11 +9,11 @@ spec_at(fit, data, need_response = TRUE)
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{data}{A data frame, or \code{NULL} for the data the model was fitted to.}
+\item{data}{A data frame, or \code{NULL} for the data used to fit the model.}
 
 \item{need_response}{\code{TRUE} where the response must be present, as for a
-log-likelihood; \code{FALSE} for a prediction, new data routinely having no
-response column.}
+log-likelihood; \code{FALSE} for a prediction, because new data routinely has
+no response column.}
 }
 \value{
 A \code{\link[=StatmodSpec]{StatmodSpec()}}: \code{fit@spec} itself when \code{data} is \code{NULL}, and

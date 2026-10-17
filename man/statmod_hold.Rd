@@ -14,8 +14,8 @@ statmod_hold(spec, coords, values)
 \item{values}{The values, one per position in \code{coords$where}.}
 }
 \value{
-\code{spec} with \code{held_coef} set. The holds already present are kept
-for coefficients that \code{coords} does not name.
+\code{spec}, in which \code{held_coef} is set. The holds already present are
+kept for coefficients that \code{coords} does not name.
 }
 \description{
 Writes values for the coefficients that \code{\link[=marginal_coords]{marginal_coords()}} returned into the
