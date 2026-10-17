@@ -10,8 +10,8 @@ iwls_polish()
 A single logical.
 }
 \description{
-\code{TRUE} where \code{\link[=iwls_fit]{iwls_fit()}} takes a full step at the point its rule
-accepted, so a criterion read there is out by a second-order amount.
+Returns \code{TRUE} where \code{\link[=iwls_fit]{iwls_fit()}} takes a full step at the point that its
+rule accepted, so a criterion read there is out by a second-order amount.
 }
 \seealso{
 \code{\link[=iwls_fit]{iwls_fit()}}.

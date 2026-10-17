@@ -18,8 +18,8 @@
 #' since a constraint is attached to a name and is not part of it.
 #'
 #' Reading the field keeps one enumeration. A member added to `Imports` is a
-#' member here after the next install, and no second list has to be kept in
-#' step.
+#' member here after the next install, and a second list does not have to be
+#' kept in step.
 #'
 #' # The exclusion of `S7`
 #'
@@ -29,7 +29,7 @@
 #' name.
 #'
 #' @return A character vector of package names, sorted alphabetically, with
-#'   one element per member. The result does not say whether a member is
+#'   one element per member. The result does not record whether a member is
 #'   installed; [statmodels7_versions()] reports that.
 #'
 #' @seealso [statmodels7_versions()] for the installed version of each,
@@ -61,7 +61,7 @@ statmodels7_packages <- function() {
 #' @description
 #' Reports the version of each member package as it is installed on this
 #' machine, one row per member. A member that is not installed has `NA` as its
-#' version and is kept, so the result always has one row per name
+#' version and is kept, so the result always has one row per name that
 #' [statmodels7_packages()] returns and a missing member is visible.
 #'
 #' @details
@@ -129,12 +129,13 @@ statmodels7_versions <- function() {
 #'
 #' @param versions A data frame as [statmodels7_versions()] returns, with
 #'   character columns `package` and `version` and `NA` in `version` for a
-#'   member that is not installed. Not validated: this is called from
-#'   `.onAttach()` with that function's own result.
+#'   member that is not installed. The argument is not validated, because
+#'   `.onAttach()` calls this function with the result of that function.
 #'
 #' @return A character vector with `ceiling(nrow(versions) / 2)` elements, one
-#'   per row of the two-column layout, each already trimmed of trailing
-#'   spaces. `character(0)` when `versions` has no rows.
+#'   per row of the two-column layout, in which trailing spaces are already
+#'   trimmed from each element. The result is `character(0)` when `versions`
+#'   has no rows.
 #'
 #' @seealso [statmodels7_versions()] for the input,
 #'   [format_conflicts()] for the other half of the same message.
@@ -177,13 +178,13 @@ statmodels7_attach_message <- function(versions) {
 #' that order. If a name were exported by two members,
 #' [statmodels7_conflicts()] would report it.
 #'
-#' @return The names of the packages this call attached, a character vector,
-#'   invisibly. Empty when every installed member was already on the search
-#'   path.
+#' @return The names of the packages that this call attached, a character
+#'   vector, invisibly. The vector is empty when every installed member was
+#'   already on the search path.
 #'
 #' @seealso [statmodels7_packages()] for the members,
-#'   [statmodels7_conflicts()] for what the suppressed warnings would have
-#'   said.
+#'   [statmodels7_conflicts()] for the conflicts that the suppressed warnings
+#'   would have reported.
 #'
 #' @keywords internal
 statmodels7_attach <- function() {

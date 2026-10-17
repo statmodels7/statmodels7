@@ -26,8 +26,8 @@ fit_smooth(obj, beta, idx, spec, design, hyper, method, vb)
 \value{
 A list with the following elements:
 \describe{
-\item{\code{par}}{the full stacked coefficient vector, with the block's
-positions replaced.}
+\item{\code{par}}{the full stacked coefficient vector, in which the block's
+positions are replaced.}
 \item{\code{value}}{the objective there.}
 \item{\code{converged}}{a single logical, the method's own verdict.}
 \item{\code{iterations}}{how many the method took.}
@@ -49,8 +49,8 @@ kinked block at its current values. This is the smooth half of one pass of
 }
 \details{
 The objective handed to the optimizer is the full one restricted to \code{idx}:
-the coefficients outside the block enter it as constants, so the value it
-reports is the model's objective, never a block's own.
+the coefficients outside the block enter it as constants, so the value that
+it reports is the model's objective, never a block's own.
 
 With \code{\link[=iwls]{iwls()}} the step is solved by the scoring loop of \code{\link[=iwls_fit]{iwls_fit()}}, which
 reads the expected or the observed information, as the settled method

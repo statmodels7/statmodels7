@@ -27,8 +27,8 @@ a named list of hyperparameter vectors keyed by term.}
 \value{
 Depends on \code{what}:
 \describe{
-\item{\code{"value"}}{a single number, the penalties summed. \code{0} for an
-unpenalized model.}
+\item{\code{"value"}}{a single number, the sum of the penalties. The value is
+\code{0} for an unpenalized model.}
 \item{\code{"gradient"}}{a named list of numeric vectors, one per
 distribution parameter, zero in every unpenalized coordinate.}
 \item{\code{"hessian"}}{a symmetric \verb{p x p} matrix over the stacked
@@ -38,8 +38,8 @@ otherwise.}
 }
 }
 \description{
-The sum of every penalized term's \code{penalty_value()}, with its gradient
-and Hessian placed in the columns that term owns.
+Computes the sum of every penalized term's \code{penalty_value()}. The gradient
+and Hessian of that sum are placed in the columns that each term owns.
 }
 \details{
 For each penalized term the function evaluates the quantity at the

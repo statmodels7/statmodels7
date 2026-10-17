@@ -2,7 +2,7 @@
 % Please edit documentation in R/iwls.R
 \name{iwls_info_diag}
 \alias{iwls_info_diag}
-\title{The Diagonal of the Information a Step Uses}
+\title{The Diagonal of the Information That a Step Uses}
 \usage{
 iwls_info_diag(pieces)
 }
@@ -16,8 +16,8 @@ An unnamed numeric vector, one entry per stacked coefficient.
 third branch.
 }
 \description{
-Returns the diagonal of the information \code{\link[=iwls_score]{iwls_score()}} normalizes by, one
-entry per stacked coefficient.
+Returns the diagonal of the information by which \code{\link[=iwls_score]{iwls_score()}} normalizes,
+one entry per stacked coefficient.
 }
 \details{
 On the augmented route it is the column sums of the squares of the
@@ -27,8 +27,8 @@ the penalty does not enter.
 On the assembled route it is the diagonal of the matrix itself, which
 folds the penalty in. That is a different normalizer. It is accepted
 because the reading only arbitrates a verdict and does not drive the loop,
-and because the assembled route is used either where no square root
-exists or when \code{"chol"} is requested.
+and because the assembled route is used either where the square
+root does not exist or when \code{"chol"} is requested.
 }
 \seealso{
 \code{\link[=iwls_score]{iwls_score()}}, which normalizes by it, and \code{\link[=iwls_fit]{iwls_fit()}}, the only

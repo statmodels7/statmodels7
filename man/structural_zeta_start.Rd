@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{structural_zeta_start}
 \alias{structural_zeta_start}
-\title{The Parameters a Structural Term Starts From}
+\title{The Starting Parameters of a Structural Term}
 \usage{
 structural_zeta_start(term, target = NULL)
 }
@@ -19,8 +19,8 @@ methods ignore it through the dots.}
 A named numeric vector.
 }
 \description{
-What the term itself declares through
-\code{\link[modelterms7:term_start]{modelterms7::term_start()}}: as near the model without the
+Returns what the term itself declares through
+\code{\link[modelterms7:term_start]{modelterms7::term_start()}}: the parameters as near the model without the
 term as its charts allow, which only the term can determine. A score
 loading on the log chart has no coordinate for zero, so it starts at a weak
 response instead.

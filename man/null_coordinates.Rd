@@ -16,7 +16,7 @@ An integer vector of positions within the block, empty for a
 penalty of full rank, or \code{NULL}.
 }
 \description{
-The positions, within a penalty's block, that span its null space, or
-\code{NULL} where the null space is not spanned by coordinates.
+Returns the positions, within a penalty's block, that span its null space,
+or \code{NULL} where the null space is not spanned by coordinates.
 }
 \keyword{internal}

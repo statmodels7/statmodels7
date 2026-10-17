@@ -22,10 +22,11 @@
 #' Whether a Family Carries Enough Derivatives
 #'
 #' @description
-#' `TRUE` when the log-density has at least `need` continuous derivatives in
-#' every parameter the model carries an equation for. Used as a gate by the
-#' consumers that can fall back on something else, and through
-#' [order_shortfall()] as an error message by the ones that cannot.
+#' Returns `TRUE` when the log-density has at least `need` continuous
+#' derivatives in every parameter for which the model carries an equation.
+#' The consumers that can fall back on something else use the result as a
+#' gate, and the consumers that cannot use it through [order_shortfall()] as
+#' an error message.
 #'
 #' @param distrib A distributions7 family.
 #' @param need The order required, an integer from 1 to 5: 1 for a score
@@ -34,8 +35,8 @@
 #'   derivative of a filtered predictor.
 #'
 #' @return A single logical. `NA` orders count as unavailable: a wrapper of a
-#'   kinked family records the kink without declaring its order, and an
-#'   unestablished order is not evidence of smoothness.
+#'   kinked family records the kink without declaring its order, and an order
+#'   that has not been established is not evidence of smoothness.
 #'
 #' @examples
 #' statmodels7:::order_available(distributions7::gaussian1_distrib(), 4L)
@@ -53,20 +54,21 @@ order_available <- function(distrib, need) {
 #' Why a Consumer Cannot Run on This Family
 #'
 #' @description
-#' The error message of a consumer that cannot run on the family: the family,
-#' the parameter, the order that the consumer needs against the order that the
-#' family has, and what to write instead. `NULL` when the family has enough
-#' derivatives.
+#' Builds the error message of a consumer that cannot run on the family. The
+#' message names the family, the parameter, the order that the consumer needs
+#' against the order that the family has, and what to write instead. The
+#' result is `NULL` when the family has enough derivatives.
 #'
 #' @details
-#' Two shapes of shortfall are told apart, because the remedies differ. A
-#' family that DECLARES a kink has a known order and the message says which
-#' composition puts it there. A wrapper of such a family declares none, so the
-#' order is unestablished rather than known to be low, and the message says
-#' that instead of inventing a number.
+#' The remedy differs between two shapes of shortfall, and the message
+#' distinguishes them. A family that DECLARES a kink has a known order and the
+#' message names the composition that puts it there. A wrapper of such a family
+#' declares none, so the order is not established rather than known to be low,
+#' and the message reports that the order is not established and gives no
+#' number.
 #'
 #' @param distrib A distributions7 family.
-#' @param need The order the consumer needs.
+#' @param need The order that the consumer needs.
 #' @param what A noun phrase naming the consumer, used as the subject.
 #'
 #' @return A single string, or `NULL`.
@@ -117,14 +119,14 @@ order_shortfall <- function(distrib, need, what) {
 #'
 #' @description
 #' Raises [order_shortfall()]'s message when the family does not carry the two
-#' derivatives every criterion reads. Called from [statmod()] once the
-#' criterion is known to have something to do, so that a model whose criterion
-#' is inert does not signal an error that cannot arise.
+#' derivatives that every criterion reads. [statmod()] calls the function once
+#' the criterion is known to have something to do, so that a model whose
+#' criterion is inert does not signal an error that cannot arise.
 #'
 #' @param distrib A distributions7 family.
 #' @param method An [OuterMethod()], or `NULL`.
 #'
-#' @return `NULL`, invisibly. Called for the error.
+#' @return `NULL`, invisibly. The function is called for the error.
 #'
 #' @examples
 #' statmodels7:::assert_criterion_order(distributions7::gaussian1_distrib(), reml())
@@ -153,16 +155,16 @@ assert_criterion_order <- function(distrib, method) {
 #' \eqn{\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
 #' \partial\eta^\top]}, a function of the parameters alone. Where a family
 #' writes that information out, [distributions7::expected_hessian_exact()]
-#' answers `TRUE` and no check is made. Where a family does not write it out,
-#' for example a family written outside the toolkit, the information falls
-#' back on the strategy `approx` names, and the default, `"opg"`, returns
-#' \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an unbiased
-#' estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not the
-#' information itself: it depends on the response, as the observed curvature
+#' returns `TRUE` and the check is skipped. Where a family does not write it
+#' out, for example a family written outside the toolkit, the information
+#' falls back on the strategy named by `approx`, and the default, `"opg"`,
+#' returns \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an
+#' unbiased estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not
+#' the information itself: it depends on the response, as the observed curvature
 #' does, and it is neither of them. The criterion built on it is neither the
 #' Laplace approximation nor its Fisher variant, and it has no exact outer
 #' gradient, so its search is derivative-free and [statmod_certificate()]
-#' answers `unknown`.
+#' returns `unknown`.
 #'
 #' A criterion on the observed information has an exact outer gradient and
 #' Hessian and is searched with Newton's method; the outer-product route has
@@ -175,10 +177,10 @@ assert_criterion_order <- function(distrib, method) {
 #'
 #' @param distrib A distributions7 family.
 #' @param method An [OuterMethod()], or `NULL`.
-#' @param approx The approximation the fit reads the expected information
-#'   with, from [inner_settings()].
+#' @param approx The approximation with which the fit reads the expected
+#'   information, taken from [inner_settings()].
 #'
-#' @return `NULL`, invisibly. Called for the error.
+#' @return `NULL`, invisibly. The function is called for the error.
 #'
 #' @examples
 #' statmodels7:::assert_criterion_information(
@@ -211,21 +213,21 @@ assert_criterion_information <- function(distrib, method, approx) {
 #' Does the Family's Expected Information Depend on the Response?
 #'
 #' @description
-#' `TRUE` where [distributions7::distrib_expected_hessian()], called with
-#' `approx`, returns a matrix that changes with the response at fixed
-#' parameters, which an expectation cannot do.
+#' The result is `TRUE` where [distributions7::distrib_expected_hessian()],
+#' called with `approx`, returns a matrix that changes with the response at
+#' fixed parameters, which an expectation cannot do.
 #'
 #' @details
 #' The answer comes from a probe and not from a list of families, so that a
-#' family written later is covered: two distinct responses drawn at one
-#' parameter value, and the two answers compared. A family that
+#' family written later is covered. The probe draws two distinct responses at
+#' one parameter value and compares the two answers. A family that
 #' [distributions7::expected_hessian_exact()] reports as writing its
-#' information out is never probed, and neither is any `approx` other than
-#' `"opg"`, the only strategy that reads the response. A truncated family reports
-#' `FALSE` to that predicate although its expected information is a quadrature
-#' that does not depend on the response, so it answers `FALSE` here: that is
-#' why the probe, and not the predicate, decides. The caller's random stream is
-#' restored.
+#' information out is not probed, and the probe is not run for any `approx`
+#' other than `"opg"`, the only strategy that reads the response. For a
+#' truncated family, the predicate returns `FALSE` although the expected
+#' information is a quadrature that does not depend on the response, so this
+#' function also returns `FALSE`, and the answer is determined by the probe and
+#' not by the predicate. The caller's random stream is restored.
 #'
 #' @param distrib A distributions7 family.
 #' @param approx The approximation, a string.
@@ -291,7 +293,7 @@ expected_is_opg <- function(distrib, approx) {
 #' Which penalties a criterion reaches depends on its role, and only those are
 #' checked: an `outer_criterion` reaches the smooth penalties, and the
 #' kinked ones as well when no `sparse_criterion` is given, while a
-#' `sparse_criterion` reaches the kinked ones alone.
+#' `sparse_criterion` reaches only the kinked ones.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -299,7 +301,7 @@ expected_is_opg <- function(distrib, approx) {
 #' @param reach Which penalties the criterion selects: `"all"`, `"smooth"` or
 #'   `"kinked"`.
 #'
-#' @return `NULL`, invisibly. Called for the error.
+#' @return `NULL`, invisibly. The function is called for the error.
 #'
 #' @examples
 #' dd <- data.frame(x = runif(60))

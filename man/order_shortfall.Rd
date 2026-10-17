@@ -9,7 +9,7 @@ order_shortfall(distrib, need, what)
 \arguments{
 \item{distrib}{A distributions7 family.}
 
-\item{need}{The order the consumer needs.}
+\item{need}{The order that the consumer needs.}
 
 \item{what}{A noun phrase naming the consumer, used as the subject.}
 }
@@ -17,17 +17,18 @@ order_shortfall(distrib, need, what)
 A single string, or \code{NULL}.
 }
 \description{
-The error message of a consumer that cannot run on the family: the family,
-the parameter, the order that the consumer needs against the order that the
-family has, and what to write instead. \code{NULL} when the family has enough
-derivatives.
+Builds the error message of a consumer that cannot run on the family. The
+message names the family, the parameter, the order that the consumer needs
+against the order that the family has, and what to write instead. The
+result is \code{NULL} when the family has enough derivatives.
 }
 \details{
-Two shapes of shortfall are told apart, because the remedies differ. A
-family that DECLARES a kink has a known order and the message says which
-composition puts it there. A wrapper of such a family declares none, so the
-order is unestablished rather than known to be low, and the message says
-that instead of inventing a number.
+The remedy differs between two shapes of shortfall, and the message
+distinguishes them. A family that DECLARES a kink has a known order and the
+message names the composition that puts it there. A wrapper of such a family
+declares none, so the order is not established rather than known to be low,
+and the message reports that the order is not established and gives no
+number.
 }
 \examples{
 statmodels7:::order_shortfall(distributions7::laplace_distrib(), 2L,

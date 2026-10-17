@@ -2,7 +2,7 @@
 % Please edit documentation in R/objective.R
 \name{statmod_eta}
 \alias{statmod_eta}
-\title{The Linear Predictors and the Parameters They Give}
+\title{The Linear Predictors and the Parameters That They Give}
 \usage{
 statmod_eta(spec, design, coef)
 }
@@ -33,7 +33,7 @@ term: the predictors before the term's level is added.}
 }
 }
 \description{
-Turns a coefficient structure into the per-observation parameters every
+Turns a coefficient structure into the per-observation parameters that every
 \pkg{distributions7} generic takes. Each equation's design, coefficients,
 offset and adjustment give a linear predictor \eqn{\eta_k}, and the
 parameter's own link inverts it to \eqn{\theta_k}.
@@ -41,7 +41,7 @@ parameter's own link inverts it to \eqn{\theta_k}.
 \details{
 \deqn{\eta_k = X_k \beta_k + o_k + a_k, \qquad \theta_k = g_k^{-1}(\eta_k)}
 
-with \eqn{o_k} the equation's offset and \eqn{a_k} the adjustment a
+with \eqn{o_k} the equation's offset and \eqn{a_k} the adjustment that a
 refreshable term contributes, zero for an ordinary design.
 
 The inverse link is evaluated by \code{linkfunctions7::linkinv()}. The links

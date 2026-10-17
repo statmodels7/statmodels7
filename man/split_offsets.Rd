@@ -12,19 +12,19 @@ split_offsets(eq)
 \value{
 A list of two:
 \describe{
-\item{\code{formula}}{\code{eq} with the offset terms removed. \code{~ 1} where the
-equation held nothing else.}
+\item{\code{formula}}{\code{eq} with the offset terms removed. The formula is
+\code{~ 1} where the equation held nothing else.}
 \item{\code{offsets}}{a list of the expressions taken out, unevaluated.
-Empty when there were none.}
+The list is empty when there were none.}
 }
 }
 \description{
-Splits a one-sided formula into the \code{offset()} terms it names and
-whatever is left, and the interpreter is given the second.
+Splits a one-sided formula into the \code{offset()} terms that it names and
+whatever is left, and passes the second part to the interpreter.
 }
 \details{
 An offset is a column of the linear predictor whose coefficient is known
-to be one, and \code{y ~ x + offset(log_n)} is how R has always written it.
+to be one, and it is written in R as in \code{y ~ x + offset(log_n)}.
 
 The offset has to be taken out before the interpreter reads the equation.
 Left in, the term would reach \code{model.matrix} through

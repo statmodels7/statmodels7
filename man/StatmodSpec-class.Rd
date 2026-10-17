@@ -24,7 +24,7 @@ StatmodSpec(
 )
 }
 \arguments{
-\item{formula}{The model formula, as given, bars included.}
+\item{formula}{The model formula as given, including the bars.}
 
 \item{distrib}{The \pkg{distributions7} distribution object.}
 
@@ -46,18 +46,18 @@ where an equation has none.}
 \item{intercepts}{A named logical, one per parameter: whether that
 equation's parametric block carried an intercept.}
 
-\item{newdata}{The rows a respecification reads, or \code{NULL} for the fitting
-rows.}
+\item{newdata}{The rows that a respecification reads, or \code{NULL} for the
+fitting rows.}
 
 \item{structural}{A named list of the parameters of the structural term,
-keyed by the term; empty where no fit has set them.}
+keyed by the term; empty until a fit sets them.}
 
 \item{linpar}{A list, the options of the implicit parametric block as
 \code{\link[=linpar_options]{linpar_options()}} returns them.}
 
 \item{held_coef}{A named list, one entry per distribution parameter, of
 coefficients held at a value, each a named numeric vector keyed by
-coefficient name. Empty by default.}
+coefficient name. The list is empty by default.}
 
 \item{threads}{The number of threads, a single integer.}
 
@@ -66,20 +66,22 @@ a cross-validation, a single integer.}
 }
 \value{
 An object of class \code{StatmodSpec} with one property per argument
-above and the properties described next. \code{linpar} holds the options of the implicit
-parametric block and is set by \code{\link[=statmod_spec]{statmod_spec()}}. \code{newdata} holds the rows
-a respecification reads, \code{NULL} until \code{\link[=statmod_respec]{statmod_respec()}} sets it.
+above and the properties described next. \code{linpar} holds the options of
+the implicit parametric block and is set by \code{\link[=statmod_spec]{statmod_spec()}}. \code{newdata}
+holds the rows
+that a respecification reads, \code{NULL} until \code{\link[=statmod_respec]{statmod_respec()}} sets it.
 \code{structural} holds the parameters of a structural term where a fit has
 set them. \code{held_coef} holds coefficients held at a value, by name, empty
 by default. \code{threads} and \code{workers} hold the thread and worker counts
 that \code{\link[=statmod]{statmod()}} sets.
 }
 \description{
-Everything the formula, the data and the distribution produce, before any
-fitting: one equation per distribution parameter, the terms each equation
-names built against the data, the response, and the prior weights and
-offsets. A fit keeps one of these in its \code{spec} property, so it is also
-what \code{summary()}, \code{predict()} and the accessors read.
+The specification holds everything that the formula, the data and the
+distribution produce before any fitting: one equation per distribution
+parameter, the terms that each equation names built against the data, the
+response, and the prior weights and offsets. A fit keeps one of these in
+its \code{spec} property, so it is also what \code{summary()}, \code{predict()} and the
+accessors read.
 
 Build one with \code{\link[=statmod_spec]{statmod_spec()}}, which interprets the formula and
 validates. This raw constructor takes the pieces already made.
@@ -89,7 +91,8 @@ dd <- data.frame(y = rnorm(10), x = runif(10))
 spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 S7::S7_inherits(spec, StatmodSpec)
 
-# One equation per parameter of the family, whatever the formula wrote.
+# The specification has one equation per parameter of the family, whatever
+# the formula wrote.
 names(spec@equations)
 spec@n_obs
 

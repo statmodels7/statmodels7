@@ -13,25 +13,25 @@ structural_penalty_block(spec, design, hyper, nfree = NULL)
 
 \item{hyper}{The hyperparameters.}
 
-\item{nfree}{The number of free parameters the caller expects, or
-\code{NULL} to take whatever the term has.}
+\item{nfree}{The number of free parameters that the caller expects, or
+\code{NULL} to accept whatever number the term has.}
 }
 \value{
 A square matrix, or \code{NULL}.
 }
 \description{
-The Hessian of whatever penalty covers a structural term's own parameters,
-over the free ones and in their order, which is the order in which the
-tail of \code{\link[=statmod_full_information]{statmod_full_information()}} carries them.
+Returns the Hessian of whatever penalty covers a structural term's own
+parameters, over the free ones and in their order, which is the order in
+which the tail of \code{\link[=statmod_full_information]{statmod_full_information()}} carries them.
 }
 \details{
-Written once because its three readers (the variance matrix of
+It is written once because its three readers (the variance matrix of
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, the marginal criterion and
 \code{\link[=statmod_structural_table]{statmod_structural_table()}}) would otherwise each place the block for
-themselves. The result is \code{NULL} where no structural term carries a
+themselves. The result is \code{NULL} where the structural terms carry no
 penalty, where the only such penalty belongs to a mixed covariance class
-(placed by \code{joint_penalty_at()}), or where no term has \code{nfree} free
-parameters, and the caller then pads with zeros.
+(placed by \code{joint_penalty_at()}), or where every term has a number of free
+parameters other than \code{nfree}, and the caller then pads with zeros.
 }
 \seealso{
 \code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}}

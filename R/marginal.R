@@ -65,23 +65,23 @@ marginal_params <- function(method, distrib) {
 #' The Coefficients That a Marginal Criterion Estimates
 #'
 #' @description
-#' The positions, in the stacked coefficient vector, of the coordinates that
-#' [reml()] and [ml()] estimate by maximizing the criterion: in the equation
-#' of every parameter that [marginal_params()] names, the coefficients that
-#' are not shrunk by a penalty.
+#' Returns the positions, in the stacked coefficient vector, of the coordinates
+#' that [reml()] and [ml()] estimate by maximizing the criterion: in the
+#' equation of every parameter that [marginal_params()] names, the coefficients
+#' that are not shrunk by a penalty.
 #'
 #' @details
-#' A coefficient qualifies when no penalty covers it, or when it lies in the
-#' null space of the quadratic penalty that covers it and that null space is
-#' spanned by coordinates. The free columns of [modelterms7::s()] are the
+#' A coefficient qualifies when it is covered by no penalty, or when it lies in
+#' the null space of the quadratic penalty that covers it and that null space
+#' is spanned by coordinates. The free columns of [modelterms7::s()] are the
 #' second case: the null space of the Demmler-Reinsch penalty is spanned by
 #' the coordinates of the linear part.
 #'
 #' A coefficient that a penalty with a kink covers (lasso, SCAD, MCP) does
 #' not qualify: it stays at the joint mode, and the criterion leaves it out
 #' of its determinant ([laplace_pinned()]). Beside a penalty with a kink the
-#' default names no parameter, so no coefficient is estimated on the
-#' criterion. A parameter that the caller names in `marginal` has its
+#' default names no parameter, so the criterion estimates no coefficient. A
+#' parameter that the caller names in `marginal` has its
 #' unpenalized coefficients estimated on the criterion, which corrects a
 #' dispersion's intercept for the columns of the mean that are fitted with
 #' it.
@@ -111,10 +111,10 @@ marginal_params <- function(method, distrib) {
 #'
 #' @return A list with `where` (integer positions in the stacked vector),
 #'   `param` and `name` (the equation and the coefficient name of each
-#'   position), and `skipped`, a named character vector giving, for every
-#'   parameter that has coefficients, that the default named and that this
-#'   function left out, the reason. Every field is empty where nothing is
-#'   estimated this way.
+#'   position), and `skipped`, a named character vector that gives the reason
+#'   for every parameter that has coefficients, was named by the default and was
+#'   left out by this function. Every field is empty if the criterion
+#'   estimates no coefficient this way.
 #'
 #' @seealso [marginal_params()], [statmod_hold()], which holds these
 #'   coefficients in the inner fit.
@@ -237,8 +237,8 @@ marginal_coords <- function(spec, design, method) {
 #' The Null Coordinates of a Penalty
 #'
 #' @description
-#' The positions, within a penalty's block, that span its null space, or
-#' `NULL` where the null space is not spanned by coordinates.
+#' Returns the positions, within a penalty's block, that span its null space,
+#' or `NULL` where the null space is not spanned by coordinates.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param k The block's width.
@@ -264,7 +264,7 @@ null_coordinates <- function(pen, k) {
 #' The Coordinates Left Out of the Marginal Determinant
 #'
 #' @description
-#' The positions that [pin_boundary()] pins besides a boundary: the
+#' Returns the positions that [pin_boundary()] pins besides a boundary: the
 #' coefficients that the criterion estimates, which the specification holds,
 #' and the coordinates that the model does not identify, which [outer_fit()]
 #' records on the design at its first fit.
@@ -284,15 +284,16 @@ pinned_coords <- function(spec, design) {
 #' The Coordinates That the Marginal Determinant Leaves Out
 #'
 #' @description
-#' [pinned_coords()] and the coordinates that a penalty with a kink covers.
+#' Returns the positions of [pinned_coords()] together with the coordinates
+#' that a penalty with a kink covers.
 #'
 #' @details
 #' A kinked penalty has no curvature at the coordinates that it sets to zero, so
-#' a Laplace expansion around them is not defined, and the coordinates it
+#' a Laplace expansion around them is not defined, and the coordinates that it
 #' leaves away from zero are chosen by the same selection. The criterion
 #' holds all of them at the joint mode and integrates the rest, which is the
-#' restricted likelihood of Verbyla (1993) with those coefficients treated
-#' as known.
+#' restricted likelihood of Verbyla (1993) in which those coefficients are
+#' treated as known.
 #'
 #' The mode's own movement is not affected: it is read over every
 #' coordinate, see [ctx_penalized()].
@@ -315,8 +316,8 @@ laplace_pinned <- function(spec, design) {
 #' The Coordinates That a Kinked Penalty Holds at Zero
 #'
 #' @description
-#' The positions among those of `kinked_coords()` whose coefficient equals
-#' zero.
+#' Returns the positions among those of `kinked_coords()` whose coefficient
+#' equals zero.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design Its design.
@@ -336,7 +337,8 @@ zero_kinked <- function(spec, design, coef) {
 #' A Score Over the Coordinates That a Kink Leaves Free
 #'
 #' @description
-#' Zeroes the entries of a score at the coordinates [zero_kinked()] returns.
+#' Zeroes the entries of a score at the coordinates that [zero_kinked()]
+#' returns.
 #'
 #' @details
 #' At a coordinate that a kinked penalty holds at zero, the objective has no
@@ -365,7 +367,7 @@ free_of_kinks <- function(score, spec, design, coef) {
 #' A Specification With Coefficients Held
 #'
 #' @description
-#' Writes values for the coefficients [marginal_coords()] returned into the
+#' Writes values for the coefficients that [marginal_coords()] returned into the
 #' specification's `held_coef`, which the inner fit enforces.
 #'
 #' @param spec A [StatmodSpec()].
@@ -373,7 +375,7 @@ free_of_kinks <- function(score, spec, design, coef) {
 #' @param values The values, one per position in `coords$where`.
 #'
 #' @return `spec` with `held_coef` set. The holds already present are kept
-#'   for coefficients `coords` does not name.
+#'   for coefficients that `coords` does not name.
 #'
 #' @keywords internal
 statmod_hold <- function(spec, coords, values) {
@@ -401,7 +403,7 @@ statmod_hold <- function(spec, coords, values) {
 #' @param spec A [StatmodSpec()].
 #' @param design Its design.
 #'
-#' @return An integer vector of positions, empty where nothing is held.
+#' @return An integer vector of positions, empty if no coefficient is held.
 #'
 #' @keywords internal
 held_stack <- function(spec, design) {
@@ -425,8 +427,8 @@ held_stack <- function(spec, design) {
 #' Name Stacked Positions
 #'
 #' @description
-#' The equation and the coefficient name of each position in the stacked
-#' coefficient vector, in the form that [marginal_coords()] returns.
+#' Returns the equation and the coefficient name of each position in the
+#' stacked coefficient vector, in the form that [marginal_coords()] returns.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design Its design.
@@ -449,7 +451,7 @@ stack_coords <- function(spec, design, pos) {
 #' The Variance Where the Criterion Estimates Coefficients
 #'
 #' @description
-#' The variance of the coefficients of a fit whose marginal criterion
+#' Returns the variance of the coefficients of a fit whose marginal criterion
 #' estimated some of them ([marginal_coords()]), in the block form of the
 #' penalized information with the curvature of the criterion in place of the
 #' Schur complement of those coefficients.
@@ -465,8 +467,8 @@ stack_coords <- function(spec, design, pos) {
 #' where \eqn{K_{uu}^{-1}} is padded with zeros on \eqn{\gamma} and \eqn{B}
 #' holds one direction per coordinate of \eqn{v}. For `type = "bayesian"`
 #' \eqn{v = \gamma} and the hyperparameters are held; for
-#' `type = "unconditional"` \eqn{v = (\eta, \gamma)}, the hyperparameters'
-#' directions being \eqn{-K_{uu}^{-1}\partial^2\rho/\partial u\,\partial\eta}.
+#' `type = "unconditional"` \eqn{v = (\eta, \gamma)} and the hyperparameters'
+#' directions are \eqn{-K_{uu}^{-1}\partial^2\rho/\partial u\,\partial\eta}.
 #'
 #' Replacing \eqn{-\nabla^2_{\gamma\gamma}\ell_M} by the Schur complement
 #' \eqn{K_{\gamma\gamma} - K_{\gamma u}K_{uu}^{-1}K_{u\gamma}} gives back
@@ -515,12 +517,11 @@ marginal_vcov <- function(object, design, A, keep, type) {
 #' The Pieces of the Block Variance Over the Estimated Coefficients
 #'
 #' @description
-#' The quantities that [marginal_vcov()] and [marginal_edf_correction()]
-#' share:
-#' the inverse of the penalized information over the integrated
-#' coefficients, the movement of those coefficients with the estimated ones
-#' and with the hyperparameters, and the Hessian of the criterion over
-#' \eqn{(\eta, \gamma)}.
+#' Returns the quantities that [marginal_vcov()] and
+#' [marginal_edf_correction()] share: the inverse of the penalized information
+#' over the integrated coefficients, the movement of those coefficients with the
+#' estimated ones and with the hyperparameters, and the Hessian of the
+#' criterion over \eqn{(\eta, \gamma)}.
 #'
 #' @details
 #' Write \eqn{u} for the coefficients that the criterion integrates and
@@ -532,9 +533,9 @@ marginal_vcov <- function(object, design, A, keep, type) {
 #' coordinates; each column of `Bg` also has a unit entry at the position of
 #' its own \eqn{\gamma_j}.
 #'
-#' @param mc The list [fit_marginal_context()] returns.
+#' @param mc The list that [fit_marginal_context()] returns.
 #' @param coef,hyper The fitted coefficients and hyperparameters.
-#' @param method The [OuterMethod()] the fit ran.
+#' @param method The [OuterMethod()] that the fit ran.
 #' @param A The penalized information over the kept coordinates.
 #' @param keep A logical vector over every coefficient, `TRUE` where it is
 #'   kept.
@@ -609,8 +610,8 @@ zero_unread <- function(V) {
 #' Coefficients
 #'
 #' @description
-#' The branch of [statmod_edf_correction()] for a fit whose criterion also
-#' estimated coefficients. The correction is the trace of the information
+#' Computes the branch of [statmod_edf_correction()] for a fit whose criterion
+#' also estimated coefficients. The correction is the trace of the information
 #' against the part of the unconditional variance that the hyperparameters
 #' add to the block variance of [marginal_vcov()].
 #'
@@ -624,9 +625,9 @@ zero_unread <- function(V) {
 #' \eqn{\mathrm{tr}(b_k v_{kk} b_k^\top H)}, with \eqn{b_k} its column of
 #' \eqn{B_\eta}.
 #'
-#' @param mc The list [fit_marginal_context()] returns.
+#' @param mc The list that [fit_marginal_context()] returns.
 #' @param coef,hyper The fitted coefficients and hyperparameters.
-#' @param method The [OuterMethod()] the fit ran.
+#' @param method The [OuterMethod()] that the fit ran.
 #' @param idx The hyperparameters' index.
 #' @param expected,approx Passed to [statmod_information_at()].
 #' @param zero The answer where the correction cannot be computed.
@@ -670,8 +671,8 @@ marginal_edf_correction <- function(mc, coef, hyper, method, idx, expected,
 #' The Criterion That a Fit Maximized, Rebuilt From the Fit
 #'
 #' @description
-#' The specification and the design on which a fit's marginal criterion was
-#' maximized: the coefficients that [marginal_coords()] names are held at
+#' Returns the specification and the design on which a fit's marginal criterion
+#' was maximized: the coefficients that [marginal_coords()] names are held at
 #' their fitted values, and the coordinates left out of the determinant are
 #' recorded on the design.
 #'
@@ -680,13 +681,13 @@ marginal_edf_correction <- function(mc, coef, hyper, method, idx, expected,
 #' to read them on this criterion. On the fit's own specification, which
 #' holds nothing, the same functions return the derivatives of a criterion
 #' that integrates the estimated coefficients, which is another function.
-#' Where [marginal_coords()] signals an error, no coefficient is treated as
-#' estimated.
+#' If [marginal_coords()] signals an error, the function treats no coefficient
+#' as estimated.
 #'
 #' @param spec The fit's specification.
 #' @param design Its design.
 #' @param coef The fitted coefficients, a named list.
-#' @param method The [OuterMethod()] the fit ran, or `NULL`.
+#' @param method The [OuterMethod()] that the fit ran, or `NULL`.
 #' @param pinned The coordinates left out of the determinant, as the fit
 #'   records them in `methods$pinned`.
 #'

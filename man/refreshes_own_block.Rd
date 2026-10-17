@@ -13,16 +13,15 @@ refreshes_own_block(term)
 A single logical.
 }
 \description{
-\code{TRUE} when the term registers a
+Returns \code{TRUE} when the term registers a
 \code{\link[modelterms7:term_refresh]{modelterms7::term_refresh()}} method of its own rather than
 inheriting the identity registered on \code{model_term}.
 }
 \details{
 The owning class of a method is \code{attr(m, "signature")[[1]]}, and it is
 compared by name and package rather than by \code{identical()}: an S7 class
-re-created from the same definition is not identical to the original, which
-is what happens whenever a package's code is re-evaluated rather than
-loaded.
+re-created from the same definition is not identical to the original, as
+happens whenever a package's code is re-evaluated rather than loaded.
 }
 \seealso{
 \code{\link[=unfittable_reason]{unfittable_reason()}}

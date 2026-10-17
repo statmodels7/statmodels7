@@ -16,14 +16,15 @@ derivative of a filtered predictor.}
 }
 \value{
 A single logical. \code{NA} orders count as unavailable: a wrapper of a
-kinked family records the kink without declaring its order, and an
-unestablished order is not evidence of smoothness.
+kinked family records the kink without declaring its order, and an order
+that has not been established is not evidence of smoothness.
 }
 \description{
-\code{TRUE} when the log-density has at least \code{need} continuous derivatives in
-every parameter the model carries an equation for. Used as a gate by the
-consumers that can fall back on something else, and through
-\code{\link[=order_shortfall]{order_shortfall()}} as an error message by the ones that cannot.
+Returns \code{TRUE} when the log-density has at least \code{need} continuous
+derivatives in every parameter for which the model carries an equation.
+The consumers that can fall back on something else use the result as a
+gate, and the consumers that cannot use it through \code{\link[=order_shortfall]{order_shortfall()}} as
+an error message.
 }
 \examples{
 statmodels7:::order_available(distributions7::gaussian1_distrib(), 4L)

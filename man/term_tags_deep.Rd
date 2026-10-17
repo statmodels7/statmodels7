@@ -2,7 +2,7 @@
 % Please edit documentation in R/spec.R
 \name{term_tags_deep}
 \alias{term_tags_deep}
-\title{The Covariance Labels a Term Carries, Its Sub-Terms Included}
+\title{The Covariance Labels That a Term Carries, Including Its Sub-Terms}
 \usage{
 term_tags_deep(term, what = "it")
 }
@@ -10,14 +10,17 @@ term_tags_deep(term, what = "it")
 \item{term}{One built term.}
 
 \item{what}{How to name this term in the result's names. Defaults to the
-term itself, and a recursive call passes the path it came by.}
+term itself, and a recursive call passes the path by which the term was
+reached.}
 }
 \value{
-A named character vector, empty where no label is reachable.
+A named character vector, empty when the term has no reachable
+label.
 }
 \description{
-Every covariance label reachable from a term: its own, and those of the
-sub-terms developing its own parameters, walked to any depth.
+Returns every covariance label reachable from a term: its own, and those
+of the sub-terms that develop its own parameters, found by walking to any
+depth.
 }
 \details{
 A label written inside a subformula is not visible where the equation's
@@ -28,8 +31,8 @@ term is a sub-term of its break-point. The sub-terms are reached through
 and the walk recurses because a sub-term is an ordinary term and may
 develop parameters of its own.
 
-The names of the result say where each label was found, so a message can
-name the sub-term rather than the equation's term alone.
+The names of the result record where each label was found, so a message can
+name the sub-term rather than only the equation's term.
 }
 \seealso{
 \code{\link[=unfittable_reason]{unfittable_reason()}}, its caller;

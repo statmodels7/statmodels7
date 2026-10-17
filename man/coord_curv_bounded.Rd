@@ -3,7 +3,8 @@
 \name{coord_curv_bounded}
 \alias{coord_curv_bounded}
 \alias{coord_curv}
-\title{Whether Every Column Curvature Is Finite and Positive, Without Them}
+\title{Whether Every Column Curvature Is Finite and Positive, Decided Without
+Computing Them}
 \usage{
 coord_curv_bounded(X, w, design, p, cols, moves)
 
@@ -14,7 +15,7 @@ coord_curv(X, w, k, threads = 1L)
 
 \item{w}{The working weights, finite and positive.}
 
-\item{design}{The design the block was read from.}
+\item{design}{The design from which the block was read.}
 
 \item{p}{The equation, a parameter name.}
 
@@ -24,36 +25,37 @@ coord_curv(X, w, k, threads = 1L)
 
 \item{k}{Integer column positions within \code{X}.}
 
-\item{threads}{The thread count \code{\link[=wxsq]{wxsq()}} would be given.}
+\item{threads}{The thread count that \code{\link[=wxsq]{wxsq()}} would be given.}
 }
 \value{
 \code{coord_curv_bounded()} gives a single logical. \code{coord_curv()}
 gives a numeric vector of \code{length(k)} curvatures.
 }
 \description{
-\code{coord_curv_bounded()} decides whether every column curvature
+\code{coord_curv_bounded()} tests whether every column curvature
 \eqn{v_j = \sum_i w_i x_{ij}^2} of a block would be finite and positive,
 from the block's column norms and the range of the weights, so that
-\code{\link[=coord_fit]{coord_fit()}} need not compute the curvatures of columns it never visits.
+\code{\link[=coord_fit]{coord_fit()}} need not compute the curvatures of columns that it never
+visits.
 \code{coord_curv()} computes them on the columns given in \code{k}.
 }
 \details{
-The condition is sufficient and not necessary. With the weights finite and
-positive, which \code{\link[=coord_working]{coord_working()}} has already checked, a column's
+The condition is sufficient and not necessary. The weights are finite and
+positive, as \code{\link[=coord_working]{coord_working()}} has already checked, so a column's
 curvature is at least \eqn{\min_i w_i\, \lVert x_j\rVert^2} and at most
-\eqn{\max_i w_i\, \lVert x_j\rVert^2}. So where every column norm is
+\eqn{\max_i w_i\, \lVert x_j\rVert^2}. Hence where every column norm is
 positive and \eqn{\min w \min_j \lVert x_j\rVert^2 > 10^{-200}} and
-\eqn{\max w \max_j \lVert x_j\rVert^2 < 10^{200}}, no curvature can be
-zero, underflow or overflow. Where any of this fails, \code{FALSE} sends the
-caller to the full computation and its own check, so the outcome is the
-one the full vector would have given.
+\eqn{\max w \max_j \lVert x_j\rVert^2 < 10^{200}}, every curvature stays
+nonzero and does not underflow or overflow. Where any of this fails,
+\code{FALSE} sends the caller to the full computation and its own check, so the
+outcome is the one that the full vector would have given.
 
 The norms are cached in the design's \code{eta_memo} environment, keyed by the
 equation and the block's columns. A design whose blocks move with the
 coefficients carries no such environment, and there the answer is always
 \code{FALSE}.
 
-\code{coord_curv()} takes the route \code{\link[=wxsq]{wxsq()}} would take for the whole block:
+\code{coord_curv()} takes the route that \code{\link[=wxsq]{wxsq()}} would take for the whole block:
 each curvature is its own column's sum, so it is the same number either
 way.
 }

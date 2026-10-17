@@ -13,9 +13,9 @@ chart_homogeneity(chart)
 An integer vector of length \code{chart@n_free}.
 }
 \description{
-\eqn{k_j \in \{-1, 0, 1\}} for each free value: 1 when multiplying the
-matrix by \eqn{\lambda^2} multiplies the free value by \eqn{\lambda}, -1
-when it divides it by \eqn{\lambda}, and 0 otherwise (a log-scale
-coordinate, which shifts, or a correlation, which does not move).
+Computes \eqn{k_j \in \{-1, 0, 1\}} for each free value: 1 when
+multiplying the matrix by \eqn{\lambda^2} multiplies the free value by
+\eqn{\lambda}, -1 when it divides it by \eqn{\lambda}, and 0 otherwise (a
+log-scale coordinate, which shifts, or a correlation, which does not move).
 }
 \keyword{internal}

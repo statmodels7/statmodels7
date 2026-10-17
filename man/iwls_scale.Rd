@@ -10,13 +10,13 @@ iwls_scale(pieces)
 \item{pieces}{What \code{\link[=iwls_pieces]{iwls_pieces()}} built, carrying \code{R} and \code{C}, or \code{A}.}
 }
 \value{
-A single positive number: the largest diagonal entry. \code{1} where
-the pieces carry nothing usable, which makes the damping schedule
-absolute there instead of relative.
+A single positive number: the largest diagonal entry. The value is
+\code{1} where the pieces carry nothing usable, which makes the damping
+schedule absolute there instead of relative.
 }
 \description{
-The largest diagonal entry of the penalized information, read off the
-pieces without assembling it.
+Returns the largest diagonal entry of the penalized information, read off
+the pieces without assembling it.
 }
 \details{
 The Levenberg damping is measured against this, so \code{\link[=iwls_escalate]{iwls_escalate()}}

@@ -8,11 +8,11 @@ Coefficients}
 marginal_edf_correction(mc, coef, hyper, method, idx, expected, approx, zero)
 }
 \arguments{
-\item{mc}{The list \code{\link[=fit_marginal_context]{fit_marginal_context()}} returns.}
+\item{mc}{The list that \code{\link[=fit_marginal_context]{fit_marginal_context()}} returns.}
 
 \item{coef, hyper}{The fitted coefficients and hyperparameters.}
 
-\item{method}{The \code{\link[=OuterMethod]{OuterMethod()}} the fit ran.}
+\item{method}{The \code{\link[=OuterMethod]{OuterMethod()}} that the fit ran.}
 
 \item{idx}{The hyperparameters' index.}
 
@@ -25,8 +25,8 @@ A list with \code{total}, \code{per} and \code{n_hyper}, as
 \code{\link[=statmod_edf_correction]{statmod_edf_correction()}} returns it.
 }
 \description{
-The branch of \code{\link[=statmod_edf_correction]{statmod_edf_correction()}} for a fit whose criterion also
-estimated coefficients. The correction is the trace of the information
+Computes the branch of \code{\link[=statmod_edf_correction]{statmod_edf_correction()}} for a fit whose criterion
+also estimated coefficients. The correction is the trace of the information
 against the part of the unconditional variance that the hyperparameters
 add to the block variance of \code{\link[=marginal_vcov]{marginal_vcov()}}.
 }

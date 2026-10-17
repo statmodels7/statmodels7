@@ -17,12 +17,13 @@ non-finite entry. A matrix with no rows is returned as it is.
 }
 \description{
 Returns the matrix unchanged when it is positive definite, and otherwise
-the matrix rebuilt from its eigendecomposition with the eigenvalues floored.
+returns the matrix rebuilt from its eigendecomposition after the
+eigenvalues are floored.
 }
 \details{
-Abandoning a start because the curvature is indefinite is what
-\code{solve()} forces and what a repair avoids; the floor is relative to
-the largest absolute eigenvalue, since an absolute one means nothing across
-scales. Positive definiteness is tested by a Cholesky factorization.
+A start at an indefinite curvature has to be abandoned if \code{solve()} is
+used, and the repair avoids this. The floor is relative to the largest
+absolute eigenvalue, since an absolute floor has no meaning across scales.
+Positive definiteness is tested by a Cholesky factorization.
 }
 \keyword{internal}

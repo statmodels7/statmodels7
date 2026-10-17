@@ -17,20 +17,20 @@ shape_floor(pen, theta, name, steps = NULL)
 }
 \value{
 A single number: the penalty's lower bound where \code{steps} is \code{NULL}
-or not finite, or where no admissible value is found below the upper
-bound; otherwise the smallest value, to bisection accuracy, at which the
-proximal table exists.
+or not finite, or where the search does not find an admissible value
+below the upper bound; otherwise the smallest value, to bisection
+accuracy, at which the proximal table exists.
 }
 \description{
-The lower end of the range a shape may be swept over: the penalty's own
-bound, raised to wherever its proximal operator starts to exist at the
-steps the block's coordinate descent will take.
+Returns the lower end of the range over which a shape may be swept: the
+penalty's own bound, raised to wherever its proximal operator starts to
+exist at the steps that the block's coordinate descent will take.
 }
 \details{
 The limit is found by bisection on whether
 \code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}} returns a table for the penalty at the
-block's steps, so that a family added later is covered and neither the
-\eqn{a - 1} of SCAD nor the \eqn{\gamma} of MCP appears here. A grid
+block's steps, so that a family added later is covered, and the
+\eqn{a - 1} of SCAD and the \eqn{\gamma} of MCP do not appear here. A grid
 starting just above the constant over which the penalty is defined would
 otherwise contain points at which the block cannot be fitted with those data
 by the only route that a kinked penalty has.

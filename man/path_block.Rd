@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{path_block}
 \alias{path_block}
-\title{The Block a Path Row Belongs To}
+\title{The Block to Which a Path Row Belongs}
 \usage{
 path_block(blocks, row)
 }
@@ -15,6 +15,6 @@ path_block(blocks, row)
 One entry of \code{blocks$sparse}.
 }
 \description{
-The Block a Path Row Belongs To
+The Block to Which a Path Row Belongs
 }
 \keyword{internal}

@@ -15,8 +15,8 @@ statmod_hyper_merge(spec, start, user)
 and then by term, or \code{NULL} for no overrides.}
 }
 \value{
-The same structure as \code{start}, with the caller's values merged in.
-\code{start} unchanged when \code{user} is \code{NULL}.
+The same structure as \code{start}, into which the caller's values are
+merged. The result is \code{start} unchanged when \code{user} is \code{NULL}.
 }
 \description{
 Merges a table of hyperparameter values, keyed by distribution parameter

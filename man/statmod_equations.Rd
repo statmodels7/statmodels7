@@ -7,33 +7,37 @@
 statmod_equations(formula, params)
 }
 \arguments{
-\item{formula}{A two-sided formula, with the parameters' equations
-separated by \code{|} as above. Its environment is carried onto every
-equation returned, so a term's symbols resolve where the caller wrote
-them; a formula with a \code{NULL} environment gets \code{\link[=baseenv]{baseenv()}}.}
+\item{formula}{A two-sided formula in which the equations of the
+parameters are separated by \code{|} as above. Its environment is carried
+onto every equation returned, so a term's symbols resolve where the
+caller wrote them; if the formula has a \code{NULL} environment, \code{\link[=baseenv]{baseenv()}}
+is used.}
 
 \item{params}{The distribution's parameter names in the family's own
-order, as \code{distrib@params} gives them. A character vector. The first
-element is the parameter the response's own equation belongs to.}
+order, as \code{distrib@params} gives them. It is a character vector. The
+first element is the parameter to which the response's own equation
+belongs.}
 }
 \value{
 A list of three:
 \describe{
 \item{\code{response}}{the unevaluated left-hand side, a language object,
-usually a symbol but any expression the caller wrote.}
+usually a symbol but any expression that the caller wrote.}
 \item{\code{equations}}{a named list of one-sided formulas, one per element
-of \code{params} and in that order, whatever order the caller wrote them
-in. A parameter with no equation of its own holds \code{~ 1}.}
-\item{\code{given}}{the parameter names the formula supplied, in the order
-it supplied them. A subset of \code{params}, possibly of length one.}
+of \code{params} and in that order, regardless of the order in which the
+caller wrote them. A parameter with no equation of its own holds
+\code{~ 1}.}
+\item{\code{given}}{the parameter names that the formula supplied, in the
+order in which it supplied them. It is a subset of \code{params}, possibly
+of length one.}
 }
 }
 \description{
-Takes the single formula \code{\link[=statmod]{statmod()}} accepts, in which the equations of the
-distribution's parameters are separated by \code{|}, and returns the response
-together with one one-sided formula per parameter of the family. Every
-parameter receives an equation, and a parameter whose equation the caller
-did not write receives \code{~ 1}, an intercept.
+Takes the single formula that \code{\link[=statmod]{statmod()}} accepts, in which the equations
+of the distribution's parameters are separated by \code{|}, and returns the
+response together with one one-sided formula per parameter of the family.
+Every parameter receives an equation, and a parameter for which the caller
+did not write an equation receives \code{~ 1}, an intercept.
 }
 \section{The syntax}{
 \preformatted{    y ~ <terms>  |  p2 ~ <terms>  |  p3 ~ <terms>}
@@ -84,7 +88,8 @@ e <- statmod_equations(y ~ x1 + x2 | sigma ~ z, c("mu", "sigma"))
 e$response
 e$equations
 
-# Every parameter gets an equation; the ones not written get an intercept.
+# Every parameter receives an equation; a parameter without one receives an
+# intercept.
 f <- statmod_equations(y ~ x, c("mu", "sigma", "nu"))
 vapply(f$equations, function(q) deparse(q[[2]]), character(1))
 f$given
@@ -105,6 +110,6 @@ try(statmod_equations(y ~ x | zz ~ z, c("mu", "sigma")))
 
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}, which calls this on the formula it is given,
+\code{\link[=statmod]{statmod()}}, which calls this on the formula that it is given,
 \code{\link[=statmod_spec]{statmod_spec()}} for what is built from the result.
 }

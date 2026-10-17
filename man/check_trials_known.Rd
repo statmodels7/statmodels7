@@ -2,7 +2,7 @@
 % Please edit documentation in R/spec.R
 \name{check_trials_known}
 \alias{check_trials_known}
-\title{Reject a Quantity That Needs Trials the Rows Lack}
+\title{Reject a Quantity That Needs Trials That the Rows Lack}
 \usage{
 check_trials_known(distrib, what)
 }
@@ -15,8 +15,8 @@ check_trials_known(distrib, what)
 \code{distrib}, unchanged.
 }
 \description{
-Signals an error where the family's numbers of trials are missing, which
-is what \code{\link[=statmod_respec]{statmod_respec()}} leaves when a prediction is made at rows with
+Signals an error where the family's numbers of trials are missing, as
+\code{\link[=statmod_respec]{statmod_respec()}} leaves them when a prediction is made at rows with
 no response.
 }
 \details{

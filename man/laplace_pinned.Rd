@@ -15,15 +15,16 @@ laplace_pinned(spec, design)
 An integer vector of stacked positions, possibly empty.
 }
 \description{
-\code{\link[=pinned_coords]{pinned_coords()}} and the coordinates that a penalty with a kink covers.
+Returns the positions of \code{\link[=pinned_coords]{pinned_coords()}} together with the coordinates
+that a penalty with a kink covers.
 }
 \details{
 A kinked penalty has no curvature at the coordinates that it sets to zero, so
-a Laplace expansion around them is not defined, and the coordinates it
+a Laplace expansion around them is not defined, and the coordinates that it
 leaves away from zero are chosen by the same selection. The criterion
 holds all of them at the joint mode and integrates the rest, which is the
-restricted likelihood of Verbyla (1993) with those coefficients treated
-as known.
+restricted likelihood of Verbyla (1993) in which those coefficients are
+treated as known.
 
 The mode's own movement is not affected: it is read over every
 coordinate, see \code{\link[=ctx_penalized]{ctx_penalized()}}.

@@ -40,9 +40,9 @@ parameters that the term holds (\code{held}).}
 by term.}
 
 \item{loglik}{The weighted log-likelihood at the fitted coefficients, a
-single number. It is the \strong{conditional} one.}
+single number. It is the conditional one.}
 
-\item{objective}{The penalized objective there, unaveraged.}
+\item{objective}{The penalized objective there, not averaged.}
 
 \item{edf}{A data frame of effective degrees of freedom with the columns
 \code{parameter}, \code{term}, \code{coefficients} and \code{edf}, one row per term of each
@@ -51,8 +51,8 @@ equation.}
 \item{fitted}{A named list of the fitted parameters, one vector per
 distribution parameter.}
 
-\item{converged}{A single logical. Where the model has nothing to alternate
-between, it is the verdict of the inner method. Where the model has a
+\item{converged}{A single logical. Where the fit does not alternate between
+blocks, it is the verdict of the inner method. Where the model has a
 kinked block or a structural term, it is read at the point reached: the
 Newton decrement of the smooth part and the optimality decrement of every
 coefficient that a kinked penalty holds at zero are both within
@@ -69,28 +69,28 @@ optimizer), or when its design column has vanished. The vector is empty
 where the design has full rank. The estimate, standard error and
 interval of a listed coefficient are reported as missing, and it is not
 counted in the degrees of freedom. The stored coefficient keeps the value
-it had when the coordinate was left out of the increment, so every
+that it had when the coordinate was left out of the increment, so every
 predictor reads the vector unchanged.}
 
 \item{elapsed}{The elapsed time in seconds.}
 
 \item{criterion}{The value of the criterion that chose the
 hyperparameters: \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}}, including
-the criterion that swept the path of a kinked penalty. \code{NA} when no
-criterion ran.}
+the criterion that swept the path of a kinked penalty. The value is \code{NA}
+when no criterion ran.}
 
 \item{history}{A list of data frames recording the run: \code{outer}, \code{blocks}
 and \code{inner}. An entry is \code{NULL} where the run produced no such record.}
 
-\item{methods}{A list of what the fit decided, which can differ from what
-was supplied: \code{smooth}, the inner method after \code{\link[=iwls]{iwls()}} has settled its
-information (never \code{"auto"}); \code{outer}, the criterion after resolution,
-\code{NULL} when no marginal or prediction-error criterion ran; \code{search}, the
-optimizer that the outer search used; \code{pinned}, the coordinates that the
-criterion left out of its determinant; \code{kkt}, the edge violations that
-survived the restarts; \code{sparse}, the blocks of kinked penalties;
-\code{sparse_criterion}, the criterion that swept their paths; and
-\code{sparse_hyper}, the hyperparameters it reached.}
+\item{methods}{A list of what was settled during the run, which can differ
+from what was supplied: \code{smooth}, the inner method after \code{\link[=iwls]{iwls()}} has
+settled its information (never \code{"auto"}); \code{outer}, the criterion after
+resolution, \code{NULL} when no marginal or prediction-error criterion ran;
+\code{search}, the optimizer that the outer search used; \code{pinned}, the
+coordinates that the criterion left out of its determinant; \code{kkt}, the
+edge violations that survived the restarts; \code{sparse}, the blocks of
+kinked penalties; \code{sparse_criterion}, the criterion that swept their
+paths; and \code{sparse_hyper}, the hyperparameters that it reached.}
 
 \item{call}{The matched call.}
 }
@@ -99,10 +99,11 @@ An object of class \code{StatmodFit} with one property per argument
 above.
 }
 \description{
-What \code{\link[=statmod]{statmod()}} returns. It holds three things: the specification kept
-whole, so the model can be read back and reapplied to new data; the
-coefficients, hyperparameters and structural parameters the fit reached;
-and the record of how it got there.
+\code{\link[=statmod]{statmod()}} returns an object of this class. It holds three things: the
+specification kept whole, so the model can be read back and reapplied to
+new data; the
+coefficients, hyperparameters and structural parameters that the fit
+reached; and the record of the run that produced them.
 
 Reach the contents through the accessors rather than the properties where
 one exists: \code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}},
@@ -116,7 +117,7 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 
 S7::S7_inherits(fit, StatmodFit)
 
-# One coefficient vector per parameter of the family.
+# The coefficients form one vector per parameter of the family.
 fit@coefficients
 fit@converged
 

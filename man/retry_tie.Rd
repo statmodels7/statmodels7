@@ -14,13 +14,13 @@ retry_tie(a, b)
 \code{TRUE} or \code{FALSE}.
 }
 \description{
-\code{TRUE} where the criteria of two fits, or their objectives where
+Returns \code{TRUE} where the criteria of two fits, or their objectives where
 either has no criterion, differ by at most
-\eqn{10^{-8}(1 + \lvert b \rvert)}, \eqn{b} being the second.
+\eqn{10^{-8}(1 + \lvert b \rvert)}, where \eqn{b} is the second.
 }
 \details{
 \code{\link[=statmod]{statmod()}} uses it after a second fit of a score-driven model from the
 term's own start: where the two reach the same point, the converged one is
-kept, a difference at the level of rounding deciding nothing.
+kept, and a difference at the level of rounding does not decide the choice.
 }
 \keyword{internal}

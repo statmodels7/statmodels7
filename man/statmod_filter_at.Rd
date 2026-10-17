@@ -13,16 +13,16 @@ statmod_filter_at(spec, design, eta_static, theta_static)
 
 \item{eta_static}{The static predictors, one per distribution parameter.}
 
-\item{theta_static}{The parameters they give.}
+\item{theta_static}{The parameters that they give.}
 }
 \value{
 A named list, one entry per structural term, carrying its
 predictor, the derivative of that predictor in the term's own
-parameters, and the curvature the recursion read at each step.
+parameters, and the curvature that the recursion read at each step.
 }
 \description{
-The level that each filter adds to the equation in which it sits, together
-with the derivative of that level in the term's own parameters.
+Returns the level that each filter adds to the equation in which it sits,
+together with the derivative of that level in the term's own parameters.
 }
 \details{
 The function keeps no memo of its own. The caller, \code{\link[=statmod_eta]{statmod_eta()}}, keeps

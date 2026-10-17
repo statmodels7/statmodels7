@@ -2,7 +2,7 @@
 % Please edit documentation in R/iwls.R
 \name{iwls_switch_rate}
 \alias{iwls_switch_rate}
-\title{The Contraction Rate Above Which Fisher Scoring Yields}
+\title{The Contraction Rate Above Which a Run Switches to the Observed Information}
 \usage{
 iwls_switch_rate()
 }
@@ -10,8 +10,8 @@ iwls_switch_rate()
 A single number.
 }
 \description{
-The ratio of consecutive scores above which \code{\link[=iwls_fit]{iwls_fit()}} continues on the
-observed information before \code{\link[=iwls_switch_after]{iwls_switch_after()}} steps.
+Returns the ratio of consecutive scores above which \code{\link[=iwls_fit]{iwls_fit()}} continues
+on the observed information before \code{\link[=iwls_switch_after]{iwls_switch_after()}} steps.
 }
 \seealso{
 \code{\link[=iwls_slow]{iwls_slow()}}.

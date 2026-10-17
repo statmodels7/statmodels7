@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{path_grid}
 \alias{path_grid}
-\title{The Values a Path Visits Over a Hyperparameter Not Swept by Kink Size}
+\title{The Values That a Path Visits Over a Hyperparameter Not Swept by Kink Size}
 \usage{
 path_grid(pen, theta, name, n_values = 25L, steps = NULL)
 }
@@ -21,18 +21,19 @@ path_grid(pen, theta, name, n_values = 25L, steps = NULL)
 A numeric vector of values for \code{name}.
 }
 \description{
-The grid of a hyperparameter that \code{\link[=path_values]{path_values()}} does not reach: equally
-spaced points strictly inside its interval where the interval is bounded,
-and a geometric grid above \code{\link[=shape_floor]{shape_floor()}} where it has no upper bound.
+Returns the grid of a hyperparameter that \code{\link[=path_values]{path_values()}} does not reach:
+equally spaced points strictly inside its interval where the interval is
+bounded, and a geometric grid above \code{\link[=shape_floor]{shape_floor()}} where it has no upper
+bound.
 }
 \details{
 \code{\link[=path_values]{path_values()}} walks the size of the kink, from the value that
 empties the block down, and a bounded hyperparameter cannot reach that end:
 the elastic net's kink is \eqn{\lambda\alpha}, so at a given \eqn{\lambda}
-no admissible \eqn{\alpha} empties the block and every point of such a path
-is dropped. A bounded hyperparameter is therefore swept over its interval,
-with \eqn{\alpha} running between the ridge and the lasso. The kink still
-moves through \eqn{\lambda}, which is swept on its own axis.
+the block stays nonempty for every admissible \eqn{\alpha} and every point
+of such a path is dropped. A bounded hyperparameter is therefore swept over
+its interval, and \eqn{\alpha} runs between the ridge and the lasso. The kink
+still moves through \eqn{\lambda}, which is swept on its own axis.
 
 The endpoints are excluded because the bounds are open: the elastic net at
 \eqn{\alpha = 0} has no kink at all, and the path would be scoring a
@@ -46,10 +47,10 @@ MCP of Zhang, 2010) and does not reach the floor itself, where the operator
 is set-valued or the penalty is not defined.
 
 The floor is the smallest value at which the block can be fitted, which
-\code{\link[=shape_floor]{shape_floor()}} derives from the proximal condition at the steps the
-block's coordinate descent takes, and not the constant the penalty is
-defined over. The two coincide on an ordinary well-conditioned block and
-differ where the steps are long.
+\code{\link[=shape_floor]{shape_floor()}} derives from the proximal condition at the steps that the
+block's coordinate descent takes, and not the constant over which the
+penalty is defined. The two coincide on an ordinary well-conditioned block
+and differ where the steps are long.
 }
 \seealso{
 \code{\link[=path_values]{path_values()}}, \code{\link[=path_bounded]{path_bounded()}},

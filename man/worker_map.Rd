@@ -19,19 +19,19 @@ worker_map(spec, n, body, what = "folds")
 A list of the bodies' results, in unit order.
 }
 \description{
-Applies a body to each of \code{n} independent units -- a
-cross-validation fold, a combination of a path's product grid -- over
-the worker processes that the specification requests (\code{spec@workers},
-from \code{\link[numericals7:n_threads]{n_threads(workers =)}}) and in this
-process otherwise. Results come back in unit order whatever the number
-of workers, and that is what makes the answer independent of the count:
-the units share nothing, so the same bodies run either way.
+Applies a body to each of \code{n} independent units (a cross-validation fold,
+a combination of a path's product grid) over the worker processes that
+the specification requests (\code{spec@workers}, from
+\code{\link[numericals7:n_threads]{n_threads(workers =)}}) and in this process
+otherwise. Results come back in unit order whatever the number of
+workers, which makes the answer independent of the count: the units
+share nothing, so the same bodies run either way.
 }
 \details{
-The units are independent by construction -- a fold is a complete refit
+The units are independent by construction (a fold is a complete refit
 on its own rows, a path combination restarts its warm chain from the
-sweep's own starting coefficients -- so they go by processes, with the
-safeguards \code{optimizers7::multistart} records: under \code{pkgload}
+sweep's own starting coefficients), so they go by processes, with the
+safeguards that \code{optimizers7::multistart} records: under \code{pkgload}
 the run stays sequential, because a worker loads the installed copy and
 S7 objects built in the development namespace do not dispatch correctly
 against it; a cluster that cannot start, or workers that cannot load

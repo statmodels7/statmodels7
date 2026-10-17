@@ -41,13 +41,13 @@ the structural state and no coefficient.}
 A list shaped like \code{\link[=sparse_fit]{sparse_fit()}}'s.
 }
 \description{
-A proximal gradient iteration over the parameters of a score-driven filter
-that a penalty with a kink covers, the coefficients and the term's other
-parameters held where the rest of the pass left them.
+Runs a proximal gradient iteration over the parameters of a score-driven
+filter that a penalty with a kink covers, while the coefficients and the
+term's other parameters stay where the rest of the pass left them.
 }
 \details{
-Neither route \code{\link[=sparse_fit]{sparse_fit()}} takes for a block of coefficients can be taken
-here. A coordinate descent reads the block's columns and its running
+The two routes that \code{\link[=sparse_fit]{sparse_fit()}} takes for a block of coefficients cannot
+be taken here. A coordinate descent reads the block's columns and its running
 residual, and a structural term contributes no column; the proximal branch
 reads \code{beta[block$index]}, and such a penalty covers no entry of the
 stacked vector. The parameters are in the design's structural state
@@ -62,8 +62,8 @@ inside the interval that the kink opens.
 
 The hyperparameter is held. A prediction-error or cross-validation
 criterion (\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}}) that would select it is rejected by
-\code{\link[=assert_criterion_reach]{assert_criterion_reach()}}, because such a criterion works over the
-coefficients alone, where this penalty covers nothing.
+\code{\link[=assert_criterion_reach]{assert_criterion_reach()}}, because such a criterion works only over the
+coefficients, where this penalty covers nothing.
 
 The convergence flag of a fit that uses this route is the flag of the
 alternation. Beside a structural term or a kinked block the alternation

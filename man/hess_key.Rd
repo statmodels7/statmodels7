@@ -11,10 +11,10 @@ hess_key(params, a, b)
 \code{distrib@params} gives them.}
 
 \item{a, b}{Indices into \code{params}, in either order: the Hessian is
-symmetric and this returns the key the list actually holds.}
+symmetric and this returns the key that the list actually holds.}
 }
 \value{
-A single string, one of the names of the list
+A single string, one of the names of the list that
 \code{\link[distributions7:distrib_hessian]{distributions7::distrib_hessian()}} returns.
 }
 \description{
@@ -22,7 +22,7 @@ Locates the \eqn{(a, b)} entry of a distribution's Hessian list, which is
 keyed by \code{\link[distributions7:hess_names]{distributions7::hess_names()}} and never by position.
 }
 \details{
-The key is built by pasting the two parameter names in the order
+The key is built by pasting the two parameter names in the order that
 \code{\link[distributions7:hess_names]{distributions7::hess_names()}} uses, and is never parsed back out of a
 name. For a family whose parameter name contains the separator, splitting
 \code{"log_scale_mu"} on the underscore gives the wrong pair, whereas generating

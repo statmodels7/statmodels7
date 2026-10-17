@@ -18,10 +18,10 @@ length \code{p}.}
 \item{damp}{The Levenberg damping \eqn{\lambda}, a single non-negative
 number. \code{0}, the default, is the plain scoring step.}
 
-\item{frozen}{Positions the caller holds at their current values, an
+\item{frozen}{Positions that the caller holds at their current values, an
 integer vector. They are dropped from the system exactly as a
 coordinate whose curvature is not finite is, so the step is that of the
-problem reduced to the rest. Empty by default.}
+problem reduced to the rest. The default is empty.}
 }
 \value{
 A list of five:
@@ -33,7 +33,7 @@ every held coordinate.}
 \code{"qr->chol"} or \code{"svd->chol"} when the augmented route fell back to
 the assembled matrix with its eigenvalues floored.}
 \item{\code{held}}{the positions dropped from the system, an integer
-vector, empty when nothing was held.}
+vector, empty when every coordinate was free.}
 \item{\code{dropped}}{the positions that the pivoted \code{qr()} left out as
 aliased, an integer vector, empty on every other route.}
 }
@@ -72,12 +72,13 @@ alike and leave the disparity exactly where it was.
 }
 
 \section{A coordinate at a boundary is held}{
-Where a parameter has reached the clamp its link keeps it strictly inside,
-the family's curvature there is zero or \code{NaN}, and no step can move that
-coordinate. Those coordinates are dropped from the system and the rest is
-solved, which is the active set the boundary defines; the step stays a
-descent step for the reduced problem. Coordinates in \code{frozen} and
-coordinates with a non-finite right-hand side are held in the same way.
+Where a parameter has reached the clamp with which its link keeps it
+strictly inside its bounds, the family's curvature there is zero or \code{NaN},
+and that coordinate cannot be moved by any step. Those coordinates are
+dropped from the system and the rest is solved, which is the active set
+that the boundary defines; the step stays a descent step for the reduced
+problem. Coordinates in \code{frozen} and coordinates with a non-finite
+right-hand side are held in the same way.
 
 Holding them keeps a single boundary coordinate from preventing the others
 from moving: a \code{NaN} in one entry of the curvature would otherwise make the
@@ -89,11 +90,11 @@ assembled route the test is on the diagonal of the curvature. A boundary
 coordinate makes its entire row non-finite, cross terms included, so a test
 over whole columns would mark its neighbors too and hold coordinates that
 can move. After the diagonal test, the columns of the reduced matrix are
-tested again, and the test repeats until none is non-finite.
+tested again, and the test repeats until every column is finite.
 }
 
 \seealso{
 \code{\link[=iwls_pieces]{iwls_pieces()}} for the input, \code{\link[=iwls]{iwls()}} for the \code{decomposition}
-argument this serves.
+argument that this function serves.
 }
 \keyword{internal}

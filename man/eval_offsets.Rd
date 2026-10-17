@@ -2,7 +2,7 @@
 % Please edit documentation in R/spec.R
 \name{eval_offsets}
 \alias{eval_offsets}
-\title{Evaluate the Offsets a Formula Names}
+\title{Evaluate the Offsets That a Formula Names}
 \usage{
 eval_offsets(formula, params, data, env, n)
 }
@@ -14,7 +14,7 @@ anything.}
 
 \item{data}{A data frame to evaluate in.}
 
-\item{env}{The environment the formula carried, the enclosure of the
+\item{env}{The environment that the formula carried, the enclosure of the
 evaluation.}
 
 \item{n}{The number of observations.}
@@ -25,11 +25,11 @@ numeric vector of length \code{n} or \code{NULL} where that equation names no
 offset.
 }
 \description{
-The offset per distribution parameter, evaluated in the data.
+Returns the offset of each distribution parameter, evaluated in the data.
 }
 \details{
-The expressions are kept and re-evaluated, not carried as numbers, which
-is how an offset written in the formula applies in prediction.
+The expressions are kept and re-evaluated, not carried as numbers, so that
+an offset written in the formula applies in prediction.
 \code{\link[=statmod_respec]{statmod_respec()}} calls this against the new data; a vector supplied
 through \code{\link[=statmod]{statmod()}}'s \code{offsets} argument at fitting time has the length of
 the fitting data and cannot be reused on other rows.

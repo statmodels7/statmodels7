@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{path_fallbacks}
 \alias{path_fallbacks}
-\title{What a Path Does Where the Term Says Nothing}
+\title{Default Grid Settings of a Path}
 \usage{
 path_fallbacks()
 }
@@ -10,17 +10,17 @@ path_fallbacks()
 A named list of \code{kink}, \code{other} and \code{min_ratio}.
 }
 \description{
-The number of values and the depth used for a kinked hyperparameter whose
-term named neither.
+Returns the number of values and the depth used for a kinked hyperparameter
+whose term named neither.
 }
 \details{
 The constructors \code{\link[modelterms7:lasso]{modelterms7::lasso()}}, \code{\link[modelterms7:enet]{modelterms7::enet()}},
 \code{\link[modelterms7:scad]{modelterms7::scad()}} and \code{\link[modelterms7:mcp]{modelterms7::mcp()}} carry these settings on
-their own signatures, for example \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)} and \code{enet(x, n_lambda = 25, n_alpha = 5)}, so that nothing here is
-used for them. The settings here are used by a term that declares a kinked
-penalty without an argument for the grid, such as \code{\link[modelterms7:random]{modelterms7::random()}}
-under a Laplace prior, whose hyperparameters are those of the effects'
-distribution.
+their own signatures, for example \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)} and \code{enet(x, n_lambda = 25, n_alpha = 5)}, so that these
+constructors do not use the settings here. The settings here are used by a
+term that declares a kinked penalty without an argument for the grid, such
+as \code{\link[modelterms7:random]{modelterms7::random()}} under a Laplace prior, whose hyperparameters are
+those of the effects' distribution.
 
 \code{kink} is the number of points on the axis swept by the size of the kink,
 which runs geometrically over a factor of \code{1/min_ratio} (four decades at

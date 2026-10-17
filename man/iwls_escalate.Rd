@@ -16,13 +16,14 @@ the schedule.}
 The next damping to try, a single positive number.
 }
 \description{
-The next \eqn{\lambda} to try after a step that failed or moved nothing.
+Returns the next \eqn{\lambda} to try after a step that failed or moved
+nothing.
 }
 \details{
 The first value is \eqn{10^{-8}} of the curvature's own scale, as
 \code{\link[=iwls_scale]{iwls_scale()}} measures it. That is negligible beside a well-curved
 coordinate and already large beside one whose information has fallen by
-eight orders, which is the disparity the damping exists to correct.
+eight orders, which is the disparity that the damping exists to correct.
 
 Each further escalation multiplies by a hundred, so that the eight
 escalations that a run may use span fourteen orders of magnitude, from

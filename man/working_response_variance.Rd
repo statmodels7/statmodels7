@@ -14,7 +14,7 @@ A named list, one entry per parameter; an entry is \code{NULL} where
 the intercept-only fit, the score or the information is not available.
 }
 \description{
-One number per distribution parameter: the weighted variance of
+Computes one number per distribution parameter: the weighted variance of
 \eqn{z_i = \eta_p + U_{ip} / I_{ip} - o_{ip}}, the working response at the
 intercept-only fit less the offset, as \code{\link[=statmod_hyper_scale_start]{statmod_hyper_scale_start()}}
 defines it.

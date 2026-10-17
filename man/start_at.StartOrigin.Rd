@@ -12,6 +12,6 @@
 A named list of numeric vectors.
 }
 \description{
-Every coefficient at zero.
+Returns a start with every coefficient at zero.
 }
 \keyword{internal}

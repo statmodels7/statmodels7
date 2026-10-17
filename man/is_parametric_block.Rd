@@ -17,8 +17,8 @@ is_parametric_block(spec, param, nm)
 A single logical.
 }
 \description{
-\code{TRUE} for the block of unpenalized parametric columns, which is the one
-\code{\link[=start_from]{start_from()}} matches column by column.
+Returns \code{TRUE} for the block of unpenalized parametric columns, which is
+the block that \code{\link[=start_from]{start_from()}} matches column by column.
 }
 \details{
 The test reads the class of the term and not the name of the term. A caller
@@ -30,6 +30,7 @@ levels or a standardized design, where a shared name does not imply a
 shared meaning.
 }
 \seealso{
-\code{\link[=start_from]{start_from()}}, which uses it to decide how a block is matched.
+\code{\link[=start_from]{start_from()}}, which uses it to determine how a block is
+matched.
 }
 \keyword{internal}

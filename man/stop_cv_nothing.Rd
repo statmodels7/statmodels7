@@ -11,7 +11,7 @@ Does not return.
 }
 \description{
 Signals the error that \code{\link[=statmod]{statmod()}} gives when \code{\link[=cv]{cv()}} is passed as
-\code{outer_criterion} to a model in which no penalty with a kink has a
-hyperparameter left to estimate.
+\code{outer_criterion} to a model in which there is no penalty with a kink that
+has a hyperparameter left to estimate.
 }
 \keyword{internal}

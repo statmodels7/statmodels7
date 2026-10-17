@@ -20,7 +20,8 @@ statmod_stat_at(
 
 \item{param, coefname}{Which coefficient, as in \code{\link[=statmod_restrict]{statmod_restrict()}}.}
 
-\item{value}{The value under the null, a single number. \code{0} by default.}
+\item{value}{The value under the null, a single number. The default is
+\code{0}.}
 
 \item{test}{One of \code{"wald"}, \code{"lr"}, \code{"score"}, \code{"gradient"}.}
 
@@ -28,11 +29,11 @@ statmod_stat_at(
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} takes it.}
 
 \item{mode_error}{Whether to read how far above its mode the restricted
-fit stopped (\code{\link[=restricted_mode_error]{restricted_mode_error()}}). \code{FALSE} by default, because it
-costs one Hessian where the likelihood ratio and the gradient statistic
-need none. \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, which calls this once per row, and
-\code{\link[=statmod_invert]{statmod_invert()}}, which calls it once per evaluation of the statistic,
-do not read it.}
+fit stopped (\code{\link[=restricted_mode_error]{restricted_mode_error()}}). The default is \code{FALSE}, because
+reading it costs one Hessian where the likelihood ratio and the gradient
+statistic need none. \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, which calls this once per
+row, and \code{\link[=statmod_invert]{statmod_invert()}}, which calls it once per evaluation of the
+statistic, do not read it.}
 
 \item{objective0}{The penalized objective at the unrestricted joint mode,
 as \code{\link[=joint_objective]{joint_objective()}} returns it, for a caller that reads the
@@ -44,11 +45,12 @@ A list with \code{test}, \code{statistic}, \code{df}, \code{p.value}, \code{conv
 three -- and \code{mode_error}, \code{NA} unless it is requested.
 }
 \description{
-The Wald, likelihood-ratio, Rao score or Terrell gradient statistic for
-the hypothesis that one coefficient equals \code{value}, with its p-value.
+Computes the Wald, likelihood-ratio, Rao score or Terrell gradient
+statistic for the hypothesis that one coefficient equals \code{value}, with its
+p-value.
 }
 \details{
-All four read the penalized objective, which is the function the fit
+All four read the penalized objective, which is the function that the fit
 maximizes. Writing \eqn{\ell_p(\beta) = \ell(\beta) - \rho(\beta;\theta)}
 for it, \eqn{\hat\beta} for the unrestricted estimates, \eqn{\tilde\beta}
 for those with \eqn{\beta_j} held at \eqn{b}, \eqn{U = \partial\ell_p} for
@@ -85,13 +87,13 @@ the asymmetry.
 }
 
 \section{Differences between the statistics}{
-The Wald statistic reads the unrestricted fit alone and needs no refit,
+The Wald statistic reads only the unrestricted fit and needs no refit,
 which is why the summary reports it by default. It depends on how the
 parameter is written: a nonlinear reparametrization of the coefficient
 changes it, whereas the likelihood ratio, a difference of objective values
 at the same two points, is not changed. The Wald statistic also loses power
-against a distant alternative (the Hauck-Donner effect), the curvature
-being read at \eqn{\hat\beta} rather than under the null.
+against a distant alternative (the Hauck-Donner effect), because the
+curvature is read at \eqn{\hat\beta} rather than under the null.
 
 The gradient statistic needs the restricted fit and no matrix inversion:
 it is the score contracted with the distance between the two fits.

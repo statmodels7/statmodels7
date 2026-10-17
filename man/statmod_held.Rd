@@ -15,9 +15,9 @@ statmod_held(spec, design = NULL)
 A character vector, possibly empty.
 }
 \description{
-One key per hyperparameter a term fixed in its constructor, as
-\code{parameter}, the penalty's key and its name joined by a carriage
-return.
+Returns one key per hyperparameter that a term fixed in its constructor,
+composed of \code{parameter}, the penalty's key and the hyperparameter's name
+joined by a carriage return.
 }
 \details{
 Which hyperparameters are estimated is a property of the terms and not of

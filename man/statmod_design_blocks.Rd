@@ -15,7 +15,7 @@ statmod_design_blocks(spec, unseen = NULL, skip = character(0))
 A named list, one entry per distribution parameter.
 }
 \description{
-The per-parameter blocks, before any refreshable term is recomputed at
-coefficients.
+Returns the per-parameter blocks, before any refreshable term is
+recomputed at coefficients.
 }
 \keyword{internal}

@@ -11,15 +11,15 @@ cv_bind_inputs(spec, sub, i, n)
 
 \item{sub}{The subset of the data, already taken.}
 
-\item{i}{The rows it was taken with.}
+\item{i}{The rows used to take it.}
 
-\item{n}{The number of rows the fit was built on.}
+\item{n}{The number of rows on which the fit was built.}
 }
 \value{
-\code{sub}, with a column per matrix input the terms carry.
+\code{sub}, which has a column per matrix input that the terms carry.
 }
 \description{
-Adds each matrix a term was given as a column of the subset, so that
+Adds, as a column of the subset, each matrix that a term was given, so that
 rebuilding the model on those rows finds it there.
 }
 \details{
@@ -28,8 +28,8 @@ rebuilding the model on those rows finds it there.
 and in the formula's environment after. \code{data.frame(X = X, y = y)}
 splits a matrix into \verb{X.x1 ... X.xp}, leaving no column \code{X}, so
 \code{lasso(X)} reaches past the data to the matrix in the calling
-environment. The fit itself is correct, the matrix being captured once and
-the coefficients being identical to those of the other spelling, but the
+environment. The fit itself is correct (the matrix is captured once, and
+the coefficients are identical to those of the other spelling), but the
 fold cannot evaluate the term on its rows: the name still resolves to all
 the rows.
 
@@ -43,9 +43,9 @@ A matrix carries no knots, contrasts or levels, so subsetting it and
 evaluating it again give the same block. A formula input is left
 untouched.
 
-It applies where \code{input_expr} is a plain symbol, which is the case the
-name can be bound for. A call such as \code{lasso(scale(X))} keeps only its own
-value on the term, never the \code{X} its re-evaluation would need, so
+It applies where \code{input_expr} is a plain symbol, which is the case for
+which the name can be bound. A call such as \code{lasso(scale(X))} keeps only its
+own value on the term, never the \code{X} that its re-evaluation would need, so
 it is left to the error that names it.
 }
 \seealso{

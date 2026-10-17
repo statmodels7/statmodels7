@@ -13,7 +13,7 @@ fit_marginal_context(spec, design, coef, method, pinned = NULL)
 
 \item{coef}{The fitted coefficients, a named list.}
 
-\item{method}{The \code{\link[=OuterMethod]{OuterMethod()}} the fit ran, or \code{NULL}.}
+\item{method}{The \code{\link[=OuterMethod]{OuterMethod()}} that the fit ran, or \code{NULL}.}
 
 \item{pinned}{The coordinates left out of the determinant, as the fit
 records them in \code{methods$pinned}.}
@@ -23,8 +23,8 @@ A list with \code{spec}, \code{design} and \code{gam}, the last as
 \code{\link[=marginal_coords]{marginal_coords()}} returns it.
 }
 \description{
-The specification and the design on which a fit's marginal criterion was
-maximized: the coefficients that \code{\link[=marginal_coords]{marginal_coords()}} names are held at
+Returns the specification and the design on which a fit's marginal criterion
+was maximized: the coefficients that \code{\link[=marginal_coords]{marginal_coords()}} names are held at
 their fitted values, and the coordinates left out of the determinant are
 recorded on the design.
 }
@@ -33,7 +33,7 @@ A consumer that reads the criterion's derivatives at a fitted object has
 to read them on this criterion. On the fit's own specification, which
 holds nothing, the same functions return the derivatives of a criterion
 that integrates the estimated coefficients, which is another function.
-Where \code{\link[=marginal_coords]{marginal_coords()}} signals an error, no coefficient is treated as
-estimated.
+If \code{\link[=marginal_coords]{marginal_coords()}} signals an error, the function treats no coefficient
+as estimated.
 }
 \keyword{internal}

@@ -9,20 +9,22 @@ format_conflicts(conflicts)
 \arguments{
 \item{conflicts}{A named list as \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} returns: one
 entry per masked name, each a character vector of at least two package
-names with the winner first. An empty list gives an empty result. Not
-validated; a vector of length one would render as masking nothing.}
+names with the winner first. An empty list gives an empty result. The
+argument is not validated, and a vector of length one would render as
+masking nothing.}
 }
 \value{
 A character vector with one element per entry of \code{conflicts}, in
-the order they arrived, with no names. \code{character(0)} for an empty
-input, so a caller can \code{c()} the result into a message
-unconditionally.
+the order in which they arrived, with no names. The result is
+\code{character(0)} for an empty input, so a caller can \code{c()} the result into
+a message unconditionally.
 }
 \description{
 Formats the result of \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} as one line per masked
-name, in the shape the attach message prints:
+name, in the shape that the attach message prints:
 \verb{x pkgA::name masks pkgB::name}. The winner is named on the left of
-\code{masks} and every package it hides on the right, comma separated.
+\code{masks}, and every package that it hides is named on the right, comma
+separated.
 }
 \seealso{
 \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} for the input,

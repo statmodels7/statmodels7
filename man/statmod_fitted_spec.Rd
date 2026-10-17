@@ -7,7 +7,7 @@
 statmod_fitted_spec(spec, coef, design)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, the one the fit started from.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, the one from which the fit started.}
 
 \item{coef}{A named list of coefficient vectors, the coefficients at which
 the fit stopped.}
@@ -22,17 +22,18 @@ refreshable term is the term held in the design's state and that
 design carries one.
 }
 \description{
-Returns the specification with every refreshable term replaced by the term
-at which the fit arrived. A break-point, a nonlinear parameter and the
-design block they imply are then read off the fitted object, and the
-specification that a caller passed to \code{\link[=statmod]{statmod()}} no longer decides what
+Returns a specification in which every refreshable term is replaced by the
+term at which the fit arrived. A break-point, a nonlinear parameter and the
+design block that they imply are then read off the fitted object, and the
+specification that a caller passed to \code{\link[=statmod]{statmod()}} no longer determines what
 \code{summary()}, \code{predict()} or \code{\link[modelterms7:seg_psi]{modelterms7::seg_psi()}} report.
 }
 \details{
-This is what a \code{\link[=StatmodFit]{StatmodFit()}} stores in its \code{spec} property. The commit is
-\code{which = "jacobian"}: a frozen block was committed by its own phase at
-exactly these coefficients, and committing a \code{\link[modelterms7:jseg]{modelterms7::jseg()}} again
-at the same point would take a further step of its incremental read-off,
+A \code{\link[=StatmodFit]{StatmodFit()}} stores this specification in its \code{spec} property. The
+commit is \code{which = "jacobian"}: a frozen block was committed by its own
+phase at exactly these coefficients, and committing a
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}} again at the same point would take a further step of
+its incremental read-off,
 so the break-points reported would not be the fitted ones. Both kinds of
 term are then copied across from the design's state, committed or not.
 
@@ -41,7 +42,7 @@ structural state onto \code{spec@structural}, so a filter's persistence and
 loadings are read off the fit as well.
 }
 \seealso{
-\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} for the commit this performs,
+\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} for the commit that this performs,
 \code{\link[=refresh_units]{refresh_units()}} for the terms replaced.
 }
 \keyword{internal}

@@ -12,13 +12,13 @@ assert_criterion_order(distrib, method)
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}, or \code{NULL}.}
 }
 \value{
-\code{NULL}, invisibly. Called for the error.
+\code{NULL}, invisibly. The function is called for the error.
 }
 \description{
 Raises \code{\link[=order_shortfall]{order_shortfall()}}'s message when the family does not carry the two
-derivatives every criterion reads. Called from \code{\link[=statmod]{statmod()}} once the
-criterion is known to have something to do, so that a model whose criterion
-is inert does not signal an error that cannot arise.
+derivatives that every criterion reads. \code{\link[=statmod]{statmod()}} calls the function once
+the criterion is known to have something to do, so that a model whose
+criterion is inert does not signal an error that cannot arise.
 }
 \examples{
 statmodels7:::assert_criterion_order(distributions7::gaussian1_distrib(), reml())

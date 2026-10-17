@@ -32,9 +32,10 @@ bit-identical to recomputing by construction, and the key is compared
 with \code{identical()} on the full numeric inputs, so a collision
 cannot happen.
 
-It stands aside where the design carries refreshable terms: a
+The memo is not used where the design carries refreshable terms: a
 break-point block advances its rescaling schedule as the alternation
 commits, so the same coefficients do not imply the same design there,
-and a key that cannot see the schedule must not answer.
+and a key that does not include the schedule cannot justify returning a
+stored value.
 }
 \keyword{internal}

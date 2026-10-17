@@ -2,7 +2,7 @@
 % Please edit documentation in R/statmod.R
 \name{curv_blocks}
 \alias{curv_blocks}
-\title{The Blocks With the Penalties a Specification Now Carries}
+\title{The Blocks With the Penalties That a Specification Now Carries}
 \usage{
 curv_blocks(blocks, spec, design)
 }
@@ -13,17 +13,17 @@ curv_blocks(blocks, spec, design)
 design.}
 }
 \value{
-\code{blocks}, with the \code{penalty} of each kinked entry replaced.
+\code{blocks}, in which the \code{penalty} of each kinked entry is replaced.
 }
 \description{
-Replaces the penalty of every kinked block with the one the specification
-carries under the same key, leaving everything else the block records
-where it was.
+Replaces the penalty of every kinked block with the one that the
+specification carries under the same key, leaving everything else that the
+block records where it was.
 }
 \details{
 \code{\link[=statmod_alternate]{statmod_alternate()}} rewrites a scaled SCAD or MCP's curvature at every
 pass. Rebuilding the blocks with \code{\link[=statmod_blocks]{statmod_blocks()}} would lose what a path
-has written onto them, the previous point's kink among it, so only the
+has written onto them, including the previous point's kink, so only the
 penalty is replaced.
 }
 \seealso{

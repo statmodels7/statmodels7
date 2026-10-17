@@ -2,7 +2,7 @@
 % Please edit documentation in R/statmod.R
 \name{inner_settings}
 \alias{inner_settings}
-\title{What the Inner Method Says About How to Fit}
+\title{The Settings Read From the Inner Method}
 \usage{
 inner_settings(method, distrib = NULL)
 }
@@ -18,7 +18,7 @@ A list of four: \code{expected} (a logical), \code{approx} (a string),
 \code{maxit} and \code{tol}.
 }
 \description{
-The information matrix, its approximation and the budget, read from the
+Reads the information matrix, its approximation and the budget from the
 inner method in one place.
 }
 \details{
@@ -32,8 +32,8 @@ as that function's second derivative, which is the observed information;
 the expected information is a different matrix, so a Newton step on it
 would be Fisher scoring under another name. Where a family writes neither
 out, the expected information is also far more expensive to form than the
-observed one. \code{approx} is \code{"opg"} for such a method, which is what
-\code{\link[=iwls]{iwls()}} itself defaults to; it is read only where \code{expected} is \code{TRUE},
+observed one. \code{approx} is \code{"opg"} for such a method, the default of
+\code{\link[=iwls]{iwls()}} itself; it is read only where \code{expected} is \code{TRUE},
 so for an optimizer it records a default and not a choice.
 }
 \seealso{

@@ -9,20 +9,20 @@ statmod_joint_pieces(spec, design, obj, hyper, kinds = "filter")
 \arguments{
 \item{spec, design, obj, hyper}{As \code{\link[=statmod_fit_joint]{statmod_fit_joint()}} takes them.}
 
-\item{kinds}{The kinds of structural unit to take the term from: \code{"filter"}
-for the joint step, and \code{"loglik"} as well where a mixture over latent
-states is read at a fitted point.}
+\item{kinds}{The kinds of structural unit from which to take the term:
+\code{"filter"} for the joint step, and \code{"loglik"} as well where a mixture
+over latent states is read at a fitted point.}
 }
 \value{
 A list with \code{fn}, \code{gr}, \code{he}, \code{raw}, \code{setz} (writes the filter's
 free parameters into the design's structural state), \code{zeta} (reads
-them), \code{ix}, \code{nb}, \code{free}, \code{key} and \code{param} (the distribution parameter the
-term sits in).
+them), \code{ix}, \code{nb}, \code{free}, \code{key} and \code{param} (the distribution parameter
+in which the term sits).
 }
 \description{
-The objective, gradient and exact information \code{\link[=statmod_fit_joint]{statmod_fit_joint()}}
-minimizes, over the coefficients followed by the filter's free
-parameters, returned as closures so \code{\link[=statmod_certificate]{statmod_certificate()}} reads the same
-ones at a fitted point.
+Returns, as closures, the objective, the gradient and the exact
+information with which \code{\link[=statmod_fit_joint]{statmod_fit_joint()}} minimizes over the
+coefficients followed by the filter's free parameters, so that
+\code{\link[=statmod_certificate]{statmod_certificate()}} reads the same ones at a fitted point.
 }
 \keyword{internal}

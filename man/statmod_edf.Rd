@@ -51,10 +51,10 @@ That curvature is computed once for all terms and not per term.
 
 A term may carry more than one penalty, over different parameters of its
 own, and each has hyperparameters of its own filed under a key of its own.
-The row stays per term, which is the granularity of a table of terms,
-and the hyperparameters are handed over keyed by the penalty names
-\code{\link[modelterms7:term_penalties]{modelterms7::term_penalties()}} gives, which is the shape
-\code{edf()} reads them in. Passing the hyperparameters of one penalty for
+The result has one row per term, the granularity of a table of terms,
+and the hyperparameters are handed over keyed by the penalty names that
+\code{\link[modelterms7:term_penalties]{modelterms7::term_penalties()}} returns, which is the shape in which
+\code{edf()} reads them. Passing the hyperparameters of one penalty for
 a term carrying two would count the whole block against it.
 
 The arguments of \code{edf()} are passed by name: its third argument is the

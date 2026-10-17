@@ -9,7 +9,7 @@ coord_working(spec, ep, coef, design, p, expected, approx)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{ep}{The linear predictors and the parameters they imply, as
+\item{ep}{The linear predictors and the parameters that they imply, as
 \code{\link[=statmod_eta]{statmod_eta()}} returns them.}
 
 \item{coef}{A named list of coefficient vectors.}
@@ -27,25 +27,26 @@ with no closed form.}
 \value{
 A list with \code{w} and \code{z}, each a numeric vector of length
 \code{spec@n_obs}. A row of weight zero has \code{w} zero and \code{z} equal to its
-predictor. \code{NULL} where the working problem is not usable: a non-finite
-or non-positive \eqn{h_i}, or a non-finite score, on a row of positive
-weight. The observed information can produce non-positive values far from
-the optimum.
+predictor. The value is \code{NULL} where the working problem is not usable: a
+non-finite or non-positive \eqn{h_i}, or a non-finite score, on a row of
+positive weight. The observed information can produce non-positive
+values far from the optimum.
 }
 \description{
-\eqn{h_i} and \eqn{z_i = \eta_i + s_i/h_i}, the weighted least squares
-problem the log-likelihood is locally.
+Computes the working weights \eqn{h_i} and the working response
+\eqn{z_i = \eta_i + s_i/h_i}, which define the weighted least squares
+problem that locally represents the log-likelihood.
 }
 \details{
 For a Gaussian response on the identity link the quadratic is exact and
-the first iteration answers the problem. Elsewhere it is the local
-approximation a scoring step works on, and the weights are rebuilt at each
-iteration. A row of weight zero has no curvature and no score, and it
+the first iteration solves the problem. Elsewhere it is the local
+approximation on which a scoring step works, and the weights are rebuilt at
+each iteration. A row of weight zero has no curvature and no score, and it
 enters the descent with weight zero at its own predictor.
 
 Where the design carries a structural term, the predictor of an equation
-includes a part that belongs to that term, and no column of a block
-carries it. The working response is then built on the static predictor,
+includes a part that belongs to that term, and the columns of a block do
+not carry it. The working response is then built on the static predictor,
 with \eqn{s_i} the score of the model from \code{\link[=statmod_score_obs]{statmod_score_obs()}}, so the
 quadratic has the gradient of the log-likelihood at the current
 coefficients. The weights stay the family's curvature at the whole

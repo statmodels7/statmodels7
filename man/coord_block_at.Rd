@@ -19,14 +19,14 @@ coord_block_at(design, p, X, cols)
 What \code{\link[=coord_block]{coord_block()}} returns for \code{X} and \code{cols}.
 }
 \description{
-\code{\link[=coord_block]{coord_block()}} of an equation's columns, kept in the design's \code{eta_memo}
-environment so a descent called many times over one design copies the
-block once.
+Returns the \code{\link[=coord_block]{coord_block()}} of an equation's columns and keeps it in the
+design's \code{eta_memo} environment, so that a descent called many times over
+one design copies the block once.
 }
 \details{
 Only a design whose blocks do not move with the coefficients carries that
-environment; any other gets a fresh \code{\link[=coord_block]{coord_block()}} at each call, as
-before. The entry is keyed on the equation and the columns.
+environment; for any other design, a fresh \code{\link[=coord_block]{coord_block()}} is built at each
+call, as before. The entry is keyed on the equation and the columns.
 }
 \seealso{
 \code{\link[=coord_block]{coord_block()}}, \code{\link[=coord_fit]{coord_fit()}}

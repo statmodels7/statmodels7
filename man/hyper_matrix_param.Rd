@@ -14,8 +14,8 @@ A list with \code{chart}, \code{names} and \code{inverted}, or \code{NULL} when 
 not a multivariate family that carries one matrix parameter.
 }
 \description{
-The chart, the names of its free values among the family's parameters, and
-whether the matrix is a precision, read from a multivariate family under
-any number of \code{\link[distributions7:fixed]{distributions7::fixed()}} wrappers.
+Returns the chart, the names of its free values among the family's
+parameters, and whether the matrix is a precision, read from a multivariate
+family under any number of \code{\link[distributions7:fixed]{distributions7::fixed()}} wrappers.
 }
 \keyword{internal}

@@ -13,7 +13,7 @@ statmod_regime_at(spec, design, eta_static, theta_static)
 
 \item{eta_static}{The static predictors.}
 
-\item{theta_static}{The parameters they give.}
+\item{theta_static}{The parameters that they give.}
 }
 \value{
 A named list, one entry per structural term of the likelihood
@@ -23,10 +23,11 @@ shape (a regime term or a marginal break-point term), each with \code{param},
 predictor).
 }
 \description{
-The smoothed posterior over the components of each structural term of the
-likelihood shape (the states of a regime term, the intervals or nodes of a
-marginal break-point term), the shifts that the components add to the
-predictor, and the posterior-weighted predictor that these give.
+Computes the smoothed posterior over the components of each structural
+term of the likelihood shape (the states of a regime term, the intervals
+or nodes of a marginal break-point term), the shifts that the components
+add to the predictor, and the posterior-weighted predictor that these
+give.
 }
 \details{
 A term of this shape does not report a predictor: its contribution is a
@@ -40,8 +41,8 @@ posterior-weighted derivative of the ordinary one. A caller therefore
 differentiates its own log-density once per component, vectorized, and
 weights.
 
-The predictor reported for the equation the term sits in is the
-posterior-weighted one, and that is what a fitted value means here.
+The predictor reported for the equation in which the term sits is the
+posterior-weighted one, and a fitted value here is that predictor.
 }
 \seealso{
 \code{\link[=statmod_structural]{statmod_structural()}}

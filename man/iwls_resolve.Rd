@@ -9,23 +9,24 @@ iwls_resolve(method, distrib)
 \arguments{
 \item{method}{An \code{\link[=Iwls]{Iwls()}} object.}
 
-\item{distrib}{The distribution the fit is of.}
+\item{distrib}{The distribution to which the model is fitted.}
 }
 \value{
 An \code{\link[=Iwls]{Iwls()}} object whose \code{hessian} is \code{"expected"} or
-\code{"observed"}, with \code{fallback} \code{TRUE} exactly where \code{"auto"} was settled on
-the observed information.
+\code{"observed"} and whose \code{fallback} is \code{TRUE} exactly where \code{"auto"} was
+settled on the observed information.
 }
 \description{
-Turns an \code{\link[=iwls]{iwls()}} left at \code{hessian = "auto"} into the method a fit runs:
-the expected information where the family writes it exactly and at an
-acceptable cost, and otherwise the observed information, with the expected
-one taking the step where the observed step finds no acceptable point. A
-method whose curvature was named is returned as it is.
+Turns an \code{\link[=iwls]{iwls()}} left at \code{hessian = "auto"} into the method that a fit
+runs. The method uses the expected information where the family writes it
+exactly and at an acceptable cost; otherwise it uses the observed
+information, and the expected one takes the step where the observed step
+finds no acceptable point. A method whose curvature was named is returned
+as it is.
 }
 \details{
 \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is the first question. Where it
-answers \code{FALSE} the expected information is an approximation, the outer
+returns \code{FALSE} the expected information is an approximation, the outer
 product of the scores by default, and the method is settled on the observed
 information. An observed penalized information that is not positive
 definite is first repaired by \code{\link[=pd_repair]{pd_repair()}} and its step tried; the

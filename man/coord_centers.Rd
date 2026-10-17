@@ -21,9 +21,9 @@ coord_centers(spec, design, p, obj, beta)
 \code{TRUE} or \code{FALSE}.
 }
 \description{
-\code{TRUE} where the equation carries an unpenalized intercept that is free to
-move, in which case \code{\link[=coord_fit]{coord_fit()}} centers the block's columns with the
-working weights and solves it with the intercept profiled out.
+Returns \code{TRUE} where the equation carries an unpenalized intercept that is
+free to move, in which case \code{\link[=coord_fit]{coord_fit()}} centers the block's columns with
+the working weights and solves it with the intercept profiled out.
 }
 \details{
 The block is fitted with the other columns of its equation held, and the
@@ -38,7 +38,7 @@ predictors reaches.
 Solving with the intercept profiled out is the Frisch-Waugh-Lovell
 reading of an unpenalized constant: the coefficients of the block are
 those of the centered columns against the centered working response, and
-they do not depend on the value the intercept holds. \code{\link[=coord_fit]{coord_fit()}} then
+they do not depend on the value that the intercept holds. \code{\link[=coord_fit]{coord_fit()}} then
 sets the intercept to the value that goes with them, the weighted mean of
 the working response net of the block, so its step is a joint step in the
 block and the intercept. A held intercept cannot take that value, so an

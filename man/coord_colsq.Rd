@@ -19,16 +19,16 @@ coord_colsq(X, w, k, m)
 A numeric vector, one entry per column in \code{k}.
 }
 \description{
-\eqn{\sum_i w_i (x_{ik} - m_k)^2} for the columns \eqn{k} given in \code{k},
-which is the curvature a coordinate of a centered block has.
+Computes \eqn{\sum_i w_i (x_{ik} - m_k)^2} for the columns \eqn{k} given in
+\code{k}, which is the curvature that a coordinate of a centered block has.
 }
 \details{
-It is computed as the sum it is, not as
+The function computes the sum directly, not as
 \eqn{\sum_i w_i x_{ik}^2 - W m_k^2}, which is the same number in exact
 arithmetic and loses as many digits as the mean exceeds the spread. On a
 sparse block the sum runs over the stored entries and adds
-\eqn{m_k^2} times the weight of the rows the column does not store,
-which is what a stored zero would contribute, so the block is never
+\eqn{m_k^2} times the weight of the rows that the column does not store; a
+stored zero would contribute the same amount, so the block is never
 densified.
 
 A column that is constant over the rows is the intercept itself once

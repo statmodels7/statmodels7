@@ -18,17 +18,17 @@ joint_smoother_diag(spec, coef, design, hyper)
 \value{
 A list with \code{beta}, the diagonal over the stacked coefficients,
 \code{zeta}, the diagonal over the structural term's free parameters, named as
-the term names them, and \code{failed}. \code{NULL} where the model carries no joint
-vector at all, and a list whose \code{failed} is \code{TRUE} where it carries one
-that could not be read. The two are different answers: the first leaves a
-caller free to fall back on a rule that is right for such a model, and the
-second leaves it with no reading, so that the count is reported missing
-rather than taken from a rule meaning something else.
+the term names them, and \code{failed}. The result is \code{NULL} where the model
+carries no joint vector at all, and a list whose \code{failed} is \code{TRUE} where
+it carries one that could not be read. The two results differ: with the
+first, the caller may fall back on a rule that is right for such a model,
+and with the second, the caller has no reading, so that the count is
+reported missing rather than taken from a rule that means something else.
 }
 \description{
-The diagonal of \eqn{F = (K+S)^{-1}K} on the vector a model carrying a
-score-driven filter actually estimates: the coefficients of every equation
-followed by the term's own free parameters.
+Returns the diagonal of \eqn{F = (K+S)^{-1}K} on the vector that a model
+carrying a score-driven filter actually estimates: the coefficients of
+every equation followed by the term's own free parameters.
 }
 \details{
 The effective degrees of freedom are the trace of the model's smoother and a
@@ -37,7 +37,7 @@ a coefficient that matrix is \eqn{(H+S)^{-1}H} and \code{\link[=statmod_edf]{sta
 directly. A filter's parameters are estimated beside the coefficients and
 may carry a penalty of their own, so for such a model the same definition is
 read on the joint vector: \eqn{K} is \code{\link[=statmod_full_information]{statmod_full_information()}} and
-\eqn{K+S} the matrix the criterion's own determinant is taken of,
+\eqn{K+S} the matrix whose determinant the criterion takes,
 \code{\link[=statmod_marginal_full]{statmod_marginal_full()}}.
 }
 \section{The count of an unpenalized parameter}{
@@ -47,18 +47,19 @@ zero row and a zero column outside \eqn{P}, so
 and for \eqn{j} outside \eqn{P} the whole column \eqn{S_{\cdot j}} vanishes,
 which makes \eqn{F_{jj}} exactly one. The rule that counts one degree of
 freedom per free parameter of a structural term, on the reading that those
-parameters are estimated and unpenalized, is therefore what this matrix
-gives wherever that rule is right. The count differs for a coordinate that
+parameters are estimated and unpenalized, therefore agrees with this matrix
+wherever that rule is right. The count differs for a coordinate that
 a prior shrinks, which a filter's own parameters may be (for example the
 deviations of a developed loading, or the parameters under a covariance
 class); such a coordinate counts less than one.
 
 A structural term that mixes over latent states rather than shifting the
-predictor has no such joint determinant, \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} answering
-\code{NULL} for it, and falls back to the coefficient-only reading.
+predictor has no such joint determinant, because \code{\link[=statmod_marginal_full]{statmod_marginal_full()}}
+returns \code{NULL} for it, so the count falls back to the coefficient-only
+reading.
 
-The joint route reads the observed information, there being no expected one
-for a filter: \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} assembles from
+The joint route reads the observed information, because a filter has no
+expected one: \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} assembles from
 \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}}, and the criterion of such a model already
 reads that same matrix. A model carrying no filter never reaches here and is
 untouched.

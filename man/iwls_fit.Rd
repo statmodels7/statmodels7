@@ -44,17 +44,17 @@ group, which is right where the whole vector is being fitted.}
 
 \item{frozen}{Positions held at their starting values, an integer vector
 in the same numbering. They are dropped from every solve, so the run
-maximizes over the rest, and the stopping rule reads the free
-coordinates alone: a held coordinate's score is what the constrained
-optimum leaves there and does not vanish.}
+maximizes over the rest, and the stopping rule reads only the free
+coordinates, because the constrained optimum leaves in a held coordinate
+a score that does not vanish.}
 
-\item{backup_at}{\code{NULL}, or a function like \code{pieces_at} building the pieces
-on the expected information, which takes the step where the observed
-step finds no acceptable point. An observed penalized information that
-is not positive definite is first repaired by \code{\link[=pd_repair]{pd_repair()}} and its step
-tried. A trial point whose objective raises an error is read as
-rejected. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method \code{\link[=iwls_resolve]{iwls_resolve()}} settled
-with the fallback.}
+\item{backup_at}{\code{NULL}, or a function, like \code{pieces_at}, that builds the
+pieces on the expected information. The expected information takes the
+step where the observed step finds no acceptable point. An observed
+penalized information that is not positive definite is first repaired by
+\code{\link[=pd_repair]{pd_repair()}} and its step tried. A trial point whose objective raises an
+error is read as rejected. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method that
+\code{\link[=iwls_resolve]{iwls_resolve()}} settled with the fallback.}
 
 \item{damp_on_reject}{Whether a line search that finds no acceptable step
 raises the Levenberg damping and retries (the default) or ends the run.
@@ -75,36 +75,37 @@ there, with the verdict of the constrained fit.}
 
 \item{newton_at}{\code{NULL}, or a function of the coefficients returning the
 full Hessian of the objective, the scoring pieces' curvature plus the
-term a block moving with its coefficients adds. Where the scoring step
+term that a block moving with its coefficients adds. Where the scoring step
 is rejected or shrunk below a tenth, the Newton step on it is tried by
 \code{\link[=iwls_newton_step]{iwls_newton_step()}} and the one that decreases the objective more is
 taken.}
 
-\item{switch_at}{\code{NULL}, or a function like \code{pieces_at} building the pieces
-on the observed information. After \code{switch_after} iterations without
+\item{switch_at}{\code{NULL}, or a function, like \code{pieces_at}, that builds the
+pieces on the observed information. After \code{switch_after} iterations without
 convergence, or earlier when \code{\link[=iwls_slow]{iwls_slow()}} reports a slow contraction of
 the score, it takes the place of \code{pieces_at}, and \code{pieces_at} that of
-\code{backup_at}. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method \code{\link[=iwls_resolve]{iwls_resolve()}}
+\code{backup_at}. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method that \code{\link[=iwls_resolve]{iwls_resolve()}}
 settled on the expected information from \code{"auto"}.}
 
-\item{switch_after}{The iteration after which \code{switch_at} takes over.}
+\item{switch_after}{The iteration after which \code{switch_at} replaces
+\code{pieces_at}.}
 }
 \value{
-A list of ten: the six below; \code{note}, the reason a run stopped or
-\code{NULL}; \code{aliased}, the coordinates the pivot left out; \code{switched}, the
-iteration at which the run moved to \code{switch_at}, or 0; and \code{fallback}, a
-named integer vector of four counts. The count \code{indefinite} is the number
-of iterations at which the observed penalized information was not
-positive definite, \code{search} the number at which the expected pieces
-stepped in for a step that found no acceptable point, \code{error} the number
-of trial points whose objective raised, and \code{newton} the number of
-iterations at which the Newton step on the full Hessian was taken in
-place of the scoring step. Of the six:
-\describe{
+A list of ten: the six below; \code{note}, the reason for which a run
+stopped or \code{NULL}; \code{aliased}, the coordinates that the pivot left out;
+\code{switched}, the iteration at which the run moved to \code{switch_at}, or 0; and
+\code{fallback}, a named integer vector of four counts. The count \code{indefinite}
+is the number of iterations at which the observed penalized information was
+not positive definite, \code{search} the number at which the expected pieces
+stepped in for a step that found no acceptable point, \code{error} the number of
+trial points whose objective raised, and \code{newton} the number of iterations
+at which the Newton step on the full Hessian was taken in place of the
+scoring step. The six are: \describe{
 \item{\code{par}}{the stacked coefficients reached, a numeric vector.}
-\item{\code{value}}{the penalized objective there, unaveraged.}
+\item{\code{value}}{the penalized objective there, not averaged over the
+observations.}
 \item{\code{converged}}{a single logical: whether a stopping rule fired,
-the dimensionless verdict included.}
+including the dimensionless verdict.}
 \item{\code{iterations}}{the index of the iteration at which the loop
 ended. \code{1} means the rule was met at the first check, as a warm start
 already at the mode reports; the full step taken after the rule is
@@ -139,10 +140,10 @@ The absolute score of a location equation carries the units \eqn{1/y}. On
 a response three decades small its rounding floor sits above any fixed
 threshold, and a run stalled exactly at the optimum reads as a failure.
 
-The verdict therefore adds a second, dimensionless reading,
+The verdict therefore includes a second, dimensionless reading,
 \deqn{\max_j \lvert g_j \rvert / (n\,s_p), \qquad
       s_p = \sqrt{\mathrm{median}_j H_{jj} / n},}
-with \eqn{s_p} taken over the equation each coordinate belongs to.
+where \eqn{s_p} is taken over the equation to which each coordinate belongs.
 
 It can relabel a run that has already stopped as converged, and it never
 stops a run that is still moving. Driving the loop with it would make the

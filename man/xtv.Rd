@@ -12,25 +12,26 @@ wxsq(X, w, threads = 1L)
 \arguments{
 \item{X}{A design block, \verb{n x p}.}
 
-\item{v}{The vector \eqn{X^\top v} is taken against, length \code{n}. Read by
-\code{xtv()} only.}
+\item{v}{The vector against which \eqn{X^\top v} is taken, length \code{n}.
+Only \code{xtv()} reads it.}
 
 \item{threads}{The thread count, a plain integer as
 \code{\link[numericals7:thread_count]{numericals7::thread_count()}} returns it. \code{1L} takes the sequential
 route unconditionally.}
 
-\item{w}{Per-observation weights, length \code{n}. Read by \code{wxsq()} only, and
-multiplied onto the squared entry.}
+\item{w}{Per-observation weights, length \code{n}. Only \code{wxsq()} reads it, and
+it multiplies the squared entry.}
 }
 \value{
 An unnamed numeric vector of length \code{ncol(X)}: for \code{xtv()} the
 column dot products with \code{v}, for \code{wxsq()} the weighted sums of squares.
-Neither carries the column names of \code{X}, since both feed arithmetic
-indexed by position.
+Both functions omit the column names of \code{X}, because their results feed
+arithmetic indexed by position.
 }
 \description{
-The two per-sweep reads of the compiled coordinate descent, each one
-vector of length \code{p} over an \verb{n x p} design.
+\code{xtv()} and \code{wxsq()} compute the two per-sweep reads of the compiled
+coordinate descent; each returns one vector of length \code{p} over an \verb{n x p}
+design.
 
 \code{xtv()} computes \eqn{X^\top v}, one dot product per column. It is the
 gradient read: \code{v} is the running residual, or the residual times the
@@ -42,25 +43,26 @@ column curvatures of a working model. The threaded kernel does not form the
 
 Both take the package's threaded kernel above a work threshold, the one
 constant that \code{\link[=wcrossprod]{wcrossprod()}} also uses, and otherwise evaluate the
-expressions they replace, \code{as.numeric(crossprod(X, v))} and
+expressions that they replace, \code{as.numeric(crossprod(X, v))} and
 \code{as.numeric(crossprod(w, X^2))}.
 }
 \section{Why the answer does not depend on the thread count}{
 Each element of the output is one column's accumulation, owned in full by
-one thread and summed in ascending row order. Nothing is split between
-threads, so the result is identical bit for bit at any count.
+one thread and summed in ascending row order. The kernel never splits an
+accumulation between threads, so the result is identical bit for bit at
+any count.
 
-The elementwise product inside each term is formed in the order the
-replaced expression forms it: \code{v} arrives already multiplied by whatever
-the caller wanted, and in \code{wxsq()} the entry is squared before the weight
-multiplies it. Against an optimized BLAS, which blocks its own
+The elementwise product inside each term is formed in the order in which
+the replaced expression forms it: \code{v} arrives already multiplied by
+whatever the caller wanted, and in \code{wxsq()} the entry is squared before
+the weight multiplies it. Against an optimized BLAS, which blocks its own
 accumulations, the two routes agree to the rounding of one dot product.
 }
 
 \section{When the kernel is used}{
-\code{threads > 1}, \code{X} a base dense matrix, the vector of length \code{nrow(X)},
-and \eqn{n \times p} at least \code{2e5}. A sparse \code{X} takes the
-\pkg{Matrix} route.
+The kernel is used when \code{threads > 1}, \code{X} is a base dense matrix, the
+vector has length \code{nrow(X)}, and \eqn{n \times p} is at least \code{2e5}. A
+sparse \code{X} takes the \pkg{Matrix} route.
 }
 
 \seealso{

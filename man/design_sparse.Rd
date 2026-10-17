@@ -5,7 +5,7 @@
 \alias{as_dense}
 \alias{as_sparse}
 \alias{zero_information}
-\title{Is a Design Sparse, and the Zero Matrix to Accumulate It Into}
+\title{Is a Design Sparse, and the Zero Matrix into Which to Accumulate It}
 \usage{
 design_sparse(design)
 
@@ -17,7 +17,7 @@ zero_information(design, total)
 }
 \arguments{
 \item{design}{The design, a list with one entry per distribution
-parameter, each carrying its block as \code{X}.}
+parameter, and each entry holds its block as \code{X}.}
 
 \item{A}{A matrix, dense or sparse.}
 
@@ -33,9 +33,9 @@ a base matrix to compressed column storage.
 }
 \description{
 \code{design_sparse()} reports whether any equation's block is sparse, and
-\code{zero_information()} gives the square zero matrix of the right kind to
-accumulate the information into. \code{as_dense()} and \code{as_sparse()} convert a
-matrix to the other storage.
+\code{zero_information()} gives the square zero matrix of the right kind, into
+which the information is accumulated. \code{as_dense()} and \code{as_sparse()} convert
+a matrix to the other storage.
 }
 \details{
 The information is assembled one \code{crossprod} per parameter pair and each
@@ -47,6 +47,6 @@ follows the design.
 }
 \seealso{
 \code{\link[=statmod_information_at]{statmod_information_at()}}, which accumulates into it,
-\code{\link[=zap_nonfinite]{zap_nonfinite()}} for the other place the two storages meet.
+\code{\link[=zap_nonfinite]{zap_nonfinite()}} for the other place where the two storages meet.
 }
 \keyword{internal}

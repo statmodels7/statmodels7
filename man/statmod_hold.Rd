@@ -15,10 +15,10 @@ statmod_hold(spec, coords, values)
 }
 \value{
 \code{spec} with \code{held_coef} set. The holds already present are kept
-for coefficients \code{coords} does not name.
+for coefficients that \code{coords} does not name.
 }
 \description{
-Writes values for the coefficients \code{\link[=marginal_coords]{marginal_coords()}} returned into the
+Writes values for the coefficients that \code{\link[=marginal_coords]{marginal_coords()}} returned into the
 specification's \code{held_coef}, which the inner fit enforces.
 }
 \keyword{internal}

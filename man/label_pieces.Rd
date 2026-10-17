@@ -2,7 +2,7 @@
 % Please edit documentation in R/blocks.R
 \name{label_pieces}
 \alias{label_pieces}
-\title{Every Labeled Effect in a Term, Its Sub-Terms Included}
+\title{Every Labeled Effect in a Term, Including Its Sub-Terms}
 \usage{
 label_pieces(
   term,
@@ -16,10 +16,9 @@ label_pieces(
 \arguments{
 \item{term}{One built term.}
 
-\item{param}{The distribution parameter its equation belongs to.}
+\item{param}{The distribution parameter to which its equation belongs.}
 
-\item{nm}{The equation-level term's name, which is what the design is keyed
-by.}
+\item{nm}{The equation-level term's name, by which the design is keyed.}
 
 \item{within}{The piece's columns in that term's block, or \code{NULL} at the top
 level, where the piece is the whole of it.}
@@ -32,19 +31,19 @@ and a report naming only the equation would be read as the second.}
 
 \item{structural}{Whether \code{within} indexes a structural term's own
 parameters rather than columns of the design. \code{NULL} at the top level,
-where it is read from the term; a recursive call passes the value it
+where it is read from the term; a recursive call passes the value that it
 received.}
 }
 \value{
 A list of pieces, each with \code{param}, \code{term}, \code{within}, \code{path},
 \code{dim}, \code{tag}, \code{group} (as \code{\link[modelterms7:term_group]{modelterms7::term_group()}} returns it),
-\code{structural} and \code{distrib}. Empty where nothing under the term is
-labeled.
+\code{structural} and \code{distrib}. The list is empty if nothing under the term
+is labeled.
 }
 \description{
-One piece per labeled random effect reachable from a term: the term itself
-where it carries a label, and the sub-terms developing its own parameters
-otherwise, walked to any depth.
+Returns one piece per labeled random effect reachable from a term: the term
+itself where it carries a label, and the sub-terms developing its own
+parameters otherwise, walked to any depth.
 }
 \section{Why a sub-term is reachable at all}{
 \code{seg(x, psi ~ random(~ 1 | u | id))} develops a break-point over a labeled
@@ -53,15 +52,15 @@ equation carries one \code{SegTerm}, whose own label is absent), and its
 coefficients are columns of that term's block. They are the columns that
 \code{\link[modelterms7:term_components]{modelterms7::term_components()}} reports as that component's \code{sub_index},
 so a piece records them as \code{within}, positions in the parent's
-block, and the design turns them into positions in the stacked vector the
-same way it does for any other term.
+block, and the design turns them into positions in the stacked vector as it
+does for any other term.
 
-A labeled effect written in a subformula of an \strong{additive} term lives in
+A labeled effect written in a subformula of an additive term lives in
 the same vector as one written in an equation, so the same positions apply.
 
-A \strong{structural} parent addresses its coefficients differently: they are the
+A structural parent addresses its coefficients differently: they are the
 term's own parameters, which contribute no design column and live in the
-design's structural state. The walk is the same and the positions it
+design's structural state. The walk is the same and the positions that it
 composes are the same numbers (for a labeled effect inside
 \code{gas(kappa1 ~ 1 + random(~ 1 | u | g))} they are the \code{cols} at which the
 unlabeled sub-term's own penalty is read), so a piece records which vector

@@ -10,8 +10,8 @@ start_origin()
 A \code{StartOrigin} object, inheriting from \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
-Every coefficient at zero on the unconstrained scale, which for each
-distribution parameter is the value its link maps zero to.
+Sets every coefficient to zero on the unconstrained scale, which for each
+distribution parameter is the value to which its link maps zero.
 }
 \section{Use of the origin}{
 A location parameter on the identity link begins at zero whatever the
@@ -27,7 +27,7 @@ link, since zero is then an ordinary interior value of the parameter.
 \section{The name}{
 The function is named \code{start_origin()} and not \code{start_zeros()}, because
 \pkg{optimizers7} already exports \code{start_zeros()} for the starting point of
-an optimizer, and no two members of this toolkit export the same name. A
+an optimizer, and the members of this toolkit export distinct names. A
 collision would be reported by \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}}, and the function
 reached by a caller would depend on the order in which the packages were
 attached.
@@ -41,7 +41,7 @@ dd <- data.frame(x = runif(40))
 dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.3)
 spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 
-# Every coefficient of every equation is zero, intercepts included.
+# Every coefficient of every equation is zero, including the intercepts.
 s <- start_at(start_origin(), spec, statmod_design(spec), NULL)
 s
 all(unlist(s) == 0)

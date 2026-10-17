@@ -15,18 +15,18 @@ statmod_respec(spec, data, need_response = TRUE)
 log-likelihood; \code{FALSE} for a prediction.}
 }
 \value{
-A \code{\link[=StatmodSpec]{StatmodSpec()}} carrying the fitted terms, with \code{newdata} set to
-\code{data}, \code{n_obs} its row count, and the response and the offsets named in
-the formula evaluated there. The weights are reset to ones, the family
-carries the numbers of trials of these rows (missing where the rows have
-no response and the family holds one per observation), and a structural
-term is
-rebuilt on them where they carry a complete response. Every other
-property is \code{spec}'s.
+A \code{\link[=StatmodSpec]{StatmodSpec()}} that carries the fitted terms. Its \code{newdata} is
+\code{data}, its \code{n_obs} is the row count of \code{data}, and the response and the
+offsets named in the formula are evaluated on \code{data}. The weights are
+reset to ones, the family carries the numbers of trials of these rows
+(missing where the rows have no response and the family holds one per
+observation), and a structural term is rebuilt on them where they carry a
+complete response. Every other property is \code{spec}'s.
 }
 \description{
-A specification carrying the fitted terms and a new data frame, so that
-every block is reapplied to those rows rather than rebuilt from them.
+Builds a specification that carries the fitted terms and a new data frame,
+so that every block is reapplied to those rows rather than rebuilt from
+them.
 }
 \details{
 A term records how its block was made: a factor's levels and contrasts, a
@@ -48,12 +48,12 @@ apply to other rows.
 \section{The rows are the data's}{
 \code{n_obs} is \code{nrow(data)} and never the length of whatever the response
 expression evaluates to. \code{eval(expr, data, env)} falls through to the
-formula's environment for anything \code{data} does not carry, and a
+formula's environment for anything that \code{data} does not carry, and a
 prediction grid carries the covariates and not the response. A response
 expression would then resolve to a variable of that name in scope, such as
 the fit's own response, and the row count would be that variable's.
 
-So a response whose variables are not columns of \code{data} is \strong{absent}
+So a response whose variables are not columns of \code{data} is absent
 where \code{need_response} is \code{FALSE}, and one of a length other than
 \code{nrow(data)} is an error where it is \code{TRUE}, rather than a vector
 recycled into a different model.

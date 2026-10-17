@@ -2,7 +2,7 @@
 % Please edit documentation in R/blocks.R
 \name{class_space}
 \alias{class_space}
-\title{Which Vector a Covariance Class Is Addressed In}
+\title{The Vector in Which a Covariance Class Is Addressed}
 \usage{
 class_space(cl)
 }
@@ -13,7 +13,7 @@ class_space(cl)
 One of \code{"coef"}, \code{"zeta"} or \code{"mixed"}.
 }
 \description{
-Which of the three vectors a class's coordinates are positions in.
+Returns which of the three vectors addresses the coordinates of a class.
 }
 \details{
 A member written in an equation, or in the subformula of an additive term,
@@ -22,16 +22,16 @@ term has none: its coordinates are that term's own parameters, which the
 design carries in its structural state.
 
 A class whose members are all of one kind is read in that vector. A class
-\strong{split between them} is read in the joint vector the fit already builds,
+split between them is read in the joint vector that the fit already builds,
 \eqn{[\beta; \zeta_{\mathrm{free}}]}: the inner step, the marginal
-criterion and the variance all assemble it, with the coefficients first and
-a filter's free parameters after them. What such a class adds to those three
-is the cross block, which the penalty produces on its own: it is one
-Hessian over the class's stacked vector, computed without reference to the
-split between coefficients and filter parameters.
+criterion and the variance all assemble it by placing the coefficients first
+and a filter's free parameters after them. Such a class adds to those three
+the cross block, which the penalty produces on its own as one Hessian over
+the class's stacked vector, computed without reference to the split between
+coefficients and filter parameters.
 }
 \seealso{
 \code{\link[=statmod_classes]{statmod_classes()}}, its only caller; \code{\link[=class_joint_pieces]{class_joint_pieces()}} for
-the positions a mixed class is read at.
+the positions at which a mixed class is read.
 }
 \keyword{internal}

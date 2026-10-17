@@ -21,19 +21,19 @@ coefficients) and \code{obj} (the objective).}
 A single non-negative number, or \code{Inf}.
 }
 \description{
-The Newton decrement \eqn{\tfrac12 g^\top H^{-1} g} of the joint objective
-over the coefficients and the free parameters of a score-driven term, at
-the point that an inner fit returned.
+Computes the Newton decrement \eqn{\tfrac12 g^\top H^{-1} g} of the joint
+objective over the coefficients and the free parameters of a score-driven
+term, at the point that an inner fit returned.
 }
 \details{
-\code{\link[=statmod]{statmod()}} reads it to decide whether the fit from the term's own start
-failed, beside the optimizer's flag: where the filter explodes the
+\code{\link[=statmod]{statmod()}} reads it, beside the optimizer's flag, to determine whether
+the fit from the term's own start failed: where the filter explodes the
 objective is flat to rounding, the flag at that point depends on the
 platform, and the decrement is many orders of magnitude above
 \code{\link[=mode_error_limit]{mode_error_limit()}}. The coefficients that the specification holds (those
-that the outer criterion estimates) are left out, their score not being a
-residual of the inner fit. A gradient or a curvature that is not finite, or
-a curvature that cannot be solved, gives \code{Inf}.
+that the outer criterion estimates) are left out, because their score is
+not a residual of the inner fit. A gradient or a curvature that is not
+finite, or a curvature that cannot be solved, gives \code{Inf}.
 }
 \seealso{
 \code{\link[=statmod_joint_pieces]{statmod_joint_pieces()}}, \code{\link[=mode_error_limit]{mode_error_limit()}}

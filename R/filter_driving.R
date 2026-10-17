@@ -18,8 +18,8 @@
 #' The Scaling Exponent of a Filter
 #'
 #' @description
-#' The `scaling` of a [modelterms7::gas()] term, and zero for a structural
-#' term that has none.
+#' Returns the `scaling` of a [modelterms7::gas()] term, and zero for a
+#' structural term that has none.
 #'
 #' @param tm A structural term.
 #'
@@ -87,8 +87,8 @@ check_filter_scaling <- function(d, y, theta) {
 #'   \phi^{(k)}(x) = (-d)(-d-1)\cdots(-d-k+1)\, x^{-d-k}.}
 #' The derivatives \eqn{\mathcal{I}_\beta} are minus those of
 #' [distributions7::distrib_dexpected_hessian()] and its higher-order
-#' siblings, all on the link scale. The highest array given sets the order:
-#' `D5` needs the fourth derivative of the information.
+#' siblings, and all of them are on the link scale. The highest array given sets
+#' the order: `D5` needs the fourth derivative of the information.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param theta The per-observation parameters.

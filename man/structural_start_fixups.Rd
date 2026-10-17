@@ -15,27 +15,27 @@ and \code{held}.}
 \item{su}{The structural units, as \code{attr(design, "structural")}.}
 
 \item{fresh}{A logical vector, one per unit: \code{TRUE} where the unit's
-values are a fresh start rather than values a fit arrived at.}
+values are a fresh start rather than values at which a fit arrived.}
 }
 \value{
 \code{NULL}, invisibly; \code{sst$zeta} is modified in place.
 }
 \description{
-The adjustments a start of a structural term's own parameters needs
-once the design is known: a level held by an intercept in the same
-equation starts at zero, and an unheld level that the term's own start
-left at zero starts at the equation's data-based intercept. A filter also
-receives a second start, kept beside the first, with each score loading
-at \eqn{0.1\,\mathcal{I}^{d-1}}, where \eqn{d} is the \code{scaling} of the
+Adjusts the start of a structural term's own parameters once the design
+is known: a level held by an intercept in the same equation starts at zero,
+and a level that is not held and that the term's own start left at zero
+starts at the equation's data-based intercept. A filter also
+receives a second start, kept beside the first, in which each score loading
+equals \eqn{0.1\,\mathcal{I}^{d-1}}, where \eqn{d} is the \code{scaling} of the
 filter (so that the loading is \eqn{0.1/\mathcal{I}} for \eqn{d = 0}) and
 \eqn{\mathcal{I}} is the expected information of its equation's predictor
 at the intercept-only fit (\code{\link[=predictor_information]{predictor_information()}}); \code{\link[=statmod]{statmod()}} fits
 from it where the fit from the first start does not converge.
 }
 \details{
-\code{\link[=statmod_design]{statmod_design()}} applies them to the start \code{\link[modelterms7:term_start]{modelterms7::term_start()}}
-gives, and \code{\link[=statmod]{statmod()}} applies them again to every further start
-\code{\link[modelterms7:term_starts]{modelterms7::term_starts()}} gives, so each start of a multistart fit is
-treated as the first one is.
+\code{\link[=statmod_design]{statmod_design()}} applies these adjustments to the start that
+\code{\link[modelterms7:term_start]{modelterms7::term_start()}} gives, and \code{\link[=statmod]{statmod()}} applies them again to
+every further start that \code{\link[modelterms7:term_starts]{modelterms7::term_starts()}} gives, so each start
+of a multistart fit is treated as the first one is.
 }
 \keyword{internal}

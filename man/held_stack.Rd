@@ -12,7 +12,7 @@ held_stack(spec, design)
 \item{design}{Its design.}
 }
 \value{
-An integer vector of positions, empty where nothing is held.
+An integer vector of positions, empty if no coefficient is held.
 }
 \description{
 Translates \code{spec@held_coef} into positions in the stacked coefficient

@@ -160,7 +160,7 @@ test_that("a rule the step cannot evaluate is refused where it is written", {
                "does not compute")
   # and tol beside a criterion is an argument that would be read by nobody
   expect_error(iwls(tol = 1e-8, criterion = optimizers7::crit_grad(1e-8)),
-               "both say when to stop")
+               "both set the stopping rule")
   expect_error(iwls(criterion = "grad"), "must be an optimizers7 criterion")
   # the print says which rule is in force
   expect_output(print(iwls(criterion = optimizers7::crit_grad(1e-8))),

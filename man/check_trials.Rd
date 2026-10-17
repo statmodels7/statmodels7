@@ -9,24 +9,25 @@ check_trials(distrib, n)
 \arguments{
 \item{distrib}{The family.}
 
-\item{n}{The number of rows it is about to be applied to.}
+\item{n}{The number of rows to which it is about to be applied.}
 }
 \value{
 \code{distrib}, unchanged.
 }
 \description{
 Signals an error where the family carries one number of trials per
-observation and the rows it is being applied to are a different number.
+observation and the rows to which it is being applied are a different
+number.
 }
 \details{
 A \code{size} given to \code{binomial_distrib()} is a vector fixed when the fit was
 written, so at other rows it is recycled and the density returns a value
 without any signal: a size of length 200 against 20 observations returns
-200 log-densities, the number of terms being decided by the family and not
-by the data.
+200 log-densities, so the family and not the data determines the number of
+terms.
 
-The function signals an error because no correct number can be returned:
-the fit does not record which rows the trials belonged to. The caller can
+The function signals an error because it cannot return a correct number:
+the fit does not record to which rows the trials belonged. The caller can
 write the response as \code{cbind(successes, failures)} instead, whose row sums
 are recomputed wherever the expression is evaluated, and the error message
 gives that remedy.

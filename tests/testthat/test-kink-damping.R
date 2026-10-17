@@ -39,7 +39,7 @@ test_that("with the damping off a rejected step ends the run at once", {
   ## eight escalations and the attempt they retry, against one attempt
   expect_equal(n_on, 9L)
   expect_equal(calls, 1L)
-  expect_match(on$note, "damping included", fixed = TRUE)
+  expect_match(on$note, "even with damping", fixed = TRUE)
   expect_match(off$note, "no acceptable step", fixed = TRUE)
-  expect_false(grepl("damping included", off$note, fixed = TRUE))
+  expect_false(grepl("even with damping", off$note, fixed = TRUE))
 })

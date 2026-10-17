@@ -2,7 +2,7 @@
 % Please edit documentation in R/statmod.R
 \name{term_held_stack}
 \alias{term_held_stack}
-\title{The Stacked Positions the Terms Hold}
+\title{The Stacked Positions That the Terms Hold}
 \usage{
 term_held_stack(spec, design)
 }
@@ -15,10 +15,10 @@ term_held_stack(spec, design)
 An integer vector of positions, possibly empty.
 }
 \description{
-The positions, in the stacked coefficient vector, of the coefficients the
-model's terms hold (\code{\link[modelterms7:term_held]{modelterms7::term_held()}}): the slot of a held
-break-point. The terms are read from the design's state where the fit
-carries one, so a term held during the fit is seen at once, and from the
-specification otherwise.
+Returns the positions, in the stacked coefficient vector, of the
+coefficients that the model's terms hold (\code{\link[modelterms7:term_held]{modelterms7::term_held()}}),
+namely the slot of a held break-point. The terms are read from the
+design's state where the fit carries one, so a term held during the fit is
+seen at once, and from the specification otherwise.
 }
 \keyword{internal}

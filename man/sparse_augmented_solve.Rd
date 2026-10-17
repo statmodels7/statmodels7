@@ -14,30 +14,30 @@ sparse_augmented_solve(R, C, u, how)
 \item{u}{The right-hand side, a numeric vector of length \code{p}.}
 
 \item{how}{The decomposition requested. Only \code{"qr"} is served; \code{"svd"} has
-no sparse counterpart and declines.}
+no sparse counterpart, so the function returns \code{NULL} for it.}
 }
 \value{
 A list with \code{delta} (numeric, length \code{p}) and \code{rank} (integer,
-equal to \code{p}), or \code{NULL} when the route declines: \code{how} is not \code{"qr"},
-the stacked matrix has fewer rows than columns, a column has zero norm,
-the factorization or the triangular solves fail, or the equilibrated
-diagonal shows that the matrix is deficient. Unlike \code{\link[=augmented_solve]{augmented_solve()}},
-the list has no \code{dropped} element.
+equal to \code{p}), or \code{NULL} when the route yields no solution: \code{how} is
+not \code{"qr"}, the stacked matrix has fewer rows than columns, a column has
+zero norm, the factorization or the triangular solves fail, or the
+equilibrated diagonal shows that the matrix is deficient. Unlike
+\code{\link[=augmented_solve]{augmented_solve()}}, the list has no \code{dropped} element.
 }
 \description{
-The same increment \code{\link[=augmented_solve]{augmented_solve()}} returns, taken through a
-sparse QR of \eqn{[R;\ C]}.
+Returns the same increment that \code{\link[=augmented_solve]{augmented_solve()}} returns, computed
+through a sparse QR of \eqn{[R;\ C]}.
 }
 \section{Why a QR}{
 The augmented form exists so that \eqn{X'X} is never formed and the
 conditioning is never squared. A sparse QR is a QR and keeps that
 property. A sparse Cholesky factorization of the normal equations would
-be faster and would give it up.
+be faster but would lose that property.
 }
 
 \section{The factor is not back-permuted}{
 A sparse QR reorders the columns to reduce fill, so \eqn{AP = QR} for the
-permutation \eqn{P} that the decomposition chose, and
+permutation \eqn{P} that the decomposition selected, and
 \eqn{(A'A)^{-1} = P(R'R)^{-1}P'}. The increment is two triangular solves
 between a permutation and its inverse, which is the bookkeeping that the
 dense route does with the pivot of \code{qr()}.
@@ -49,10 +49,10 @@ against it is a general solve instead of two triangular ones.
 
 \section{The rank test}{
 The rank is read off the diagonal of the triangular factor, since a sparse
-QR does not report a rank. The test is on the \strong{Jacobi-equilibrated}
-diagonal, each entry divided by its column's norm, and the route declines
-when the smallest ratio is at most \code{ncol(A) * .Machine$double.eps} times
-the largest.
+QR does not report a rank. The test is on the Jacobi-equilibrated
+diagonal, in which each entry is divided by its column's norm, and the
+route returns \code{NULL} when the smallest ratio is at most
+\code{ncol(A) * .Machine$double.eps} times the largest.
 
 Without the equilibration the raw diagonal would reject matrices that the
 dense route finds at full rank, because their columns differ in size (a
@@ -64,8 +64,9 @@ the sparse matrix; \code{colSums(A * A)} would form a binary operation between
 two sparse matrices, which intersects their index sets and is slower.
 
 Where the matrix is rank deficient there is no unique increment, and this
-route declines instead of choosing one. The caller falls back to the dense
-route, which drops columns and reports the rank and the dropped columns.
+route returns \code{NULL} instead of choosing one. The caller falls back to the
+dense route, which drops columns and reports the rank and the dropped
+columns.
 }
 
 \seealso{

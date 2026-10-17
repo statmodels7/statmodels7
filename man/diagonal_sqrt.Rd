@@ -10,19 +10,20 @@ diagonal_sqrt(S, p)
 \item{S}{A diagonal penalty Hessian, \verb{p x p}, dense or sparse. Only its
 diagonal is read.}
 
-\item{p}{Its dimension. Passed in so that the caller's own count is used
-and no dimension is inferred here.}
+\item{p}{Its dimension. The caller supplies it, so that the function uses
+the caller's own count and does not infer a dimension.}
 }
 \value{
-A matrix with \code{p} columns and one row per retained coordinate,
-each row zero except for the square root of that coordinate's entry.
+A matrix with \code{p} columns and one row per retained coordinate, in
+which each row is zero except for the square root of that coordinate's
+entry.
 Its class mirrors \code{S}'s. \code{NULL} when any entry is negative beyond the
 tolerance.
 }
 \description{
-One row per coordinate that the penalty reaches, carrying the square root
-of that coordinate's entry, which is the value of \code{\link[=penalty_sqrt]{penalty_sqrt()}} where
-the matrix is diagonal.
+Returns one row per coordinate that the penalty reaches, and each row
+carries the square root of that coordinate's entry. This is the value of
+\code{\link[=penalty_sqrt]{penalty_sqrt()}} where the matrix is diagonal.
 }
 \details{
 The thresholds are the eigen route's, applied to the diagonal, which for

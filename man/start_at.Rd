@@ -7,7 +7,8 @@
 start_at(strategy, spec, design, obj, ...)
 }
 \arguments{
-\item{strategy}{A \code{\link[=start_strategy]{start_strategy()}}, which decides the method.}
+\item{strategy}{A \code{\link[=start_strategy]{start_strategy()}}; its class determines the method that
+is used.}
 
 \item{spec}{The \code{\link[=StatmodSpec]{StatmodSpec()}} being fitted.}
 
@@ -18,26 +19,26 @@ Only \code{\link[=start_search]{start_search()}} reads it, and \code{\link[=star
 when \code{obj} is \code{NULL}. The other four shipped strategies run with \code{NULL};
 \code{\link[=start_from]{start_from()}} passes \code{obj} on to its \code{rest} strategy.}
 
-\item{...}{Passed to methods. No shipped method reads it.}
+\item{...}{Passed to methods. The shipped methods do not read it.}
 }
 \value{
 A named list, one numeric vector per distribution parameter in the
 family's order, each as long as that parameter's design is wide.
 }
 \description{
-The one generic a starting-value strategy implements. Given the model, it
-returns one starting vector per distribution parameter, on the coefficient
-scale, ready for the fit to begin from.
+This is the one generic that a starting-value strategy implements. Given
+the model, it returns one starting vector per distribution parameter, on
+the coefficient scale, as the point from which the fit begins.
 }
 \details{
-Write a method on your own subclass of \code{\link[=start_strategy]{start_strategy()}} to add a
-strategy. The shipped methods show the range: \code{\link[=start_origin]{start_origin()}} reads
-only the design's widths, \code{\link[=start_intercepts]{start_intercepts()}} fits a small model,
-\code{\link[=start_random]{start_random()}} draws from the caller's generator, and \code{\link[=start_search]{start_search()}}
-runs an optimizer over \code{obj}.
+To add a strategy, write a method on a user-defined subclass of
+\code{\link[=start_strategy]{start_strategy()}}. The shipped methods show the range: \code{\link[=start_origin]{start_origin()}}
+reads only the design's widths, \code{\link[=start_intercepts]{start_intercepts()}} fits a small model,
+\code{\link[=start_random]{start_random()}} draws from the caller's generator, and \code{\link[=start_search]{start_search()}} runs
+an optimizer over \code{obj}.
 
 A method must return a full-length vector for every distribution
-parameter, including the ones it does not set. Zero is the conventional
+parameter, including the ones that it does not set. Zero is the conventional
 filler, and it is the value at which the penalty of a penalized block is
 smallest.
 }

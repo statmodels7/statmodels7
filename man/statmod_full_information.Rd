@@ -26,7 +26,7 @@ matrix), or the ordinary observed information where there is no
 structural term.
 }
 \description{
-The information of a model carrying a structural filter, over the
+Computes the information of a model carrying a structural filter, over the
 coefficients of every equation and the term's own parameters, with the
 recursion's own curvature in it.
 }
@@ -39,7 +39,7 @@ computes. Writing
 \eqn{u} for the coefficients followed by the term's parameters on the
 unconstrained scale, \eqn{V_{q,t}} for the derivative of equation
 \eqn{q}'s predictor in \eqn{u}, and \eqn{E_t} for the second derivative
-of the predictor the filter produces,
+of the predictor that the filter produces,
 
 \deqn{-\frac{\partial^2 \ell}{\partial u \partial u^\top}
   = -\sum_t w_t \sum_{q,r} \ell_{qr,t} V_{q,t}^\top V_{r,t}
@@ -48,16 +48,16 @@ of the predictor the filter produces,
 Only the equation carrying the filter has a \eqn{V} that is not its own
 design: there it is the forward Jacobian of the recursion, which
 \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} returns beside the contracted
-\eqn{E}. The third derivatives the second sum needs are
-\pkg{distributions7}'s, from \code{\link[distributions7:distrib_deriv3]{distributions7::distrib_deriv3()}}.
+\eqn{E}. The third derivatives that the second sum needs are those of
+\pkg{distributions7}, from \code{\link[distributions7:distrib_deriv3]{distributions7::distrib_deriv3()}}.
 
-The term's parameters are the last columns, which is the convention
+The term's parameters are the last columns, which is the convention that
 \code{term_curvature()} shares with its caller.
 
 A term that mixes over latent states, in place of shifting the predictor,
 is routed to \code{\link[=statmod_regime_information]{statmod_regime_information()}}, whose Hessian
-comes from the same forward recursion the likelihood does; a model
-carrying neither gets the ordinary information.
+comes from the same forward recursion that computes the likelihood; for a
+model that carries neither kind of term, the ordinary information is used.
 }
 \seealso{
 \code{\link[=statmod_structural_score]{statmod_structural_score()}},

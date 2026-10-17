@@ -2,7 +2,7 @@
 % Please edit documentation in R/iwls.R
 \name{iwls_pieces}
 \alias{iwls_pieces}
-\title{The Pieces One Scoring Step Needs}
+\title{The Pieces That One Scoring Step Needs}
 \usage{
 iwls_pieces(spec, design, coef, hyper, method)
 }
@@ -35,8 +35,8 @@ factor, and \code{\link[=iwls_solve]{iwls_solve()}} falls back to the assembled 
 }
 \description{
 Assembles, at the current coefficients, whichever of the square-root
-design, the penalty's factor and the penalized information the requested
-decomposition will actually use.
+design, the penalty's factor and the penalized information that the
+requested decomposition will actually use.
 }
 \details{
 Only what the decomposition will read is built. \code{"qr"} and \code{"svd"} need

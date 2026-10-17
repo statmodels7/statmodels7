@@ -20,7 +20,7 @@ Iwls(
 \arguments{
 \item{hessian}{\code{"expected"} for Fisher scoring, \code{"observed"} for Newton,
 or \code{"auto"}, which \code{\link[=iwls_resolve]{iwls_resolve()}} turns into one of the two once the
-distribution is known. A single string.}
+distribution is known. The value is a single string.}
 
 \item{approx}{How the expected information is approximated for a family
 with no closed form: \code{"opg"}, \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
@@ -38,7 +38,7 @@ in place of \code{tol}, or \code{NULL} for the built-in rule.}
 \item{step_halving}{The number of halvings tried after the full step before
 a step is abandoned, a single non-negative whole number. The line search
 tries the full step and then at most \code{step_halving} halved steps, so \code{0}
-tries the full step alone.}
+tries only the full step.}
 
 \item{fallback}{A single logical: whether the expected information takes
 the step where the observed step finds no acceptable point. An observed
@@ -57,15 +57,15 @@ information is exact and not costly to evaluate, to
 \code{\link[=iwls_switch_after]{iwls_switch_after()}}.}
 }
 \value{
-An object of class \code{Iwls} with one property per argument above,
-each holding what was passed.
+An object of class \code{Iwls} with one property per argument above, and
+each property holds the value that was passed.
 }
 \description{
-The S7 class of the scoring step \code{\link[=statmod]{statmod()}} uses for the jointly fitted
-smooth block. An object of this class carries the whole configuration of
-that step: which curvature to invert, how to solve the system, how long to
-run and when to stop. Build one with \code{\link[=iwls]{iwls()}}, which validates every
-argument; this raw constructor does not.
+\code{Iwls} is the S7 class of the scoring step that \code{\link[=statmod]{statmod()}} uses for the
+jointly fitted smooth block. An object of this class carries the whole
+configuration of that step: which curvature to invert, how to solve the
+system, how long to run and when to stop. Build one with \code{\link[=iwls]{iwls()}}, which
+validates every argument; this raw constructor does not.
 }
 \examples{
 S7::S7_inherits(iwls(), Iwls)

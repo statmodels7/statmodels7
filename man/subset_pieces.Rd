@@ -15,7 +15,7 @@ subset_pieces(spec, design, coef, hyper, method, idx)
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link[=iwls]{iwls()}} method, its \code{hessian} read.}
+\item{method}{An \code{\link[=iwls]{iwls()}} method, whose \code{hessian} is read.}
 
 \item{idx}{Integer positions of the subset in the stacked coefficients.}
 }
@@ -24,8 +24,9 @@ A list with \code{R = NULL}, \code{C = NULL} and \code{A}, the penalized
 information over \code{idx}.
 }
 \description{
-The penalized information over the coordinates \code{idx}, in the assembled
-form \code{\link[=iwls_fit]{iwls_fit()}} reads when a block is solved with the others held.
+Returns the penalized information over the coordinates \code{idx}, in the
+assembled form that \code{\link[=iwls_fit]{iwls_fit()}} reads when a block is solved while the
+others are held.
 }
 \details{
 A subset has no square-root route of its own: that route needs the whole

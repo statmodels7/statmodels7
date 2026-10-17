@@ -9,13 +9,14 @@ statmodels7_attach_message(versions)
 \arguments{
 \item{versions}{A data frame as \code{\link[=statmodels7_versions]{statmodels7_versions()}} returns, with
 character columns \code{package} and \code{version} and \code{NA} in \code{version} for a
-member that is not installed. Not validated: this is called from
-\code{.onAttach()} with that function's own result.}
+member that is not installed. The argument is not validated, because
+\code{.onAttach()} calls this function with the result of that function.}
 }
 \value{
 A character vector with \code{ceiling(nrow(versions) / 2)} elements, one
-per row of the two-column layout, each already trimmed of trailing
-spaces. \code{character(0)} when \code{versions} has no rows.
+per row of the two-column layout, in which trailing spaces are already
+trimmed from each element. The result is \code{character(0)} when \code{versions}
+has no rows.
 }
 \description{
 Lays the member packages out in two columns with their versions, padded so

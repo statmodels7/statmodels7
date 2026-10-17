@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{statmod_select}
 \alias{statmod_select}
-\title{Estimate the Hyperparameters, by Whichever Route Each One Admits}
+\title{Estimate the Hyperparameters by the Route That Each One Admits}
 \usage{
 statmod_select(
   spec,
@@ -45,27 +45,28 @@ hyperparameters, or \code{NULL}.}
 
 \item{vb}{The verbosity.}
 
-\item{data}{The data the fit was called on, which cross-validation needs
-in order to refit on part of it; the weights and offsets are those held
-by \code{spec}.}
+\item{data}{The data with which the fit was called, which cross-validation
+needs in order to refit on part of it; the weights and offsets are those
+held by \code{spec}.}
 
 \item{sparse_method}{The \code{\link[=OuterMethod]{OuterMethod()}} that scores the path, or \code{NULL},
 in which case \code{method} is used.}
 }
 \value{
-The list \code{\link[=outer_fit]{outer_fit()}} or \code{\link[=statmod_path]{statmod_path()}} returns, with the
+The list that \code{\link[=outer_fit]{outer_fit()}} or \code{\link[=statmod_path]{statmod_path()}} returns, with the
 element \code{criterion_by}, the \code{\link[=OuterMethod]{OuterMethod()}} whose value is \code{criterion};
-the list \code{\link[=statmod_alternate]{statmod_alternate()}} returns where no criterion runs.
+the list that \code{\link[=statmod_alternate]{statmod_alternate()}} returns when the fit runs without a
+criterion.
 }
 \description{
 Routes the twice differentiable hyperparameters to \code{\link[=outer_fit]{outer_fit()}}
 and the rest to \code{\link[=statmod_path]{statmod_path()}}.
 }
 \details{
-The split is the same one that decides how the coefficients are fitted, so a
-term whose penalty has a kink has both its coefficients and its
-hyperparameters handled by methods that do not require a curvature that the
-penalty does not have.
+The split is the same one that determines how the coefficients are fitted,
+so for a term whose penalty has a kink, both the coefficients and the
+hyperparameters are handled by methods that do not require a curvature that
+the penalty does not have.
 }
 \seealso{
 \code{\link[=statmod]{statmod()}}

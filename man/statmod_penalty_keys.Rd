@@ -16,9 +16,9 @@ A list of entries with \code{param}, \code{term}, \code{key},
 covariance class also carries \code{class} and \code{params}.
 }
 \description{
-The same enumeration as \code{\link[=statmod_penalized]{statmod_penalized()}} minus the column
-positions, for the callers that need to know which penalties exist before a
-design has been built.
+Returns the same enumeration as \code{\link[=statmod_penalized]{statmod_penalized()}} without the column
+positions, for the callers that need to know which penalties exist before
+a design has been built.
 }
 \seealso{
 \code{\link[=statmod_penalized]{statmod_penalized()}}

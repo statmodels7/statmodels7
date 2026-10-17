@@ -23,13 +23,13 @@ A square matrix over the stacked coefficients followed by the
 term's own free parameters.
 }
 \description{
-The observed information over the coefficients of every equation together
-with the own parameters of a structural term of the likelihood shape (a
-regime term or a marginal break-point term), from the exact Hessian of the
-mixed log-likelihood.
+Computes the observed information over the coefficients of every equation
+together with the own parameters of a structural term of the likelihood
+shape (a regime term or a marginal break-point term), from the exact
+Hessian of the mixed log-likelihood.
 }
 \details{
-The matrix \code{\link[=statmod_information_at]{statmod_information_at()}} assembles for a mixture is
+The matrix that \code{\link[=statmod_information_at]{statmod_information_at()}} assembles for a mixture is
 the complete-data information, the ordinary one averaged over the
 smoothed states. It serves as a scoring matrix and differs from the
 observed information: by Louis's missing-information principle the two

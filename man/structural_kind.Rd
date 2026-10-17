@@ -13,7 +13,7 @@ structural_kind(term)
 A single string.
 }
 \description{
-\code{"filter"} when the term registers its own
+Returns \code{"filter"} when the term registers its own
 \code{\link[modelterms7:term_filter]{modelterms7::term_filter()}} method, \code{"loglik"} when it registers its own
 \code{\link[modelterms7:term_loglik]{modelterms7::term_loglik()}} method, and \code{""} when it registers neither.
 }

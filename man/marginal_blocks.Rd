@@ -7,11 +7,11 @@
 marginal_blocks(mc, coef, hyper, method, A, keep, full = TRUE)
 }
 \arguments{
-\item{mc}{The list \code{\link[=fit_marginal_context]{fit_marginal_context()}} returns.}
+\item{mc}{The list that \code{\link[=fit_marginal_context]{fit_marginal_context()}} returns.}
 
 \item{coef, hyper}{The fitted coefficients and hyperparameters.}
 
-\item{method}{The \code{\link[=OuterMethod]{OuterMethod()}} the fit ran.}
+\item{method}{The \code{\link[=OuterMethod]{OuterMethod()}} that the fit ran.}
 
 \item{A}{The penalized information over the kept coordinates.}
 
@@ -26,12 +26,11 @@ A list with \code{Pu}, \code{ui}, \code{p}, \code{Bg}, \code{Be}, \code{Hv}, \co
 \code{idx}, or \code{NULL} where a piece cannot be computed.
 }
 \description{
-The quantities that \code{\link[=marginal_vcov]{marginal_vcov()}} and \code{\link[=marginal_edf_correction]{marginal_edf_correction()}}
-share:
-the inverse of the penalized information over the integrated
-coefficients, the movement of those coefficients with the estimated ones
-and with the hyperparameters, and the Hessian of the criterion over
-\eqn{(\eta, \gamma)}.
+Returns the quantities that \code{\link[=marginal_vcov]{marginal_vcov()}} and
+\code{\link[=marginal_edf_correction]{marginal_edf_correction()}} share: the inverse of the penalized information
+over the integrated coefficients, the movement of those coefficients with the
+estimated ones and with the hyperparameters, and the Hessian of the
+criterion over \eqn{(\eta, \gamma)}.
 }
 \details{
 Write \eqn{u} for the coefficients that the criterion integrates and

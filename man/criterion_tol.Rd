@@ -11,9 +11,9 @@ criterion_tol(crit)
 by \code{crit_any()} or \code{crit_all()}.}
 }
 \value{
-A single number. \code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}}'s own default where
-the criterion carries no tolerance at all, read from that function's
-formals.
+A single number. The value is \code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}}'s own
+default where the criterion carries no tolerance at all, read from that
+function's formals.
 }
 \description{
 Returns the tolerance of a criterion, descending into a combined rule: the
@@ -21,12 +21,12 @@ largest tolerance of its parts for a rule built by \code{crit_any()} and the
 smallest for a rule built by \code{crit_all()}.
 }
 \details{
-A rule built by \code{crit_any()} stops when \strong{any} part holds, so the loop it
+A rule built by \code{crit_any()} stops when any part holds, so the loop that it
 drives is no more precise than its loosest part, and the maximum is taken.
 A rule built by \code{crit_all()} stops only when every part holds, so the loop
 reaches the precision of its tightest part, and the minimum is taken. The
-value is the precision that the loop delivers, which is what a caller of
-\code{\link[=method_budget]{method_budget()}} needs.
+value is the precision that the loop delivers, and a caller of
+\code{\link[=method_budget]{method_budget()}} needs that value.
 }
 \seealso{
 \code{\link[=method_budget]{method_budget()}}, its caller.

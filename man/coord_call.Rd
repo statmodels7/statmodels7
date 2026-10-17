@@ -16,7 +16,7 @@ coord_call(X, z, w, b0, tab, screen, tol, covariance, means = numeric(0))
 \item{tab}{The piecewise linear proximal table, as
 \code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}} returns it.}
 
-\item{screen}{The \strong{zero-based} positions the strong rule kept, for the
+\item{screen}{The zero-based positions that the strong rule kept, for the
 C++ indexing.}
 
 \item{tol}{The stopping tolerance on the largest coefficient change of a
@@ -24,7 +24,7 @@ sweep.}
 
 \item{covariance}{\code{TRUE} to hold the gradient itself and cache Gram
 columns, \code{FALSE} to hold the running residual. \code{\link[=coord_covariance]{coord_covariance()}}
-decides.}
+returns the value to use.}
 
 \item{means}{The weighted column means of the block, one per column, with
 which the kernel centers the columns and the working response implicitly,
@@ -39,7 +39,7 @@ otherwise).
 }
 \description{
 Sends the block to the dense kernel or to the sparse one, taking a
-\code{dgCMatrix} apart into the slots the second reads.
+\code{dgCMatrix} apart into the slots that the second reads.
 }
 \details{
 The two kernels are one algorithm instantiated twice over a column

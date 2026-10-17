@@ -7,22 +7,22 @@
 terms_first(env)
 }
 \arguments{
-\item{env}{The environment the formula carried, which becomes the parent
-of the result. Everything visible from \code{env} stays visible.}
+\item{env}{The environment that the formula carried, which becomes the
+parent of the result. Everything visible from \code{env} stays visible.}
 }
 \value{
 A new environment holding one binding per exported function of
 \pkg{modelterms7}, with \code{env} as its parent.
 }
 \description{
-Returns a fresh environment holding every function \pkg{modelterms7}
+Returns a fresh environment holding every function that \pkg{modelterms7}
 exports, whose parent is \code{env}. A term call evaluated there reaches
 \pkg{modelterms7}'s function whatever the caller has attached, and every
-other name the caller wrote resolves as usual, one step further out.
+other name that the caller wrote resolves as usual, one step further out.
 }
 \details{
 \pkg{mgcv} exports \code{s()} and \code{te()}, and \pkg{segmented} exports \code{seg()}.
-With either package attached, a \code{statmod()} formula that uses one of these
+If either package is attached, a \code{statmod()} formula that uses one of these
 names would call that package's function, whose value is not a model term.
 The failure then occurs inside \code{model.matrix()} as \verb{invalid type (list) for variable 's(x)'}, a message that does not mention the masking package.
 
@@ -32,12 +32,13 @@ writes \code{mgcv::s(x)}, which reaches past the shim; the formula interpreter
 of \pkg{modelterms7} then rejects the value, naming the class returned
 and the call as written.
 
-A binding is made for each export of \pkg{modelterms7} for which
+The function binds each export of \pkg{modelterms7} for which
 \code{is.function()} is \code{TRUE}. The S7 class generators of that package are
 functions and are copied with the others.
 }
 \seealso{
-\code{\link[=statmod_equations]{statmod_equations()}} for the formula this is used to interpret,
-\code{\link[modelterms7:interpret_formula]{modelterms7::interpret_formula()}} for the reading it feeds.
+\code{\link[=statmod_equations]{statmod_equations()}} for the formula that is interpreted with
+this function, \code{\link[modelterms7:interpret_formula]{modelterms7::interpret_formula()}} for the reading that
+it feeds.
 }
 \keyword{internal}

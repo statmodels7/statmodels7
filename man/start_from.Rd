@@ -7,11 +7,11 @@
 start_from(fit, rest = start_intercepts())
 }
 \arguments{
-\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}} to take the estimates from.}
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}} from which to take the estimates.}
 
 \item{rest}{The strategy for whatever the two models do not share.
-\code{\link[=start_intercepts]{start_intercepts()}} by default, which is what a fit given no strategy
-uses. It receives the objective, so \code{\link[=start_search]{start_search()}} can serve as \code{rest}.}
+The default is \code{\link[=start_intercepts]{start_intercepts()}}, which a fit given no strategy uses.
+It receives the objective, so \code{\link[=start_search]{start_search()}} can serve as \code{rest}.}
 }
 \value{
 A \code{StartFrom} object, inheriting from \code{\link[=start_strategy]{start_strategy()}}.
@@ -29,8 +29,8 @@ of the first model are then a closer starting point for the second than a
 rule that uses only the response.
 }
 \section{What is matched, and what is projected}{
-The two designs are compared block by block, a block being the columns of
-one term, and a block is treated in one of three ways:
+The two designs are compared block by block, where a block is the columns
+of one term, and each block is treated in one of three ways:
 \describe{
 \item{the parametric block}{is matched column by column, by name. The
 names of a model matrix are variables, levels and interactions, so a
@@ -46,21 +46,21 @@ The third rule makes two bases comparable. The coefficients of a smooth are
 coordinates in a basis that the fit rotates, so
 \code{s(x, bspline_smooth(k = 6))} and \code{s(x, bspline_smooth(k = 10))} carry the
 names \verb{s(x).z1} to \verb{s(x).z4} in common but give them different meanings,
-and one name does not identify one function. What the two bases share is
-the fitted function, so the coefficients are found by projecting it,
+and one name does not identify one function. The two bases share the
+fitted function, so the coefficients are found by projecting it,
 \deqn{\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
 r = \eta^{\mathrm{ref}} - \eta_{-S},}
 over the pending columns \eqn{S} alone, where \eqn{\eta^{\mathrm{ref}}} is
 the reference's predictor and \eqn{\eta_{-S}} is the new model's predictor
-with the pending columns at zero. Both predictors are the actual predictors
-of their models, including the value of a block that moves with its
-coefficients (a break-point or a nonlinear term). The equality of the two
+when the pending columns are set to zero. Both predictors are the actual
+predictors of their models, including the value of a block that moves with
+its coefficients (a break-point or a nonlinear term). The equality of the two
 blocks, \eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} =
 B_{\mathrm{old}}\beta_{\mathrm{old}}}, has a solution only if the old span
 lies inside the new one, and the projection gives the closest function that
 the new basis can represent. Where the spans are nested the projection is
-exact, and where the two bases coincide it returns the coefficients it was
-given, so the second rule above is a shortcut and not a different answer.
+exact, and where the two bases coincide it returns the coefficients that it
+was given, so the second rule above is a shortcut and not a different answer.
 
 Two blocks are paired by the stem of their coefficient names and by the
 class of the term, and not by the key of the block, which is the deparsed
@@ -88,13 +88,13 @@ dd <- data.frame(x = runif(200), z = runif(200))
 dd$y <- rpois(200, exp(0.4 + 0.6 * dd$x - 0.3 * dd$z))
 full <- statmod(y ~ x + z, distributions7::poisson_distrib(), dd)
 
-# the same model with one covariate dropped, started where the other
-# one ended
+# The same model is refitted after one covariate is dropped, and the fit
+# starts where the full model ended.
 sub <- statmod(y ~ z, distributions7::poisson_distrib(), dd,
                start = start_from(full))
 coef(sub)
 
-# what was taken, and from where
+# The attribute "taken" records what was taken, and from where.
 spec <- statmod_spec(y ~ z, distributions7::poisson_distrib(), dd)
 attr(start_at(start_from(full), spec, statmod_design(spec), NULL), "taken")
 

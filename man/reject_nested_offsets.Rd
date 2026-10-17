@@ -10,11 +10,12 @@ reject_nested_offsets(eq, param)
 \item{eq}{A one-sided formula, with the equation's own offsets already
 taken out by \code{\link[=split_offsets]{split_offsets()}}.}
 
-\item{param}{The parameter the equation belongs to, named in the message.}
+\item{param}{The parameter to which the equation belongs, named in the
+message.}
 }
 \value{
-\code{NULL}, invisibly, when nothing is found. Signals an error naming
-\code{param} and the offending call otherwise.
+\code{NULL}, invisibly, when the walk finds no offset. Signals an error
+naming \code{param} and the offending call otherwise.
 }
 \description{
 Stops where \code{offset()} appears anywhere other than as a term of the

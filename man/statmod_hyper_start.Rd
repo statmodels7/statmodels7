@@ -2,7 +2,7 @@
 % Please edit documentation in R/objective.R
 \name{statmod_hyper_start}
 \alias{statmod_hyper_start}
-\title{The Hyperparameters a Specification Starts From}
+\title{The Hyperparameters from Which a Specification Starts}
 \usage{
 statmod_hyper_start(spec, design = NULL)
 }
@@ -14,13 +14,13 @@ equation.}
 from \code{spec} when \code{NULL}.}
 }
 \value{
-A named list with one entry per distribution parameter, each a
-named list of numeric vectors keyed by term key, each vector named by
-that penalty's own hyperparameters. An equation with no penalized term
-holds an empty list.
+A named list with one entry per distribution parameter. Each entry
+is a named list of numeric vectors keyed by term key, and each vector is
+named by that penalty's own hyperparameters. An equation with no
+penalized term holds an empty list.
 }
 \description{
-Builds the hyperparameter structure that a fit starts from: one entry per
+Builds the hyperparameter structure from which a fit starts: one entry per
 penalized term, each hyperparameter at the value given by
 \code{\link[=penalty_theta_start]{penalty_theta_start()}}. That value is the probe value that
 \pkg{modelterms7} uses when it reads the kinks of a penalty, so that both

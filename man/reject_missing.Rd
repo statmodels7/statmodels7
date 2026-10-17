@@ -2,7 +2,7 @@
 % Please edit documentation in R/spec.R
 \name{reject_missing}
 \alias{reject_missing}
-\title{Reject Missing Values in the Data a Fit Reads}
+\title{Reject Missing Values in the Data That a Fit Reads}
 \usage{
 reject_missing(response, equations, data)
 }
@@ -14,7 +14,7 @@ reject_missing(response, equations, data)
 \item{data}{The data frame.}
 }
 \value{
-\code{NULL}, invisibly, when nothing is missing.
+\code{NULL}, invisibly, when every value is present.
 }
 \description{
 Signals an error naming the response, or the first variable of the data

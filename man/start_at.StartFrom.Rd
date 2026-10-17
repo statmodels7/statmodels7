@@ -12,8 +12,8 @@
 A named list of numeric vectors, with the attribute \code{"taken"}.
 }
 \description{
-The reference fit's estimates where the two models share a coefficient,
-the fallback strategy's answer everywhere else.
+Returns the reference fit's estimates where the two models share a
+coefficient and the fallback strategy's answer everywhere else.
 }
 \details{
 A block is matched by the name that the formula gave its term: column by

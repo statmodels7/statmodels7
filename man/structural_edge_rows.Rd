@@ -19,20 +19,20 @@ structural_edge_rows(tm, zeta, nm, edge = 8)
 A logical vector with one element per reported quantity.
 }
 \description{
-Marks each quantity \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}} reports for a
+Marks each quantity that \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}} reports for a
 structural term according to whether it depends on a free coordinate that
 has run past the edge of a chart mapping onto a bounded set.
 }
 \details{
-The coordinates checked are those \code{\link[modelterms7:term_charted]{modelterms7::term_charted()}} names,
-and a coordinate is at the edge when its free value exceeds \code{edge} in
-absolute value, the rule \code{\link[=edge_violations]{edge_violations()}} and \code{\link[=statmod_certificate]{statmod_certificate()}}
-use, on a side where its chart maps onto a finite bound: a log link has
-an edge towards zero and none towards infinity. The dependence is read off
-the Jacobian evaluated with those
-coordinates moved back to \eqn{\pm}\code{edge}: at the fitted point the
-derivative of a saturated chart can underflow to zero, which would hide
-the dependence it is meant to reveal.
+The coordinates checked are those that \code{\link[modelterms7:term_charted]{modelterms7::term_charted()}}
+names, and a coordinate is at the edge when its free value exceeds \code{edge}
+in absolute value, the rule that \code{\link[=edge_violations]{edge_violations()}} and
+\code{\link[=statmod_certificate]{statmod_certificate()}} use, on a side where its chart maps onto a finite
+bound: a log link has an edge towards zero and none towards infinity. The
+dependence is read off the Jacobian evaluated after those coordinates are
+moved back to \eqn{\pm}\code{edge}: at the fitted point the derivative of a
+saturated chart can underflow to zero, which would hide the dependence
+that it is meant to reveal.
 }
 \seealso{
 \code{\link[=statmod_structural_table]{statmod_structural_table()}}, \code{\link[=readable_joint]{readable_joint()}}

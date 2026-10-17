@@ -8,8 +8,8 @@ one_sided(expr, env)
 }
 \arguments{
 \item{expr}{A language object, the right-hand side to wrap: a symbol, a
-call, or the literal \code{1}. Substituted unevaluated, so a term call is not
-run here.}
+call, or the literal \code{1}. It is substituted unevaluated, so a term call
+is not run here.}
 
 \item{env}{The environment to attach. It is not checked, and \code{NULL} gives a
 formula with a \code{NULL} environment.}
@@ -20,9 +20,9 @@ A one-sided formula of length 2, whose \verb{[[2]]} is \code{expr} and whose
 }
 \description{
 Wraps a term expression as \code{~ expr} and attaches \code{env} to it, so that the
-symbols in a term resolve where the caller wrote them. Used by
-\code{\link[=statmod_equations]{statmod_equations()}} on each piece it collects, and on \code{quote(1)} for a
-parameter with no equation.
+symbols in a term resolve where the caller wrote them.
+\code{\link[=statmod_equations]{statmod_equations()}} uses it on each piece that it collects, and on
+\code{quote(1)} for a parameter with no equation.
 }
 \details{
 The formula is built with \code{eval(bquote(~ .(expr)), envir = env)}, and the

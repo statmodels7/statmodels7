@@ -13,17 +13,18 @@ block_stem(nms)
 A single string, or \code{NA_character_} where the block has no stem.
 }
 \description{
-Returns the part every coefficient name of a block has in common before
-its own suffix, which is what identifies the term across two models
+Returns the part that every coefficient name of a block has in common
+before its own suffix. This part identifies the term across two models
 written on different bases.
 }
 \details{
 A block is keyed in the design by the term's deparsed call, so
-\code{s(x, bspline_smooth(k = 6))} and \code{s(x, bspline_smooth(k = 10))} are two different keys and never meet by
-name. Their coefficients, on the other hand, are \verb{s(x).lin}, \verb{s(x).z1},
-... on both sides, so the stem \code{s(x)} names the term without naming the
-basis. The suffix is taken from the last dot and not the first, so a
-covariate whose own name carries one -- \code{s(my.var)} -- keeps it.
+\code{s(x, bspline_smooth(k = 6))} and \code{s(x, bspline_smooth(k = 10))} are two
+different keys and never meet by name. Their coefficients, on the other
+hand, are \verb{s(x).lin}, \verb{s(x).z1}, ... on both sides, so the stem \code{s(x)}
+names the term without naming the basis. The suffix is taken from the last
+dot and not the first, so a covariate whose own name carries one
+(\code{s(my.var)}) keeps it.
 
 \code{NA} is returned where the names do not reduce to one common stem, as for
 the parametric block of several columns, whose columns are variables and

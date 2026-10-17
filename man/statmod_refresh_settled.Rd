@@ -16,9 +16,10 @@ checked.}
 \code{"frozen"}.}
 }
 \value{
-A single logical. \code{TRUE} when every term checked reports that it
-has settled, and \code{TRUE} when there is nothing to check, so a model with
-no refreshable term never blocks a fit's verdict on this.
+A single logical. The value is \code{TRUE} when every term checked
+reports that it has settled, and also \code{TRUE} when there is nothing to
+check, so that a model with no refreshable term never blocks a fit's
+verdict on this.
 }
 \description{
 Reads \code{\link[modelterms7:term_converged]{modelterms7::term_converged()}} for every term that recomputes its
@@ -31,7 +32,7 @@ Where a term's block is the Jacobian of its contribution, the gradient of
 the model's objective is the model's own gradient and its vanishing is
 the test. Where the block is a working linearization with a frozen
 weight, as in a discontinuous break-point term, the gradient belongs to
-the working model alone, and the profile objective there is a step
+the working model only, and the profile objective there is a step
 function in the break-point with no gradient to vanish at all.
 
 A fit of a discontinuous break-point term can report convergence at a
@@ -41,8 +42,8 @@ annealed, so that a stopping rule reading that score would not stop.
 }
 
 \seealso{
-\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}} for what each construction
-answers, \code{\link[=statmod_design_at]{statmod_design_at()}} for the refresh,
+\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}} for the verdict that each
+construction reports, \code{\link[=statmod_design_at]{statmod_design_at()}} for the refresh,
 \code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} for the state that it reads.
 }
 \keyword{internal}

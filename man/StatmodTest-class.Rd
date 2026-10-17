@@ -29,7 +29,7 @@ StatmodTest(
 
 \item{estimate}{The unrestricted estimate of the coefficient.}
 
-\item{null_value}{The value it was tested against.}
+\item{null_value}{The value against which the coefficient was tested.}
 
 \item{parameter, coefficient}{Which coefficient of which equation.}
 
@@ -43,9 +43,8 @@ stopped, in log-likelihood units; \code{NA} for the Wald statistic.}
 An object of class \code{StatmodTest}.
 }
 \description{
-The result of testing that one coefficient of a fit equals one value,
-carrying the statistic, its distribution, the p-value and what was
-tested.
+Holds the result of testing that one coefficient of a fit equals one
+value: the statistic, its distribution, the p-value and what was tested.
 }
 \details{
 The four statistics are compared with the same \eqn{\chi^2_1}, so \code{df} is
@@ -54,7 +53,7 @@ always 1 and the object holds one kind of quantity whatever produced it.
 \section{Whether the refit reached its mode}{
 \code{mode_error} and \code{converged} both describe the restricted refit and both
 are \code{NA} for the Wald statistic, which reads the unrestricted fit and
-refits nothing. They answer different questions and only the first is
+refits nothing. They measure different things, and only the first is
 printed.
 
 \code{converged} is the inner optimizer's flag: whether a stopping rule fired,

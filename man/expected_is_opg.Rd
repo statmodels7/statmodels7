@@ -15,21 +15,21 @@ expected_is_opg(distrib, approx)
 A single logical.
 }
 \description{
-\code{TRUE} where \code{\link[distributions7:distrib_expected_hessian]{distributions7::distrib_expected_hessian()}}, called with
-\code{approx}, returns a matrix that changes with the response at fixed
-parameters, which an expectation cannot do.
+The result is \code{TRUE} where \code{\link[distributions7:distrib_expected_hessian]{distributions7::distrib_expected_hessian()}},
+called with \code{approx}, returns a matrix that changes with the response at
+fixed parameters, which an expectation cannot do.
 }
 \details{
 The answer comes from a probe and not from a list of families, so that a
-family written later is covered: two distinct responses drawn at one
-parameter value, and the two answers compared. A family that
+family written later is covered. The probe draws two distinct responses at
+one parameter value and compares the two answers. A family that
 \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} reports as writing its
-information out is never probed, and neither is any \code{approx} other than
-\code{"opg"}, the only strategy that reads the response. A truncated family reports
-\code{FALSE} to that predicate although its expected information is a quadrature
-that does not depend on the response, so it answers \code{FALSE} here: that is
-why the probe, and not the predicate, decides. The caller's random stream is
-restored.
+information out is not probed, and the probe is not run for any \code{approx}
+other than \code{"opg"}, the only strategy that reads the response. For a
+truncated family, the predicate returns \code{FALSE} although the expected
+information is a quadrature that does not depend on the response, so this
+function also returns \code{FALSE}, and the answer is determined by the probe and
+not by the predicate. The caller's random stream is restored.
 }
 \seealso{
 \code{\link[=assert_criterion_information]{assert_criterion_information()}}

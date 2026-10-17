@@ -25,8 +25,8 @@ of a covariance class also carries \code{class}, \code{params}, \code{pieces}, \
 and, for a mixed class, \code{joint} and \code{beta_index}.
 }
 \description{
-One entry per penalty in the model, whatever term it belongs to and whether
-or not that term has more than one.
+Returns one entry per penalty in the model, regardless of the term to which
+the penalty belongs and of whether that term has more than one penalty.
 }
 \details{
 The enumeration runs over the distribution parameters and over the terms of
@@ -37,17 +37,17 @@ covariance class (see \code{\link[=statmod_classes]{statmod_classes()}}) is one 
 columns of its members. The callers that need the penalties of a model
 read this one enumeration.
 
-\strong{The key} is the term's name in the formula, with the entry's own name
-appended after \code{::} when the term carries more than one penalty and the
-entry is named. Two \code{ridge()} terms are two terms with two keys and two
-hyperparameters. A term with one penalty has its name alone as key, so a
+The key is the term's name in the formula. When the term carries more than
+one penalty and the entry is named, the entry's own name is appended after
+\code{::}. Two \code{ridge()} terms are two terms with two keys and two
+hyperparameters. A term with one penalty has only its name as key, so a
 hyperparameter is read by the term's name.
 
 \code{statmod_penalized_units()} builds the list. \code{statmod_penalized()}
-returns it from the design's \code{eta_memo} environment where the design has
-one and the terms and the family's parameters are the ones it was built
-for, which is what an objective evaluated many times over one design
-reads.
+returns the list from the design's \code{eta_memo} environment when the design
+has one and the terms and the family's parameters are the ones for which the
+design was built. An objective evaluated many times over one design reads
+the list from there.
 }
 \seealso{
 \code{\link[=statmod_blocks]{statmod_blocks()}},

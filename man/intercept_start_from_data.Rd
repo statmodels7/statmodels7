@@ -12,12 +12,12 @@ intercept_start_from_data(spec, eta)
 \item{eta}{The named list of link-scale intercepts.}
 }
 \value{
-\code{eta}, with the answered entries replaced.
+\code{eta}, in which the answered entries are replaced.
 }
 \description{
-Overwrites, in the list \code{\link[=statmod_intercepts]{statmod_intercepts()}} builds, the intercept of each
-parameter \code{\link[distributions7:distrib_intercept_start]{distributions7::distrib_intercept_start()}} answers for, carried
-onto that parameter's own link.
+Overwrites, in the list that \code{\link[=statmod_intercepts]{statmod_intercepts()}} builds, the intercept of
+each parameter for which \code{\link[distributions7:distrib_intercept_start]{distributions7::distrib_intercept_start()}}
+returns a value, carried onto that parameter's own link.
 }
 \details{
 The intercept-only fit is the right start for almost every family. It is
@@ -27,9 +27,9 @@ and for \code{skewnormal1_distrib()} and the pseudo-Huber families, for which
 For the mixing weight, the overdispersion of the parent can absorb the
 excess zeros without covariates, the weight goes to the edge of its
 domain, and the link is flat there, so that a model with covariates
-started from it does not leave the edge. The family answers with the
+started from it does not leave the edge. The family returns the
 observed proportion of zeros, and the value is mapped through the
-parameter's link, so a probit or a cloglog chart gets its own linear
+parameter's link, so a probit or a cloglog chart has its own linear
 predictor and not a logit.
 }
 \seealso{

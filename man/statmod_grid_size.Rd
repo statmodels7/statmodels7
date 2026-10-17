@@ -18,18 +18,18 @@ specifies none.}
 A single integer.
 }
 \description{
-The grid size that the term specifies, or the fallback of
+Returns the grid size that the term specifies, or the fallback of
 \code{\link[=path_fallbacks]{path_fallbacks()}} where the term specifies none.
 }
 \details{
 How finely a hyperparameter is swept is a property of the term for the
 same reason as whether it is swept at all: a penalized block of four
-columns and one of four hundred want different grids. A criterion applies
-to every hyperparameter of the model at once, the smooth ones included, and
+columns and one of four hundred require different grids. A criterion applies
+to every hyperparameter of the model at once, including the smooth ones, and
 those are read at the mode instead of being swept, so the grid size cannot
-be a property of the criterion. \code{\link[modelterms7:term_grid]{modelterms7::term_grid()}} is where a term
-gives its grid size, and the value travels with the penalty's entry, so one
-reached through a sub-term of a structural term carries it too.
+be a property of the criterion. A term gives its grid size through
+\code{\link[modelterms7:term_grid]{modelterms7::term_grid()}}, and the value travels with the penalty's entry,
+so one reached through a sub-term of a structural term carries it too.
 }
 \seealso{
 \code{\link[=statmod_held]{statmod_held()}}, \code{\link[=path_values]{path_values()}}

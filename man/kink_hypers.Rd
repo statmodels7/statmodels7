@@ -12,17 +12,18 @@ kink_hypers(pen, theta, unbounded = TRUE)
 \item{theta}{The hyperparameters in force.}
 
 \item{unbounded}{Whether to keep only those with an infinite upper bound.
-\code{TRUE} by default.}
+The default is \code{TRUE}.}
 }
 \value{
 A character vector, possibly empty.
 }
 \description{
-The names of the hyperparameters whose value changes \code{\link[=kink_scale]{kink_scale()}}.
+Returns the names of the hyperparameters whose value changes
+\code{\link[=kink_scale]{kink_scale()}}.
 }
 \details{
 Each hyperparameter is moved to another admissible value and the size of the
-kink is read again, so that no list of families is consulted. The shape
+kink is read again, so that a list of families is not consulted. The shape
 parameters of SCAD and MCP leave the subdifferential at zero unchanged and
 govern how fast the penalty flattens further out, while \eqn{\lambda} and
 the elastic net's \eqn{\alpha} both scale it.

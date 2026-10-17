@@ -12,14 +12,14 @@ pieces_definite(pc, rel = 1e-08)
 \item{rel}{The relative floor, \code{\link[=pd_repair]{pd_repair()}}'s own.}
 }
 \value{
-A single logical. A matrix with a non-finite entry answers \code{TRUE},
-the boundary being \code{\link[=iwls_solve]{iwls_solve()}}'s to hold.
+A single logical. The result is \code{TRUE} for a matrix with a
+non-finite entry; holding the boundary is left to \code{\link[=iwls_solve]{iwls_solve()}}.
 }
 \description{
-\code{TRUE} where the pieces are square roots, which are positive semidefinite
-by construction, or where the assembled matrix has its smallest eigenvalue
-above a relative floor. \code{\link[=iwls_fit]{iwls_fit()}} reads it to decide whether the
-observed pieces can take the step.
+Returns \code{TRUE} where the pieces are square roots, which are positive
+semidefinite by construction, or where the assembled matrix has its
+smallest eigenvalue above a relative floor. \code{\link[=iwls_fit]{iwls_fit()}} uses the result to
+check whether the observed pieces can take the step.
 }
 \seealso{
 \code{\link[=iwls_fit]{iwls_fit()}}

@@ -18,8 +18,9 @@ A named list of numeric vectors of length \code{n_obs}, keyed as
 \code{\link[distributions7:distrib_hessian]{distributions7::distrib_hessian()}} keys its result.
 }
 \description{
-For a likelihood mixed over states, each second-derivative component of
-the family averaged over the states with their smoothed probabilities,
+Computes, for a likelihood mixed over states, each second-derivative
+component of the family averaged over the states with their smoothed
+probabilities,
 \eqn{\bar h_{ab,i} = \sum_k \gamma_{ik} h_{ab}(\theta_{ik})}.
 }
 \details{

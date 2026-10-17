@@ -15,9 +15,9 @@ search_coords(spec, design)
 An integer vector of positions, possibly empty.
 }
 \description{
-The positions, in the stacked coefficient vector, of the coordinates where
-the likelihood is not convex: each equation's intercept, and the blocks of
-the terms that recompute their own design.
+Returns the positions, in the stacked coefficient vector, of the
+coordinates where the likelihood is not convex: each equation's intercept,
+and the blocks of the terms that recompute their own design.
 }
 \details{
 The predicate for the second is \code{\link[=refreshes_own_block]{refreshes_own_block()}}, which tests

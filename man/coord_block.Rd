@@ -2,7 +2,7 @@
 % Please edit documentation in R/coord.R
 \name{coord_block}
 \alias{coord_block}
-\title{The Penalized Block, in the Storage It Arrived In}
+\title{The Penalized Block, in the Storage in Which It Arrived}
 \usage{
 coord_block(X, cols)
 }
@@ -19,15 +19,15 @@ sparse.
 \description{
 Slices a penalized term's columns out of its equation's design without
 densifying a sparse one, and normalizes a \pkg{Matrix} to the
-compressed-column class the kernel reads.
+compressed-column class that the kernel reads.
 }
 \details{
 A dense slice of a base matrix is returned as it is. Any \pkg{Matrix} is
 carried to \code{dgCMatrix}: the general compressed-column form is the
 one whose slots the kernel walks, and a symmetric or triangular
 compression would describe the same entries differently. A dense
-\pkg{Matrix} class is materialized as a base matrix instead, there being
-nothing to save.
+\pkg{Matrix} class is materialized as a base matrix instead, because there
+is nothing to save.
 }
 \seealso{
 \code{\link[=coord_call]{coord_call()}}, \code{\link[=coord_fit]{coord_fit()}}

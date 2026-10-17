@@ -18,11 +18,11 @@ An integer position into the equation's coefficient vector, or
 \code{NA_integer_}.
 }
 \description{
-The position of the intercept of one equation's parametric block, or
-\code{NA} where it has none.
+Returns the position of the intercept of one equation's parametric block,
+or \code{NA} where the block has none.
 }
 \details{
-The position searched for is a column of the parametric block, which is a
+The intercept is located as a column of the parametric block, which is a
 stricter test than a coefficient whose name ends in \code{(Intercept)}.
 \code{\link[modelterms7:nl]{modelterms7::nl()}} names the intercept of each of its own parameters the
 same way, and those coefficients lie on the charts of the parameters of

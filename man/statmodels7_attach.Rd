@@ -7,9 +7,9 @@
 statmodels7_attach()
 }
 \value{
-The names of the packages this call attached, a character vector,
-invisibly. Empty when every installed member was already on the search
-path.
+The names of the packages that this call attached, a character
+vector, invisibly. The vector is empty when every installed member was
+already on the search path.
 }
 \description{
 Attaches every installed member that is not on the search path already,
@@ -30,7 +30,7 @@ that order. If a name were exported by two members,
 }
 \seealso{
 \code{\link[=statmodels7_packages]{statmodels7_packages()}} for the members,
-\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} for what the suppressed warnings would have
-said.
+\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} for the conflicts that the suppressed warnings
+would have reported.
 }
 \keyword{internal}

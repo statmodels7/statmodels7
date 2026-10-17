@@ -18,7 +18,7 @@ checked.}
 A single logical, \code{FALSE} when there is nothing to check.
 }
 \description{
-\code{TRUE} when at least one refreshable term reports, through
+Returns \code{TRUE} when at least one refreshable term reports, through
 \code{\link[modelterms7:term_stalled]{modelterms7::term_stalled()}}, that it has not settled and has no step
 control left, and every other term checked has either settled or reports
 the same. \code{\link[=fit_working]{fit_working()}} reads it to end a working phase that cannot

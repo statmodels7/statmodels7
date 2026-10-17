@@ -14,7 +14,7 @@ A list of entries with \code{param}, \code{term} and \code{kind},
 possibly empty.
 }
 \description{
-The parameter, name and shape of every structural term in a
+Returns the parameter, name and shape of every structural term in a
 specification.
 }
 \details{

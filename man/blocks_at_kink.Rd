@@ -13,7 +13,7 @@ blocks_at_kink(blocks, hyper)
 \item{hyper}{The hyperparameters at the point just fitted.}
 }
 \value{
-\code{blocks}, with each entry of its \code{sparse} list carrying a
+\code{blocks}, in which each entry of its \code{sparse} list carries a
 \code{prev_kink} element: the size of that penalty's kink at \code{hyper}. An entry
 whose kink size is not finite and positive, or cannot be read, carries no
 \code{prev_kink} element. The \code{smooth} list is untouched.
@@ -23,8 +23,8 @@ Writes the size of each kinked penalty's kink at the given hyperparameters
 onto its block, so that the next point of a path can screen against it.
 }
 \details{
-The size at the previous point travels on the blocks themselves, so that no
-argument has to pass through the layers between the path and the descent.
+The size at the previous point travels on the blocks themselves, so that the
+layers between the path and the descent do not have to pass an argument.
 }
 \seealso{
 \code{\link[=coord_screen]{coord_screen()}}, \code{\link[=statmod_path]{statmod_path()}}

@@ -19,8 +19,8 @@ coord_fit(
 )
 }
 \arguments{
-\item{obj}{The full objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it. Read
-for the value at the point reached, not for its gradient.}
+\item{obj}{The full objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it. The
+function reads the value at the point reached, not the gradient.}
 
 \item{beta}{The current coefficients of all distribution parameters,
 stacked into one numeric vector (the vector that \code{obj$split()} divides by
@@ -64,25 +64,27 @@ coefficient vector, updated in this block and, where the block is
 centered, in the equation's intercept), \code{value} (the objective),
 \code{converged}, \code{iterations} (the total number of kernel sweeps) and
 \code{method} (\code{"coordinate descent"}). \code{converged} is \code{TRUE} when the
-iterations settled or when no length of step lowered the objective.
-\code{NULL} where the route does not apply: the penalty describes no
-proximal table at the steps this block's curvature produces, or the
-working weights are unusable.
+iterations settled or when the objective did not fall for any length of
+step. The value is \code{NULL} where the route does not apply: the penalty
+describes no proximal table at the steps that this block's curvature
+produces, or the working weights are unusable.
 }
 \description{
 Estimates one penalized block by cycling over its coefficients on the
-working quadratic of its own equation, the other blocks held fixed. Where
-the equation has an unpenalized intercept that is not held, the block is
-solved with the intercept profiled out, and the intercept is then set to the
-value that goes with the block's coefficients.
+working quadratic of its own equation while the other blocks are held
+fixed. Where the equation has an unpenalized intercept that is not held,
+the block is solved with the intercept profiled out, and the intercept is
+then set to the value that goes with the block's coefficients.
 }
-\details{
-\strong{Comparison with the proximal method.} Each iteration of a proximal
+\section{Comparison with the proximal method}{
+Each iteration of a proximal
 gradient method evaluates the objective, its gradient and the penalty's
 operator over every parameter of the distribution. A coordinate descent
 reads only the block's own columns and the running residual.
+}
 
-\strong{The working quadratic.} With \eqn{\eta} the equation's linear
+\section{The working quadratic}{
+With \eqn{\eta} the equation's linear
 predictor, \eqn{s_i} the score in it and \eqn{h_i} the information,
 \eqn{-\ell} is \eqn{\frac12\sum_i h_i(z_i - \eta_i)^2} up to a constant with
 \eqn{z = \eta + s/h}, which is the weighted least squares problem of
@@ -90,47 +92,59 @@ predictor, \eqn{s_i} the score in it and \eqn{h_i} the information,
 equation enter as an offset. For a Gaussian response with an identity link
 the quadratic is exact and the first weighted least squares iteration gives
 the answer; otherwise the weights are rebuilt and the sweeps repeated.
+}
 
-\strong{Centering.} Where the equation has an unpenalized intercept that is not
+\section{Centering}{
+Where the equation has an unpenalized intercept that is not
 held (see \code{\link[=coord_centers]{coord_centers()}}), the compiled sweeps solve the block with the
 intercept profiled out: the columns and the working response enter at their
 weighted means, implicitly, so a sparse block stays sparse. After the sweeps
 the intercept is set to the weighted mean of the working response net of the
 block, so the step is a joint step in the block and the intercept. A held
 intercept, or an equation with no intercept, leaves the block uncentered.
+}
 
-\strong{The penalty arrives as a table.} The coordinate update is the
+\section{The penalty arrives as a table}{
+The coordinate update is the
 penalty's own proximal operator at the step \eqn{1/v_j}, with
 \eqn{v_j = \sum_i w_i x_{ij}^2} (the centered sum of squares where the block
 is centered), and \eqn{v_j} does not move while the working weights are
 held. The whole table is therefore built once per weighted least squares
 iteration by
 \code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}} and the compiled sweeps read it,
-so the kernel names no family and a penalty that describes its operator gets
-the compiled route without an edit here.
+so the kernel does not refer to any family by name, and a penalty that
+describes its operator uses the compiled route without an edit to the
+kernel.
+}
 
-\strong{Screening.} Passing from one point of a path to the next, a
-coordinate can be discarded when the gradient it had at the previous point
-is below \eqn{2s_k - s_{k-1}}, with \eqn{s} the size of the kink: the
+\section{Screening}{
+In passing from one point of a path to the next, a
+coordinate can be discarded when the gradient that it had at the previous
+point is below \eqn{2s_k - s_{k-1}}, with \eqn{s} the size of the kink: the
 sequential strong rule of Tibshirani and others (2012), which assumes the
 gradient moves at most as fast as the threshold does. That assumption is not
-a theorem, so the rule can discard a coordinate that belongs in the fit, and
-what makes the answer exact is the check afterwards: the gradient is read
+a theorem, so the rule can discard a coordinate that belongs in the fit.
+The answer is exact because of the check afterwards: the gradient is read
 over every column at the point reached, any discarded coordinate whose
 gradient exceeds the kink is put back, and the fit is repeated. Without
 the check the answer would not be exact.
+}
 
-\strong{Which update.} The gradient is kept either as a residual, at
+\section{Which update}{
+The gradient is kept either as a residual, at
 \eqn{O(n)} a visit, or as itself through
 \eqn{g_j = (X'Wz)_j - \sum_k (X'WX)_{jk}\beta_k}, at \eqn{O(m)} a change
-with the Gram columns cached as coordinates come alive. The second wins when
-\eqn{n} is large next to the number of live coordinates and pays in
-memory, so \code{\link[=coord_covariance]{coord_covariance()}} decides it from the two sizes.
+with the Gram columns cached as coordinates come alive. The second costs
+less when \eqn{n} is large next to the number of live coordinates and uses
+more memory, so \code{\link[=coord_covariance]{coord_covariance()}} computes the choice from the two sizes.
+}
 
-\strong{Acceptance.} A step is accepted where the penalized objective falls, and
+\section{Acceptance}{
+A step is accepted where the penalized objective falls, and
 is halved towards the current point otherwise. A SCAD or MCP penalty that
 carries a curvature (see \code{\link[=coord_table_penalty]{coord_table_penalty()}}) takes every step whole.
 }
+
 \references{
 Friedman, J., Hastie, T. and Tibshirani, R. (2010). Regularization paths for
 generalized linear models via coordinate descent. \emph{Journal of

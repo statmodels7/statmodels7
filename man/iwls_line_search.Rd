@@ -15,7 +15,7 @@ iwls_line_search(obj, beta, value, g, pc, method, damp, frozen, guard = FALSE)
 
 \item{g}{The gradient there.}
 
-\item{pc}{The pieces \code{\link[=iwls_solve]{iwls_solve()}} reads.}
+\item{pc}{The pieces that \code{\link[=iwls_solve]{iwls_solve()}} reads.}
 
 \item{method}{The \code{\link[=Iwls]{Iwls()}} object.}
 
@@ -36,12 +36,12 @@ step is tried first, so a budget of \code{step_halving} halvings allows
 \code{step_halving + 1} trial points.
 }
 \details{
-It is the body \code{\link[=iwls_fit]{iwls_fit()}} ran inline, moved into a function so that the
-step can be tried twice at one iterate, first on the observed information
-and then on the expected one, where \code{\link[=iwls_resolve]{iwls_resolve()}} settled the method
-with the fallback. With \code{guard = FALSE} the operations are the inline ones,
-in the same order. With \code{guard = TRUE} a trial point whose objective raises
-an error is read as rejected rather than stopping the fit, and counted.
+It is the body that \code{\link[=iwls_fit]{iwls_fit()}} ran inline, moved into a function so that
+the step can be tried twice at one iterate, first on the observed information
+and then on the expected one, where \code{\link[=iwls_resolve]{iwls_resolve()}} settled the method with
+the fallback. With \code{guard = FALSE} the operations are the inline ones, in the
+same order. With \code{guard = TRUE} a trial point whose objective raises an error
+is read as rejected rather than stopping the fit, and counted.
 }
 \seealso{
 \code{\link[=iwls_fit]{iwls_fit()}}, its caller.

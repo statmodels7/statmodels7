@@ -18,7 +18,8 @@ statmod_objective(
 \item{hyper}{The hyperparameters, per penalized term, held for the life of
 the objective.}
 
-\item{design}{The design. Rebuilt from \code{spec} when absent.}
+\item{design}{The design. The function rebuilds it from \code{spec} when it is
+absent.}
 
 \item{expected}{\code{TRUE} for the expected information in \code{he}, \code{FALSE} for
 the observed one.}
@@ -34,7 +35,7 @@ vector.}
 \item{\code{fn(b)}}{the objective at the stacked coefficients \code{b}, a single
 number.}
 \item{\code{gr(b)}}{its gradient, a numeric vector as long as \code{b}.}
-\item{\code{gr_sub(b, idx)}}{the gradient at the positions \code{idx} alone.}
+\item{\code{gr_sub(b, idx)}}{the gradient only at the positions \code{idx}.}
 \item{\code{he(b)}}{its Hessian, the information matrix (expected or
 observed according to \code{expected}) plus the Hessian of the penalties,
 a \verb{p x p} matrix.}
@@ -44,21 +45,22 @@ distribution parameter.}
 }
 }
 \description{
-\eqn{F(\beta) = -\ell(\beta) + \sum_t \rho_t}, unaveraged, over the
-coefficients of every parameter stacked into one vector.
+Builds the objective \eqn{F(\beta) = -\ell(\beta) + \sum_t \rho_t}, which is
+not averaged over the observations, over the coefficients of every
+parameter stacked into one vector.
 }
 \section{The objective is not divided by the sample size}{
 A penalty is a negative log-prior at full size, and a posterior adds a
-log-likelihood and a log-prior at full size. Averaging the likelihood
-alone would make a hyperparameter mean something that depends on \eqn{n}.
+log-likelihood and a log-prior at full size. Averaging only the likelihood
+would make a hyperparameter mean something that depends on \eqn{n}.
 
-What is scaled instead is the stopping rule, in the one place it is read.
+Instead, the stopping rule is scaled, in the one place where it is read.
 See \code{\link[=iwls]{iwls()}} and \code{\link[=iwls_score]{iwls_score()}}.
 }
 
 \section{The closures share one design}{
 The functions \code{fn}, \code{gr}, \code{gr_sub} and \code{he} close over \code{design} and
-\code{hyper}, and \code{he} also over the two information settings, so that a
+\code{hyper}, and \code{he} also closes over the two information settings, so that a
 change of a hyperparameter requires a new objective. The outer search
 builds a new objective at every point that it visits.
 }

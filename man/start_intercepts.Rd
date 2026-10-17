@@ -10,15 +10,15 @@ start_intercepts()
 A \code{StartIntercepts} object, inheriting from \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
-The default: each equation's intercept at the maximum likelihood estimate
-of the model with every covariate removed. Where the first parameter is a
-location or a mean on the identity link, the slopes of its parametric
-columns start at a least-squares fit, and a term with a starting value of
-its own starts at the value that the term declares. The remaining
-coefficients start at zero.
+This is the default strategy: each equation's intercept starts at the
+maximum likelihood estimate of the model that has no covariates.
+Where the first parameter is a location or a mean on the identity link, the
+slopes of its parametric columns start at a least-squares fit, and a term
+with a starting value of its own starts at the value that the term
+declares. The remaining coefficients start at zero.
 }
 \details{
-The model with no covariates is the model with every slope set to zero, so
+The model with no covariates is the model in which every slope is zero, so
 its maximum likelihood estimate is a natural starting point for the
 intercepts of the model with covariates. It requires one small fit, on an
 intercept-only design.
@@ -40,16 +40,16 @@ penalized block is smallest.
 
 Two adjustments apply to the intercepts:
 \itemize{
-\item The mean of an \strong{offset} is subtracted from the intercept before the
-value is written, because the intercept-only fit does not see the offset
-and the predictor would otherwise start displaced by it.
-\item The value is written to a \strong{parametric intercept} and to nothing else.
+\item The mean of an offset is subtracted from the intercept before the
+value is written, because the intercept-only fit is computed without the
+offset and the predictor would otherwise start displaced by it.
+\item The value is written to a parametric intercept and to nothing else.
 A term such as \code{\link[modelterms7:nl]{modelterms7::nl()}} also names the intercept of each of
 its own parameters \code{(Intercept)}, but those coefficients lie on the
 chart of that parameter and not on the scale of the predictor.
 }
 
-This is what \code{\link[=statmod]{statmod()}} does when \code{start} is \code{NULL}. The constructor
+\code{\link[=statmod]{statmod()}} uses this strategy when \code{start} is \code{NULL}. The constructor
 exists so that the default can be named, compared with other strategies and
 passed on.
 }

@@ -24,7 +24,7 @@ estimated no coefficient on its criterion, where the model carries a
 structural term, or where a piece cannot be read.
 }
 \description{
-The variance of the coefficients of a fit whose marginal criterion
+Returns the variance of the coefficients of a fit whose marginal criterion
 estimated some of them (\code{\link[=marginal_coords]{marginal_coords()}}), in the block form of the
 penalized information with the curvature of the criterion in place of the
 Schur complement of those coefficients.
@@ -40,8 +40,8 @@ mode of the penalized likelihood at \eqn{\gamma}, and
 where \eqn{K_{uu}^{-1}} is padded with zeros on \eqn{\gamma} and \eqn{B}
 holds one direction per coordinate of \eqn{v}. For \code{type = "bayesian"}
 \eqn{v = \gamma} and the hyperparameters are held; for
-\code{type = "unconditional"} \eqn{v = (\eta, \gamma)}, the hyperparameters'
-directions being \eqn{-K_{uu}^{-1}\partial^2\rho/\partial u\,\partial\eta}.
+\code{type = "unconditional"} \eqn{v = (\eta, \gamma)} and the hyperparameters'
+directions are \eqn{-K_{uu}^{-1}\partial^2\rho/\partial u\,\partial\eta}.
 
 Replacing \eqn{-\nabla^2_{\gamma\gamma}\ell_M} by the Schur complement
 \eqn{K_{\gamma\gamma} - K_{\gamma u}K_{uu}^{-1}K_{u\gamma}} gives back

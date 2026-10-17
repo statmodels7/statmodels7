@@ -15,7 +15,7 @@ read.}
 An \eqn{n \times K \times K} numeric array, lower triangular in
 its last two indices, with \code{Om[i, , ] == L[i, , ] \%*\% t(L[i, , ])} for
 every \code{i}. \code{NULL} as soon as any block fails to be positive definite,
-so a single bad observation declines for the whole sample.
+so a single bad observation makes the result \code{NULL} for the whole sample.
 }
 \description{
 Returns the lower triangular \eqn{L_i} with \eqn{L_iL_i' = \Omega_i} for
@@ -26,7 +26,7 @@ every observation, as a \eqn{n \times K \times K} array.
 family, whereas \eqn{n}, the number of observations, can be large. The
 standard Cholesky recursion is therefore written out over the
 \eqn{K} indices and evaluated over all \eqn{n} observations at once, one
-vectorized pass per entry of the factor, so no loop runs over
+vectorized pass per entry of the factor, so the function does not loop over
 observations.
 
 A block that is not positive definite produces a non-positive pivot, and

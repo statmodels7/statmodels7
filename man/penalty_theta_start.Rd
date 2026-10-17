@@ -8,7 +8,7 @@ penalty_theta_start(pen, unit = 1)
 }
 \arguments{
 \item{pen}{A \pkg{penalties7} penalty object, read for its
-\code{params_bounds} property alone.}
+\code{params_bounds} property only.}
 
 \item{unit}{How far from a one-sided bound the neutral point sits, \code{1} by
 default. A simulation that draws a prior over the coordinates of a chart
@@ -17,8 +17,8 @@ partial-autocorrelation chart away from the edge of the chart.}
 }
 \value{
 A named numeric vector, one entry per hyperparameter of \code{pen},
-named as the penalty names them. \code{numeric(0)} for a penalty with none,
-which a fixed prior is.
+named as the penalty names them. The value is \code{numeric(0)} for a penalty
+with none, which a fixed prior is.
 }
 \description{
 Picks a starting value for each of a penalty's hyperparameters from its
@@ -39,11 +39,12 @@ that is unbounded on both sides is a free coordinate of a
 on \code{dr_prod(2)} it gives standard deviations of \eqn{e^1 = 2.718} and a
 correlation of -0.664. Zero is the neutral point of the chart, with unit
 standard deviations and no correlation, so that a coordinate unbounded on
-both sides starts at zero. This is also where an ordinary random effect
-starts, because its own scale is bounded below and starts at \code{lower + 1}.
+both sides starts at zero. An ordinary random effect also starts at that
+neutral point, because its own scale is bounded below and starts at
+\code{lower + 1}.
 
 The value is a starting point only, and the criterion moves it. A start
-that the inner fit cannot converge from can end the search, and the
+from which the inner fit cannot converge can end the search, and the
 neutral point of an unbounded coordinate converges in cases where a start
 at one does not. A hyperparameter bounded on both sides starts at the
 midpoint of its bounds, and one bounded on one side starts one \code{unit}

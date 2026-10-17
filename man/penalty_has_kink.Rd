@@ -15,25 +15,25 @@ penalty_has_kink(pen, what = "a penalty")
 A single logical.
 }
 \description{
-\code{TRUE} when the penalty is not differentiable somewhere a coefficient can
-be. A block whose penalty gives \code{TRUE} is estimated outside the jointly
-fitted system by \code{\link[=sparse_fit]{sparse_fit()}}: a compiled coordinate descent where the
-penalty describes its proximal operator as a table, and an accelerated
-proximal gradient iteration otherwise.
+Returns \code{TRUE} when the penalty is not differentiable at some point that a
+coefficient can take. A block whose penalty gives \code{TRUE} is estimated outside
+the jointly fitted system by \code{\link[=sparse_fit]{sparse_fit()}}: a compiled coordinate descent
+where the penalty describes its proximal operator as a table, and an
+accelerated proximal gradient iteration otherwise.
 }
 \details{
 \code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} is read at a probe value of the
 hyperparameters, which \code{\link[=penalty_theta_start]{penalty_theta_start()}} gives. The probe is the
 midpoint of the interval where both bounds are finite, one unit inside the
-bound where only one is finite, and zero where neither is.
+bound where only one is finite, and zero where both bounds are infinite.
 \pkg{modelterms7} uses the same rule. Whether a kink exists is a property
 of the family and not of a point, so any admissible probe gives the same
 answer.
 
 If \code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} signals an error, \code{penalty_has_kink()}
 signals an error that names the penalty, and the penalty is not treated as
-smooth. Reading the failure as an answer would send a kinked penalty, such
-as \code{scad()} or \code{mcp()}, to the scheme for smooth penalties, which fits it
-by the curvature of a function that has none.
+smooth. If the failure were read as an answer, a kinked penalty, such as
+\code{scad()} or \code{mcp()}, would be sent to the scheme for smooth penalties, which
+fits it by the curvature of a function that has none.
 }
 \keyword{internal}

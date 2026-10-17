@@ -19,7 +19,8 @@ not a maximum: \code{\link[=mode_error_limit]{mode_error_limit()}}.}
 \value{
 A data frame with one row per violating coordinate and columns
 \code{kind} (\code{"structural"} or \code{"coefficient"}), \code{param}, \code{term}, \code{name},
-\code{eta} (the free value), \code{target} (the value it is moved to) and \code{gain};
+\code{eta} (the free value), \code{target} (the value to which it is moved) and
+\code{gain};
 zero rows where every coordinate at an edge points outward, and also
 where the log-likelihood at the fit is not finite. The design's
 structural state is left as it was found.
@@ -40,18 +41,17 @@ vanishing score, and a certificate a vanishing mode error, at a point
 where the log-likelihood still rises towards the interior. The condition
 for a maximum on the boundary of a bounded parameter (Karush, Kuhn and
 Tucker) is that the derivative on the bounded scale points outward, and
-that is what is checked.
+the function checks this condition.
 
 The derivative is read as a one-sided difference: each coordinate beyond
-\code{edge} in absolute value is moved, one at a time and with the others held,
+\code{edge} in absolute value is moved, one at a time while the others are held,
 to \eqn{\pm}\code{edge}, and the log-likelihood is evaluated there. A coordinate
 is reported where the gain exceeds \code{tol}, in log-likelihood units. The
 coordinates checked are those that \code{\link[modelterms7:term_charted]{modelterms7::term_charted()}} names for
-a structural term (leaving out the ones the term holds) and for
+a structural term (leaving out the ones that the term holds) and for
 \code{\link[modelterms7:nl]{modelterms7::nl()}}, and the intercept of an equation that has no other
-column and carries a link that is not the identity. The comparison is made
-on the log-likelihood alone, and a penalty on these coordinates is not
-included.
+column and carries a link that is not the identity. The comparison uses
+only the log-likelihood and excludes any penalty on these coordinates.
 }
 \seealso{
 \code{\link[=statmod_certificate]{statmod_certificate()}}, which reports a violation.

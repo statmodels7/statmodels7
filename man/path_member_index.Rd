@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{path_member_index}
 \alias{path_member_index}
-\title{The Coefficients an Axis Covers, Across Its Members}
+\title{The Coefficients That an Axis Covers, Across Its Members}
 \usage{
 path_member_index(blocks, row)
 }
@@ -15,12 +15,12 @@ path_member_index(blocks, row)
 An integer vector of positions.
 }
 \description{
-The union of the blocks the axis's members penalize, as positions in the
-stacked coefficient vector.
+Returns the union of the blocks that the axis's members penalize, as
+positions in the stacked coefficient vector.
 }
 \details{
 A shared axis is one value multiplying several penalties, so whether the
-block is empty has to be decided over all of them at once. Where nothing is
-shared, the result is the single block's own index.
+block is empty has to be decided over all of them at once. If the axis has a
+single member, the result is that block's own index.
 }
 \keyword{internal}

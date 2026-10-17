@@ -17,19 +17,20 @@ parameters.}
 \value{
 A named list of numeric vectors, one entry per structural term,
 keyed by the term's key in the specification, each as long as that term
-has parameters. An empty list when the model carries no structural term.
+has parameters. The list is empty when the model carries no structural
+term.
 }
 \description{
-The derivative of the weighted log-likelihood in the unconstrained
+Computes the derivative of the weighted log-likelihood in the unconstrained
 parameters of each structural term, one entry per term.
 }
 \details{
-The filter's Jacobian is already the \strong{total} derivative of the predictor
-in the term's own parameters, with the recursion propagated inside it. So
-a chain rule over the observations is the whole of the work here and no
-reverse pass is needed.
+The filter's Jacobian is already the total derivative of the predictor
+in the term's own parameters, and the recursion is propagated inside it. So
+the function needs only a chain rule over the observations, and it does not
+need a reverse pass.
 
-The reverse pass answers a different question: the derivative in the
+The reverse pass computes a different quantity: the derivative in the
 coefficients of the equations, where a coefficient reaches the level only
 through the scores at earlier times. That is \code{modelterms7::term_adjoint()}.
 
@@ -38,7 +39,7 @@ derivative is the Jacobian of the term's log-likelihood in its parameters,
 weighted by the observation weights.
 }
 \seealso{
-\code{\link[=statmod_filter_at]{statmod_filter_at()}} for the filter run this reads,
+\code{\link[=statmod_filter_at]{statmod_filter_at()}} for the filter run that this reads,
 \code{\link[=statmod_score_at]{statmod_score_at()}} for the coefficients' own score.
 }
 \keyword{internal}

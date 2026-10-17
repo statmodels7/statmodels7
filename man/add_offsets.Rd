@@ -11,17 +11,17 @@ add_offsets(a, b)
 either list's entries possibly \code{NULL}. Either list may itself be \code{NULL}.}
 }
 \value{
-\code{a} with each entry summed with the entry of \code{b} for the same
-parameter where both are present, and replaced by \code{b}'s where only \code{b}
-names one. A parameter named only in \code{b} is not added, and the result is
-\code{NULL} when \code{a} is.
+\code{a}, in which each entry is summed with the entry of \code{b} for the
+same parameter where both are present, and is replaced by \code{b}'s where only
+\code{b} names one. A parameter named only in \code{b} is not added, and the result
+is \code{NULL} when \code{a} is.
 }
 \description{
-Combines the offsets a formula names with those the \code{offsets} argument
-supplies, per parameter.
+Combines the offsets that a formula names with those that the \code{offsets}
+argument supplies, per parameter.
 }
 \details{
-Where both name an offset for the same parameter the two are \strong{summed},
+Where both name an offset for the same parameter the two are summed,
 as \code{\link[stats:glm]{stats::glm()}} does with a formula offset and an \code{offset} argument
 together. Where only one does, that one is taken.
 }

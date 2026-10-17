@@ -1,11 +1,11 @@
 #' Split a Multi-Parameter Formula Into One Equation Per Parameter
 #'
 #' @description
-#' Takes the single formula [statmod()] accepts, in which the equations of the
-#' distribution's parameters are separated by `|`, and returns the response
-#' together with one one-sided formula per parameter of the family. Every
-#' parameter receives an equation, and a parameter whose equation the caller
-#' did not write receives `~ 1`, an intercept.
+#' Takes the single formula that [statmod()] accepts, in which the equations
+#' of the distribution's parameters are separated by `|`, and returns the
+#' response together with one one-sided formula per parameter of the family.
+#' Every parameter receives an equation, and a parameter for which the caller
+#' did not write an equation receives `~ 1`, an intercept.
 #'
 #' @details
 #' # The syntax
@@ -51,26 +51,30 @@
 #'   and lists the parameters of the distribution.
 #' - A parameter is given two equations. The message names the parameter.
 #'
-#' @param formula A two-sided formula, with the parameters' equations
-#'   separated by `|` as above. Its environment is carried onto every
-#'   equation returned, so a term's symbols resolve where the caller wrote
-#'   them; a formula with a `NULL` environment gets [baseenv()].
+#' @param formula A two-sided formula in which the equations of the
+#'   parameters are separated by `|` as above. Its environment is carried
+#'   onto every equation returned, so a term's symbols resolve where the
+#'   caller wrote them; if the formula has a `NULL` environment, [baseenv()]
+#'   is used.
 #' @param params The distribution's parameter names in the family's own
-#'   order, as `distrib@params` gives them. A character vector. The first
-#'   element is the parameter the response's own equation belongs to.
+#'   order, as `distrib@params` gives them. It is a character vector. The
+#'   first element is the parameter to which the response's own equation
+#'   belongs.
 #'
 #' @return A list of three:
 #'   \describe{
 #'     \item{`response`}{the unevaluated left-hand side, a language object,
-#'       usually a symbol but any expression the caller wrote.}
+#'       usually a symbol but any expression that the caller wrote.}
 #'     \item{`equations`}{a named list of one-sided formulas, one per element
-#'       of `params` and in that order, whatever order the caller wrote them
-#'       in. A parameter with no equation of its own holds `~ 1`.}
-#'     \item{`given`}{the parameter names the formula supplied, in the order
-#'       it supplied them. A subset of `params`, possibly of length one.}
+#'       of `params` and in that order, regardless of the order in which the
+#'       caller wrote them. A parameter with no equation of its own holds
+#'       `~ 1`.}
+#'     \item{`given`}{the parameter names that the formula supplied, in the
+#'       order in which it supplied them. It is a subset of `params`, possibly
+#'       of length one.}
 #'   }
 #'
-#' @seealso [statmod()], which calls this on the formula it is given,
+#' @seealso [statmod()], which calls this on the formula that it is given,
 #'   [statmod_spec()] for what is built from the result.
 #'
 #' @examples
@@ -78,7 +82,8 @@
 #' e$response
 #' e$equations
 #'
-#' # Every parameter gets an equation; the ones not written get an intercept.
+#' # Every parameter receives an equation; a parameter without one receives an
+#' # intercept.
 #' f <- statmod_equations(y ~ x, c("mu", "sigma", "nu"))
 #' vapply(f$equations, function(q) deparse(q[[2]]), character(1))
 #' f$given
@@ -167,9 +172,9 @@ statmod_equations <- function(formula, params) {
 #'
 #' @description
 #' Wraps a term expression as `~ expr` and attaches `env` to it, so that the
-#' symbols in a term resolve where the caller wrote them. Used by
-#' [statmod_equations()] on each piece it collects, and on `quote(1)` for a
-#' parameter with no equation.
+#' symbols in a term resolve where the caller wrote them.
+#' [statmod_equations()] uses it on each piece that it collects, and on
+#' `quote(1)` for a parameter with no equation.
 #'
 #' @details
 #' The formula is built with `eval(bquote(~ .(expr)), envir = env)`, and the
@@ -179,8 +184,8 @@ statmod_equations <- function(formula, params) {
 #' construction does.
 #'
 #' @param expr A language object, the right-hand side to wrap: a symbol, a
-#'   call, or the literal `1`. Substituted unevaluated, so a term call is not
-#'   run here.
+#'   call, or the literal `1`. It is substituted unevaluated, so a term call
+#'   is not run here.
 #' @param env The environment to attach. It is not checked, and `NULL` gives a
 #'   formula with a `NULL` environment.
 #'
@@ -200,14 +205,14 @@ one_sided <- function(expr, env) {
 #' Evaluate a Formula's Terms With modelterms7 in Front
 #'
 #' @description
-#' Returns a fresh environment holding every function \pkg{modelterms7}
+#' Returns a fresh environment holding every function that \pkg{modelterms7}
 #' exports, whose parent is `env`. A term call evaluated there reaches
 #' \pkg{modelterms7}'s function whatever the caller has attached, and every
-#' other name the caller wrote resolves as usual, one step further out.
+#' other name that the caller wrote resolves as usual, one step further out.
 #'
 #' @details
 #' \pkg{mgcv} exports `s()` and `te()`, and \pkg{segmented} exports `seg()`.
-#' With either package attached, a `statmod()` formula that uses one of these
+#' If either package is attached, a `statmod()` formula that uses one of these
 #' names would call that package's function, whose value is not a model term.
 #' The failure then occurs inside `model.matrix()` as `invalid type (list) for
 #' variable 's(x)'`, a message that does not mention the masking package.
@@ -218,18 +223,19 @@ one_sided <- function(expr, env) {
 #' of \pkg{modelterms7} then rejects the value, naming the class returned
 #' and the call as written.
 #'
-#' A binding is made for each export of \pkg{modelterms7} for which
+#' The function binds each export of \pkg{modelterms7} for which
 #' `is.function()` is `TRUE`. The S7 class generators of that package are
 #' functions and are copied with the others.
 #'
-#' @param env The environment the formula carried, which becomes the parent
-#'   of the result. Everything visible from `env` stays visible.
+#' @param env The environment that the formula carried, which becomes the
+#'   parent of the result. Everything visible from `env` stays visible.
 #'
 #' @return A new environment holding one binding per exported function of
 #'   \pkg{modelterms7}, with `env` as its parent.
 #'
-#' @seealso [statmod_equations()] for the formula this is used to interpret,
-#'   [modelterms7::interpret_formula()] for the reading it feeds.
+#' @seealso [statmod_equations()] for the formula that is interpreted with
+#'   this function, [modelterms7::interpret_formula()] for the reading that
+#'   it feeds.
 #'
 #' @keywords internal
 terms_first <- function(env) {

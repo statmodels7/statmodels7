@@ -19,9 +19,9 @@ hyper_unit_scale(spec, design, hy, idx)
 A numeric vector of length \code{nrow(idx)}.
 }
 \description{
-One multiplier per row of \code{idx}: the factor that turns the outer curvature
-in a hyperparameter's free value into the curvature in a free value
-without units. It is 1 except for a free value of a matrix prior that
+Computes one multiplier per row of \code{idx}: the factor that turns the outer
+curvature in a hyperparameter's free value into the curvature in a free
+value without units. It is 1 except for a free value of a matrix prior that
 scales with the matrix.
 }
 \details{

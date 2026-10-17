@@ -21,17 +21,17 @@ coefficients followed by the term's parameters.}
 \item{gl, H, D3}{The family's first three derivatives on the link scale at
 the fitted predictors.}
 
-\item{theta}{The per-observation parameters they were read at, from which
-the expected information is read where the filter scales its score.}
+\item{theta}{The per-observation parameters at which they were read, from
+which the expected information is read where the filter scales its score.}
 }
 \value{
-The list \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} returns.
+The list that \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} returns.
 }
 \description{
-\code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} run at the parameters the filter was
-fitted at, with the family's derivatives looked up instead of evaluated
-again, returning the forward Jacobian of the filtered predictor beside the
-contracted second derivative.
+Runs \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} at the parameters at which the filter
+was fitted. The family's derivatives are looked up instead of evaluated
+again, and the function returns the forward Jacobian of the filtered
+predictor beside the contracted second derivative.
 }
 \details{
 Three callers read it at the same point: \code{\link[=statmod_full_information]{statmod_full_information()}}, for
@@ -52,7 +52,7 @@ differed would miss the cache and not take the wrong shape.
 The assembly of the callback is written once, in \code{.structural_blocks()}:
 the exact gradient of a penalized filter needs the same pieces at one order
 higher. The same pieces are also passed as data, with which an eligible
-term runs its second-order recursion compiled, the callback being kept for
-the cases that the kernel declines.
+term runs its second-order recursion compiled, and the callback is kept for
+the cases that the kernel does not handle.
 }
 \keyword{internal}

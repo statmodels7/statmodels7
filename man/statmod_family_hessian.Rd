@@ -15,7 +15,7 @@ the thread count.}
 \item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
 observed Hessian.}
 
-\item{approx}{The strategy the expected information uses when the family
+\item{approx}{The strategy that the expected information uses when the family
 has no closed form, passed through to
 \code{\link[distributions7:distrib_expected_hessian]{distributions7::distrib_expected_hessian()}}.}
 }

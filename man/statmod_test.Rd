@@ -12,8 +12,8 @@ statmod_test(fit, param, coefname, value = 0, test = "wald", type = "bayesian")
 \item{param, coefname}{Which coefficient, as in \code{\link[=statmod_restrict]{statmod_restrict()}}:
 the distribution parameter and the coefficient's name in its equation.}
 
-\item{value}{The value under the null, a single number. \code{0} by default,
-which is what a summary reports.}
+\item{value}{The value under the null, a single number. The default is
+\code{0}, which is the value that a summary reports.}
 
 \item{test}{One of \code{"wald"}, \code{"lr"}, \code{"score"}, \code{"gradient"}.}
 
@@ -31,10 +31,10 @@ statistic, the likelihood ratio, Rao's score or Terrell's gradient.
 \code{summary(fit, test =)} reports one of the four statistics for the rows of
 the coefficient tables that can be held (not a row under a kinked penalty,
 not an aliased one, and none for a model with a structural term), always
-against zero. This function tests one coefficient against any value, which
-is a question that a summary cannot answer: whether a slope is one, whether
-an elasticity is unity, whether a coefficient matches a value fixed outside
-the data.
+against zero. This function tests one coefficient against any value, for
+questions that a summary cannot answer, such as whether a slope is one,
+whether an elasticity is unity, or whether a coefficient matches a value
+fixed outside the data.
 
 The statistics, the quantities that they read and their cost are described
 at \code{\link[=statmod_stat_at]{statmod_stat_at()}}. The last three are built on the restricted fit of
@@ -59,5 +59,5 @@ statmod_test(fit, param = "mu", coefname = "x", value = 0, test = "lr")
 }
 \seealso{
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the rows that can be held, against zero,
-\code{\link[=confint.StatmodFit]{confint.StatmodFit()}} for the interval a test inverts.
+\code{\link[=confint.StatmodFit]{confint.StatmodFit()}} for the interval that a test inverts.
 }

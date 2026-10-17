@@ -16,7 +16,7 @@ documents it.}
 A single logical.
 }
 \description{
-Applies whichever stopping rule the step was configured with: the built-in
+Applies the stopping rule with which the step was configured: the built-in
 one, the score per observation against \code{tol}, or the caller's
 \pkg{optimizers7} criterion read on the same state.
 }
@@ -25,11 +25,11 @@ Both routes are implemented here, although the loop evaluates the rule at
 two places. This keeps the state that a criterion receives identical at
 both places.
 
-Two properties of that state matter to a caller writing a rule.
-\code{state$gradient} is already the score per observation, so \code{crit_grad(t)}
-and \code{tol = t} apply the same threshold to the score; the built-in rule
-also requires a small Newton decrement, which a criterion does not receive.
-\code{state$f_new} is the negative penalized log-likelihood, not divided by the
-sample size, which is the scale on which the penalty is added.
+In the state that a rule receives, \code{state$gradient} is already the score
+per observation, so \code{crit_grad(t)} and \code{tol = t} apply the same threshold
+to the score; the built-in rule also requires a small Newton decrement,
+which a criterion does not receive. \code{state$f_new} is the negative
+penalized log-likelihood, not divided by the sample size, which is the
+scale on which the penalty is added.
 }
 \keyword{internal}

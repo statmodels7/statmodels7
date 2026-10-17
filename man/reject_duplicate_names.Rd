@@ -11,7 +11,7 @@ reject_duplicate_names(terms)
 parameter, each a named list of terms as \code{\link[=statmod_terms]{statmod_terms()}} builds them.}
 }
 \value{
-\code{NULL}, invisibly. Called for the error.
+\code{NULL}, invisibly. The function is called for its error.
 }
 \description{
 The coefficients of an equation are addressed by name in \code{coef()},

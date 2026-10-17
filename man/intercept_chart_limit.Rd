@@ -10,9 +10,10 @@ intercept_chart_limit()
 A single positive number.
 }
 \description{
-The absolute value, on the link scale, past which \code{\link[=statmod_intercepts]{statmod_intercepts()}}
-reads an intercept-only estimate as a limit the fit ran to: 16, a parameter
-beyond \eqn{e^{16} \approx 8.9 \times 10^6} or below its reciprocal on a log
+Returns the absolute value, on the link scale, past which
+\code{\link[=statmod_intercepts]{statmod_intercepts()}} reads an intercept-only estimate as a limit to which
+the fit ran. The value is 16, which corresponds to a parameter beyond
+\eqn{e^{16} \approx 8.9 \times 10^6} or below its reciprocal on a log
 chart.
 }
 \keyword{internal}

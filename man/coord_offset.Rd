@@ -12,7 +12,7 @@ coord_offset(spec, p, n)
 \item{p}{Which distribution parameter, a string naming one of the
 family's.}
 
-\item{n}{The number of observations to recycle to.}
+\item{n}{The number of observations to which the offset is recycled.}
 }
 \value{
 A numeric vector of length \code{n}: the offset, or zeros where the
@@ -20,20 +20,22 @@ equation has none.
 }
 \description{
 Returns the offset of one distribution parameter's equation, evaluated in
-the fitting data and recycled to the sample size. An equation with no
-offset gets zeros, so the caller adds the result unconditionally.
+the fitting data and recycled to the sample size. The function returns
+zeros for an equation with no offset, so the result can be added
+unconditionally.
 }
 \details{
 The offsets are stored on the specification as evaluated vectors, one per
-parameter, with \code{NULL} for an equation that has none. This turns that
-\code{NULL} into zeros at the point of use, so no caller has to test for it.
+parameter, with \code{NULL} for an equation that has none. This function turns
+that \code{NULL} into zeros at the point of use, so callers do not have to test
+for it.
 
 An offset shorter than \code{n} is recycled with \code{\link[=rep_len]{rep_len()}}, so a single
-number is a constant offset. That is the shape a caller writing
-\code{offsets = list(mu = log(2))} gets.
+number is a constant offset. That is the shape produced by
+\code{offsets = list(mu = log(2))}.
 }
 \seealso{
-\code{\link[=eval_offsets]{eval_offsets()}}, which evaluates the expressions this reads,
+\code{\link[=eval_offsets]{eval_offsets()}}, which evaluates the expressions that this reads,
 \code{\link[=statmod]{statmod()}} for the \code{offsets} argument.
 }
 \keyword{internal}

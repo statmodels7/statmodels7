@@ -2,7 +2,7 @@
 % Please edit documentation in R/objective.R
 \name{statmod_held_ids}
 \alias{statmod_held_ids}
-\title{The Value Each Sharing Label Is Held At}
+\title{The Value at Which Each Sharing Label Is Held}
 \usage{
 statmod_held_ids(units)
 }
@@ -13,8 +13,8 @@ statmod_held_ids(units)
 A named list of numbers, empty where no label is held.
 }
 \description{
-One entry per label a member holds its hyperparameter at, keyed by the
-label.
+Returns one entry, keyed by the label, for each sharing label whose
+hyperparameter a member holds at a value.
 }
 \details{
 The members of a group estimate one value, so a value written on one of

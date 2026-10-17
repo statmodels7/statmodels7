@@ -19,7 +19,7 @@ so both columns are character.
 \description{
 Reports the version of each member package as it is installed on this
 machine, one row per member. A member that is not installed has \code{NA} as its
-version and is kept, so the result always has one row per name
+version and is kept, so the result always has one row per name that
 \code{\link[=statmodels7_packages]{statmodels7_packages()}} returns and a missing member is visible.
 }
 \details{

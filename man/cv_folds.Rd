@@ -17,14 +17,14 @@ cv_folds(n, k, folds)
 An integer vector of length \code{n}.
 }
 \description{
-A fold number per observation, either the assignment the method carries or
-a permutation drawn with a fixed seed.
+Returns a fold number per observation, either the assignment that the
+method carries or a permutation drawn with a fixed seed.
 }
 \details{
 The permutation is drawn after \code{set.seed(20260811L)}, and the caller's
 random-number state is restored afterwards, so the partition is the same
-whatever the caller's seed. Passing \code{folds} explicitly is how two criteria
-are made comparable on a partition of the caller's own. The values of
+whatever the caller's seed. Passing \code{folds} explicitly makes two criteria
+comparable on a partition of the caller's own. The values of
 \code{folds} are relabeled to the integers \verb{1, 2, ...} in the order of their
 factor levels, and a length other than \code{n} signals an error.
 }

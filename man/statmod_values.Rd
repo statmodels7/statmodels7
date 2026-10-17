@@ -2,7 +2,7 @@
 % Please edit documentation in R/blocks.R
 \name{statmod_values}
 \alias{statmod_values}
-\title{The Values a Term Wrote Out for One Hyperparameter}
+\title{The Values That a Term Wrote Out for One Hyperparameter}
 \usage{
 statmod_values(spec, row)
 }
@@ -15,11 +15,13 @@ statmod_values(spec, row)
 A numeric vector, or \code{NULL}.
 }
 \description{
-The grid the term specifies, or \code{NULL} where the path builds one.
+Returns the grid that the term specifies, or \code{NULL} where the path builds
+one.
 }
 \details{
-The third state of a hyperparameter's argument, beside holding it at one
-number and leaving it to be estimated over a grid the path constructs. It
+This is the third state of a hyperparameter's argument, beside holding it at
+one number and leaving it to be estimated over a grid that the path
+constructs. It
 travels with the penalty's entry like the grid size and the depth, so a
 penalty reached through a sub-term of a structural term carries it too.
 }

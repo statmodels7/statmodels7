@@ -15,24 +15,26 @@ kinked_coords(spec, design)
 An integer vector of stacked positions, possibly empty.
 }
 \description{
-The positions of the coefficients whose penalty is not differentiable
-everywhere -- a lasso, a SCAD, an MCP -- as an integer vector.
+Returns the positions of the coefficients whose penalty is not
+differentiable everywhere -- a lasso, a SCAD, an MCP -- as an integer
+vector.
 }
 \details{
-It applies to the coordinates the test that \code{\link[=statmod_blocks]{statmod_blocks()}} applies to
-the blocks to decide which of the two fitting schemes a block goes to, and
-it reads the same predicate (\code{\link[=penalty_has_kink]{penalty_has_kink()}}), so that the two cannot
-disagree. A penalty that is twice differentiable contributes nothing, so
-that a ridge, a random effect and a smooth are testable.
+The function tests the coordinates in the way that \code{\link[=statmod_blocks]{statmod_blocks()}} tests
+the blocks to decide which of the two fitting schemes is used for a block,
+and it reads the same predicate (\code{\link[=penalty_has_kink]{penalty_has_kink()}}), so that the two
+cannot disagree. A penalty that is twice differentiable contributes
+nothing, so that a ridge, a random effect and a smooth are testable.
 
-The enumeration of each penalty decides, so a partial penalty (one
-covering some of a term's coordinates and not the rest) names only what it
-covers, and a term is not classified as a whole. The penalty of a
-structural term covers positions among the term's own parameters and not
+The result follows from the enumeration of each penalty, so a partial
+penalty (one covering some of a term's coordinates and not the rest) names
+only what it covers, and a term is not classified as a whole. The penalty of
+a structural term covers positions among the term's own parameters and not
 among the design's, and contributes nothing here.
 }
 \seealso{
 \code{\link[=statmod_penalized]{statmod_penalized()}}, the enumeration that it reads, and
-\code{\link[=statmod_blocks]{statmod_blocks()}}, which answers the same question for a whole block.
+\code{\link[=statmod_blocks]{statmod_blocks()}}, which gives the same classification for a whole
+block.
 }
 \keyword{internal}

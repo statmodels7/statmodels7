@@ -22,7 +22,7 @@ assert_criterion_reach(
 \code{"kinked"}.}
 }
 \value{
-\code{NULL}, invisibly. Called for the error.
+\code{NULL}, invisibly. The function is called for the error.
 }
 \description{
 Raises an error naming the penalty and the remedy when \code{aic()}, \code{bic()} or
@@ -46,7 +46,7 @@ parameters by a proximal route, without a criterion.
 Which penalties a criterion reaches depends on its role, and only those are
 checked: an \code{outer_criterion} reaches the smooth penalties, and the
 kinked ones as well when no \code{sparse_criterion} is given, while a
-\code{sparse_criterion} reaches the kinked ones alone.
+\code{sparse_criterion} reaches only the kinked ones.
 }
 \examples{
 dd <- data.frame(x = runif(60))

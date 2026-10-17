@@ -9,14 +9,14 @@ statmodels7_conflicts()
 \value{
 A named list, one entry per masked name, sorted by name. Each entry
 is a character vector of the packages exporting that name, the most
-recently attached first, which is the one a bare call reaches. An empty
-named list when nothing is masked, so \code{length()} is the count of
-conflicts and \code{names()} are the masked names.
+recently attached first, which is the one that a bare call reaches. If no
+name is masked, the result is an empty named list, so \code{length()} gives
+the number of conflicts and \code{names()} gives the masked names.
 }
 \description{
 Reports the names exported by more than one attached member package,
-together with the packages exporting them, ordered so that the package a
-bare name reaches comes first. Attaching several packages puts several
+together with the packages exporting them, ordered so that the package that
+a bare name reaches comes first. Attaching several packages puts several
 environments on the search path, and a name exported by two of them
 resolves to whichever was attached last; this function shows which
 function that is. The members currently export no name in common, so the
@@ -24,21 +24,22 @@ result is empty.
 }
 \section{Definition of a conflict}{
 A conflict is a name exported by two members. A name that one member
-exports and another only registers an S7 or S3 method on is not a conflict
-and does not appear, since methods dispatch on the class of the argument
-and do not mask.
+exports and on which another member only registers an S7 or S3 method is
+not a conflict and does not appear, since methods dispatch on the class of
+the argument and do not mask.
 
 Only members that are attached are examined. A package that is merely
 installed puts nothing on the search path and masks nothing, so it cannot
-contribute, and with fewer than two members attached the result is empty
-by construction.
+contribute. If fewer than two members are attached, the result is empty by
+construction.
 }
 
 \section{Scope of the comparison}{
 The comparison is between the members. The exports of \code{statmodels7}
 itself are not compared with theirs, so a name that this package and a
-member both export would not be reported here. No such name exists at
-present, and the example below performs the check.
+member both export would not be reported here. At present every name that
+this package exports differs from the names that the members export, and
+the example below performs the check.
 }
 
 \section{Namespaces and attached environments}{
@@ -56,8 +57,8 @@ between packages that export no such thing.
 statmodels7_conflicts()
 length(statmodels7_conflicts())
 
-# The check that this function does not perform: for each member, the
-# number of names shared with the exports of statmodels7 itself.
+# The following check, which this function does not perform, counts for
+# each member the names shared with the exports of statmodels7 itself.
 own <- getNamespaceExports("statmodels7")
 vapply(statmodels7_packages(),
        function(p) length(intersect(own, getNamespaceExports(p))),
@@ -66,6 +67,6 @@ vapply(statmodels7_packages(),
 }
 \seealso{
 \code{\link[=statmodels7_packages]{statmodels7_packages()}} for the members examined,
-\code{\link[=format_conflicts]{format_conflicts()}} for the one-line-per-name rendering the attach
+\code{\link[=format_conflicts]{format_conflicts()}} for the one-line-per-name rendering that the attach
 message uses.
 }

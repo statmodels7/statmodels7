@@ -51,27 +51,28 @@ take. The bootstrap excursions of \code{\link[=statmod_boot_restart]{statmod_boo
 pass a short one: an excursion needs to travel, not to converge.}
 
 \item{hold_refresh}{\code{TRUE} holds every frozen break-point block at
-its committed positions: the fit is then an ordinary smooth fit, no
-read-off runs and no schedule advances. The outer machinery passes it
-at every criterion evaluation, path point and fold. A working phase
+its committed positions: the fit is then an ordinary smooth fit, and
+the schedule is neither read off nor advanced. The outer
+machinery passes it at every criterion evaluation, path point and fold. A
+working phase
 inside each evaluation would multiply the cost of the fit, and a
 break-point that moves between evaluations makes the criterion depend on
 the path of the search. The positions are refined once, by the full
-alternation \code{statmod()} runs at the chosen hyperparameters before the
+alternation that \code{statmod()} runs at the chosen hyperparameters before the
 restarts.}
 }
 \value{
 A list of nine:
 \describe{
 \item{\code{par}}{the stacked coefficients reached.}
-\item{\code{value}}{the penalized objective there, unaveraged.}
+\item{\code{value}}{the penalized objective there, not averaged.}
 \item{\code{converged}}{a single logical. Where a term recomputes its own
 block, the verdict is the objective's together with that term's own
 flags, and the flag of the smooth block is not part of it. Beside a
 kinked block or a structural term it also requires
-\code{\link[=alternation_settled]{alternation_settled()}} at the point. Where nothing alternates, it
-is the flag of the inner method.}
-\item{\code{obj}}{the objective object the last pass used.}
+\code{\link[=alternation_settled]{alternation_settled()}} at the point. Where the fit does not
+alternate between blocks, it is the flag of the inner method.}
+\item{\code{obj}}{the objective object that the last pass used.}
 \item{\code{note}}{the \code{note} element of the last smooth fit, as
 \code{\link[=fit_smooth]{fit_smooth()}} returns it.}
 \item{\code{aliased}}{the sorted stacked positions that the pivot left
@@ -79,9 +80,9 @@ out.}
 \item{\code{hist_blocks}}{a list of one-row data frames, one for each block
 fitted in each pass, with \code{pass}, \code{block}, \code{objective}, \code{change},
 \code{iterations} and \code{converged}.}
-\item{\code{hist_inner}}{a list of data frames, one for each pass whose
-smooth fit recorded steps, holding the inner history with the columns
-\code{pass} and \code{block} added.}
+\item{\code{hist_inner}}{a list of data frames, one for each pass in which
+the smooth fit recorded steps, holding the inner history with the
+columns \code{pass} and \code{block} added.}
 \item{\code{spec}}{the specification after the last pass, with the SCAD and
 MCP curvatures that the fit used.}
 }
@@ -99,18 +100,18 @@ at one point of the search is one call.
 One pass fits the smooth block (beside a structural term of the filter
 shape, the joint system of the coefficients and the term's parameters),
 then the structural block of a term of the likelihood shape, then each
-kinked block with the other blocks held, and then commits the schedule of
-any refreshable term. The passes stop when the relative change of the
-objective falls below \code{tol}. The verdict is the inner fit's flag where
-there is nothing to alternate with. Otherwise it also requires
-\code{\link[=alternation_settled]{alternation_settled()}} (the Newton decrement of the smooth part and the
-KKT decrement of each coefficient that a kinked penalty holds at zero,
-both within \code{\link[=mode_error_limit]{mode_error_limit()}}), and \code{\link[=statmod_refresh_settled]{statmod_refresh_settled()}} where
-the model has refreshable terms.
+kinked block while the other blocks are held, and then commits the
+schedule of any refreshable term. The passes stop when the relative change of
+the objective falls below \code{tol}. The verdict is the inner fit's flag where
+the fit does not alternate between blocks. Otherwise it also requires
+\code{\link[=alternation_settled]{alternation_settled()}} (the Newton decrement of the smooth part and the KKT
+decrement of each coefficient that a kinked penalty holds at zero, both
+within \code{\link[=mode_error_limit]{mode_error_limit()}}), and \code{\link[=statmod_refresh_settled]{statmod_refresh_settled()}} where the model
+has refreshable terms.
 }
 \seealso{
-\code{\link[=statmod]{statmod()}} for the fit this performs,
-\code{\link[=fit_smooth]{fit_smooth()}} and \code{\link[=sparse_fit]{sparse_fit()}} for the two halves of a pass,
+\code{\link[=statmod]{statmod()}} for the fit that this performs,
+\code{\link[=fit_smooth]{fit_smooth()}} and \code{\link[=sparse_fit]{sparse_fit()}} for the two halves of a pass, and
 \code{\link[=statmod_boot_restart]{statmod_boot_restart()}}, which calls this repeatedly.
 }
 \keyword{internal}

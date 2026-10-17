@@ -14,7 +14,7 @@
 \description{
 Prints a one-line description of a starting-value strategy: its label, and
 for \code{\link[=start_random]{start_random()}} whether the draw is centered, for \code{\link[=start_search]{start_search()}}
-which optimizer it searches with.
+the optimizer that performs the search.
 }
 \examples{
 print(start_random())

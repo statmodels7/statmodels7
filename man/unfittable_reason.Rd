@@ -13,26 +13,27 @@ unfittable_reason(term)
 A single string.
 }
 \description{
-Returns the reason a term cannot be assembled as a fixed design block, or
-the empty string when it can.
+Returns the reason why a term cannot be assembled as a fixed design block,
+or the empty string when it can.
 }
 \details{
-Two reasons, and both are read from the term rather than from its class.
+There are two reasons, and both are read from the term rather than from
+its class.
 
 A covariance label (\code{\link[modelterms7:term_tag]{modelterms7::term_tag()}}) under a structural term of
-the \strong{likelihood} shape would make a latent that the likelihood integrates
+the likelihood shape would make a latent that the likelihood integrates
 out share a prior with coefficients that are estimated. The two are
 integrated by different routes and there is no one prior to share, so the
 term is rejected. Fitting it as though the label were absent would report
 a different model under the name of the one requested. A label under a
-\strong{filter} is fitted: its parameters are numbers estimated beside the
+filter is fitted: its parameters are numbers estimated beside the
 coefficients, and the block is read among them.
 
 Whether a class is admissible depends on all its members, and
-\code{\link[=class_space]{class_space()}} decides it where every member is visible.
+\code{\link[=class_space]{class_space()}} determines it where every member is visible.
 
 A structural term that implements neither \code{term_filter()} nor
-\code{term_loglik()} is rejected for the reason its message gives.
+\code{term_loglik()} is rejected for the reason that its message gives.
 }
 \seealso{
 \code{\link[=reject_unfittable]{reject_unfittable()}}

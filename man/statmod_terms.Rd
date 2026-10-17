@@ -10,13 +10,13 @@ statmod_terms(equations, data, env, response = NULL, linpar = list())
 \item{equations}{A named list of one-sided formulas, one per distribution
 parameter.}
 
-\item{data}{A data frame to build the terms against.}
+\item{data}{The data frame against which the terms are built.}
 
-\item{env}{The environment the original formula carried, which becomes the
-parent of the interpreting environment.}
+\item{env}{The environment that the original formula carried, which becomes
+the parent of the interpreting environment.}
 
 \item{response}{The evaluated left-hand side, or \code{NULL} where there is
-none. Read by \code{\link[=seg_grid_start]{seg_grid_start()}} and by nothing else.}
+none. Only \code{\link[=seg_grid_start]{seg_grid_start()}} reads it.}
 
 \item{linpar}{The options of the implicit parametric block, as
 \code{\link[=linpar_options]{linpar_options()}} returns them.}
@@ -32,22 +32,22 @@ equation's parametric block carried an intercept.}
 }
 \description{
 Runs \pkg{modelterms7}'s interpreter on every equation and builds the terms
-it names against the data.
+that it names against the data.
 }
 \details{
 The equations are interpreted with \pkg{modelterms7}'s constructors in
 front of the search path, so \code{s()} means this toolkit's whatever the
-caller has attached. See \code{\link[=terms_first]{terms_first()}} for the shim and the collision it
-removes.
+caller has attached. See \code{\link[=terms_first]{terms_first()}} for the shim and the collision that
+it removes.
 
 A factor covariate needs no handling of its own: the interpreter collects
 the bare covariates of an equation into one \code{\link[modelterms7:linpar]{modelterms7::linpar()}}, whose
 block comes from \code{model.matrix}, or from \code{Matrix::sparse.model.matrix()}
 when the block is sparse, and so carries the contrasts.
 
-A break-point term whose starting positions the caller did not name has
-them chosen on a grid, through \code{\link[=seg_grid_start]{seg_grid_start()}}, in place of the
-interior quantiles of the covariate the term would otherwise default to.
+The starting positions of a break-point term are chosen on a grid, through
+\code{\link[=seg_grid_start]{seg_grid_start()}}, when the caller did not name them, in place of the
+interior quantiles of the covariate, which are the term's default.
 }
 \seealso{
 \code{\link[=statmod_spec]{statmod_spec()}}, the caller, \code{\link[=terms_first]{terms_first()}} for the shim.

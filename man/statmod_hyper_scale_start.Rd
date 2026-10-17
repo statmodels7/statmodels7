@@ -14,7 +14,8 @@ statmod_hyper_scale_start(spec, design, hyper)
 \item{hyper}{The hyperparameters as \code{\link[=statmod_hyper_start]{statmod_hyper_start()}} returns them.}
 }
 \value{
-\code{hyper}, with the free values of each matrix parameter moved.
+\code{hyper}, in which the free values of each matrix parameter are
+moved.
 }
 \description{
 Moves the starting free values of every estimated matrix parameter (a

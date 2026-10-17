@@ -11,7 +11,7 @@ statmod_theta_shifted(spec, eta_static, param, shift)
 
 \item{eta_static}{The static predictors.}
 
-\item{param}{The equation the term sits in.}
+\item{param}{The equation in which the term sits.}
 
 \item{shift}{The level to add.}
 }
@@ -19,7 +19,7 @@ statmod_theta_shifted(spec, eta_static, param, shift)
 A named list of per-observation parameters.
 }
 \description{
-The distribution's parameters at every observation with the equation of
-the term shifted by the level of one component.
+Returns the distribution's parameters at every observation, with the
+equation of the term shifted by the level of one component.
 }
 \keyword{internal}

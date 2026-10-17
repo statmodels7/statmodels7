@@ -12,9 +12,9 @@
 A named list of numeric vectors.
 }
 \description{
-The answer of the default strategy: the intercept-only fit, the
-least-squares start of a location where \code{\link[=location_ols_start]{location_ols_start()}} applies, and
-the start that each term declares through
+Returns the starting values of the default strategy: the intercept-only
+fit, the least-squares start of a location where \code{\link[=location_ols_start]{location_ols_start()}}
+applies, and the start that each term declares through
 \code{\link[modelterms7:term_coef_start]{modelterms7::term_coef_start()}}. See \code{\link[=start_intercepts]{start_intercepts()}}.
 }
 \keyword{internal}

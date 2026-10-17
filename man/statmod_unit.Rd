@@ -19,8 +19,8 @@ statmod_unit(spec, design, param, key)
 One entry, or \code{NULL}.
 }
 \description{
-The entry of \code{\link[=statmod_penalized]{statmod_penalized()}} a hyperparameter row names, or
-\code{NULL} where there is none.
+Returns the entry of \code{\link[=statmod_penalized]{statmod_penalized()}} that a hyperparameter row names,
+or \code{NULL} where there is none.
 }
 \details{
 A reader that starts from a \verb{(parameter, term)} pair looks the penalty up

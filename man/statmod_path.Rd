@@ -46,9 +46,9 @@ statmod_path(
 
 \item{vb}{The verbosity.}
 
-\item{data}{The data the fit was called on, which cross-validation needs
-in order to refit on part of it; the weights and offsets are those held
-by \code{spec}.}
+\item{data}{The data with which the fit was called, which cross-validation
+needs in order to refit on part of it; the weights and offsets are those
+held by \code{spec}.}
 
 \item{rows}{The axes to select, as \code{\link[=path_rows]{path_rows()}} returns them.}
 
@@ -78,21 +78,21 @@ fit starts from the previous one's coefficients. The top of the grid is
 computed at the coefficients in hand and not at a refitted null; where the
 fit at the top does not empty the block, the top is doubled until it does.
 
-A term that carries several of these hyperparameters has every combination
-visited where it sets \code{search = "grid"} and one coordinate at a time where
-it sets \code{"cyclic"}. Between terms the alternation is cyclic either way, so
-that the cost is the product within a term and the sum across terms. Each
-axis is built at the settings of the axes outside it, which makes the
+For a term that carries several of these hyperparameters, every combination
+is visited where the term sets \code{search = "grid"} and one coordinate at a
+time where it sets \code{"cyclic"}. Between terms the alternation is cyclic either
+way, so that the cost is the product within a term and the sum across terms.
+Each axis is built at the settings of the axes outside it, which makes the
 elastic net's grid a family of \eqn{\lambda} axes and not a single one, and
 the axis swept by kink size is put innermost so that the warm starts walk
-along it. The runs of a product grid are independent and are distributed
-over worker processes where the specification requests them.
+along it. The runs of a product grid are independent and are distributed over
+worker processes where the specification requests them.
 
 A pass that would visit the points scored by the previous one is not run.
 The top of the path is computed again at every pass, because the rest of
 the model moves, and where it has not moved the grid is the one already in
-hand. At most \code{sweeps} passes are made, and only where more than one
-hyperparameter is selected.
+hand. The function makes at most \code{sweeps} passes, and only where more than
+one hyperparameter is selected.
 
 Where the model also carries hyperparameters that are twice differentiable,
 those are estimated by \code{\link[=outer_fit]{outer_fit()}} inside each point of the path, by
@@ -101,10 +101,10 @@ unpenalized coefficients of a dispersion are then held at the joint mode
 along the path when \code{nested_method} is a marginal criterion, and are
 estimated on that criterion once, at the setting chosen.
 
-An error is signaled where \code{method} is \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}} and no
-point of a path is scored. A warning is signaled where the rule is \code{"min"},
+An error is signaled where \code{method} is \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}} and the
+path scores no point. A warning is signaled where the rule is \code{"min"},
 the axis is swept by kink size, and the minimum lies at the dense end of the
-path with the criterion still falling there.
+path and the criterion is still falling there.
 }
 \seealso{
 \code{\link[=cv]{cv()}}, \code{\link[=path_rows]{path_rows()}}

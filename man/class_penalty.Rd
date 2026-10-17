@@ -13,11 +13,12 @@ class_penalty(cl)
 A \pkg{penalties7} penalty over \code{m * dim} coefficients.
 }
 \description{
-The penalty over a class's stacked coefficients: the distribution one of its
-members named, or the centered multivariate Gaussian that is the default.
+Returns the penalty over a class's stacked coefficients: the distribution
+that one of its members named, or the centered multivariate Gaussian that is
+the default.
 }
 \details{
-The prior describes the effects of \strong{one group} over every column the label
+The prior describes the effects of one group over every column that the label
 collects, so its dimension is the class's total and the penalty covers
 \eqn{m} such blocks. The default prior is a centered multivariate Gaussian
 whose covariance is written by \code{\link[parameters7:dr_prod]{parameters7::dr_prod()}}, where a coordinate

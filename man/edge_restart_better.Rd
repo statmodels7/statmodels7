@@ -11,7 +11,7 @@ edge_restart_better(new, old, crit, outer_criterion, sparse_criterion)
 \code{\link[=statmod_select]{statmod_select()}}. The element \code{criterion_by} of \code{old}, the
 \code{\link[=OuterMethod]{OuterMethod()}} whose value is \code{criterion}, gives the criterion.}
 
-\item{crit}{The criterion \code{old} reached, \code{NA} where none ran.}
+\item{crit}{The criterion that \code{old} reached, or \code{NA} if no criterion ran.}
 
 \item{outer_criterion, sparse_criterion}{As passed to \code{\link[=statmod]{statmod()}}, read
 only where \code{old} does not record the criterion that produced \code{crit}; the
@@ -23,8 +23,9 @@ otherwise.}
 }
 \description{
 Compares a fit restarted by \code{\link[=statmod]{statmod()}} (after \code{\link[=edge_violations]{edge_violations()}}, or from
-a score-driven term's own start) with the one it replaces. The comparison
-is made on the criterion that chose the hyperparameters, where one ran, in
-the direction of that criterion, and on the penalized objective otherwise.
+a score-driven term's own start) with the one that it replaces. The
+comparison uses the criterion that chose the hyperparameters, where one
+ran, in the direction of that criterion, and uses the penalized objective
+otherwise.
 }
 \keyword{internal}

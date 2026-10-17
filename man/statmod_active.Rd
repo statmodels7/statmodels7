@@ -15,23 +15,24 @@ statmod_active(spec, blocks, beta, hyper, tol = 1e-08)
 
 \item{hyper}{The hyperparameters.}
 
-\item{tol}{How close to a kink counts as at it.}
+\item{tol}{The distance to a kink within which a coefficient is taken to be
+at the kink.}
 }
 \value{
 A logical vector as long as \code{beta}.
 }
 \description{
-A logical vector over the stacked coefficients, \code{FALSE} where one lies
-at a point its penalty is not differentiable at.
+Returns a logical vector over the stacked coefficients, with \code{FALSE} where a
+coefficient lies at a point at which its penalty is not differentiable.
 }
 \details{
 The kink locations come from \code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} read at
 the hyperparameters in force, and a coefficient is inactive when it sits at
-one of them. Everything outside a kinked block is active, having no kink to
-sit at.
+one of them. Everything outside a kinked block is active, because it has no
+kink at which to sit.
 
-A kinked penalty reaches this function with no map or with a diagonal map,
-which is what \code{standardize = TRUE} writes. A separable penalty under a
+A kinked penalty reaches this function with no map or with a diagonal map;
+\code{standardize = TRUE} writes a diagonal map. A separable penalty under a
 general map is the generalized-lasso problem, which
 \code{\link[penalties7:penalty_prox]{penalties7::penalty_prox()}} rejects. A block that reaches this function
 therefore penalizes its coefficients one at a time, and a kink of the

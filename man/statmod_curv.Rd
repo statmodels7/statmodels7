@@ -2,7 +2,7 @@
 % Please edit documentation in R/statmod.R
 \name{statmod_curv}
 \alias{statmod_curv}
-\title{The Curvature a SCAD or MCP Penalty Is Scaled By}
+\title{The Curvature by Which a SCAD or MCP Penalty Is Scaled}
 \usage{
 statmod_curv(spec, design, coef, expected, approx)
 }
@@ -14,8 +14,8 @@ statmod_curv(spec, design, coef, expected, approx)
 \item{expected, approx}{Which information.}
 }
 \value{
-The specification with the curvature written into the terms, or
-\code{NULL} where no penalty was written, so that the caller rebuilds its
+The specification in which the curvature is written into the terms,
+or \code{NULL} where no penalty was written, so that the caller rebuilds its
 blocks only when a penalty changed.
 }
 \description{
@@ -23,15 +23,16 @@ Writes into every SCAD and MCP penalty of the model the curvature of the
 likelihood in each of its coordinates, read at the given coefficients.
 }
 \details{
-The curvature of coordinate \eqn{j} is the one the coordinate descent steps
-with: \eqn{c_j = \sum_i w_i (x_{ij} - \bar x_j)^2}, the working weights
-being the ones \code{\link[=coord_working]{coord_working()}} returns for the coordinate's own equation
-and \eqn{\bar x_j} the column's weighted mean where the equation's
-intercept is profiled out of the descent (\code{\link[=coord_centers]{coord_centers()}}), and
-\eqn{\sum_i w_i x_{ij}^2} where it is not. The uncentered diagonal of the
-information is not used, because it differs from the curvature of the
-centered step when the column means are large relative to their standard
-deviations.
+The curvature of coordinate \eqn{j} is the one that the coordinate descent
+uses in its steps. It is \eqn{c_j = \sum_i w_i (x_{ij} - \bar x_j)^2}
+where the equation's intercept is profiled out of the descent
+(\code{\link[=coord_centers]{coord_centers()}}), with \eqn{w_i} the working weights that
+\code{\link[=coord_working]{coord_working()}} returns for the coordinate's own equation and
+\eqn{\bar x_j} the column's weighted mean, and it is
+\eqn{c_j = \sum_i w_i x_{ij}^2} where the intercept is not. The uncentered
+diagonal of the information is not used, because it differs from the
+curvature of the centered step when the column means are large relative to
+their standard deviations.
 
 It is called at the starting coefficients, at every pass of
 \code{\link[=statmod_alternate]{statmod_alternate()}} and once more at the fitted coefficients, so that
@@ -39,7 +40,7 @@ the scaling is self-consistent: at the fit, \eqn{c_j} is the curvature at
 the fit. The step condition of the descent is met because
 \code{\link[=coord_table_penalty]{coord_table_penalty()}} writes the current step's curvature into the
 table. Under a diagonal map \eqn{u = D\beta} the curvature is divided by
-\eqn{d_j^2}, the penalty being written on \eqn{u}. A penalty under any
+\eqn{d_j^2}, because the penalty is written on \eqn{u}. A penalty under any
 other map, or reached through a sub-term, is left as it is.
 }
 \keyword{internal}

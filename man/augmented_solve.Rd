@@ -26,11 +26,11 @@ integer. With \code{1L} the threaded route is not used.}
 A list with the elements \code{delta}, \code{rank} and \code{dropped}:
 \describe{
 \item{\code{delta}}{the increment, an unnamed numeric vector of length \code{p}.
-Zero in every coordinate that the pivoted route dropped.}
-\item{\code{rank}}{the rank used, an integer. Always \code{p} on the threaded
-and sparse routes, which decline on a deficient matrix instead of
-reporting a smaller rank, and the number of retained singular
-values on the \code{"svd"} route.}
+It is zero in every coordinate that the pivoted route dropped.}
+\item{\code{rank}}{the rank used, an integer. It is always \code{p} on the
+threaded and sparse routes, which hand a deficient matrix to the
+dense route instead of reporting a smaller rank, and it is the
+number of retained singular values on the \code{"svd"} route.}
 \item{\code{dropped}}{the integer positions of the columns that the pivoted
 \code{qr()} route left out (the aliased coordinates); \code{integer(0)} on the
 sparse, threaded and \code{"svd"} routes.}
@@ -50,19 +50,19 @@ and not at \eqn{\kappa^2}, which the normal equations would give.
 \section{The four routes}{
 The routes are tried in this order.
 \enumerate{
-\item \strong{Sparse QR}, when either factor is a \pkg{Matrix} object. The pair is
-passed to \code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}, which declines on a
+\item Sparse QR, when either factor is a \pkg{Matrix} object. The pair is
+passed to \code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}, which returns \code{NULL} on a
 rank-deficient matrix.
-\item \strong{SVD}, when \code{how = "svd"}. The singular values below
+\item SVD, when \code{how = "svd"}. The singular values below
 \eqn{\max(\dim A)\,\epsilon\,\sigma_{\max}} are dropped and the
-increment is built from the retained right singular vectors, so a
-deficient system gets the minimum-norm solution.
-\item \strong{The threaded triangular factor}, when \code{how = "qr"}, \code{threads > 1}
+increment is built from the retained right singular vectors, so the
+solution of a deficient system is the minimum-norm one.
+\item The threaded triangular factor, when \code{how = "qr"}, \code{threads > 1}
 and \eqn{m p^2} is at least \code{5e7}, where \eqn{m} is the number of rows
 of \eqn{A}. Only the triangular factor is read, so a kernel that
 produces it without accumulating \eqn{Q} does the whole job.
-\item \strong{\code{qr()}}, the pivoted LINPACK route, which returns a rank and can
-drop columns. A sparse solve that declined continues here on
+\item \code{qr()}, the pivoted LINPACK route, which returns a rank and can
+drop columns. A sparse solve that returned \code{NULL} continues here on
 densified factors.
 }
 }
@@ -70,7 +70,7 @@ densified factors.
 \section{Why the rank test is equilibrated}{
 The threaded route is taken only where the matrix has full rank by a
 comfortable margin. The test reads the diagonal of the triangular factor
-\strong{divided by each column's norm}. Writing \eqn{T} for the triangular
+divided by each column's norm. Writing \eqn{T} for the triangular
 factor of \eqn{A}, so that \eqn{A'A = T'T}, scaling the columns of \eqn{A}
 scales the diagonal of \eqn{T} by the same factors, so the ratio is the
 diagonal of a decomposition with unit column norms.

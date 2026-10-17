@@ -2,7 +2,7 @@
 % Please edit documentation in R/blocks.R
 \name{sparse_fit}
 \alias{sparse_fit}
-\title{Fit One Non-Smooth Block, the Others Held Fixed}
+\title{Fit One Non-Smooth Block While the Others Are Held Fixed}
 \usage{
 sparse_fit(
   obj,
@@ -36,7 +36,7 @@ set in \code{\link[=coord_fit]{coord_fit()}} and \code{\link[=coord_call]{coord_
 \item{verbose}{Whether the optimizer of the proximal routes prints its own
 trace. The coordinate descent route does not use it.}
 
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}. With \code{spec} or \code{design} \code{NULL} the
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}. If \code{spec} or \code{design} is \code{NULL}, the
 coordinate descent is skipped.}
 
 \item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
@@ -53,13 +53,14 @@ A list with \code{par} (the whole vector, updated in this block),
 \code{"proximal gradient"} or \code{"proximal gradient (structural)"}).
 }
 \description{
-Estimates the coefficients of one block with a kinked penalty, the other
-coefficients held fixed. A penalty over a structural term's own parameters
-is fitted by \code{\link[=sparse_fit_structural]{sparse_fit_structural()}}. Otherwise a compiled coordinate
-descent, \code{\link[=coord_fit]{coord_fit()}}, is used where the penalty describes its proximal
-operator as a table, and an accelerated proximal gradient iteration runs on
-the block where it does not, the smooth part of the objective supplying the
-gradient and the penalty its proximal operator.
+Estimates the coefficients of one block with a kinked penalty while the other
+coefficients are held fixed. A penalty over a structural term's own
+parameters is fitted by \code{\link[=sparse_fit_structural]{sparse_fit_structural()}}. Otherwise a compiled
+coordinate descent, \code{\link[=coord_fit]{coord_fit()}}, is used where the penalty describes its
+proximal operator as a table, and an accelerated proximal gradient iteration
+runs on the block where it does not, in which the smooth part of the
+objective supplies the gradient and the penalty supplies its proximal
+operator.
 }
 \details{
 The coordinate descent of \code{\link[=coord_fit]{coord_fit()}} reads the columns of the design and

@@ -35,8 +35,8 @@ A list with \code{value}, \code{converged} and \code{iterations}.
 }
 \description{
 Estimates each structural term's parameters on the unconstrained scale of
-\code{\link[modelterms7:term_links]{modelterms7::term_links()}}, the coefficients held where they
-are, by a general optimizer with the exact gradient.
+\code{\link[modelterms7:term_links]{modelterms7::term_links()}}, while the coefficients stay where they are,
+by a general optimizer with the exact gradient.
 }
 \details{
 The scoring step does not apply to these parameters, because they are not

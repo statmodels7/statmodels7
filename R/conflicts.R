@@ -2,8 +2,8 @@
 #'
 #' @description
 #' Reports the names exported by more than one attached member package,
-#' together with the packages exporting them, ordered so that the package a
-#' bare name reaches comes first. Attaching several packages puts several
+#' together with the packages exporting them, ordered so that the package that
+#' a bare name reaches comes first. Attaching several packages puts several
 #' environments on the search path, and a name exported by two of them
 #' resolves to whichever was attached last; this function shows which
 #' function that is. The members currently export no name in common, so the
@@ -13,21 +13,22 @@
 #' # Definition of a conflict
 #'
 #' A conflict is a name exported by two members. A name that one member
-#' exports and another only registers an S7 or S3 method on is not a conflict
-#' and does not appear, since methods dispatch on the class of the argument
-#' and do not mask.
+#' exports and on which another member only registers an S7 or S3 method is
+#' not a conflict and does not appear, since methods dispatch on the class of
+#' the argument and do not mask.
 #'
 #' Only members that are attached are examined. A package that is merely
 #' installed puts nothing on the search path and masks nothing, so it cannot
-#' contribute, and with fewer than two members attached the result is empty
-#' by construction.
+#' contribute. If fewer than two members are attached, the result is empty by
+#' construction.
 #'
 #' # Scope of the comparison
 #'
 #' The comparison is between the members. The exports of `statmodels7`
 #' itself are not compared with theirs, so a name that this package and a
-#' member both export would not be reported here. No such name exists at
-#' present, and the example below performs the check.
+#' member both export would not be reported here. At present every name that
+#' this package exports differs from the names that the members export, and
+#' the example below performs the check.
 #'
 #' # Namespaces and attached environments
 #'
@@ -41,12 +42,12 @@
 #'
 #' @return A named list, one entry per masked name, sorted by name. Each entry
 #'   is a character vector of the packages exporting that name, the most
-#'   recently attached first, which is the one a bare call reaches. An empty
-#'   named list when nothing is masked, so `length()` is the count of
-#'   conflicts and `names()` are the masked names.
+#'   recently attached first, which is the one that a bare call reaches. If no
+#'   name is masked, the result is an empty named list, so `length()` gives
+#'   the number of conflicts and `names()` gives the masked names.
 #'
 #' @seealso [statmodels7_packages()] for the members examined,
-#'   [format_conflicts()] for the one-line-per-name rendering the attach
+#'   [format_conflicts()] for the one-line-per-name rendering that the attach
 #'   message uses.
 #'
 #' @examples
@@ -54,8 +55,8 @@
 #' statmodels7_conflicts()
 #' length(statmodels7_conflicts())
 #'
-#' # The check that this function does not perform: for each member, the
-#' # number of names shared with the exports of statmodels7 itself.
+#' # The following check, which this function does not perform, counts for
+#' # each member the names shared with the exports of statmodels7 itself.
 #' own <- getNamespaceExports("statmodels7")
 #' vapply(statmodels7_packages(),
 #'        function(p) length(intersect(own, getNamespaceExports(p))),
@@ -90,19 +91,21 @@ statmodels7_conflicts <- function() {
 #'
 #' @description
 #' Formats the result of [statmodels7_conflicts()] as one line per masked
-#' name, in the shape the attach message prints:
+#' name, in the shape that the attach message prints:
 #' `x pkgA::name masks pkgB::name`. The winner is named on the left of
-#' `masks` and every package it hides on the right, comma separated.
+#' `masks`, and every package that it hides is named on the right, comma
+#' separated.
 #'
 #' @param conflicts A named list as [statmodels7_conflicts()] returns: one
 #'   entry per masked name, each a character vector of at least two package
-#'   names with the winner first. An empty list gives an empty result. Not
-#'   validated; a vector of length one would render as masking nothing.
+#'   names with the winner first. An empty list gives an empty result. The
+#'   argument is not validated, and a vector of length one would render as
+#'   masking nothing.
 #'
 #' @return A character vector with one element per entry of `conflicts`, in
-#'   the order they arrived, with no names. `character(0)` for an empty
-#'   input, so a caller can `c()` the result into a message
-#'   unconditionally.
+#'   the order in which they arrived, with no names. The result is
+#'   `character(0)` for an empty input, so a caller can `c()` the result into
+#'   a message unconditionally.
 #'
 #' @seealso [statmodels7_conflicts()] for the input,
 #'   [statmodels7_attach_message()] for the other half of the same message.

@@ -7,37 +7,37 @@
 cv(nfolds = 10, folds = NULL, rule = c("min", "1se"))
 }
 \arguments{
-\item{nfolds}{How many folds, a single number of at least 2. \code{10} by
-default. Ignored when \code{folds} is given.}
+\item{nfolds}{How many folds, a single number of at least 2. The default
+is \code{10}. It is ignored when \code{folds} is given.}
 
 \item{folds}{A fold number per observation, an integer vector as long as
-the data, for a partition of your own or to compare two criteria on the
+the data, for a user-defined partition or to compare two criteria on the
 same one. \code{NULL}, the default, draws a partition with a fixed seed.}
 
 \item{rule}{\code{"min"} for the best criterion, \code{"1se"} for the sparsest fit
-within one standard error of it. Matched with \code{\link[=match.arg]{match.arg()}}.}
+within one standard error of it. It is matched with \code{\link[=match.arg]{match.arg()}}.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"cv"}, carrying \code{nfolds},
 \code{rule} and \code{folds}. Its \code{hessian} is \code{"observed"} and its \code{k} is
-\code{NA_real_}, neither being read by this criterion.
+\code{NA_real_}; this criterion reads neither.
 }
 \description{
 Builds the object with which \code{\link[=statmod]{statmod()}} chooses the hyperparameters of
 the penalties with a kink by cross-validation: the points of a path of
 values are scored by the log-likelihood that the fit assigns to
-observations it was not fitted on, and the best is kept. The result is
-passed as \code{sparse_criterion}. It is not an outer criterion:
-\code{outer_criterion = cv()} is an error, the smoothing parameters being
+observations on which it was not fitted, and the best is kept. The result
+is passed as \code{sparse_criterion}. It is not an outer criterion:
+\code{outer_criterion = cv()} is an error, because the smoothing parameters are
 estimated by \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}}.
 }
 \section{Cross-validation for a penalty with a kink}{
 A marginal criterion, \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}}, approximates an integral by a
 Laplace expansion at the penalized mode, which requires the second
 derivative of the penalty there. The mode of a lasso, a SCAD or an MCP
-sits at the kink for every coefficient it sets to zero, and that is where
-the derivative does not exist, so the criterion is undefined at the point
-it would be read at.
+sits at the kink for every coefficient that it sets to zero, and the
+derivative does not exist at the kink, so the criterion is undefined at the
+point at which it would be read.
 
 Cross-validation scores prediction and not a posterior, and it needs
 nothing from the penalty beyond a fit.
@@ -47,9 +47,10 @@ penalty left to estimate, \code{cv()} has no effect.
 }
 
 \section{The criterion}{
-The mean over folds of \eqn{-2\ell_f/w_f}, where \eqn{\ell_f} is the
-weighted log-likelihood of the fold left out at the coefficients fitted on
-the other folds, and \eqn{w_f} is the sum of the weights of its rows. Each
+The criterion is the mean over folds of \eqn{-2\ell_f/w_f}, where
+\eqn{\ell_f} is the weighted log-likelihood of the fold left out at the
+coefficients fitted on the other folds, and \eqn{w_f} is the sum of the
+weights of its rows. Each
 training fit reapplies to its rows the terms built on all the rows (knots,
 factor levels and scales of standardization), as \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
 does for new data, and carries the weights and offsets of the fit.
@@ -83,9 +84,9 @@ constructor did not hold at a number.
 }
 
 \section{A product within a term, an alternation between terms}{
-A term with several kinked hyperparameters has every combination visited
-under \code{search = "grid"} and one hyperparameter swept at a time under
-\code{"cyclic"}.
+For a term with several kinked hyperparameters, every combination is
+visited under \code{search = "grid"} and one hyperparameter is swept at a time
+under \code{"cyclic"}.
 
 The choice belongs to the term, through \code{enet(X, search =)} and
 \code{\link[modelterms7:term_search]{modelterms7::term_search()}}, and not to this criterion. The criterion is
@@ -98,13 +99,14 @@ that \code{y ~ lasso(X) + enet(R)} costs the two blocks added and not
 multiplied, and a term that sets a product does not make the other term
 pay for it.
 
-A term that names neither gets the product, because the cyclic sweep
+A term that names neither is swept over the product, because the cyclic sweep
 traverses a cross through the point in hand and can stop where each
 coordinate is separately best without being jointly so. Its cost is the
-product of the term's grids where the cyclic sweep's is their sum, which at
-two hyperparameters is \code{n_lambda * n_alpha} fits against
-\code{n_lambda + n_alpha} per pass; with three or more estimated it grows
-exponentially, and \code{"cyclic"} is there for that case.
+product of the term's grids, whereas the cost of the cyclic sweep is their
+sum. At two hyperparameters this is \code{n_lambda * n_alpha} fits against
+\code{n_lambda + n_alpha} per pass. If three or more hyperparameters are
+estimated, the cost of the product grows exponentially, and \code{"cyclic"} is
+there for that case.
 }
 
 \section{How long the path is, and how far down it reaches}{
@@ -122,7 +124,7 @@ The grid is not a rectangle for the elastic net and is a rectangle for
 SCAD and MCP. The elastic net's kink is \eqn{\lambda\alpha}, so the value
 emptying the block is \eqn{\lambda_{\max} = \kappa/\alpha} and every
 \eqn{\alpha} carries its own \eqn{\lambda} axis, descending from its own
-top. The shapes of SCAD and MCP leave the kink alone, so that
+top. The shapes of SCAD and MCP do not change the kink, so that
 \eqn{\lambda_{\max}} is one number whatever the shape and the two axes form
 a rectangle. Each axis is built at the settings of the axes outside it,
 which covers both cases without a rule about families.
@@ -134,7 +136,7 @@ term's \code{n_lambda} for one kinked hyperparameter, and the product of its
 axes for several. The fits along a path are warm-started within each fold.
 
 The folds run over separate R processes when
-\code{statmod(threads = n_threads(workers = 4))} requests them, with one seed
+\code{statmod(threads = n_threads(workers = 4))} requests them. One seed is
 drawn per fold in the parent, so that the answer is identical at any worker
 count.
 }

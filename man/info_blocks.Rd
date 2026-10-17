@@ -18,8 +18,8 @@ negated observed Hessian.}
 
 \item{approx}{How the expected information is approximated for a family
 that has no closed form, passed through to \pkg{distributions7}:
-\code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}. Ignored
-when \code{expected} is \code{FALSE} or when the family computes its expected
+\code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}. It is
+ignored when \code{expected} is \code{FALSE} or when the family computes its expected
 information exactly.}
 
 \item{H}{The family's link-scale second derivatives, as
@@ -33,17 +33,17 @@ two indices, with \eqn{K} the number of distribution parameters.
 \description{
 Assembles \eqn{\Omega_i}, the \eqn{K \times K} information of observation
 \eqn{i} with respect to the \eqn{K} link-scale predictors, multiplied by
-that observation's prior weight. This is the per-observation curvature a
-scoring step is built from, before any design enters.
+that observation's prior weight. This is the per-observation curvature from
+which a scoring step is built, before any design enters.
 }
 \details{
 The derivatives come from the family on the link scale, so the chain rule
 onto \eqn{\eta} has already been applied by \pkg{distributions7} and
-nothing here multiplies by a link's derivative. With \code{expected = TRUE} the
-expected information is taken and the blocks are positive definite
-wherever the family is regular; with \code{expected = FALSE} the observed
-Hessian is negated, which far from the optimum is routinely indefinite.
-In that case \code{\link[=chol_blocks]{chol_blocks()}} returns \code{NULL}.
+the function does not multiply by a link's derivative. With \code{expected = TRUE}
+the expected information is taken and the blocks are positive definite
+wherever the family is regular; with \code{expected = FALSE} the observed Hessian
+is negated, which far from the optimum is routinely indefinite. In that case
+\code{\link[=chol_blocks]{chol_blocks()}} returns \code{NULL}.
 
 The weights enter as given, without normalization, so a weight of two
 counts an observation twice.

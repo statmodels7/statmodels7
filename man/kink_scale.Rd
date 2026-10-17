@@ -18,13 +18,14 @@ derivative is read.}
 A single non-negative number, \code{0} where there is no kink.
 }
 \description{
-Half the jump of \eqn{\rho'} across the first point the penalty is not
-differentiable at, which is the half-width of the subdifferential there.
+Returns half the jump of \eqn{\rho'} across the first point at which the
+penalty is not differentiable, which is the half-width of the
+subdifferential there.
 }
 \details{
 A coefficient stays at the kink while the unpenalized score at that point is
-inside the subdifferential, so this number is what a score has to exceed for
-a coefficient to leave zero. It is \eqn{\lambda} for the lasso, SCAD and
+inside the subdifferential, so a score has to exceed this number for a
+coefficient to leave zero. It is \eqn{\lambda} for the lasso, SCAD and
 MCP, and \eqn{\lambda\alpha} for the elastic net, but it is read and never
 assumed: a penalty built from a density carries the same information in a
 hyperparameter of its own, and a Laplace prior written by its scale has a
@@ -36,12 +37,12 @@ map, which \code{standardize = TRUE} writes, the kink differs by coordinate. Thi
 function reads the first coordinate's kink, and \code{\link[=coord_kinks]{coord_kinks()}} returns the
 kink of every coordinate.
 
-The derivative just past the kink depends on the distance it is read at
-(MCP's, for example, is \eqn{\lambda - \epsilon/\gamma}), so the one-sided
-derivatives at distances \eqn{\epsilon/2} and \eqn{\epsilon} are combined by
-Richardson extrapolation to the limit. The extrapolation is exact for a
-penalty that is affine on each side of the kink, as the lasso, SCAD, MCP and
-the elastic net are.
+The derivative just past the kink depends on the distance at which it is
+read (MCP's, for example, is \eqn{\lambda - \epsilon/\gamma}), so the
+one-sided derivatives at distances \eqn{\epsilon/2} and \eqn{\epsilon} are
+combined by Richardson extrapolation to the limit. The extrapolation is
+exact for a penalty that is affine on each side of the kink, as the lasso,
+SCAD, MCP and the elastic net are.
 }
 \seealso{
 \code{\link[=kink_hypers]{kink_hypers()}}, \code{\link[=kink_solve]{kink_solve()}}

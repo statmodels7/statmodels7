@@ -22,7 +22,7 @@ length \code{p}.}
 \item{s_prev}{The size of the kink at the previous point, one number per
 column, or \code{NULL} when there is no previous point.}
 
-\item{threads}{The thread count the gradient read may use, a plain
+\item{threads}{The thread count that the gradient read may use, a plain
 integer.}
 
 \item{center}{\code{TRUE} when the block is solved with its equation's intercept
@@ -31,21 +31,22 @@ gradient is read.}
 }
 \value{
 An integer vector of one-based column indices to visit, in
-ascending order. Every column when \code{s_prev} is \code{NULL} or either kink
-size is not usable. A coordinate already away from zero is always kept,
-whatever its gradient, so the rule can only ever add coordinates to the
-active set. Never empty: where the test discards everything, the column
-with the largest gradient is kept.
+ascending order. The result is every column when \code{s_prev} is \code{NULL} or
+either kink size is not usable. A coordinate already away from zero is
+always kept, whatever its gradient, so the rule can only ever add
+coordinates to the active set. The result is never empty: where the test
+discards everything, the column with the largest gradient is kept.
 }
 \description{
-The sequential strong rule: a coordinate whose gradient at the previous
-point of the path is below \eqn{2s_k - s_{k-1}} is left out of the sweeps.
+Selects the coordinates to visit by the sequential strong rule: a
+coordinate whose gradient at the previous point of the path is below
+\eqn{2s_k - s_{k-1}} is left out of the sweeps.
 }
 \details{
-The rule rests on the gradient moving no faster than the threshold does.
+The rule assumes that the gradient moves no faster than the threshold does.
 That is an assumption and not a bound, so the rule screens without
-proving, and the caller checks what it discarded. With no previous point
-there is nothing to screen against and every coordinate is visited.
+proving, and the caller checks what it discarded. If there is no previous
+point, the screening has no reference and every coordinate is visited.
 }
 \seealso{
 \code{\link[=coord_fit]{coord_fit()}}

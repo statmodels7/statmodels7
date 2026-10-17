@@ -21,13 +21,13 @@ corresponding columns are skipped.
 }
 \details{
 A term \eqn{0 \cdot x_{ij}} adds exactly zero to the running sum, so
-leaving those columns out gives the same number, the remaining products
-being summed in the same column order. The design is subset only where
-fewer than all the coefficients are nonzero; with none, the result is a
-vector of zeros. A non-finite coefficient keeps the full product. The
-design itself is taken to be finite, as a model matrix is: an infinite
-entry in a column whose coefficient is zero would make the full product
-\code{NaN} and this one not.
+leaving those columns out gives the same number, because the remaining
+products are summed in the same column order. The design is subset only where
+fewer than all the coefficients are nonzero; when all of them are zero, the
+result is a vector of zeros. A non-finite coefficient keeps the full
+product. The design itself is taken to be finite, as a model matrix is: an
+infinite entry in a column whose coefficient is zero would make the full
+product \code{NaN} but would not affect this one.
 }
 \seealso{
 \code{\link[=statmod_eta]{statmod_eta()}}, \code{\link[=coord_screen]{coord_screen()}}

@@ -11,7 +11,7 @@ assemble_blocks(blocks, sparse)
 and columns \code{b} for \code{b >= a}. Entries below the diagonal are not read.}
 
 \item{sparse}{Whether the result is a \code{dgCMatrix}, as
-\code{\link[=design_sparse]{design_sparse()}} decides for the accumulator it replaces.}
+\code{\link[=design_sparse]{design_sparse()}} determines for the accumulator that it replaces.}
 }
 \value{
 The assembled matrix, without dimnames: a \code{dgCMatrix} without
@@ -19,17 +19,17 @@ stored zeros when \code{sparse} is \code{TRUE}, otherwise a base matrix.
 }
 \description{
 Binds a symmetric matrix out of the blocks on and above its block
-diagonal, the ones below being the transposes of those above.
+diagonal; the blocks below are the transposes of those above.
 }
 \details{
 It replaces writing each block into a zero accumulator. With a sparse
 design that accumulator is a \code{dgCMatrix}, and a sub-assignment into it
 rebuilds the compressed columns at every assignment. Binding the blocks
 once avoids that and does no arithmetic on them, so the entries are the
-ones the products gave.
+ones that the products gave.
 }
 \seealso{
-\code{\link[=zero_information]{zero_information()}}, the accumulator this replaces where every
-block is written exactly once.
+\code{\link[=zero_information]{zero_information()}}, the accumulator that this replaces where
+every block is written exactly once.
 }
 \keyword{internal}

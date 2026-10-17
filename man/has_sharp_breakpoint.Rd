@@ -13,9 +13,10 @@ has_sharp_breakpoint(spec)
 A single logical.
 }
 \description{
-\code{TRUE} where some equation carries \code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}}
-or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} with neither \code{smoothed} nor \code{marginal = TRUE},
-whose contribution has a kink in the break-point at the observations.
+Returns \code{TRUE} where some equation carries \code{\link[modelterms7:seg]{modelterms7::seg()}},
+\code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} with neither \code{smoothed} nor
+\code{marginal = TRUE}, a term whose contribution has a kink in the break-point
+at the observations.
 }
 \details{
 \code{\link[=fit_smooth]{fit_smooth()}} reads it to keep \code{\link[=iwls_fit]{iwls_fit()}} from escalating the

@@ -11,13 +11,13 @@ bind_blocks(mats, n)
 each dense or sparse. May be empty.}
 
 \item{n}{The number of observations, used only when \code{mats} is empty, where
-there is no block to read a row count from.}
+there is no block from which to read a row count.}
 }
 \value{
 An \verb{n x p} matrix with \code{p} the total width of the blocks: a
 \pkg{Matrix} object when any input is sparse, a base matrix otherwise.
-An \verb{n x 0} base matrix for an empty \code{mats}, as an equation
-carrying only a structural term gives.
+For an empty \code{mats} the result is an \verb{n x 0} base matrix, which is the
+design of an equation that carries only a structural term.
 }
 \description{
 Binds one equation's term blocks side by side into its design, keeping the
@@ -32,13 +32,13 @@ Blocks are bound with \code{cbind()} when all of them are base matrices. When
 any block is sparse, they are bound with \code{Matrix::cbind2()}, so that the
 result is a \pkg{Matrix} object whatever the order of the blocks.
 
-The result is sparse when \strong{one} block is. Sparsity is a property of the
+The result is sparse when one block is. Sparsity is a property of the
 assembled matrix and not of its pieces: a dense fixed block beside a large
 indicator leaves a matrix that is still overwhelmingly zero, and its
 factorization stays sparse under a fill-reducing ordering.
 }
 \seealso{
 \code{\link[=design_sparse]{design_sparse()}} for the same test applied to a whole design,
-\code{\link[=statmod_design]{statmod_design()}} for the assembly this serves.
+\code{\link[=statmod_design]{statmod_design()}} for the assembly that this serves.
 }
 \keyword{internal}

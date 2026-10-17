@@ -12,8 +12,8 @@ wcrossprod(A, w, B, threads = 1L)
 taken and the result is whatever \code{crossprod()} gives for that pair.}
 
 \item{w}{Per-observation weights, a numeric vector of length \code{n}. A weight
-of any sign is accepted; nothing here assumes the working weights are
-positive.}
+of any sign is accepted; the function does not assume that the working
+weights are positive.}
 
 \item{threads}{The thread count, a plain integer as
 \code{\link[numericals7:thread_count]{numericals7::thread_count()}} returns it. \code{1L}, the default, takes the
@@ -24,26 +24,27 @@ A \verb{pa x pb} numeric matrix, with the column names of \code{A} and \code{B}
 as its dimnames when either block carries them.
 }
 \description{
-Computes \eqn{A^\top \mathrm{diag}(w) B}, the weighted cross product the
-information matrix and the outer Hessian are assembled from. Above a work
-threshold, and only when more than one thread is requested, the work goes
-to the package's own threaded kernel. Everywhere else the function
-evaluates \code{crossprod(A * w, B)}, which is the expression the kernel
+Computes \eqn{A^\top \mathrm{diag}(w) B}, the weighted cross product from
+which the information matrix and the outer Hessian are assembled. Above a
+work threshold, and only when more than one thread is requested, the work
+goes to the package's own threaded kernel. Everywhere else the function
+evaluates \code{crossprod(A * w, B)}, which is the expression that the kernel
 replaces.
 }
 \section{Why the answer does not depend on the thread count}{
-The kernel splits the work over the \strong{elements of the output}: one thread
-owns one entry \eqn{(j,k)} and accumulates its whole dot product, in
-ascending row order, with the weight multiplied onto \code{A}'s entry before
-the product is formed. No accumulation is ever split between threads, so
-the sum is the same sequence of additions at any count and the result is
-identical bit for bit at any thread count.
+The kernel splits the work over the elements of the output: one thread
+owns one entry \eqn{(j,k)} and accumulates its whole dot product in
+ascending row order, multiplying the weight onto \code{A}'s entry before
+the product is formed. The kernel never splits an accumulation between
+threads, so the sum is the same sequence of additions at any count and the
+result is identical bit for bit at any thread count.
 
-That guarantee is about the kernel alone. It says nothing about the two
-routes agreeing with each other: engaging the kernel replaces a BLAS call,
-and an optimized BLAS (OpenBLAS, Accelerate) blocks its accumulations into
-a different order. The two routes therefore agree to the last bit on R's
-reference BLAS and to the rounding of a single dot product elsewhere.
+That guarantee concerns only the kernel and does not cover the agreement
+of the two routes with each other: engaging the kernel replaces a BLAS
+call, and an optimized BLAS (OpenBLAS, Accelerate) blocks its
+accumulations into a different order. The two routes therefore agree to
+the last bit on R's reference BLAS and to the rounding of a single dot
+product elsewhere.
 }
 
 \section{When the kernel is used}{
@@ -55,9 +56,9 @@ for blocks of different heights. A sparse design keeps its \pkg{Matrix}
 route, where a dense kernel would gain nothing: the cost there is set by
 the number of stored nonzeros, and the threshold reads the dense shape.
 
-The threshold is a constant in the source, with no argument to set it. It
-lies above the work at which opening a parallel region costs what it
-saves.
+The threshold is a constant in the source, and the function has no argument
+for it. It lies above the work at which opening a parallel region costs what
+it saves.
 }
 
 \section{Dimnames}{

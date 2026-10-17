@@ -13,9 +13,9 @@ joint_objective(fit)
 A single number, on the scale of \code{fit@objective}.
 }
 \description{
-The minimum of the penalized objective over every coefficient at the
-fitted hyperparameters, which is the unrestricted side of the likelihood
-ratio \code{\link[=statmod_stat_at]{statmod_stat_at()}} computes.
+Computes the minimum of the penalized objective over every coefficient at
+the fitted hyperparameters, which is the unrestricted side of the
+likelihood ratio that \code{\link[=statmod_stat_at]{statmod_stat_at()}} computes.
 }
 \details{
 The restricted fit of \code{\link[=statmod_restrict]{statmod_restrict()}} holds one coefficient and takes
@@ -30,9 +30,9 @@ mode, and \code{fit@objective} is not its minimum. A likelihood ratio
 differenced against \code{fit@objective} then contains the difference between
 the objective at the fitted point and at the joint mode.
 
-The full model is therefore refitted with nothing held, from the fitted
-coefficients, which are already close to the joint mode, at the fitted
-hyperparameters. Where the criterion estimated nothing, the fit is at the
+The full model is therefore refitted from the fitted coefficients, which
+are already close to the joint mode, at the fitted hyperparameters, and no
+coefficient is held. Where the criterion estimated nothing, the fit is at the
 joint mode and \code{fit@objective} is returned unchanged.
 }
 \seealso{

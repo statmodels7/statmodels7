@@ -19,22 +19,23 @@ frame with one row per observation, in the order of the data, and one
 column per regime, \code{state1}, \code{state2}, and so on.
 }
 \description{
-The posterior summary of the latent variable over which a structural term
-of the likelihood shape integrates: the posterior mean and standard
-deviation of each group's break-points for a marginal break-point term
+Returns the posterior summary of the latent variable over which a
+structural term of the likelihood shape integrates: the posterior mean and
+standard deviation of each group's break-points for a marginal break-point
+term
 (\code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}
 with \code{marginal = TRUE}), and the smoothed probability of each regime at
 each observation for \code{\link[modelterms7:regime]{modelterms7::regime()}}.
 }
 \details{
 The quantities come from the same decomposition on which the marginal
-likelihood is computed. For a break-point term it is the posterior over a group's
-intervals or quadrature nodes, with the within-interval moments those of
-the fitted prior truncated to it. For a regime term it is the forward and
-backward recursions, which give \eqn{P(S_t = j \mid y_1, \dots, y_n)}.
-The computation is \code{\link[modelterms7:term_latent]{modelterms7::term_latent()}}'s; this function supplies
-the quantities that the term does not hold, the fitted predictors and the
-model's log-density.
+likelihood is computed. For a break-point term it is the posterior over a
+group's intervals or quadrature nodes, and the within-interval moments are
+those of the fitted prior truncated to the interval. For a regime term it
+is the forward and backward recursions, which give \eqn{P(S_t = j \mid y_1,
+\dots, y_n)}. The computation is \code{\link[modelterms7:term_latent]{modelterms7::term_latent()}}'s; this
+function supplies the quantities that the term does not hold, the fitted
+predictors and the model's log-density.
 }
 \examples{
 set.seed(1)
@@ -45,7 +46,7 @@ fit <- statmod(y ~ jump(x, psi ~ random(~1 | id), marginal = TRUE),
                distributions7::gaussian1_distrib(), dd)
 statmod_latent(fit)
 
-# the smoothed probability of the second regime at a change of level
+# The smoothed probability of the second regime is read at a change of level.
 dr <- data.frame(t = 1:60, y = c(rnorm(30), rnorm(30, 3)))
 fr <- statmod(y ~ regime(k = 2, time = t),
               distributions7::gaussian1_distrib(), dr)

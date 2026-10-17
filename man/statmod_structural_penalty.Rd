@@ -27,8 +27,8 @@ or matrix over that term's parameters in their own order; empty when no
 structural term carries a penalty.
 }
 \description{
-The value, gradient or Hessian of the penalties that a structural term
-declares, in the term's own parameters. \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} evaluates
+Computes the value, gradient or Hessian of the penalties that a structural
+term declares, in the term's own parameters. \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} evaluates
 the penalties on the coefficients.
 }
 \details{

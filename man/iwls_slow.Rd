@@ -9,14 +9,15 @@ iwls_slow(scores, rate)
 \arguments{
 \item{scores}{The scores of the run so far, one per iteration.}
 
-\item{rate}{The ratio above which a step counts as slow, or \code{NA} to never
-answer \code{TRUE}.}
+\item{rate}{The ratio above which a step counts as slow, or \code{NA}, for which
+the function never returns \code{TRUE}.}
 }
 \value{
 A single logical.
 }
 \description{
-\code{TRUE} where the last two ratios of consecutive scores both exceed \code{rate}.
+Returns \code{TRUE} where the last two ratios of consecutive scores both exceed
+\code{rate}.
 }
 \seealso{
 \code{\link[=iwls_fit]{iwls_fit()}}, \code{\link[=iwls_switch_rate]{iwls_switch_rate()}}.

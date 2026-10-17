@@ -10,37 +10,38 @@ statmod_design(spec, unseen = NULL, skip = character(0))
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{unseen}{A named list, one entry per distribution parameter, of the
-keys of the \code{\link[modelterms7:random]{modelterms7::random()}} terms whose rows of a level the fit
-never saw are given zeros instead of an error; \code{NULL} (the default) for
-none. It is how \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} reads a new group under
-\code{random = "zero"} or \code{"marginal"}.}
+keys of the \code{\link[modelterms7:random]{modelterms7::random()}} terms whose rows of a level that was
+absent from the fitting data are given zeros instead of an error; \code{NULL}
+(the default) for none. \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} uses it to read a new
+group under \code{random = "zero"} or \code{"marginal"}.}
 
 \item{skip}{The distribution parameters whose equations are not rebuilt
 from \code{spec@newdata}: each of their blocks is a matrix of zeros of the
-width the fit gave it. \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} passes the parameters a
-prediction does not read whose covariates \code{newdata} lacks; \code{character(0)}
-(the default) for none.}
+width that the fit gave it. \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} passes the parameters
+that a prediction does not read and whose covariates \code{newdata} lacks;
+\code{character(0)} (the default) for none.}
 }
 \value{
 A named list with one entry per parameter, each a list with \code{X},
 \code{asked_sparse} (whether a block is sparse because the caller requested
 it, absent for an equation that holds only structural terms),
-\code{coef_names}, \code{npar} and \code{blocks} (the column range each term occupies).
+\code{coef_names}, \code{npar} and \code{blocks} (the column range that each term
+occupies).
 
 The list carries attributes where the model needs them. \code{structural} and
-\code{structure} are present when a structural term is, \code{structural} listing
-the structural units and \code{structure} being an environment with the term's
+\code{structure} are present when a structural term is; \code{structural} lists
+the structural units and \code{structure} is an environment with the term's
 current parameters and held levels. \code{refresh} and \code{state} are present when
-a term recomputes its own block, \code{refresh} listing those terms and \code{state}
-being an environment with the terms they chain from. Where no term moves
-with the coefficients and none is structural, the attribute \code{eta_memo} is
-an environment holding the last predictors \code{\link[=statmod_eta]{statmod_eta()}} computed on
-this design, so a second call at the same coefficients returns them
-without recomputing.
+a term recomputes its own block; \code{refresh} lists those terms and \code{state}
+is an environment with the terms from which they chain. When every block
+is independent of the coefficients and the design has no structural term,
+the attribute \code{eta_memo} is an environment holding the last predictors
+that \code{\link[=statmod_eta]{statmod_eta()}} computed on this design, so a second call at the
+same coefficients returns them without recomputing.
 }
 \description{
 Returns, per parameter, the terms' blocks side by side and the names of the
-coefficients they carry.
+coefficients that they carry.
 }
 \examples{
 dd <- data.frame(y = rnorm(20), x = runif(20))

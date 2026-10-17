@@ -49,7 +49,7 @@ partitions \eqn{\pi} of \eqn{B} gives
   \phi^{(k)}(x) = (-d)(-d-1)\cdots(-d-k+1)\, x^{-d-k}.}
 The derivatives \eqn{\mathcal{I}_\beta} are minus those of
 \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} and its higher-order
-siblings, all on the link scale. The highest array given sets the order:
-\code{D5} needs the fourth derivative of the information.
+siblings, and all of them are on the link scale. The highest array given sets
+the order: \code{D5} needs the fourth derivative of the information.
 }
 \keyword{internal}

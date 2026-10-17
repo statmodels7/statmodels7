@@ -14,8 +14,8 @@ A named numeric vector, one entry per distribution parameter, or
 \code{NULL} where the intercept-only fit is not available.
 }
 \description{
-For each distribution parameter, the mean over the observations of the
-expected information of its linear predictor,
+Computes, for each distribution parameter, the mean over the observations
+of the expected information of its linear predictor,
 \eqn{-\mathrm{E}[\partial^2 \ell / \partial \eta^2]}, at the parameters of
 the intercept-only fit.
 }

@@ -26,7 +26,8 @@ statmod_invert(
 \item{type}{Which variance sets the starting bracket, and which the Wald
 statistic reads.}
 
-\item{maxit}{How many widenings to try on each side before giving up.}
+\item{maxit}{How many widenings to try on each side before the search
+stops.}
 }
 \value{
 A numeric vector of two, \code{lower} and \code{upper}. An end that the
@@ -35,15 +36,15 @@ statistic could not be evaluated, is \code{NA}; both ends are \code{NA} when the
 standard error of the coefficient is not finite and positive.
 }
 \description{
-The set of values a test does not reject at \code{level}, found by locating the
-two points where the statistic crosses its critical value.
+Returns the set of values that a test does not reject at \code{level}, found by
+locating the two points where the statistic crosses its critical value.
 }
 \details{
 An interval by inversion is \eqn{\{b : T(b) \le \chi^2_{1,\alpha}\}}, and
 it is not symmetric about the estimate unless the statistic is a parabola
-in \eqn{b}. The Wald statistic is a parabola by construction, the
-curvature being read once at \eqn{\hat\beta}, and the other three
-statistics are not. The asymmetry is the reason to invert one of the other
+in \eqn{b}. The Wald statistic is a parabola by construction, because the
+curvature is read once at \eqn{\hat\beta}, and the other three statistics
+are not. The asymmetry is the reason to invert one of the other
 three: the interval follows the shape of the likelihood and not a quadratic
 fitted at its maximum.
 
@@ -56,6 +57,6 @@ estimates and run at the fitted hyperparameters, so the interval requires
 no outer search.
 }
 \seealso{
-\code{\link[=statmod_stat_at]{statmod_stat_at()}}, the statistic being inverted.
+\code{\link[=statmod_stat_at]{statmod_stat_at()}}, the statistic that is inverted.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/blocks.R
 \name{unit_beta}
 \alias{unit_beta}
-\title{The Coefficients a Penalized Unit Covers}
+\title{The Coefficients That a Penalized Unit Covers}
 \usage{
 unit_beta(u, coef, params)
 }
@@ -17,17 +17,18 @@ unit_beta(u, coef, params)
 A numeric vector as long as the unit's index.
 }
 \description{
-The values the unit's penalty is read at, in the unit's own order.
+Returns the values at which the unit's penalty is read, in the unit's own
+order.
 }
 \details{
-Written once because a unit's coefficients are addressed differently
-depending on what it is, and every caller needs the same vector. An ordinary
-unit sits in one equation and its columns are positions in that parameter's
-coefficients; a covariance class may span several equations and is
-addressed only in the stacked vector. Stacking and indexing serves both, and
-for an ordinary unit
-it returns exactly what \code{coef[[u$param]][u$cols]} returned, the stacked
-index being that parameter's offset plus those columns.
+This function is written once because a unit's coefficients are addressed
+differently depending on what the unit is, and every caller needs the same
+vector. An ordinary unit sits in one equation and its columns are positions
+in that parameter's coefficients; a covariance class may span several
+equations and is addressed only in the stacked vector. Stacking and indexing
+serves both, and for an ordinary unit it returns exactly what
+\code{coef[[u$param]][u$cols]} returned, because the stacked index is that
+parameter's offset plus those columns.
 
 A structural unit has no position in the stacked vector at all: its penalty
 covers the term's own parameters, which contribute no design column. It is

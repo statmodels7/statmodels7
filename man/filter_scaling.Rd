@@ -13,7 +13,7 @@ filter_scaling(tm)
 A single number.
 }
 \description{
-The \code{scaling} of a \code{\link[modelterms7:gas]{modelterms7::gas()}} term, and zero for a structural
-term that has none.
+Returns the \code{scaling} of a \code{\link[modelterms7:gas]{modelterms7::gas()}} term, and zero for a
+structural term that has none.
 }
 \keyword{internal}

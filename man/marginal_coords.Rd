@@ -16,29 +16,29 @@ marginal_coords(spec, design, method)
 \value{
 A list with \code{where} (integer positions in the stacked vector),
 \code{param} and \code{name} (the equation and the coefficient name of each
-position), and \code{skipped}, a named character vector giving, for every
-parameter that has coefficients, that the default named and that this
-function left out, the reason. Every field is empty where nothing is
-estimated this way.
+position), and \code{skipped}, a named character vector that gives the reason
+for every parameter that has coefficients, was named by the default and was
+left out by this function. Every field is empty if the criterion
+estimates no coefficient this way.
 }
 \description{
-The positions, in the stacked coefficient vector, of the coordinates that
-\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} estimate by maximizing the criterion: in the equation
-of every parameter that \code{\link[=marginal_params]{marginal_params()}} names, the coefficients that
-are not shrunk by a penalty.
+Returns the positions, in the stacked coefficient vector, of the coordinates
+that \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} estimate by maximizing the criterion: in the
+equation of every parameter that \code{\link[=marginal_params]{marginal_params()}} names, the coefficients
+that are not shrunk by a penalty.
 }
 \details{
-A coefficient qualifies when no penalty covers it, or when it lies in the
-null space of the quadratic penalty that covers it and that null space is
-spanned by coordinates. The free columns of \code{\link[modelterms7:s]{modelterms7::s()}} are the
+A coefficient qualifies when it is covered by no penalty, or when it lies in
+the null space of the quadratic penalty that covers it and that null space
+is spanned by coordinates. The free columns of \code{\link[modelterms7:s]{modelterms7::s()}} are the
 second case: the null space of the Demmler-Reinsch penalty is spanned by
 the coordinates of the linear part.
 
 A coefficient that a penalty with a kink covers (lasso, SCAD, MCP) does
 not qualify: it stays at the joint mode, and the criterion leaves it out
 of its determinant (\code{\link[=laplace_pinned]{laplace_pinned()}}). Beside a penalty with a kink the
-default names no parameter, so no coefficient is estimated on the
-criterion. A parameter that the caller names in \code{marginal} has its
+default names no parameter, so the criterion estimates no coefficient. A
+parameter that the caller names in \code{marginal} has its
 unpenalized coefficients estimated on the criterion, which corrects a
 dispersion's intercept for the columns of the mean that are fitted with
 it.

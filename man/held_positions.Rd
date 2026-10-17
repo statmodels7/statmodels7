@@ -18,12 +18,13 @@ values of the coefficients that the terms hold.}
 }
 \value{
 A list of two numeric vectors of equal length, \code{where} (integer
-positions) and \code{value}. Both are empty where nothing is held.
+positions) and \code{value}. Both are empty if the model holds no
+coefficient.
 }
 \description{
 Translates \code{spec@held_coef}, which names coefficients, into positions in
-the stacked coefficient vector the objective works on, with the values
-beside them.
+the stacked coefficient vector on which the objective works, with the
+values beside them.
 }
 \details{
 A hold is written by name, because the column order of the design follows

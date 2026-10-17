@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{path_forced}
 \alias{path_forced}
-\title{The Values a Caller Wrote Out}
+\title{The Values That a Caller Wrote Out}
 \usage{
 path_forced(pen, theta, name, values)
 }
@@ -19,8 +19,9 @@ path_forced(pen, theta, name, values)
 The distinct values sorted, from the emptiest fit to the fullest.
 }
 \description{
-The grid the term named, ordered from the emptiest fit towards the fullest
-so that the warm starts run the way every other path here runs.
+Returns the grid that the term named, ordered from the emptiest fit towards
+the fullest so that the warm starts run in the same direction as in every
+other path here.
 }
 \details{
 Which end is the sparse one is a property of the penalty and not of the
@@ -28,9 +29,9 @@ numbers: the kink of a lasso widens with \eqn{\lambda} and that of a
 Laplace prior written by its scale narrows with \eqn{\sigma}. The order is
 therefore taken from the sign of the exponent that \code{\link[=kink_power]{kink_power()}} reads,
 descending where the kink widens with the hyperparameter and ascending
-otherwise. No other rule is applied: the value that empties the block does
-not cap the grid and \code{min_ratio} does not extend it, both of those being
-ways to build a grid.
+otherwise. The function applies no other rule: the value that empties the
+block does not cap the grid, \code{min_ratio} does not extend it, and both of
+those are ways to build a grid.
 }
 \seealso{
 \code{\link[modelterms7:term_values]{modelterms7::term_values()}}, \code{\link[=path_values]{path_values()}}

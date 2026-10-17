@@ -19,7 +19,8 @@ free_of_kinks(score, spec, design, coef)
 \code{score}, with those entries set to zero.
 }
 \description{
-Zeroes the entries of a score at the coordinates \code{\link[=zero_kinked]{zero_kinked()}} returns.
+Zeroes the entries of a score at the coordinates that \code{\link[=zero_kinked]{zero_kinked()}}
+returns.
 }
 \details{
 At a coordinate that a kinked penalty holds at zero, the objective has no

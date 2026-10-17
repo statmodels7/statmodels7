@@ -15,7 +15,7 @@ coefficient, a single string.}
 \item{coefname}{The coefficient's name, a single string, as
 \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} reports it.}
 
-\item{value}{The value to hold it at, a single number.}
+\item{value}{The value at which to hold it, a single number.}
 }
 \value{
 A list:
@@ -26,14 +26,14 @@ A list:
 log-likelihood plus the penalty, which the fit minimizes.}
 \item{\code{score}}{the penalized score at the restricted point, a numeric
 vector over the stacked coefficients. Its free entries are zero to
-the tolerance; the held one is what the statistics read.}
+the tolerance; the statistics read the held one.}
 \item{\code{at}}{the held coordinate's position in that vector.}
 \item{\code{par}}{the restricted estimates, stacked.}
 \item{\code{information}}{a function of no arguments returning the
 penalized information at the restricted point. It is read at most
-once however often it is called, and not at all where nothing calls
-it, which is the ordinary case: the likelihood ratio and the
-gradient statistic need no matrix.}
+once however often it is called, and it is not read if the function
+is never called, which is the ordinary case: the likelihood ratio and
+the gradient statistic need no matrix.}
 \item{\code{mode_error}}{a function of no arguments returning
 \code{\link[=restricted_mode_error]{restricted_mode_error()}}, how far above its own mode the refit
 stopped. It reads the information, so it costs one Hessian.}
@@ -45,13 +45,14 @@ distance to the mode, which \code{\link[=restricted_mode_error]{restricted_mode_
 }
 \description{
 Maximizes the penalized likelihood over every coefficient but one, which
-is held at \code{value}. What comes back is the restricted maximum, the
-coefficients that attain it and the score there.
+is held at \code{value}. It returns the restricted maximum, the coefficients
+that attain it and the score there.
 }
 \details{
-The hold is written on the specification and enforced in the solve, so no
-formula is rewritten and no term is rebuilt: a design whose bases were
-rebuilt would carry different knots and answer for a different model. See
+The hold is written on the specification and enforced in the solve, so the
+refit does not rewrite the formula and does not rebuild any term: a design
+whose bases were rebuilt would carry different knots and would correspond
+to a different model. See
 \code{\link[=held_positions]{held_positions()}} and \code{\link[=iwls_solve]{iwls_solve()}} for the two halves.
 }
 \section{The hyperparameters are held too}{
@@ -79,7 +80,7 @@ recursion and not \eqn{X\beta}, and the hold does not reach it.
 
 A coefficient under a penalty that is twice differentiable is held like
 any other: a smooth's linear column and its rotated coordinates, a ridge,
-a random effect. What such a fit means is stated at \code{\link[=statmod_stat_at]{statmod_stat_at()}}.
+a random effect. \code{\link[=statmod_stat_at]{statmod_stat_at()}} states the meaning of such a fit.
 }
 
 \seealso{

@@ -20,15 +20,16 @@ design and the hyperparameters.}
 
 \item{expected, approx}{Which information.}
 
-\item{aliased}{Stacked positions the fit did not estimate.}
+\item{aliased}{Stacked positions that the fit did not estimate.}
 }
 \value{
 A numeric vector over the stacked coefficients, or \code{NULL}.
 }
 \description{
-The diagonal of \eqn{(H_{AA} + S_{AA})^{-1}H_{AA}} over the coordinates
-\eqn{A} away from a kink, and zero elsewhere: the count \code{\link[=statmod_pe]{statmod_pe()}}
-prices a point of a path with, one coordinate at a time.
+Returns the diagonal of \eqn{(H_{AA} + S_{AA})^{-1}H_{AA}} over the
+coordinates \eqn{A} away from a kink, and zero elsewhere. This is the count
+with which \code{\link[=statmod_pe]{statmod_pe()}} prices a point of a path, one coordinate at a
+time.
 }
 \details{
 The total is \code{\link[=statmod_pe]{statmod_pe()}}'s \eqn{\tau} at the same coefficients: where
@@ -38,8 +39,8 @@ trace is read through the same Cholesky factor. A coordinate in the
 concave zone of SCAD or MCP has a negative penalty curvature and counts more
 than one, which is Stein's count for those penalties.
 
-It answers only for a model with a kinked block and no structural term,
-and declines (\code{NULL}) where the penalty has no curvature over the active
+It returns a value only for a model with a kinked block and no structural
+term, and returns \code{NULL} where the penalty has no curvature over the active
 coordinates and the count of one per column cannot be certified
 (\code{\link[=design_count_exact]{design_count_exact()}} is \code{FALSE}, where \code{\link[=statmod_pe]{statmod_pe()}} reads a rank in
 place of a count), or where the penalized curvature of the active

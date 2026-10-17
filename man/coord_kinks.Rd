@@ -20,19 +20,19 @@ where the penalty reports no finite kink. Its first entry is
 }
 \description{
 Returns, for every coordinate of a kinked penalty, the size of its kink:
-half the jump of its derivative across the kink, which is the threshold a
-coordinate's gradient is compared with to decide whether it can stay at
-zero.
+half the jump of its derivative across the kink, which is the threshold
+against which a coordinate's gradient is compared to decide whether the
+coordinate can stay at zero.
 }
 \details{
-\code{\link[=kink_scale]{kink_scale()}} reads the first coordinate only, which is what a path needs
-to place its grid. A coordinate descent needs every coordinate's: under a
-diagonal map \eqn{D}, which is what \code{standardize} writes, coordinate
-\eqn{j}'s kink is \eqn{\lambda\lvert d_j\rvert}. The size is measured as in
-\code{\link[=kink_scale]{kink_scale()}}, by a Richardson extrapolation of the one-sided derivatives,
-on every coordinate at once. A scaled SCAD or MCP has its kink at
-\eqn{\lambda\lvert d_j\rvert} whatever its curvature, the scaling leaving
-the slope at the origin where it was.
+\code{\link[=kink_scale]{kink_scale()}} reads the first coordinate only, and a path needs only that
+coordinate to place its grid. A coordinate descent needs the kink of every
+coordinate. Under a diagonal map \eqn{D}, which \code{standardize} writes, the
+kink of coordinate \eqn{j} is \eqn{\lambda\lvert d_j\rvert}. The size is
+measured as in \code{\link[=kink_scale]{kink_scale()}}, by a Richardson extrapolation of the
+one-sided derivatives, on every coordinate at once. A scaled SCAD or MCP has
+its kink at \eqn{\lambda\lvert d_j\rvert} whatever its curvature, because
+the scaling leaves the slope at the origin where it was.
 }
 \seealso{
 \code{\link[=kink_scale]{kink_scale()}}, \code{\link[=coord_screen]{coord_screen()}}, \code{\link[=coord_fit]{coord_fit()}}

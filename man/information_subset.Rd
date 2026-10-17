@@ -24,12 +24,12 @@ A symmetric matrix over \code{index}, in that order: a \pkg{Matrix}
 object when any equation's design is sparse, a base matrix otherwise.
 }
 \description{
-The rows and columns of \code{\link[=statmod_information_at]{statmod_information_at()}} at the given positions,
-assembled from those columns of the designs alone.
+Computes the rows and columns of \code{\link[=statmod_information_at]{statmod_information_at()}} at the given
+positions, assembling them only from those columns of the designs.
 }
 \details{
 Block \eqn{(a, b)} of the result is \eqn{X_{a,J_a}'\,\mathrm{diag}(w\,
-h_{ab})\,X_{b,J_b}} over the columns \eqn{J_a} and \eqn{J_b} the
+h_{ab})\,X_{b,J_b}} over the columns \eqn{J_a} and \eqn{J_b} that the
 positions select in each equation, which is exactly the corresponding
 submatrix of the whole information and costs a cross product over those
 columns instead of over all of them. A mixture over regimes sums the

@@ -14,7 +14,7 @@ the search starts.}
 
 \item{name}{Which one to solve for.}
 
-\item{target}{The size the kink should have.}
+\item{target}{The size that the kink should have.}
 }
 \value{
 A single value, or \code{NA} where the target is out of reach.

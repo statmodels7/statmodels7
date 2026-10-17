@@ -7,9 +7,9 @@
 start_search(optimizer = optimizers7::sa(), over = NULL)
 }
 \arguments{
-\item{optimizer}{The optimizer to search with, any \pkg{optimizers7}
-optimizer. Defaults to \code{optimizers7::sa()}, simulated annealing, which
-is the one built for a multimodal surface.}
+\item{optimizer}{The optimizer that performs the search, any
+\pkg{optimizers7} optimizer. Defaults to \code{optimizers7::sa()}, simulated
+annealing, which is the one built for a multimodal surface.}
 
 \item{over}{Optional character vector naming the coefficients to search
 over, overriding the choice above. A coefficient is named by its label,
@@ -23,9 +23,9 @@ properties \code{optimizer} and \code{over}.
 }
 \description{
 Runs a global search once, before the fit begins, over the coordinates
-where the likelihood is not convex. Built for a model whose objective has
-several local optima: a break-point term, a nonlinear term, a score-driven
-filter or a latent-state mixture.
+where the likelihood is not convex. The strategy is built for a model whose
+objective has several local optima: a break-point term, a nonlinear term, a
+score-driven filter or a latent-state mixture.
 }
 \section{Once, before the fit}{
 A search is a starting value and is not part of the scoring step. If it
@@ -44,22 +44,22 @@ model.
 }
 
 \section{Which coordinates are searched}{
-The non-convex ones, which the toolkit can name: the parameters of a
-structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}), the
-coefficients of a term that recomputes its own block
-(\code{\link[modelterms7:nl]{modelterms7::nl()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} and the break-point terms), and
-each equation's intercept.
+The search covers the non-convex coordinates, which the toolkit can name:
+the parameters of a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}},
+\code{\link[modelterms7:regime]{modelterms7::regime()}}), the coefficients of a term that recomputes its own
+block (\code{\link[modelterms7:nl]{modelterms7::nl()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} and the break-point terms),
+and each equation's intercept.
 
 All other coefficients keep their default values. A smooth, a ridge or a
 random effect is a convex block whose optimum the scoring step reaches from
 any start, and a search over a thousand random-effect coefficients would
 spend the budget on the part of the model that needs a search least.
 
-A penalized coordinate is excluded \strong{wherever it sits}, including inside
+A penalized coordinate is excluded wherever it sits, including inside
 a non-convex term. A sub-formula can develop a break-point or a nonlinear
 parameter over groups, and the group deviations are columns of the block of
-that term. On the likelihood alone nothing identifies these deviations,
-because the penalty identifies them, so a search over them would fit the
+that term. Without the penalty these deviations are not identified, because
+only the penalty identifies them, so a search over them would fit the
 points of each group and move away from the penalized mode. In a \code{jseg()}
 term with \code{by = ~random(~1|id)}, most coordinates are such deviations.
 
@@ -69,10 +69,10 @@ A structural term's own parameters are searched in either case.
 
 \section{The hyperparameters}{
 The search does not cover the hyperparameters. Its objective is the
-likelihood with the penalties off, in which no hyperparameter appears, so
-no proposal can change one.
+likelihood with the penalties off, in which the hyperparameters do not
+appear, so a proposal cannot change them.
 
-A global search over the hyperparameters is a search over the \strong{outer}
+A global search over the hyperparameters is a search over the outer
 criterion, where each proposal requires a full refit and not one likelihood
 evaluation. It is requested by \code{statmod(outer_optimizer = optimizers7::sa())}. The hyperparameters of a kinked penalty are outside
 that search as well: they are chosen along a warm-started path scored by

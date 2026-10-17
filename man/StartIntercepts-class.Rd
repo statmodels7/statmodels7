@@ -27,19 +27,21 @@ StartFrom(label = character(0), fit = NULL, rest = NULL)
 \arguments{
 \item{label}{A single string, the name that the strategy prints.}
 
-\item{fn}{The generator a random start draws from, called as \code{fn(n, ...)}.
-\code{StartRandom} only.}
+\item{fn}{The generator from which a random start draws, called as
+\code{fn(n, ...)}. Only \code{StartRandom} carries this property.}
 
-\item{args}{A list of further arguments to \code{fn}. \code{StartRandom} only.}
+\item{args}{A list of further arguments to \code{fn}. Only \code{StartRandom} carries
+this property.}
 
 \item{center}{A single logical: whether the draw is added to the
-intercept-only start. \code{StartRandom} only.}
+intercept-only start. Only \code{StartRandom} carries this property.}
 
 \item{optimizer, over}{An \pkg{optimizers7} optimizer and an optional
-character vector of coefficient labels. \code{StartSearch} only.}
+character vector of coefficient labels. Only \code{StartSearch} carries these
+properties.}
 
-\item{fit, rest}{A \code{\link[=StatmodFit]{StatmodFit()}} and a \code{\link[=start_strategy]{start_strategy()}}. \code{StartFrom}
-only.}
+\item{fit, rest}{A \code{\link[=StatmodFit]{StatmodFit()}} and a \code{\link[=start_strategy]{start_strategy()}}. Only
+\code{StartFrom} carries these properties.}
 }
 \value{
 An S7 object inheriting from \code{\link[=start_strategy]{start_strategy()}}:
@@ -49,7 +51,7 @@ An S7 object inheriting from \code{\link[=start_strategy]{start_strategy()}}:
 \code{rest}.
 }
 \description{
-The five classes that \code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}},
+These are the five classes that \code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}},
 \code{\link[=start_random]{start_random()}}, \code{\link[=start_search]{start_search()}} and \code{\link[=start_from]{start_from()}} instantiate. Each
 inherits from \code{\link[=start_strategy]{start_strategy()}} and carries its \code{label}; \code{StartRandom}
 adds \code{fn}, \code{args} and \code{center}, \code{StartSearch} adds \code{optimizer} and \code{over},

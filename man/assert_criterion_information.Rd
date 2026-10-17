@@ -11,11 +11,11 @@ assert_criterion_information(distrib, method, approx)
 
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}, or \code{NULL}.}
 
-\item{approx}{The approximation the fit reads the expected information
-with, from \code{\link[=inner_settings]{inner_settings()}}.}
+\item{approx}{The approximation with which the fit reads the expected
+information, taken from \code{\link[=inner_settings]{inner_settings()}}.}
 }
 \value{
-\code{NULL}, invisibly. Called for the error.
+\code{NULL}, invisibly. The function is called for the error.
 }
 \description{
 Raises an error naming the family and the remedy when a criterion defined
@@ -29,16 +29,16 @@ at \eqn{y_i}, with the Fisher information
 \eqn{\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
 \partial\eta^\top]}, a function of the parameters alone. Where a family
 writes that information out, \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}
-answers \code{TRUE} and no check is made. Where a family does not write it out,
-for example a family written outside the toolkit, the information falls
-back on the strategy \code{approx} names, and the default, \code{"opg"}, returns
-\eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an unbiased
-estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not the
-information itself: it depends on the response, as the observed curvature
+returns \code{TRUE} and the check is skipped. Where a family does not write it
+out, for example a family written outside the toolkit, the information
+falls back on the strategy named by \code{approx}, and the default, \code{"opg"},
+returns \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an
+unbiased estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not
+the information itself: it depends on the response, as the observed curvature
 does, and it is neither of them. The criterion built on it is neither the
 Laplace approximation nor its Fisher variant, and it has no exact outer
 gradient, so its search is derivative-free and \code{\link[=statmod_certificate]{statmod_certificate()}}
-answers \code{unknown}.
+returns \code{unknown}.
 
 A criterion on the observed information has an exact outer gradient and
 Hessian and is searched with Newton's method; the outer-product route has

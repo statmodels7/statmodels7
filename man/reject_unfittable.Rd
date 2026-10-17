@@ -2,7 +2,7 @@
 % Please edit documentation in R/spec.R
 \name{reject_unfittable}
 \alias{reject_unfittable}
-\title{Reject a Term the Fitting Scheme Does Not Cover}
+\title{Reject a Term That the Fitting Scheme Does Not Cover}
 \usage{
 reject_unfittable(terms)
 }
@@ -21,15 +21,15 @@ does not cover, and any formula that carries more than one structural term.
 Terms are examined by what they implement and not by a list of class
 names, so a term written later is covered without an edit here.
 
-A \strong{structural} term rewrites the likelihood or the filtered predictor
+A structural term rewrites the likelihood or the filtered predictor
 instead of contributing a fixed design block, so it has no design block and
-answers neither \code{term_matrix()} nor \code{term_npar()}. A term of the filter
+does not implement \code{term_matrix()} or \code{term_npar()}. A term of the filter
 shape, such as \code{gas()}, contributes a predictor through \code{term_filter()}. A
 term of the likelihood shape, such as \code{regime()}, contributes a likelihood
-through \code{term_loglik()}. \code{\link[=statmod_structural]{statmod_structural()}} routes both. What this
-function rejects is a structural term that implements neither
-\code{term_filter()} nor \code{term_loglik()}, and a structural term of the
-likelihood shape that carries a covariance label (\code{\link[=unfittable_reason]{unfittable_reason()}}).
+through \code{term_loglik()}. \code{\link[=statmod_structural]{statmod_structural()}} routes both. The function
+rejects a structural term that implements neither \code{term_filter()} nor
+\code{term_loglik()}, and a structural term of the likelihood shape that
+carries a covariance label (\code{\link[=unfittable_reason]{unfittable_reason()}}).
 \code{\link[=reject_incompatible]{reject_incompatible()}} is called before these reasons are raised, so a
 formula with more than one structural term is rejected with that
 function's message.

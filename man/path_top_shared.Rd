@@ -9,7 +9,7 @@ path_top_shared(obj, beta, blocks, row, hyper, b)
 \arguments{
 \item{obj}{The stacked objective.}
 
-\item{beta}{The coefficients the scores are read at.}
+\item{beta}{The coefficients at which the scores are read.}
 
 \item{blocks}{The block split.}
 
@@ -23,20 +23,20 @@ path_top_shared(obj, beta, blocks, row, hyper, b)
 A single number, a size of \code{b}'s kink.
 }
 \description{
-The size of the kink, in the axis's own block's units, at which every
-member of the axis has all its coefficients at the kink.
+Returns the size of the kink, in the axis's own block's units, at which
+every member of the axis has all its coefficients at the kink.
 }
 \details{
 A shared axis is one value multiplying several penalties, which may sit in
-different equations -- a lasso on the mean and a lasso on the scale with
-one \code{id}. Each member's top is read from its own score, with every member
-held at its kink, and carried onto the value of the hyperparameter through
+different equations (a lasso on the mean and a lasso on the scale with
+one \code{id}). Each member's top is read from its own score, while every member
+is held at its kink, and carried onto the value of the hyperparameter through
 its own penalty; the axis starts at the largest of those values, written
-back as a size of the first member's kink, which is the size the rest of
-the path speaks. Two blocks of one equation sharing an \code{id} therefore start
-where a single block over both starts, the score of a column not depending
-on how the columns were grouped. Where nothing is shared this is
-\code{\link[=path_null_score]{path_null_score()}} of the one block.
+back as a size of the first member's kink, which is the size in which the
+rest of the path is expressed. Two blocks of one equation sharing an \code{id}
+therefore start where a single block over both starts, because the score of
+a column does not depend on how the columns were grouped. If the axis has a
+single member, this is \code{\link[=path_null_score]{path_null_score()}} of that block.
 }
 \seealso{
 \code{\link[=path_null_score]{path_null_score()}}, \code{\link[=path_member_index]{path_member_index()}}

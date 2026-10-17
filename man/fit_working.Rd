@@ -50,7 +50,7 @@ the phase was ended by \code{stall_limit}. In the iteration proper the list
 also carries a \code{note} element, which is \code{NULL}.
 }
 \description{
-The iteration of Fasola, Muggeo and Kuchenhoff (2018) for a term whose
+Runs the iteration of Fasola, Muggeo and Kuchenhoff (2018) for a term whose
 block is a working linearization with a frozen weight
 (\code{\link[modelterms7:jump]{modelterms7::jump()}} and \code{\link[modelterms7:jseg]{modelterms7::jseg()}}). The smooth block is
 fitted exactly at the committed block, the break-points are read off the
@@ -58,11 +58,11 @@ fitted coefficients and committed, and the two alternate until the
 read-off settles or the working objective stops moving.
 }
 \details{
-The sequencing is the whole of the difference from \code{\link[=fit_smooth]{fit_smooth()}}, and it
-is the sequencing of the \pkg{segmented} package. The fixed-point
-iteration these constructions belong to is not a descent method on the
+The two functions differ only in this sequencing, which is the sequencing
+of the \pkg{segmented} package. The fixed-point
+iteration to which these constructions belong is not a descent method on the
 objective of the model: its early steps under a large scaling factor move
-uphill on purpose, which is how it leaves a spurious optimum. Embedding
+uphill on purpose, and in this way it leaves a spurious optimum. Embedding
 the read-off inside the objective of the inner optimizer would put a
 sufficient-decrease line search in its way and stall it. During the
 working fit the frozen blocks contribute \eqn{X\beta} and nothing else
@@ -78,23 +78,24 @@ in cost. Each working fit is solved afresh at a frozen block, so a method
 that carries exact curvature closes it in a step or two, while a
 quasi-Newton method rebuilds its own curvature from nothing every time.
 
-The exit is at a fixed point of the iteration or in the cycle it settles
-into, judged on the working objective. The iteration stops when the
+The exit is at a fixed point of the iteration or in the cycle into which it
+settles, judged on the working objective. The iteration stops when the
 read-off has settled (\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}}) with the objective
 stalled, when the objective has stalled three times in a row, or when the
 objective equals its value two iterations back twice (the period-two
 cycle of the break-point that Muggeo documents, which a
-consecutive-change rule never sees). Only at a fixed point does the
-working objective coincide with the model's, so no best-so-far iterate is
-kept: mid-travel, the committed contribution of a good working value can
-sit orders of magnitude off the data. Running out of the budget reports
-\code{FALSE}.
+consecutive-change rule cannot detect). Only at a fixed point does the
+working objective coincide with the model's, so the fit does not keep a
+best-so-far iterate: mid-travel, the committed contribution of a good
+working value can sit orders of magnitude off the data. If the budget runs
+out, the verdict is \code{FALSE}.
 
 A phase that cannot settle is ended early and reports \code{FALSE} as well.
 This happens where every break-point that has not settled sits at the
 floor of its scaling factor (\code{\link[modelterms7:term_stalled]{modelterms7::term_stalled()}}) for
 \code{stall_limit} consecutive working fits: the factor can shrink no further,
-and nothing is left to bring the break-point to rest. The profile
+and there is nothing left with which to bring the break-point to rest. The
+profile
 objective of a discontinuous term is constant between consecutive
 observations, so such a break-point passes from one observation to the
 next for as long as the budget lasts. The default \code{stall_limit} of 20 ends

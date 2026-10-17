@@ -16,12 +16,12 @@ A named list, one entry per structural term, each a list with
 \code{parameter} (the named vector on the parameter scale), \code{unconstrained},
 \code{equation} (the distribution parameter in which the term sits) and \code{held}
 (the names of the parameters that an intercept of the equation carries).
-Empty when there is none.
+The list is empty when the model has no such term.
 }
 \description{
-One named vector per structural term, on the scale that the term's own
-documentation uses for its parameters, together with the unconstrained
-values that were estimated.
+Returns one named vector per structural term, on the scale that the
+term's own documentation uses for its parameters, together with the
+unconstrained values that were estimated.
 }
 \seealso{
 \code{\link[=statmod_fit_structural]{statmod_fit_structural()}}

@@ -15,10 +15,10 @@ NULL
 # Measured on 20000 x 221, one iteration of this spends 98.1% of its time
 # inside BLAS, so there is nothing here to compile.
 
-#' The Linear Predictors and the Parameters They Give
+#' The Linear Predictors and the Parameters That They Give
 #'
 #' @description
-#' Turns a coefficient structure into the per-observation parameters every
+#' Turns a coefficient structure into the per-observation parameters that every
 #' \pkg{distributions7} generic takes. Each equation's design, coefficients,
 #' offset and adjustment give a linear predictor \eqn{\eta_k}, and the
 #' parameter's own link inverts it to \eqn{\theta_k}.
@@ -26,7 +26,7 @@ NULL
 #' @details
 #' \deqn{\eta_k = X_k \beta_k + o_k + a_k, \qquad \theta_k = g_k^{-1}(\eta_k)}
 #'
-#' with \eqn{o_k} the equation's offset and \eqn{a_k} the adjustment a
+#' with \eqn{o_k} the equation's offset and \eqn{a_k} the adjustment that a
 #' refreshable term contributes, zero for an ordinary design.
 #'
 #' The inverse link is evaluated by `linkfunctions7::linkinv()`. The links
@@ -146,9 +146,8 @@ statmod_eta <- function(spec, design, coef) {
 #' counts an observation twice.
 #'
 #' @details
-#' No penalty enters. This is the likelihood alone; [statmod_penalty_at()]
-#' gives the other half of the objective, and [statmod_objective()] combines
-#' them.
+#' The log-likelihood contains no penalty; [statmod_penalty_at()] gives the
+#' other half of the objective, and [statmod_objective()] combines them.
 #'
 #' For a model with a term of the likelihood shape, a mixture over latent
 #' states, the log-likelihood of the term replaces the sum of the log-densities
@@ -157,15 +156,15 @@ statmod_eta <- function(spec, design, coef) {
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors, one per distribution
 #'   parameter.
-#' @param design The design. Rebuilt from `spec` when absent, which is
-#'   convenient at the console and wasteful in a loop.
+#' @param design The design. The function rebuilds it from `spec` when it is
+#'   absent, which is convenient at the console and wasteful in a loop.
 #'
-#' @return A single number. `-Inf` where the density is zero at some
-#'   observation, and `NaN` where the parameters are outside the family's
-#'   support, both of which a search reads as an unusable point.
+#' @return A single number. The value is `-Inf` where the density is zero at
+#'   some observation and `NaN` where the parameters are outside the family's
+#'   support; a search reads both as an unusable point.
 #'
 #' @seealso [statmod_score_at()] for its derivative,
-#'   [statmod_objective()] for the penalized objective it enters.
+#'   [statmod_objective()] for the penalized objective that it enters.
 #'
 #' @keywords internal
 statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
@@ -212,12 +211,13 @@ statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
 #' @param coef A named list of coefficient vectors.
 #' @param design The design, refreshed at `coef` if any term needs it.
 #' @param index `NULL` for every coefficient, or integer positions in the
-#'   stacked coefficients: only those columns enter the final products, which
-#'   is what a fit over a few coordinates of a wide model reads.
+#'   stacked coefficients, in which case only those columns enter the final
+#'   products; a fit over a few coordinates of a wide model uses this form.
 #'
 #' @return A named list of numeric vectors, one per distribution parameter in
 #'   the family's order, each as long as that equation's design is wide. With
-#'   `index`, a numeric vector over those positions, in the order given.
+#'   `index`, the value is a numeric vector over those positions, in the order
+#'   given.
 #'
 #' @seealso [statmod_loglik_at()] for the value,
 #'   [statmod_information_at()] for the curvature,
@@ -352,16 +352,16 @@ statmod_score_obs <- function(spec, coef, design) {
 #' The Score in a Structural Term's Own Parameters
 #'
 #' @description
-#' The derivative of the weighted log-likelihood in the unconstrained
+#' Computes the derivative of the weighted log-likelihood in the unconstrained
 #' parameters of each structural term, one entry per term.
 #'
 #' @details
-#' The filter's Jacobian is already the **total** derivative of the predictor
-#' in the term's own parameters, with the recursion propagated inside it. So
-#' a chain rule over the observations is the whole of the work here and no
-#' reverse pass is needed.
+#' The filter's Jacobian is already the total derivative of the predictor
+#' in the term's own parameters, and the recursion is propagated inside it. So
+#' the function needs only a chain rule over the observations, and it does not
+#' need a reverse pass.
 #'
-#' The reverse pass answers a different question: the derivative in the
+#' The reverse pass computes a different quantity: the derivative in the
 #' coefficients of the equations, where a coefficient reaches the level only
 #' through the scores at earlier times. That is `modelterms7::term_adjoint()`.
 #'
@@ -376,9 +376,10 @@ statmod_score_obs <- function(spec, coef, design) {
 #'
 #' @return A named list of numeric vectors, one entry per structural term,
 #'   keyed by the term's key in the specification, each as long as that term
-#'   has parameters. An empty list when the model carries no structural term.
+#'   has parameters. The list is empty when the model carries no structural
+#'   term.
 #'
-#' @seealso [statmod_filter_at()] for the filter run this reads,
+#' @seealso [statmod_filter_at()] for the filter run that this reads,
 #'   [statmod_score_at()] for the coefficients' own score.
 #'
 #' @keywords internal
@@ -439,7 +440,7 @@ statmod_structural_score <- function(spec, coef,
 #' @param theta The parameters, one value per observation.
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   observed Hessian.
-#' @param approx The strategy the expected information uses when the family
+#' @param approx The strategy that the expected information uses when the family
 #'   has no closed form, passed through to
 #'   [distributions7::distrib_expected_hessian()].
 #'
@@ -469,15 +470,15 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #' The Information of the Weighted Log-Likelihood
 #'
 #' @description
-#' The negative Hessian in the coefficients, assembled block by block from the
-#' distribution's own link-scale second derivatives.
+#' Computes the negative Hessian in the coefficients, assembled block by block
+#' from the distribution's own link-scale second derivatives.
 #'
 #' @details
 #' Block \eqn{(a, b)} is \eqn{X_a'\,\mathrm{diag}(w\,h_{ab})\,X_b} with
 #' \eqn{h_{ab}} the per-observation second derivative of the log-density in
 #' \eqn{(\eta_a, \eta_b)}, negated. The blocks are assembled in the storage
-#' the designs call for, so a model with a sparse equation gets a sparse
-#' information.
+#' type of the designs, so the information is sparse for a model with a sparse
+#' equation.
 #'
 #' `expected = TRUE` gives the expected information, which Fisher scoring
 #' inverts and which is positive definite wherever the family is regular.
@@ -506,13 +507,13 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #'   with no closed form: `"opg"` (the default), `"bartlett"`, `"integrate"`
 #'   or `"mc"`.
 #'
-#' @return A symmetric `p x p` matrix over the stacked coefficients, `p`
-#'   being their total count across the equations. A \pkg{Matrix} object when
-#'   any equation's design is sparse, a base matrix otherwise.
+#' @return A symmetric `p x p` matrix over the stacked coefficients, where `p`
+#'   is their total count across the equations. The matrix is a \pkg{Matrix}
+#'   object when any equation's design is sparse and a base matrix otherwise.
 #'
 #' @seealso [statmod_score_at()] for the first derivative,
-#'   [info_blocks()] for the per-observation blocks a square-root route uses
-#'   instead, and [statmod_family_hessian()] for the components both read.
+#'   [info_blocks()] for the per-observation blocks that a square-root route
+#'   uses instead, and [statmod_family_hessian()] for the components both read.
 #'
 #' @param H The second-derivative components at this point, as
 #'   [statmod_family_hessian()] returns them, or `NULL` to compute them here.
@@ -520,7 +521,7 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #'   ignores this.
 #' @param index `NULL` for the whole matrix, or integer positions in the
 #'   stacked coefficients: the submatrix over those positions, in the order
-#'   given, assembled from those columns alone.
+#'   given, assembled only from those columns.
 #'
 #' @keywords internal
 statmod_information_at <- function(spec, coef, design = statmod_design(spec),
@@ -583,12 +584,12 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
 #' The Information Over Some of the Coefficients
 #'
 #' @description
-#' The rows and columns of [statmod_information_at()] at the given positions,
-#' assembled from those columns of the designs alone.
+#' Computes the rows and columns of [statmod_information_at()] at the given
+#' positions, assembling them only from those columns of the designs.
 #'
 #' @details
 #' Block \eqn{(a, b)} of the result is \eqn{X_{a,J_a}'\,\mathrm{diag}(w\,
-#' h_{ab})\,X_{b,J_b}} over the columns \eqn{J_a} and \eqn{J_b} the
+#' h_{ab})\,X_{b,J_b}} over the columns \eqn{J_a} and \eqn{J_b} that the
 #' positions select in each equation, which is exactly the corresponding
 #' submatrix of the whole information and costs a cross product over those
 #' columns instead of over all of them. A mixture over regimes sums the
@@ -649,8 +650,9 @@ information_subset <- function(spec, design, ev, expected, approx, H, index) {
 #' The Second-Derivative Components of a Mixture, Averaged Over Its States
 #'
 #' @description
-#' For a likelihood mixed over states, each second-derivative component of
-#' the family averaged over the states with their smoothed probabilities,
+#' Computes, for a likelihood mixed over states, each second-derivative
+#' component of the family averaged over the states with their smoothed
+#' probabilities,
 #' \eqn{\bar h_{ab,i} = \sum_k \gamma_{ik} h_{ab}(\theta_{ik})}.
 #'
 #' @details
@@ -751,7 +753,7 @@ regime_hessian_sum <- function(spec, ev, expected, approx) {
 #' keyed by [distributions7::hess_names()] and never by position.
 #'
 #' @details
-#' The key is built by pasting the two parameter names in the order
+#' The key is built by pasting the two parameter names in the order that
 #' [distributions7::hess_names()] uses, and is never parsed back out of a
 #' name. For a family whose parameter name contains the separator, splitting
 #' `"log_scale_mu"` on the underscore gives the wrong pair, whereas generating
@@ -760,9 +762,9 @@ regime_hessian_sum <- function(spec, ev, expected, approx) {
 #' @param params The parameter names, in the family's order, as
 #'   `distrib@params` gives them.
 #' @param a,b Indices into `params`, in either order: the Hessian is
-#'   symmetric and this returns the key the list actually holds.
+#'   symmetric and this returns the key that the list actually holds.
 #'
-#' @return A single string, one of the names of the list
+#' @return A single string, one of the names of the list that
 #'   [distributions7::distrib_hessian()] returns.
 #'
 #' @seealso [statmod_information_at()], its caller.
@@ -774,7 +776,7 @@ hess_key <- function(params, a, b) {
   if (want %in% nm) return(want)
   alt <- paste(params[rev(sort(c(a, b)))], collapse = "_")
   if (alt %in% nm) return(alt)
-  stop(sprintf("No Hessian component for '%s' and '%s'.",
+  stop(sprintf("The family has no Hessian component for '%s' and '%s'.",
                params[a], params[b]), call. = FALSE)
 }
 
@@ -782,8 +784,8 @@ hess_key <- function(params, a, b) {
 #' The Penalty of a Specification at Given Coefficients
 #'
 #' @description
-#' The sum of every penalized term's `penalty_value()`, with its gradient
-#' and Hessian placed in the columns that term owns.
+#' Computes the sum of every penalized term's `penalty_value()`. The gradient
+#' and Hessian of that sum are placed in the columns that each term owns.
 #'
 #' @details
 #' For each penalized term the function evaluates the quantity at the
@@ -815,8 +817,8 @@ hess_key <- function(params, a, b) {
 #'
 #' @return Depends on `what`:
 #'   \describe{
-#'     \item{`"value"`}{a single number, the penalties summed. `0` for an
-#'       unpenalized model.}
+#'     \item{`"value"`}{a single number, the sum of the penalties. The value is
+#'       `0` for an unpenalized model.}
 #'     \item{`"gradient"`}{a named list of numeric vectors, one per
 #'       distribution parameter, zero in every unpenalized coordinate.}
 #'     \item{`"hessian"`}{a symmetric `p x p` matrix over the stacked
@@ -925,8 +927,8 @@ statmod_penalty_at <- function(spec, coef, hyper,
 #' The Penalty Over a Structural Term's Own Parameters
 #'
 #' @description
-#' The value, gradient or Hessian of the penalties that a structural term
-#' declares, in the term's own parameters. [statmod_penalty_at()] evaluates
+#' Computes the value, gradient or Hessian of the penalties that a structural
+#' term declares, in the term's own parameters. [statmod_penalty_at()] evaluates
 #' the penalties on the coefficients.
 #'
 #' @details
@@ -991,10 +993,10 @@ statmod_structural_penalty <- function(spec, design, hyper,
 }
 
 
-#' The Hyperparameters a Specification Starts From
+#' The Hyperparameters from Which a Specification Starts
 #'
 #' @description
-#' Builds the hyperparameter structure that a fit starts from: one entry per
+#' Builds the hyperparameter structure from which a fit starts: one entry per
 #' penalized term, each hyperparameter at the value given by
 #' [penalty_theta_start()]. That value is the probe value that
 #' \pkg{modelterms7} uses when it reads the kinks of a penalty, so that both
@@ -1013,10 +1015,10 @@ statmod_structural_penalty <- function(spec, design, hyper,
 #' @param design The design, as [statmod_design()] returns it. It is built
 #'   from `spec` when `NULL`.
 #'
-#' @return A named list with one entry per distribution parameter, each a
-#'   named list of numeric vectors keyed by term key, each vector named by
-#'   that penalty's own hyperparameters. An equation with no penalized term
-#'   holds an empty list.
+#' @return A named list with one entry per distribution parameter. Each entry
+#'   is a named list of numeric vectors keyed by term key, and each vector is
+#'   named by that penalty's own hyperparameters. An equation with no
+#'   penalized term holds an empty list.
 #'
 #' @seealso [penalty_theta_start()] for the start values of one penalty,
 #'   [statmod_held()] for the hyperparameters that are held.
@@ -1048,11 +1050,11 @@ statmod_hyper_start <- function(spec, design = NULL) {
 }
 
 
-#' The Value Each Sharing Label Is Held At
+#' The Value at Which Each Sharing Label Is Held
 #'
 #' @description
-#' One entry per label a member holds its hyperparameter at, keyed by the
-#' label.
+#' Returns one entry, keyed by the label, for each sharing label whose
+#' hyperparameter a member holds at a value.
 #'
 #' @details
 #' The members of a group estimate one value, so a value written on one of
@@ -1114,8 +1116,8 @@ statmod_held_ids <- function(units) {
 #' @param user A named list of named lists, keyed by distribution parameter
 #'   and then by term, or `NULL` for no overrides.
 #'
-#' @return The same structure as `start`, with the caller's values merged in.
-#'   `start` unchanged when `user` is `NULL`.
+#' @return The same structure as `start`, into which the caller's values are
+#'   merged. The result is `start` unchanged when `user` is `NULL`.
 #'
 #' @seealso [statmod_hyper_start()] for the structure,
 #'   [hyper_key()] for the name matching.
@@ -1188,12 +1190,12 @@ statmod_hyper_merge <- function(spec, start, user) {
 #'
 #' @param spec A [StatmodSpec()], read for the terms' labels.
 #' @param start The hyperparameter structure, whose names are the keys.
-#' @param p The distribution parameter whose equation to look in, a string.
+#' @param p The distribution parameter in whose equation to look, a string.
 #' @param name What the caller wrote: a key or a label.
 #'
-#' @return A single string, the key `start[[p]]` holds the term under.
-#'   Signals an error when `name` matches nothing, and when it matches the
-#'   labels of two terms at once.
+#' @return A single string, the key under which `start[[p]]` holds the term.
+#'   The function signals an error when `name` matches nothing, and when it
+#'   matches the labels of two terms at once.
 #'
 #' @seealso [statmod_hyper_merge()], its caller.
 #'
@@ -1241,11 +1243,12 @@ hyper_key <- function(spec, start, p, name) {
 #' on `dr_prod(2)` it gives standard deviations of \eqn{e^1 = 2.718} and a
 #' correlation of -0.664. Zero is the neutral point of the chart, with unit
 #' standard deviations and no correlation, so that a coordinate unbounded on
-#' both sides starts at zero. This is also where an ordinary random effect
-#' starts, because its own scale is bounded below and starts at `lower + 1`.
+#' both sides starts at zero. An ordinary random effect also starts at that
+#' neutral point, because its own scale is bounded below and starts at
+#' `lower + 1`.
 #'
 #' The value is a starting point only, and the criterion moves it. A start
-#' that the inner fit cannot converge from can end the search, and the
+#' from which the inner fit cannot converge can end the search, and the
 #' neutral point of an unbounded coordinate converges in cases where a start
 #' at one does not. A hyperparameter bounded on both sides starts at the
 #' midpoint of its bounds, and one bounded on one side starts one `unit`
@@ -1254,15 +1257,15 @@ hyper_key <- function(spec, start, p, name) {
 #' are bounded below by zero and start at one.
 #'
 #' @param pen A \pkg{penalties7} penalty object, read for its
-#'   `params_bounds` property alone.
+#'   `params_bounds` property only.
 #' @param unit How far from a one-sided bound the neutral point sits, `1` by
 #'   default. A simulation that draws a prior over the coordinates of a chart
 #'   may pass a smaller value, which keeps the persistences drawn on a
 #'   partial-autocorrelation chart away from the edge of the chart.
 #'
 #' @return A named numeric vector, one entry per hyperparameter of `pen`,
-#'   named as the penalty names them. `numeric(0)` for a penalty with none,
-#'   which a fixed prior is.
+#'   named as the penalty names them. The value is `numeric(0)` for a penalty
+#'   with none, which a fixed prior is.
 #'
 #' @seealso [statmod_hyper_start()], its caller.
 #'
@@ -1317,7 +1320,8 @@ penalty_theta_start <- function(pen, unit = 1) {
 #' @param design The design, as [statmod_design()] returns it.
 #' @param hyper The hyperparameters as [statmod_hyper_start()] returns them.
 #'
-#' @return `hyper`, with the free values of each matrix parameter moved.
+#' @return `hyper`, in which the free values of each matrix parameter are
+#'   moved.
 #'
 #' @seealso [statmod_hyper_start()], which supplies the neutral start.
 #'
@@ -1360,9 +1364,9 @@ statmod_hyper_scale_start <- function(spec, design, hyper) {
 #' The Matrix Parameter of a Multivariate Prior
 #'
 #' @description
-#' The chart, the names of its free values among the family's parameters, and
-#' whether the matrix is a precision, read from a multivariate family under
-#' any number of [distributions7::fixed()] wrappers.
+#' Returns the chart, the names of its free values among the family's
+#' parameters, and whether the matrix is a precision, read from a multivariate
+#' family under any number of [distributions7::fixed()] wrappers.
 #'
 #' @param d A \pkg{distributions7} object.
 #'
@@ -1390,9 +1394,9 @@ hyper_matrix_param <- function(d) {
 #' The Units of the Free Values of a Matrix Prior
 #'
 #' @description
-#' One multiplier per row of `idx`: the factor that turns the outer curvature
-#' in a hyperparameter's free value into the curvature in a free value
-#' without units. It is 1 except for a free value of a matrix prior that
+#' Computes one multiplier per row of `idx`: the factor that turns the outer
+#' curvature in a hyperparameter's free value into the curvature in a free
+#' value without units. It is 1 except for a free value of a matrix prior that
 #' scales with the matrix.
 #'
 #' @details
@@ -1446,10 +1450,10 @@ hyper_unit_scale <- function(spec, design, hy, idx) {
 #' The Degree of Each Free Value of a Chart in the Scale of Its Matrix
 #'
 #' @description
-#' \eqn{k_j \in \{-1, 0, 1\}} for each free value: 1 when multiplying the
-#' matrix by \eqn{\lambda^2} multiplies the free value by \eqn{\lambda}, -1
-#' when it divides it by \eqn{\lambda}, and 0 otherwise (a log-scale
-#' coordinate, which shifts, or a correlation, which does not move).
+#' Computes \eqn{k_j \in \{-1, 0, 1\}} for each free value: 1 when
+#' multiplying the matrix by \eqn{\lambda^2} multiplies the free value by
+#' \eqn{\lambda}, -1 when it divides it by \eqn{\lambda}, and 0 otherwise (a
+#' log-scale coordinate, which shifts, or a correlation, which does not move).
 #'
 #' @param chart A \pkg{parameters7} matrix chart.
 #'
@@ -1474,7 +1478,7 @@ chart_homogeneity <- function(chart) {
 #' The Variance of Each Equation's Working Response
 #'
 #' @description
-#' One number per distribution parameter: the weighted variance of
+#' Computes one number per distribution parameter: the weighted variance of
 #' \eqn{z_i = \eta_p + U_{ip} / I_{ip} - o_{ip}}, the working response at the
 #' intercept-only fit less the offset, as [statmod_hyper_scale_start()]
 #' defines it.
@@ -1518,30 +1522,32 @@ working_response_variance <- function(spec) {
 #' The Objective, Its Gradient and Its Hessian, Stacked
 #'
 #' @description
-#' \eqn{F(\beta) = -\ell(\beta) + \sum_t \rho_t}, unaveraged, over the
-#' coefficients of every parameter stacked into one vector.
+#' Builds the objective \eqn{F(\beta) = -\ell(\beta) + \sum_t \rho_t}, which is
+#' not averaged over the observations, over the coefficients of every
+#' parameter stacked into one vector.
 #'
 #' @details
 #' # The objective is not divided by the sample size
 #'
 #' A penalty is a negative log-prior at full size, and a posterior adds a
-#' log-likelihood and a log-prior at full size. Averaging the likelihood
-#' alone would make a hyperparameter mean something that depends on \eqn{n}.
+#' log-likelihood and a log-prior at full size. Averaging only the likelihood
+#' would make a hyperparameter mean something that depends on \eqn{n}.
 #'
-#' What is scaled instead is the stopping rule, in the one place it is read.
+#' Instead, the stopping rule is scaled, in the one place where it is read.
 #' See [iwls()] and [iwls_score()].
 #'
 #' # The closures share one design
 #'
 #' The functions `fn`, `gr`, `gr_sub` and `he` close over `design` and
-#' `hyper`, and `he` also over the two information settings, so that a
+#' `hyper`, and `he` also closes over the two information settings, so that a
 #' change of a hyperparameter requires a new objective. The outer search
 #' builds a new objective at every point that it visits.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param hyper The hyperparameters, per penalized term, held for the life of
 #'   the objective.
-#' @param design The design. Rebuilt from `spec` when absent.
+#' @param design The design. The function rebuilds it from `spec` when it is
+#'   absent.
 #' @param expected `TRUE` for the expected information in `he`, `FALSE` for
 #'   the observed one.
 #' @param approx How the expected information is approximated for a family
@@ -1554,7 +1560,7 @@ working_response_variance <- function(spec) {
 #'     \item{`fn(b)`}{the objective at the stacked coefficients `b`, a single
 #'       number.}
 #'     \item{`gr(b)`}{its gradient, a numeric vector as long as `b`.}
-#'     \item{`gr_sub(b, idx)`}{the gradient at the positions `idx` alone.}
+#'     \item{`gr_sub(b, idx)`}{the gradient only at the positions `idx`.}
 #'     \item{`he(b)`}{its Hessian, the information matrix (expected or
 #'       observed according to `expected`) plus the Hessian of the penalties,
 #'       a `p x p` matrix.}
@@ -1632,20 +1638,20 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
 #' A Covariance Class Split Between the Coefficients and a Filter's Parameters
 #'
 #' @description
-#' The value, gradient and Hessian of every penalty whose coordinates are part
-#' coefficients and part a structural term's own parameters, placed in the
-#' joint vector \eqn{[\beta; \zeta_{\mathrm{free}}]}.
+#' Computes the value, gradient and Hessian of every penalty whose coordinates
+#' are part coefficients and part a structural term's own parameters, and
+#' places them in the joint vector \eqn{[\beta; \zeta_{\mathrm{free}}]}.
 #'
 #' @details
 #' # One function for both parts
 #'
 #' The prior of a class is one object over one stacked vector. \pkg{penalties7}
 #' computes one gradient and one Hessian over that vector, in the order of the
-#' class, and has no notion of the split: it treats the coordinates as \eqn{m}
-#' blocks of \eqn{d} numbers with a covariance in common. Splitting the result
-#' into a coefficient part and a parameter part would report each as though
-#' the other were absent and would lose the cross block, the only place where
-#' the correlation between the two enters.
+#' class, and does not represent the split: it treats the coordinates as
+#' \eqn{m} blocks of \eqn{d} numbers with a covariance in common. Splitting
+#' the result into a coefficient part and a parameter part would give each
+#' part as though the other were absent, and the cross block, which is the
+#' only place where the correlation between the two enters, would be lost.
 #'
 #' The scatter is therefore written once, and the three assemblies that build
 #' the joint matrix add what it returns: the inner step
@@ -1667,11 +1673,12 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
 #' @param hyper The hyperparameters.
 #' @param what Which quantity: `"value"`, `"gradient"` or `"hessian"`.
 #' @param n The length of the joint vector, `nb` plus the number of free
-#'   parameters. Read from the caller, which has already computed it.
+#'   parameters. The function reads it from the caller, which has already
+#'   computed it.
 #'
 #' @return For `"value"` a single number; for `"gradient"` a numeric vector of
-#'   length `n`; for `"hessian"` an `n` by `n` matrix. Zero throughout where no
-#'   class is mixed.
+#'   length `n`; for `"hessian"` an `n` by `n` matrix. The result is zero
+#'   throughout if no class is mixed.
 #'
 #' @seealso [statmod_penalty_at()] for the coefficients' own penalties,
 #'   [statmod_structural_penalty()] for a filter's.
@@ -1725,13 +1732,13 @@ joint_penalty_at <- function(spec, design, coef, hyper,
 #'
 #' @details
 #' A term \eqn{0 \cdot x_{ij}} adds exactly zero to the running sum, so
-#' leaving those columns out gives the same number, the remaining products
-#' being summed in the same column order. The design is subset only where
-#' fewer than all the coefficients are nonzero; with none, the result is a
-#' vector of zeros. A non-finite coefficient keeps the full product. The
-#' design itself is taken to be finite, as a model matrix is: an infinite
-#' entry in a column whose coefficient is zero would make the full product
-#' `NaN` and this one not.
+#' leaving those columns out gives the same number, because the remaining
+#' products are summed in the same column order. The design is subset only where
+#' fewer than all the coefficients are nonzero; when all of them are zero, the
+#' result is a vector of zeros. A non-finite coefficient keeps the full
+#' product. The design itself is taken to be finite, as a model matrix is: an
+#' infinite entry in a column whose coefficient is zero would make the full
+#' product `NaN` but would not affect this one.
 #'
 #' @param X A design block, dense or a \pkg{Matrix} class.
 #' @param b Its coefficients, `ncol(X)` numbers.

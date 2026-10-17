@@ -31,15 +31,16 @@ parameter.}
 A dense symmetric matrix over the coefficients of every equation.
 }
 \description{
-\eqn{H + S}, dense, with the penalty's non-finite entries zeroed.
+Returns \eqn{H + S} as a dense matrix and sets the penalty's non-finite
+entries to zero.
 }
 \details{
-The matrix a penalized fit's curvature is read from: the model's
-information from \code{\link[=statmod_information_at]{statmod_information_at()}} and the penalty's Hessian
-from \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}. It is written once because its readers, the
-rank test of \code{\link[=deficient_coords]{deficient_coords()}} in \code{\link[=statmod]{statmod()}}, the readings of the
-alternation (\code{\link[=alternation_readings]{alternation_readings()}}) and the flat-direction test of the
-outer search, must use the same matrix at the same point.
+This is the matrix from which a penalized fit's curvature is read: the
+model's information from \code{\link[=statmod_information_at]{statmod_information_at()}} and the penalty's
+Hessian from \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}. It is written once because its
+readers, the rank test of \code{\link[=deficient_coords]{deficient_coords()}} in \code{\link[=statmod]{statmod()}}, the readings
+of the alternation (\code{\link[=alternation_readings]{alternation_readings()}}) and the flat-direction test
+of the outer search, must use the same matrix at the same point.
 
 A kinked penalty contributes no curvature away from its kink, and any
 non-finite entry would be the kink itself reached by a hair, so the

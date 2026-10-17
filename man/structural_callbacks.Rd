@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{structural_callbacks}
 \alias{structural_callbacks}
-\title{The Score and Curvature a Filter Is Driven By}
+\title{The Score and Curvature That Drive a Filter}
 \usage{
 structural_callbacks(spec, theta, p, scaling = 0)
 }
@@ -12,25 +12,25 @@ structural_callbacks(spec, theta, p, scaling = 0)
 \item{theta}{The per-observation parameters, as
 \code{\link[=statmod_eta]{statmod_eta()}} returns them.}
 
-\item{p}{The distribution parameter the term sits in.}
+\item{p}{The distribution parameter in whose equation the term sits.}
 
 \item{scaling}{The exponent \eqn{d} of \code{\link[modelterms7:gas]{modelterms7::gas()}}: where it is
 not zero, \code{score} returns \eqn{u = s\,\mathcal{I}^{-d}} and \code{curvature}
 its derivative in the predictor,
 \eqn{u' = s'\,\mathcal{I}^{-d} - d\,s\,\mathcal{I}^{-d-1}\mathcal{I}'},
-and the compiled context carries \code{scaling}, its kernel composing the
+and the compiled context carries \code{scaling}, and its kernel composes the
 same quantities from the family's scalar entry points.}
 }
 \value{
-A list with \code{score}, \code{curvature}, \code{logdens} and \code{fast}, the last
-being the context for the compiled filter, or \code{NULL} where the registries
-of \pkg{distributions7} and \pkg{linkfunctions7} do not cover the family
-and the link.
+A list with \code{score}, \code{curvature}, \code{logdens} and \code{fast}, where
+\code{fast} is the context for the compiled filter, or \code{NULL} where the
+registries of \pkg{distributions7} and \pkg{linkfunctions7} do not cover
+the family and the link.
 }
 \description{
-The derivative of the log-density in one distribution parameter's
+Returns the derivative of the log-density in one distribution parameter's
 predictor, and its second derivative, as functions of that predictor at
-one observation, with every other parameter held where it is.
+one observation, while every other parameter stays where it is.
 }
 \details{
 They are read one observation at a time because a score-driven filter

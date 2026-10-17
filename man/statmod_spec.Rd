@@ -18,13 +18,13 @@ statmod_spec(
 \item{formula}{The model formula, with the parameters' equations separated
 by \code{|}.}
 
-\item{distrib}{A \pkg{distributions7} distribution object, which decides
+\item{distrib}{A \pkg{distributions7} distribution object, which determines
 how many equations there are and what they are called.}
 
 \item{data}{A data frame holding the response, the covariates and any
-matrix columns the terms name. A missing value in the response, or in a
-variable that an equation names, is an error, because a fit does not
-drop rows.}
+matrix columns that the terms name. A missing value in the response, or in
+a variable that an equation names, is an error, because a fit does not drop
+rows.}
 
 \item{weights}{Optional prior weights, a numeric vector of length
 \code{nrow(data)} (not the name of a column), or \code{NULL} for all ones. The
@@ -36,29 +36,30 @@ each a finite numeric vector of length 1 or \code{nrow(data)}, summed with any
 offset the formula names for the same parameter.}
 
 \item{need_response}{\code{TRUE}, the default, requires the left-hand side to
-evaluate. \code{FALSE} is what prediction uses: new data routinely has no
+evaluate. Prediction uses \code{FALSE}, because new data routinely has no
 response column.}
 
 \item{linpar}{How the implicit parametric block is built, as
-\code{\link[=linpar_options]{linpar_options()}} returns it. Kept on the specification, so a rebuild
-such as a fold of \code{\link[=cv]{cv()}} reproduces the storage instead of quietly
-densifying.}
+\code{\link[=linpar_options]{linpar_options()}} returns it. The options are kept on the specification,
+so that a rebuild such as a fold of \code{\link[=cv]{cv()}} reproduces the storage instead
+of quietly densifying.}
 }
 \value{
 A \code{\link[=StatmodSpec]{StatmodSpec()}} object.
 }
 \description{
-Builds everything \code{\link[=statmod]{statmod()}} fits from: splits the formula into one
+Builds everything from which \code{\link[=statmod]{statmod()}} fits: splits the formula into one
 equation per distribution parameter, interprets each with
-\pkg{modelterms7}, and builds the terms it names against the data.
-\code{\link[=statmod]{statmod()}} calls this first; calling it directly is how a model is
-inspected without being fitted.
+\pkg{modelterms7}, and builds the terms that it names against the data.
+\code{\link[=statmod]{statmod()}} calls this first, and calling it directly inspects a model
+without fitting it.
 }
 \section{The formula}{
-The equations are separated by \code{|}, the first carrying the response, and a
-parameter with no equation gets an intercept. \code{\link[=statmod_equations]{statmod_equations()}} does
-the split, which is not the obvious one: R's precedence makes the whole
-right-hand side of a three-equation formula the last term alone.
+The equations are separated by \code{|}, and the first of them carries the
+response. A parameter with no equation is given an intercept.
+\code{\link[=statmod_equations]{statmod_equations()}} does the split, which is not the obvious one: R's
+precedence reduces the whole right-hand side of a three-equation formula to
+the last term.
 
 Each equation is interpreted in an environment where \pkg{modelterms7}'s
 term constructors sit in front of the search path, so \code{s()} means this
@@ -94,7 +95,8 @@ dd <- data.frame(y = rnorm(20), x = runif(20), z = runif(20))
 spec <- statmod_spec(y ~ x | sigma ~ z,
                      distributions7::gaussian1_distrib(), dd)
 
-# One entry per parameter of the family, in the family's order.
+# The terms have one entry per parameter of the family, in the family's
+# order.
 names(spec@terms)
 spec@equations
 

@@ -14,7 +14,7 @@ hyper_set(hyper, row, value)
 \item{value}{The value to write.}
 }
 \value{
-The hyperparameters, with that one changed.
+The hyperparameters, in which that one is changed.
 }
 \description{
 Set One Hyperparameter

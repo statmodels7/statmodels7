@@ -19,13 +19,14 @@ is not finite, where there is no free coordinate, or where the
 information on the free coordinates cannot be inverted.
 }
 \description{
-\eqn{\tfrac12 g'K^{-1}g} over the free coordinates of a restricted fit:
-the decrease of the penalized objective that a Newton step from the point
-returned by \code{\link[=statmod_restrict]{statmod_restrict()}} would predict, in log-likelihood units.
+Computes \eqn{\tfrac12 g'K^{-1}g} over the free coordinates of a
+restricted fit, which is the decrease of the penalized objective that a
+Newton step from the point returned by \code{\link[=statmod_restrict]{statmod_restrict()}} would predict,
+in log-likelihood units.
 }
 \details{
-It is the quantity that \code{\link[=inner_mode_error]{inner_mode_error()}} computes inside a search,
-applied to a restricted fit. The inner optimizer's flag records whether a
+\code{\link[=inner_mode_error]{inner_mode_error()}} computes the same quantity inside a search; here it
+is applied to a restricted fit. The inner optimizer's flag records whether a
 stopping rule fired, which is a boolean about a threshold on a score whose
 size depends on the model, whereas whether a point is at its mode is a
 matter of distance and has a natural scale. A stopping rule reads a change
@@ -34,10 +35,11 @@ agree, and the print method of \code{\link[=StatmodTest]{StatmodTest()}} reads t
 not the flag.
 
 The held coordinate is excluded because it is not free: its score is the
-quantity Rao's statistic reads and does not vanish under the restriction.
+quantity that Rao's statistic reads, and it does not vanish under the
+restriction.
 }
 \seealso{
-\code{\link[=mode_error_limit]{mode_error_limit()}}, the limit it is read against, and
+\code{\link[=mode_error_limit]{mode_error_limit()}}, the limit against which it is read, and
 \code{\link[=inner_mode_error]{inner_mode_error()}}, the same reading inside a search.
 }
 \keyword{internal}

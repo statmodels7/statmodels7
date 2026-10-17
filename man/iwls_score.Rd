@@ -14,7 +14,7 @@ coefficients.}
 \code{\link[=iwls_info_diag]{iwls_info_diag()}} returns it, the same length as \code{g}.}
 
 \item{groups}{A list of integer index vectors, one per equation, giving
-the coordinates that equation owns.}
+the coordinates belonging to that equation.}
 
 \item{n}{The number of observations.}
 }
@@ -24,10 +24,11 @@ An equation whose median curvature is zero or not finite is scaled by
 one, so that its score per observation enters the reading as it is.
 }
 \description{
-The absolute \eqn{\max\lvert g\rvert / n} read per equation against that
-equation's own information scale, \eqn{\max_j \lvert g_j\rvert /
-(n\,s_p)} with \eqn{s_p = \sqrt{\mathrm{median}_j H_{jj} / n}} over the
-equation's coordinates.
+Returns the absolute \eqn{\max\lvert g\rvert / n} read per equation
+against that equation's own information scale,
+\eqn{\max_j \lvert g_j\rvert / (n\,s_p)} with
+\eqn{s_p = \sqrt{\mathrm{median}_j H_{jj} / n}} over the equation's
+coordinates.
 }
 \section{Why the division is per equation}{
 The score of a location equation carries the units \eqn{1/y} and its
@@ -43,12 +44,12 @@ This reading arbitrates the final verdict and never drives the loop.
 \section{Alternative readings that were rejected}{
 A per-coordinate normalization by \eqn{(H+S)_{jj}} is dimensionless too,
 but at extreme shrinkage the penalized coordinates converge loosely and the
-envelope identities lose their footing.
+envelope identities cease to hold.
 
-Using the per-equation form to drive the loop works at small \eqn{y} and
-cannot be met at large \eqn{y}. At \eqn{y \times 10^4} the magnitude of the
-objective grows with \eqn{\log y}, so the stall guard on the objective
-stops the run before a rule \eqn{1/s_p} stricter can be met.
+When the per-equation form drives the loop, the rule works at small
+\eqn{y} and cannot be met at large \eqn{y}. At \eqn{y \times 10^4} the
+magnitude of the objective grows with \eqn{\log y}, so the stall guard on the
+objective stops the run before a rule \eqn{1/s_p} stricter can be met.
 }
 
 \seealso{

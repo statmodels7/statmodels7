@@ -13,16 +13,17 @@ kink_by_power(pen, theta, name, target, pw)
 
 \item{name}{Which one to solve for.}
 
-\item{target}{The sizes the kink should have.}
+\item{target}{The sizes that the kink should have.}
 
 \item{pw}{What \code{\link[=kink_power]{kink_power()}} returned, or \code{NULL}.}
 }
 \value{
 A numeric vector as long as \code{target}, \code{NA} where the
-power law did not answer.
+power law gives no value.
 }
 \description{
-The value giving each target size, checked against the size it produces.
+Returns, for each target size, the value that gives it, checked against the
+size that the value produces.
 }
 \details{
 The exponent comes from two points, and the relation is checked at the

@@ -12,17 +12,18 @@ statmod_commit_refresh(spec, coef, design, which = "all")
 \item{coef}{A named list of coefficient vectors, one per distribution
 parameter.}
 
-\item{design}{The design, whose refresh state is what this advances.}
+\item{design}{The design, whose refresh state this function advances.}
 
 \item{which}{Which entries to commit: \code{"all"} (the default), \code{"jacobian"}
 or \code{"frozen"}. The alternation's pass level and \code{\link[=statmod_fitted_spec]{statmod_fitted_spec()}}
-both pass \code{"jacobian"}, the frozen terms having been committed already
-by their own phase.}
+both pass \code{"jacobian"}, because their own phase has already committed
+the frozen terms.}
 }
 \value{
-The coefficient list, invisibly, with each committed term's
-stretch replaced by the coefficients that term stored. Identical to
-\code{coef} when nothing was committed or when no term relabeled.
+The coefficient list, invisibly. The stretch of each committed
+term is replaced by the coefficients that the term stored. The result is
+identical to \code{coef} if the function commits no term or if no term
+relabels.
 }
 \description{
 Replaces each term in the design state by the term that results from
@@ -30,10 +31,11 @@ refreshing it at the given coefficients, so that the state of each term's
 iteration advances one step.
 }
 \section{What moves}{
-The rescaling factor of a discontinuous break-point term, and the
-direction it last traveled in, which \pkg{modelterms7} halves on a
-reversal. Advancing that once per objective evaluation would anneal at
-the speed of the line search instead of the speed of the fit; never
+The state that moves is the rescaling factor of a discontinuous
+break-point term and the direction in which it last traveled;
+\pkg{modelterms7} halves the factor on a reversal. Advancing that once
+per objective evaluation would anneal at the speed of the line search
+instead of the speed of the fit; never
 advancing it would solve a permanently smoothed problem, whose fixed
 point is not the model's. The alternation commits the Jacobian entries
 once per pass (\code{which = "jacobian"}), and \code{\link[=fit_working]{fit_working()}} commits the
@@ -56,8 +58,9 @@ and changes the contribution. And a refresh
 may relabel crossed break-point lineages, after which the caller's own
 copy of the coefficients names them in the old order.
 
-The relabeling is why the committed coefficients are returned. A caller
-continues from what the terms stored, not from what it passed in.
+Because of this relabeling, the function returns the committed
+coefficients. A caller continues from what the terms stored, not from what
+it passed in.
 }
 
 \seealso{

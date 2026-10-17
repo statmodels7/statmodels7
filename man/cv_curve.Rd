@@ -9,7 +9,7 @@ cv_curve(spec, data, inner_optimizer, hypers, folds, run = NULL)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, holding the weights and offsets of the fit.}
 
-\item{data}{The data the fit was called on.}
+\item{data}{The data with which the fit was called.}
 
 \item{inner_optimizer}{The inner method.}
 
@@ -17,16 +17,16 @@ cv_curve(spec, data, inner_optimizer, hypers, folds, run = NULL)
 
 \item{folds}{A fold number per observation.}
 
-\item{run}{Which combination of the outer axes each point belongs to. The
-warm start begins again at the head of each, the kink jumping back up
-there. \code{NULL} treats the whole list as one run.}
+\item{run}{The combination of the outer axes to which each point belongs.
+The warm start begins again at the head of each combination, where the
+kink jumps back up. \code{NULL} treats the whole list as one run.}
 }
 \value{
 A list with \code{cvm}, the mean over folds at each point; \code{cvse}, its
 standard error across the folds with a finite value; \code{n_fail}, the number
 of folds without a value at each point; and \code{error}, the message of the
 first fold that could not rebuild the model, or \code{NULL}. \code{cvm} is missing
-at a point where no fold has a value.
+at a point where every fold lacks a value.
 }
 \description{
 Refits the model on each training fold along the whole path and scores it on
@@ -44,10 +44,10 @@ never from the response. A basis rebuilt on the training rows alone would
 not cover a held-out row beyond their range, and the fold would fail.
 
 The training rows and the held-out rows carry the weights and offsets of
-\code{spec} at those rows, the offsets given through the \code{offsets} argument of
-\code{\link[=statmod]{statmod()}} included. Where the fit of a fold at a point does not converge,
-or its criterion is not finite, the fold's value at that point is missing
-and is counted in \code{n_fail}.
+\code{spec} at those rows, including the offsets given through the \code{offsets}
+argument of \code{\link[=statmod]{statmod()}}. Where the fit of a fold at a point does not
+converge, or its criterion is not finite, the fold's value at that point is
+missing and is counted in \code{n_fail}.
 }
 \seealso{
 \code{\link[=cv]{cv()}}

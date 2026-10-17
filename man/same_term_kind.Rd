@@ -13,8 +13,8 @@ same_term_kind(a, b)
 A single logical.
 }
 \description{
-\code{TRUE} when two built terms have the same class, which is what keeps the
-stem of \code{\link[=block_stem]{block_stem()}} from pairing a smooth with something else that
+Returns \code{TRUE} when two built terms have the same class. This test keeps
+the stem of \code{\link[=block_stem]{block_stem()}} from pairing a smooth with something else that
 happens to name its coefficients the same way.
 }
 \seealso{

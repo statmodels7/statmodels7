@@ -14,13 +14,14 @@ statmod_score_at(spec, coef, design = statmod_design(spec), index = NULL)
 \item{design}{The design, refreshed at \code{coef} if any term needs it.}
 
 \item{index}{\code{NULL} for every coefficient, or integer positions in the
-stacked coefficients: only those columns enter the final products, which
-is what a fit over a few coordinates of a wide model reads.}
+stacked coefficients, in which case only those columns enter the final
+products; a fit over a few coordinates of a wide model uses this form.}
 }
 \value{
 A named list of numeric vectors, one per distribution parameter in
 the family's order, each as long as that equation's design is wide. With
-\code{index}, a numeric vector over those positions, in the order given.
+\code{index}, the value is a numeric vector over those positions, in the order
+given.
 }
 \description{
 Computes the score of the weighted log-likelihood in the coefficients, one

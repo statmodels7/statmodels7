@@ -14,11 +14,11 @@ path_pick(value, se = NULL, rule = "min")
 \item{rule}{\code{"min"} or \code{"1se"}.}
 }
 \value{
-A single index, or \code{NA} where no point was usable.
+A single index, or \code{NA} if every point was unusable.
 }
 \description{
-The index of the smallest criterion, or of the largest kink whose criterion
-is within one standard error of it.
+Returns the index of the smallest criterion, or of the largest kink whose
+criterion is within one standard error of it.
 }
 \details{
 The one-standard-error rule takes the sparsest fit that is not measurably

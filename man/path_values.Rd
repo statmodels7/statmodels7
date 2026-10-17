@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{path_values}
 \alias{path_values}
-\title{The Values a Path Visits}
+\title{The Values That a Path Visits}
 \usage{
 path_values(pen, theta, name, s_max, n_values = 40L, min_ratio = 1e-04)
 }
@@ -24,14 +24,15 @@ A numeric vector of values for \code{name}, from the emptiest fit to
 the fullest.
 }
 \description{
-A geometric grid of kink sizes from the one that empties the block down to
-\code{min_ratio} of it, carried back onto the hyperparameter.
+Returns a geometric grid of kink sizes from the one that empties the block
+down to \code{min_ratio} of it, carried back onto the hyperparameter.
 }
 \details{
 The grid is geometric in the size of the kink, never in the
 hyperparameter, so that a penalty whose kink narrows as its hyperparameter
 grows is swept in the same order as one whose kink widens: from the empty
-model towards the full one. Values the penalty cannot reach are dropped.
+model towards the full one. Values that the penalty cannot reach are
+dropped.
 
 The exponent relating the two is read once by \code{\link[=kink_power]{kink_power()}} and every
 target is inverted through it, in place of bracketing each target on its

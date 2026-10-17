@@ -15,10 +15,10 @@ predictor_target(spec, p)
 A numeric vector, one value per observation, or \code{NULL}.
 }
 \description{
-The response carried onto the scale of one equation's linear predictor.
-\code{\link[modelterms7:term_coef_start]{modelterms7::term_coef_start()}} takes it to estimate a term's own
-parameters from the data, which is the one thing a term cannot work out
-for itself.
+Returns the response carried onto the scale of one equation's linear
+predictor. \code{\link[modelterms7:term_coef_start]{modelterms7::term_coef_start()}} takes it to estimate a term's
+own parameters from the data, which is the one thing that a term cannot
+work out for itself.
 }
 \details{
 A target exists only where the response reads the parameter directly,

@@ -12,13 +12,13 @@ statmod_loglik_at(spec, coef, design = statmod_design(spec))
 \item{coef}{A named list of coefficient vectors, one per distribution
 parameter.}
 
-\item{design}{The design. Rebuilt from \code{spec} when absent, which is
-convenient at the console and wasteful in a loop.}
+\item{design}{The design. The function rebuilds it from \code{spec} when it is
+absent, which is convenient at the console and wasteful in a loop.}
 }
 \value{
-A single number. \code{-Inf} where the density is zero at some
-observation, and \code{NaN} where the parameters are outside the family's
-support, both of which a search reads as an unusable point.
+A single number. The value is \code{-Inf} where the density is zero at
+some observation and \code{NaN} where the parameters are outside the family's
+support; a search reads both as an unusable point.
 }
 \description{
 Computes \deqn{\ell(\beta) = \sum_i w_i \log f(y_i; \theta_i),} the
@@ -27,9 +27,8 @@ weights enter as supplied and are never normalized, so a weight of two
 counts an observation twice.
 }
 \details{
-No penalty enters. This is the likelihood alone; \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}
-gives the other half of the objective, and \code{\link[=statmod_objective]{statmod_objective()}} combines
-them.
+The log-likelihood contains no penalty; \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} gives the
+other half of the objective, and \code{\link[=statmod_objective]{statmod_objective()}} combines them.
 
 For a model with a term of the likelihood shape, a mixture over latent
 states, the log-likelihood of the term replaces the sum of the log-densities
@@ -37,6 +36,6 @@ at the observations.
 }
 \seealso{
 \code{\link[=statmod_score_at]{statmod_score_at()}} for its derivative,
-\code{\link[=statmod_objective]{statmod_objective()}} for the penalized objective it enters.
+\code{\link[=statmod_objective]{statmod_objective()}} for the penalized objective that it enters.
 }
 \keyword{internal}

@@ -15,7 +15,7 @@ pinned_coords(spec, design)
 An integer vector of stacked positions, possibly empty.
 }
 \description{
-The positions that \code{\link[=pin_boundary]{pin_boundary()}} pins besides a boundary: the
+Returns the positions that \code{\link[=pin_boundary]{pin_boundary()}} pins besides a boundary: the
 coefficients that the criterion estimates, which the specification holds,
 and the coordinates that the model does not identify, which \code{\link[=outer_fit]{outer_fit()}}
 records on the design at its first fit.

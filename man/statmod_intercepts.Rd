@@ -11,36 +11,36 @@ statmod_intercepts(spec)
 }
 \value{
 A named list, one entry per distribution parameter, on the link
-scale; an entry is \code{NULL} where neither route answered.
+scale; an entry is \code{NULL} where both routes failed to supply a value.
 }
 \description{
-The intercept-only maximum likelihood estimate, where it can be had, and
-the data-based start of \code{\link[distributions7:distrib_start]{distributions7::distrib_start()}} otherwise.
+Returns the intercept-only maximum likelihood estimate where it can be had,
+and otherwise the data-based start of \code{\link[distributions7:distrib_start]{distributions7::distrib_start()}}.
 }
 \details{
-Two routes, tried in order. \code{\link[distributions7:fit_distrib]{distributions7::fit_distrib()}} fits
+Two routes are tried in order. \code{\link[distributions7:fit_distrib]{distributions7::fit_distrib()}} fits
 the distribution to the response with no covariates, which is the same model
-with every slope set to zero and therefore a natural place for the fit to
+in which every slope is zero and therefore a natural place for the fit to
 begin; its link-scale coefficients are the intercepts.
 \code{\link[distributions7:distrib_start]{distributions7::distrib_start()}} is the fallback, and its result
-is a list of starts, each keyed by parameter, so a value is reached at
-\verb{[[1]][[p]]}.
+is a list of starts, and each start is keyed by parameter, so a value is
+reached at \verb{[[1]][[p]]}.
 
-\strong{The random stream is pinned and restored.} The intercept-only fit takes
+The random stream is pinned and restored. The intercept-only fit takes
 several starts (\code{n_start = 10}) and keeps the best, and the starts of some
 families are random draws. The seed is therefore fixed for the length of
 this call and the caller's stream is put back afterwards, so that the same
 call gives the same answer twice.
 
-\strong{An intercept the fit ran to the limit of its chart is replaced} by the
+An intercept that the fit ran to the limit of its chart is replaced by the
 data-based start of \code{\link[distributions7:distrib_start]{distributions7::distrib_start()}}. On a log or logit
 chart a value past \eqn{e^{\pm 16}} is a limit of the family and not an
 estimate: a Student t fitted to a response no heavier-tailed than a
 gaussian puts \eqn{\nu} at a value far beyond any useful estimate. A
 marginal criterion that estimates such a coefficient is flat in it, and a
 search that starts there does not leave it, so the data-based start is
-used instead. An identity chart is left alone, a location of any size
-being an estimate.
+used instead. An identity chart is left alone, because a location of any
+size is an estimate.
 }
 \seealso{
 \code{\link[=statmod_start]{statmod_start()}}

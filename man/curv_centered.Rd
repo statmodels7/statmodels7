@@ -15,16 +15,16 @@ curv_centered(spec, design, p)
 \code{TRUE} or \code{FALSE}.
 }
 \description{
-Decides, for an equation, whether its parametric intercept is profiled out
+Returns, for an equation, whether its parametric intercept is profiled out
 of the coordinate descent, so that a column's curvature is its centered
-weighted sum of squares, as \code{\link[=coord_centers]{coord_centers()}} decides for a descent.
+weighted sum of squares, as \code{\link[=coord_centers]{coord_centers()}} does for a descent.
 }
 \details{
 The intercept is profiled out where the equation has one and it is not
-held at a value. \code{\link[=coord_centers]{coord_centers()}} decides this from the positions that a
-hold reaches through the objective; this function decides it from the
-\code{held_coef} of the specification directly, which is what \code{\link[=statmod_curv]{statmod_curv()}}
-has in hand.
+held at a value. \code{\link[=coord_centers]{coord_centers()}} derives this from the positions that a
+hold reaches through the objective, and this function derives it from the
+\code{held_coef} of the specification directly, because that slot is available
+in \code{\link[=statmod_curv]{statmod_curv()}}.
 }
 \seealso{
 \code{\link[=coord_centers]{coord_centers()}}, \code{\link[=statmod_curv]{statmod_curv()}}

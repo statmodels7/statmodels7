@@ -16,11 +16,11 @@ path_rows(spec, blocks, hyper)
 \value{
 A data frame with one row per axis, with columns \code{parameter},
 \code{term} and \code{name}, and a list column \code{members} that holds, for each axis,
-the data frame of the hyperparameters it stands for. It has zero rows
-where no hyperparameter is to be estimated.
+the data frame of the hyperparameters represented by the axis. It has
+zero rows if there is no hyperparameter to estimate.
 }
 \description{
-The rows of an index like \code{\link[=outer_hyper_index]{outer_hyper_index()}}'s, for the
+Returns the rows of an index like \code{\link[=outer_hyper_index]{outer_hyper_index()}}'s, for the
 hyperparameters whose penalty has a kink.
 }
 \details{
@@ -28,8 +28,8 @@ A gradient search is not the instrument for these. The penalized mode is a
 piecewise smooth function of the hyperparameter, differentiable while the
 active set holds and turning a corner every time a coefficient joins it or
 leaves, so a criterion read at that mode inherits the corners and a
-quasi-Newton step is reading a slope that is about to change. A grid does
-not care, and warm starts make it cheap.
+quasi-Newton step is reading a slope that is about to change. A grid is not
+affected by the corners, and warm starts make it cheap.
 
 Every hyperparameter of a kinked penalty is varied, except those that
 its term holds and those of an \code{id} group that one member holds.

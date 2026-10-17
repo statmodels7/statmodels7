@@ -14,15 +14,15 @@ kink_power(pen, theta, name)
 \item{name}{Which one.}
 }
 \value{
-A list of the exponent \code{k}, the value \code{v0} it was read at
+A list of the exponent \code{k}, the value \code{v0} at which it was read
 and the size \code{s0} there; \code{NULL} where the size does not move or where
 either size or the value is not positive and finite.
 }
 \description{
-The exponent \eqn{k} in \eqn{s(v) = c\,v^k}, read from the size of the kink
-at the current value and at twice it (or at half it, where twice it is
-outside the hyperparameter's interval), or \code{NULL} where there is no such
-exponent to read.
+Returns the exponent \eqn{k} in \eqn{s(v) = c\,v^k}, read from the size of
+the kink at the current value and at twice it (or at half it, where twice
+it is outside the hyperparameter's interval), or \code{NULL} where there is no
+such exponent to read.
 }
 \details{
 A separable penalty is minus a log density and its hyperparameter enters as
@@ -31,7 +31,7 @@ The exponent is one for the lasso, for SCAD and MCP in \eqn{\lambda} and for
 the elastic net in both \eqn{\lambda} and \eqn{\alpha}. For the shapes of
 SCAD and MCP, which do not move the kink, there is no exponent and the
 result is \code{NULL}. A Laplace prior written by its scale has exponent
-\eqn{-1}, its kink narrowing as the hyperparameter grows.
+\eqn{-1}, and its kink narrows as the hyperparameter grows.
 
 The exponent is measured and not assumed, and \code{\link[=kink_by_power]{kink_by_power()}} checks the
 inversion, so that a penalty whose kink is not a power of its

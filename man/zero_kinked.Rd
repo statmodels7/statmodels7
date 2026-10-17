@@ -17,7 +17,7 @@ zero_kinked(spec, design, coef)
 An integer vector of stacked positions, possibly empty.
 }
 \description{
-The positions among those of \code{kinked_coords()} whose coefficient equals
-zero.
+Returns the positions among those of \code{kinked_coords()} whose coefficient
+equals zero.
 }
 \keyword{internal}

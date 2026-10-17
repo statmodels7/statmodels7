@@ -61,8 +61,8 @@ elastic net, scad, mcp) is chosen: \code{\link[=bic]{bic()}} (the default), \cod
 \code{\link[=cv]{cv()}}, or \code{NULL}. With \code{NULL} the hyperparameter is held at its value,
 unless the model also carries a smooth penalty and \code{outer_criterion} is a
 prediction-error criterion, which then sweeps the path.
-A marginal criterion is rejected here, being read at a mode that sits on
-the kink.}
+A marginal criterion is rejected here, because it is read at a mode that
+sits on the kink.}
 
 \item{outer_optimizer}{The optimizer that searches over the smooth
 hyperparameters, or \code{NULL} to choose one from the derivatives of the
@@ -82,8 +82,8 @@ tries.}
 
 \item{linpar_control}{How the unpenalized parametric block is built, as
 \code{\link[=linpar_options]{linpar_options()}} returns it: the storage and the contrasts
-for its factors. It reaches the implicit term, the one the bare
-covariates collapse into and which a caller never writes; a
+for its factors. It reaches the implicit term, the one into which the bare
+covariates collapse and which a caller never writes; a
 \code{\link[modelterms7:linpar]{modelterms7::linpar()}} written out takes them directly.
 The argument and the function are named differently on purpose, as
 \code{\link[stats:glm]{stats::glm()}}'s \code{control} and
@@ -125,8 +125,8 @@ A \code{\link[=StatmodFit]{StatmodFit()}} object.
 \description{
 Fits a distributional regression. One formula carries an equation per
 parameter of the response distribution, so a scale or a shape is modeled
-as readily as a mean; the terms those equations name are assembled into a
-penalized likelihood and fitted, and any smoothing parameters or prior
+as readily as a mean; the terms that those equations name are assembled into
+a penalized likelihood and fitted, and any smoothing parameters or prior
 scales are estimated from the data.
 
 Returns a \code{\link[=StatmodFit]{StatmodFit()}}, which \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
@@ -137,7 +137,7 @@ The equations are separated by \code{|}, and the first carries the response:
 
 \preformatted{    y ~ x1 + ridge(R) + lasso(L)  |  sigma ~ z  |  nu ~ 1}
 
-A parameter with no equation of its own gets an intercept, so
+A parameter with no equation of its own is given an intercept, so
 \code{y ~ x} on a two-parameter family fits a constant scale.
 \code{\link[=statmod_equations]{statmod_equations()}} does the split. R's operator precedence nests the
 equations on the left, so the right-hand side of the whole formula holds
@@ -166,15 +166,16 @@ minus the sum of the persistences \eqn{\xi_j}. The page of
 }
 
 \section{The fitting scheme}{
-The terms split in two by a property each one already reports.
+The terms split in two by a property that each one already reports.
 
-A term whose penalty is \strong{twice differentiable} in its coefficients, an
+A term whose penalty is twice differentiable in its coefficients, an
 unpenalized block, a ridge, a spline or a random effect, is estimated in
 one system by \code{inner_optimizer}. Their joint curvature exists, and using
-it is what closes a fit in a handful of iterations.
+it closes a fit in a handful of iterations.
 
-A term whose penalty has a \strong{kink}, a lasso, an elastic net, a SCAD or an
-MCP, is estimated as a block of its own with the other blocks held fixed.
+A term whose penalty has a kink, a lasso, an elastic net, a SCAD or an
+MCP, is estimated as a block of its own while the other blocks are held
+fixed.
 The block is fitted by a compiled coordinate descent where the penalty
 describes its proximal operator as a table at the step taken, and
 otherwise by an accelerated proximal gradient. Where the equation has a
@@ -193,12 +194,12 @@ conditions of the smooth part and of every coefficient held at a kink, and
 \code{converged} reports that reading.
 }
 
-\section{The objective is unaveraged}{
-Minus the weighted log-likelihood, plus the penalties at full size. A
-penalty is a negative log-prior, and a posterior adds a log-likelihood and
-a log-prior at full size; averaging one of them would make a
-hyperparameter mean something that depends on \eqn{n}. What is scaled
-instead is the stopping rule, so a threshold means the same at
+\section{The objective is not averaged}{
+The objective is minus the weighted log-likelihood plus the penalties at
+full size. A penalty is a negative log-prior, and a posterior adds a
+log-likelihood and a log-prior at full size; averaging one of them would
+make a hyperparameter mean something that depends on \eqn{n}. The stopping
+rule is scaled instead, so a threshold means the same at
 \eqn{n = 10} and at \eqn{n = 10^7}.
 
 The weights multiply the log-likelihood, so they act as frequency
@@ -227,22 +228,23 @@ term's default, is estimated from the data. A hyperparameter is held in
 the term and nowhere else, so that the model has one statement of each
 held value.
 
-The \strong{smooth} hyperparameters go to \code{outer_criterion}, \code{\link[=reml]{reml()}} by
-default, with \code{outer_optimizer} searching over them and the coefficients
-refitted at each point.
+The smooth hyperparameters go to \code{outer_criterion}, \code{\link[=reml]{reml()}} by default.
+\code{outer_optimizer} searches over them, and the coefficients are refitted at
+each point.
 
-A \strong{kinked} penalty has its own argument. \code{sparse_criterion}, \code{\link[=bic]{bic()}} by
+A kinked penalty has its own argument. \code{sparse_criterion}, \code{\link[=bic]{bic()}} by
 default, sweeps its hyperparameters along a path of their own values,
 from the kink that empties the block down to a fraction of it. The
 penalized mode is only piecewise smooth in such a hyperparameter, turning
 a corner whenever a coefficient joins the active set or leaves it, so a
 gradient search on a criterion read there would meet those corners.
 
-The top of that path depends on the data \strong{and on the rest of the model}:
-it is the kink that empties the block, found at the coefficients in hand
-and not at a refitted null, so the fits of the other terms enter it.
+The top of that path is the kink that empties the block, found at the
+coefficients in hand and not at a refitted null. It therefore depends on
+the data and on the rest of the model, since the fits of the other terms
+enter it.
 
-Where a model carries both kinds the path is outside and the marginal
+Where a model carries both kinds, the path is outside and the marginal
 criterion is estimated inside each of its points, so a smoothing parameter
 can come from REML and a lasso's \eqn{\lambda} from BIC in one fit.
 
@@ -275,11 +277,12 @@ set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- 1 + 2 * dd$x + rnorm(200, sd = exp(0.3 * dd$x))
 
-# An ordinary regression: the scale gets an intercept it was not given.
+# An ordinary regression: the scale receives an intercept that the
+# formula does not specify.
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 coef(fit)
 
-# The scale modeled too, which is what the framework is for. The data
+# The scale is modeled too, which is the purpose of the framework. The data
 # were drawn with log sigma = 0.3 x, and the interval covers it.
 both <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 coef(both)$sigma

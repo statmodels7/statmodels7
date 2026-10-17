@@ -35,23 +35,23 @@ ignores this.}
 
 \item{index}{\code{NULL} for the whole matrix, or integer positions in the
 stacked coefficients: the submatrix over those positions, in the order
-given, assembled from those columns alone.}
+given, assembled only from those columns.}
 }
 \value{
-A symmetric \verb{p x p} matrix over the stacked coefficients, \code{p}
-being their total count across the equations. A \pkg{Matrix} object when
-any equation's design is sparse, a base matrix otherwise.
+A symmetric \verb{p x p} matrix over the stacked coefficients, where \code{p}
+is their total count across the equations. The matrix is a \pkg{Matrix}
+object when any equation's design is sparse and a base matrix otherwise.
 }
 \description{
-The negative Hessian in the coefficients, assembled block by block from the
-distribution's own link-scale second derivatives.
+Computes the negative Hessian in the coefficients, assembled block by block
+from the distribution's own link-scale second derivatives.
 }
 \details{
 Block \eqn{(a, b)} is \eqn{X_a'\,\mathrm{diag}(w\,h_{ab})\,X_b} with
 \eqn{h_{ab}} the per-observation second derivative of the log-density in
 \eqn{(\eta_a, \eta_b)}, negated. The blocks are assembled in the storage
-the designs call for, so a model with a sparse equation gets a sparse
-information.
+type of the designs, so the information is sparse for a model with a sparse
+equation.
 
 \code{expected = TRUE} gives the expected information, which Fisher scoring
 inverts and which is positive definite wherever the family is regular.
@@ -73,7 +73,7 @@ observed information of the mixture. The variance of a fit comes from
 }
 \seealso{
 \code{\link[=statmod_score_at]{statmod_score_at()}} for the first derivative,
-\code{\link[=info_blocks]{info_blocks()}} for the per-observation blocks a square-root route uses
-instead, and \code{\link[=statmod_family_hessian]{statmod_family_hessian()}} for the components both read.
+\code{\link[=info_blocks]{info_blocks()}} for the per-observation blocks that a square-root route
+uses instead, and \code{\link[=statmod_family_hessian]{statmod_family_hessian()}} for the components both read.
 }
 \keyword{internal}

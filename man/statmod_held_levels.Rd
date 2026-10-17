@@ -15,9 +15,9 @@ statmod_held_levels(spec, design)
 A named list, one character vector per structural term.
 }
 \description{
-The parameters of the structural terms that must be held rather than
-estimated, because the equation they sit in already spans the constant
-they would shift it by.
+Returns the parameters of the structural terms that must be held rather
+than estimated, because the equation in which they sit already spans the
+constant by which they would shift it.
 }
 \details{
 A score-driven level and a regime's first level both add a constant to
@@ -30,19 +30,20 @@ depends on the predictor alone, and the starting level moves by the same
 the ridge without failing, because the score is small wherever the surface
 is flat.
 
-\strong{The linear intercept wins.} Where both are present the term's
+The linear intercept takes precedence. Where both are present the term's
 level is held at zero and the coefficient carries it, which makes
-\code{y ~ x + gas(...)} an ordinary formula. The model loses nothing, since a
-constant cannot express the dynamics or the difference between one regime
-and another, and the parameters that express them remain free.
+\code{y ~ x + gas(...)} an ordinary formula. This leaves the model able to
+express the same fits, since a constant cannot express the dynamics or the
+difference between one regime and another, and the parameters that express
+them remain free.
 
-The test is made on the \strong{span} of the equation's design and not on a
-column named \code{"(Intercept)"}: a factor coded without one, or any set of
+The function tests the span of the equation's design and not a column
+named \code{"(Intercept)"}: a factor coded without one, or any set of
 columns summing to a constant, spans the constant just as well.
 \code{\link[modelterms7:term_level_param]{modelterms7::term_level_param()}} gives which parameter of the term is
 the level.
 
-\strong{For a developed level} the same test applies to a subspace. With
+For a developed level, the same test applies to a subspace. With
 \verb{omega ~ Z gamma} the confounding is no longer with one constant but with
 whatever \code{span(Z)} shares with the span of the equation's design. The
 constant coordinates are held as above. For the rest, an unpenalized

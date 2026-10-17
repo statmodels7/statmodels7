@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{path_null_score}
 \alias{path_null_score}
-\title{The Largest Score a Kinked Block Has to Beat}
+\title{The Largest Score That a Kinked Block Has to Beat}
 \usage{
 path_null_score(obj, beta, block, hyper, also = NULL)
 }
@@ -15,16 +15,17 @@ path_null_score(obj, beta, block, hyper, also = NULL)
 
 \item{hyper}{The hyperparameters.}
 
-\item{also}{Other blocks to hold at their kinks while the score is read,
-each a list with the stacked positions \code{index} and the value \code{at}; the
-members of a shared hyperparameter other than \code{block}.}
+\item{also}{Other blocks to hold at their kinks while the score is read.
+Each block is a list with the stacked positions \code{index} and the value
+\code{at}, and these blocks are the members of a shared hyperparameter other
+than \code{block}.}
 }
 \value{
 A single number.
 }
 \description{
-\eqn{\max_j |\partial(-\ell)/\partial\beta_j|} over the block's own
-coefficients, with the block held at the kink.
+Returns \eqn{\max_j |\partial(-\ell)/\partial\beta_j|} over the block's own
+coefficients, evaluated while the block is held at the kink.
 }
 \details{
 A coefficient leaves the kink when the unpenalized score there exceeds the

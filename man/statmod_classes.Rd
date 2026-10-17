@@ -16,15 +16,15 @@ per class, each with \code{tag}, \code{group} (the deparsed expression), \code{l
 \code{m}, \code{key}, \code{dim} (the class total), \code{space} (see \code{\link[=class_space]{class_space()}}),
 \code{structural}, \code{sterm} (the name of the structural term, present only
 where the class touches one), \code{penalty} and \code{pieces}. The pieces are one
-per member, as \code{\link[=label_pieces]{label_pieces()}} returns them, in the order the equations
-were walked. Empty where no term carries a label.
+per member, as \code{\link[=label_pieces]{label_pieces()}} returns them, in the order in which the
+equations were walked. The list is empty if the terms carry no label.
 }
 \description{
-The groups of terms that share a covariance block: those carrying the same
-label and the same grouping variable, collected across the equations.
+Returns the groups of terms that share a covariance block: those carrying the
+same label and the same grouping variable, collected across the equations.
 }
 \section{What identifies a class}{
-A label and a grouping, both. The label comes from
+A class is identified by both a label and a grouping. The label comes from
 \code{\link[modelterms7:term_tag]{modelterms7::term_tag()}} and the grouping from
 \code{\link[modelterms7:term_group]{modelterms7::term_group()}}, which returns the expression, the levels and
 the within-group column count. Two terms belong together only if the levels
@@ -40,21 +40,21 @@ used on two groupings is an error naming both.
 \section{Whose prior it is}{
 The joint prior belongs to the class and not to any of its members. At most
 one term may name a \code{distrib}, and its dimension must be the class's total;
-where none does, the default is a centered multivariate Gaussian on
+if no term names one, the default is a centered multivariate Gaussian on
 \code{\link[parameters7:dr_prod]{parameters7::dr_prod()}}, whose coordinates are the log standard deviations
-and the correlations' angles, so a printed hyperparameter is the quantity it
-names. At a total of one column there is no correlation and the default is
-the centered univariate Gaussian that a single unlabeled term would have
-built.
+and the correlations' angles, so a printed hyperparameter is the quantity
+that it names. At a total of one column there is no correlation and the
+default is the centered univariate Gaussian that a single unlabeled term
+would have built.
 
-A class whose members carry priors of \strong{different families} (a Gaussian
+A class whose members carry priors of different families (a Gaussian
 intercept correlated with a Student t slope) is a copula and not an
 elliptical family. \pkg{modelterms7} rejects a univariate \code{distrib} on a
-labeled term for that reason, and this function never sees the case.
+labeled term for that reason, so the case does not reach this function.
 }
 
 \seealso{
 \code{\link[=statmod_penalty_keys]{statmod_penalty_keys()}}, which turns each into one penalized
-unit; \code{\link[=statmod_penalized]{statmod_penalized()}} for the interleaved index it is read at.
+unit; \code{\link[=statmod_penalized]{statmod_penalized()}} for the interleaved index at which it is read.
 }
 \keyword{internal}

@@ -17,9 +17,9 @@
 \code{x}, invisibly.
 }
 \description{
-The statistic, its degrees of freedom and the p-value on one line, under
-a title naming the test, in the layout R uses for a hypothesis test. A
-note follows when the restricted refit stopped above its mode, by more than
-\code{\link[=mode_error_limit]{mode_error_limit()}}, or when its mode error could not be read.
+Prints the statistic, its degrees of freedom and the p-value on one line,
+under a title naming the test, in the layout that R uses for a hypothesis
+test. A note follows when the restricted refit stopped above its mode, by
+more than \code{\link[=mode_error_limit]{mode_error_limit()}}, or when its mode error could not be read.
 }
 \keyword{internal}

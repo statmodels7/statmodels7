@@ -21,18 +21,18 @@ Returns the response as a number, converting a two-level \code{factor},
 \code{character} or \code{logical} to 0 and 1 and leaving anything else alone.
 }
 \details{
-A binary outcome recorded as a factor is how these data are ordinarily
-written, and \code{glm()} accepts one: its binomial family reads the first
-level as the failure. The conversion makes the response a number before it
-reaches the density, which would otherwise receive a factor.
+A binary outcome is ordinarily recorded as a factor, and \code{glm()} accepts
+one: its binomial family reads the first level as the failure. The
+conversion makes the response a number before it reaches the density,
+which would otherwise receive a factor.
 
 The first level is the failure, which is \code{glm()}'s rule, so a model moved
-from \code{glm()} keeps its signs. The conversion is made for every family and
-not only for the binary ones, which differs from base R, where
+from \code{glm()} keeps its signs. The conversion applies to every family and
+not only to the binary ones, which differs from base R, where
 \code{glm(f ~ x, gaussian)} on a factor \code{f} signals \emph{"NA/NaN/Inf in 'y'"} after
 three warnings from \code{Ops.factor}. A two-level factor has one numeric
 reading and this is it; on a gaussian family the result is the linear
-probability model, which is what \code{as.numeric(f == "b")} gives.
+probability model for the response \code{as.numeric(f == "b")}.
 
 The levels used are returned as the attribute \code{"response_levels"}, which
 lets \code{\link[=statmod_respec]{statmod_respec()}} reproduce the same mapping on other rows. A factor

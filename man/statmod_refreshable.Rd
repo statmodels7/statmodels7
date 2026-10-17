@@ -11,17 +11,17 @@ statmod_refreshable(spec)
 equation.}
 }
 \value{
-A list with one element per refreshable term, in the order the
-design holds them: equations in the family's parameter order, and terms
-within an equation in the order they were written. Each element is a
-list of two:
+A list with one element per refreshable term, in the order in which
+the design holds them: equations in the family's parameter order, and
+terms within an equation in the order in which they were written. Each
+element is a list of two:
 \describe{
-\item{\code{param}}{the distribution parameter whose equation the term sits
-in, a string.}
+\item{\code{param}}{the distribution parameter in whose equation the term
+sits, a string.}
 \item{\code{term}}{the name of the term within that equation, a string
 (for example \code{"seg(x)"}).}
 }
-An empty list when no term refreshes, which is the common case.
+The list is empty when no term refreshes, which is the common case.
 }
 \description{
 Locates every term of the specification whose design block is a function
@@ -32,10 +32,10 @@ terms whose block has to be rebuilt whenever the coefficients move:
 time.
 }
 \details{
-Membership is decided by testing whether the term registers a
-\code{term_refresh()} method of its own, which is \code{\link[=refreshes_own_block]{refreshes_own_block()}}. The
-base method on \code{model_term} is the identity, so a term written later is
-covered without an edit here.
+Membership is determined by \code{\link[=refreshes_own_block]{refreshes_own_block()}}, which tests whether
+the term registers a \code{term_refresh()} method of its own. The base method
+on \code{model_term} is the identity, so a term written later is covered without
+an edit here.
 
 The design stores this list, and every other function in the file walks
 it. When it is empty, a model of ordinary terms incurs no cost from the

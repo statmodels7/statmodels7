@@ -7,9 +7,9 @@
 start_strategy(label = character(0))
 }
 \arguments{
-\item{label}{A short name, printed by \code{\link[=print.start_strategy]{print.start_strategy()}}. A single
-string. Set by each subclass's constructor, since the class itself
-cannot be built.}
+\item{label}{A short name, printed by \code{\link[=print.start_strategy]{print.start_strategy()}}. It is a
+single string, and the constructor of each subclass sets it, since the
+class itself cannot be built.}
 }
 \value{
 Nothing: the class is abstract and the constructor signals an
@@ -18,11 +18,12 @@ registering methods, it has one property, \code{label}, which every subclass
 inherits.
 }
 \description{
-The abstract parent of the starting-value strategies. A strategy defines
-where a fit begins as a procedure and not as a vector of numbers: fit the
-intercept-only model, draw around it, search the likelihood for a basin,
-or reuse the estimates of another fit. \code{statmod(start =)} accepts a
-strategy, or a named list of coefficient vectors.
+This class is the abstract parent of the starting-value strategies. A
+strategy defines where a fit begins as a procedure and not as a vector of
+numbers: fit the intercept-only model, draw around it, search the
+likelihood for a basin, or reuse the estimates of another fit.
+\code{statmod(start =)} accepts a strategy, or a named list of coefficient
+vectors.
 }
 \details{
 \code{\link[=statmod]{statmod()}} calls a strategy exactly once, before the alternation between
@@ -31,10 +32,10 @@ step of that alternation, which is why a global search belongs here: given
 to \code{inner_optimizer} it would rerun at every hyperparameter value that the
 outer search tries and reach the same point each time.
 
-\strong{The class is abstract and cannot be instantiated.} Calling
-\code{start_strategy()} signals an error; what the class is for is to be
-subclassed and to make a membership test possible. To write a strategy of
-your own, subclass it and register a \code{\link[=start_at]{start_at()}} method on the subclass.
+The class is abstract and cannot be instantiated. Calling
+\code{start_strategy()} signals an error. The class exists to be subclassed and
+to make a membership test possible. To write a user-defined strategy,
+subclass it and register a \code{\link[=start_at]{start_at()}} method on the subclass.
 That method receives the specification, the design and the objective, and
 returns one vector per distribution parameter.
 }
@@ -43,7 +44,7 @@ returns one vector per distribution parameter.
 S7::S7_inherits(start_origin(), start_strategy)
 S7::S7_inherits(start_search(), start_strategy)
 
-# Every one of them carries the label the class defines.
+# Every one of them carries the label that the class defines.
 vapply(list(start_intercepts(), start_origin(), start_random(),
             start_search()),
        function(s) s@label, character(1))
@@ -56,5 +57,5 @@ try(start_strategy("my own"))
 \code{\link[=start_intercepts]{start_intercepts()}} (the default), \code{\link[=start_origin]{start_origin()}},
 \code{\link[=start_random]{start_random()}}, \code{\link[=start_search]{start_search()}} and \code{\link[=start_from]{start_from()}} for the five
 shipped strategies,
-\code{\link[=start_at]{start_at()}} for the generic they implement.
+\code{\link[=start_at]{start_at()}} for the generic that they implement.
 }

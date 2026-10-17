@@ -21,27 +21,27 @@ is not numeric, holds a negative count, or where the family has no
 }
 \description{
 Splits a \code{cbind(successes, failures)} response into the successes and the
-number of trials, returning the response and the distribution the trials
-have been written onto.
+number of trials, returning the response and the distribution onto which
+the trials have been written.
 }
 \details{
-\code{cbind(y, n - y) ~ x} is how aggregated binomial data are written in R.
+R writes aggregated binomial data as \code{cbind(y, n - y) ~ x}.
 The two columns are read as the successes and the failures: the response
 becomes the successes and the family's \code{size} becomes the row sums.
 
 The number of trials is taken from the response and not from the family.
 A size given to the family is a vector fixed at fitting time, so it cannot
 follow the rows anywhere else, whereas the row sums of a response
-expression are recomputed wherever that expression is evaluated, which is
-what makes a fold of \code{\link[=cv]{cv()}} or a prediction at new data use the right
-trials. A size of another length than the rows is recycled by the density
-without any signal (a size of length 200 against 20 observations returns
+expression are recomputed wherever that expression is evaluated, so a fold
+of \code{\link[=cv]{cv()}} or a prediction at new data uses the right trials. A size of
+another length than the rows is recycled by the density without any signal
+(a size of length 200 against 20 observations returns
 200 log-densities). See \code{\link[=check_trials]{check_trials()}}, which rejects that case where the
 row sums cannot be had.
 
 A size given to the family as well must agree with the row sums, and the
-two statements disagreeing is an error; the default size of one is not a
-statement and is replaced.
+function signals an error when the two statements disagree; the default
+size of one is not a statement and is replaced.
 
 A matrix response is left alone for a multivariate family, where it is the
 ordinary response and each row is one observation.

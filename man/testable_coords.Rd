@@ -14,13 +14,13 @@ them already.}
 }
 \value{
 An integer vector of stacked positions, possibly empty, named by
-the labels \code{\link[=coef_labels]{coef_labels()}} gives them.
+the labels that \code{\link[=coef_labels]{coef_labels()}} gives them.
 }
 \description{
-The stacked positions of the coefficients the three restricted statistics
-are defined for: every coordinate less the ones under a kinked penalty,
-less the aliased ones, and none at all where the model carries a
-structural term.
+Returns the stacked positions of the coefficients for which the three
+restricted statistics are defined: every coordinate less the ones under a
+kinked penalty, less the aliased ones, and none at all where the model
+carries a structural term.
 }
 \details{
 It applies to the whole vector the enumeration that \code{\link[=statmod_restrict]{statmod_restrict()}}
@@ -33,8 +33,8 @@ before its refit is computed and not after.
 A coordinate under a penalty that is twice differentiable is included:
 a smooth's linear column and its rotated coordinates, a ridge, a random
 effect. The restricted fit holds it exactly as it holds an unpenalized
-one, \code{\link[=fit_smooth]{fit_smooth()}} enforcing the hold in the solve. Only a kinked penalty
-is excluded, for the reasons that \code{\link[=statmod_restrict]{statmod_restrict()}} gives.
+one, because \code{\link[=fit_smooth]{fit_smooth()}} enforces the hold in the solve. Only a kinked
+penalty is excluded, for the reasons that \code{\link[=statmod_restrict]{statmod_restrict()}} gives.
 }
 \seealso{
 \code{\link[=statmod_restrict]{statmod_restrict()}}, which rejects the same coordinates one at a

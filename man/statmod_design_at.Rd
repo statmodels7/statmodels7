@@ -15,10 +15,10 @@ parameter, each as long as its equation's design is wide.}
 \item{design}{The design to refresh, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 }
 \value{
-A design of the same shape as \code{design}, with the refreshable
-terms' column blocks replaced and the \code{adj} of each equation that carries
-a refreshable term set to the per-observation adjustment above. \code{design}
-itself when nothing refreshes.
+A design of the same shape as \code{design}. The column blocks of the
+refreshable terms are replaced, and the \code{adj} of each equation that
+carries a refreshable term is set to the per-observation adjustment
+above. The function returns \code{design} itself when no term refreshes.
 }
 \description{
 Recomputes the design block of every refreshable term at the coefficients
@@ -33,9 +33,10 @@ block as an ordinary design while the predictor stays exact:
 For a term whose block is a Jacobian, \code{\link[modelterms7:seg]{modelterms7::seg()}},
 \code{\link[modelterms7:nl]{modelterms7::nl()}} and a smoothed \code{\link[modelterms7:jump]{modelterms7::jump()}} or
 \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, the adjustment is non-zero and the resulting
-scoring step is the Gauss-Newton one. A sharp, unheld \code{\link[modelterms7:jump]{modelterms7::jump()}}
-or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} is a frozen block instead. It is not recomputed
-at a trial point. Inside \code{\link[=fit_working]{fit_working()}} its columns give the predictor
+scoring step is the Gauss-Newton one. A sharp \code{\link[modelterms7:jump]{modelterms7::jump()}}
+or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} that is not held is a frozen block instead. It is
+not recomputed at a trial point. Inside \code{\link[=fit_working]{fit_working()}} its columns give
+the predictor
 exactly, so that the adjustment is zero and the working fit is the
 fixed-point iteration of Fasola et al.; elsewhere the adjustment is
 anchored at the committed coefficients.
@@ -57,14 +58,14 @@ and solve a permanently smoothed problem, whose fixed point is not the
 model's.
 
 The state advances only when \code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} is called, so
-every trial point of a line search sees one schedule and the schedule
+every trial point of a line search uses one schedule and the schedule
 advances once per sweep.
 }
 
 \section{New data}{
-When the specification carries new data, nothing is refreshed. The design
-block is the one in \code{design}, and the contribution on the new rows is
-\code{\link[modelterms7:term_value]{modelterms7::term_value()}} at the coefficients in hand, or at the
+When the specification carries new data, the function refreshes no block.
+The design block is the one in \code{design}, and the contribution on the new
+rows is \code{\link[modelterms7:term_value]{modelterms7::term_value()}} at the coefficients in hand, or at the
 committed coefficients for a frozen block.
 }
 

@@ -17,7 +17,7 @@ stack_coords(spec, design, pos)
 A list with \code{where}, \code{param} and \code{name}.
 }
 \description{
-The equation and the coefficient name of each position in the stacked
-coefficient vector, in the form that \code{\link[=marginal_coords]{marginal_coords()}} returns.
+Returns the equation and the coefficient name of each position in the
+stacked coefficient vector, in the form that \code{\link[=marginal_coords]{marginal_coords()}} returns.
 }
 \keyword{internal}

@@ -23,20 +23,20 @@ as both dimnames when \code{A} has them.
 Computes \eqn{A^\top A} for a square-root design, through the package's
 threaded kernel above a work threshold and through
 \code{crossprod(A)} everywhere else. The argument is a design that has already
-been scaled by the square root of the working weights, so no weight vector
-enters.
+been scaled by the square root of the working weights, so the function
+takes no weight vector.
 }
 \section{Symmetry, and independence of the thread count}{
 Only the upper triangle is accumulated: one thread owns column \eqn{k} and
-walks \eqn{j = 1, \ldots, k}, and each entry it computes is written to
-both \eqn{(j,k)} and \eqn{(k,j)}. The two halves are therefore the same
-number, one rounding shared, so the result is exactly symmetric with
-nothing to symmetrize away. Each pair belongs to exactly one thread,
-so the mirrored write is disjoint, and no accumulation is split, so the
-answer is identical bit for bit at any thread count.
+walks \eqn{j = 1, \ldots, k}, and each entry that it computes is written
+to both \eqn{(j,k)} and \eqn{(k,j)}. The two halves are therefore the same
+number, rounded once, so the result is exactly symmetric and needs no
+symmetrization. Each pair belongs to exactly one thread, so the mirrored
+write is disjoint. The kernel splits no accumulation, so the answer is
+identical bit for bit at any thread count.
 
-That halving is what the reference \code{dsyrk} behind \code{crossprod()} does too,
-and it accumulates in the same ascending row order, so the two routes
+The reference \code{dsyrk} behind \code{crossprod()} also halves the work in this
+way and accumulates in the same ascending row order, so the two routes
 agree to the last bit there. An optimized BLAS blocks its accumulations
 and agrees to the rounding of one dot product.
 
@@ -45,10 +45,10 @@ Only the upper triangle is computed, as \code{dsyrk} does, because computing all
 }
 
 \section{When the kernel is used}{
-\code{threads > 1}, \code{A} a base dense matrix, and \eqn{n \times p^2} at least
-\code{2e5}. This kernel writes \eqn{p^2} outputs where \code{\link[=xtv]{xtv()}} writes \eqn{p},
-so a design wide enough to reach the threshold here can be too narrow to
-reach it there.
+The kernel is used when \code{threads > 1}, \code{A} is a base dense matrix, and
+\eqn{n \times p^2} is at least \code{2e5}. This kernel writes \eqn{p^2} outputs
+where \code{\link[=xtv]{xtv()}} writes \eqn{p}, so a design wide enough to reach the
+threshold here can be too narrow to reach it there.
 }
 
 \seealso{
