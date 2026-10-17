@@ -48,9 +48,10 @@ mode_solver(spec, design, coef, K, Kinv, Dm, npar, offs)
 
 ## Value
 
-A list with `solve`, a function of \\c\\ returning \\v\\ without the
-sign; `J`, the curvature solved with; `Dm`, the curvature with the held
-rows and columns set to zero; and `hold`, the held positions.
+A list with `solve`, a function of \\c\\ that returns \\v\\ without the
+sign; `J`, the curvature used in the solve; `Dm`, the curvature in which
+the held rows and columns are set to zero; and `hold`, the held
+positions.
 
 ## Details
 
@@ -62,15 +63,15 @@ The kinks are the break-points that sit on an observation at the mode
 there the one-sided slopes have opposite signs, so a small perturbation
 leaves the break-point on the observation, as a lasso leaves a
 coefficient at zero. Where the break-point's position is a single
-coefficient that coefficient does not move; where it is developed over a
-design the mode moves along the hyperplane on which the break-point
+coefficient, that coefficient does not move; where it is developed over
+a design, the mode moves along the hyperplane on which the break-point
 stays on the observation. The solve is the bordered system of the
 equality constrained problem, written in the basis of its null space.
 The criterion's own determinant is not affected: it keeps the side
 convention of the break-point term.
 
-Where \\N^\top (K + D_m) N\\ is not positive definite, \\K\\ alone
-replaces \\K + D_m\\.
+Where \\N^\top (K + D_m) N\\ is not positive definite, the solve uses
+\\K\\ in place of \\K + D_m\\.
 
 ## See also
 

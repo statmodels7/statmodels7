@@ -1,7 +1,8 @@
 # Refit One Bootstrap Replica
 
-Re-estimates the coefficients of a fit on a simulated response, at its
-hyperparameters or with them chosen again. See
+Re-estimates the coefficients of a fit on a simulated response, either
+at the fit's hyperparameters or after choosing the hyperparameters
+again. See
 [`predictive_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/predictive_bootstrap.md).
 
 ## Usage

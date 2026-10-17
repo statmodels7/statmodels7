@@ -1,7 +1,7 @@
 # The Variance Matrix of a Fit
 
-The variance of the estimated coefficients, over every distribution
-parameter's block at once.
+Returns the variance of the estimated coefficients, over every
+distribution parameter's block at once.
 
 ## Usage
 
@@ -34,10 +34,10 @@ vcov(
 - expected:
 
   Whether the expected information is used. Defaults to
-  [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md):
-  the expected one where the fit inverted it and the family writes it
-  out, the observed Hessian otherwise. A model that carries a structural
-  term always uses the observed information.
+  [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md),
+  which selects the expected information where the fit inverted it and
+  the family writes it out, and the observed Hessian otherwise. A model
+  that carries a structural term always uses the observed information.
 
 - approx:
 
@@ -75,17 +75,16 @@ not identified has `NA` in its row and column.
 
 ## Details
 
-**Three matrices.** Writing \\H\\ for the information of the
-log-likelihood and \\S\\ for the second derivative of the penalty,
-\$\$V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}.\$\$ The
-first is the posterior variance under the prior whose negative logarithm
-is the penalty, and it is the matrix from which an interval around a
-penalized term should be built: it carries the smoothing bias as
-variance, and for that reason such intervals cover at about their
-nominal rate. The second is the sampling variance of the penalized
-estimator at a fixed penalty, which is smaller and covers less. With no
-penalty \\S = 0\\ and both are \\H^{-1}\\, for a coefficient that the
-outer criterion does not estimate. Under
+Writing \\H\\ for the information of the log-likelihood and \\S\\ for
+the second derivative of the penalty, \$\$V_b = (H + S)^{-1}, \qquad V_f
+= (H+S)^{-1} H (H+S)^{-1}.\$\$ \\V_b\\ is the posterior variance under
+the prior whose negative logarithm is the penalty, and it is the matrix
+from which an interval around a penalized term should be built: it
+carries the smoothing bias as variance, and for that reason such
+intervals cover at about their nominal rate. \\V_f\\ is the sampling
+variance of the penalized estimator at a fixed penalty, which is smaller
+and covers less. With no penalty \\S = 0\\ and both are \\H^{-1}\\, for
+a coefficient that the outer criterion does not estimate. Under
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 with the default `marginal = NULL`, in a model without a structural
@@ -96,7 +95,7 @@ take the curvature of that criterion for them. These two types then
 differ from `"frequentist"` for those coefficients even without a
 penalty.
 
-**A prior that is not Gaussian.** \\V_b\\ is computed in the same way
+For a prior that is not Gaussian, \\V_b\\ is computed in the same way
 for every penalty that is twice differentiable at the mode. \\H + S\\ is
 then the curvature of the log-posterior at the mode, and \\V_b\\ is the
 Laplace approximation of the posterior variance. The statement about
@@ -111,11 +110,11 @@ or has more than one mode. Where \\H + S\\ is not positive definite, a
 coordinate whose diagonal entry is not positive is held as described
 below, and otherwise an error is signaled.
 
-**The first two matrices are conditional on the hyperparameters**, which
-they read at the value where the outer search stopped, as though it were
-known. That value was estimated from the same data, and the third matrix
-adds the variance that this estimation contributes: \$\$V' = V_b + J
-V\_\theta J', \qquad J = -(H + S)^{-1} \frac{\partial^2
+The first two matrices are conditional on the hyperparameters, which are
+evaluated at the value where the outer search stopped, as though that
+value were known. It was estimated from the same data, and the third
+matrix adds the variance that this estimation contributes: \$\$V' =
+V_b + J V\_\theta J', \qquad J = -(H + S)^{-1} \frac{\partial^2
 \rho}{\partial\beta \partial\theta},\$\$ with \\V\_\theta\\ the variance
 of the estimated hyperparameters on their own free scale. It is the
 delta method applied to the map from the hyperparameter to the penalized
@@ -124,7 +123,7 @@ mode (Wood, Pya and Safken, 2016), and the matrix that mgcv returns as
 \\V'\\ is never narrower than \\V_b\\. It matters where a smoothing
 parameter is poorly determined, and it affects the penalized coordinates
 much more than the unpenalized ones. It requires the curvature of the
-outer criterion, which neither conditional matrix reads, so
+outer criterion, which the two conditional matrices do not read, so
 `"unconditional"` is more expensive than the other two types.
 
 Where no hyperparameter was estimated by a differentiable criterion
@@ -137,29 +136,29 @@ curvature can be read for only some of the hyperparameters, the
 correction is a lower bound and a warning states it. See
 [`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md).
 
-**A coefficient that a kinked penalty has set to zero has `NA` in its
-row and column.** At zero the penalty is not twice differentiable, so
-\\S\\ does not exist there and no curvature can be read. The
-coefficients that a lasso or an MCP leaves non-zero have a variance,
-which is conditional on that selection;
+A coefficient that a kinked penalty has set to zero has `NA` in its row
+and column. At zero the penalty is not twice differentiable, so \\S\\
+does not exist there and the curvature cannot be read. The coefficients
+that a lasso or an MCP leaves non-zero have a variance, which is
+conditional on that selection;
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 reports this in a note. Away from zero the lasso contributes nothing to
 \\S\\, and SCAD and MCP contribute a negative curvature on their concave
 part, which makes the variance of a coefficient there larger than that
 of the likelihood alone. For these penalties \\V_b\\ is therefore not
 the posterior variance under the corresponding prior, because a
-curvature read at the mode does not see the mass that the prior puts
+curvature read at the mode does not include the mass that the prior puts
 near zero.
 
-**Which information.** `expected` selects the matrix used as \\H\\. Its
-default is the expected information where the fit inverted it and the
-family writes it out in closed form, and the observed Hessian otherwise
+The argument `expected` selects the matrix used as \\H\\. Its default is
+the expected information where the fit inverted it and the family writes
+it out in closed form, and the observed Hessian otherwise
 ([`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)).
 The two agree asymptotically and not in a sample: one is the information
-averaged over the model, the other the curvature of the likelihood at
-the data in hand. A model that carries a structural term is always
-inverted on the observed information, because neither a filter nor a
-mixture over states has an expected information.
+averaged over the model, and the other is the curvature of the
+likelihood at the data in hand. A model that carries a structural term
+is always inverted on the observed information, because a filter and a
+mixture over states do not have an expected information.
 
 Where the family has no closed form, `expected = TRUE` reaches an
 approximation, and `approx` selects it. `"opg"`, the default, is the

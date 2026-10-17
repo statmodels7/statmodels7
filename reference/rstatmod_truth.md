@@ -1,8 +1,8 @@
 # Draw the Whole Truth of a Simulation
 
-Every coefficient, every hyperparameter and, where the formula carries a
-structural term, that term's own parameters: drawn once, then
-overwritten by whatever `par` names.
+Draws every coefficient, every hyperparameter and, where the formula
+carries a structural term, that term's own parameters, once, and then
+overwrites them with the values that `par` supplies.
 
 ## Usage
 

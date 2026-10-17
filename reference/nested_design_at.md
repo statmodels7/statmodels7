@@ -26,4 +26,4 @@ nested_design_at(spec, design, coef, terms)
 
 ## Value
 
-The design with those columns replaced.
+The design, in which those columns are replaced.

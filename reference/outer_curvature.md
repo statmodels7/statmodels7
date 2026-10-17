@@ -1,8 +1,8 @@
 # The Outer Criterion's Curvature at a Reported Point
 
-\\A = -(H + H^\top)/2\\, the matrix a Newton decrement is read against,
-from the analytic Hessian where the form has one and from one central
-difference of the **exact** gradient where it does not.
+Computes \\A = -(H + H^\top)/2\\, the matrix against which a Newton
+decrement is read, from the analytic Hessian where the form has one and
+from one central difference of the exact gradient where it does not.
 
 ## Usage
 
@@ -30,11 +30,11 @@ outer_curvature(
 
 - inner:
 
-  The inner optimizer, which the differenced route refits with.
+  The inner optimizer with which the differenced route refits.
 
 - gam:
 
-  The coefficients the criterion estimates, from
+  The coefficients that the criterion estimates, from
   [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md),
   or `NULL`.
 
@@ -62,21 +62,21 @@ instead by
 which is also the route that
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
 takes for a model carrying a filter. The forms that reach it are a
-criterion on the **expected** information for a family that does not
-supply the second derivative of its expected information (or for a model
-with a refreshable block or a structural term), and a penalty whose
-Hessian moves with the coefficients, such as a heavy-tailed prior on a
-random effect, placed beside a structural term, where
+criterion on the expected information for a family that does not supply
+the second derivative of its expected information (or for a model with a
+refreshable block or a structural term), and a penalty whose Hessian
+moves with the coefficients, such as a heavy-tailed prior on a random
+effect, placed beside a structural term, where
 [`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
 reads no movement of that Hessian. The same prior without a structural
 term is analytic, through
 [`statmod_penalty_second()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_second.md).
-Both kinds of form carry an exact gradient, which is the quantity that
-the difference is taken of.
+Both kinds of form carry an exact gradient, and the difference is taken
+of that gradient.
 
 The two routes agree where both exist. The difference costs \\4(n_h +
-n\_\gamma)\\ refits, \\n\_\gamma\\ being the number of coefficients that
-the criterion estimates; the analytic route refits nothing.
+n\_\gamma)\\ refits, where \\n\_\gamma\\ is the number of coefficients
+that the criterion estimates; the analytic route refits nothing.
 
 `source` is informative only. For a model carrying a filter
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)

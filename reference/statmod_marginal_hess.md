@@ -1,7 +1,7 @@
 # The Exact Hessian of the Marginal Criterion
 
-\\\partial^2 V/\partial\eta^2\\ at the penalized mode, over the free
-scale of the hyperparameters under estimation.
+Computes \\\partial^2 V/\partial\eta^2\\ at the penalized mode, over the
+free scale of the hyperparameters under estimation.
 
 ## Usage
 
@@ -62,7 +62,7 @@ statmod_marginal_hess(
 
 - gam:
 
-  The coefficients the criterion estimates, from
+  The coefficients that the criterion estimates, from
   [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md),
   or `NULL`. Their rows and columns follow those of the hyperparameters.
 
@@ -80,8 +80,7 @@ hyperparameter Hessian of the penalty, the movement of the mode read
 through the penalized curvature, and two contributions from the
 determinant, one from \\M\\ moving and one from \\K_m\\ moving.
 
-**Contributions of the penalty.** Every contribution of the penalty
-comes from a generic of penalties7:
+Every contribution of the penalty comes from a generic of penalties7:
 [`penalties7::penalty_hess_theta()`](https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html),
 [`penalties7::penalty_cross()`](https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html),
 [`penalties7::penalty_dhessian()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html),
@@ -94,13 +93,13 @@ and its second-order companions for a penalty whose Hessian depends on
 the coefficients. The assembly therefore contains no branch for a
 particular penalty class (a ridge, a random effect, a structured prior).
 
-**Onto the free scale** the chain rule is second order and diagonal,
-each hyperparameter having its own link: with \\\theta = h(\eta)\\,
+Onto the free scale the chain rule is second order and diagonal, because
+each hyperparameter has its own link: with \\\theta = h(\eta)\\,
 \$\$\partial^2 V/\partial\eta_m\partial\eta_l = h_m'h_l'\\\partial^2
 V/\partial\theta_m\partial\theta_l + \delta\_{ml}\\h_m''\\\partial
 V/\partial\theta_m.\$\$
 
-**Routes.** For a model with a structural term the function returns
+For a model with a structural term the function returns
 [`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
 where the term implements
 [`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html)
@@ -109,8 +108,8 @@ and a penalty covers the term's own parameters, and
 otherwise, including the case where that assembly returns no finite
 matrix. On the expected information the assembly runs only where
 [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-admits order 2, and the stencil is used elsewhere. Any other model is
-answered by the assembly described above.
+admits order 2, and the stencil is used elsewhere. Any other model uses
+the assembly described above.
 
 ## See also
 

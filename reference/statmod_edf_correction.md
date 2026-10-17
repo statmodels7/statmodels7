@@ -1,7 +1,7 @@
 # The Smoothing-Parameter Correction to the Effective Degrees of Freedom
 
-The amount by which \\\mathrm{tr}\[(H+S)^{-1}H\]\\ understates the
-complexity of a fit whose hyperparameters were themselves estimated.
+Returns the amount by which \\\mathrm{tr}\[(H+S)^{-1}H\]\\ understates
+the complexity of a fit whose hyperparameters were themselves estimated.
 
 ## Usage
 
@@ -43,15 +43,15 @@ statmod_edf_correction(
 
 - expected:
 
-  Whether the information \\H\\ is the expected one. Not read where the
-  model carries a filter, whose information is observed. The caller
-  passes the information that the fit used, so that \\V\_\beta\\, \\H\\
-  and the criterion's Hessian read one information.
+  Whether the information \\H\\ is the expected one. The argument is not
+  read where the model carries a filter, whose information is observed.
+  The caller passes the information that the fit used, so that
+  \\V\_\beta\\, \\H\\ and the criterion's Hessian read one information.
 
 - approx:
 
-  The approximation for the expected information. Not read where the
-  model carries a filter.
+  The approximation for the expected information. The argument is not
+  read where the model carries a filter.
 
 - pinned:
 
@@ -62,7 +62,7 @@ statmod_edf_correction(
 
 A list with `total`, the scalar correction, `per`, one entry for each
 parameter and term, and `n_hyper`, the number of hyperparameters that
-were estimated. `per` uses the diagonal of \\V\_\theta\\ alone, so its
+were estimated. `per` uses only the diagonal of \\V\_\theta\\, so its
 sum differs from `total` when the estimated hyperparameters are
 correlated. The total and `n_hyper` are zero and `per` is empty where no
 hyperparameter was estimated. A zero `total` beside a positive `n_hyper`
@@ -86,7 +86,7 @@ right-hand side is penalties7's `penalty_cross()`. \\V\_\theta\\ is the
 inverse of the negative of the outer criterion's Hessian, which
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
 returns; the negative is taken because the criterion is maximized. The
-Hessian is that of the criterion the fit maximized, so for
+Hessian is that of the criterion that the fit maximized, so for
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 the determinant spans the range space of the penalty
 ([`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md)).
@@ -95,15 +95,14 @@ Everything is on the hyperparameter's link scale, which is the scale on
 which the outer criterion is optimized and therefore the only scale on
 which its Hessian is a variance.
 
-**Relation to mgcv.** The correction corresponds to the term of the
-effective degrees of freedom `edf2` of mgcv that arises from the
-uncertainty of the smoothing parameters (Wood, Pya and Safken, 2016).
-The scale of a Gaussian response is a distribution parameter with its
-own coefficients here, so its uncertainty is part of \\H\\ and needs no
-separate term.
+The correction corresponds to the term of the effective degrees of
+freedom `edf2` of mgcv that arises from the uncertainty of the smoothing
+parameters (Wood, Pya and Safken, 2016). The scale of a Gaussian
+response is a distribution parameter with its own coefficients here, so
+its uncertainty is part of \\H\\ and needs no separate term.
 
-**Where it does not apply.** The function returns zero, with `n_hyper`
-zero, for every outer criterion other than
+The function returns zero, and `n_hyper` is zero, for every outer
+criterion other than
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 and
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
@@ -119,17 +118,15 @@ The map from the hyperparameter to the penalized mode turns a corner
 whenever a coefficient joins or leaves the active set, and a delta
 method needs a derivative that does not exist there.
 
-**Coefficients estimated on the criterion.** Where the criterion also
-estimates coefficients
+Where the criterion also estimates coefficients
 ([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)),
 the function returns
 [`marginal_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/marginal_edf_correction.md).
 
-**A model carrying a filter.** The mode of such a model moves in the
-joint vector of the coefficients and the own parameters of the
-structural term, which is the vector that the determinant of the
-criterion spans. A penalty over those parameters is not a column of any
-design, so
+The mode of a model that carries a filter moves in the joint vector of
+the coefficients and the own parameters of the structural term, which is
+the vector that the determinant of the criterion spans. A penalty over
+those parameters is not a column of any design, so
 [`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)
 omits it when it is called for the coefficients alone. The correction is
 therefore computed on the joint vector.

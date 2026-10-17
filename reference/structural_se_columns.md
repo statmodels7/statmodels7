@@ -1,10 +1,10 @@
 # The Derivative Row of an Equation Carrying a Structural Term
 
-The derivative of the predictor of the equation carrying a structural
-term, one row per observation, in every coordinate of the variance
-matrix it moves with: the coefficients of every equation and the term's
-free parameters on their unconstrained scale. A score-driven term is
-read through
+Returns the derivative of the predictor of the equation that carries a
+structural term, one row per observation, in every coordinate of the
+variance matrix on which the predictor depends: the coefficients of
+every equation and the term's free parameters on their unconstrained
+scale. A score-driven term is read through
 [`filter_joint_jacobian()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_jacobian.md)
 and a term of the likelihood shape through
 [`loglik_shift_jacobian()`](https://statmodels7.github.io/statmodels7/reference/loglik_shift_jacobian.md).
@@ -37,7 +37,7 @@ structural_se_columns(spec, design, ep, p, coef)
 
 - coef:
 
-  The coefficients the predictors were evaluated at.
+  The coefficients at which the predictors were evaluated.
 
 ## Value
 

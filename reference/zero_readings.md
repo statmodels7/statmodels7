@@ -1,8 +1,8 @@
 # The Optimality Check of the Coefficients That a Kinked Penalty Sets to Zero
 
-The largest ratio \\\|s_j\|/\kappa_j\\ over the coefficients that a
-penalty with a kink sets exactly to zero, where \\s_j\\ is the
-derivative of the log-likelihood in that coefficient and \\\kappa_j\\
+Computes the largest ratio \\\|s_j\|/\kappa_j\\ over the coefficients
+that a penalty with a kink sets exactly to zero, where \\s_j\\ is the
+derivative of the log-likelihood in that coefficient and \\\kappa_j\\ is
 the size of the kink there.
 
 ## Usage
@@ -43,8 +43,8 @@ With the other coefficients fixed and a kink proportional to
 zero at a \\\lambda\\ that is the fraction \\r\\ of the fitted one,
 while along a path the other coefficients move and the threshold moves
 with them. The ratio is not a test of significance, and values close to
-one are ordinary where \\\lambda\\ was chosen on a grid, the next
-coefficient to enter being close to its threshold by construction.
+one are ordinary where \\\lambda\\ was chosen on a grid, because the
+next coefficient to enter is close to its threshold by construction.
 
 The kink is read from the penalty's own gradient just to the right of
 zero, so it is \\\lambda\\ for a lasso, \\\lambda\alpha\\ for an elastic

@@ -13,8 +13,8 @@ format_duration(seconds, digits = 3L)
 
 - seconds:
 
-  A number of seconds. Vectorized: a vector in gives a vector out, each
-  element in its own unit.
+  A number of seconds. Vectorized: a vector in gives a vector out, and
+  each element is in its own unit.
 
 - digits:
 

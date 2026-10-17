@@ -1,9 +1,9 @@
 # The Message for an Unrecognized Prediction Target
 
-Builds the error
+Builds the error that
 [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
-signals when `what` names nothing it can compute, listing this family's
-own parameter names, the moments and the collective targets.
+signals when `what` names nothing that it can compute, listing this
+family's own parameter names, the moments and the collective targets.
 
 ## Usage
 
@@ -29,9 +29,9 @@ A single string, ready for [`stop()`](https://rdrr.io/r/base/stop.html).
 
 The family's parameters are listed by name rather than described, since
 they differ from family to family. A data frame passed where `what`
-belongs, which is the mistake
-[`stats::predict()`](https://rdrr.io/r/stats/predict.html)'s argument
-order invites, is recognized and named separately.
+belongs, which is the mistake that the argument order of
+[`stats::predict()`](https://rdrr.io/r/stats/predict.html) invites, is
+recognized and named separately.
 
 ## See also
 

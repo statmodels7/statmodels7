@@ -1,7 +1,8 @@
 # The Mixed Derivative of the Penalty in the Coefficients and the Hyperparameters
 
-\\\partial^2\rho / \partial\beta \partial\theta\\, written into the
-stacked coefficient vector with one column per estimated hyperparameter.
+Returns \\\partial^2\rho / \partial\beta \partial\theta\\, written into
+the stacked coefficient vector with one column per estimated
+hyperparameter.
 
 ## Usage
 
@@ -67,9 +68,10 @@ accumulate. Where nothing is shared, each member has its own column.
 
 A penalty over the own parameters of a structural term covers positions
 among those parameters, which are not columns of a design. Where the
-matrix spans the coefficients alone, there is no position to write to
-and the penalty is skipped. The skipped penalties are counted in
-`skipped`, because a correction assembled without them is incomplete.
+matrix spans the coefficients alone, there is no position in which the
+penalty can be written, and the penalty is skipped. The skipped
+penalties are counted in `skipped`, because a correction assembled
+without them is incomplete.
 
 With `joint` the matrix spans the vector in which the mode of such a
 model moves, the coefficients followed by the free parameters of the

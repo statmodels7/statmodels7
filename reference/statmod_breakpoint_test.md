@@ -1,12 +1,12 @@
 # Test That a Break-Point Exists
 
 Tests the hypothesis that a model has no break-point against the
-alternative of the break-point term that the model carries: no change of
-slope for a
+alternative of the break-point term that the model carries. The null
+hypothesis is that the change of slope is zero for a
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
-no change of level for a
+that the change of level is zero for a
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
-and neither for a
+and that both are zero for a
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html).
 The term can sit in the equation of any distribution parameter, beside
 any other term that is not structural, and inside a parameter of
@@ -46,8 +46,8 @@ statmod_breakpoint_test(
 - term:
 
   The label of the term (`"seg"`, `"jump"`, `"jseg"` by default), or
-  `NULL` to find it. Needed only where the model carries more than one
-  break-point term.
+  `NULL` to find it. The label is needed only where the model carries
+  more than one break-point term.
 
 - k:
 
@@ -79,9 +79,9 @@ parameter present only under the alternative (Davies, 1987). The test
 reads Rao's score statistic for the change at a fixed position \\q\\,
 \$\$S(q) = U_c(q)' \\ \[K(q)^{-1}\]\_{cc} \\ U_c(q),\$\$ where
 \\U_c(q)\\ is the score of the change coefficients at the fit of the
-null model and \\K(q)\\ the penalized information of the model with the
-break-point held at \\q\\. One fit of the null model serves every \\q\\:
-the process costs one gradient and one Hessian per position. The
+null model and \\K(q)\\ the penalized information of the model in which
+the break-point is held at \\q\\. One fit of the null model serves every
+\\q\\: the process costs one gradient and one Hessian per position. The
 statistic of the test is \\M = \sup_q S(q)\\.
 
 Where the position moves the model continuously (a change of slope, or a
@@ -109,10 +109,10 @@ draws are conditional on the fitted random effects, if any.
 
 The hyperparameters are held at the values of the fit, so the test is
 conditional on the smoothing that the data chose. The term must carry
-one break-point, and none of its coefficients (the position, the change
-of slope or the change of level) may have a development on covariates.
-For a choice between one and several break-points, the fits can be
-compared by an information criterion.
+one break-point, and its coefficients (the position, the change of slope
+or the change of level) must not have a development on covariates. For a
+choice between one and several break-points, the fits can be compared by
+an information criterion.
 
 ## References
 

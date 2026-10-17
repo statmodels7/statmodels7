@@ -43,13 +43,13 @@ summary_blocks(
 
 - ci:
 
-  The flat interval table, as
+  The flat interval table that
   [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
-  returns it with the statistic and the p-value added.
+  returns, to which the statistic and the p-value have been added.
 
 - level:
 
-  The confidence level the intervals are built at.
+  The confidence level at which the intervals are built.
 
 - V:
 
@@ -73,10 +73,10 @@ summary_blocks(
   The `boundary_key` of
   [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md):
   the hyperparameter coordinates that have run to an edge of their range
-  with their own gradient already met. Such a coordinate reports no
-  standard error and no interval, and neither does any quantity that
-  depends on it; the variance matrix around it is computed and reported
-  as it always was.
+  and whose own gradient is already met. Such a coordinate reports no
+  standard error and no interval, like every quantity that depends on
+  it; the variance matrix around it is computed and reported as it
+  always was.
 
 - test:
 

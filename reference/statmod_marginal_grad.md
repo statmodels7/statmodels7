@@ -1,7 +1,7 @@
 # The Exact Gradient of the Marginal Criterion
 
-\\\partial V/\partial\eta\\ at the penalized mode, over the free scale
-of the hyperparameters under estimation.
+Computes \\\partial V/\partial\eta\\ at the penalized mode, over the
+free scale of the hyperparameters under estimation.
 
 ## Usage
 
@@ -89,13 +89,13 @@ and the inverse of \\K\\ on the integrated subspace under
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md).
 
 The matrix \\J\\ is the curvature of the penalized likelihood at the
-mode, the observed information plus the penalty's Hessian, with the
-second derivative of a block that moves with its coefficients added
+mode: the observed information plus the penalty's Hessian, plus the
+second derivative of a block that moves with its coefficients
 ([`mode_curvature()`](https://statmodels7.github.io/statmodels7/reference/mode_curvature.md)).
 It differs from \\K\\ when the criterion reads the expected information.
 A coefficient that the criterion estimates, a direction that the model
 does not identify and a coordinate that a kink of a break-point term
-holds do not move with \\\theta\\, and the solve is made on the
+holds do not move with \\\theta\\, and the function solves on the
 directions that they leave free
 ([`mode_solver()`](https://statmodels7.github.io/statmodels7/reference/mode_solver.md)).
 Where a penalty covers the parameters of a structural term, the function

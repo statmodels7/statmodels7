@@ -1,6 +1,6 @@
-# The Predictors a Coefficient Direction Induces
+# The Predictors That a Coefficient Direction Induces
 
-\\(X_k v_k)\_i\\ for each distribution parameter, which is how a
+Returns \\(X_k v_k)\_i\\ for each distribution parameter, which is how a
 movement of the coefficients is felt by the log-density.
 
 ## Usage

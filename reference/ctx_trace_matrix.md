@@ -1,7 +1,7 @@
-# The Matrix the Traces Are Taken Against
+# The Matrix Against Which the Traces Are Taken
 
-\\M\\, which is \\K^{-1}\\ when nothing is projected away and the
-projected inverse otherwise.
+Returns \\M\\, which is the projected inverse when a subspace is
+projected away and \\K^{-1}\\ otherwise.
 
 ## Usage
 
@@ -26,11 +26,11 @@ ctx_trace_matrix(ctx, pen, basis, expected = FALSE)
 
 - expected:
 
-  Which information `pen` was built with, which is the cache's key: the
-  projection is of that matrix, so one entry cannot serve both
+  The information with which `pen` was built, which is the cache's key:
+  the projection is of that matrix, so one entry cannot serve both
   information types.
 
 ## Value
 
-A square matrix, with the rows and columns of the pinned coordinates set
-to zero, or `NULL`.
+A square matrix in which the rows and columns of the pinned coordinates
+are zero, or `NULL`.

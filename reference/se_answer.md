@@ -1,8 +1,8 @@
-# The Shape a Prediction With Its Uncertainty Comes Back In
+# The Shape in Which a Prediction With Its Uncertainty Is Returned
 
-The rows
+Reduces the rows that
 [`predict_se()`](https://statmodels7.github.io/statmodels7/reference/predict_se.md)
-computed, reduced to the quantity requested.
+computed to the quantity requested.
 
 ## Usage
 
@@ -35,7 +35,7 @@ A data frame, or a named list of them.
 
 ## Details
 
-The vocabulary is the one that a prediction without uncertainty answers,
-minus the moments: a moment's delta method needs its derivative in every
-parameter, which distributions7 does not offer as a generic, so a moment
-signals an error.
+The accepted values of `what` are those of a prediction without
+uncertainty, minus the moments: a moment's delta method needs its
+derivative in every parameter, which distributions7 does not provide as
+a generic, so a moment signals an error.

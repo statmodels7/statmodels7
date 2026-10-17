@@ -1,6 +1,6 @@
-# What the Joint Chain Term Needs Before a Direction Is Known
+# The Direction-Free Quantities of the Joint Chain Term
 
-The quantities of
+Computes the quantities of
 [`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md)
 that do not depend on which hyperparameter is being differentiated: the
 family's derivatives, the filter's forward Jacobian, the per-observation
@@ -50,6 +50,6 @@ and curvature that drive the recursion, the seed of the recursion, the
 
 ## Details
 
-Computing them once is what keeps a model with several hyperparameters
-affordable: only the two pieces that read the direction are repeated,
-and each of those is one pass of the recursion.
+Computing them once keeps a model with several hyperparameters
+affordable, because only the two pieces that read the direction are
+repeated, and each of those is one pass of the recursion.

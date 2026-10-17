@@ -1,8 +1,9 @@
 # One Evaluation Point, Shared
 
-The quantities the marginal criterion, its gradient and its Hessian all
-read at one \\(\beta, \theta)\\: the linear predictors, the information,
-the penalty's Hessian, their sum and its factorization.
+Creates the environment that holds the quantities that the marginal
+criterion, its gradient and its Hessian all read at one \\(\beta,
+\theta)\\: the linear predictors, the information, the penalty's
+Hessian, their sum and its factorization.
 
 ## Usage
 

@@ -1,8 +1,8 @@
 # The Flat Directions of the Outer Curvature
 
-The directions along which the equilibrated outer curvature \\A/(ss')\\,
-\\s_j = \sqrt{\|A\_{jj}\|}\\, has an eigenvalue of at most `flat` in
-absolute value, over the coordinates `keep`.
+Computes the directions along which the equilibrated outer curvature
+\\A/(ss')\\, \\s_j = \sqrt{\|A\_{jj}\|}\\, has an eigenvalue of at most
+`flat` in absolute value, over the coordinates `keep`.
 
 ## Usage
 
@@ -39,21 +39,22 @@ coordinate, and `settled`, those whose own decrement is at most `tol`.
 
 ## Details
 
-A coordinate the curvature does not resolve shows on the diagonal, which
+A coordinate that the curvature does not resolve shows on the diagonal,
+which
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
 reads one coordinate at a time. A direction along which several
-coordinates move together can be flat while every coordinate alone is
-curved, and the equilibrated matrix is what reads it: its diagonal is
-one, so its smallest eigenvalue measures how far the coordinates are
-from a linear dependence in the curvature, whatever their scales. A
-direction is returned on the original coordinates, scaled so that its
-largest entry is one in absolute value, with entries below 1e-3 set to
-zero. Its own decrement is \\(q'\tilde g)^2/(2\|\lambda\|)\\, with \\q\\
-the equilibrated eigenvector and \\\tilde g = g/s\\; the absolute value
-is taken because the sign of an eigenvalue as small as this is the sign
-of rounding. No direction is returned when any eigenvalue is below
-`-flat`: the point is then not a maximum, and a flat direction there is
-not a ridge of one.
+coordinates move together can be flat while the criterion is curved in
+every coordinate separately, and the equilibrated matrix reads such a
+direction: its diagonal is one, so its smallest eigenvalue measures how
+far the coordinates are from a linear dependence in the curvature,
+whatever their scales. A direction is returned on the original
+coordinates, scaled so that its largest entry is one in absolute value,
+and entries below 1e-3 are set to zero. Its own decrement is \\(q'\tilde
+g)^2/(2\|\lambda\|)\\, with \\q\\ the equilibrated eigenvector and
+\\\tilde g = g/s\\; the absolute value is taken because the sign of an
+eigenvalue as small as this is the sign of rounding. The function
+returns no direction when any eigenvalue is below `-flat`: the point is
+then not a maximum, and a flat direction there is not a ridge of one.
 
 ## See also
 

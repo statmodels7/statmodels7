@@ -1,6 +1,6 @@
 # The Certificate's Readings Before the Edge Check
 
-Everything
+Computes everything that
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
 computes except the check at the edge of a chart, which that function
 applies to the result.
@@ -34,7 +34,7 @@ certificate_core(fit, tol, flat, edge)
   units of the matrix's scale
   ([`hyper_unit_scale()`](https://statmodels7.github.io/statmodels7/reference/hyper_unit_scale.md)).
   It is also the largest eigenvalue, in absolute value, of a flat
-  direction of the equilibrated curvature. It decides the label alone
+  direction of the equilibrated curvature. It determines only the label
   and never the verdict; see the details.
 
 - edge:
@@ -44,6 +44,6 @@ certificate_core(fit, tol, flat, edge)
 
 ## Value
 
-The list
+The list that
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
 returns.

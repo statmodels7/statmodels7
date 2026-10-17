@@ -1,7 +1,7 @@
 # The Variance Added to Each Predictor by Priors Other Than Gaussian
 
-\\z^\top \mathrm{Var}(b)\\ z\\ for every Student t and every other prior
-that
+Returns \\z^\top \mathrm{Var}(b)\\ z\\ for every Student t and every
+other prior that
 [`prior_parts()`](https://statmodels7.github.io/statmodels7/reference/prior_parts.md)
 lists, in each parameter's equation. A Student t with scale \\\Sigma\\
 has variance \\\Sigma\nu/(\nu - 2)\\, infinite for \\\nu \le 2\\; a

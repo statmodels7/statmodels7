@@ -1,7 +1,8 @@
-# The Coordinates a Fit Does Not Identify, Found After the Fact
+# The Coordinates That a Fit Does Not Identify, Found After the Fact
 
-The coordinates a pivoted decomposition of the penalized information at
-the mode leaves out, for a fit whose own solve named none.
+Returns the coordinates that a pivoted decomposition of the penalized
+information at the mode leaves out, for a fit whose own solve named
+none.
 
 ## Usage
 
@@ -17,7 +18,7 @@ deficient_coords(K, held = integer(0))
 
 - held:
 
-  The coordinates a kinked penalty holds at zero, from
+  The coordinates that a kinked penalty holds at zero, from
   [`zero_kinked()`](https://statmodels7.github.io/statmodels7/reference/zero_kinked.md),
   which are not candidates.
 
@@ -30,22 +31,23 @@ empty.
 
 Only
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-on a pivoting decomposition reports which column it dropped, that being
-a by-product of the solve that fitted the model. An `optimizers7` method
-solves nothing by a pivot, and neither do the `chol` and `svd` routes,
-so a design of less than full rank left every coordinate unnamed and
+on a pivoting decomposition reports which column it dropped, which is a
+by-product of the solve that fitted the model. An `optimizers7` method
+does not solve by a pivot, and the `chol` and `svd` routes do not
+either, so a design of less than full rank left every coordinate unnamed
+and
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
 signaled an error for the whole matrix. The question that a pivot
-answers is answered here on the matrix that
-[`vcov()`](https://rdrr.io/r/stats/vcov.html) inverts, so the two agree
-on which model is being reported.
+settles during the fit is settled here on the matrix that
+[`vcov()`](https://rdrr.io/r/stats/vcov.html) inverts, so that the alias
+and the variance refer to the same model.
 
 The matrix is \\K = H + S\\, which makes a penalized coordinate safe
 without a clause of its own: the curvature of the penalty is in \\S\\,
 so a column that the design alone does not identify is identified in
 \\K\\, as it is identified in the augmented system that the pivoted
 route factorizes. Under `ridge(~ 0 + x1 + x3)` with two identical
-columns, no coordinate is named.
+columns, the function names no coordinate.
 
 \\K\\ is equilibrated to a unit diagonal before the pivot runs, as in
 [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
@@ -60,25 +62,24 @@ positive, which is the rule of
 [`boundary_coords()`](https://statmodels7.github.io/statmodels7/reference/boundary_coords.md):
 a parameter at the clamp of its link makes its whole row non-finite, and
 a coordinate about which the information carries nothing has an empty
-row. Neither is an aliasing. There the estimate stands and only the
-variance does not, which is what
+row. Both cases differ from aliasing. In them the estimate stands and
+only the variance does not, a situation that
 [`uninformative_coords()`](https://statmodels7.github.io/statmodels7/reference/uninformative_coords.md)
-handles; aliasing reports the coefficient itself as missing.
+handles, whereas aliasing reports the coefficient itself as missing.
 
-Whether there is anything to name is decided by
 [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
-and not by a tolerance of this function, so a fit whose information
-inverts is untouched and the alias cannot disagree with the variance
-reported beside it. The gate is necessary. \\K\\ is \\X'X\\ up to the
-weights, so it squares the conditioning of the design, and a pivoted QR
-read at the tolerance of `dqrdc2` is twice as strict here as it is on
-the augmented system. For two columns collinear to within 1e-4 (an
-ordinary pair of correlated covariates), the bare pivot would name one
-of them while
+determines whether there is anything to name, and a tolerance of this
+function does not, so a fit whose information inverts is untouched and
+the alias cannot disagree with the variance reported beside it. The gate
+is necessary because \\K\\ is \\X'X\\ up to the weights, so it squares
+the conditioning of the design, and a pivoted QR read at the tolerance
+of `dqrdc2` is twice as strict here as it is on the augmented system.
+For two columns collinear to within 1e-4 (an ordinary pair of correlated
+covariates), the bare pivot would name one of them while
 [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
-inverts the matrix without difficulty. With the gate, such a case is
-untouched and the naming runs only where the whole matrix would
-otherwise have been rejected.
+inverts the matrix without difficulty. With the gate, the function
+leaves such a case untouched and names a coordinate only where the whole
+matrix would otherwise have been rejected.
 
 Which coordinate is then named is determined by the pivot, as in
 [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md).
@@ -96,7 +97,7 @@ whole matrix would name the last level, so that coordinate is excluded.
 ## See also
 
 [`uninformative_coords()`](https://statmodels7.github.io/statmodels7/reference/uninformative_coords.md),
-which holds a coordinate the information carries nothing about rather
-than aliasing it, and
+which holds a coordinate about which the information carries nothing
+instead of aliasing it, and
 [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md),
-whose pivot answers the same question during the fit.
+whose pivot settles the same question during the fit.

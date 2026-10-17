@@ -9,7 +9,7 @@ term read at &quot;marginal&quot;, at the fixed part of each equation's predicto
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,8 +63,8 @@ term read at <code>"marginal"</code>, at the fixed part of each equation's predi
 
 
 <dl><dt id="arg-spec-design">spec, design<a class="anchor" aria-label="anchor" href="#arg-spec-design"></a></dt>
-<dd><p>The specification at the new rows and its design, with
-the marginal terms' columns set to zero.</p></dd>
+<dd><p>The specification at the new rows and its design, whose
+columns for the marginal terms are set to zero.</p></dd>
 
 
 <dt id="arg-ep">ep<a class="anchor" aria-label="anchor" href="#arg-ep"></a></dt>
@@ -86,15 +86,15 @@ them.</p></dd>
 
 
 <dt id="arg-eta-at">eta_at<a class="anchor" aria-label="anchor" href="#arg-eta-at"></a></dt>
-<dd><p>A named list of predictors to integrate at in place of
+<dd><p>A named list of predictors at which to integrate, in place of
 <code>ep$eta</code>, for the ends of an interval; <code>NULL</code> for <code>ep$eta</code>.</p></dd>
 
 
 <dt id="arg-deriv">deriv<a class="anchor" aria-label="anchor" href="#arg-deriv"></a></dt>
 <dd><p><code>TRUE</code> to average the derivative of the inverse link instead
-of the inverse link, which is what the delta method of a marginal
-parameter multiplies the predictor's standard error by. Read only for a
-parameter.</p></dd>
+of the inverse link. The delta method of a marginal parameter multiplies
+the standard error of the predictor by this average. It is read only for
+a parameter.</p></dd>
 
 
 <dt id="arg-eta-node">eta_node<a class="anchor" aria-label="anchor" href="#arg-eta-node"></a></dt>
@@ -119,7 +119,7 @@ total expectation; the variance adds the variance of the conditional mean,
 \(E_b[\mathrm{Var}(Y\mid b)] + \mathrm{Var}_b(E[Y\mid b])\), which is
 where a random effect on the scale enters. A predictor, <code>"link"</code> or
 <code>"link:p"</code>, is not computed here: <code><a href="predict.StatmodFit.html">predict.StatmodFit()</a></code> returns
-\(\eta_0\) itself for it, the effects having mean zero.</p>
+\(\eta_0\) itself for it, because the effects have mean zero.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

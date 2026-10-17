@@ -11,7 +11,7 @@ behind it."><meta property="og:image" content="https://statmodels7.github.io/sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,8 +71,9 @@ equations separated by <code>|</code>. Its left-hand side must be a symbol.</p><
 
 
 <dt id="arg-distrib">distrib<a class="anchor" aria-label="anchor" href="#arg-distrib"></a></dt>
-<dd><p>A <span class="pkg">distributions7</span> distribution object, which decides
-how many equations there are and what is drawn from.</p></dd>
+<dd><p>A <span class="pkg">distributions7</span> distribution object, which
+determines how many equations there are and the distribution from which
+the data are drawn.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
@@ -86,8 +87,8 @@ the number of rows.</p></dd>
 
 
 <dt id="arg-n-sim">n_sim<a class="anchor" aria-label="anchor" href="#arg-n-sim"></a></dt>
-<dd><p>How many data sets to draw, a positive whole number. <code>1</code> by
-default.</p></dd>
+<dd><p>How many data sets to draw, a positive whole number. The
+default is <code>1</code>.</p></dd>
 
 
 <dt id="arg-par">par<a class="anchor" aria-label="anchor" href="#arg-par"></a></dt>
@@ -101,7 +102,7 @@ details. <code>NULL</code>, the default, draws everything.</p></dd>
 <dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>
 <dd><p>The width of the draws, <code>1</code> by default. A quantity that rides a
 chart (a structural parameter, a prior's own scale) is drawn at half of
-it, the chart carrying a width of one onto most of its parameter's
+it, because a chart carries a width of one onto most of its parameter's
 range.</p></dd>
 
 
@@ -120,8 +121,8 @@ level stops the simulation with an error.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>"StatmodSim"</code>, a list with the elements:</p><dl><dt><code>data</code></dt>
-<dd><p>the data frame with the response column added, named
-after the formula's left-hand side.</p></dd>
+<dd><p>the data frame, to which the response column has been
+added under the name of the formula's left-hand side.</p></dd>
 
 <dt><code>par</code></dt>
 <dd><p>the coefficients used, drawn or given, named as the
@@ -140,10 +141,10 @@ a marginal break-point term), or <code>NULL</code>.</p></dd>
 <dd><p>such a term's own parameters, or <code>NULL</code>.</p></dd>
 
 <dt><code>hyper</code></dt>
-<dd><p>a data frame of the hyperparameters, one row per
-penalty and name, with the value drawn or held. Its columns are
-those of <code><a href="hyper.html">hyper()</a></code> as far as they mean the same thing, <code>value</code>
-taking the place of <code>estimate</code>, so a study compares the two
+<dd><p>a data frame of the hyperparameters, with one row per
+penalty and name; each row gives the value drawn or held. Its columns
+are those of <code><a href="hyper.html">hyper()</a></code> as far as they mean the same thing, and <code>value</code>
+takes the place of <code>estimate</code>, so a study compares the two
 directly.</p></dd>
 
 <dt><code>n_sim</code></dt>
@@ -159,14 +160,14 @@ and <code>latent</code> is such a list when the model has a term with state and
     </div>
     <div class="section level2">
     <h2 id="what-it-is-for">What it is for<a class="anchor" aria-label="anchor" href="#what-it-is-for"></a></h2>
-    <p>Data whose truth is known: write the model, draw from it, fit it back, and
-see whether the fit recovers what was put in. That is the shape of a
-simulation study, and of a check on a term that has just been written.</p>
+    <p>Simulated data have a known truth: write the model, draw from it, fit it
+back, and see whether the fit recovers what was put in. That is the shape
+of a simulation study, and of a check on a term that has just been written.</p>
 <p>This is not <code><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">stats::simulate()</a></code>, which draws from a model already fitted.
 The <code>r</code> prefix is the one that R uses for a random draw, so the two names
 stay apart.</p>
 <p>A covariate needs no declaration. A factor becomes its contrasts and a
-numeric variable stays as it is, the design being built by the interpreter
+numeric variable stays as it is, and the design is built by the interpreter
 that a fit uses.</p>
     </div>
     <div class="section level2">
@@ -200,14 +201,14 @@ they must agree.</p>
 entry of <code>par</code> may be, and the columns are drawn afresh at every replicate.
 A column of <code>data</code> under the same name is overwritten, and the columns of
 <code>data</code> that are not drawn are the same in every replicate.</p>
-<p>The choice decides what a study measures. With <code>data</code> the covariates are
+<p>The choice determines what a study measures. With <code>data</code> the covariates are
 the same throughout, so the study measures the behavior of the estimator
 conditional on that design; with <code>covariates</code> it measures that behavior
-over the design as well. Neither is more correct, and a study should state
-which one it ran.</p>
+over the design as well. The two choices are equally correct, and a study
+should state which one it ran.</p>
 <p>A drawn factor should have its levels fixed. A factor drawn with free
 levels can lose a level at some replicate. The design then has another
-shape than the one that the coefficients were drawn for, and the
+shape than the one for which the coefficients were drawn, and the
 simulation stops at that replicate with an error.</p>
     </div>
     <div class="section level2">
@@ -224,8 +225,8 @@ single.</p>
     </div>
     <div class="section level2">
     <h2 id="the-quantities-that-are-drawn">The quantities that are drawn<a class="anchor" aria-label="anchor" href="#the-quantities-that-are-drawn"></a></h2>
-    <p>A call that names nothing draws the whole truth, so writing the model is
-all that getting data from it requires. Each quantity is drawn by the
+    <p>If the user names no quantity, the call draws the whole truth, so writing
+the model is enough to get data from it. Each quantity is drawn by the
 component that defines its meaning:</p><ul><li><p>a coefficient of a design column has no other owner and comes from
 <code>rnorm(1, 0, sd)</code>, which on the link scale gives predictors of order
 one;</p></li>
@@ -238,12 +239,12 @@ that the penalty carries for it, and comes back in <code>hyper</code>;</p></li>
 <code><a href="https://statmodels7.github.io/modelterms7/reference/term_draw.html" class="external-link">modelterms7::term_draw()</a></code>, on the chart that each one rides. A loading
 stays positive and a persistence stationary whatever comes out;</p></li>
 <li><p>a coefficient of a design column whose meaning only the term defines is
-drawn by the term, through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_coef_draw.html" class="external-link">modelterms7::term_coef_draw()</a></code>, last of all
-so that what it writes is what survives. A break-point is the case: it
-is a position on the covariate's own axis, so a normal of width <code>sd</code>
-often lands outside the data, and the confinement then pins it to an edge
-of the interval, where one of the two segments holds a small share of the
-rows.</p></li>
+drawn by the term, through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_coef_draw.html" class="external-link">modelterms7::term_coef_draw()</a></code>, last of all,
+so that the values that it writes survive. A break-point is such a
+coordinate: it is a position on the covariate's own axis, so a normal of
+width <code>sd</code> often lands outside the data, and the term then confines it,
+which pins it to an edge of the interval, where one of the two segments
+holds a small share of the rows.</p></li>
 </ul><p>A hyperparameter that the term holds is used and not drawn, so
 <code>s(x, bspline_smooth(), hyper = c(lambda = 2))</code> simulates at the smoothing
 parameter that it names. If a term draws the coordinates that a prior
@@ -251,22 +252,22 @@ covers, the prior is reported at the width that the term used, since those
 values are no longer the prior's own draw. They are drawn Gaussian at that
 width, so a heavy-tailed prior over a break-point keeps its family for the
 fitting but not for the simulation.</p>
-<p>What no prior reaches falls back to the plain draw. The cases are SCAD and
-MCP, which are improper by construction; an anisotropic tensor smooth,
-which is flat along its null space; a covariance class spanning a filter
-and an equation at once, which is in neither vector on its own; and a
-coordinate for which the draw of the penalty is missing.</p>
+<p>A coordinate that a prior does not reach falls back to the plain draw. The
+cases are SCAD and MCP, which are improper by construction; an anisotropic
+tensor smooth, which is flat along its null space; a covariance class
+spanning a filter and an equation at once, which is in neither vector on
+its own; and a coordinate for which the draw of the penalty is missing.</p>
     </div>
     <div class="section level2">
     <h2 id="fixing-quantities-by-name">Fixing quantities by name<a class="anchor" aria-label="anchor" href="#fixing-quantities-by-name"></a></h2>
     <p><code>par</code> is one named list over the whole model, and a key may be</p><ul><li><p>a distribution parameter, <code>mu</code>, which is that whole equation;</p></li>
 <li><p>one of its coefficients or a group of them, <code>mu.(Intercept)</code> or
-<code>mu.random</code>, a group being a name that the members extend at a dot;</p></li>
+<code>mu.random</code>, where a group is a name that the members extend at a dot;</p></li>
 <li><p>a structural term's own parameter, <code>kappa1</code>, or a group of those,
 <code>omega.random</code>.</p></li>
 </ul><p>A value is a vector of that key's own length, a single number used for all
-of them, or a function of the count. The function is how a structured
-truth is written without a vocabulary of its own:
+of them, or a function of the count. A function writes a structured
+truth without a vocabulary of its own:
 <code>function(k) rnorm(k, 0, 0.4)</code> is a random effect at a scale chosen by the
 caller and <code>function(k) c(1.5, -2, rep(0, k - 2))</code> is a sparse truth for a
 lasso to find. A function that returns the wrong number of values or a
@@ -287,11 +288,11 @@ departure is.</p>
     <h2 id="a-term-with-state">A term with state<a class="anchor" aria-label="anchor" href="#a-term-with-state"></a></h2>
     <p>The simulation runs through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_simulate.html" class="external-link">modelterms7::term_simulate()</a></code>, so the
 recursion that generates the data is the term's own. A score-driven term
-draws the response as it runs, its level at one time being driven by the
+draws the response as it runs, and its level at one time is driven by the
 score at the time before; a latent chain draws its path from the stationary
-law that the likelihood is written with; a marginal break-point term draws
-each group's positions from their prior. What each drew comes back in
-<code>latent</code>, which is what a recovery check compares against.</p>
+law with which the likelihood is written; a marginal break-point term draws
+each group's positions from their prior. The values that each term drew
+come back in <code>latent</code>, and a recovery check compares a fit with them.</p>
 <p>The parameters of such a term are not coefficients of any equation. They
 are named in <code>par</code> beside the equations' coefficients, and since a formula
 holds at most one such term, the names carry no term key. They are drawn
@@ -317,7 +318,7 @@ likelihood.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">50</span><span class="op">)</span>, g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># coefficients drawn</span></span></span>
+<span class="r-in"><span><span class="co"># The coefficients are drawn.</span></span></span>
 <span class="r-in"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">+</span> <span class="va">g</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sim</span><span class="op">$</span><span class="va">par</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $mu</span>
@@ -329,7 +330,7 @@ likelihood.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  0.07434132 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># or given, and recovered by a fit</span></span></span>
+<span class="r-in"><span><span class="co"># The coefficients are given, and a fit recovers them.</span></span></span>
 <span class="r-in"><span><span class="va">sim2</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span>,</span></span>
 <span class="r-in"><span>                 par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mu <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, sigma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">0.3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">sim2</span><span class="op">$</span><span class="va">data</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -342,7 +343,7 @@ likelihood.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   -1.145181 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># a sparse truth, written as a function of the coefficient count</span></span></span>
+<span class="r-in"><span><span class="co"># A sparse truth is written as a function of the coefficient count.</span></span></span>
 <span class="r-in"><span><span class="va">dd2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span> <span class="op">*</span> <span class="fl">6</span><span class="op">)</span>, <span class="fl">50</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sim3</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">lasso</span><span class="op">(</span><span class="op">~</span> <span class="va">V1</span> <span class="op">+</span> <span class="va">V2</span> <span class="op">+</span> <span class="va">V3</span> <span class="op">+</span> <span class="va">V4</span> <span class="op">+</span> <span class="va">V5</span> <span class="op">+</span> <span class="va">V6</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd2</span>,</span></span>
@@ -351,12 +352,12 @@ likelihood.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sim3</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">y</span>, <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2.108603 3.625229 6.596983</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># a model with no covariates at all</span></span></span>
+<span class="r-in"><span><span class="co"># This model has no covariates at all.</span></span></span>
 <span class="r-in"><span><span class="va">sim4</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sim4</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 20</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># a study over replicates, the covariates drawn afresh at each one</span></span></span>
+<span class="r-in"><span><span class="co"># A study over replicates draws the covariates afresh at each one.</span></span></span>
 <span class="r-in"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">80</span>,</span></span>
 <span class="r-in"><span>                  n_sim <span class="op">=</span> <span class="fl">5</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mu <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, sigma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                  covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, <span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -367,7 +368,8 @@ likelihood.</p>
 <span class="r-in"><span>  readable <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span><span class="op">[[</span><span class="fl">2L</span><span class="op">]</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2.017968 2.036897 2.013920 2.043438 1.935684</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># a score-driven series, its own parameters named beside the equations'</span></span></span>
+<span class="r-in"><span><span class="co"># In a score-driven series, the term's own parameters are named beside the</span></span></span>
+<span class="r-in"><span><span class="co"># equations'.</span></span></span>
 <span class="r-in"><span><span class="va">sim5</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">gas</span><span class="op">(</span>p <span class="op">=</span> <span class="fl">1</span>, q <span class="op">=</span> <span class="fl">1</span>, time <span class="op">=</span> <span class="va">t</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">)</span>,</span></span>
@@ -376,8 +378,8 @@ likelihood.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sim5</span><span class="op">$</span><span class="va">latent</span>, <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.0000000 0.6960904 0.6137012</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># and a panel whose level varies by group: naming nothing draws the</span></span></span>
-<span class="r-in"><span><span class="co"># deviations from the prior random() declares, at a scale drawn too</span></span></span>
+<span class="r-in"><span><span class="co"># In a panel whose level varies by group, naming nothing draws the</span></span></span>
+<span class="r-in"><span><span class="co"># deviations from the prior that random() declares, at a scale drawn too.</span></span></span>
 <span class="r-in"><span><span class="va">pan</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, each <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span>, t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sim6</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">gas</span><span class="op">(</span>p <span class="op">=</span> <span class="fl">1</span>, q <span class="op">=</span> <span class="fl">1</span>, <span class="va">omega</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu">random</span><span class="op">(</span><span class="op">~</span><span class="fl">1</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                             by <span class="op">=</span> <span class="va">id</span>, time <span class="op">=</span> <span class="va">t</span><span class="op">)</span>,</span></span>

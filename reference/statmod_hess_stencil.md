@@ -1,9 +1,9 @@
 # The Outer Hessian by One Difference of the Exact Gradient
 
-The criterion's second derivative in the hyperparameters where no
-analytic route exists: one central difference of
+Returns the criterion's second derivative in the hyperparameters where
+there is no analytic route: one central difference of
 [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
-with the coefficients refitted at every probe.
+in which the coefficients are refitted at every probe.
 
 ## Usage
 
@@ -59,7 +59,7 @@ statmod_hess_stencil(
 
   The inner optimizer with which the probes refit;
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-  where none is given.
+  where the argument is `NULL`.
 
 - h:
 
@@ -111,9 +111,10 @@ averaging it with its transpose.
 
 Each probe refits the coefficients from the coefficients supplied and
 from the structural state as it stands, which is restored before each
-probe, so that the two probes of a column differ in the hyperparameter
-alone. The location error of the mode is nearly the same at \\+h\\ and
-\\-h\\ and cancels in the difference. Where the inner optimizer is
+probe, so that the two probes of a column differ only in the
+hyperparameter. The location error of the mode is nearly the same at
+\\+h\\ and \\-h\\ and cancels in the difference. Where the inner
+optimizer is
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
 the probes use its tolerance `min(tol, hess_stencil_inner_tol())`, a
 budget of at least 500 iterations and no stopping criterion of its own;

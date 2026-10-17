@@ -13,7 +13,7 @@ so the installation runs only when action = "install" is given.'><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,25 +61,26 @@ so the installation runs only when <code>action = "install"</code> is given.</p>
 <dl><dt id="arg-action">action<a class="anchor" aria-label="anchor" href="#arg-action"></a></dt>
 <dd><p><code>"report"</code> (the default) to print the installed versions and
 the calls that would update them, or <code>"install"</code> to install and update.
-Matched with <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>, so an unambiguous prefix such as <code>"i"</code> is
-accepted and anything else is an error.</p></dd>
+The argument is matched with <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>, so an unambiguous prefix such
+as <code>"i"</code> is accepted and anything else is an error.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame as <code><a href="statmodels7_versions.html">statmodels7_versions()</a></code> returns, with columns
-<code>package</code> and <code>version</code>. Returned invisibly under both actions: the
-report prints to the console with <code><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat()</a></code> and is not the return value.
+<code>package</code> and <code>version</code>. The data frame is returned invisibly under both
+actions: the report prints to the console with <code><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat()</a></code> and is not the
+return value.
 Under <code>"install"</code> the versions are read after the installation, so the
 result is the state that the call left behind.</p>
     </div>
     <div class="section level2">
     <h2 id="where-the-packages-come-from">Where the packages come from<a class="anchor" aria-label="anchor" href="#where-the-packages-come-from"></a></h2>
-    <p>None of the toolkit is on CRAN, so the install path is GitHub, at
-<code>statmodels7/&lt;package&gt;</code> for each member <code><a href="statmodels7_packages.html">statmodels7_packages()</a></code> names.
-The work is handed to <span class="pkg">pak</span>, which resolves the dependencies among the
-members itself and installs only what is missing or behind. The order the
-names are passed in therefore does not matter.</p>
+    <p>The members of the toolkit are not on CRAN, so the install path is GitHub,
+at <code>statmodels7/&lt;package&gt;</code> for each member that <code><a href="statmodels7_packages.html">statmodels7_packages()</a></code>
+names. The work is handed to <span class="pkg">pak</span>, which resolves the dependencies
+among the members itself and installs only what is missing or behind. The
+order in which the names are passed therefore does not matter.</p>
 <p><span class="pkg">pak</span> is not a dependency of this package. When <code>action = "install"</code>
 is given and <span class="pkg">pak</span> is not installed, the call stops with a message
 that contains the <code>install.packages("pak")</code> line and the equivalent
@@ -96,11 +97,11 @@ member can fail partway and leave that member in a state in which
     </div>
     <div class="section level2">
     <h2 id="printing">Printing<a class="anchor" aria-label="anchor" href="#printing"></a></h2>
-    <p>Both actions print, and no argument suppresses the output. The return value
-of the report is the result of <code><a href="statmodels7_versions.html">statmodels7_versions()</a></code>, so a caller who
-wants the versions without the console output calls that function instead.
-The installation is carried out by <span class="pkg">pak</span>, which prints its own progress
-and has no <code>quiet</code> argument.</p>
+    <p>Both actions print, and an argument cannot suppress the output. The return
+value of the report is the result of <code><a href="statmodels7_versions.html">statmodels7_versions()</a></code>, so a caller
+who wants the versions without the console output calls that function
+instead. The installation is carried out by <span class="pkg">pak</span>, which prints its own
+progress and has no <code>quiet</code> argument.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

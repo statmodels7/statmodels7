@@ -1,9 +1,9 @@
 # The Effective Degrees of Freedom of a Whole Fit
 
 Computes \\\tau = \mathrm{tr}\[(H+S)^{-1}H\]\\, the trace of the
-influence matrix, which is the effective degrees of freedom a
-prediction-error criterion charges for. An unpenalized fit has \\S = 0\\
-and \\\tau = p\\; shrinkage lowers it, and \\\tau\\ falls to the
+influence matrix, which is the number of effective degrees of freedom
+charged by a prediction-error criterion. An unpenalized fit has \\S =
+0\\ and \\\tau = p\\; shrinkage lowers it, and \\\tau\\ falls to the
 dimension of the penalty's null space as the hyperparameter grows.
 
 ## Usage
@@ -21,7 +21,7 @@ outer_tau(J, H, active = NULL)
 
 - H:
 
-  The likelihood's information alone, the same shape as `J`.
+  The likelihood's own information, of the same shape as `J`.
 
 - active:
 
@@ -39,8 +39,8 @@ A single number: the trace, `0` when `active` selects nothing, and
 A penalty with a kink is not twice differentiable everywhere, and the
 mode of such a fit sits on the kink for every coefficient that it sets
 to zero. It is twice differentiable away from the kink, so the trace is
-taken over the active coordinates alone, which is the submodel the fit
-has selected.
+taken over the active coordinates only, which form the submodel that the
+fit has selected.
 
 For a penalty that is linear there, the lasso, \\S\_{AA}\\ vanishes and
 \\\tau\\ is exactly the number of coefficients that survived, the
@@ -55,10 +55,10 @@ everything.
 
 ## The inverse
 
-Through a Cholesky of \\J\\, and `NA_real_` when that fails, which is
-what a caller reads as an unusable point. Both matrices are densified
-first: the trace needs the full inverse, which is dense whatever \\J\\
-was.
+The inverse is computed through a Cholesky factorization of \\J\\, and
+the result is `NA_real_` when that fails, which a caller reads as an
+unusable point. Both matrices are densified first: the trace needs the
+full inverse, which is dense whatever \\J\\ was.
 
 ## References
 
@@ -68,6 +68,6 @@ of the lasso. *The Annals of Statistics* 35(5), 2173–2192.
 ## See also
 
 [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
-for the criterion this feeds,
+for the criterion that this function feeds,
 [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
 for the per-term reading, which splits the same trace by term.

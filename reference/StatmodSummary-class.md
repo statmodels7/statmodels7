@@ -1,6 +1,6 @@
 # A Summary of a Fitted Model
 
-What
+Holds what
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 returns: the blocks of each distribution parameter, the degrees of
 freedom, the information criteria and the notes that qualify the
@@ -100,7 +100,7 @@ StatmodSummary(
 
 - level:
 
-  The confidence level the intervals were built at.
+  The confidence level at which the intervals were built.
 
 - type:
 
@@ -114,7 +114,7 @@ StatmodSummary(
 - max_coef:
 
   The number of coefficient rows that each block prints, or `NULL` where
-  the option `statmodels7.summary_max_coef` decides.
+  the option `statmodels7.summary_max_coef` determines it.
 
 - notes:
 

@@ -1,6 +1,6 @@
-# The Variance of the Quantities a Fit Reports
+# The Variance of the Quantities That a Fit Reports
 
-The delta method over the joint variance, with the Jacobian
+Applies the delta method to the joint variance, with the Jacobian that
 [`readable_joint()`](https://statmodels7.github.io/statmodels7/reference/readable_joint.md)
 supplies.
 

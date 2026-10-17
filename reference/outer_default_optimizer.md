@@ -50,7 +50,7 @@ outer_default_optimizer(exact, use_hess, mixed = FALSE, n = NA_integer_)
 
 - n:
 
-  The number of coordinates the search moves.
+  The number of coordinates that the search moves.
 
 ## Value
 

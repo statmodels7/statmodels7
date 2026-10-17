@@ -1,7 +1,7 @@
 # The Log-Density's Curvature Used by the Refresh Corrections
 
-\\\ell\_{ab}\\ on the link scale, from whichever route the criterion's
-\\K\\ was assembled on.
+Returns \\\ell\_{ab}\\ on the link scale, from whichever route was used
+to assemble the criterion's \\K\\.
 
 ## Usage
 

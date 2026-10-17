@@ -1,7 +1,7 @@
 # The Log-Likelihood of a Fit
 
-The value that R's convention expects, with the degrees of freedom and
-the number of observations as attributes.
+Returns the value that R's convention expects, with the degrees of
+freedom and the number of observations as attributes.
 [`loglik()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
 is a different function: it evaluates the model at parameters and data
 chosen by the caller.
@@ -39,15 +39,15 @@ where the weights are all 1).
 
 ## Which likelihood, and why it matters
 
-The default is the **conditional** one: the log-density at the fitted
-coefficients, a penalized coefficient among them, paired with the
+The default is the conditional one: the log-density at the fitted
+coefficients, including the penalized coefficients, paired with the
 effective degrees of freedom \\\mathrm{tr}\[(H+S)^{-1}H\]\\. A criterion
 built on that pair is the conditional AIC, which measures how well the
 model describes the groups, curves and states actually observed.
 
-A mixed-model package reports the **marginal** likelihood instead: the
+A mixed-model package reports the marginal likelihood instead: the
 random effects are integrated out and the count is the number of
-estimated parameters, variance components among them. That likelihood
+estimated parameters, including the variance components. That likelihood
 concerns the population, and the AIC built on it is a different number,
 not comparable with the conditional one.
 
@@ -59,13 +59,13 @@ the two conventions (Vaida and Blanchard, 2005).
 
 `type = "marginal"` returns the value of the outer criterion at the fit.
 Its degrees of freedom count the parameters that the marginal model
-estimates: the coefficients that no penalty covers, the dimension of the
-null space of each penalty without a kink (the straight line of a
-smooth), the hyperparameters that the outer search or a path estimated,
-and the free parameters of a structural term. A held hyperparameter is
-not counted, and a hyperparameter shared by several terms is counted
-once. The other coefficients of a penalized term are integrated out and
-are not counted.
+estimates: the coefficients that are not covered by any penalty, the
+dimension of the null space of each penalty without a kink (the straight
+line of a smooth), the hyperparameters that the outer search or a path
+estimated, and the free parameters of a structural term. A held
+hyperparameter is not counted, and a hyperparameter shared by several
+terms is counted once. The other coefficients of a penalized term are
+integrated out and are not counted.
 
 The value exists only where the outer criterion is
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md) or

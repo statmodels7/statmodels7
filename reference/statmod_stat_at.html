@@ -11,7 +11,7 @@ p-value."><meta property="og:image" content="https://statmodels7.github.io/statm
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,8 +112,9 @@ three – and <code>mode_error</code>, <code>NA</code> unless it is requested.</
     <p>All four read the penalized objective, which is the function that the fit
 maximizes. Writing \(\ell_p(\beta) = \ell(\beta) - \rho(\beta;\theta)\)
 for it, \(\hat\beta\) for the unrestricted estimates, \(\tilde\beta\)
-for those with \(\beta_j\) held at \(b\), \(U = \partial\ell_p\) for
-its score and \(K\) for the penalized information, the four are
+for the estimates in which \(\beta_j\) is held at \(b\),
+\(U = \partial\ell_p\) for its score and \(K\) for the penalized
+information, the four are
 $$W = (\hat\beta_j - b)^2 / \widehat{\mathrm{Var}}(\hat\beta_j),
 \qquad LR = 2\{\ell_p(\hat\beta) - \ell_p(\tilde\beta)\},$$
 $$S = U_j(\tilde\beta)^2 \, [K(\tilde\beta)^{-1}]_{jj}, \qquad

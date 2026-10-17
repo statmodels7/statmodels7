@@ -1,6 +1,6 @@
 # How a Moving Block Enters the Twice-Contracted Fourth Derivative
 
-The part of \\\mathrm{tr}(M\\U\[v,u\])\\ that
+Returns the part of \\\mathrm{tr}(M\\U\[v,u\])\\ that
 [`trace_design_form()`](https://statmodels7.github.io/statmodels7/reference/trace_design_form.md)
 does not compute, where \\U\\ is the second derivative of \\K\\ in the
 coefficients contracted in two directions.
@@ -72,12 +72,12 @@ A single number.
 ## Details
 
 Differentiating the three contributions of \\\partial K/\partial\beta\\
-once more leaves five terms. Writing \\D_a = (\partial
+once more leaves five terms. With \\D_a = (\partial
 X_a/\partial\beta)v\\ and \\E_a = (\partial X_a/\partial\beta)u\\, three
-of them read the first derivative alone, \$\$N_1\[(a,j),(b,k)\] =
--\sum_i w_i\Big(\sum_m \ell\_{abm}(X_mv_m)\_i\Big)
-E_a\[i,j\]X_b\[i,k\],\$\$ \\N_2\\ the same with the two directions
-exchanged, and \\N_3\[(a,j),(b,k)\] = -\sum_i
+of them read only the first derivative, \$\$N_1\[(a,j),(b,k)\] = -\sum_i
+w_i\Big(\sum_m \ell\_{abm}(X_mv_m)\_i\Big) E_a\[i,j\]X_b\[i,k\],\$\$
+\\N_2\\ is the same expression when the two directions are exchanged,
+and \\N_3\[(a,j),(b,k)\] = -\sum_i
 w_i\ell\_{ab,i}D_a\[i,j\]E_b\[i,k\]\\, which is supported where both
 blocks move. A fourth reads the second, \\N_4\[(a,j),(b,k)\] = -\sum_i
 w_i\ell\_{ab,i}F_a\[i,j\]X_b\[i,k\]\\ with \\F_a =
@@ -88,15 +88,16 @@ Those four enter as \\\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N\\.
 [`refresh_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md),
 with the third derivative for the first two and the curvature for the
 fourth, and \\N_3\\ is summed from the two blocks' derivatives with the
-rows of \\M\\ between them, so that neither \\N\\ nor any contraction is
-assembled.
+rows of \\M\\ between them, so that the function assembles neither \\N\\
+nor any contraction.
 
 The fifth is of another shape and is added separately. The
 third-derivative contraction carries the direction's predictor
-\\(X_mv_m)\_i\\, which where \\X_m\\ is a Jacobian moves with \\\beta\\
-as everything else does, and differentiating it leaves \$\$-\sum_i
+\\(X_mv_m)\_i\\, which moves with \\\beta\\ as everything else does
+where \\X_m\\ is a Jacobian, and differentiating it leaves \$\$-\sum_i
 w_i\Big(\sum_m \ell\_{abm}\\\dot v_m(i)\Big)X_a\[i,j\]X_b\[i,k\], \qquad
 \dot v_m = (\partial X_m/\partial\beta\[u\])\\v_m.\$\$ That is the shape
+that
 [`trace_design_form()`](https://statmodels7.github.io/statmodels7/reference/trace_design_form.md)
 already computes, so the piece is one further call of it with \\\dot v\\
 in place of the predictors. \\\dot v\\ is the predictor's own second

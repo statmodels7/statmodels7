@@ -1,8 +1,8 @@
 # Does a Term Supply Its Third Derivative?
 
-Whether the term implements
-[`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html),
-read from the class the method is registered on, never from a list of
+Determines whether the term implements
+[`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
+from the class on which the method is registered, never from a list of
 class names, so a term written later is covered without an edit here.
 
 ## Usage

@@ -1,9 +1,9 @@
 # Probe the Hyperparameters at the Edge of Their Chart From Inside
 
 Moves each hyperparameter whose free value has run past `edge` back
-towards its starting value, with the other coordinates held, and returns
-the free vector of the best probe where it improves the criterion by
-more than `tol`.
+towards its starting value while the other coordinates are held, and
+returns the free vector of the best probe where it improves the
+criterion by more than `tol`.
 
 ## Usage
 
@@ -15,8 +15,9 @@ edge_probe_hyper(par, start, nh, value, fn, edge = 8, tol = mode_error_limit())
 
 - par:
 
-  The point the search reported: the free values of the hyperparameters
-  first, then any coefficients the criterion estimates.
+  The point that the search reported: the free values of the
+  hyperparameters first, then any coefficients that the criterion
+  estimates.
 
 - start:
 
@@ -46,8 +47,8 @@ edge_probe_hyper(par, start, nh, value, fn, edge = 8, tol = mode_error_limit())
 
 ## Value
 
-The free vector of the best probe, or `NULL` where no coordinate is at
-the edge or no probe gains more than `tol`.
+The free vector of the best probe, or `NULL` if all coordinates lie
+inside the edge or every probe gains at most `tol`.
 
 ## Details
 
@@ -60,8 +61,8 @@ inside. A finite step reads that rise where a derivative cannot. Each
 coordinate past the edge is probed at the points \\s + f(\hat\eta -
 s)\\, with \\s\\ its starting value (or zero where the start itself is
 past the edge), \\\hat\eta\\ the reported value and \\f\\ equal to three
-quarters, one half, one quarter and zero, the last being the starting
-value itself. A coordinate that sits at an edge, such as the smoothing
-parameter of a smooth of noise, loses criterion at every probe and is
-left where it is. The cost is four evaluations of the criterion per
-coordinate at the edge, one inner fit each.
+quarters, one half, one quarter and zero, so that the last probe is the
+starting value itself. A coordinate that sits at an edge, such as the
+smoothing parameter of a smooth of noise, loses criterion at every probe
+and is left where it is. The cost is four evaluations of the criterion
+per coordinate at the edge, one inner fit each.

@@ -1,8 +1,8 @@
 # Nodes and Weights for a Gamma(a, a) Mixing Variable
 
-A trapezoidal rule in \\v = \log w\\ for the \\\mathrm{Gamma}(a, a)\\
-density, over the range between its quantiles \\10^{-12}\\ and \\1 -
-10^{-12}\\, the weights normalized to sum to one.
+Returns a trapezoidal rule in \\v = \log w\\ for the \\\mathrm{Gamma}(a,
+a)\\ density, over the range between its quantiles \\10^{-12}\\ and
+\\1 - 10^{-12}\\. The weights are normalized to sum to one.
 
 ## Usage
 

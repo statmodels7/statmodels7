@@ -1,7 +1,7 @@
 # Hold What a Simulation's Caller Named
 
-Writes the entries of `par` over the drawn truth, each addressed by a
-name the result reports it under.
+Writes the entries of `par` over the drawn truth, and each entry is
+addressed by the name under which the result reports it.
 
 ## Usage
 
@@ -47,10 +47,10 @@ in a development of `omega` and `mu.s(x)` is every coordinate of that
 smooth.
 
 A value may be a vector of the group's own length, a single number used
-for all of them, or a function of the count. The function is how a
-structured truth is written: `function(k) rnorm(k, 0, 0.4)` is a random
-effect at a scale of its own and `function(k) c(2, -1.5, rep(0, k - 2))`
-is a sparse truth for a lasso to find.
+for all of them, or a function of the count. A function writes a
+structured truth: `function(k) rnorm(k, 0, 0.4)` is a random effect at a
+scale of its own and `function(k) c(2, -1.5, rep(0, k - 2))` is a sparse
+truth for a lasso to find.
 
 A structural parameter is named on the scale of
 [`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html):

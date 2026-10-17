@@ -20,12 +20,12 @@ spec_at(fit, data, need_response = TRUE)
 
 - data:
 
-  A data frame, or `NULL` for the data the model was fitted to.
+  A data frame, or `NULL` for the data used to fit the model.
 
 - need_response:
 
   `TRUE` where the response must be present, as for a log-likelihood;
-  `FALSE` for a prediction, new data routinely having no response
+  `FALSE` for a prediction, because new data routinely has no response
   column.
 
 ## Value

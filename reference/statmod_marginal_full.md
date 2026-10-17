@@ -1,8 +1,8 @@
 # The Penalized Curvature Over the Coefficients and a Filter's Parameters
 
-The matrix whose determinant the Laplace approximation reads, where a
-penalty covers a structural term's own parameters instead of a block of
-design columns.
+Returns the matrix whose determinant the Laplace approximation reads,
+where a penalty covers a structural term's own parameters instead of a
+block of design columns.
 
 ## Usage
 
@@ -39,27 +39,26 @@ statmod_marginal_full(spec, design, coef, hyper, basis = NULL)
 ## Value
 
 A square symmetric matrix spanning the integrated coefficients followed
-by the integrated structural parameters. `NULL` where the structural
-term could not be run at the given point, which a caller reads as an
-unusable hyperparameter.
+by the integrated structural parameters. The value is `NULL` where the
+structural term could not be run at the given point, which a caller
+reads as an unusable hyperparameter.
 
 ## Why the determinant has to span them
 
-A marginal criterion integrates the quantities its penalty shrinks.
+A marginal criterion integrates the quantities that its penalty shrinks.
 Where the penalty is a structural term's own, as with the deviations of
 a panel, those quantities are not coefficients.
 
-Taken over the coefficients alone the determinant then does not depend
+Taken over the coefficients only, the determinant then does not depend
 on the hyperparameter at all, and the criterion reduces to the penalized
 likelihood, whose maximum in a shrinkage parameter is at no shrinkage.
-The criterion then answers a different question from the marginal
-likelihood.
+The criterion then differs from the marginal likelihood.
 
 ## The matrix
 
 [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
 spans the coefficients followed by the term's free parameters, which is
-the order the joint fit uses, and
+the order that the joint fit uses, and
 [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
 gives the Hessian of the penalty in those same parameters. A covariance
 class split between the two halves is placed by
@@ -72,10 +71,10 @@ recursion enters the expectation.
 
 ## Under ML
 
-The tail is integrated over the penalized coordinates alone, through the
-penalty's own range basis, so a parameter the penalty does not cover,
-such as a population value, is profiled instead of integrated. That is
-what happens to an unpenalized coefficient too.
+The tail is integrated only over the penalized coordinates, through the
+penalty's own range basis, so a parameter that the penalty does not
+cover, such as a population value, is profiled instead of integrated. An
+unpenalized coefficient is profiled too.
 
 ## See also
 

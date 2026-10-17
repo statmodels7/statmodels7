@@ -16,6 +16,6 @@ theta_fill(v)
 
 ## Value
 
-The first finite value of `v`, or 1 where no value of `v` is finite, so
+The first finite value of `v`, or 1 where `v` has no finite value, so
 that a row with no covariance is carried through the vectorized
 arithmetic and blanked afterwards.

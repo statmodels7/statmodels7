@@ -36,14 +36,15 @@ A single logical.
 
 ## Details
 
-The outer search always minimizes, so this decides whether the criterion
-goes in as it stands or with its sign turned. Reading the orientation
-from the method, and not from a list of kinds written into the search,
-lets a criterion added later declare its own orientation in one place.
+The outer search always minimizes, so the value returned here determines
+whether the criterion enters as it stands or after a change of sign.
+Reading the orientation from the method, and not from a list of kinds
+written into the search, lets a criterion added later declare its own
+orientation in one place.
 
 ## See also
 
 [`outer_k()`](https://statmodels7.github.io/statmodels7/reference/outer_k.md)
-for the other property of a criterion the search reads,
+for the other property of a criterion that the search reads,
 [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
-for the criteria this answers `TRUE` for.
+for the criteria for which this returns `TRUE`.

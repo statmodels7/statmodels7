@@ -1,4 +1,4 @@
-# The Coordinates a Simulation's `par` Writes
+# The Coordinates That a Simulation's `par` Writes
 
 Marks, for every distribution parameter and for the structural term's
 own parameters, the positions that some key of `par` addresses.
@@ -38,9 +38,9 @@ It reads the keys through
 [`resolve_par_key()`](https://statmodels7.github.io/statmodels7/reference/resolve_par_key.md),
 the function that
 [`rstatmod_named()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_named.md)
-uses to write them, so the two cannot disagree about what a key reaches.
-A key that reaches nothing signals the same error here that it would
-signal there.
+uses to write them, so a key reaches the same positions in both. A key
+that reaches nothing signals the same error here that it would signal
+there.
 
 ## See also
 

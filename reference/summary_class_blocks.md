@@ -1,9 +1,9 @@
-# The Covariance Blocks a Summary Prints Ahead of the Equations
+# The Covariance Blocks That a Summary Prints Ahead of the Equations
 
-One block record per covariance class shared by more than one member:
-the standard deviations and correlations of the shared prior, with each
-coordinate named for the equation, the term and the column to which it
-belongs.
+Returns one block record per covariance class shared by more than one
+member: the standard deviations and correlations of the shared prior, in
+which each coordinate is named for the equation, the term and the column
+to which it belongs.
 
 ## Usage
 
@@ -48,10 +48,10 @@ summary_class_blocks(
 
 ## Value
 
-A list of block records, in the shape
+A list of block records in the shape that
 [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
-reads, each carrying its coordinates in `coords`. Empty where no class
-has two or more members.
+reads. Each record carries its coordinates in `coords`. The list is
+empty where every class has fewer than two members.
 
 ## Details
 

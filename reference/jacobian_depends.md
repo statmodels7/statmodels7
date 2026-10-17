@@ -33,15 +33,16 @@ be a small nonzero number from cancellation, and an exact comparison
 then reads it as a dependence, which removes the standard error and the
 interval of the standard deviation for a dependence that does not exist.
 
-A Jacobian entry is judged against the largest entry of its own row, a
-row being a gradient, and the tolerance is `sqrt(.Machine$double.eps)`,
-the point beyond which a differentiated quantity cannot be distinguished
-from the rounding of the quantities it was formed from. The two possible
-errors are asymmetric, so the tolerance errs on the generous side: a
-genuine dependence of relative size below `sqrt(eps)` that is read as
-zero changes a variance contribution by a relative amount of order
-`1e-16`, whereas a cancellation artifact read as a dependence removes
-the standard error of a quantity.
+A Jacobian entry is judged against the largest entry of its own row,
+because a row is a gradient, and the tolerance is
+`sqrt(.Machine$double.eps)`, the point beyond which a differentiated
+quantity cannot be distinguished from the rounding of the quantities
+from which it was formed. The two possible errors are asymmetric, so the
+tolerance errs on the generous side: a genuine dependence of relative
+size below `sqrt(eps)` that is read as zero changes a variance
+contribution by a relative amount of order `1e-16`, whereas a
+cancellation artifact read as a dependence removes the standard error of
+a quantity.
 
 ## See also
 

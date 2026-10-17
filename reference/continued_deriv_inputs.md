@@ -1,9 +1,10 @@
-# What the Derivative of a Continued Filter Starts From
+# The Inputs to the Derivative of a Continued Filter
 
-The derivatives of the level and of the score at the observed rows, and
-of the term's parameters, in the coordinates the variance matrix of the
-fit is written in: the coefficients of every equation followed by the
-term's free parameters on their unconstrained scale.
+Returns the derivatives of the level and of the score at the observed
+rows, and of the term's parameters, in the coordinates in which the
+variance matrix of the fit is written: the coefficients of every
+equation followed by the term's free parameters on their unconstrained
+scale.
 
 ## Usage
 
@@ -43,7 +44,7 @@ the fit carries no filter.
 
 ## Details
 
-The coordinates are the ones
+The coordinates are those that
 [`structural_se_columns()`](https://statmodels7.github.io/statmodels7/reference/structural_se_columns.md)
 uses for a prediction at the observed rows, so a forecast and a fitted
 value are read against the same rows and columns of the variance. The
@@ -59,8 +60,9 @@ equation \\b\\. Where the filter is not scaled, the driving quantity is
 the score and \\\ell\_{pb,t}\\ is the family's second derivative on the
 link scale; where it is scaled, \\\ell\_{pb,t}\\ is the derivative that
 [`filter_driving()`](https://statmodels7.github.io/statmodels7/reference/filter_driving.md)
-returns. A parameter's derivative in its own unconstrained coordinate is
-its link's, and one for a coefficient of a development.
+returns. The derivative of a parameter in its own unconstrained
+coordinate is that of its link, and for a coefficient of a development
+it is one.
 
 ## See also
 

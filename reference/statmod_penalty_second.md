@@ -1,7 +1,7 @@
 # How a Moving Penalty Hessian Enters the Criterion's Second Derivative
 
-The part of \\\partial K_m/\partial t_l\\ that a penalty whose Hessian
-depends on the coefficients contributes, placed in the stacked
+Computes the part of \\\partial K_m/\partial t_l\\ that a penalty whose
+Hessian depends on the coefficients contributes, placed in the stacked
 coefficient space, where \\K_m = S_m + T\[b_m\]\\ is the determinant's
 matrix differentiated in hyperparameter \\m\\.
 
@@ -60,13 +60,13 @@ statmod_penalty_second(
 
 ## Value
 
-A `total` square matrix, or `NULL` where no penalty's Hessian moves with
+A `total` square matrix, or `NULL` if no penalty's Hessian moves with
 the coefficients.
 
 ## Details
 
 Differentiating \\S_m(\beta, t) + \partial S/\partial\beta\\\[b_m\]\\
-once more along \\t_l\\, with \\\beta\\ moving by \\b_l\\, gives
+once more along \\t_l\\, while \\\beta\\ moves by \\b_l\\, gives
 \$\$\frac{\partial S_m}{\partial\beta}\[b_l\] + \frac{\partial
 S_l}{\partial\beta}\[b_m\] + \frac{\partial^2 S}{\partial\beta^2}\[b_l,
 b_m\] + \frac{\partial S}{\partial\beta}\[b\_{ml}\]\$\$ beside
@@ -81,12 +81,12 @@ for the hyperparameters that the penalty owns. The third is
 [`penalties7::penalty_d2hessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html)
 and the fourth
 [`penalties7::penalty_dhessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html).
-A penalty that
+A penalty for which
 [`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html)
-calls quadratic contributes nothing, and neither do a kinked penalty, a
-mixed covariance class and a penalty over a structural term's own
-parameters, so a model carrying only those gets `NULL` and its Hessian
-is untouched.
+returns `TRUE` does not contribute, and a kinked penalty, a mixed
+covariance class and a penalty over a structural term's own parameters
+do not contribute either, so for a model carrying only those the
+function returns `NULL` and the Hessian is left untouched.
 
 ## See also
 

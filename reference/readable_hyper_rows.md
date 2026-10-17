@@ -1,4 +1,4 @@
-# The Quantities a Penalty's Hyperparameters Are About
+# The Quantities That a Penalty's Hyperparameters Describe
 
 Replaces the coordinate rows of a penalty whose hyperparameters are a
 chart with the quantities that the penalty declares through
@@ -84,15 +84,16 @@ A data frame of rows, in the shape of a summary block.
 
 The standard error is the delta method, and it composes two Jacobians:
 the penalty's, which is in the parameter scale of its hyperparameters,
-and the link's, the variance matrix being on the free scale on which the
-outer criterion was maximized. Each interval is built on the scale that
-the quantity declares, log for a standard deviation and Fisher's z for a
-correlation, and mapped back, so a standard deviation cannot be given a
-negative lower end and a correlation cannot be given an interval that
-leaves \\(-1, 1)\\. The coefficients of a linear predictor keep the
-symmetric interval of the estimate plus or minus \\z\\ standard errors.
+and the link's, because the variance matrix is on the free scale on
+which the outer criterion was maximized. Each interval is built on the
+scale that the quantity declares, log for a standard deviation and
+Fisher's z for a correlation, and mapped back, so a standard deviation
+cannot be given a negative lower end and a correlation cannot be given
+an interval that leaves \\(-1, 1)\\. The coefficients of a linear
+predictor keep the symmetric interval of the estimate plus or minus
+\\z\\ standard errors.
 
-No test is printed, for the same reason that the coordinate rows print
-none: the null hypothesis that a \\z\\ statistic reports on is that the
-quantity is zero, which for a standard deviation is the edge of its
-range.
+The summary does not print a test here, for the same reason that it does
+not print one for the coordinate rows: a \\z\\ statistic tests the null
+hypothesis that the quantity is zero, which for a standard deviation is
+the edge of its range.

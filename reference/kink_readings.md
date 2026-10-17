@@ -1,5 +1,6 @@
 # The Inner Readings on the Directions That the Kinks Leave Free
 
+Computes
 [`certificate_readings()`](https://statmodels7.github.io/statmodels7/reference/certificate_readings.md)
 over the null space of the linear constraints that a break-point sitting
 on an observation imposes

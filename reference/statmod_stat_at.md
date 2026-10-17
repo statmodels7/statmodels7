@@ -74,9 +74,9 @@ and `mode_error`, `NA` unless it is requested.
 All four read the penalized objective, which is the function that the
 fit maximizes. Writing \\\ell_p(\beta) = \ell(\beta) -
 \rho(\beta;\theta)\\ for it, \\\hat\beta\\ for the unrestricted
-estimates, \\\tilde\beta\\ for those with \\\beta_j\\ held at \\b\\, \\U
-= \partial\ell_p\\ for its score and \\K\\ for the penalized
-information, the four are \$\$W = (\hat\beta_j - b)^2 /
+estimates, \\\tilde\beta\\ for the estimates in which \\\beta_j\\ is
+held at \\b\\, \\U = \partial\ell_p\\ for its score and \\K\\ for the
+penalized information, the four are \$\$W = (\hat\beta_j - b)^2 /
 \widehat{\mathrm{Var}}(\hat\beta_j), \qquad LR = 2\\\ell_p(\hat\beta) -
 \ell_p(\tilde\beta)\\,\$\$ \$\$S = U_j(\tilde\beta)^2 \\
 \[K(\tilde\beta)^{-1}\]\_{jj}, \qquad T =

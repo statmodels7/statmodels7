@@ -25,7 +25,7 @@ total of the weights, which are frequencies). Both are minimized."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,18 +81,20 @@ total of the weights, which are frequencies). Both are minimized.</p>
 <dl><dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
 <dd><p>The price of one degree of freedom, a single non-negative finite
 number. Defaults to 2, which is Akaike's. <code>k = log(n)</code> by hand is <code>bic()</code>.
-A value that is not a single non-negative finite number is an error. <code>bic()</code> does not take it: its \(\kappa\) is
-<code>NA</code> on the object and resolved to \(\log n\) when the model is fitted,
-the sample size being unknown until then.</p></dd>
+A value that is not a single non-negative finite number is an error.
+<code>bic()</code> does not take it: its \(\kappa\) is <code>NA</code> on the object and is
+resolved to \(\log n\) when the model is fitted, because the sample
+size is unknown until then.</p></dd>
 
 
 <dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
-<dd><p>Which information the criterion is built on, <code>"observed"</code>
-(the default) or <code>"expected"</code>. Matched with <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>. The exact
+<dd><p>The information on which the criterion is built,
+<code>"observed"</code> (the default) or <code>"expected"</code>. The argument is matched with
+<code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>. The exact
 gradient is available on either wherever the family writes its expected
 information out; the Hessian is exact on the observed one and is not
 available on the expected one, where the search uses an optimizer that
-needs the gradient alone. A family that does not write it out would read the
+needs only the gradient. A family that does not write it out would read the
 outer product of its scores at the data under the default
 <code>iwls(approx = "opg")</code>, and <code><a href="statmod.html">statmod()</a></code> rejects <code>"expected"</code> there: see
 <code><a href="assert_criterion_information.html">assert_criterion_information()</a></code>.</p></dd>
@@ -116,7 +118,7 @@ of its determinant and does not select the hyperparameter of the kinked
 penalty. These two criteria select it, and <code>bic()</code> is <code><a href="statmod.html">statmod()</a></code>'s default
 <code>sparse_criterion</code>.</p>
 <p>For a smooth penalty both families apply. A marginal criterion selects the
-hyperparameter that makes the data most likely with the coefficients
+hyperparameter that makes the data most likely after the coefficients are
 integrated out, and these select the one that predicts best.</p>
     </div>
     <div class="section level2">
@@ -134,10 +136,10 @@ because of the mode's own condition,
     <div class="section level2">
     <h2 id="which-effective-degrees-of-freedom">Which effective degrees of freedom<a class="anchor" aria-label="anchor" href="#which-effective-degrees-of-freedom"></a></h2>
     <p>The trace runs over the whole coefficient vector, so a term's contribution
-reads the full penalized information, its couplings with the other blocks
-included. <code><a href="statmod_edf.html">statmod_edf()</a></code> reads each term's share from the diagonal block
-of the same full smoother matrix \((H+S)^{-1}H\), so the per-term numbers
-add up to \(\tau\).</p>
+reads the full penalized information, including the term's couplings with
+the other blocks. <code><a href="statmod_edf.html">statmod_edf()</a></code> reads each term's share from the diagonal
+block of the same full smoother matrix \((H+S)^{-1}H\), so the per-term
+numbers add up to \(\tau\).</p>
 <p>Where a penalty has a kink the trace is restricted to the active
 coordinates, so for a lasso \(\tau\) is the number of surviving
 coefficients, the unbiased count of Zou, Hastie and Tibshirani (2007).</p>
@@ -146,10 +148,10 @@ coefficients, the unbiased count of Zou, Hastie and Tibshirani (2007).</p>
     <h2 id="gcv-is-not-offered">GCV is not offered<a class="anchor" aria-label="anchor" href="#gcv-is-not-offered"></a></h2>
     <p>Classical GCV divides a residual sum of squares by \((n-\tau)^2\), which
 estimates an unknown scale. Here every distribution parameter carries its
-own equation and nothing is profiled, so there is no unknown scale for
-that ratio to estimate and the criterion degenerates to <code>aic()</code>. That is
-the substitution Wood (2008) makes in the other direction when the scale
-is known.</p>
+own equation and the fit profiles no parameter, so there is no unknown
+scale for that ratio to estimate and the criterion degenerates to <code>aic()</code>.
+That is the substitution that Wood (2008) makes in the other direction when
+the scale is known.</p>
 <p>A GCV on the squared error of the fitted mean is a different and
 well-defined object. It would need the derivative of that mean in the
 parameters, which is not one of <span class="pkg">distributions7</span>'s generics.</p>

@@ -1,6 +1,6 @@
 # One Equation's Submatrix of a Variance Matrix
 
-The rows and columns of the named distribution parameters.
+Returns the rows and columns of the named distribution parameters.
 
 ## Usage
 

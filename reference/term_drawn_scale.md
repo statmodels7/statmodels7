@@ -1,7 +1,7 @@
-# The Width a Term Drew a Penalty's Coordinates At
+# The Width at Which a Term Drew a Penalty's Coordinates
 
-One number where every coordinate that a penalty covers was written by
-the term that owns it, and `NULL` otherwise.
+Returns one number where every coordinate that a penalty covers was
+written by the term that owns it, and `NULL` otherwise.
 
 ## Usage
 
@@ -32,11 +32,12 @@ A single number, or `NULL`.
 
 ## Details
 
-A penalty whose coordinates a term overwrote no longer describes them,
-so the truth reported for it is the width the term drew at. The test is
-that every covered coordinate was owned: a penalty spanning owned and
-unowned ones together is described by neither width, and reporting
-either would name a truth that part of the coefficients do not have.
+A penalty whose coordinates were overwritten by a term no longer
+describes them, so the truth reported for it is the width at which the
+term drew. The test is that every covered coordinate was owned: a
+penalty spanning owned and unowned ones together is described by neither
+width, and reporting either would name a truth that part of the
+coefficients do not have.
 
 ## See also
 

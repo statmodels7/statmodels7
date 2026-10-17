@@ -1,7 +1,7 @@
 # The Leverage Diagonal Over the Nonzeros of Two Rows
 
-\\G_i = \sum\_{j\in J_i}\sum\_{k\in K_i}
-X_a\[i,j\]X_b\[i,k\]M\_{ab}\[j,k\]\\, the same quantity
+Computes \\G_i = \sum\_{j\in J_i}\sum\_{k\in K_i}
+X_a\[i,j\]X_b\[i,k\]M\_{ab}\[j,k\]\\, the same quantity that
 [`block_leverage()`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md)
 otherwise reads off a dense \\n\times p_b\\ product.
 

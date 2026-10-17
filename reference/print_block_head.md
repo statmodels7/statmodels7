@@ -1,7 +1,7 @@
 # The Term Read at a Glance
 
-One line per parameter a term is written in, giving its value and
-interval where it is a number and, where it is developed over
+Prints one line per parameter in which a term is written, giving its
+value and interval where it is a number and, where it is developed over
 covariates, the population value of that development beside what
 develops it.
 
@@ -23,4 +23,4 @@ print_block_head(hd, digits = 4L)
 
 ## Value
 
-`NULL`, invisibly. Called for the printing.
+`NULL`, invisibly. The function is called for the printing.

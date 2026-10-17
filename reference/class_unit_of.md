@@ -1,6 +1,6 @@
-# The Covariance Class One Term Belongs To
+# The Covariance Class to Which One Term Belongs
 
-The penalized unit of the covariance class that covers a term's
+Returns the penalized unit of the covariance class that covers a term's
 coefficients, or `NULL` where the term has no label.
 
 ## Usage
@@ -22,7 +22,7 @@ class_unit_of(spec, design, param, nm)
 
 - param:
 
-  The distribution parameter the term sits in.
+  The distribution parameter in which the term sits.
 
 - nm:
 
@@ -38,8 +38,8 @@ returns it, or `NULL`.
 
 A term with a label declares no penalty of its own, because the class
 carries it, so the hyperparameters of such a term are read from the
-class. The lookup is by the pair of the equation and the term's name,
-which is what a class's pieces record.
+class. A class's pieces record the pair of the equation and the term's
+name, and the lookup uses that pair.
 
 ## See also
 

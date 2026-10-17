@@ -1,7 +1,7 @@
 # Print One Block of a Model Summary
 
-The heading of a block, the term read at a glance where it is written in
-parameters of its own, its own coefficients, and one indented
+Prints the heading of a block, the term read at a glance where it is
+written in parameters of its own, its own coefficients, and one indented
 compartment per parameter developed over covariates.
 
 ## Usage
@@ -29,12 +29,13 @@ print_block(b, digits = 4L, max_coef = NULL, stat = "z")
 
 - stat:
 
-  What to head the statistic column with: `"z"` for the estimate over
-  its standard error, `"r"` for the signed root of a restricted test.
+  The label at the head of the statistic column: `"z"` for the estimate
+  over its standard error, `"r"` for the signed root of a restricted
+  test.
 
 ## Value
 
-`NULL`, invisibly. Called for the printing.
+`NULL`, invisibly. The function is called for the printing.
 
 ## Details
 

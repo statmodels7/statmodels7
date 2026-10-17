@@ -45,9 +45,9 @@ class_zeta_cols(cl)
 
 `class_pieces()` a list with one element per member: the member's piece
 (see
-[`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md))
-with `cols` and `index` added; `class_index()` and `class_zeta_cols()`
-an integer vector of `m * dim` positions.
+[`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md)),
+to which `cols` and `index` are added; `class_index()` and
+`class_zeta_cols()` an integer vector of `m * dim` positions.
 
 ## Details
 

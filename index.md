@@ -22,11 +22,11 @@ Attaching it attaches the eight member packages.
 ``` r
 
 library(statmodels7)
-#> -- Attaching the statmodels7 toolkit 0.200.0
-#> v basis7         0.15.0   v numericals7    0.22.1
-#> v distributions7 0.78.1   v optimizers7    0.14.0
-#> v linkfunctions7 0.5.2    v parameters7    0.24.0
-#> v modelterms7    0.98.0   v penalties7     0.31.0
+#> -- Attaching the statmodels7 toolkit 0.203.3
+#> v basis7         0.15.1   v numericals7    0.23.3
+#> v distributions7 0.80.2   v optimizers7    0.15.1
+#> v linkfunctions7 0.5.4    v parameters7    0.26.0
+#> v modelterms7    0.99.3   v penalties7     0.33.0
 ```
 
 ## Fitting a model
@@ -107,7 +107,7 @@ summary(fit)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -282.744059    effective df 28.26
 #> cAIC 622.006    cBIC 734.801
-#> fitted in 1.98 s
+#> fitted in 1.99 s
 #> inner   max |grad|/se 1.9e-15   min eigen 0.014
 #> outer   max |grad|/se 2.9e-12   min eigen 0.97
 #> 1 note: print(summary(fit), notes = TRUE)
@@ -117,7 +117,7 @@ After the conditional log-likelihood and the information criteria, the
 table ends with two lines headed `inner` and `outer`. Each gives the
 largest gradient in standard errors and the smallest eigenvalue of the
 curvature, for the coefficients and for the hyperparameters
-respectively, both read at the point the fit reached.
+respectively, and both are read at the point that the fit reached.
 
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
 is computed at the same point and not read off the stopping rule of the
@@ -183,8 +183,8 @@ function
 serves only as `sparse_criterion`.
 
 Random effects written with the same label and the same grouping share
-one covariance block, whatever equation they sit in, as with the middle
-bar of `(1 | u | id)` in `brms`. The formula
+one covariance block, in whichever equation they appear, as with the
+middle bar of `(1 | u | id)` in `brms`. The formula
 `y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)` estimates the
 correlation between a subject’s level and the logarithm of its scale.
 The label reaches a subformula too, so
@@ -238,7 +238,7 @@ statmodels7_packages()
 | [optimizers7](https://statmodels7.github.io/optimizers7/) | optimization algorithms as objects, with composable stopping rules |
 | [basis7](https://statmodels7.github.io/basis7/) | basis expansions with derivatives, anchored integrals and exact Gram matrices |
 | [parameters7](https://statmodels7.github.io/parameters7/) | constrained parameters as maps from an unconstrained vector, exact to fourth order |
-| [penalties7](https://statmodels7.github.io/penalties7/) | penalties as objects, with exact derivatives, proximal operators and the pieces a marginal criterion consumes |
+| [penalties7](https://statmodels7.github.io/penalties7/) | penalties as objects, with exact derivatives, proximal operators and the pieces that a marginal criterion consumes |
 | [modelterms7](https://statmodels7.github.io/modelterms7/) | model terms as objects, each carrying its design block, its penalty and its blueprint for new data |
 
 [`statmodels7_versions()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.md)

@@ -1,7 +1,7 @@
-# The Values One Entry of `par` Stands For
+# The Values Represented by One Entry of `par`
 
-A numeric vector of the length the key addresses, from a vector, a
-single number or a function of the count.
+Returns a numeric vector of the length that the key addresses, from a
+vector, a single number or a function of the count.
 
 ## Usage
 

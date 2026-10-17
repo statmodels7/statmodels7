@@ -24,8 +24,8 @@ random_marginal(
 
 - spec, design:
 
-  The specification at the new rows and its design, with the marginal
-  terms' columns set to zero.
+  The specification at the new rows and its design, whose columns for
+  the marginal terms are set to zero.
 
 - ep:
 
@@ -51,14 +51,14 @@ random_marginal(
 
 - eta_at:
 
-  A named list of predictors to integrate at in place of `ep$eta`, for
-  the ends of an interval; `NULL` for `ep$eta`.
+  A named list of predictors at which to integrate, in place of
+  `ep$eta`, for the ends of an interval; `NULL` for `ep$eta`.
 
 - deriv:
 
   `TRUE` to average the derivative of the inverse link instead of the
-  inverse link, which is what the delta method of a marginal parameter
-  multiplies the predictor's standard error by. Read only for a
+  inverse link. The delta method of a marginal parameter multiplies the
+  standard error of the predictor by this average. It is read only for a
   parameter.
 
 - eta_node:
@@ -84,4 +84,4 @@ variance of the conditional mean, \\E_b\[\mathrm{Var}(Y\mid b)\] +
 \mathrm{Var}\_b(E\[Y\mid b\])\\, which is where a random effect on the
 scale enters. A predictor, `"link"` or `"link:p"`, is not computed here:
 [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
-returns \\\eta_0\\ itself for it, the effects having mean zero.
+returns \\\eta_0\\ itself for it, because the effects have mean zero.

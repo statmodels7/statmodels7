@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,7 +37,7 @@
     <div class="section level2">
       <h2 id="the-toolkit">The toolkit<a class="anchor" aria-label="anchor" href="#the-toolkit"></a></h2>
 
-      <div class="section-desc"><p>Which packages the toolkit is made of, at which versions, and whether any of their exports mask one another.</p></div>
+      <div class="section-desc"><p>The packages of which the toolkit is made, their versions, and whether any of their exports mask one another.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -67,7 +67,7 @@
       </dl></div><div class="section level2">
       <h2 id="specifying-a-model">Specifying a model<a class="anchor" aria-label="anchor" href="#specifying-a-model"></a></h2>
 
-      <div class="section-desc"><p>One formula carries every parameter of the distribution, the equations separated by a bar, and each equation’s terms come from modelterms7.</p></div>
+      <div class="section-desc"><p>One formula carries the equations of all the parameters of the distribution, separated by a bar, and the terms of each equation come from modelterms7.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -97,7 +97,7 @@
       </dl></div><div class="section level2">
       <h2 id="fitting">Fitting<a class="anchor" aria-label="anchor" href="#fitting"></a></h2>
 
-      <div class="section-desc"><p>One formula and one distribution. The coefficients of the terms with a differentiable penalty are fitted in one system, together with a score-driven term, and the terms with a kinked penalty and the regime terms are alternated with that system. The section also holds the inner method, the criteria that choose the hyperparameters and the simulator.</p></div>
+      <div class="section-desc"><p>One formula and one distribution. The coefficients of the terms with a differentiable penalty are fitted in one system, together with a score-driven term, and the terms with a kinked penalty and the regime terms are alternated with that system. The section also holds the inner method, the criteria for the hyperparameters and the simulator.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -246,7 +246,7 @@
           <code><a href="statmod_certificate.html">statmod_certificate()</a></code>
 
         </dt>
-        <dd>What the Fit Certifies About the Point It Reports</dd>
+        <dd>The Certificate of the Reported Point</dd>
 
         <dt>
 
@@ -264,7 +264,7 @@
       </dl></div><div class="section level2">
       <h2 id="testing-a-coefficient">Testing a coefficient<a class="anchor" aria-label="anchor" href="#testing-a-coefficient"></a></h2>
 
-      <div class="section-desc"><p>One coefficient against one value, by Wald’s statistic, the likelihood ratio, Rao’s score or Terrell’s gradient. The same four are what <code>summary(test =)</code> reports for every row against zero and what <code>confint(test =)</code> inverts; <code><a href="../reference/statmod_test.html">statmod_test()</a></code> also takes a null value other than zero. The test that a break-point exists is a separate function, which reads the supremum of a score process over the positions of the break-point.</p></div>
+      <div class="section-desc"><p>One coefficient against one value, by Wald’s statistic, the likelihood ratio, Rao’s score or Terrell’s gradient. <code>summary(test =)</code> reports the same four for every row against zero, and <code>confint(test =)</code> inverts them; <code><a href="../reference/statmod_test.html">statmod_test()</a></code> also takes a null value other than zero. The test that a break-point exists is a separate function, which reads the supremum of a score process over the positions of the break-point.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -303,7 +303,7 @@
       </dl></div><div class="section level2">
       <h2 id="internals">Internals<a class="anchor" aria-label="anchor" href="#internals"></a></h2>
 
-      <div class="section-desc"><p>The machinery that the exported functions are built from: the classes behind a fit, the methods registered for the generics of stats, and the helper functions. None of it is needed to use the package.</p></div>
+      <div class="section-desc"><p>The machinery from which the exported functions are built: the classes behind a fit, the methods registered for the generics of stats, and the helper functions. Using the package does not require any of it.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -469,7 +469,7 @@
           <code><a href="block_label.html">block_label()</a></code>
 
         </dt>
-        <dd>The Heading a Block of Each Kind Is Printed Under</dd>
+        <dd>The Heading Under Which a Block of Each Kind Is Printed</dd>
 
         <dt>
 
@@ -483,7 +483,7 @@
           <code><a href="block_predictors.html">block_predictors()</a></code>
 
         </dt>
-        <dd>The Predictors a Coefficient Direction Induces</dd>
+        <dd>The Predictors That a Coefficient Direction Induces</dd>
 
         <dt>
 
@@ -553,7 +553,7 @@
           <code><a href="certificate_readings.html">certificate_readings()</a></code>
 
         </dt>
-        <dd>The Two Readings a Summary Prints About a Point</dd>
+        <dd>The Two Readings That a Summary Prints About a Point</dd>
 
         <dt>
 
@@ -630,7 +630,7 @@
           <code><a href="class_coords.html">class_coords()</a></code> <code><a href="class_coords.html">coord_labels_of()</a></code>
 
         </dt>
-        <dd>What Each Coordinate of a Covariance Block Is</dd>
+        <dd>The Coordinates of a Covariance Block</dd>
 
         <dt>
 
@@ -672,7 +672,7 @@
           <code><a href="class_unit_of.html">class_unit_of()</a></code>
 
         </dt>
-        <dd>The Covariance Class One Term Belongs To</dd>
+        <dd>The Covariance Class to Which One Term Belongs</dd>
 
         <dt>
 
@@ -693,7 +693,7 @@
           <code><a href="coef_readable.html">coef_readable()</a></code>
 
         </dt>
-        <dd>The Quantities a Term Reports in Place of Its Coordinates</dd>
+        <dd>The Quantities Reported by a Term in Place of Its Coordinates</dd>
 
         <dt>
 
@@ -728,7 +728,7 @@
           <code><a href="conditional_condition.html">conditional_condition()</a></code>
 
         </dt>
-        <dd>The Condition an Unavailable Correction Warns Through</dd>
+        <dd>The Condition Through Which an Unavailable Correction Warns</dd>
 
         <dt>
 
@@ -742,7 +742,7 @@
           <code><a href="continued_deriv_inputs.html">continued_deriv_inputs()</a></code>
 
         </dt>
-        <dd>What the Derivative of a Continued Filter Starts From</dd>
+        <dd>The Inputs to the Derivative of a Continued Filter</dd>
 
         <dt>
 
@@ -819,7 +819,7 @@
           <code><a href="coord_decrement.html">coord_decrement()</a></code>
 
         </dt>
-        <dd>What One Coordinate Alone Would Buy</dd>
+        <dd>The Decrement of One Coordinate</dd>
 
         <dt>
 
@@ -896,7 +896,7 @@
           <code><a href="ctx_approx.html">ctx_approx()</a></code>
 
         </dt>
-        <dd>The Approximation a Context Was Built With</dd>
+        <dd>The Approximation With Which a Context Was Built</dd>
 
         <dt>
 
@@ -959,7 +959,7 @@
           <code><a href="ctx_trace_matrix.html">ctx_trace_matrix()</a></code>
 
         </dt>
-        <dd>The Matrix the Traces Are Taken Against</dd>
+        <dd>The Matrix Against Which the Traces Are Taken</dd>
 
         <dt>
 
@@ -1036,7 +1036,7 @@
           <code><a href="deficient_coords.html">deficient_coords()</a></code>
 
         </dt>
-        <dd>The Coordinates a Fit Does Not Identify, Found After the Fact</dd>
+        <dd>The Coordinates That a Fit Does Not Identify, Found After the Fact</dd>
 
         <dt>
 
@@ -1113,7 +1113,7 @@
           <code><a href="drop_common_prefix.html">drop_common_prefix()</a></code>
 
         </dt>
-        <dd>Drop the Prefix a Set of Coefficient Names Share</dd>
+        <dd>Drop the Prefix That a Set of Coefficient Names Share</dd>
 
         <dt>
 
@@ -1148,7 +1148,7 @@
           <code><a href="entry_owner.html">entry_owner()</a></code>
 
         </dt>
-        <dd>Which Sub-Term a Penalty Entry Belongs To</dd>
+        <dd>The Sub-Term to Which a Penalty Entry Belongs</dd>
 
         <dt>
 
@@ -1183,7 +1183,7 @@
           <code><a href="family.StatmodFit.html">family(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
-        <dd>The Distribution a Model Was Fitted With</dd>
+        <dd>The Distribution of a Fitted Model</dd>
 
         <dt>
 
@@ -1232,7 +1232,7 @@
           <code><a href="find_term.html">find_term()</a></code>
 
         </dt>
-        <dd>A Term by Its Key, Whichever Equation It Sits In</dd>
+        <dd>A Term by Its Key in Any Equation</dd>
 
         <dt>
 
@@ -1309,7 +1309,7 @@
           <code><a href="formula.StatmodFit.html">formula(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
-        <dd>The Formula a Model Was Written With</dd>
+        <dd>The Formula of a Fitted Model</dd>
 
         <dt>
 
@@ -1337,7 +1337,7 @@
           <code><a href="frozen_condition.html">frozen_condition()</a></code>
 
         </dt>
-        <dd>The Condition a Frozen Block Raises</dd>
+        <dd>The Condition That a Frozen Block Raises</dd>
 
         <dt>
 
@@ -1407,7 +1407,7 @@
           <code><a href="held_condition.html">held_condition()</a></code>
 
         </dt>
-        <dd>The Condition a Held Coordinate Warns Through</dd>
+        <dd>The Condition Through Which a Held Coordinate Warns</dd>
 
         <dt>
 
@@ -1554,7 +1554,7 @@
           <code><a href="integrated_basis.html">integrated_basis()</a></code>
 
         </dt>
-        <dd>The Subspace a Marginal Criterion Integrates Over</dd>
+        <dd>The Subspace Over Which a Marginal Criterion Integrates</dd>
 
         <dt>
 
@@ -1946,7 +1946,7 @@
           <code><a href="mode_curvature.html">mode_curvature()</a></code>
 
         </dt>
-        <dd>The Curvature the Mode Actually Moves By</dd>
+        <dd>The Curvature by Which the Mode Actually Moves</dd>
 
         <dt>
 
@@ -2016,7 +2016,7 @@
           <code><a href="nobs.StatmodFit.html">nobs(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
-        <dd>The Number of Observations a Model Was Fitted To</dd>
+        <dd>The Number of Observations in a Fitted Model</dd>
 
         <dt>
 
@@ -2107,7 +2107,7 @@
           <code><a href="outer_hyper_index.html">outer_hyper_index()</a></code>
 
         </dt>
-        <dd>The Hyperparameters an Outer Method Estimates</dd>
+        <dd>The Hyperparameters That an Outer Method Estimates</dd>
 
         <dt>
 
@@ -2142,7 +2142,7 @@
           <code><a href="outer_path_defaults.html">outer_path_defaults()</a></code>
 
         </dt>
-        <dd>The Properties Every Criterion Carries</dd>
+        <dd>The Properties That Every Criterion Carries</dd>
 
         <dt>
 
@@ -2184,14 +2184,14 @@
           <code><a href="par_values.html">par_values()</a></code>
 
         </dt>
-        <dd>The Values One Entry of <code>par</code> Stands For</dd>
+        <dd>The Values Represented by One Entry of <code>par</code></dd>
 
         <dt>
 
           <code><a href="par_written.html">par_written()</a></code>
 
         </dt>
-        <dd>The Coordinates a Simulation's <code>par</code> Writes</dd>
+        <dd>The Coordinates That a Simulation's <code>par</code> Writes</dd>
 
         <dt>
 
@@ -2373,7 +2373,7 @@
           <code><a href="pin_boundary.html">pin_boundary()</a></code>
 
         </dt>
-        <dd>Pin the Coordinates a Boundary Has Frozen</dd>
+        <dd>Pin the Coordinates That a Boundary Has Frozen</dd>
 
         <dt>
 
@@ -2401,7 +2401,7 @@
           <code><a href="predict_moments.html">predict_moments()</a></code>
 
         </dt>
-        <dd>The Quantities a Fit Can Predict</dd>
+        <dd>The Quantities That a Fit Can Predict</dd>
 
         <dt>
 
@@ -2415,7 +2415,7 @@
           <code><a href="predict_unread.html">predict_unread()</a></code>
 
         </dt>
-        <dd>The Equations a Prediction Does Not Read</dd>
+        <dd>The Equations That a Prediction Does Not Read</dd>
 
         <dt>
 
@@ -2569,7 +2569,7 @@
           <code><a href="random_blocks.html">random_blocks()</a></code>
 
         </dt>
-        <dd>The Gaussian Prior of the Effects a Prediction Sets Aside</dd>
+        <dd>The Gaussian Prior of the Effects That a Prediction Sets Aside</dd>
 
         <dt>
 
@@ -2625,21 +2625,21 @@
           <code><a href="readable_hyper_rows.html">readable_hyper_rows()</a></code>
 
         </dt>
-        <dd>The Quantities a Penalty's Hyperparameters Are About</dd>
+        <dd>The Quantities That a Penalty's Hyperparameters Describe</dd>
 
         <dt>
 
           <code><a href="readable_joint.html">readable_joint()</a></code>
 
         </dt>
-        <dd>The Quantities a Fit Reports, and the Map From Its Coordinates</dd>
+        <dd>The Quantities That a Fit Reports, and the Map From Its Coordinates</dd>
 
         <dt>
 
           <code><a href="readable_vcov.html">readable_vcov()</a></code>
 
         </dt>
-        <dd>The Variance of the Quantities a Fit Reports</dd>
+        <dd>The Variance of the Quantities That a Fit Reports</dd>
 
         <dt>
 
@@ -2758,7 +2758,7 @@
           <code><a href="resolution_summary.html">resolution_summary()</a></code>
 
         </dt>
-        <dd>The Resolution the Search Is Given, Out of the Readings Taken So Far</dd>
+        <dd>The Resolution That the Search Is Given, Out of the Readings Taken So Far</dd>
 
         <dt>
 
@@ -2814,7 +2814,7 @@
           <code><a href="rstatmod_data.html">rstatmod_data()</a></code>
 
         </dt>
-        <dd>The Data Frame a Simulation Runs Against</dd>
+        <dd>The Data Frame Against Which a Simulation Runs</dd>
 
         <dt>
 
@@ -2842,14 +2842,14 @@
           <code><a href="rstatmod_response_name.html">rstatmod_response_name()</a></code>
 
         </dt>
-        <dd>The Column a Simulated Response Is Written To</dd>
+        <dd>The Column to Which a Simulated Response Is Written</dd>
 
         <dt>
 
           <code><a href="rstatmod_term_draw.html">rstatmod_term_draw()</a></code>
 
         </dt>
-        <dd>Let Every Term Draw the Coefficients Only It Can</dd>
+        <dd>Let Every Term Draw the Coefficients That Only It Can Draw</dd>
 
         <dt>
 
@@ -2870,7 +2870,7 @@
           <code><a href="se_answer.html">se_answer()</a></code>
 
         </dt>
-        <dd>The Shape a Prediction With Its Uncertainty Comes Back In</dd>
+        <dd>The Shape in Which a Prediction With Its Uncertainty Is Returned</dd>
 
         <dt>
 
@@ -2919,14 +2919,14 @@
           <code><a href="sigma.StatmodFit.html">sigma(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
-        <dd>The Standard Deviation a Fitted Model Implies</dd>
+        <dd>The Standard Deviation Implied by a Fitted Model</dd>
 
         <dt>
 
           <code><a href="sim_groups.html">sim_groups()</a></code>
 
         </dt>
-        <dd>The Groups a Printed Truth Collapses</dd>
+        <dd>The Groups That a Printed Truth Collapses</dd>
 
         <dt>
 
@@ -2954,7 +2954,7 @@
           <code><a href="smoothed_notes.html">smoothed_notes()</a></code>
 
         </dt>
-        <dd>The Notes a Smoothed Break-Point Term Adds to a Summary</dd>
+        <dd>The Notes That a Smoothed Break-Point Term Adds to a Summary</dd>
 
         <dt>
 
@@ -3276,7 +3276,7 @@
           <code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code>
 
         </dt>
-        <dd>The Variance of the Hyperparameters a Marginal Criterion Estimated</dd>
+        <dd>The Variance of the Hyperparameters That a Marginal Criterion Estimated</dd>
 
         <dt>
 
@@ -3703,14 +3703,14 @@
           <code><a href="structural_grad_parts.html">structural_grad_parts()</a></code> <code><a href="structural_grad_parts.html">structural_grad_parts_impl()</a></code>
 
         </dt>
-        <dd>What the Joint Chain Term Needs Before a Direction Is Known</dd>
+        <dd>The Direction-Free Quantities of the Joint Chain Term</dd>
 
         <dt>
 
           <code><a href="structural_joint_basis.html">structural_joint_basis()</a></code>
 
         </dt>
-        <dd>The Subspace a Marginal Criterion Integrates Over, Jointly</dd>
+        <dd>The Joint Subspace over Which a Marginal Criterion Integrates</dd>
 
         <dt>
 
@@ -3794,7 +3794,7 @@
           <code><a href="structural_term_of.html">structural_term_of()</a></code>
 
         </dt>
-        <dd>Which Structural Term a Model Carries, If Any</dd>
+        <dd>The Structural Term of a Model, If Any</dd>
 
         <dt>
 
@@ -3829,14 +3829,14 @@
           <code><a href="summary_class_blocks.html">summary_class_blocks()</a></code>
 
         </dt>
-        <dd>The Covariance Blocks a Summary Prints Ahead of the Equations</dd>
+        <dd>The Covariance Blocks That a Summary Prints Ahead of the Equations</dd>
 
         <dt>
 
           <code><a href="targets_written.html">targets_written()</a></code>
 
         </dt>
-        <dd>Whether <code>par</code> Wrote Every Coordinate a Prior Drew</dd>
+        <dd>Whether <code>par</code> Wrote Every Coordinate That a Prior Drew</dd>
 
         <dt>
 
@@ -3857,7 +3857,7 @@
           <code><a href="term_drawn_scale.html">term_drawn_scale()</a></code>
 
         </dt>
-        <dd>The Width a Term Drew a Penalty's Coordinates At</dd>
+        <dd>The Width at Which a Term Drew a Penalty's Coordinates</dd>
 
         <dt>
 
@@ -3948,7 +3948,7 @@
           <code><a href="unit_draw_targets.html">unit_draw_targets()</a></code>
 
         </dt>
-        <dd>Where a Penalty's Coordinates Sit in the Vectors a Simulation Draws</dd>
+        <dd>Where a Penalty's Coordinates Sit in the Vectors That a Simulation Draws</dd>
 
         <dt>
 
@@ -4046,7 +4046,7 @@
           <code><a href="weight_total.html">weight_total()</a></code>
 
         </dt>
-        <dd>The Number of Observations the Weights Count</dd>
+        <dd>The Number of Observations Counted by the Weights</dd>
 
         <dt>
 

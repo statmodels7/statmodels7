@@ -1,6 +1,7 @@
-# What One Coordinate Alone Would Buy
+# The Decrement of One Coordinate
 
-\\g_j^2/(2A\_{jj})\\, the decrement of the one-coordinate problem.
+Computes \\g_j^2/(2A\_{jj})\\, the decrement of the one-coordinate
+problem.
 
 ## Usage
 
@@ -35,9 +36,9 @@ test that the verdict applies. This keeps `flat` a label and not a
 verdict. It is a weaker reading than the joint decrement and is not used
 as a verdict.
 
-`Inf` where the diagonal or the gradient entry is not finite or the
-diagonal is not positive, so that such a coordinate is never called
-settled.
+The result is `Inf` where the diagonal or the gradient entry is not
+finite or the diagonal is not positive, so that such a coordinate is
+never called settled.
 
 ## See also
 

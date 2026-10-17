@@ -1,7 +1,8 @@
-# The Quantities a Term Reports in Place of Its Coordinates
+# The Quantities Reported by a Term in Place of Its Coordinates
 
-The coefficient vector of one equation, with each term's declared
-quantities put in place of the coordinates from which they are computed.
+Returns the coefficient vector of one equation, in which each term's
+declared quantities replace the coordinates from which they are
+computed.
 
 ## Usage
 
@@ -34,9 +35,9 @@ coef_readable(spec, design, fit, p, v)
 
 ## Value
 
-`v`, with each term's declared quantities in place of the coordinates
-from which they are computed. `v` unchanged where no term of the
-equation declares any.
+`v`, in which each term's declared quantities replace the coordinates
+from which they are computed. The vector `v` is returned unchanged where
+no term of the equation declares any.
 
 ## Details
 

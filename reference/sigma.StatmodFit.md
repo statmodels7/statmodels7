@@ -1,7 +1,7 @@
-# The Standard Deviation a Fitted Model Implies
+# The Standard Deviation Implied by a Fitted Model
 
-The fitted standard deviation at each observation, where the family has
-one.
+Returns the fitted standard deviation at each observation, where the
+family has one.
 
 ## Usage
 

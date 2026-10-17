@@ -1,6 +1,6 @@
-# The Properties Every Criterion Carries
+# The Properties That Every Criterion Carries
 
-The defaults for `nfolds`, `rule` and `folds`, which only
+Returns the defaults for `nfolds`, `rule` and `folds`, which only
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
 reads, so that one class can serve every criterion and each constructor
 names only what it needs.
@@ -19,7 +19,7 @@ call.
 
 ## Details
 
-The settings of a **path** are not among them. How many values a path
+The settings of a path are not among them. How many values a path
 visits, how far down it reaches, and whether a term's own
 hyperparameters are combined or swept one at a time all belong to the
 term.
@@ -35,7 +35,7 @@ accepted only as a `sparse_criterion`.
 ## See also
 
 [`path_fallbacks()`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md)
-for the settings a term that declares a kinked penalty without offering
-a grid argument falls back to,
+for the settings to which a term falls back when it declares a kinked
+penalty without offering a grid argument,
 [`modelterms7::term_search()`](https://statmodels7.github.io/modelterms7/reference/term_search.html)
 for where a path's shape is set.

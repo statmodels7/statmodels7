@@ -1,10 +1,10 @@
 # How a Penalty's Hessian Moves With the Mode
 
-\\\sum_u \partial S_u/\partial\beta\\\[v\]\\ over every penalty on the
-stacked coefficients whose Hessian depends on them, placed in the
-stacked coefficient space. `penalty_dbeta_trace()` is its trace against
-a matrix and `penalty_dbeta_blocks()` the per-penalty pieces both are
-assembled from.
+Computes \\\sum_u \partial S_u/\partial\beta\\\[v\]\\ over every penalty
+on the stacked coefficients whose Hessian depends on them, placed in the
+stacked coefficient space. `penalty_dbeta_trace()` computes its trace
+against a matrix, and `penalty_dbeta_blocks()` returns the per-penalty
+pieces from which both are assembled.
 
 ## Usage
 
@@ -49,7 +49,7 @@ penalty_dbeta_blocks(spec, design, coef, hyper, v)
 
 ## Value
 
-`statmod_penalty_dbeta()` a `total` square matrix, or `NULL` where no
+`statmod_penalty_dbeta()` a `total` square matrix, or `NULL` if no
 penalty's Hessian moves; `penalty_dbeta_trace()` a single number;
 `penalty_dbeta_blocks()` a list of `pos` and `T` pairs.
 
@@ -64,10 +64,10 @@ Every such penalty contributes, not only the one owning the
 hyperparameter being differentiated, because the mode moves in all of
 the coefficients at once.
 
-A penalty that
+A penalty for which
 [`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html)
-calls quadratic is skipped, which is every ridge, smooth and Gaussian
-random effect, so a model carrying only those assembles nothing: the
+returns `TRUE` is skipped (this is every ridge, smooth and Gaussian
+random effect), so a model carrying only those assembles nothing: the
 matrix is `NULL` and the trace exactly `0`, which leaves the gradient
 unchanged. A kinked penalty and a mixed covariance class are skipped as
 well, and a penalty over a structural term's own parameters is read on

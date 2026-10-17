@@ -1,10 +1,10 @@
 # The Derivative Row of an Equation Carrying a Likelihood Mixed Over States
 
-The derivative of the posterior-weighted predictor of the equation that
-a structural term of the likelihood shape (a regime term or a marginal
-break-point term) shifts, one row per observation, in the coefficients
-of every equation and the term's free parameters on their unconstrained
-scale.
+Returns the derivative of the posterior-weighted predictor of the
+equation that a structural term of the likelihood shape (a regime term
+or a marginal break-point term) shifts, one row per observation, in the
+coefficients of every equation and the term's free parameters on their
+unconstrained scale.
 
 ## Usage
 

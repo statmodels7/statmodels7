@@ -1,7 +1,7 @@
-# The Hyperparameters an Outer Method Estimates
+# The Hyperparameters That an Outer Method Estimates
 
-One row per hyperparameter of a penalized term that is fitted in the
-joint system, with the link that carries it onto the whole line.
+Returns one row per hyperparameter of a penalized term that is fitted in
+the joint system, with the link that carries it onto the whole line.
 
 ## Usage
 
@@ -30,26 +30,26 @@ shared ones, and three character columns, `parameter`, `term` and
 `"links"` attribute, a list with one element per row of the frame (a
 list column would not survive the subsetting that the search does). The
 `"members"` attribute is a data frame of the same three columns plus
-`row`, which lists the hyperparameters that each row stands for.
+`row`, which lists the hyperparameters that each row represents.
 
 ## Details
 
 A term whose penalty has a kink is left out. Its coefficients are
-estimated by a coordinate descent with everything else held fixed, and
-the criterion is a Laplace approximation, which needs a second
+estimated by a coordinate descent while everything else is held fixed,
+and the criterion is a Laplace approximation, which needs a second
 derivative that does not exist at a kink. Those hyperparameters are
 chosen by a path instead.
 
-A hyperparameter that its own term holds is left out too, whatever kind
-of penalty it belongs to, and so is every member of a shared label when
-one member holds it.
+A hyperparameter that its own term holds is left out too, whatever the
+kind of penalty to which it belongs, and so is every member of a shared
+label when one member holds it.
 
 The result is the index of the hyperparameters on the outer search. The
 search also moves the coefficients that the criterion estimates (see
 [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)),
 so its dimension is the number of rows plus the number of those
-coefficients. With no rows and no such coefficients the criterion does
-not run.
+coefficients. If there are no rows and no such coefficients, the
+criterion does not run.
 
 ## Shared hyperparameters
 
@@ -59,13 +59,13 @@ are estimated at one value, so they occupy one row: the search has one
 coordinate for the group. The row is identified by its first member, so
 that every lookup that reads `parameter`, `term` and `name` keeps
 working, and the `"members"` attribute lists the hyperparameters that
-the row stands for.
+the row represents.
 
 Sharing does not merge the penalties, which remain two objects estimated
 at one value, so the derivative of the row is the sum of the derivatives
 of its members and the value is written back under the key of each
-member. Where nothing is shared the member table is the index itself,
-one line per row.
+member. If no hyperparameter is shared, the member table is the index
+itself, one line per row.
 
 Two members must carry the same link, since one free value has to lie in
 both of their domains, and a label may not span a smooth penalty and a
@@ -76,7 +76,7 @@ sides are visible.
 ## See also
 
 [`hyper_to_eta()`](https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.md)
-for the map those links define,
+for the map that those links define,
 [`statmod_held_ids()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_ids.md)
 for the shared labels that a term holds,
 [`index_members()`](https://statmodels7.github.io/statmodels7/reference/index_members.md)

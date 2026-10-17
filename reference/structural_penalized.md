@@ -26,23 +26,23 @@ mixed_penalized(spec, design)
 
 ## Value
 
-A single logical. `TRUE` where a penalty covers a structural term's own
-parameters, or a covariance class spans both the coefficients and those
-parameters. `FALSE` for a model with no structural term, and for one
-whose structural term has no such penalty. `mixed_penalized()` answers
-`TRUE` for the second case alone.
+A single logical. It is `TRUE` where a penalty covers a structural
+term's own parameters, or a covariance class spans both the coefficients
+and those parameters, and `FALSE` for a model with no structural term
+and for one whose structural term has no such penalty.
+`mixed_penalized()` returns `TRUE` for the second case only.
 
 ## Details
 
-The answer decides which matrix the Laplace determinant is taken over.
-`TRUE` sends the criterion to
+The answer determines the matrix over which the Laplace determinant is
+taken. `TRUE` sends the criterion to
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md),
-which spans the coefficients **and** the term's free parameters; `FALSE`
-leaves it over the coefficients alone.
+which spans the coefficients and the term's free parameters; `FALSE`
+leaves it over the coefficients only.
 
 ## See also
 
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
 for the matrix that it selects,
 [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
-for the penalties that it looks for.
+for the penalties that it seeks.

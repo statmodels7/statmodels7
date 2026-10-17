@@ -1,6 +1,6 @@
 # How the Hyperparameters Are Estimated
 
-The class every outer criterion is an instance of:
+Every outer criterion is an instance of this class:
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
 [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
@@ -8,7 +8,7 @@ The class every outer criterion is an instance of:
 and [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
 all return one. It carries which subspace of the coefficients is
 integrated over, which information matrix enters the determinant, and
-the settings a path or a cross-validation needs.
+the settings that a path or a cross-validation needs.
 
 One class serves every criterion, so a property that a given criterion
 does not read is present and unused. The class validates the values of
@@ -39,8 +39,8 @@ OuterMethod(
 
 - kind:
 
-  `"reml"`, `"ml"`, `"aic"`, `"bic"` or `"cv"`. Decides which criterion
-  is evaluated and, through
+  `"reml"`, `"ml"`, `"aic"`, `"bic"` or `"cv"`. Determines which
+  criterion is evaluated and, through
   [`outer_minimize()`](https://statmodels7.github.io/statmodels7/reference/outer_minimize.md),
   whether it is made small or large.
 
@@ -55,7 +55,7 @@ OuterMethod(
 - k:
 
   The price of one effective degree of freedom, for a prediction-error
-  criterion. `NA_real_` for
+  criterion. It is `NA_real_` for
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
   which resolves it to \\\log n\\ at fit time, and for the criteria that
   do not charge per degree of freedom.
@@ -64,23 +64,23 @@ OuterMethod(
 
   How many folds
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
-  uses. Read by `"cv"` alone.
+  uses. Only `"cv"` reads it.
 
 - rule:
 
-  `"min"` or `"1se"`. Read by `"cv"` alone.
+  `"min"` or `"1se"`. Only `"cv"` reads it.
 
 - folds:
 
   A fold number per observation, or `integer(0)` for folds drawn at fit
-  time. Read by `"cv"` alone.
+  time. Only `"cv"` reads it.
 
 - marginal:
 
   Which distribution parameters have their unpenalized coefficients
   estimated on the marginal criterion: `NULL` for every parameter except
-  the position, `"none"`, `"all"`, or a vector of names. Read by
-  `"reml"` and `"ml"` alone; see
+  the position, `"none"`, `"all"`, or a vector of names. Only `"reml"`
+  and `"ml"` read it; see
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md).
 
 ## Value

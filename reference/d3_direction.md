@@ -1,6 +1,7 @@
 # The Third Derivative Already Contracted in One Direction
 
-\\\sum_k \ell\_{abk}(X_k v_k)\_i\\, the per-observation weight
+Computes \\\sum_k \ell\_{abk}(X_k v_k)\_i\\, the per-observation weight
+that
 [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
 builds for the \\(a,b)\\ block.
 

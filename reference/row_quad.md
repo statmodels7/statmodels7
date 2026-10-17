@@ -1,9 +1,9 @@
 # A Quadratic Form Row by Row, Where the Variance Has Missing Entries
 
-\\x\_{ia}^\top V x\_{ib}\\ for every row \\i\\, with the entries of
-\\V\\ that are not finite read as missing: a row is `NA` only where it
-reaches one of them, that is where both its coefficient in \\x_a\\ and
-its coefficient in \\x_b\\ are non-zero.
+Computes \\x\_{ia}^\top V x\_{ib}\\ for every row \\i\\, reading the
+entries of \\V\\ that are not finite as missing: a row is `NA` only
+where it reaches one of them, that is where both its coefficient in
+\\x_a\\ and its coefficient in \\x_b\\ are non-zero.
 
 ## Usage
 

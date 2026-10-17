@@ -11,7 +11,7 @@ reml() and ml(), which are log-likelihoods and are maximized."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,15 +66,16 @@ reml() and ml(), which are log-likelihoods and are maximized."><meta property="o
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The outer search always minimizes, so this decides whether the criterion
-goes in as it stands or with its sign turned. Reading the orientation from
-the method, and not from a list of kinds written into the search, lets a
-criterion added later declare its own orientation in one place.</p>
+    <p>The outer search always minimizes, so the value returned here determines
+whether the criterion enters as it stands or after a change of sign. Reading
+the orientation from the method, and not from a list of kinds written into
+the search, lets a criterion added later declare its own orientation in one
+place.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="outer_k.html">outer_k()</a></code> for the other property of a criterion the search
-reads, <code><a href="aic.html">aic()</a></code> for the criteria this answers <code>TRUE</code> for.</p></div>
+    <div class="dont-index"><p><code><a href="outer_k.html">outer_k()</a></code> for the other property of a criterion that the search
+reads, <code><a href="aic.html">aic()</a></code> for the criteria for which this returns <code>TRUE</code>.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

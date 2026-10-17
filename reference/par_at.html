@@ -9,7 +9,7 @@ a supplied structure against the design before returning it."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@ a supplied structure against the design before returning it.</p>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
-<dd><p>The design to validate the lengths against.</p></dd>
+<dd><p>The design against which the lengths are validated.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -74,8 +74,9 @@ parameter in the family's order.</p>
     <p>Three things are checked: that <code>par</code> is a named list, that every name of
 <code>par</code> is a distribution parameter, and that the vector given for each is
 as long as that equation's design is wide. Each failure signals an error.
-The messages for a name and for a length name the parameter, so that a
-short vector is not recycled into a different model. A distribution
+The message for a wrong name and the message for a wrong length both give
+the name of the parameter, so that a short vector is not recycled into a
+different model. A distribution
 parameter that <code>par</code> omits keeps its fitted coefficients.</p>
     </div>
     <div class="section level2">

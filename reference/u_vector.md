@@ -1,7 +1,7 @@
 # The Trace of the Determinant's Movement With the Coefficients
 
-\\u_c = \mathrm{tr}(M\\\partial K/\partial\beta_c)\\, assembled one
-crossprod per distribution parameter.
+Computes \\u_c = \mathrm{tr}(M\\\partial K/\partial\beta_c)\\,
+assembling one crossprod per distribution parameter.
 
 ## Usage
 
@@ -54,8 +54,8 @@ u_vector(
   The array from which \\\partial K/\partial\eta\\ is read, with a
   negative sign: the third derivatives of the log-likelihood on the
   observed route, the derivatives in the predictors of \\E\[\ell''\]\\
-  on the expected one. `NULL` for the family's third derivative at the
-  fitted predictors.
+  on the expected one. The value `NULL` selects the family's third
+  derivative at the fitted predictors.
 
 - G:
 

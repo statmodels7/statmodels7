@@ -1,7 +1,7 @@
-# The Number of Observations a Model Was Fitted To
+# The Number of Observations in a Fitted Model
 
-The number of observations that entered the likelihood: the sum of the
-prior weights, which are frequency weights.
+Returns the number of observations that entered the likelihood. This
+number is the sum of the prior weights, which are frequency weights.
 
 ## Usage
 

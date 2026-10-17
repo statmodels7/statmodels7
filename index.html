@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,11 +74,11 @@
 <p>Attaching it attaches the eight member packages.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://statmodels7.github.io/statmodels7/">statmodels7</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; -- Attaching the statmodels7 toolkit 0.200.0</span></span>
-<span><span class="co">#&gt; v basis7         0.15.0   v numericals7    0.22.1</span></span>
-<span><span class="co">#&gt; v distributions7 0.78.1   v optimizers7    0.14.0</span></span>
-<span><span class="co">#&gt; v linkfunctions7 0.5.2    v parameters7    0.24.0</span></span>
-<span><span class="co">#&gt; v modelterms7    0.98.0   v penalties7     0.31.0</span></span></code></pre></div>
+<span><span class="co">#&gt; -- Attaching the statmodels7 toolkit 0.203.3</span></span>
+<span><span class="co">#&gt; v basis7         0.15.1   v numericals7    0.23.3</span></span>
+<span><span class="co">#&gt; v distributions7 0.80.2   v optimizers7    0.15.1</span></span>
+<span><span class="co">#&gt; v linkfunctions7 0.5.4    v parameters7    0.26.0</span></span>
+<span><span class="co">#&gt; v modelterms7    0.99.3   v penalties7     0.33.0</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="fitting-a-model">Fitting a model<a class="anchor" aria-label="anchor" href="#fitting-a-model"></a>
@@ -138,11 +138,11 @@
 <span><span class="co">#&gt; 95% intervals, bayesian variance</span></span>
 <span><span class="co">#&gt; conditional log-likelihood -282.744059    effective df 28.26</span></span>
 <span><span class="co">#&gt; cAIC 622.006    cBIC 734.801</span></span>
-<span><span class="co">#&gt; fitted in 1.98 s</span></span>
+<span><span class="co">#&gt; fitted in 1.99 s</span></span>
 <span><span class="co">#&gt; inner   max |grad|/se 1.9e-15   min eigen 0.014</span></span>
 <span><span class="co">#&gt; outer   max |grad|/se 2.9e-12   min eigen 0.97</span></span>
 <span><span class="co">#&gt; 1 note: print(summary(fit), notes = TRUE)</span></span></code></pre></div>
-<p>After the conditional log-likelihood and the information criteria, the table ends with two lines headed <code>inner</code> and <code>outer</code>. Each gives the largest gradient in standard errors and the smallest eigenvalue of the curvature, for the coefficients and for the hyperparameters respectively, both read at the point the fit reached.</p>
+<p>After the conditional log-likelihood and the information criteria, the table ends with two lines headed <code>inner</code> and <code>outer</code>. Each gives the largest gradient in standard errors and the smallest eigenvalue of the curvature, for the coefficients and for the hyperparameters respectively, and both are read at the point that the fit reached.</p>
 <p><code><a href="reference/statmod_certificate.html">statmod_certificate()</a></code> is computed at the same point and not read off the stopping rule of the optimizer. Its <code>mode_error</code> is how far above its own penalized mode the coefficients stopped, in log-likelihood units, and its <code>state</code> is <code>converged</code>, <code>boundary</code>, <code>not converged</code> or <code>unknown</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/statmod_certificate.html">statmod_certificate</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"state"</span>, <span class="st">"mode_error"</span><span class="op">)</span><span class="op">]</span></span>
@@ -164,7 +164,7 @@
 </h2>
 <p>Any term of <code>modelterms7</code> goes in any equation: the parametric block, penalized smooths of one and several covariates, grouped random intercepts and slopes, ridge, lasso, elastic net, SCAD and MCP, a nonlinear parametric term, effects that change at estimated break-points, score-driven dynamics and latent Markov regimes. A formula carries at most one score-driven term, regime term or break-point term built with <code>marginal = TRUE</code>. A score-driven term is fitted in one system with the coefficients, and <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> is built from the observed information of that joint model. A regime term, or a marginal break-point term, is fitted by alternating with the coefficients.</p>
 <p>The hyperparameters of a smooth penalty are estimated by <code><a href="reference/reml.html">reml()</a></code> or <code><a href="reference/reml.html">ml()</a></code>, or by <code><a href="reference/aic.html">aic()</a></code> or <code><a href="reference/aic.html">bic()</a></code> on an estimate of prediction error, all passed as <code>outer_criterion</code>. A penalty with a kink (<code>lasso()</code>, <code>enet()</code>, <code>scad()</code> and <code>mcp()</code>) has no second derivative at the mode, so its hyperparameter is chosen along a path of its own values, from the value that empties the block downwards. The path is scored by <code>sparse_criterion</code>, which is <code><a href="reference/aic.html">bic()</a></code> by default and may also be <code><a href="reference/aic.html">aic()</a></code> or <code><a href="reference/cv.html">cv()</a></code>. The function <code><a href="reference/cv.html">cv()</a></code> serves only as <code>sparse_criterion</code>.</p>
-<p>Random effects written with the same label and the same grouping share one covariance block, whatever equation they sit in, as with the middle bar of <code>(1 | u | id)</code> in <code>brms</code>. The formula <code>y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)</code> estimates the correlation between a subject’s level and the logarithm of its scale. The label reaches a subformula too, so <code>seg(x, psi ~ random(~ 1 | u | id))</code> in the same formula correlates a random break-point with a random scale. The block is one multivariate prior over the effects of one level, parametrized by <code>dr_prod()</code> by default, whose free coordinates are the logarithms of the standard deviations followed by the angles of the correlation.</p>
+<p>Random effects written with the same label and the same grouping share one covariance block, in whichever equation they appear, as with the middle bar of <code>(1 | u | id)</code> in <code>brms</code>. The formula <code>y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)</code> estimates the correlation between a subject’s level and the logarithm of its scale. The label reaches a subformula too, so <code>seg(x, psi ~ random(~ 1 | u | id))</code> in the same formula correlates a random break-point with a random scale. The block is one multivariate prior over the effects of one level, parametrized by <code>dr_prod()</code> by default, whose free coordinates are the logarithms of the standard deviations followed by the angles of the correlation.</p>
 <p><code><a href="reference/rstatmod.html">rstatmod()</a></code> simulates from a model written the same way and returns the parameters used beside the data.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rstatmod.html">rstatmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, distrib <span class="op">=</span> <span class="fu">gaussian1_distrib</span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="op">]</span>,</span>
@@ -223,7 +223,7 @@
 </tr>
 <tr>
 <td><a href="https://statmodels7.github.io/penalties7/" class="external-link">penalties7</a></td>
-<td>penalties as objects, with exact derivatives, proximal operators and the pieces a marginal criterion consumes</td>
+<td>penalties as objects, with exact derivatives, proximal operators and the pieces that a marginal criterion consumes</td>
 </tr>
 <tr>
 <td><a href="https://statmodels7.github.io/modelterms7/" class="external-link">modelterms7</a></td>

@@ -1,7 +1,7 @@
-# The Subspace a Marginal Criterion Integrates Over
+# The Subspace Over Which a Marginal Criterion Integrates
 
-`NULL` for REML, which integrates everything, and an orthonormal basis
-of the penalty's range space for ML.
+Returns `NULL` for REML, which integrates everything, and an orthonormal
+basis of the penalty's range space for ML.
 
 ## Usage
 
@@ -28,30 +28,33 @@ integrated_basis(spec, design, kind, gamma = FALSE)
 
   `TRUE` where the criterion also estimates coefficients
   ([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md));
-  a model with no penalized direction then gets an empty basis in place
-  of an error.
+  the function then returns an empty basis, instead of an error, for a
+  model with no penalized direction.
 
 ## Value
 
 `NULL` for `"reml"`, which integrates every direction and needs no
-basis. For `"ml"`, a `p x r` matrix with orthonormal columns spanning
-the range space of the penalties, `p` the total coefficient count and
-`r` the total rank. The matrix has no columns (\\r = 0\\) where nothing
-is penalized and the criterion estimates coefficients or a structural
-term is penalized. Where neither holds, an error is signaled.
+basis. For `"ml"`, it is a `p x r` matrix with orthonormal columns
+spanning the range space of the penalties, where `p` is the total
+coefficient count and `r` is the total rank. The matrix has no columns
+(\\r = 0\\) if no direction of the design is penalized and either the
+criterion estimates coefficients or a structural term is penalized.
+Otherwise an error is signaled.
 
 ## Details
 
-The total penalty is block diagonal over the terms, each owning its own
-columns, so its null space is the direct sum of the unpenalized columns
-and each penalty's own null space. The basis is assembled that way.
+The total penalty is block diagonal over the terms, and each term owns
+its own columns, so the null space of the total penalty is the direct
+sum of the unpenalized columns and each penalty's own null space. The
+basis is assembled that way.
 
 It is not read off the eigenvalues of the assembled matrix. A count of
 eigenvalues above a tolerance depends on the scale of the smoothing
-parameters: with two smoothing parameters many orders of magnitude apart
-the small contributions fall below the tolerance, while the null space
-itself does not change. A penalty with a kink contributes no column, and
-a penalty over the own parameters of a structural term is appended by
+parameters: if two smoothing parameters are many orders of magnitude
+apart, the small contributions fall below the tolerance, while the null
+space itself does not change. A penalty with a kink contributes no
+column, and a penalty over the own parameters of a structural term is
+appended by
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md).
 
 ## See also
@@ -61,4 +64,4 @@ for one penalty's contribution,
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 and
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-for the distinction this implements.
+for the distinction that this implements.

@@ -1,7 +1,7 @@
 # Print an Outer Method
 
-Prints one line naming the criterion and the information it is built on,
-as `<REML> observed information`, and for
+Prints one line naming the criterion and the information on which it is
+built, as `<REML> observed information`, and for
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) the
 number of folds and the selection rule.
 

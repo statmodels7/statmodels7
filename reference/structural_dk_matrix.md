@@ -1,6 +1,6 @@
 # The Joint Derivative of the Penalized Information Along One Direction
 
-\\\partial K/\partial u\\\[v\]\\ assembled as a matrix over the
+Returns \\\partial K/\partial u\\\[v\]\\ assembled as a matrix over the
 coefficients and the filter's own parameters, where
 [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
 returns only its trace against \\M\\.
@@ -44,11 +44,11 @@ A square symmetric matrix over the estimated coordinates.
 
 The gradient uses only the trace of this matrix against \\M\\ and does
 not form the matrix. The Hessian uses the matrix in two places: in
-\\\mathrm{tr}(M K_l M K_m)\\, which no contraction reduces, and as the
-operator that carries the second movement of the mode. Write \\V_a\\ for
-the rows of each equation, \\\mathrm{d}\varphi = E v\\ for the movement
-of the filter's own parameters, and \\E\\ for the second derivative of
-the predictor that the filter produces. Then
+\\\mathrm{tr}(M K_l M K_m)\\, which a contraction cannot reduce, and as
+the operator that carries the second movement of the mode. Write \\V_a\\
+for the rows of each equation, \\\mathrm{d}\varphi = E v\\ for the
+movement of the filter's own parameters, and \\E\\ for the second
+derivative of the predictor that the filter produces. Then
 
 \$\$\frac{\partial K}{\partial u}\[v\] = -\sum_i
 w_i\Big\[\sum\_{a,b}\Big(\sum_k\ell\_{abk}(V_k\cdot v)\Big) V_a^\top

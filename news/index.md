@@ -1,5 +1,45 @@
 # Changelog
 
+## statmodels7 0.203.3
+
+- Documentation and messages of the outer criterion, inference,
+  prediction and simulation
+  ([`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  and their derivatives,
+  [`summary()`](https://rdrr.io/r/base/summary.html),
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html),
+  [`confint()`](https://rdrr.io/r/stats/confint.html),
+  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md),
+  [`predict()`](https://rdrr.io/r/stats/predict.html),
+  [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md),
+  [`statmod_breakpoint_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_breakpoint_test.md)),
+  the README, the vignette and the `desc:` blocks of `_pkgdown.yml`:
+  relative clauses without a relative pronoun, stranded prepositions,
+  absolute constructions, sentences without a verb, emphasis in bold,
+  negated subjects, cleft sentences and personified descriptions of the
+  code rewritten as plain clauses. Absolute constructions with “with”
+  that the first pass left in `@return` sections of the inner fit are
+  rewritten as well. Error messages and notes of
+  [`summary()`](https://rdrr.io/r/base/summary.html),
+  [`predict()`](https://rdrr.io/r/stats/predict.html),
+  [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md),
+  [`statmod_breakpoint_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_breakpoint_test.md),
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and the outer search are reworded; where a test matches a message, its
+  pattern changes with it (the flat direction outside the coefficients,
+  the note of a zero correction of the degrees of freedom, and the
+  parameters reached by a fit that did not converge).
+- The error of
+  [`statmod_breakpoint_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_breakpoint_test.md)
+  when no bootstrap replicate yields a statistic said that no replicate
+  could be refitted. A replicate is also lost when the statistic fails
+  on a refitted null model, and the message now names both causes.
+
 ## statmodels7 0.203.2
 
 - Documentation and messages of the inner fit (the specification, the

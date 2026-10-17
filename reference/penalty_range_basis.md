@@ -1,11 +1,11 @@
 # An Orthonormal Basis of a Penalty's Range Space
 
-Returns an orthonormal basis of the directions a penalty constrains,
-which are the ones
+Returns an orthonormal basis of the directions that a penalty
+constrains.
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-integrates over and
+integrates over these directions, and
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-integrates together with the others.
+integrates them together with the others.
 
 ## Usage
 
@@ -33,8 +33,8 @@ penalty_range_basis(pen, k, p, nm)
 
 ## Value
 
-A `k x r` matrix with orthonormal columns, `r` being the penalty's rank.
-The `k x k` identity for a proper penalty.
+A `k x r` matrix with orthonormal columns, where `r` is the penalty's
+rank. It is the `k x k` identity for a proper penalty.
 
 ## Details
 
@@ -46,7 +46,7 @@ supplies it through
 [`penalties7::penalty_null_basis()`](https://statmodels7.github.io/penalties7/reference/penalty_matrix.html),
 and the range basis is the orthogonal complement.
 
-A penalty that answers neither is rejected by name, because integrating
+A penalty that supplies neither is rejected by name, because integrating
 over a guessed subspace would not give the marginal likelihood.
 
 ## See also

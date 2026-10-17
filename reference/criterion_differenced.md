@@ -1,7 +1,7 @@
 # The Outer Criterion Differenced by Refitting
 
-The gradient and the curvature of the outer criterion in its free
-coordinates, read by central differences of the criterion itself: the
+Computes the gradient and the curvature of the outer criterion in its
+free coordinates by central differences of the criterion itself: the
 model is refitted at each displaced point, warm-started at the fitted
 coefficients, and the criterion is read at the refitted mode.
 

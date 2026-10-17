@@ -1,8 +1,8 @@
 # A Marginal Prediction by Adaptive Quadrature Over One Univariate Prior
 
-The average over a new group's effect when the only effect set aside is
-one coordinate with a prior that is not Gaussian: each quantity is
-\\\int q(\eta_0 + z u)\\ f_b(u)\\ du\\, with \\f_b\\ the prior's own
+Computes the average over a new group's effect when the only effect set
+aside is one coordinate with a prior that is not Gaussian. Each quantity
+is \\\int q(\eta_0 + z u)\\ f_b(u)\\ du\\, with \\f_b\\ the prior's own
 density, computed by
 [`numericals7::quad_vec()`](https://statmodels7.github.io/numericals7/reference/quad_vec.html)
 over the rows at once.

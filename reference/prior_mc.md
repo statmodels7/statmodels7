@@ -1,8 +1,8 @@
 # The Predictive Mixture by Monte Carlo
 
-`n_draw` point components: each a draw of the estimation error from
-\\\mathrm{N}(0, C)\\ at every row and a draw of a new group's effects
-for every term in `heavy`. See
+Returns `n_draw` point components. Each component is a draw of the
+estimation error from \\\mathrm{N}(0, C)\\ at every row and a draw of a
+new group's effects for every term in `heavy`. See
 [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md).
 
 ## Usage

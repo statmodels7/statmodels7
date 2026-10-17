@@ -1,6 +1,6 @@
-# The Condition an Unavailable Correction Warns Through
+# The Condition Through Which an Unavailable Correction Warns
 
-A classed warning, so a caller can catch the one raised when
+Returns a classed warning, so a caller can catch the one raised when
 `vcov(type = "unconditional")` cannot read the hyperparameters' own
 uncertainty and returns the conditional variance instead.
 
@@ -35,6 +35,6 @@ whatever else was raised on the way.
 ## See also
 
 [`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md),
-which decides whether it fires, and
+which determines whether it fires, and
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
 which raises it.

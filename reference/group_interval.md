@@ -1,11 +1,11 @@
 # The Interval and Standard Deviation of a New Group's Parameter
 
-For `interval = "group"`: the distribution of a new group's parameter
-\\\theta^\* = h^{-1}(\eta^\*)\\, with \\\eta^\* = \eta_0 + e + z^\top
-b\\, where \\e\\ is the estimation error of the fixed part and \\b\\ the
-effects of a new group, drawn from the prior that the fit estimated.
-Returns the ends of its interval and its standard deviation, on the
-predictor's scale and on the parameter's.
+Returns, for `interval = "group"`, the ends of the interval and the
+standard deviation of a new group's parameter \\\theta^\* =
+h^{-1}(\eta^\*)\\, on the predictor's scale and on the parameter's. Here
+\\\eta^\* = \eta_0 + e + z^\top b\\, where \\e\\ is the estimation error
+of the fixed part and \\b\\ are the effects of a new group, drawn from
+the prior that the fit estimated.
 
 ## Usage
 

@@ -4,7 +4,7 @@ Build the criterion object that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 uses to choose a model's smooth hyperparameters by a marginal
 likelihood: the coefficients are integrated out by a Laplace
-approximation at the penalized mode, and what is left is maximized in
+approximation at the penalized mode, and the remainder is maximized in
 the hyperparameters. Pass the result as `outer_criterion`.
 
 `reml()` integrates every coefficient that `marginal` does not name.
@@ -36,8 +36,8 @@ ml(hessian = c("observed", "auto", "expected"), marginal = NULL)
   outlier, and the observed information otherwise. The default is
   `"observed"`; the expected information is used where the caller names
   it, as for a Student t whose degrees of freedom are modeled. The
-  fitted model records the information used. Matched with
-  [`match.arg()`](https://rdrr.io/r/base/match.arg.html). On the
+  fitted model records the information used. The argument is matched
+  with [`match.arg()`](https://rdrr.io/r/base/match.arg.html). On the
   expected route the outer gradient is exact wherever the family writes
   its expected information out, as every shipped family does, and the
   outer Hessian is exact wherever the family also supplies the
@@ -75,8 +75,8 @@ ml(hessian = c("observed", "auto", "expected"), marginal = NULL)
 
 An
 [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-object of kind `"reml"` or `"ml"`, with `hessian` and `marginal` as
-supplied and the path settings unused.
+object of kind `"reml"` or `"ml"`, whose `hessian` and `marginal` are as
+supplied and whose path settings are unused.
 
 ## The criterion
 
@@ -101,8 +101,8 @@ value of \\\gamma\\, the coefficients \\u\\ are set to the penalized
 mode.
 
 `reml()` integrates every coefficient in \\u\\. An unpenalized one is
-integrated under a flat prior, which is what the absence of a penalty
-amounts to. `ml()` integrates only the directions in the range space of
+integrated under a flat prior; the absence of a penalty amounts to a
+flat prior. `ml()` integrates only the directions in the range space of
 the penalty, so an unpenalized coefficient in \\u\\ is read at the mode.
 An ordinary covariate is unpenalized. The linear component of a
 Demmler-Reinsch smooth is unpenalized too, because the penalty of that
@@ -132,7 +132,7 @@ the criterion. Without any penalty, `reml()` returns the \\\sigma\\ of
 [`stats::lm()`](https://rdrr.io/r/stats/lm.html),
 \\\sqrt{\mathrm{rss}/(n-p)}\\, and its criterion equals
 `logLik(lm(...), REML = TRUE)`. `ml()` returns
-\\\sqrt{\mathrm{rss}/n}\\. With `agec` defined as `age - 11`, the model
+\\\sqrt{\mathrm{rss}/n}\\. If `agec` is defined as `age - 11`, the model
 `distance ~ agec + random(~ agec | Subject)` on
 [`nlme::Orthodont`](https://rdrr.io/pkg/nlme/man/Orthodont.html) gives
 the estimates and the criterion of `lme`.
@@ -167,17 +167,18 @@ null space is not spanned by coordinates. In each case a parameter that
 the default names keeps the convention of `"none"`, and a parameter
 named explicitly is rejected. Beside a penalty with a kink the default
 names no parameter, and a parameter named explicitly is estimated on the
-criterion, with the coordinates that the kinked penalty covers excluded.
-For a multivariate family the default names no parameter, and an
-explicit `marginal` other than `"none"` is an error.
+criterion, and the coordinates that the kinked penalty covers are
+excluded. For a multivariate family the default names no parameter, and
+an explicit `marginal` other than `"none"` is an error.
 
 ## Which hyperparameters
 
-Those of the terms fitted in one system, meaning those whose penalty is
-twice differentiable. A lasso, a SCAD or an MCP has a kink, its
-coefficients are estimated by a method of their own, and a Laplace
-approximation is undefined at a point where the second derivative does
-not exist. Those hyperparameters are not on the outer search.
+The criterion estimates the hyperparameters of the terms fitted in one
+system, meaning the terms whose penalty is twice differentiable. A
+lasso, a SCAD or an MCP has a kink, its coefficients are estimated by a
+method of their own, and a Laplace approximation is undefined at a point
+where the second derivative does not exist. Those hyperparameters are
+not on the outer search.
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 chooses them by a path under `sparse_criterion`, which is
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) by
@@ -211,14 +212,14 @@ there are two or more hyperparameters.
 
 ## ML needs a null basis
 
-`ml()` reads the null space of every penalty that it integrates over,
+`ml()` reads the null space of every penalty over which it integrates,
 because the null space determines which directions are profiled.
 [`penalties7::is_proper()`](https://statmodels7.github.io/penalties7/reference/is_proper.html)
 identifies a penalty with no null space, and
 [`penalties7::penalty_null_basis()`](https://statmodels7.github.io/penalties7/reference/penalty_matrix.html)
 returns the null space of a quadratic, structured, additive or separable
-penalty. A penalty that offers neither is rejected by name, and no
-subspace is guessed.
+penalty. A penalty that provides neither is rejected by name, and the
+criterion does not assume a subspace for it.
 
 ## References
 
@@ -265,7 +266,7 @@ c(reml = sum(fit@edf$edf), ml = sum(fml@edf$edf))
 #>     reml       ml 
 #> 8.562273 8.574067 
 
-# The marginal log-likelihood is what these maximize, and it is only
+# The marginal log-likelihood, which these criteria maximize, is only
 # available where one of them ran.
 logLik(fit, type = "marginal")
 #> 'log Lik.' -53.66395 (df=4)

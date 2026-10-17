@@ -1,11 +1,11 @@
 # A Simulator of the Response From a Fitted Model
 
 Returns a function of no arguments that draws one response at the
-fitting rows: the effects of the
+fitting rows. The function draws the effects of the
 [`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
-terms in `aside` from the prior the fit estimated, every other
-coefficient at its estimate, and the response from the family at the
-parameters that gives.
+terms in `aside` from the prior that the fit estimated, keeps every
+other coefficient at its estimate, and draws the response from the
+family at the parameters that these coefficients give.
 
 ## Usage
 
@@ -28,7 +28,7 @@ bootstrap_simulator(object, spec0, design0, aside)
 
   The rows of
   [`random_modes()`](https://statmodels7.github.io/statmodels7/reference/random_modes.md)
-  whose effects are redrawn, the others keeping their estimates.
+  whose effects are redrawn; the other effects keep their estimates.
 
 ## Value
 
@@ -36,15 +36,15 @@ A function returning a numeric vector of `spec0@n_obs` values.
 
 ## Details
 
-The effects are drawn with
+The effects are drawn by reading the penalty as a prior at the fit's
+hyperparameters with
 [`penalties7::penalty_draw()`](https://statmodels7.github.io/penalties7/reference/penalty_draw.html),
-the penalty read as a prior at the fit's hyperparameters, and placed by
-the map
+and are placed by the map that
 [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
 uses, so a structured covariance (an AR(1), a compound symmetry), a
-covariance a label shares between terms and a prior that is not Gaussian
-(a multivariate Student t, a Laplace) are drawn alike. A smooth or a
-ridge is not a random effect and keeps its estimate.
+covariance that a label shares between terms and a prior that is not
+Gaussian (a multivariate Student t, a Laplace) are drawn alike. A smooth
+or a ridge is not a random effect and keeps its estimate.
 
 ## Examples
 

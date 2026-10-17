@@ -11,7 +11,7 @@ term's other parameters stay where the rest of the pass left them."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,8 +115,8 @@ residual, and a structural term contributes no column; the proximal branch
 reads <code>beta[block$index]</code>, and such a penalty covers no entry of the
 stacked vector. The parameters are in the design's structural state
 instead, so the iteration is written on that subvector: the smooth part is
-the negative log-likelihood with this penalty taken back out, its gradient
-is <code><a href="statmod_structural_score.html">statmod_structural_score()</a></code>'s with the same correction, and the
+the negative log-likelihood from which this penalty is taken back out, its
+gradient is <code><a href="statmod_structural_score.html">statmod_structural_score()</a></code>'s with the same correction, and the
 operator is the penalty's own.</p>
 <p>The iteration stops when the gradient criterion <code>crit_grad(tol)</code> is met. A
 coordinate at exactly zero is one whose gradient of the smooth part lies

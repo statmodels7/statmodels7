@@ -28,8 +28,8 @@ prior_draw_groups(pen, th, D, n_draw)
 
 ## Value
 
-A matrix with `n_draw` rows and `D` columns, a group's coordinates side
-by side, each row an independent draw.
+A matrix with `n_draw` rows and `D` columns, in which the columns hold a
+group's coordinates side by side and each row is an independent draw.
 
 ## Examples
 

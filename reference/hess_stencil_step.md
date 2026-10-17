@@ -1,6 +1,6 @@
 # The Step and the Tolerance of the Outer Hessian's Stencil
 
-The step at which
+Return the step at which
 [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
 differences, the largest relative disagreement between its two readings,
 and the tolerance of the probes' inner fit.

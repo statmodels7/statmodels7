@@ -1,8 +1,8 @@
 # The Exact Gradient Where a Penalty Covers a Filter's Own Parameters
 
-The exact gradient of the marginal criterion where a penalty covers a
-structural term's own parameters, so that the determinant spans the
-joint vector of the coefficients and those parameters.
+Computes the exact gradient of the marginal criterion where a penalty
+covers a structural term's own parameters, so that the determinant spans
+the joint vector of the coefficients and those parameters.
 
 ## Usage
 
@@ -62,11 +62,11 @@ determinant does not exist.
 
 ## Details
 
-The criterion is the same and so are its three pieces; what changes is
-that \\K\\ carries the recursion's own second derivative, \$\$K =
--\sum_t w_t\sum\_{a,b}\ell\_{ab,t}V\_{a,t}^\top V\_{b,t} - \sum_t w_t
-\ell\_{p,t}E_t,\$\$ so differentiating it along the direction \\v\\ the
-mode moves in gives three contributions instead of one:
+The criterion is the same and so are its three pieces, except that \\K\\
+carries the recursion's own second derivative, \$\$K = -\sum_t
+w_t\sum\_{a,b}\ell\_{ab,t}V\_{a,t}^\top V\_{b,t} - \sum_t w_t
+\ell\_{p,t}E_t,\$\$ so differentiating it along the direction \\v\\ in
+which the mode moves gives three contributions instead of one:
 
 1.  the family's third derivative against the per-observation diagonal
     of \\M\\, which is

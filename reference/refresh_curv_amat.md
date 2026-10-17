@@ -1,5 +1,6 @@
 # The Weight for the Second Derivative of a Block
 
+Computes
 [`refresh_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md)
 with the curvature, one matrix per unit.
 
@@ -44,7 +45,7 @@ A list of matrices, one per unit.
 
 ## Details
 
-It is the same weight
+It is the same weight that
 [`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)
 builds for the gradient, and it depends on neither direction, so it is
 built once per Hessian rather than once per pair of hyperparameters.

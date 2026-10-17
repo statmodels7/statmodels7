@@ -1,7 +1,7 @@
 # The Uncertainty of a Predicted Predictor
 
-The standard error of each equation's linear predictor, and of the
-parameter it gives, with an interval.
+Computes the standard error of each equation's linear predictor, and of
+the parameter that the predictor gives, with an interval.
 
 ## Usage
 
@@ -53,17 +53,18 @@ in them, not the quantities that
 [`coef.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md)
 reports by default.
 
-The equations do not mix. One equation's predictor reads that equation's
-coefficients alone, whatever the covariance between the blocks. A
-predictor that reads no coefficient (an equation written as `~ 0`, or an
-offset alone) is a known constant, with a standard error of zero.
+The equations do not mix. One equation's predictor reads only the
+coefficients of that equation, whatever the covariance between the
+blocks. A predictor that reads no coefficient (an equation written as
+`~ 0`, or an equation with only an offset) is a known constant, with a
+standard error of zero.
 
 ## A term whose block moves needs no special case
 
 Its block is the Jacobian \\\partial\eta/\partial\beta\\ by
-construction, that being why a linear fit on it is a Gauss-Newton step,
-so the row already is the derivative and the delta method is exact to
-first order. That covers
+construction, which is why a linear fit on it is a Gauss-Newton step.
+The row is therefore already the derivative, and the delta method is
+exact to first order. That covers
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
 and a smoothed
@@ -81,18 +82,18 @@ conditional on that position.
 
 ## The interval
 
-Built on the scale on which the equation is written and mapped back
-through the link, as every interval in this toolkit is. A scale
-parameter under a log link, for example, cannot have a negative lower
-end.
+The interval is built on the scale on which the equation is written and
+mapped back through the link, as every interval in this toolkit is. A
+scale parameter under a log link, for example, cannot have a negative
+lower end.
 
 ## A coefficient with no variance carries none forward
 
 An entry of the variance that is not finite blanks the standard error of
-the rows whose design reaches it, and of no other row. An aliased
-coefficient is such a case. The position of a sharp break-point term is
-held and has no variance either, but its column of the design is zero,
-so it blanks no row.
+the rows whose design reaches it, and does not blank that of any other
+row. An aliased coefficient is such a case. The position of a sharp
+break-point term is held and has no variance either, but its column of
+the design is zero, so it blanks no row.
 
 A coefficient that a lasso, an elastic net, a SCAD or an MCP holds at
 exactly zero is treated as fixed: the model is selected without it, its

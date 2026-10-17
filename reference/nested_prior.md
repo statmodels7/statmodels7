@@ -1,6 +1,7 @@
 # The Prior of One Nested Random-Effect Term
 
-The Gaussian prior of a random-effect sub-term, as
+Returns the Gaussian prior of a random-effect sub-term in the form in
+which
 [`random_prior()`](https://statmodels7.github.io/statmodels7/reference/random_prior.md)
 returns it for a term written in an equation.
 
@@ -36,8 +37,9 @@ carries one penalty and by the row's key where it carries several. Only
 a Gaussian prior is integrated: inside a nonlinear term the average is
 taken over the nodes of
 [`random_nodes()`](https://statmodels7.github.io/statmodels7/reference/random_nodes.md)
-at which the term is evaluated, those of a product grid up to three
-coordinates in all and Monte Carlo draws beyond that. A prior of another
-family signals an error naming `random = "zero"`; the Gaussian test is
+at which the term is evaluated, which are the nodes of a product grid up
+to three coordinates in all and Monte Carlo draws beyond that. A prior
+of another family signals an error naming `random = "zero"`; the
+Gaussian test is
 [`prior_is_gaussian()`](https://statmodels7.github.io/statmodels7/reference/prior_is_gaussian.md),
 which excludes a prior with a kink.

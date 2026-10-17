@@ -1,7 +1,7 @@
 # A Basis of the Directions That a Set of Linear Constraints Leaves Free
 
-The columns of a `p x r` matrix \\N\\ with \\B N = 0\\ and \\N^\top N =
-I\\, spanning the null space of `B`.
+Returns a `p x r` matrix \\N\\ with \\B N = 0\\ and \\N^\top N = I\\,
+whose columns span the null space of `B`.
 
 ## Usage
 

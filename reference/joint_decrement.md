@@ -1,7 +1,7 @@
 # The Newton Decrement of a Criterion at a Point
 
-The Newton decrement \\\tfrac{1}{2}g^\top A^{-1} g\\, in the criterion's
-own units.
+Computes the Newton decrement \\\tfrac{1}{2}g^\top A^{-1} g\\, in the
+criterion's own units.
 
 ## Usage
 
@@ -31,11 +31,12 @@ therefore the part of the criterion that remains to be gained at the
 point, in the units in which criteria are compared, and it approximates
 the gap between the criterion at the point and at the optimum. A
 gradient does not have that scale: its size depends on the number of
-penalized coefficients and on the shape of the model, so that no single
-threshold on it serves every model.
+penalized coefficients and on the shape of the model, so that a single
+threshold on it cannot serve every model.
 
-`NA` where \\A\\ is not positive definite, the point then not being a
-maximum in those directions and no rise following from it.
+The result is `NA` where \\A\\ is not positive definite, because the
+point is then not a maximum in those directions and no rise follows from
+it.
 
 ## See also
 

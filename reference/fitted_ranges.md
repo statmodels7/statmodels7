@@ -1,7 +1,7 @@
 # What Each Distribution Parameter Reached
 
-A single string that gives, for each parameter of the distribution, the
-range of its fitted values.
+Returns a single string that gives, for each parameter of the
+distribution, the range of its fitted values.
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 adds it as a note where the fit did not converge.
 

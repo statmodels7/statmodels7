@@ -1,7 +1,7 @@
-# Which Structural Term a Model Carries, If Any
+# The Structural Term of a Model, If Any
 
-The single term of the structural branch, or `NULL` where the model
-carries none.
+Returns the single term of the structural branch, or `NULL` where the
+model carries none.
 
 ## Usage
 

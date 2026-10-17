@@ -1,8 +1,9 @@
 # The Exact Outer Hessian of a Model Carrying a Structural Term
 
+Computes
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
-over the joint vector of coefficients and a filter's own parameters,
-which is what the determinant spans there.
+over the joint vector of coefficients and a filter's own parameters, the
+vector that the determinant spans there.
 
 ## Usage
 
@@ -67,15 +68,15 @@ enters with it.
 
 The assembly has the form of
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md).
-With \\u\\ the joint vector, \\K\\ the penalized information over it and
-\\M\\ the matrix against which the trace is taken,
+Write \\u\\ for the joint vector, \\K\\ for the penalized information
+over it and \\M\\ for the matrix against which the trace is taken. Then
 
 \$\$\frac{\partial^2 V}{\partial t_m\partial t_l} = -\rho\_{ml} + \hat
 b_m^\top K \hat b_l + \tfrac{1}{2}\mathrm{tr}(MK_lMK_m) -
 \tfrac{1}{2}\mathrm{tr}\Big(M\frac{\partial K_m}{\partial t_l}\Big),\$\$
 
-with \\\hat b_m = -K^{-1}c_m\\ the mode's movement, \\K_m = S_m +
-\partial K/\partial u\[\hat b_m\]\\ and the last trace carrying the
+where \\\hat b_m = -K^{-1}c_m\\ is the mode's movement, \\K_m = S_m +
+\partial K/\partial u\[\hat b_m\]\\, and the last trace contains the
 penalty's second derivative, the twice-contracted second derivative of
 \\K\\ and the once-contracted one at the second movement of the mode.
 Every piece is the one that the coefficient-space assembly uses, read on

@@ -1,7 +1,7 @@
-# The Formula a Model Was Written With
+# The Formula of a Fitted Model
 
-The formula as supplied, every distribution parameter's equation
-included.
+Returns the formula as supplied, including the equation of every
+distribution parameter.
 
 ## Usage
 
@@ -25,12 +25,12 @@ formula(x, ...)
 
 The formula object supplied to
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
-with its bars and its original environment intact.
+including its bars and its original environment.
 
 ## Details
 
-The formula is returned whole, bars included, because the bars are part
-of what was written.
+The formula is returned whole, including its bars, because the bars are
+part of what was written.
 [`statmod_equations()`](https://statmodels7.github.io/statmodels7/reference/statmod_equations.md)
 splits the formula into one equation per distribution parameter; it
 takes the formula and the names of the parameters.
@@ -50,5 +50,5 @@ dd$y <- 1 + dd$x + rnorm(40, sd = 0.3)
 fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 formula(fit)
 #> y ~ x | sigma ~ x
-#> <environment: 0x5585566dc9c0>
+#> <environment: 0x55e647d38268>
 ```

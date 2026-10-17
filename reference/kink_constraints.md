@@ -41,7 +41,7 @@ kink_constraints(spec, design, coef, split, total)
 ## Value
 
 A numeric matrix with `total` columns and one row per constraint, with
-no rows where no term has a kink.
+no rows if the design has no term with a kink.
 
 ## Details
 

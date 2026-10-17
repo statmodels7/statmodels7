@@ -40,8 +40,8 @@ the pivot determines which column is left out, as in
 from the solve as coordinates of the coefficient vector; this function
 converts them into the labels that
 [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
-supplies, so that no later step has to rebuild a design to identify a
-coefficient.
+supplies, so that a later step can identify a coefficient without
+rebuilding a design.
 
 A coordinate that a penalty covers is never among them, because the
 pivot runs on the augmented system (design and penalty factor together),

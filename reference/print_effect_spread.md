@@ -29,4 +29,4 @@ print_effect_spread(sp, indent = 2L, digits = 4L)
 
 ## Value
 
-`NULL`, invisibly. Called for the printing.
+`NULL`, invisibly. The function is called for the printing.

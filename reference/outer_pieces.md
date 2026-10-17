@@ -1,7 +1,7 @@
 # The Per-Hyperparameter Pieces of the Outer Derivatives
 
-The penalty's contributions to the criterion's gradient and Hessian,
-placed in the stacked coefficient space.
+Returns the penalty's contributions to the criterion's gradient and
+Hessian, placed in the stacked coefficient space.
 
 ## Usage
 
@@ -38,7 +38,7 @@ outer_pieces(spec, design, coef, hyper, idx, offs, total, order = 2L)
 
 - order:
 
-  `1` for the first-order pieces alone, `2` for the second-order ones as
+  `1` for the first-order pieces only, `2` for the second-order ones as
   well.
 
 ## Value

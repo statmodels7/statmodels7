@@ -11,7 +11,7 @@ floating-point image of a structural zero."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,10 +75,11 @@ column is structurally zero. The entry that is computed can be a small
 nonzero number from cancellation, and an exact comparison then reads it as
 a dependence, which removes the standard error and the interval of the
 standard deviation for a dependence that does not exist.</p>
-<p>A Jacobian entry is judged against the largest entry of its own row, a row
-being a gradient, and the tolerance is <code>sqrt(.Machine$double.eps)</code>, the
-point beyond which a differentiated quantity cannot be distinguished from
-the rounding of the quantities it was formed from. The two possible errors
+<p>A Jacobian entry is judged against the largest entry of its own row,
+because a row is a gradient, and the tolerance is
+<code>sqrt(.Machine$double.eps)</code>, the point beyond which a differentiated
+quantity cannot be distinguished from the rounding of the quantities from
+which it was formed. The two possible errors
 are asymmetric, so the tolerance errs on the generous side: a genuine
 dependence of relative size below <code>sqrt(eps)</code> that is read as zero changes
 a variance contribution by a relative amount of order <code>1e-16</code>, whereas a

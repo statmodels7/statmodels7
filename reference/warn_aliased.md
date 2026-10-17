@@ -1,7 +1,7 @@
 # Report a Model Whose Columns Are Not All Identified
 
-Raises a warning naming the coordinates the fit could not estimate, so
-that a reader who does not print the summary is told the model as
+Raises a warning naming the coordinates that the fit could not estimate,
+so that a reader who does not print the summary learns that the model as
 written does not identify every column of its design.
 
 ## Usage
@@ -20,7 +20,7 @@ warn_aliased(alias)
 
 ## Value
 
-`NULL`, invisibly. Called for the warning.
+`NULL`, invisibly. The function is called for the warning.
 
 ## Details
 
@@ -40,12 +40,12 @@ The coordinates are those of
 read at the fitted coefficients on \\K = H + S\\ and gated by
 [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md),
 which makes the warning safe to raise. A rank test on the raw design
-answers a different question and has false positives that would make the
-warning noisy: it reports a deficiency on `random(~ 1 | g)`, on
+addresses a different question and has false positives that would make
+the warning noisy: it reports a deficiency on `random(~ 1 | g)`, on
 `random(~ x | g)` and on `s(x) + random(~ 1 | g)`, whose columns are
 identified by their own penalty and whose fits are ordinary. Read on
-\\K\\, the curvature of the penalty is in the matrix and none of the
-three is named. The warning does fire on
+\\K\\, the curvature of the penalty is in the matrix and the function
+names none of the three. The warning does fire on
 `nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))`, where the intercept of a
 parameter sits beside a complete set of indicators that sum to it.
 
@@ -56,24 +56,25 @@ zero for a reason that goes away as soon as the parameter moves, and
 deficient there and is not named here.
 
 The message names no cause, because two different shapes reach it. In
-the first the design is deficient, a column being the sum of others. In
-the second the design has full rank and \\K\\ does not, as for
+the first the design is deficient because a column is the sum of others.
+In the second the design has full rank and \\K\\ does not, as for
 `jump(x, smoothed = smooth_quintic(h = g))` at one median spacing \\g\\,
 and for `jseg()` under the same smoother: the block has rank 3 of 3
-while `mu:jump.psi1` is named, the quintic being exact outside its own
-width, so that where no observation falls within \\h\\ of the
-break-point its derivative column carries no curvature. The quintic
+while `mu:jump.psi1` is named, because the quintic is exact outside its
+own width, so that where every observation lies farther than \\h\\ from
+the break-point its derivative column carries no curvature. The quintic
 resolves its width at \\5/(2\log 2)\\ median spacings, which avoids this
 on a uniform covariate; a width supplied by hand can still produce it.
-Both cases are genuine (neither coefficient has a standard error), and a
-message asserting the first would be wrong about the second, so the
-message reports the fact and leaves the diagnosis to the reader. The two
-smoothers whose derivative has unbounded support, `smooth_probit()` and
-`smooth_hyperbolic()`, are not named on the same data.
+Both cases are genuine (in each of them the coefficient has no standard
+error), and a message asserting the first would be wrong about the
+second, so the message reports the fact and leaves the diagnosis to the
+reader. The two smoothers whose derivative has unbounded support,
+`smooth_probit()` and `smooth_hyperbolic()`, are not named on the same
+data.
 
 ## See also
 
 [`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md),
-which answers which coordinates those are, and
+which determines which coordinates those are, and
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
 which reports them as missing.

@@ -1,7 +1,7 @@
-# The Condition a Held Coordinate Warns Through
+# The Condition Through Which a Held Coordinate Warns
 
-A classed warning, so that a caller can silence or catch the one raised
-when
+Returns a classed warning, so that a caller can silence or catch the one
+raised when
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
 holds a coordinate about which the information carries nothing, without
 silencing every other warning of a fit.

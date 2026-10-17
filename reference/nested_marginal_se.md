@@ -1,6 +1,6 @@
 # The Standard Error of a Marginal Parameter With Nested Effects
 
-The delta method of \\\bar\theta = \sum_k w_k h^{-1}(\eta(\beta,
+Applies the delta method to \\\bar\theta = \sum_k w_k h^{-1}(\eta(\beta,
 u_k))\\, whose gradient in the coefficients is \\\sum_k w_k\\
 (h^{-1})'(\eta_k)\\ J_k\\ with \\J_k\\ the design at the coefficients of
 node \\k\\.

@@ -31,7 +31,7 @@ free_of_kinks(score, spec, design, coef)
 
 ## Value
 
-`score`, with those entries set to zero.
+`score`, in which those entries are set to zero.
 
 ## Details
 

@@ -9,7 +9,8 @@ response
 ([`modelterms7::seg_polish_exact()`](https://statmodels7.github.io/modelterms7/reference/seg_polish_exact.html)),
 which is exact only for the location of a gaussian family, held there
 ([`modelterms7::seg_hold()`](https://statmodels7.github.io/modelterms7/reference/seg_hold.html)),
-and the coefficients of the model are refitted with the positions held.
+and the coefficients of the model are refitted while the positions are
+held.
 
 ## Usage
 
@@ -34,7 +35,7 @@ statmod_settle_breakpoints(
 
 - spec:
 
-  The specification, holds included.
+  The specification, including the holds.
 
 - design:
 
@@ -59,8 +60,8 @@ statmod_settle_breakpoints(
 ## Value
 
 A list: `res`, the settled fit, `moved`, `TRUE` where a polished
-position replaced the one the iteration reached, and `settled`, `TRUE`
-where a term was held.
+position replaced the one that the iteration reached, and `settled`,
+`TRUE` where a term was held.
 
 ## Details
 
@@ -79,8 +80,8 @@ coefficients, so the refit is an ordinary fit, and the coordinate that
 carried the position is held in the solve and left out of the
 information
 ([`term_held_stack()`](https://statmodels7.github.io/statmodels7/reference/term_held_stack.md)).
-This is how `segmented` and `stepmented` report their coefficients: at
-the estimated positions, conditional on them.
+`segmented` and `stepmented` report their coefficients in this way, at
+the estimated positions and conditional on them.
 
 The profile is weighted least squares of the working response of the
 term's own equation, net of the rest of that equation, on the term's own
@@ -97,9 +98,9 @@ line searches of
 [`modelterms7::seg_polish_exact()`](https://statmodels7.github.io/modelterms7/reference/seg_polish_exact.html)
 in the coefficients of the development. In an equation whose working
 profile is only a model of the objective, the five deepest local minima
-of the profile are also refitted with the positions held, and so are the
-neighboring intervals of the best position; these two searches skip a
-developed term, whose positions are one per observation.
+of the profile are also refitted while the positions are held, and so
+are the neighboring intervals of the best position; these two searches
+skip a developed term, whose positions are one per observation.
 
 ## References
 

@@ -1,6 +1,6 @@
 # How a Moving Block Enters the Contracted Third Derivative
 
-The part of \\T\[v\] = (\partial K/\partial\beta)\cdot v\\ that
+Returns the part of \\T\[v\] = (\partial K/\partial\beta)\cdot v\\ that
 [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
 does not compute, as a matrix over the stacked coefficients.
 
@@ -47,7 +47,7 @@ A square matrix, whose transpose completes the correction.
 ## Details
 
 Differentiating \\H\\ in \\\beta\\ and contracting with \\v\\ leaves,
-beside the third derivative
+beside the third derivative that
 [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
 carries, two terms in \\\partial X/\partial\beta\\: with \\D_a =
 (\partial X_a/\partial\beta)v\\, \$\$R\[(a,j),(b,k)\] = -\sum_i
@@ -55,7 +55,7 @@ w_i\\\ell\_{ab,i}\\D_a\[i,j\]\\X_b\[i,k\],\$\$ and the other is its
 transpose, so the correction is \\R + R^\top\\. The derivative is read
 from the term through
 [`modelterms7::term_block_deriv()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html)
-and is never differenced here, for the reason
+and is never differenced here, for the reason that
 [`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)
 records: a break-point column is a step function in its break-point.
 

@@ -1,7 +1,7 @@
 # The Penalized Matrix and Its Inverse
 
-\\K = H + S\\ with the criterion's own information, and its inverse,
-which the gradient and the Hessian both read.
+Builds \\K = H + S\\ with the criterion's own information, and its
+inverse, which the gradient and the Hessian both read.
 
 ## Usage
 
@@ -35,8 +35,8 @@ ctx_penalized(
 
 - laplace:
 
-  Whether the matrix is the criterion's, with the kinked coordinates
-  left out, or the mode's.
+  Whether the matrix is the criterion's, which leaves out the kinked
+  coordinates, or the mode's.
 
 ## Value
 
@@ -44,21 +44,21 @@ A list with `K`, `inv` and `logdet`, or `NULL`.
 
 ## Details
 
-**The storage is the matrix's own.** \\H\\ is sparse wherever the design
-is, which covers a grouping indicator, a factor `by` and a `linpar` over
+The storage is the matrix's own. \\H\\ is sparse wherever the design is,
+which covers a grouping indicator, a factor `by` and a `linpar` over
 many levels. Where the sum \\H + S\\ is large enough and sparse enough
 ([`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md))
-it is kept sparse and factorized as such. The decision reads the matrix
-alone and does not depend on which term produced it. The penalized
-matrix is a new object at every point, so a factorization stored on an
-earlier matrix is never reused.
+it is kept sparse and factorized as such. The decision depends only on
+the matrix and not on which term produced it. The penalized matrix is a
+new object at every point, so a factorization stored on an earlier
+matrix is never reused.
 
-**The inverse stays dense whatever the factor is.** Its readers take
-full matrix products against it,
+The inverse stays dense whatever the factor is. Its readers take full
+matrix products against it,
 [`block_leverage()`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md)
 and the Hessian's pair loop among them, so a dense inverse of a sparse
-matrix costs nothing that sparsity could have kept. What the sparse
-factor saves is the cost of producing it.
+matrix costs nothing that sparsity could have kept. The sparse factor
+saves the cost of producing the inverse.
 
 `NULL` is returned where the matrix is not positive definite. For the
 mode's matrix (`laplace = FALSE`) the directions that
@@ -66,7 +66,7 @@ mode's matrix (`laplace = FALSE`) the directions that
 reports as unidentified are pinned and the factorization is attempted
 once more before `NULL` is returned.
 
-**Two matrices, where a penalty has a kink.** The criterion's
+Where a penalty has a kink, there are two matrices. The criterion's
 determinant leaves out every coordinate that a kinked penalty covers
 ([`laplace_pinned()`](https://statmodels7.github.io/statmodels7/reference/laplace_pinned.md)),
 which is the matrix that `laplace = TRUE` selects. The default is the

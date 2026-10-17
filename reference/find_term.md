@@ -1,6 +1,7 @@
-# A Term by Its Key, Whichever Equation It Sits In
+# A Term by Its Key in Any Equation
 
-The term a key names, searched over every distribution parameter.
+Returns the term that a key names, searching over every distribution
+parameter.
 
 ## Usage
 
@@ -21,12 +22,12 @@ find_term(spec, key)
 
 ## Value
 
-The term, or `NULL` where no equation carries that key.
+The term, or `NULL` if no equation carries that key.
 
 ## Details
 
 A unit records the parameter under which its penalty is filed. For a
 covariance class that is the parameter by which the class is keyed,
-which is not necessarily the parameter carrying the structural term that
-the class reaches into. A caller that has a term's key and needs the
+which is not necessarily the parameter carrying the structural term into
+which the class reaches. A caller that has a term's key and needs the
 term should use this function instead of assuming that the two agree.

@@ -1,6 +1,8 @@
 # Whether the Default Search Steers by the Exact Hessian
 
-Whether a search this package chooses should take
+Returns whether a search that
+[`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+selects by default should take
 [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)'s
 order-2 answer as its direction, which is a narrower question than
 whether the Hessian exists.
@@ -57,9 +59,9 @@ than one. In the first two cases the cost of the Hessian at each
 evaluation outweighs the saving in evaluations.
 
 The availability of the Hessian still governs the rest: it is supplied
-to an optimizer that the caller names, it is what
+to an optimizer that the caller names,
 [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
-and `vcov(type = "unconditional")` read, and it is recorded as
+and `vcov(type = "unconditional")` read it, and it is recorded as
 `exact_hessian`. Only the default direction is held back.
 
 The block width is read from the `block` property of the penalty where

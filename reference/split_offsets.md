@@ -22,8 +22,8 @@ A list of two:
 
 - `formula`:
 
-  `eq` with the offset terms removed. The formula is `~ 1` where the
-  equation held nothing else.
+  `eq`, from which the offset terms are removed. The formula is `~ 1`
+  where the equation held nothing else.
 
 - `offsets`:
 

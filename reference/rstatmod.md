@@ -31,8 +31,9 @@ rstatmod(
 
 - distrib:
 
-  A distributions7 distribution object, which decides how many equations
-  there are and what is drawn from.
+  A distributions7 distribution object, which determines how many
+  equations there are and the distribution from which the data are
+  drawn.
 
 - data:
 
@@ -46,7 +47,8 @@ rstatmod(
 
 - n_sim:
 
-  How many data sets to draw, a positive whole number. `1` by default.
+  How many data sets to draw, a positive whole number. The default is
+  `1`.
 
 - par:
 
@@ -60,7 +62,8 @@ rstatmod(
 
   The width of the draws, `1` by default. A quantity that rides a chart
   (a structural parameter, a prior's own scale) is drawn at half of it,
-  the chart carrying a width of one onto most of its parameter's range.
+  because a chart carries a width of one onto most of its parameter's
+  range.
 
 - offsets:
 
@@ -81,8 +84,8 @@ An object of class `"StatmodSim"`, a list with the elements:
 
 - `data`:
 
-  the data frame with the response column added, named after the
-  formula's left-hand side.
+  the data frame, to which the response column has been added under the
+  name of the formula's left-hand side.
 
 - `par`:
 
@@ -105,10 +108,10 @@ An object of class `"StatmodSim"`, a list with the elements:
 
 - `hyper`:
 
-  a data frame of the hyperparameters, one row per penalty and name,
-  with the value drawn or held. Its columns are those of
+  a data frame of the hyperparameters, with one row per penalty and
+  name; each row gives the value drawn or held. Its columns are those of
   [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
-  as far as they mean the same thing, `value` taking the place of
+  as far as they mean the same thing, and `value` takes the place of
   `estimate`, so a study compares the two directly.
 
 - `n_sim`:
@@ -125,9 +128,10 @@ and `latent` is such a list when the model has a term with state and
 
 ## What it is for
 
-Data whose truth is known: write the model, draw from it, fit it back,
-and see whether the fit recovers what was put in. That is the shape of a
-simulation study, and of a check on a term that has just been written.
+Simulated data have a known truth: write the model, draw from it, fit it
+back, and see whether the fit recovers what was put in. That is the
+shape of a simulation study, and of a check on a term that has just been
+written.
 
 This is not
 [`stats::simulate()`](https://rdrr.io/r/stats/simulate.html), which
@@ -135,7 +139,7 @@ draws from a model already fitted. The `r` prefix is the one that R uses
 for a random draw, so the two names stay apart.
 
 A covariate needs no declaration. A factor becomes its contrasts and a
-numeric variable stays as it is, the design being built by the
+numeric variable stays as it is, and the design is built by the
 interpreter that a fit uses.
 
 ## The returned truth
@@ -180,15 +184,15 @@ replicate. A column of `data` under the same name is overwritten, and
 the columns of `data` that are not drawn are the same in every
 replicate.
 
-The choice decides what a study measures. With `data` the covariates are
-the same throughout, so the study measures the behavior of the estimator
-conditional on that design; with `covariates` it measures that behavior
-over the design as well. Neither is more correct, and a study should
-state which one it ran.
+The choice determines what a study measures. With `data` the covariates
+are the same throughout, so the study measures the behavior of the
+estimator conditional on that design; with `covariates` it measures that
+behavior over the design as well. The two choices are equally correct,
+and a study should state which one it ran.
 
 A drawn factor should have its levels fixed. A factor drawn with free
 levels can lose a level at some replicate. The design then has another
-shape than the one that the coefficients were drawn for, and the
+shape than the one for which the coefficients were drawn, and the
 simulation stops at that replicate with an error.
 
 ## Several replicates
@@ -206,9 +210,9 @@ with state (otherwise it is `NULL`), while `par`, `structural` and
 
 ## The quantities that are drawn
 
-A call that names nothing draws the whole truth, so writing the model is
-all that getting data from it requires. Each quantity is drawn by the
-component that defines its meaning:
+If the user names no quantity, the call draws the whole truth, so
+writing the model is enough to get data from it. Each quantity is drawn
+by the component that defines its meaning:
 
 - a coefficient of a design column has no other owner and comes from
   `rnorm(1, 0, sd)`, which on the link scale gives predictors of order
@@ -230,11 +234,11 @@ component that defines its meaning:
 - a coefficient of a design column whose meaning only the term defines
   is drawn by the term, through
   [`modelterms7::term_coef_draw()`](https://statmodels7.github.io/modelterms7/reference/term_coef_draw.html),
-  last of all so that what it writes is what survives. A break-point is
-  the case: it is a position on the covariate's own axis, so a normal of
-  width `sd` often lands outside the data, and the confinement then pins
-  it to an edge of the interval, where one of the two segments holds a
-  small share of the rows.
+  last of all, so that the values that it writes survive. A break-point
+  is such a coordinate: it is a position on the covariate's own axis, so
+  a normal of width `sd` often lands outside the data, and the term then
+  confines it, which pins it to an edge of the interval, where one of
+  the two segments holds a small share of the rows.
 
 A hyperparameter that the term holds is used and not drawn, so
 `s(x, bspline_smooth(), hyper = c(lambda = 2))` simulates at the
@@ -244,11 +248,12 @@ since those values are no longer the prior's own draw. They are drawn
 Gaussian at that width, so a heavy-tailed prior over a break-point keeps
 its family for the fitting but not for the simulation.
 
-What no prior reaches falls back to the plain draw. The cases are SCAD
-and MCP, which are improper by construction; an anisotropic tensor
-smooth, which is flat along its null space; a covariance class spanning
-a filter and an equation at once, which is in neither vector on its own;
-and a coordinate for which the draw of the penalty is missing.
+A coordinate that a prior does not reach falls back to the plain draw.
+The cases are SCAD and MCP, which are improper by construction; an
+anisotropic tensor smooth, which is flat along its null space; a
+covariance class spanning a filter and an equation at once, which is in
+neither vector on its own; and a coordinate for which the draw of the
+penalty is missing.
 
 ## Fixing quantities by name
 
@@ -257,20 +262,20 @@ and a coordinate for which the draw of the penalty is missing.
 - a distribution parameter, `mu`, which is that whole equation;
 
 - one of its coefficients or a group of them, `mu.(Intercept)` or
-  `mu.random`, a group being a name that the members extend at a dot;
+  `mu.random`, where a group is a name that the members extend at a dot;
 
 - a structural term's own parameter, `kappa1`, or a group of those,
   `omega.random`.
 
 A value is a vector of that key's own length, a single number used for
-all of them, or a function of the count. The function is how a
-structured truth is written without a vocabulary of its own:
-`function(k) rnorm(k, 0, 0.4)` is a random effect at a scale chosen by
-the caller and `function(k) c(1.5, -2, rep(0, k - 2))` is a sparse truth
-for a lasso to find. A function that returns the wrong number of values
-or a missing value is rejected, because R would recycle a vector of the
-wrong length into a different model. A key that addresses nothing is
-rejected with a message that lists what the model does carry.
+all of them, or a function of the count. A function writes a structured
+truth without a vocabulary of its own: `function(k) rnorm(k, 0, 0.4)` is
+a random effect at a scale chosen by the caller and
+`function(k) c(1.5, -2, rep(0, k - 2))` is a sparse truth for a lasso to
+find. A function that returns the wrong number of values or a missing
+value is rejected, because R would recycle a vector of the wrong length
+into a different model. A key that addresses nothing is rejected with a
+message that lists what the model does carry.
 
 A structural parameter is named on the scale of
 [`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html):
@@ -287,12 +292,12 @@ every group's loading positive whatever the departure is.
 The simulation runs through
 [`modelterms7::term_simulate()`](https://statmodels7.github.io/modelterms7/reference/term_simulate.html),
 so the recursion that generates the data is the term's own. A
-score-driven term draws the response as it runs, its level at one time
-being driven by the score at the time before; a latent chain draws its
-path from the stationary law that the likelihood is written with; a
+score-driven term draws the response as it runs, and its level at one
+time is driven by the score at the time before; a latent chain draws its
+path from the stationary law with which the likelihood is written; a
 marginal break-point term draws each group's positions from their prior.
-What each drew comes back in `latent`, which is what a recovery check
-compares against.
+The values that each term drew come back in `latent`, and a recovery
+check compares a fit with them.
 
 The parameters of such a term are not coefficients of any equation. They
 are named in `par` beside the equations' coefficients, and since a
@@ -323,7 +328,7 @@ for the printed form.
 set.seed(1)
 dd <- data.frame(x = runif(50), g = factor(rep(c("a", "b"), 25)))
 
-# coefficients drawn
+# The coefficients are drawn.
 sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd)
 sim$par
 #> $mu
@@ -335,7 +340,7 @@ sim$par
 #>  0.07434132 
 #> 
 
-# or given, and recovered by a fit
+# The coefficients are given, and a fit recovers them.
 sim2 <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
                  par = list(mu = c(1, 2), sigma = log(0.3)))
 coef(statmod(y ~ x, distributions7::gaussian1_distrib(), sim2$data))
@@ -348,7 +353,7 @@ coef(statmod(y ~ x, distributions7::gaussian1_distrib(), sim2$data))
 #>   -1.145181 
 #> 
 
-# a sparse truth, written as a function of the coefficient count
+# A sparse truth is written as a function of the coefficient count.
 dd2 <- as.data.frame(matrix(rnorm(50 * 6), 50, 6))
 sim3 <- rstatmod(y ~ lasso(~ V1 + V2 + V3 + V4 + V5 + V6),
                  distributions7::gaussian1_distrib(), dd2,
@@ -357,12 +362,12 @@ sim3 <- rstatmod(y ~ lasso(~ V1 + V2 + V3 + V4 + V5 + V6),
 head(sim3$data$y, 3)
 #> [1] 2.108603 3.625229 6.596983
 
-# a model with no covariates at all
+# This model has no covariates at all.
 sim4 <- rstatmod(y ~ 1, distributions7::gaussian1_distrib(), n = 20)
 nrow(sim4$data)
 #> [1] 20
 
-# a study over replicates, the covariates drawn afresh at each one
+# A study over replicates draws the covariates afresh at each one.
 study <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), n = 80,
                   n_sim = 5, par = list(mu = c(1, 2), sigma = log(0.5)),
                   covariates = list(x = function(n) runif(n, -2, 2)))
@@ -373,7 +378,8 @@ vapply(study$data, function(d) coef(statmod(
   readable = FALSE)$mu[[2L]], numeric(1))
 #> [1] 2.017968 2.036897 2.013920 2.043438 1.935684
 
-# a score-driven series, its own parameters named beside the equations'
+# In a score-driven series, the term's own parameters are named beside the
+# equations'.
 sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
                  distributions7::gaussian1_distrib(),
                  data.frame(t = 1:100),
@@ -382,8 +388,8 @@ sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
 head(sim5$latent, 3)
 #> [1] 1.0000000 0.6960904 0.6137012
 
-# and a panel whose level varies by group: naming nothing draws the
-# deviations from the prior random() declares, at a scale drawn too
+# In a panel whose level varies by group, naming nothing draws the
+# deviations from the prior that random() declares, at a scale drawn too.
 pan <- data.frame(id = factor(rep(1:6, each = 10)), t = rep(1:10, 6))
 sim6 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, omega ~ 1 + random(~1 | id),
                              by = id, time = t),

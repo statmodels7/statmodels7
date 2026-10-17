@@ -1,6 +1,6 @@
 # One Hyperparameter of an Index
 
-The value the `j`-th row of an outer index points at.
+Returns the value to which the `j`-th row of an outer index points.
 
 ## Usage
 

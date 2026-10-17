@@ -1,7 +1,7 @@
 # Draw One Penalty's Hyperparameters
 
-A value per hyperparameter, drawn on the chart that the penalty carries
-for it around the neutral point that
+Draws a value per hyperparameter on the chart that the penalty carries
+for it, around the neutral point that
 [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
 gives.
 
@@ -37,16 +37,16 @@ A named list, empty for a penalty with no hyperparameters.
 The draw is on the unconstrained scale so that whatever comes out is
 admissible: a scale stays positive, a correlation stays inside its
 interval, and a log-Cholesky coordinate is free on the line already. The
-width is half of `sd` for the reason
+width is half of `sd` for the reason that
 [`modelterms7::term_draw()`](https://statmodels7.github.io/modelterms7/reference/term_draw.html)
-halves it, a chart mapping a width of one onto most of its parameter's
+halves it: a chart maps a width of one onto most of its parameter's
 range.
 
 `unit` moves the center away from a one-sided bound and affects nothing
 else, so a hyperparameter that is unbounded on both sides (a coordinate
 of a multivariate prior's own chart) is drawn around the neutral point
-of that chart whatever the term is. This is also the point that a fit
-starts from; on `dr_prod` it corresponds to unit standard deviations and
+of that chart whatever the term is. This is also the point from which a
+fit starts; on `dr_prod` it corresponds to unit standard deviations and
 no correlation.
 
 ## See also

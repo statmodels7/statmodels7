@@ -1,9 +1,9 @@
 # When a Matrix Is Factorized Sparsely
 
-Whether a symmetric matrix is large enough and sparse enough that a
-sparse Cholesky factorization is used in place of a dense one. The
-decision depends on the matrix alone: no term, no model and no caller's
-preference enters.
+Returns whether a symmetric matrix is large enough and sparse enough
+that a sparse Cholesky factorization is used in place of a dense one.
+The decision depends only on the matrix, and not on any term, any model
+or any preference of the caller.
 
 ## Usage
 
@@ -40,10 +40,9 @@ S4 dispatch around it, which does not shrink with the matrix. The size
 condition prevents this on the fully dense penalized information of a
 single smooth.
 
-**Both quantities are read from the matrix, and the first is its
-storage.** A matrix held as a base matrix is never factorized sparsely,
-whatever its zeros. This is not a test of the term that produced the
-matrix.
+Both quantities are read from the matrix, and the first is its storage.
+A matrix held as a base matrix is never factorized sparsely, whatever
+its zeros. This is not a test of the term that produced the matrix.
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 accumulates into the design's own kind, so the penalized matrix is
 stored sparsely exactly when the design is. modelterms7 settles the

@@ -1,6 +1,7 @@
-# The Column a Simulated Response Is Written To
+# The Column to Which a Simulated Response Is Written
 
-The name on the formula's left-hand side, which must be a symbol.
+Returns the name on the formula's left-hand side, which must be a
+symbol.
 
 ## Usage
 
@@ -25,7 +26,7 @@ generates values of `log(y)`, so a column called `y` would hold the
 wrong quantity and one called `"log(y)"` would not be the name that the
 formula reads back. A censored response is rejected for the reason that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-rejects one: there is no censored likelihood to fit it back with.
+rejects one: there is no censored likelihood with which to fit it back.
 
 ## See also
 

@@ -1,7 +1,8 @@
 # Gauss-Hermite Nodes and Weights
 
-For \\\int f(x) e^{-x^2} dx\\, by the eigendecomposition of the Jacobi
-matrix of the Hermite polynomials (Golub and Welsch 1969).
+Returns the nodes and weights of the rule for \\\int f(x) e^{-x^2} dx\\,
+computed by the eigendecomposition of the Jacobi matrix of the Hermite
+polynomials (Golub and Welsch 1969).
 
 ## Usage
 

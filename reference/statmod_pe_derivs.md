@@ -1,7 +1,7 @@
 # The Exact Derivatives of a Prediction-Error Criterion
 
-The gradient and, at order 2, the Hessian of \\-2\ell + \kappa\tau\\
-over the free scale of the hyperparameters.
+Computes the gradient and, at order 2, the Hessian of \\-2\ell +
+\kappa\tau\\ over the free scale of the hyperparameters.
 
 ## Usage
 
@@ -53,7 +53,8 @@ statmod_pe_derivs(
 - approx:
 
   How the expected information is approximated for a family with no
-  closed form. Read only when `method@hessian` is `"expected"`.
+  closed form. The argument is read only when `method@hessian` is
+  `"expected"`.
 
 ## Value
 

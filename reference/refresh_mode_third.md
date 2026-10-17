@@ -1,6 +1,6 @@
 # How a Moving Block Enters the Mode's Second Movement
 
-The part of \\\partial^3L/\partial\beta^3\[v,u\]\\ that
+Returns the part of \\\partial^3L/\partial\beta^3\[v,u\]\\ that
 [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
 and
 [`contract3_refresh()`](https://statmodels7.github.io/statmodels7/reference/contract3_refresh.md)
@@ -59,19 +59,19 @@ A numeric vector as long as the stacked coefficients.
 \\b\_{ml}\\ solves \\J b\_{ml} = -\[(S_l + T\[b_l\])b_m + S_m b_l +
 c\_{ml}\]\\ with \\T\\ the third derivative of the penalized objective
 in \\\beta\\. Where a block moves, the objective's second derivative is
-not \\K\\ but \\K + D\\, with \\D\\ the term
+not \\K\\ but \\K + D\\, with \\D\\ the term that
 [`mode_curvature()`](https://statmodels7.github.io/statmodels7/reference/mode_curvature.md)
 builds, so its third derivative is not \\\partial K/\partial\beta\\
-either. What is missing is \\\partial D/\partial\beta\\, and
+either. The term \\\partial D/\partial\beta\\ is missing, and
 differentiating \\D\_{cd} = -\sum_i w_i\ell_a\\\Xi_a\[i,c,d\]\\ once and
 contracting gives two pieces, \$\$-\sum_i w_i\Big(\sum_k
 \ell\_{ak}(X_kv_k)\_i\Big)\\ \big\[(\partial
 X_a/\partial\beta)u\big\]\[i,c\] \\-\\\sum_i
-w_i\\\ell_a(i)\\F_a\[i,c\],\$\$ the first reading the block's first
-derivative and the second its second, \\F_a =
+w_i\\\ell_a(i)\\F_a\[i,c\],\$\$ of which the first reads the block's
+first derivative and the second reads its second derivative \\F_a =
 (\partial^2X_a/\partial\beta^2)\[v,u\]\\. Both are one `crossprod`
-against a per-observation weight, so neither the third-derivative array
-of the predictor nor any contraction of it is formed.
+against a per-observation weight, so the function forms neither the
+third-derivative array of the predictor nor any contraction of it.
 
 ## See also
 

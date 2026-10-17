@@ -3,11 +3,11 @@
 that is not smoothed, not developed and not marginal is moved to the
 minimum of the least-squares profile of its working response over every
 interval of the covariate (modelterms7::seg_polish_exact()), and the
-model is refitted from there with the positions free."><meta property="og:description" content="After the working phase and the restarts, every modelterms7::seg() term
+model is refitted from there while the positions are free."><meta property="og:description" content="After the working phase and the restarts, every modelterms7::seg() term
 that is not smoothed, not developed and not marginal is moved to the
 minimum of the least-squares profile of its working response over every
 interval of the covariate (modelterms7::seg_polish_exact()), and the
-model is refitted from there with the positions free."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
+model is refitted from there while the positions are free."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +15,7 @@ model is refitted from there with the positions free."><meta property="og:image"
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@ model is refitted from there with the positions free."><meta property="og:image"
 that is not smoothed, not developed and not marginal is moved to the
 minimum of the least-squares profile of its working response over every
 interval of the covariate (<code><a href="https://statmodels7.github.io/modelterms7/reference/seg_polish_exact.html" class="external-link">modelterms7::seg_polish_exact()</a></code>), and the
-model is refitted from there with the positions free.</p>
+model is refitted from there while the positions are free.</p>
     </div>
 
     <div class="section level2">
@@ -75,7 +75,7 @@ model is refitted from there with the positions free.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>The specification, holds included.</p></dd>
+<dd><p>The specification, including the holds.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
@@ -99,7 +99,7 @@ read again after a refit, 5 by default.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list: <code>res</code>, the fit, and <code>moved</code>, <code>TRUE</code> where a polished
-position replaced the one the iteration reached.</p>
+position replaced the one that the iteration reached.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

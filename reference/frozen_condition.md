@@ -1,7 +1,7 @@
-# The Condition a Frozen Block Raises
+# The Condition That a Frozen Block Raises
 
-A warning of its own class, so that a caller reporting the same thing in
-its own channel can muffle it in place of repeating it.
+Returns a warning of its own class, so that a caller reporting the same
+thing in its own channel can muffle it in place of repeating it.
 
 ## Usage
 

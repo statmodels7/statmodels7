@@ -1,8 +1,8 @@
 # Which Coefficients of a Smooth Are the Linear Part
 
-`TRUE` for the columns of a smooth's block that no penalty of the term
-touches, which carry its unpenalized (linear or polynomial) effect and
-are the columns that the summary prints.
+Returns `TRUE` for the columns of a smooth's block that are not touched
+by any penalty of the term, which carry its unpenalized (linear or
+polynomial) effect and are the columns that the summary prints.
 
 ## Usage
 
@@ -32,12 +32,12 @@ interpretation, and together they determine the effective degrees of
 freedom, which the block header reports instead.
 
 The columns are identified from the construction and not from a suffix
-in a coefficient's name, a name being a label. The decisive quantity is
-the **penalty**: a column that the roughness matrix leaves alone belongs
-to the null space that the smoother kept, and that null space carries
-the unpenalized effect. The answer therefore follows the smoother: an
+in a coefficient's name, which is only a label. The decisive quantity is
+the penalty: a column that the roughness matrix leaves alone belongs to
+the null space that the smoother kept, and that null space carries the
+unpenalized effect. The answer therefore follows the smoother: an
 order-2 penalty leaves one column free, an order-3 penalty two, and a
-periodic basis none, its null space being the constant alone and the
-constant belonging to the model's intercept. Under a factor `by` the
-block is one copy per level and the free columns of every level are
+periodic basis none, because its null space contains only the constant
+and the constant belongs to the model's intercept. Under a factor `by`
+the block is one copy per level and the free columns of every level are
 marked, whether the levels share a smoothing parameter or not.

@@ -1,9 +1,9 @@
 # Settle a Marginal Criterion's Information Against the Family
 
-Replaces `hessian = "auto"` by the information the criterion uses for
-`distrib`: `"expected"` for a Student t, a skew t or a Cauchy response,
-wrapped or not, and `"observed"` for every other family. Any other value
-is returned unchanged.
+Replaces `hessian = "auto"` by the information that the criterion uses
+for `distrib`: `"expected"` for a Student t, a skew t or a Cauchy
+response, wrapped or not, and `"observed"` for every other family. Any
+other value is returned unchanged.
 
 ## Usage
 
@@ -24,7 +24,7 @@ outer_resolve(method, distrib)
 
 ## Value
 
-`method`, with `hessian` settled.
+`method`, in which `hessian` is settled.
 
 ## Details
 

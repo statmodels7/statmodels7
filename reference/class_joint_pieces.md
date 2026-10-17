@@ -33,10 +33,10 @@ class_joint_pieces(cl, design, params, offs)
 
 ## Value
 
-A list of lists, one per member, each the piece with `joint` added. A
-coefficient member also carries `cols` and `index`. A structural member
-carries `zcols` (positions among the term's own parameters), and its
-`cols` and `index` are `NULL`.
+A list of lists, one per member; each is the piece to which `joint` is
+added. A coefficient member also carries `cols` and `index`. A
+structural member carries `zcols` (positions among the term's own
+parameters), and its `cols` and `index` are `NULL`.
 
 ## Details
 

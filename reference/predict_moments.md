@@ -1,8 +1,8 @@
-# The Quantities a Fit Can Predict
+# The Quantities That a Fit Can Predict
 
-The table
+Returns the table against which
 [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
-resolves a moment name against: the recognized names, each mapped to the
+resolves a moment name. The table maps each recognized name to the
 distributions7 generic that computes it.
 
 ## Usage
@@ -19,10 +19,10 @@ list and returns one value per observation.
 
 ## Details
 
-Written once as a table so that the recognized names and the functions
-they call cannot disagree, and so that
+The table is written once so that the recognized names and the functions
+that they call cannot disagree, and so that
 [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
-can list them in its message.
+can list the names in its message.
 
 ## See also
 

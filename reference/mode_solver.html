@@ -13,7 +13,7 @@ leave free."><meta property="og:image" content="https://statmodels7.github.io/st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,10 +89,10 @@ it with <code>laplace = FALSE</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>solve</code>, a function of \(c\) returning \(v\)
-without the sign; <code>J</code>, the curvature solved with; <code>Dm</code>, the curvature
-with the held rows and columns set to zero; and <code>hold</code>, the held
-positions.</p>
+    <p>A list with <code>solve</code>, a function of \(c\) that returns \(v\)
+without the sign; <code>J</code>, the curvature used in the solve; <code>Dm</code>, the
+curvature in which the held rows and columns are set to zero; and
+<code>hold</code>, the held positions.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -103,14 +103,14 @@ kinks are the break-points that sit on an observation at the mode
 (<code><a href="kink_constraints.html">kink_constraints()</a></code>): there the one-sided slopes have opposite signs, so
 a small perturbation leaves the break-point on the observation, as a lasso
 leaves a coefficient at zero. Where the break-point's position is a single
-coefficient that coefficient does not move; where it is developed over a
-design the mode moves along the hyperplane on which the break-point stays
+coefficient, that coefficient does not move; where it is developed over a
+design, the mode moves along the hyperplane on which the break-point stays
 on the observation. The solve is the bordered system of the equality
 constrained problem, written in the basis of its null space. The
 criterion's own determinant is not affected: it keeps the side convention
 of the break-point term.</p>
-<p>Where \(N^\top (K + D_m) N\) is not positive definite, \(K\) alone
-replaces \(K + D_m\).</p>
+<p>Where \(N^\top (K + D_m) N\) is not positive definite, the solve uses
+\(K\) in place of \(K + D_m\).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

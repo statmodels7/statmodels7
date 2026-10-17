@@ -1,7 +1,7 @@
 # The Names of the Structural Tail of the Joint Information
 
-The free parameters of every structural term, under the names a
-coefficient of the same term would carry.
+Returns the free parameters of every structural term, under the names
+that a coefficient of the same term would carry.
 
 ## Usage
 

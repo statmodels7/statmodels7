@@ -1,8 +1,8 @@
 # The Marginal Criterion at Given Coefficients and Hyperparameters
 
-The Laplace approximation to the log marginal likelihood, evaluated at
-the penalized mode: the log-likelihood minus the penalty, plus
-\\(q/2)\log 2\pi\\, minus half the log determinant of the penalized
+Computes the Laplace approximation to the log marginal likelihood,
+evaluated at the penalized mode: the log-likelihood minus the penalty,
+plus \\(q/2)\log 2\pi\\, minus half the log determinant of the penalized
 information over the integrated subspace. A coordinate with a non-finite
 curvature is pinned to the identity (see
 [`pin_boundary()`](https://statmodels7.github.io/statmodels7/reference/pin_boundary.md)),
@@ -68,5 +68,5 @@ statmod_marginal(
 
 A list with `value`, `loglik`, `penalty`, `logdet` and `q`, or `NULL`
 where the determinant does not exist. Where the integrated subspace is
-empty, `value` is the profile log-likelihood minus the penalty, with
-`logdet` and `q` equal to zero.
+empty, `value` is the profile log-likelihood minus the penalty, and
+`logdet` and `q` are zero.

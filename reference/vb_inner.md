@@ -1,8 +1,8 @@
 # The Verbosity of an Inner Fit Inside the Outer Search
 
-The same switches, with the block trace kept only where the inner switch
-is also on, since one line per pass per hyperparameter tried is too long
-a trace for the outer search.
+Returns the same switches, but keeps the block trace only where the
+inner switch is also on, since one line per pass per hyperparameter
+tried is too long a trace for the outer search.
 
 ## Usage
 

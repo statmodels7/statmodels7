@@ -1,10 +1,11 @@
 # The Parametric Bootstrap of a Prediction Interval
 
-The components of the predictive mixture
+Returns the components of the predictive mixture that
 [`predictive_response()`](https://statmodels7.github.io/statmodels7/reference/predictive_response.md)
-reads for `predictive = "bootstrap"`: one per replica, each the fit
-refitted on a response simulated from the fitted model, read at the rows
-predicted with no estimation uncertainty of its own.
+reads for `predictive = "bootstrap"`. There is one component per
+replica, which is the fit refitted on a response simulated from the
+fitted model and read at the rows predicted with no estimation
+uncertainty of its own.
 
 ## Usage
 
@@ -21,8 +22,8 @@ predictive_bootstrap(object, spec, design, aside, n_boot, refit)
 
 - spec, design:
 
-  The specification and design at the rows predicted, with the columns
-  of the effects set aside at zero.
+  The specification and design at the rows predicted, in which the
+  columns of the effects set aside are zero.
 
 - aside:
 
@@ -40,9 +41,9 @@ predictive_bootstrap(object, spec, design, aside, n_boot, refit)
 
 ## Value
 
-A list of components, each a list with `eta`, `C` and `weight`, with the
-attribute `infinite_variance` set to `TRUE` where a prior has no
-variance. The weights of the components add up to one.
+A list of components, each a list with `eta`, `C` and `weight`. The list
+has the attribute `infinite_variance`, which is `TRUE` where a prior has
+no variance. The weights of the components add up to one.
 
 ## Details
 
@@ -60,24 +61,24 @@ keeps its estimate. The replica is then refitted in one of two ways:
 
 - `"coefficients"`:
 
-  at the hyperparameters that the fit reached, every coefficient
-  re-estimated. A coefficient that the fit estimated on its criterion (a
+  every coefficient is re-estimated at the hyperparameters that the fit
+  reached. A coefficient that the fit estimated on its criterion (a
   dispersion under
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md))
-  is estimated there again, with the hyperparameters held, so the
+  is estimated there again while the hyperparameters are held, so the
   replica's estimator is the fit's.
 
 - `"full"`:
 
-  with the hyperparameters chosen again by the fit's own criteria, so
+  the hyperparameters are chosen again by the fit's own criteria, so
   their uncertainty enters the interval too, and the path of a kinked
   penalty is walked again, warm started from the fit's coefficients. A
   cross-validated criterion needs the data's folds and is rejected.
 
 Every refit starts at the optimum that the fit found: its coefficients,
-the criterion's own coefficients among them, and its hyperparameters.
-The bootstrap is rejected for a model with a block that moves with its
-coefficients
+including those that the fit estimated on its criterion, and its
+hyperparameters. The bootstrap is rejected for a model with a block that
+moves with its coefficients
 ([`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html),
@@ -89,9 +90,9 @@ predictors at the rows predicted and the covariance that the effects set
 aside add, at its own hyperparameters. The interval is the mixture's,
 which is the parametric bootstrap predictive distribution of Harris
 (1989); the default `predictive = "averaged"` is its normal
-approximation, the sampling distribution of the estimates replaced by
-\\\mathrm{N}(\hat \beta, \widehat{V})\\. A replica whose refit fails is
-left out, and the warning reports how many were.
+approximation, in which the sampling distribution of the estimates is
+replaced by \\\mathrm{N}(\hat \beta, \widehat{V})\\. A replica whose
+refit fails is left out, and the warning reports how many were.
 
 ## References
 

@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,13 +71,12 @@
     
 <p>An ordinary regression models the mean and treats everything else
 about the distribution as a nuisance held constant. A distributional
-model gives <strong>every parameter its own equation</strong>, so the
-scale, the shape and a zero-inflation probability may each depend on
-covariates, and each may be a smooth, a random effect or a penalized
-block.</p>
-<p><code><a href="../reference/statmod.html">statmod()</a></code> reads one formula carrying all of them, the
-equations separated by a bar, and fits it. This vignette walks through a
-fit and then through the functions that read it.</p>
+model gives every parameter its own equation, so the scale, the shape
+and a zero-inflation probability may each depend on covariates, and each
+may be a smooth, a random effect or a penalized block.</p>
+<p><code><a href="../reference/statmod.html">statmod()</a></code> reads one formula that carries all of them, in
+which a bar separates the equations, and fits it. This vignette walks
+through a fit and then through the functions that read it.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">300</span></span>
 <span><span class="va">da</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">3</span>, max <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -106,12 +105,11 @@ other parameters as intercepts:</p>
 <span><span class="co">#&gt; $sigma</span></span>
 <span><span class="co">#&gt; (Intercept) </span></span>
 <span><span class="co">#&gt;  -0.2493397</span></span></code></pre></div>
-<p><code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> returns <strong>one compartment per
-parameter</strong>, because the coefficients of the mean and of the
-scale are different quantities on different scales, and a single flat
-vector would run them together. For this model the compartment of the
-mean holds the coefficients of an ordinary regression, which the
-following check confirms:</p>
+<p><code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> returns one compartment per parameter, because
+the coefficients of the mean and of the scale are different quantities
+on different scales, and a single flat vector would run them together.
+For this model the compartment of the mean holds the coefficients of an
+ordinary regression, which the following check confirms:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">f1</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, data <span class="op">=</span> <span class="va">da</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>          tolerance <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span></span>
@@ -136,10 +134,10 @@ bar:</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mo>=</mo><mn>1</mn><mo>+</mo><mn>0.8</mn><mi>x</mi></mrow><annotation encoding="application/x-tex">\mu = 1 + 0.8x</annotation></semantics></math>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>σ</mi><mo>=</mo><mi>−</mi><mn>0.6</mn><mo>+</mo><mn>0.35</mn><mi>x</mi></mrow><annotation encoding="application/x-tex">\log\sigma = -0.6 + 0.35x</annotation></semantics></math>.
-The equation of the scale is on the <strong>log scale</strong>, which is
-the link of that parameter: an equation is fitted on the scale that
-keeps its parameter inside its domain, so no combination of covariates
-can produce a negative standard deviation.</p>
+The equation of the scale is on the log scale, which is the link of that
+parameter: an equation is fitted on the scale that keeps its parameter
+inside its domain, so a combination of covariates cannot produce a
+negative standard deviation.</p>
 <p>The log-likelihoods of the two fits show the gain from the second
 equation:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -165,17 +163,16 @@ data:</p>
 <span><span class="co">#&gt; 1        mu                      linpar            1 1.000000</span></span>
 <span><span class="co">#&gt; 2        mu s(z, bspline_smooth(k = 8))            7 5.264483</span></span>
 <span><span class="co">#&gt; 3     sigma                      linpar            1 1.000000</span></span></code></pre></div>
-<p>The smooth has 7 coefficients and <strong>spends</strong> about 5.3
-of them. This effective number of degrees of freedom is the one a
-criterion counts, in place of the number of coefficients.
-<code><a href="../reference/hyper.html">hyper()</a></code> reports the hyperparameters and the source of
-each:</p>
+<p>The smooth has 7 coefficients and uses about 5.3 of them. This
+effective number of degrees of freedom is the one that a criterion
+counts, in place of the number of coefficients. <code><a href="../reference/hyper.html">hyper()</a></code>
+reports the hyperparameters and the source of each:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hyper.html">hyper</a></span><span class="op">(</span><span class="va">f3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   parameter                        term   name estimate  held source   id</span></span>
 <span><span class="co">#&gt; 1        mu s(z, bspline_smooth(k = 8)) lambda 1.064316 FALSE   reml &lt;NA&gt;</span></span></code></pre></div>
 <p>A random effect is written the same way and is fitted by the same
-machinery, its penalty being a Gaussian prior over the group
+machinery, and its penalty is a Gaussian prior over the group
 effects:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f4</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">z</span>, <span class="fu">bspline_smooth</span><span class="op">(</span>k <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu">random</span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">g</span><span class="op">)</span>,</span>
@@ -191,15 +188,16 @@ effects:</p>
 <span><span class="co">#&gt; 1        mu s(z, bspline_smooth(k = 8)) lambda 1.0345354 FALSE   reml &lt;NA&gt;</span></span>
 <span><span class="co">#&gt; 2        mu              random(~1 | g)  sigma 0.7070243 FALSE   reml &lt;NA&gt;</span></span></code></pre></div>
 <p>The 20 group effects spend about 18.5 degrees of freedom here, and
-the estimated prior scale is 0.71, against the 0.6 that the groups were
-drawn with. A random intercept is a ridge penalty on an indicator block,
-so it is fitted like a smooth.</p>
+the estimated prior scale is 0.71, against the 0.6 used to draw the
+groups. A random intercept is a ridge penalty on an indicator block, so
+it is fitted like a smooth.</p>
 </div>
 <div class="section level2">
 <h2 id="who-chooses-the-hyperparameters">Who chooses the hyperparameters<a class="anchor" aria-label="anchor" href="#who-chooses-the-hyperparameters"></a>
 </h2>
-<p>Every hyperparameter is estimated unless the term holds it. Two
-arguments of <code><a href="../reference/statmod.html">statmod()</a></code> choose the criterion. The argument
+<p>Every hyperparameter is estimated unless the term holds it. The
+criterion is set by the arguments <code>outer_criterion</code> and
+<code>sparse_criterion</code> of <code><a href="../reference/statmod.html">statmod()</a></code>. The argument
 <code>outer_criterion</code> applies to the hyperparameters of a penalty
 that is twice differentiable, such as a smooth or a random effect:</p>
 <ul>
@@ -212,17 +210,16 @@ Hessian. <code><a href="../reference/reml.html">reml()</a></code> is the default
 <code><a href="../reference/aic.html">aic()</a></code> and <code><a href="../reference/aic.html">bic()</a></code> score an estimate of
 prediction error instead.</li>
 </ul>
-<p>A penalty with a <strong>kink</strong> (<code>lasso()</code>,
-<code>enet()</code>, <code>scad()</code> and <code>mcp()</code>) is
-chosen along a path of its own values, from the value that empties the
-block downwards, and the path is scored by
-<code>sparse_criterion</code>. This argument is <code><a href="../reference/aic.html">bic()</a></code> by
-default and may be <code><a href="../reference/aic.html">aic()</a></code> or <code><a href="../reference/cv.html">cv()</a></code>, and a
-marginal criterion is rejected there. A marginal criterion expands the
-penalized objective around the penalized mode, and for a lasso that mode
-lies <em>at</em> the kink, where the second derivative does not exist.
-The function <code><a href="../reference/cv.html">cv()</a></code> serves only as
-<code>sparse_criterion</code>.</p>
+<p>A penalty with a kink (<code>lasso()</code>, <code>enet()</code>,
+<code>scad()</code> and <code>mcp()</code>) is chosen along a path of
+its own values, from the value that empties the block downwards, and the
+path is scored by <code>sparse_criterion</code>. This argument is
+<code><a href="../reference/aic.html">bic()</a></code> by default and may be <code><a href="../reference/aic.html">aic()</a></code> or
+<code><a href="../reference/cv.html">cv()</a></code>, and a marginal criterion is rejected there. A
+marginal criterion expands the penalized objective around the penalized
+mode, and for a lasso that mode lies <em>at</em> the kink, where the
+second derivative does not exist. The function <code><a href="../reference/cv.html">cv()</a></code> serves
+only as <code>sparse_criterion</code>.</p>
 <p>A term holds a hyperparameter when the call names its value, for
 example <code>lasso(x, lambda = 3)</code> or
 <code>s(z, bspline_smooth(k = 8), hyper = c(lambda = 2))</code>, and the
@@ -269,13 +266,12 @@ example <code>lasso(x, lambda = 3)</code> or
 <span><span class="co">#&gt; 95% intervals, bayesian variance</span></span>
 <span><span class="co">#&gt; conditional log-likelihood -362.616546    effective df 7.26</span></span>
 <span><span class="co">#&gt; cAIC 739.762    cBIC 766.668</span></span>
-<span><span class="co">#&gt; fitted in 259 ms</span></span>
+<span><span class="co">#&gt; fitted in 258 ms</span></span>
 <span><span class="co">#&gt; inner   max |grad|/se 3.7e-16   min eigen 1</span></span>
 <span><span class="co">#&gt; outer   max |grad|/se 2.1e-08   min eigen 0.99</span></span>
 <span><span class="co">#&gt; 1 note: print(summary(fit), notes = TRUE)</span></span></code></pre></div>
-<p>The output has three features that need explanation. The
-log-likelihood is the <strong>conditional</strong> one, read at the
-fitted coefficients, and the effective degrees of freedom go with it:
+<p>The log-likelihood is the conditional one, read at the fitted
+coefficients, and the effective degrees of freedom go with it:
 <code>cAIC</code> and <code>cBIC</code> are built from that pair, and
 comparing a conditional log-likelihood with a marginal one from another
 package compares two different quantities. The interval of a
@@ -285,8 +281,8 @@ so it cannot contain a negative number, while the interval of a
 coefficient is on the link scale of its equation. The last lines, headed
 <code>inner</code> and <code>outer</code>, give the largest gradient in
 standard errors and the smallest eigenvalue of the curvature for the
-coefficients and for the hyperparameters, both read at the point the fit
-reached.</p>
+coefficients and for the hyperparameters, and both are read at the point
+that the fit reached.</p>
 </div>
 <div class="section level2">
 <h2 id="the-certificate">The certificate<a class="anchor" aria-label="anchor" href="#the-certificate"></a>
@@ -322,10 +318,10 @@ standard error on request:</p>
 <span><span class="co">#&gt; 1 -0.2837629 0.1188419 -0.5166888 -0.05083693</span></span>
 <span><span class="co">#&gt; 2  1.8468308 0.1199200  1.6117920  2.08186963</span></span>
 <span><span class="co">#&gt; 3  2.4646126 0.1219466  2.2256016  2.70362367</span></span></code></pre></div>
-<p>Prediction <strong>reapplies</strong> each term’s blueprint instead
-of rebuilding it, so the knots of a smooth and the levels of a factor
-are those of the fitted model. As a consequence, predicting at rows that
-the model saw returns the fitted values there.</p>
+<p>Prediction reapplies each term’s blueprint instead of rebuilding it,
+so the knots of a smooth and the levels of a factor are those of the
+fitted model. As a consequence, predicting at rows that were used to fit
+the model returns the fitted values there.</p>
 <p>The generics of <code>stats</code> apply to a fit:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>nobs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span>, df.residual <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/df.residual.html" class="external-link">df.residual</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span><span class="op">)</span></span>
@@ -334,18 +330,17 @@ the model saw returns the fitted values there.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 300</span></span></code></pre></div>
 <p><code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> returns the standard deviation of the response
-at each observation, so it is a <strong>vector</strong> wherever the
-scale is modeled or the variance depends on the mean.
-<code><a href="https://rdrr.io/r/stats/df.residual.html" class="external-link">df.residual()</a></code> subtracts the <em>effective</em> count of
-degrees of freedom from the number of observations, so it is not an
-integer.</p>
-<p>Three generics signal an error, each naming the function to use
-instead. <code><a href="https://rdrr.io/r/stats/terms.html" class="external-link">terms()</a></code> fails because a fit has one set of terms
-per distribution parameter, <code><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame()</a></code> fails because a
-fit keeps the blueprint of each term and not the data, and
-<code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> fails because a penalized fit whose hyperparameters
-were chosen from the same data has no null distribution to test
-against.</p>
+at each observation, so it is a vector wherever the scale is modeled or
+the variance depends on the mean. <code><a href="https://rdrr.io/r/stats/df.residual.html" class="external-link">df.residual()</a></code> subtracts
+the <em>effective</em> count of degrees of freedom from the number of
+observations, so it is not an integer.</p>
+<p>Three generics signal an error, and each error message names the
+function to use instead. <code><a href="https://rdrr.io/r/stats/terms.html" class="external-link">terms()</a></code> fails because a fit has
+one set of terms per distribution parameter, <code><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame()</a></code>
+fails because a fit keeps the blueprint of each term and not the data,
+and <code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> fails because a penalized fit whose
+hyperparameters were chosen from the same data has no null distribution
+against which to test.</p>
 </div>
 <div class="section level2">
 <h2 id="simulating-from-a-model">Simulating from a model<a class="anchor" aria-label="anchor" href="#simulating-from-a-model"></a>
@@ -374,10 +369,11 @@ row’s parameters and would be misaligned with the rows kept.</p>
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
 <ul>
-<li>One formula, the equations separated by a bar, one per distribution
-parameter; an equation omitted is an intercept.</li>
-<li>Each equation is fitted on the link scale of its parameter, so no
-combination of covariates leaves the domain of the parameter.</li>
+<li>One formula, in which the equations are separated by a bar, one per
+distribution parameter; an equation that is omitted is an
+intercept.</li>
+<li>Each equation is fitted on the link scale of its parameter, so a
+combination of covariates cannot leave the domain of the parameter.</li>
 <li>
 <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> and
 <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> return one compartment per parameter.</li>

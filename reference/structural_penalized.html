@@ -13,7 +13,7 @@ spans both the coefficients and those parameters counts as well."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,23 +70,23 @@ spans both the coefficients and those parameters counts as well.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single logical. <code>TRUE</code> where a penalty covers a structural term's
-own parameters, or a covariance class spans both the coefficients and
-those parameters. <code>FALSE</code> for a model with no structural term, and for
-one whose structural term has no such penalty. <code>mixed_penalized()</code>
-answers <code>TRUE</code> for the second case alone.</p>
+    <p>A single logical. It is <code>TRUE</code> where a penalty covers a structural
+term's own parameters, or a covariance class spans both the coefficients
+and those parameters, and <code>FALSE</code> for a model with no structural term and
+for one whose structural term has no such penalty. <code>mixed_penalized()</code>
+returns <code>TRUE</code> for the second case only.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The answer decides which matrix the Laplace determinant is taken over.
-<code>TRUE</code> sends the criterion to <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code>, which spans the
-coefficients <strong>and</strong> the term's free parameters; <code>FALSE</code> leaves it over
-the coefficients alone.</p>
+    <p>The answer determines the matrix over which the Laplace determinant is
+taken. <code>TRUE</code> sends the criterion to <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code>, which spans
+the coefficients and the term's free parameters; <code>FALSE</code> leaves it over
+the coefficients only.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code> for the matrix that it selects,
-<code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> for the penalties that it looks for.</p></div>
+<code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> for the penalties that it seeks.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,6 +1,6 @@
 # Confidence Intervals for a Fit
 
-Confidence intervals for the coefficients of every distribution
+Returns confidence intervals for the coefficients of every distribution
 parameter, by default the Wald ones and otherwise by inverting a
 likelihood test.
 
@@ -46,15 +46,16 @@ confint(
 
   Whether to report the quantities in which the model is written (a
   term's own parameters under the names of the literature) and not the
-  raw coordinates. Passed to
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
-  and necessarily `FALSE` for the three restricted tests.
+  raw coordinates. The value is passed to
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
+  and must be `FALSE` for the three restricted tests.
 
 - test:
 
-  Which test the interval is the acceptance region of: `"wald"`, the
-  default, or `"lr"`, `"score"` or `"gradient"`, each inverted by
-  [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md).
+  The test whose acceptance region is the interval: `"wald"`, the
+  default, or `"lr"`, `"score"` or `"gradient"`, which
+  [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md)
+  inverts.
 
 - ...:
 
@@ -70,11 +71,11 @@ estimate, its standard error and the two limits.
 
 With `readable = FALSE`, the interval for a coefficient of a linear
 predictor is symmetric about the estimate and needs no mapping back.
-Such a coefficient is unbounded whatever the distribution parameter it
-belongs to, the link having already carried that parameter onto the
-whole line, so the scale on which the interval is built is the scale on
-which the quantity lives. The interval does not respect a bound on the
-distribution parameter itself; for that, map an interval for the
+Such a coefficient is unbounded whatever the distribution parameter to
+which it belongs, because the link has already carried that parameter
+onto the whole line, so the scale on which the interval is built is the
+scale on which the quantity lives. The interval does not respect a bound
+on the distribution parameter itself; for that, map an interval for the
 predictor through the inverse link at the covariate values of interest.
 With the default `readable = TRUE`, each quantity that a structural term
 declares (a loading or a persistence, for example) has an interval built
@@ -90,10 +91,10 @@ treat the smoothing parameter as known.
 
 ## Inverting a test instead
 
-`test` chooses which statistic the interval is the acceptance region of.
-The Wald interval is the set of \\b\\ that the Wald statistic does not
-reject, and it is symmetric by construction: that statistic is a
-parabola in \\b\\, the curvature having been read once at \\\hat\beta\\.
+The argument `test` selects the statistic whose acceptance region is the
+interval. The Wald interval is the set of \\b\\ that the Wald statistic
+does not reject, and it is symmetric by construction: that statistic is
+a parabola in \\b\\, since the curvature is read once at \\\hat\beta\\.
 The other three read the likelihood at each \\b\\ in turn, so their
 intervals follow its shape and are not symmetric where it is not. Where
 the likelihood is nearly quadratic the four intervals agree; with a

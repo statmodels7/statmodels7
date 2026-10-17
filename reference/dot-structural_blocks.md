@@ -38,7 +38,7 @@ take, at a direction, at two directions or without one.
 
 ## Value
 
-A function of the direction – `NULL`, one vector, or a list of two –
+A function of the direction (`NULL`, one vector, or a list of two)
 returning a `blocks` callback.
 
 ## Details
@@ -56,6 +56,6 @@ With TWO directions the callback serves
 instead, and carries three quantities more: `Q`, the fourth derivative
 with two of its indices on the filter's own equation; `P`, the FIFTH
 derivative contracted against both directions, which is the only place
-that order enters; and `cppp`, the scalar the level's own curvature
-moves by, which no contraction recovers. `N` is then a list of two, one
-per direction.
+that order enters; and `cppp`, the scalar by which the level's own
+curvature moves, which a contraction cannot recover. `N` is then a list
+of two, one per direction.

@@ -1,8 +1,8 @@
 # A Structural Term's Parameters, With Standard Errors
 
 Returns the estimated parameters of every structural term, on their own
-scale, with standard errors and intervals taken from the joint observed
-information.
+scale, together with standard errors and intervals that are taken from
+the joint observed information.
 
 ## Usage
 

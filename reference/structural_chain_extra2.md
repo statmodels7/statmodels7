@@ -1,9 +1,10 @@
 # The Joint Second Derivative of the Penalized Information, Traced
 
-\\\mathrm{tr}(M\\\partial^2 K/\partial u^2\[v, w\])\\: the quantity
+Returns \\\mathrm{tr}(M\\\partial^2 K/\partial u^2\[v, w\])\\: the
+quantity that
 [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
-gives at the first order, one order up and contracted against a second
-direction.
+returns at the first order, taken one order up and contracted against a
+second direction.
 
 ## Usage
 
@@ -51,12 +52,12 @@ A single number.
 
 ## Details
 
-The terms are listed in the comments of the code. None of them assembles
-a matrix over the coefficients: a term in \\V_a^\top V_b\\ traces as a
-weighted sum of the per-observation diagonal \\G\\, a term carrying
-\\\mathrm{d}\varphi\\ traces against the rows to which \\M\\ has already
-been applied, and the terms that carry the derivatives of the recursion
-trace against what
+The terms are listed in the comments of the code. Each of them is traced
+without assembling a matrix over the coefficients: a term in \\V_a^\top
+V_b\\ traces as a weighted sum of the per-observation diagonal \\G\\, a
+term carrying \\\mathrm{d}\varphi\\ traces against the rows to which
+\\M\\ has already been applied, and the terms that carry the derivatives
+of the recursion trace against what
 [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html),
 [`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
 and

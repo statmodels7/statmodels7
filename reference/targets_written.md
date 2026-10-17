@@ -1,8 +1,8 @@
-# Whether `par` Wrote Every Coordinate a Prior Drew
+# Whether `par` Wrote Every Coordinate That a Prior Drew
 
-`TRUE` where every coordinate that a penalty's draw reached was then
-written by `par`, so that the penalty's hyperparameters govern nothing
-in the truth.
+Returns `TRUE` where every coordinate that a penalty's draw reached was
+then written by `par`, so that the penalty's hyperparameters govern
+nothing in the truth.
 
 ## Usage
 

@@ -1,8 +1,8 @@
 # Where Each Stacked Coefficient Comes From
 
-One row per stacked coefficient, naming the distribution parameter, the
-term and the coefficient, and saying whether the term carries a penalty
-and whether that penalty has a kink.
+Returns one row per stacked coefficient. Each row names the distribution
+parameter, the term and the coefficient, and records whether the term
+carries a penalty and whether that penalty has a kink.
 
 ## Usage
 

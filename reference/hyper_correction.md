@@ -1,6 +1,6 @@
 # What a Hyperparameter's Own Uncertainty Adds to a Variance
 
-\\J V\_\theta J'\\, the movement of the penalized mode under the
+Returns \\J V\_\theta J'\\, the movement of the penalized mode under the
 estimated hyperparameters, as a matrix to be added to \\V_b\\.
 
 ## Usage
@@ -40,7 +40,7 @@ hyper_correction(spec, design, coef, hyper, method, Vb, keep, nz = 0L)
 - keep:
 
   A logical vector over the joint vector (the stacked coefficients
-  followed by any structural tail) that marks the coordinates `Vb`
+  followed by any structural tail) that marks the coordinates that `Vb`
   spans. It is the whole vector of the caller and not its head, because
   a tail coordinate dropped as a flat direction leaves `Vb` narrower
   than the count alone would indicate.
@@ -55,8 +55,8 @@ A list with `C`, the correction or `NULL`, `n_hyper`, the number of
 hyperparameters that
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-estimated, and `complete`, whether every one of them contributed and no
-penalty was skipped.
+estimated, and `complete`, whether every one of them contributed and the
+function skipped no penalty.
 
 ## Details
 
@@ -93,17 +93,17 @@ and a kinked penalty, whose hyperparameter is the argument of a minimum
 over a grid that
 [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
 skips. The map from that hyperparameter to the mode turns a corner
-whenever a coefficient joins or leaves the active set, so no derivative
-exists to propagate.
+whenever a coefficient joins or leaves the active set, so the map has no
+derivative to propagate.
 
-The correction is unavailable, with `n_hyper` positive and `C` `NULL`,
-where the criterion's own Hessian cannot be read, or where
+The correction is unavailable, and then `n_hyper` is positive and `C` is
+`NULL`, where the criterion's own Hessian cannot be read, or where
 [`hyper_variance()`](https://statmodels7.github.io/statmodels7/reference/hyper_variance.md)
 cannot invert it because the coupling of a held coordinate to the kept
 ones is too large to ignore.
 
-The correction is partial, with `complete` false, where some of it could
-be read and some could not: a hyperparameter that
+The correction is partial, and `complete` is false, where some of it
+could be read and some could not: a hyperparameter that
 [`hyper_variance()`](https://statmodels7.github.io/statmodels7/reference/hyper_variance.md)
 held contributes nothing, and a penalty for which
 [`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)

@@ -1,8 +1,8 @@
 # The Column Rank of One Design Block
 
-The number of linearly independent columns, by the pivoted decomposition
-that the fit's own solve uses, so that the two agree on which columns a
-model identifies.
+Returns the number of linearly independent columns, computed by the
+pivoted decomposition that the fit's own solve uses, so that the two
+agree on which columns a model identifies.
 
 ## Usage
 
@@ -23,12 +23,12 @@ A single number, or `NA_integer_` where the decomposition fails.
 ## Details
 
 A dense block goes through [`qr()`](https://rdrr.io/r/base/qr.html), at
-`dqrdc2`'s own tolerance, which is what
+the tolerance of `dqrdc2`, which is the tolerance that
 [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
-reads. A sparse one goes through
+uses. A sparse one goes through
 [`Matrix::qr()`](https://rdrr.io/pkg/Matrix/man/qr-methods.html) and its
 rank is counted on the JACOBI-EQUILIBRATED diagonal of the triangular
-factor, which is the correction
+factor, which is the correction that
 [`sparse_augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.md)
 already carries: since \\R'R = A'A\\, scaling the columns by their norms
 scales that diagonal by the same factors, so a block whose columns

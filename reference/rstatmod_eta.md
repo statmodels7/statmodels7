@@ -1,7 +1,8 @@
 # The Predictor and Parameters of a Simulation
 
-The linear predictors, the distribution's parameters, and – where a term
-has state – the response that it drew and the latent quantity behind it.
+Returns the linear predictors, the distribution's parameters and, where
+a term has state, the response that it drew and the latent quantity
+behind it.
 
 ## Usage
 

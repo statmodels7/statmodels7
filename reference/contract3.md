@@ -1,7 +1,7 @@
 # The Third Derivative of the Objective Contracted Once
 
-\\T\[v\] = (\partial K/\partial\beta)\cdot v\\, a matrix over the
-stacked coefficients.
+Returns \\T\[v\] = (\partial K/\partial\beta)\cdot v\\, a matrix over
+the stacked coefficients.
 
 ## Usage
 
@@ -45,10 +45,10 @@ A square matrix.
 
 ## Details
 
-Each block is minus a weighted crossproduct of the two designs, the
-weight being \\w_i\sum_k \ell'''\_{abk}(X_k v_k)\_i\\, so that the third
-derivative is never formed as an array over the coefficients. The sign
-makes \\T\[v\]\\ the derivative of \\K = -\ell'' + S\\.
+Each block is minus a weighted crossproduct of the two designs, where
+the weight is \\w_i\sum_k \ell'''\_{abk}(X_k v_k)\_i\\, so that the
+third derivative is never formed as an array over the coefficients. The
+sign makes \\T\[v\]\\ the derivative of \\K = -\ell'' + S\\.
 
 On the expected route `d3` is the derivative of the expected information
 in the predictors,

@@ -17,11 +17,11 @@ ctx_usable(ctx, coef, hyper)
 
 - coef:
 
-  The coefficients the caller is reading.
+  The coefficients that the caller is reading.
 
 - hyper:
 
-  The hyperparameters the caller is reading.
+  The hyperparameters that the caller is reading.
 
 ## Value
 

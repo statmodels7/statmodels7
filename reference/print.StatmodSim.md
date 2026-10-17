@@ -1,7 +1,7 @@
 # Printing a Simulation
 
-The model that was written, the size of what came out, and the truth
-behind it.
+Prints the model that was written, the size of what came out, and the
+truth behind it.
 
 ## Usage
 

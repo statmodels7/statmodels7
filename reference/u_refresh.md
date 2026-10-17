@@ -1,9 +1,10 @@
 # How the Determinant Reads a Block That Moves With the Coefficients
 
-The part of \\u_c = \mathrm{tr}(M\\\partial K/\partial\beta_c)\\ that
+Computes the part of \\u_c = \mathrm{tr}(M\\\partial
+K/\partial\beta_c)\\ that
 [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
-does not compute: everything coming from \\\partial X/\partial\beta\\
-where a term's block depends on its own coefficients.
+does not compute: everything that comes from \\\partial
+X/\partial\beta\\ where a term's block depends on its own coefficients.
 
 ## Usage
 
@@ -89,8 +90,8 @@ on its parameters and a subformula's design. A break-point column is a
 step function of its break-point, so a difference quotient of it
 diverges as the step shrinks. A term that does not implement the
 contraction inherits zeros, which is correct for a fixed design. A sharp
-`jump()` or `jseg()` returns zeros as well, its block being a working
-linearization with a frozen weight.
+`jump()` or `jseg()` returns zeros as well, because its block is a
+working linearization with a frozen weight.
 
 ## See also
 

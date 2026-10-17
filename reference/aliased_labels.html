@@ -9,7 +9,7 @@ coefficient labels."><meta property="og:image" content="https://statmodels7.gith
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,8 +76,8 @@ repeat information already carried: only combinations are estimable, and
 the pivot determines which column is left out, as in <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>.
 Those columns come back from the solve as coordinates of the coefficient
 vector; this function converts them into the labels that <code><a href="coef_labels.html">coef_labels()</a></code>
-supplies, so that no later step has to rebuild a design to identify a
-coefficient.</p>
+supplies, so that a later step can identify a coefficient without rebuilding
+a design.</p>
 <p>A coordinate that a penalty covers is never among them, because the pivot
 runs on the augmented system (design and penalty factor together), in which
 a column that the design alone does not identify is identified. Under

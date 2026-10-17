@@ -1,7 +1,7 @@
 # A Higher Derivative of the Log-Density at the Context's Point
 
-The third or fourth derivative on the link scale, which the gradient's
-contraction and the Hessian's two contractions all read.
+Returns the third or fourth derivative on the link scale, which the
+gradient's contraction and the Hessian's two contractions all read.
 
 ## Usage
 

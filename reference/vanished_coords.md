@@ -1,9 +1,9 @@
 # Coordinates Whose Design Column Has Vanished
 
-The coordinates of the stacked coefficient vector whose column of the
-design, read at the fitted coefficients, has vanished: its norm is at
-most `eps` times the largest column norm of its own equation, and the
-penalized information carries nothing on its diagonal either.
+Returns the coordinates of the stacked coefficient vector whose column
+of the design, read at the fitted coefficients, has vanished: its norm
+is at most `eps` times the largest column norm of its own equation, and
+the penalized information carries nothing on its diagonal either.
 
 ## Usage
 
@@ -23,7 +23,7 @@ vanished_coords(spec, coef, design, K)
 
 - design:
 
-  The design
+  The design that
   [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
   built.
 
@@ -40,32 +40,35 @@ possibly empty.
 
 ## Details
 
-It answers the one case that
+This function covers the one case that
 [`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md)
-leaves unnamed by design. That function reads \\K\\ alone, and an empty
-row of \\K\\ is two different things a matrix cannot tell apart. At a
-parameter's boundary the design column is alive and the working weight
-vanishes: the estimate stands and only its variance does not, which is
-[`uninformative_coords()`](https://statmodels7.github.io/statmodels7/reference/uninformative_coords.md)'
-business. Where a coefficient's own column vanishes, nothing in the data
-moves with it and it is not identified at all: a break-point run out of
-the data has change and position columns that are identically zero
-there. A sharp step or a truncated line written into
+leaves unnamed by design. That function reads only \\K\\, and an empty
+row of \\K\\ can arise in two different ways, which the matrix does not
+distinguish. At a parameter's boundary the design column is alive and
+the working weight vanishes: the estimate stands and only its variance
+does not, a case that
+[`uninformative_coords()`](https://statmodels7.github.io/statmodels7/reference/uninformative_coords.md)
+handles. Where a coefficient's own column vanishes, the data do not move
+with it and it is not identified at all: a break-point run out of the
+data has change and position columns that are identically zero there. A
+sharp step or a truncated line written into
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
 can park a break-point beyond the data in this way, and without this
-rule one of the two coordinates, or neither, would be named.
+rule the function would name one of the two coordinates, or would name
+none.
 
-Both conditions are required. The design column alone would name a
-penalized coordinate whose column is empty – a level of a random effect
-with no observations, which its prior identifies – and the diagonal
-alone would name a coordinate at a boundary. The column is compared with
-its own equation's largest, since two equations' designs need not share
-a scale, and the diagonal with \\\epsilon^2\\ times the largest, the
-square of the same resolution.
+Both conditions are required. If only the design column were used, the
+function would name a penalized coordinate whose column is empty (a
+level of a random effect with no observations, which its prior
+identifies), and if only the diagonal were used, it would name a
+coordinate at a boundary. The column is compared with its own equation's
+largest, since two equations' designs need not share a scale, and the
+diagonal with \\\epsilon^2\\ times the largest, the square of the same
+resolution.
 
 ## See also
 
 [`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md)
-for a column the others span,
+for a column that the others span,
 [`uninformative_coords()`](https://statmodels7.github.io/statmodels7/reference/uninformative_coords.md)
 for a coordinate at a boundary.

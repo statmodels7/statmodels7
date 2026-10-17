@@ -1,8 +1,8 @@
 # A Titled Rule for a Verbose Trace
 
-One blank line, then a titled rule with the name of the method that does
-the work on the right, so that a reader of a running fit can see where
-one step ends and the next begins.
+Prints one blank line, then a titled rule with the name of the method
+that does the work on the right, so that a reader of a running fit can
+see where one step ends and the next begins.
 
 ## Usage
 

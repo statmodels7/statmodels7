@@ -1,7 +1,7 @@
 # A Vector of a Simulated Truth, Short Enough to Read
 
-The values where there are six or fewer, and otherwise the first two
-values with the count and the standard deviation.
+Returns the values where there are six or fewer, and otherwise the first
+two values with the count and the standard deviation.
 
 ## Usage
 

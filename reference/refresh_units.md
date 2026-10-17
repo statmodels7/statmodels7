@@ -1,9 +1,9 @@
 # The Terms Whose Block Moves With Their Coefficients
 
-One entry per refreshable term, carrying everything its derivative
-needs: the distribution parameter it sits in, its columns within that
-equation and in the stacked coefficient vector, its own coefficients and
-the term rebuilt at them.
+Returns one entry per refreshable term, carrying everything that its
+derivative needs: the distribution parameter of the equation in which
+the term sits, its columns within that equation and in the stacked
+coefficient vector, its own coefficients and the term rebuilt at them.
 
 ## Usage
 
@@ -32,18 +32,18 @@ refresh_units(spec, design, coef, params, npar, offs)
 
 ## Value
 
-A list, empty where no block moves. Each element is a list with `a`, the
-index of the term's equation; `param`, the distribution parameter of
-that equation; `term`, the name of the term within the equation; `cols`,
-its columns within the equation; `ra`, the same columns in the stacked
-coefficient vector; `bt`, the term's coefficients; and `built`, the term
-refreshed at `bt`.
+A list, which is empty if the design has no block that moves. Each
+element is a list with `a`, the index of the term's equation; `param`,
+the distribution parameter of that equation; `term`, the name of the
+term within the equation; `cols`, its columns within the equation; `ra`,
+the same columns in the stacked coefficient vector; `bt`, the term's
+coefficients; and `built`, the term refreshed at `bt`.
 
 ## Details
 
-Resolved once and passed to every consumer, so the gradient's
-contraction and the Hessian's three corrections cannot disagree about
-which terms move or where their columns are.
+The entries are resolved once and passed to every consumer, so the
+gradient's contraction and the Hessian's three corrections cannot
+disagree about which terms move or where their columns are.
 
 ## See also
 

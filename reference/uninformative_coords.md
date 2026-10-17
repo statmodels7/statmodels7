@@ -1,8 +1,8 @@
 # Which Coordinates a Singular Information Carries Nothing About
 
-The positions whose row and column of a penalized information are empty,
-so that holding them and inverting the rest reports the variance of
-every other coordinate exactly.
+Returns the positions whose row and column of a penalized information
+are empty, so that holding them and inverting the rest reports the
+variance of every other coordinate exactly.
 
 ## Usage
 
@@ -59,21 +59,21 @@ the truth is infinite. The rule is in two parts, invert away from
 second part.
 
 A candidate is a coordinate with no curvature of its own. Its diagonal
-is not finite, which is what a parameter run out of its range leaves
-behind; or it is not positive, which is the reading of
+is not finite, as a parameter that has run out of its range leaves it;
+or it is not positive, which is the reading of
 [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
-for that entry and is a statement about the coordinate whatever scale it
-is on; or, among the coordinates whose diagonal is positive, it carries
+for that entry and is a statement about the coordinate regardless of its
+scale; or, among the coordinates whose diagonal is positive, it carries
 the whole of a null direction of the Jacobi-equilibrated matrix. The
 equilibration distinguishes a flat direction from scale separation, and
 requiring one coordinate to carry the whole direction excludes the
 collinear case, where the null vector is \\(e_1 - e_2)/\sqrt{2}\\ and
 each of the two carries half of it.
 
-**A candidate is held only where holding it disturbs nothing**, and the
-amount it disturbs is the Schur correction it removes from the others,
-\\K\_{Aj}K\_{jj}^{-1}K\_{jA}\\. That test has two branches, because it
-has two scales.
+A candidate is held only where holding it disturbs nothing, and the
+amount that it disturbs is the Schur correction that it removes from the
+others, \\K\_{Aj}K\_{jj}^{-1}K\_{jA}\\. That test has two branches,
+because it has two scales.
 
 Where \\K\_{jj}\\ is positive the coordinate has a scale of its own and
 the correction, read against \\K\_{AA}\\ in equilibrated units where
@@ -83,7 +83,7 @@ that block has a unit diagonal, is \$\$\max_k
 coordinate measured a thousand times smaller than its neighbors has a
 small row and a small diagonal, and the ratio is unchanged by the
 scaling. Scaling one coordinate down by \\10^{-14}\\ leaves the ratio
-unchanged, and nothing is held.
+unchanged, and the function holds no coordinate.
 
 Where \\K\_{jj}\\ is not positive the coordinate has no scale of its own
 (the information in that direction is zero and not merely small), so
@@ -94,14 +94,14 @@ level to which its entries were accumulated: \\\max_k \|K\_{jk}\| \le
 left its range, \\K\_{jj}\\ is exactly zero and the entries of the row
 of that coordinate are at the rounding level of the matrix.
 
-Where neither branch passes, dropping the coordinate would leave
+Where both branches fail, dropping the coordinate would leave
 \\K\_{AA}^{-1}\\, the variance conditional on that coefficient being
-known, which is smaller than the marginal one; nothing is held and the
-error signaled by the caller stands.
+known, which is smaller than the marginal one; the function holds no
+coordinate and the error signaled by the caller stands.
 
 ## See also
 
 [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md),
-which signals an error for the matrix these come from, and
+which signals an error for the matrix from which these are taken, and
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
 which holds them.

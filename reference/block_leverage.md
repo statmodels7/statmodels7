@@ -1,7 +1,7 @@
 # The Per-Observation Diagonal of Each Block of a Matrix
 
-\\G\_{ab,i} = x\_{ia}'M\_{\[a\]\[b\]}x\_{ib}\\, the diagonal of \\X_a
-M\_{ab} X_b'\\ taken one observation at a time.
+Computes \\G\_{ab,i} = x\_{ia}'M\_{\[a\]\[b\]}x\_{ib}\\, the diagonal of
+\\X_a M\_{ab} X_b'\\ taken one observation at a time.
 
 ## Usage
 
@@ -38,8 +38,8 @@ where equation `a` or equation `b` has no coefficients.
 
 ## Details
 
-This is the one quantity every trace against \\M\\ reduces to. For a
-matrix of the design's own form, \$\$\mathrm{tr}(M\\X'WX) = \sum_i
+This is the one quantity to which every trace against \\M\\ reduces. For
+a matrix of the design's own form, \$\$\mathrm{tr}(M\\X'WX) = \sum_i
 w_i\\(XMX')\_{ii},\$\$ so a contraction of a third or fourth derivative
 never has to be assembled as a \\p\times p\\ matrix in order to be
 traced against \\M\\.
@@ -52,8 +52,8 @@ Where both blocks are sparse, the product of their densities is below
 diagonal is computed by
 [`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
 from the nonzeros of each row. The pair count bounds the work in
-absolute terms, which the density alone does not. Otherwise the diagonal
-is read off the dense product that has the fewer columns.
+absolute terms, which the density by itself does not. Otherwise the
+diagonal is read off the dense product that has the fewer columns.
 
 ## See also
 

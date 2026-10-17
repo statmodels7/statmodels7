@@ -1,10 +1,10 @@
-# The Notes a Smoothed Break-Point Term Adds to a Summary
+# The Notes That a Smoothed Break-Point Term Adds to a Summary
 
-A note for each smoothed break-point term that names the smoother and
-the width that was resolved at build, and a second note for each random
-development of a break-point under a Gaussian prior, when the smoother
-declares a scale correction, that gives the corrected scale beside the
-apparent one.
+Returns a note for each smoothed break-point term that names the
+smoother and the width that was resolved at build, and a second note for
+each random development of a break-point under a Gaussian prior, when
+the smoother declares a scale correction, that gives the corrected scale
+beside the apparent one.
 
 ## Usage
 

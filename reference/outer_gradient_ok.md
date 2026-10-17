@@ -1,6 +1,6 @@
 # Can the Exact Derivatives of the Criterion Be Computed Here?
 
-`TRUE` when the exact gradient of the marginal criterion in the
+Returns `TRUE` when the exact gradient of the marginal criterion in the
 hyperparameters under estimation (`order = 1`), or the exact gradient
 and Hessian (`order = 2`), can be assembled for the model.
 
@@ -40,7 +40,7 @@ outer_gradient_ok(spec, design, idx, method, order = 1L, gamma = FALSE)
   `TRUE` where the outer vector also carries coefficients that the
   criterion estimates
   ([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)),
-  so an empty index is not a reason to answer `FALSE`.
+  so an empty index is not a reason to return `FALSE`.
 
 ## Value
 
@@ -53,7 +53,7 @@ The family must carry the derivatives that the order needs
 the third derivative of the log-likelihood for the gradient and the
 fourth for the Hessian.
 
-**The information.** \\K\\ enters the criterion through its determinant,
+For the information, \\K\\ enters the criterion through its determinant,
 so the gradient needs \\\partial K/\partial\beta\\. With the observed
 information that is the third derivative of the log-likelihood in the
 link-scale predictors. With the expected information it is the
@@ -74,16 +74,16 @@ The expected route is not admitted at either order where a penalty
 covers the parameters of a structural term, because the criterion is
 then assembled from the observed joint curvature.
 
-**The structural terms.** A term of the likelihood shape (`regime()` and
-the marginal break-point term) has no exact derivatives at either order.
-For a term of the filter shape, order 2 requires a penalty over the
-term's own parameters and a term that implements
+For structural terms, a term of the likelihood shape (`regime()` and the
+marginal break-point term) has no exact derivatives at either order. For
+a term of the filter shape, order 2 requires a penalty over the term's
+own parameters and a term that implements
 [`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html).
 Where a penalty covers the term's parameters, the term must also
 implement
 [`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html).
 
-**The moving blocks.** A block that moves with its coefficients (`nl()`,
+For moving blocks, a block that moves with its coefficients (`nl()`,
 `seg()`, `jump()` and `jseg()`) is admitted at order 1 on either route
 and at order 2 on the observed route. Its contribution is read from the
 term
@@ -91,8 +91,8 @@ term
 [`mode_curvature()`](https://statmodels7.github.io/statmodels7/reference/mode_curvature.md))
 and is never differenced.
 
-**The penalties.** \\\partial S/\partial\theta\\ and its second
-derivative are given by the generics of penalties7
+For penalties, \\\partial S/\partial\theta\\ and its second derivative
+are given by the generics of penalties7
 ([`penalties7::penalty_dhessian()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html),
 [`penalties7::penalty_d2hessian()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html)
 and
@@ -103,9 +103,9 @@ penalty is admitted according to what its methods return and not
 according to its class. The check has two parts. Every penalized unit of
 the model is examined, because the movement of the mode reaches the
 determinant through each penalty whose Hessian moves with the
-coefficients (a Student t prior, for instance). A penalty that
+coefficients (a Student t prior, for instance). A penalty for which
 [`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html)
-calls quadratic passes, and so does a penalty with a kink (a lasso, a
+returns `TRUE` passes, and so does a penalty with a kink (a lasso, a
 SCAD or an MCP). Any other penalty must supply
 [`penalties7::penalty_dhessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html),
 and a mixed covariance class of this kind is not admitted. Beside a

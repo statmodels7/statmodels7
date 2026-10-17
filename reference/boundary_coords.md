@@ -1,7 +1,8 @@
 # Which Coordinates a Boundary Has Frozen
 
-The positions whose curvature is not finite, as left by a parameter
-sitting at the clamp that its link keeps it strictly inside.
+Returns the positions whose curvature is not finite, as left by a
+parameter sitting at the clamp of its link, which keeps it strictly
+inside its bounds.
 
 ## Usage
 
@@ -22,8 +23,8 @@ An integer vector of positions, empty where there are none.
 ## Details
 
 The test is on the diagonal. A frozen coordinate makes its whole row
-non-finite, cross terms included, so a test over whole columns marks its
-neighbors too.
+non-finite, including the cross terms, so a test over whole columns
+marks its neighbors too.
 
 ## See also
 

@@ -1,9 +1,9 @@
 # The Derivatives of a Moving Block Along One Direction
 
-The two quantities every consumer of \\\partial X/\partial\beta\\ reads
-for a given direction: the block's own derivative along it, and the
-third derivative already contracted in it and carried onto the term's
-columns.
+Returns the two quantities that every consumer of \\\partial
+X/\partial\beta\\ reads for a given direction: the block's own
+derivative along it, and the third derivative already contracted in it
+and carried onto the term's columns.
 
 ## Usage
 
@@ -53,7 +53,7 @@ A list, one entry per unit, with `D` and `A`.
 
 ## Details
 
-Both depend on one direction alone, never on a pair, so they are built
+Both depend on a single direction, never on a pair, so they are built
 once per hyperparameter and combined in the Hessian's pair loop:
 computing them inside that loop would repeat an \\O(np^2)\\ product for
 every pair.

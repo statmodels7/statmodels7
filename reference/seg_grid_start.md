@@ -32,9 +32,10 @@ seg_grid_start(tm, data, response)
 
 ## Value
 
-`tm`, with `psi` set to the grid's choice where the rule applies, and
-unchanged where it does not: a term of another kind, a term whose `psi`
-the caller named, or a response against which the rule cannot score.
+`tm`, in which `psi` is set to the grid's choice where the rule applies,
+and `tm` unchanged where it does not: a term of another kind, a term
+whose `psi` the caller named, or a response against which the rule
+cannot score.
 
 ## Details
 

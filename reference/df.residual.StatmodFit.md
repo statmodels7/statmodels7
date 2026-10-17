@@ -1,6 +1,6 @@
 # Residual Degrees of Freedom of a Fitted Model
 
-The number of observations,
+Returns the number of observations,
 [`nobs.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/nobs.StatmodFit.md),
 less the effective degrees of freedom of the model.
 
@@ -25,8 +25,8 @@ df.residual(object, ...)
 ## Value
 
 A single number, `nobs(object)` less the total effective degrees of
-freedom. Not an integer in general. Where the effective degrees of
-freedom of a term could not be computed,
+freedom. The result is not an integer in general. Where the effective
+degrees of freedom of a term could not be computed,
 [`logLik.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
 uses the number of coefficients of that term (the number of free
 parameters, for a structural term) in its place, so the result is always
@@ -38,13 +38,13 @@ The count subtracted is the effective one, the sum over the terms of
 their effective degrees of freedom, as
 [`logLik.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
 reports it. A penalized block has fewer effective degrees of freedom
-than the number of coefficients it carries, so the result is not an
+than the number of coefficients that it carries, so the result is not an
 integer in general.
 
 ## See also
 
 [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
-for the per-term counts this sums,
+for the per-term counts that this function sums,
 [`logLik.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
 
 ## Examples

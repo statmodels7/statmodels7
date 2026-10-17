@@ -1,7 +1,7 @@
-# The Curvature the Mode Actually Moves By
+# The Curvature by Which the Mode Actually Moves
 
-What separates the true Hessian of the penalized log-likelihood from the
-Gauss-Newton matrix that
+Computes the difference between the true Hessian of the penalized
+log-likelihood and the Gauss-Newton matrix that
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 returns, where a term's block moves with its coefficients.
 
@@ -43,12 +43,12 @@ only on the blocks of refreshable terms.
 \\\partial^2\ell/\partial\beta^2\\ is the true second derivative:
 \$\$\sum_i\sum\_{a,b}\ell\_{ab}\frac{\partial\eta_a}{\partial\beta}
 \frac{\partial\eta_b}{\partial\beta} + \sum_i\sum_a
-\ell_a\frac{\partial^2\eta_a}{\partial\beta^2}.\$\$ The first sum is
-what the design gives; the second is zero for every fixed block and is
-not for a refreshable one, where \\X\\ is the Jacobian and so
+\ell_a\frac{\partial^2\eta_a}{\partial\beta^2}.\$\$ The design gives the
+first sum; the second is zero for every fixed block and is not for a
+refreshable one, where \\X\\ is the Jacobian and so
 \\\partial^2\eta_i/\partial\beta_c\partial\beta_d = \partial
-X\_{id}/\partial\beta_c\\. It is supported on the term's own block, and
-that is what keeps this cheap: one call of
+X\_{id}/\partial\beta_c\\. It is supported on the term's own block,
+which keeps the computation cheap: one call of
 [`modelterms7::term_block_contract()`](https://statmodels7.github.io/modelterms7/reference/term_block_contract.html)
 per column, weighted by the score where
 [`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)

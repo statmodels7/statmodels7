@@ -44,6 +44,6 @@ Every term holding such an effect is replaced by the copy that
 [`pool_nested_random()`](https://statmodels7.github.io/statmodels7/reference/pool_nested_random.md)
 returns, its effects' coefficients are set to zero and its columns are
 recomputed there. The columns of the effects themselves are then set to
-zero, so that the delta method of the prediction carries the uncertainty
-of the other coefficients alone, as it does for a term written in an
-equation.
+zero, so that the delta method of the prediction carries only the
+uncertainty of the other coefficients, as it does for a term written in
+an equation.

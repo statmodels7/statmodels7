@@ -1,7 +1,7 @@
 # The Hyperparameters Behind Each Row of the Outer Index
 
-The member table: one line per estimated hyperparameter, with the row of
-the index that stands for it.
+Returns the member table: one line per estimated hyperparameter, with
+the row of the index that stands for it.
 
 ## Usage
 
@@ -23,7 +23,7 @@ A data frame with columns `row`, `parameter`, `term` and `name`.
 
 ## Details
 
-Where nothing is shared it is the index itself with a `row` column
-counting up. Where a label ties several, they carry the same `row`, and
-a quantity accumulated over members lands on the coordinate of the
-group.
+If no hyperparameter is shared, the member table is the index itself
+with a `row` column counting up. Where a label ties several
+hyperparameters, they carry the same `row`, and a quantity accumulated
+over members lands on the coordinate of the group.

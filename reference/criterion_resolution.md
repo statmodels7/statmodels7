@@ -1,7 +1,7 @@
 # What the Outer Criterion Can Resolve at This Fit
 
-The size of a difference in the criterion that carries no information,
-computed from the fit at the point.
+Computes the size of a difference in the criterion that carries no
+information, from the fit at the point.
 
 ## Usage
 
@@ -58,8 +58,8 @@ criterion at given coefficients gives it, with no refit.
 
 The criterion carries \\-\tfrac{1}{2}\log\lvert K(\beta)\rvert\\, which
 is not stationary in \\\beta\\, so a mode error enters it at first order
-and the quadratic form \\\tfrac{1}{2} g' K^{-1} g\\ alone does not bound
-the change. The criterion is therefore evaluated at the displaced
+and the quadratic form \\\tfrac{1}{2} g' K^{-1} g\\ does not bound the
+change by itself. The criterion is therefore evaluated at the displaced
 coefficients.
 
 The reading estimates the spread of the criterion across warm starts. It

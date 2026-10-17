@@ -2,8 +2,8 @@
 
 Runs
 [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md)
-on each row a restricted fit is defined for and writes the two limits
-back, leaving the rest of the table as it was.
+on each row for which a restricted fit is defined and writes the two
+limits back, leaving the rest of the table as it was.
 
 ## Usage
 
@@ -20,7 +20,7 @@ invert_rows(fit, out, level, test, type)
 
 - out:
 
-  The table
+  The table that
   [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
   has built, already subset.
 
@@ -38,17 +38,17 @@ invert_rows(fit, out, level, test, type)
 
 ## Value
 
-`out` with its `lower` and `upper` columns replaced.
+`out`, in which the `lower` and `upper` columns are replaced.
 
 ## Details
 
-A row the restricted fit cannot hold keeps `NA` limits rather than the
-Wald ones it arrived with, so that one column never carries two
-different intervals.
+A row that the restricted fit cannot hold keeps `NA` limits rather than
+the Wald limits that it carried on arrival, so that one column never
+carries two different intervals.
 [`testable_coords()`](https://statmodels7.github.io/statmodels7/reference/testable_coords.md)
 determines which rows those are; if it names none of the rows of the
-table, the function signals an error, since a table of missing values
-alone is less informative than the reason.
+table, the function signals an error, since a table that consists only
+of missing values is less informative than the reason.
 
 ## See also
 

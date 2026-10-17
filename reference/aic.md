@@ -30,18 +30,18 @@ bic(hessian = c("observed", "expected"))
   number. Defaults to 2, which is Akaike's. `k = log(n)` by hand is
   `bic()`. A value that is not a single non-negative finite number is an
   error. `bic()` does not take it: its \\\kappa\\ is `NA` on the object
-  and resolved to \\\log n\\ when the model is fitted, the sample size
-  being unknown until then.
+  and is resolved to \\\log n\\ when the model is fitted, because the
+  sample size is unknown until then.
 
 - hessian:
 
-  Which information the criterion is built on, `"observed"` (the
-  default) or `"expected"`. Matched with
+  The information on which the criterion is built, `"observed"` (the
+  default) or `"expected"`. The argument is matched with
   [`match.arg()`](https://rdrr.io/r/base/match.arg.html). The exact
   gradient is available on either wherever the family writes its
   expected information out; the Hessian is exact on the observed one and
   is not available on the expected one, where the search uses an
-  optimizer that needs the gradient alone. A family that does not write
+  optimizer that needs only the gradient. A family that does not write
   it out would read the outer product of its scores at the data under
   the default `iwls(approx = "opg")`, and
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
@@ -74,8 +74,9 @@ criteria select it, and `bic()` is
 default `sparse_criterion`.
 
 For a smooth penalty both families apply. A marginal criterion selects
-the hyperparameter that makes the data most likely with the coefficients
-integrated out, and these select the one that predicts best.
+the hyperparameter that makes the data most likely after the
+coefficients are integrated out, and these select the one that predicts
+best.
 
 ## Exact derivatives
 
@@ -93,8 +94,8 @@ The gradient is exact with either information. The Hessian is exact with
 ## Which effective degrees of freedom
 
 The trace runs over the whole coefficient vector, so a term's
-contribution reads the full penalized information, its couplings with
-the other blocks included.
+contribution reads the full penalized information, including the term's
+couplings with the other blocks.
 [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
 reads each term's share from the diagonal block of the same full
 smoother matrix \\(H+S)^{-1}H\\, so the per-term numbers add up to
@@ -108,10 +109,10 @@ coefficients, the unbiased count of Zou, Hastie and Tibshirani (2007).
 
 Classical GCV divides a residual sum of squares by \\(n-\tau)^2\\, which
 estimates an unknown scale. Here every distribution parameter carries
-its own equation and nothing is profiled, so there is no unknown scale
-for that ratio to estimate and the criterion degenerates to `aic()`.
-That is the substitution Wood (2008) makes in the other direction when
-the scale is known.
+its own equation and the fit profiles no parameter, so there is no
+unknown scale for that ratio to estimate and the criterion degenerates
+to `aic()`. That is the substitution that Wood (2008) makes in the other
+direction when the scale is known.
 
 A GCV on the squared error of the fitted mean is a different and
 well-defined object. It would need the derivative of that mean in the

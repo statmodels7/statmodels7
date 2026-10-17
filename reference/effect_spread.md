@@ -1,10 +1,10 @@
 # The Predicted Random Effects of a Term, Summarized
 
-The six-number summary of
+Computes the six-number summary of
 [`base::summary()`](https://rdrr.io/r/base/summary.html) (minimum,
 quartiles, mean and maximum) of a random-effect term's predicted
-effects, one row per coordinate of the effect: the intercept, and each
-covariate of a random slope.
+effects, with one row per coordinate of the effect: the intercept, and
+each covariate of a random slope.
 
 ## Usage
 
@@ -32,9 +32,9 @@ grouping expression; `NULL` where the term carries no grouping.
 
 The coefficients of one group are adjacent in the block, so the
 predictions are read as a matrix with one row per level and one column
-per coordinate, the coordinates named as
+per coordinate, and the coordinates are named as
 [`modelterms7::term_group()`](https://statmodels7.github.io/modelterms7/reference/term_group.html)
 names them. A term with one level and several coordinates is a single
 draw of a vector, and its table has one row, the summary across the
-coordinates. The statistics are taken over the finite effects, an
-aliased effect being `NA`.
+coordinates. The statistics are taken over the finite effects, because
+an aliased effect is `NA`.

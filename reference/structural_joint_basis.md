@@ -1,9 +1,10 @@
-# The Subspace a Marginal Criterion Integrates Over, Jointly
+# The Joint Subspace over Which a Marginal Criterion Integrates
 
-The basis onto which
+Returns the basis onto which
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-projects the joint curvature: the coefficients' own range basis, with
-one column per penalized parameter of the structural term appended.
+projects the joint curvature: the coefficients' own range basis, to
+which one column per penalized parameter of the structural term is
+appended.
 
 ## Usage
 
@@ -48,5 +49,5 @@ It is written once because
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
 and
 [`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md)
-must project onto the same subspace, and two callers composing it
-separately would agree only by accident.
+must project onto the same subspace, and a separate composition in each
+of the two callers would agree only by accident.

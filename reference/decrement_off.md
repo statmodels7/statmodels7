@@ -1,7 +1,7 @@
 # The Decrement Over the Directions Orthogonal to Some Others
 
-The joint decrement over the coordinates `interior`, maximized over the
-steps that have no component along the directions `dirs` in the
+Computes the joint decrement over the coordinates `interior`, maximized
+over the steps that have no component along the directions `dirs` in the
 equilibrated coordinates.
 
 ## Usage

@@ -76,7 +76,7 @@ outer_fit(
 - hold_hyper:
 
   `TRUE` to hold the hyperparameters at `hyper` and search over the
-  criterion's own coefficients alone.
+  criterion's own coefficients only.
 
 ## Value
 

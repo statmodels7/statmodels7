@@ -29,5 +29,5 @@ statmod_hold(spec, coords, values)
 
 ## Value
 
-`spec` with `held_coef` set. The holds already present are kept for
-coefficients that `coords` does not name.
+`spec`, in which `held_coef` is set. The holds already present are kept
+for coefficients that `coords` does not name.

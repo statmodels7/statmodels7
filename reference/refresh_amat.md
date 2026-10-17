@@ -1,7 +1,8 @@
 # The Weight for Contracting a Refreshable Block
 
-\\A_a\[i,j\] = w_i\sum_b c\_{ab}(i)\\(X_b M\_{ab}^\top)\[i,j\]\\, the
-matrix with which a term's own derivative is paired.
+Computes \\A_a\[i,j\] = w_i\sum_b c\_{ab}(i)\\(X_b
+M\_{ab}^\top)\[i,j\]\\, the matrix with which a term's own derivative is
+paired.
 
 ## Usage
 

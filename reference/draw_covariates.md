@@ -21,7 +21,7 @@ draw_covariates(covariates, n, data)
 
 - data:
 
-  The frame to write into.
+  The frame into which the columns are written.
 
 ## Value
 

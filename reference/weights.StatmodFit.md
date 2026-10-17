@@ -1,6 +1,6 @@
 # The Prior Weights of a Fitted Model
 
-The weights each observation entered the likelihood with.
+Returns the weight with which each observation entered the likelihood.
 
 ## Usage
 
@@ -23,8 +23,9 @@ weights(object, ...)
 ## Value
 
 A numeric vector with one entry per row of the data, the prior weights
-as supplied. All ones when none were given. They enter as given and are
-never normalized, so a weight of two counts an observation twice.
+as supplied. The vector is all ones if no weights were given. The
+weights enter as given and are never normalized, so a weight of two
+counts an observation twice.
 
 ## Details
 

@@ -20,7 +20,7 @@ hyper(fit, scale = c("parameter", "link"))
 
 - scale:
 
-  `"parameter"` (the default) or `"link"`. Matched with
+  `"parameter"` (the default) or `"link"`. The argument is matched with
   [`match.arg()`](https://rdrr.io/r/base/match.arg.html).
 
 ## Value
@@ -29,7 +29,7 @@ A data frame with one row per hyperparameter and the columns:
 
 - `parameter`:
 
-  the distribution parameter whose equation the penalized term sits in.
+  the distribution parameter whose equation contains the penalized term.
   For a covariance class that spans several equations, the names of all
   of them, separated by commas.
 
@@ -57,8 +57,8 @@ A data frame with one row per hyperparameter and the columns:
 
   the sharing label, `NA` where the hyperparameter is not shared.
 
-A data frame of no rows, with those columns, where the model carries no
-penalty at all.
+The result is a data frame of no rows, with those columns, where the
+model carries no penalty at all.
 
 ## A hyperparameter is not a coefficient
 
@@ -104,8 +104,8 @@ The distinction matters for inference. A value chosen by
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
 whether by the outer search or along a path, is the argument of a
 minimum of a prediction-error criterion and not the root of the
-derivative of a likelihood, so no standard error follows from it. A
-value that
+derivative of a likelihood, so the value does not yield a standard
+error. A value that
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 estimated carries a standard error, computed from the curvature of that
@@ -141,19 +141,19 @@ set.seed(1)
 d <- data.frame(x = runif(80, 0, 1))
 d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 
-# Estimated by REML, which the source column records.
+# The hyperparameter is estimated by REML, which the source column records.
 fit <- statmod(y ~ s(x, bspline_smooth(k = 6)),
                distributions7::gaussian1_distrib(), d)
 hyper(fit)
 #>   parameter                        term   name estimate  held source   id
 #> 1        mu s(x, bspline_smooth(k = 6)) lambda 29.31279 FALSE   reml <NA>
 
-# The same value on the scale the outer search ran on.
+# The same value is shown on the scale on which the outer search ran.
 hyper(fit, scale = "link")
 #>   parameter                        term   name estimate  held source   id
 #> 1        mu s(x, bspline_smooth(k = 6)) lambda 3.378024 FALSE   reml <NA>
 
-# Held by the term instead, and reported as fixed.
+# Here the term holds the value instead, and it is reported as fixed.
 held <- statmod(y ~ s(x, bspline_smooth(k = 6), hyper = c(lambda = 2)),
                 distributions7::gaussian1_distrib(), d)
 hyper(held)[, c("name", "estimate", "held", "source")]

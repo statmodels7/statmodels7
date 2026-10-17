@@ -1,9 +1,11 @@
 # How Far Above Its Minimum an Inner Fit May Sit and Still Report a Resolution
 
-The limit that
+Returns the limit that
 [`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
 places on \\g'K^{-1}g/2\\, the decrease that the mode's own Newton
-correction predicts, above which no resolution is reported.
+correction predicts. Above this limit,
+[`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
+reports no resolution.
 
 ## Usage
 

@@ -9,7 +9,7 @@ line through their links; eta_to_hyper() puts a free vector back."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,8 +60,8 @@ and then by term.</p></dd>
 
 
 <dt id="arg-idx">idx<a class="anchor" aria-label="anchor" href="#arg-idx"></a></dt>
-<dd><p>The index, as <code><a href="outer_hyper_index.html">outer_hyper_index()</a></code> returns it, whose rows say
-which hyperparameters are on the search and whose <code>"links"</code> attribute
+<dd><p>The index, as <code><a href="outer_hyper_index.html">outer_hyper_index()</a></code> returns it, whose rows
+identify the hyperparameters on the search and whose <code>"links"</code> attribute
 gives the link that carries each.</p></dd>
 
 
@@ -73,18 +73,19 @@ gives the link that carries each.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>hyper_to_eta()</code> gives an unnamed numeric vector with one entry
 per row of <code>idx</code>. <code>eta_to_hyper()</code> gives the hyperparameter structure,
-with the estimated entries replaced and every other one as it was.</p>
+in which the estimated entries are replaced and every other entry is as
+it was.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The outer search runs on the free scale for the reason every other search
-in the toolkit does: a smoothing parameter is positive, and an optimizer
-that has no information about the domain can step outside it. The link of
-each hyperparameter is read from the <code>"links"</code> attribute of the index that
-<code><a href="outer_hyper_index.html">outer_hyper_index()</a></code> returns.</p>
+    <p>The outer search runs on the free scale for the reason that every other
+search in the toolkit does: a smoothing parameter is positive, and an
+optimizer that has no information about the domain can step outside it. The
+link of each hyperparameter is read from the <code>"links"</code> attribute of the
+index that <code><a href="outer_hyper_index.html">outer_hyper_index()</a></code> returns.</p>
 <p>The two are inverses over the estimated hyperparameters:
 <code>eta_to_hyper(hyper_to_eta(h, idx), idx, h)</code> returns <code>h</code>. The
-hyperparameters <code>idx</code> does not name are untouched by both.</p>
+hyperparameters that <code>idx</code> does not name are untouched by both.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

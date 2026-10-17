@@ -1,12 +1,12 @@
 # How the Mode Moves Where an Unpenalized Filter Moves With It
 
-The pieces that
+Computes the pieces that
 [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
 reads on the joint vector of coefficients and a filter's own parameters
-where no penalty covers those parameters: a solve with the joint
-penalized curvature, which is how the mode moves, and the derivative of
-every equation's predictor over that vector, which is what the
-determinant's movement is read along.
+when no penalty covers those parameters: a solve with the joint
+penalized curvature, which gives the movement of the mode, and the
+derivative of every equation's predictor over that vector, along which
+the movement of the determinant is read.
 
 ## Usage
 
@@ -63,16 +63,16 @@ condition in a hyperparameter gives \$\$(J + S)\\v =
 observed information of
 [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
 and \\S\\ the penalty's Hessian placed on the coefficients, the only
-coordinates it covers. A block that moves with its coefficients adds its
-own second derivative on those coordinates, as it does on the
+coordinates that it covers. A block that moves with its coefficients
+adds its own second derivative on those coordinates, as it does on the
 coefficient route.
 
-The rows are the static design of every equation, with the equation
-carrying the filter replaced by the forward Jacobian of the recursion,
-read from
+The rows are the static design of every equation, except that the
+equation carrying the filter is replaced by the forward Jacobian of the
+recursion, which is read from
 [`filter_curvature()`](https://statmodels7.github.io/statmodels7/reference/filter_curvature.md)
-at the same memo slot the joint information fills, so the recursion runs
-once at a point. A held level is dropped from both, exactly as the
+at the same memo slot that the joint information fills, so the recursion
+runs once at a point. A held level is dropped from both, exactly as the
 information drops it.
 
 ## See also

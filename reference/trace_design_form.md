@@ -1,7 +1,7 @@
 # The Trace Against a Contraction, Without Forming It
 
-\\\mathrm{tr}(M\\T)\\ where \\T\\ is the third derivative of the
-penalized objective contracted once, or the fourth contracted twice.
+Computes \\\mathrm{tr}(M\\T)\\ where \\T\\ is the third derivative of
+the penalized objective contracted once, or the fourth contracted twice.
 
 ## Usage
 
@@ -31,7 +31,7 @@ trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL, key = NULL)
 
 - tv:
 
-  The direction the derivative is contracted in.
+  The direction in which the derivative is contracted.
 
 - tu:
 

@@ -1,7 +1,7 @@
 # Which Coefficients a Singular Curvature Is Flat In
 
-The eigenvector of the smallest eigenvalue, reported as the coefficients
-that load on it.
+Returns a string that names the coefficients that load on the
+eigenvector of the smallest eigenvalue.
 
 ## Usage
 

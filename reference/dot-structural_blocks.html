@@ -11,7 +11,7 @@ direction, at two directions or without one."><meta property="og:image" content=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,8 +78,8 @@ direction, at two directions or without one.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A function of the direction – <code>NULL</code>, one vector, or a list
-of two – returning a <code>blocks</code> callback.</p>
+    <p>A function of the direction (<code>NULL</code>, one vector, or a list
+of two) returning a <code>blocks</code> callback.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -95,8 +95,8 @@ of the family.</p>
 instead, and carries three quantities more: <code>Q</code>, the fourth
 derivative with two of its indices on the filter's own equation;
 <code>P</code>, the FIFTH derivative contracted against both directions, which
-is the only place that order enters; and <code>cppp</code>, the scalar the
-level's own curvature moves by, which no contraction recovers.
+is the only place that order enters; and <code>cppp</code>, the scalar by which the
+level's own curvature moves, which a contraction cannot recover.
 <code>N</code> is then a list of two, one per direction.</p>
     </div>
 

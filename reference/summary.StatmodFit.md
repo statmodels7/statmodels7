@@ -1,10 +1,10 @@
 # Summarize a Fitted Model
 
-One coefficient table per distribution parameter, carrying the estimate,
-its standard error, the statistic of the test named by `test` (Wald's by
-default), its p-value and an interval, together with the degrees of
-freedom, the information criteria and the notes that qualify the
-numbers.
+Returns one coefficient table per distribution parameter, carrying the
+estimate, its standard error, the statistic of the test named by `test`
+(Wald's by default), its p-value and an interval, together with the
+degrees of freedom, the information criteria and the notes that qualify
+the numbers.
 
 ## Usage
 
@@ -46,7 +46,7 @@ summary(
 
 - expected:
 
-  Which information the standard errors are read from, passed to
+  The information from which the standard errors are computed, passed to
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
   `NULL`, the default, takes the expected one where the fit inverted it
   and the family writes it out, and the observed Hessian otherwise;
@@ -101,8 +101,8 @@ A
 
 ## Details
 
-**Each distribution parameter is read as blocks, not as one list of
-coefficients**, because most coefficients of a fitted model are not
+Each distribution parameter is read as blocks, not as one list of
+coefficients, because most coefficients of a fitted model are not
 quantities of interest in themselves. The blocks are
 
 - the parametric terms:
@@ -148,10 +148,9 @@ quantities of interest in themselves. The blocks are
   persistences, or the transition probabilities of a regime chain), with
   a level that an intercept holds marked as held.
 
-**A hyperparameter is the first row of its block**, since it governs
-every coefficient under it, and its name carries a mark in square
-brackets that gives the source of the value. A hyperparameter estimated
-by
+A hyperparameter is the first row of its block, since it governs every
+coefficient under it, and its name carries a mark in square brackets
+that gives the source of the value. A hyperparameter estimated by
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 maximizes a twice differentiable criterion, so it carries a standard
@@ -171,12 +170,12 @@ standard error. A smooth penalty under
 minimized over its free scale, and its row also has no standard error,
 because the criterion is not a likelihood. A hyperparameter that the
 term holds is marked fixed, and one that stayed at the starting value of
-its term because no outer criterion was run is marked start.
+its term because the outer criterion was not run is marked start.
 
-**The statistic column reports the test named by `test`.** By default it
-is Wald's, the estimate over its standard error, which is the only one
-of the four that needs no refit and is read from the unrestricted fit
-alone. The other three – the likelihood ratio, Rao's score and Terrell's
+The statistic column reports the test named by `test`. By default it is
+Wald's, the estimate over its standard error, which is the only one of
+the four that needs no refit and is read only from the unrestricted fit.
+The other three – the likelihood ratio, Rao's score and Terrell's
 gradient – hold the coefficient at the null value and refit, one refit
 per row, and are reported as the signed root of their \\\chi^2_1\\
 statistic with the sign of \\\hat\beta_j - b\\, so that the column
@@ -193,15 +192,15 @@ inverts the same test through its `test` argument, one coefficient at a
 time. A row for which the restricted fit is not defined – a coefficient
 under a kinked penalty, an aliased one, any coefficient of a model
 carrying a structural term – reports `NA` instead of the Wald value, so
-the column never carries two tests at once. Every other row is tested, a
-smooth's own coordinates and a random effect's among them, on the
+the column never carries two tests at once. Every other row is tested,
+including a smooth's own coordinates and a random effect's, on the
 penalized objective and with the reading described in
 [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md).
 A quantity of a break-point term that is one coefficient carries the
 restricted statistic of that coefficient; a quantity that combines
 several coefficients, and the position of a break-point, carry none.
 
-**The meaning of a Wald p-value depends on the row.** For an unpenalized
+The meaning of a Wald p-value depends on the row. For an unpenalized
 coefficient it is the ordinary p-value. For a coefficient in a penalized
 block it is conditional on the smoothing parameter, which was not
 estimated jointly with it, and it does not account for the shrinkage of
@@ -209,11 +208,11 @@ the estimate toward zero. For a coefficient that a kinked penalty
 selected, the row exists only because that coefficient survived the
 selection, and a naive interval there under-covers.
 
-**The degrees of freedom** are the effective ones, summed over the
-terms, so a penalized term counts the degrees of freedom that it uses
-instead of the number of its columns. The information criteria are built
-on that count: `aic` is \\-2\ell + 2\\\mathrm{df}\\ and `bic` replaces
-the factor 2 by the logarithm of the sum of the prior weights, which are
+The degrees of freedom are the effective ones, summed over the terms, so
+a penalized term counts the degrees of freedom that it uses instead of
+the number of its columns. The information criteria are built on that
+count: `aic` is \\-2\ell + 2\\\mathrm{df}\\ and `bic` replaces the
+factor 2 by the logarithm of the sum of the prior weights, which are
 frequency weights.
 
 ## Reading the foot
@@ -221,8 +220,8 @@ frequency weights.
 Below the criteria the summary describes the point at which the fit
 stopped with a few numbers from
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md).
-No verdict is printed. Each number is dimensionless, so it does not
-change with the units of a coefficient.
+The summary prints no verdict. Each number is dimensionless, so it does
+not change with the units of a coefficient.
 
 - `inner max |grad|/se`:
 
@@ -260,27 +259,27 @@ change with the units of a coefficient.
   optimum; above one a coefficient would improve the objective by
   leaving zero. A reading \\r\\ below one means that the coefficient
   with the largest ratio is held by the kink with a margin of \\1 - r\\;
-  with the other coefficients fixed it would leave zero at a \\\lambda\\
-  smaller by the factor \\r\\. Along a path the others move too, and the
-  threshold moves with them. The number is not a test of significance,
-  only a check on whether the zeros agree with the \\\lambda\\ of the
-  fit, and values close to one are ordinary where \\\lambda\\ was chosen
-  on a grid, the next coefficient to enter being close to its threshold
-  by construction.
+  if the other coefficients were fixed it would leave zero at a
+  \\\lambda\\ smaller by the factor \\r\\. Along a path the others move
+  too, and the threshold moves with them. The number is not a test of
+  significance, only a check on whether the zeros agree with the
+  \\\lambda\\ of the fit, and values close to one are ordinary where
+  \\\lambda\\ was chosen on a grid, because the next coefficient to
+  enter is close to its threshold by construction.
 
 - `outer max |grad|/se` and `min eigen`:
 
   the same two readings for the criterion that estimated the
-  hyperparameters, on the free scale their links define, printed only
-  where
+  hyperparameters, on the free scale that their links define, printed
+  only where
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   or
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   ran. The curvature is the negated Hessian of the criterion. A
-  hyperparameter that ran to the edge of its chart is left out, its
-  curvature collapsing with its gradient; where every one did the line
-  reads `not available: at a boundary`. A hyperparameter chosen along a
-  path has no gradient, and there is no outer line.
+  hyperparameter that ran to the edge of its chart is left out, because
+  its curvature collapses with its gradient; where every one did the
+  line reads `not available: at a boundary`. A hyperparameter chosen
+  along a path has no gradient, and there is no outer line.
 
 ## See also
 
@@ -323,7 +322,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.852571    effective df 4.00
 #> cAIC 119.705    cBIC 130.855
-#> fitted in 107 ms
+#> fitted in 110 ms
 #> inner   max |grad|/se 1.6e-15   min eigen 0.12
 #> outer   max |grad|/se 1.8e-14   min eigen 0.13
 ```

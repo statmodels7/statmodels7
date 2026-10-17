@@ -1,7 +1,7 @@
 # The Smallest Eigenvalue of a Sparse Factor's Matrix, Estimated
 
-\\1/\lVert A^{-1}\rVert_1\\ from a sparse Cholesky factor, the same
-quantity LAPACK's `dpocon` produces from a dense one.
+Returns \\1/\lVert A^{-1}\rVert_1\\ from a sparse Cholesky factor, which
+is the same quantity that LAPACK's `dpocon` produces from a dense one.
 
 ## Usage
 

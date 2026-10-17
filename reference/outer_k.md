@@ -1,11 +1,11 @@
 # The Price of One Degree of Freedom
 
-Returns \\\kappa\\, the price a prediction-error criterion charges for
-one effective degree of freedom, resolved against the sample size where
-the method left it open.
+Returns \\\kappa\\, the price that a prediction-error criterion charges
+for one effective degree of freedom, resolved against the sample size
+where the method left it open.
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
-stores `NA` and gets \\\log n\\ here; every other criterion returns the
-`k` it was constructed with.
+stores `NA`, which this function replaces by \\\log n\\; every other
+criterion returns the `k` with which it was constructed.
 
 ## Usage
 
@@ -34,7 +34,7 @@ and `method@k` for anything else, which is `NA_real_` for
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 and [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
-none of which charges per degree of freedom.
+and these three criteria charge nothing per degree of freedom.
 
 ## Details
 

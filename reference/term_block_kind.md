@@ -1,10 +1,10 @@
 # What Kind of Block a Term Reports As
 
-Which reading a term gets in a summary: a structural term's own
-parameters, the quantities of a break-point term, the coefficients of an
-unpenalized term, a smooth's linear part and smoothing parameter, a
-random effect's variance parameters, a selection's survivors, or the
-coefficients of another penalized term.
+Returns the reading that a term receives in a summary: a structural
+term's own parameters, the quantities of a break-point term, the
+coefficients of an unpenalized term, a smooth's linear part and
+smoothing parameter, a random effect's variance parameters, a
+selection's survivors, or the coefficients of another penalized term.
 
 ## Usage
 

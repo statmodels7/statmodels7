@@ -15,7 +15,7 @@ number as the maximum number of proposals that it tries."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,14 +75,14 @@ zero.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The number is set in the term. <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>
 and <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> each take <code>n_boot</code>, with a default of 10,
-because the objective of these terms has spurious local optima that the
-restarts search for. The restarts are run by this package, which can refit
-the model.</p>
-<p>A model with two break-point terms that set <code>n_boot</code> to 10 and to 25 gets
-25. The restart loop works on all of the terms together, since a proposal
-is a configuration of positions for every break-point term in the model,
-so the budget is a single number and the largest of the set values is
-used.</p>
+because the objective of these terms has spurious local optima, and the
+restarts search for a better one. The restarts are run by this package, which
+can refit the model.</p>
+<p>A model with two break-point terms that set <code>n_boot</code> to 10 and to 25 has a
+budget of 25. The restart loop works on all of the terms together, since a
+proposal is a configuration of positions for every break-point term in the
+model, so the budget is a single number and the largest of the set values
+is used.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

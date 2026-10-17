@@ -43,9 +43,9 @@ coord_centers(spec, design, p, obj, beta)
 
 ## Details
 
-The block is fitted with the other columns of its equation held, and the
-intercept is one of them. Where the columns are not centered, each
-change of a coefficient moves the mean of the fit, which only the
+The block is fitted while the other columns of its equation are held,
+and the intercept is one of them. Where the columns are not centered,
+each change of a coefficient moves the mean of the fit, which only the
 intercept can take back, and the intercept is updated in another block.
 The alternation between the two then converges at a rate set by how
 close each column is to the constant. Centering the columns removes this

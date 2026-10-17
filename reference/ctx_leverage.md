@@ -1,5 +1,6 @@
 # The Per-Observation Diagonals at the Context's Point
 
+Returns the result of
 [`block_leverage()`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md),
 computed once and read by the gradient's contraction and by every pair
 of the Hessian.
@@ -22,7 +23,7 @@ ctx_leverage(ctx, design, M, params, npar, offs, threads = 1L)
 
 - M:
 
-  The matrix the traces are taken against.
+  The matrix against which the traces are taken.
 
 - params, npar, offs:
 

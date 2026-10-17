@@ -1,7 +1,8 @@
-# The Number of Observations the Weights Count
+# The Number of Observations Counted by the Weights
 
-The sum of the prior weights, which are frequency weights: a weight of
-two counts the row twice. Without weights it is the number of rows.
+Returns the sum of the prior weights, which are frequency weights: a
+weight of two counts the row twice. Without weights it is the number of
+rows.
 
 ## Usage
 

@@ -6,7 +6,7 @@ term that is not smoothed, not developed and not marginal is moved to
 the minimum of the least-squares profile of its working response over
 every interval of the covariate
 ([`modelterms7::seg_polish_exact()`](https://statmodels7.github.io/modelterms7/reference/seg_polish_exact.html)),
-and the model is refitted from there with the positions free.
+and the model is refitted from there while the positions are free.
 
 ## Usage
 
@@ -31,7 +31,7 @@ statmod_settle_seg(
 
 - spec:
 
-  The specification, holds included.
+  The specification, including the holds.
 
 - design:
 
@@ -56,7 +56,7 @@ statmod_settle_seg(
 ## Value
 
 A list: `res`, the fit, and `moved`, `TRUE` where a polished position
-replaced the one the iteration reached.
+replaced the one that the iteration reached.
 
 ## Details
 

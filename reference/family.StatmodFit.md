@@ -1,6 +1,6 @@
-# The Distribution a Model Was Fitted With
+# The Distribution of a Fitted Model
 
-The distributions7 object, with its links.
+Returns the distributions7 object of the model, with its links.
 
 ## Usage
 
@@ -22,8 +22,8 @@ family(object, ...)
 
 ## Value
 
-The distributions7 distribution object the model was fitted with, links
-included. A binomial family fitted to a two-column response carries the
+The distributions7 distribution object used to fit the model, including
+its links. A binomial family fitted to a two-column response carries the
 row sums as its `size`, so in that case the object differs from the one
 supplied. Its `@params` property names the parameters and `@link_params`
 holds their links.

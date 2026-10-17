@@ -1,8 +1,8 @@
 # The Residuals of a Fitted Model
 
-One residual per observation, comparing the observation with the whole
-distribution that the model assigns to it and not with any single
-parameter of that distribution.
+Returns one residual per observation, which compares the observation
+with the whole distribution that the model assigns to it and not with
+any single parameter of that distribution.
 
 ## Usage
 
@@ -25,12 +25,13 @@ residuals(
 
 - type:
 
-  `"quantile"` (the default), `"pearson"` or `"response"`. Matched with
+  `"quantile"` (the default), `"pearson"` or `"response"`. The argument
+  is matched with
   [`match.arg()`](https://rdrr.io/r/base/match.arg.html).
 
 - seed:
 
-  An integer to seed the randomization with, or `NULL` for the ambient
+  An integer used to seed the randomization, or `NULL` for the ambient
   state. Read only where the distribution function jumps, so it changes
   nothing for a continuous family.
 
@@ -40,16 +41,17 @@ residuals(
 
 ## Value
 
-A numeric vector with one entry per row of the data. Standard normal
-under a correct model for `"quantile"`; approximately standardized for
-`"pearson"`; on the response's own scale for `"response"`.
+A numeric vector with one entry per row of the data. The residuals are
+standard normal under a correct model for `"quantile"`; approximately
+standardized for `"pearson"`; on the response's own scale for
+`"response"`.
 
 ## One residual per observation
 
 A residual measures whether an observation is consistent with the law
 that was given to its row, and that law is one object that carries every
 parameter at once. There is therefore one residual per observation,
-however many parameters the model develops over covariates.
+however many parameters that the model develops over covariates.
 
 A per-parameter quantity is a different object: the contribution
 \\\partial \ell_i / \partial \eta\_{ip}\\ identifies which equation an
@@ -75,17 +77,18 @@ The construction is randomized: \\u_i\\ is drawn uniformly on
 residual is again exactly standard normal under a correct model, but it
 is random, so that two calls give two answers.
 
-Where \\F(y_i)\\ exceeds one half the residual is read from the survival
-function, \\\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)\\ with \\1 - u_i\\
-computed as \\1 - F\\ directly, so a count far in the upper tail, where
-\\F\\ rounds to one, gets a finite residual. A family whose distribution
-function does not take `lower.tail` keeps the lower-tail reading.
+Where \\F(y_i)\\ exceeds one half, the residual is read from the
+survival function, \\\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)\\, and \\1 -
+u_i\\ is computed as \\1 - F\\ directly, so a count far in the upper
+tail, where \\F\\ rounds to one, has a finite residual. A family whose
+distribution function does not take `lower.tail` keeps the lower-tail
+reading.
 
-The randomization applies to every discrete family, and at the declared
-atoms alone to a mixed family such as the zero-adjusted wrapper of a
-continuous parent. `seed` makes a call reproducible without disturbing
-the caller's stream; left `NULL`, the ambient state is used and nothing
-is set.
+The randomization applies to every discrete family and, for a mixed
+family such as the zero-adjusted wrapper of a continuous parent, only at
+the declared atoms. `seed` makes a call reproducible without disturbing
+the stream of the caller. If `seed` is `NULL`, the ambient state is used
+and the seed is not set.
 
 ## Pearson and response residuals
 
@@ -106,7 +109,7 @@ Dunn, P. K. and Smyth, G. K. (1996). Randomized quantile residuals.
 [`fitted.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.md)
 and
 [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
-for the fitted parameters these are read against.
+for the fitted parameters against which these are read.
 
 ## Examples
 

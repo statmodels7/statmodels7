@@ -13,7 +13,7 @@ standard errors and intervals on request."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,10 +97,10 @@ with no rows signals an error.</p></dd>
 
 <dt id="arg-se">se<a class="anchor" aria-label="anchor" href="#arg-se"></a></dt>
 <dd><p><code>TRUE</code> to report the standard error and an interval as well.
-<code>FALSE</code> by default. A moment has no standard error, and <code>se = TRUE</code> with
-a moment signals an error. <code>interval = "group"</code> sets it to <code>TRUE</code>, and
-<code>interval = "prediction"</code> does not read it, its result carrying its own
-<code>se</code> column.</p></dd>
+The default is <code>FALSE</code>. A moment has no standard error, and <code>se = TRUE</code>
+with a moment signals an error. <code>interval = "group"</code> sets it to <code>TRUE</code>, and
+<code>interval = "prediction"</code> does not read it, because its result carries
+its own <code>se</code> column.</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
@@ -113,12 +113,13 @@ with <code>se = TRUE</code>, with <code>interval = "group"</code> and with
 <dt id="arg-random">random<a class="anchor" aria-label="anchor" href="#arg-random"></a></dt>
 <dd><p>How a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term is read:
 <code>"conditional"</code> (the default) with each group's own estimated effect, so
-a level the fit never saw signals an error; <code>"zero"</code> with every effect at
-zero, the typical group; <code>"marginal"</code> averaged over the prior that the fit
-estimated, the population average \(E_b[h^{-1}(\eta + z^\top b)]\).
-A single string applies to every such term; a character vector named by
-the terms' keys chooses term by term, the rest staying conditional. See
-the section on new groups.</p></dd>
+a level that is absent from the fitting data signals an error; <code>"zero"</code>
+with every effect at zero, the typical group; <code>"marginal"</code> averaged over
+the prior that the fit estimated, the population average
+\(E_b[h^{-1}(\eta + z^\top b)]\). A single string applies to every such
+term; a character vector named by the terms' keys sets the mode term by
+term, and the terms that it does not name stay conditional. See the section
+on new groups.</p></dd>
 
 
 <dt id="arg-interval">interval<a class="anchor" aria-label="anchor" href="#arg-interval"></a></dt>
@@ -127,20 +128,21 @@ the section on new groups.</p></dd>
 
 
 <dt id="arg-predictive">predictive<a class="anchor" aria-label="anchor" href="#arg-predictive"></a></dt>
-<dd><p>With <code>interval = "prediction"</code>, what the family is
-averaged over: <code>"averaged"</code> (the default), <code>"plugin"</code> or <code>"bootstrap"</code>.
+<dd><p>With <code>interval = "prediction"</code>, the quantities over
+which the family is averaged: <code>"averaged"</code> (the default), <code>"plugin"</code> or
+<code>"bootstrap"</code>.
 See the section on the predictive distribution.</p></dd>
 
 
 <dt id="arg-n-boot">n_boot<a class="anchor" aria-label="anchor" href="#arg-n-boot"></a></dt>
-<dd><p>The number of bootstrap replicas, <code>200</code> by default. Read only
-where <code>predictive = "bootstrap"</code>.</p></dd>
+<dd><p>The number of bootstrap replicas, <code>200</code> by default. It is
+read only where <code>predictive = "bootstrap"</code>.</p></dd>
 
 
 <dt id="arg-boot-refit">boot_refit<a class="anchor" aria-label="anchor" href="#arg-boot-refit"></a></dt>
 <dd><p><code>"coefficients"</code> (the default), refitting each replica
-at the fit's hyperparameters, or <code>"full"</code>, choosing them again. Read only
-where <code>predictive = "bootstrap"</code>.</p></dd>
+at the fit's hyperparameters, or <code>"full"</code>, choosing them again. It is
+read only where <code>predictive = "bootstrap"</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -151,8 +153,7 @@ also accounts for the estimated smoothing parameters. It is read where
 <code>interval = "prediction"</code> and <code>predictive = "averaged"</code>, and it signals an
 error elsewhere. Any other argument signals an error that names it. The
 unconditional variance differs most from the others in a band around a
-penalized term, since it is the fitted values that a smoothing
-parameter moves.</p></dd>
+penalized term, since a smoothing parameter moves the fitted values.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -173,23 +174,23 @@ predictor reads a coefficient that has no variance.</p>
     <div class="section level2">
     <h2 id="quantities-that-can-be-predicted">Quantities that can be predicted<a class="anchor" aria-label="anchor" href="#quantities-that-can-be-predicted"></a></h2>
     <p><code>what</code> takes</p><dl><dt>a parameter's name</dt>
-<dd><p><code>"mu"</code>, <code>"sigma"</code>, <code>"alpha"</code> –
-whatever the family calls them. Always available, whatever the family:
-a parameter is what the model fits, and it exists even where a moment
-does not.</p></dd>
+<dd><p><code>"mu"</code>, <code>"sigma"</code> or <code>"alpha"</code>, whatever the
+family calls them. A parameter is available for every family, because
+the model fits it, and it exists even where a moment does not.</p></dd>
 
 <dt>a moment's name</dt>
 <dd><p><code>"mean"</code>, <code>"variance"</code>, <code>"std_dev"</code>,
-<code>"skewness"</code>, <code>"kurtosis"</code>. Available where the family has one, and
-answering <code>NaN</code> or <code>NA</code> where it does not exist. A Cauchy's mean is
+<code>"skewness"</code>, <code>"kurtosis"</code>. A moment is available where the family has
+one, and the result is <code>NaN</code> or <code>NA</code> where the moment does not exist.
+A Cauchy's mean is
 <code>NaN</code>, which is the correct answer for it. A moment has no standard
 error. For a binomial fitted with <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind()</a></code>, a moment needs the
 number of trials of each row, so <code>newdata</code> has to carry the variables
-that the response is written with.</p></dd>
+with which the response is written.</p></dd>
 
 <dt><code>"parameter"</code></dt>
-<dd><p>every parameter at once, as a named list. The
-default.</p></dd>
+<dd><p>every parameter at once, as a named list. This is
+the default.</p></dd>
 
 <dt><code>"link"</code></dt>
 <dd><p>every linear predictor at once, before the inverse
@@ -197,7 +198,7 @@ link.</p></dd>
 
 <dt><code>"response"</code></dt>
 <dd><p>the response itself, with <code>interval = "prediction"</code>, which it requires: its median and the ends of an
-interval that a new observation falls in. See the section on
+interval in which a new observation falls. See the section on
 intervals.</p></dd>
 
 
@@ -215,7 +216,7 @@ order.</p>
     <div class="section level2">
     <h2 id="new-data">New data<a class="anchor" aria-label="anchor" href="#new-data"></a></h2>
     <p>New data is passed through each term's blueprint, so a factor keeps the
-levels and contrasts that it was fitted with, a spline its knots, and a
+levels and contrasts with which it was fitted, a spline its knots, and a
 basis its reparametrization. The new frame supplies the values at which the
 terms are evaluated and does not change how they are built. Offsets are
 evaluated again at the new rows.</p>
@@ -233,16 +234,16 @@ has reached, so new rows without the response continue the series instead
 of being read on their own. Each row is placed by its own time within its
 own group, and must come after every observed time of that group. A row
 that falls inside the observed series is rejected, since there the response
-is known and the filter has to be run, not continued. A group that the fit
-never saw is rejected as well, and a term built without <code>time</code> cannot be
-continued, because the place of a row in the series is then its position in
-the data frame.</p>
+is known and the filter has to be run, not continued. A group that is
+absent from the fitting data is rejected as well, and a term built without
+<code>time</code> cannot be continued, because the place of a row in the series is
+then its position in the data frame.</p>
 <p>New rows that carry the response are a series of their own: the
 structural term is rebuilt on them with the fitted parameters, and they
-are read as the fitting rows are, standard errors included. With the
-fitting data as <code>newdata</code> the result is <code>predict(fit)</code>'s; this holds for a
-<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code> term as well, whose prediction is the
-posterior-weighted predictor. A frame that carries the response on some
+are read as the fitting rows are, including the standard errors. If the
+fitting data are passed as <code>newdata</code>, the result is that of <code>predict(fit)</code>;
+this holds for a <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code> term as well, whose prediction is
+the posterior-weighted predictor. A frame that carries the response on some
 rows only is rejected. A <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code> term cannot be continued
 past the series, since what it reports at an observed row is a posterior
 over states.</p>
@@ -252,9 +253,10 @@ deterministic recursion and involves no simulation.</p>
     </div>
     <div class="section level2">
     <h2 id="a-new-group-and-the-typical-one">A new group, and the typical one<a class="anchor" aria-label="anchor" href="#a-new-group-and-the-typical-one"></a></h2>
-    <p>A random-effect term predicts a group that the fit saw with that group's
-estimated effect. A group that it never saw has none, and <code>random</code>
-determines what is put in its place. <code>"zero"</code> sets every effect of the
+    <p>A random-effect term predicts a group that is present in the fitting data
+with that group's estimated effect. A group that is absent from the
+fitting data has none, and what is put in
+its place depends on <code>random</code>. <code>"zero"</code> sets every effect of the
 term to zero, at every row, which is the prediction for the typical group
 (lme4's and glmmTMB's <code>re.form = NA</code>). <code>"marginal"</code> averages over the prior
 instead,
@@ -298,16 +300,16 @@ at the nodes. The standard error of a marginal parameter is the delta method of
 that average, whose gradient sums the design at each node, and its
 interval is the delta method's on the link scale carried through the
 link. <code>interval = "group"</code> and <code>"prediction"</code> are not available for such
-an effect, and neither is a standard error where effects of both kinds
-are averaged over.</p>
+an effect, and a standard error is not available where an average is taken
+over effects of both kinds.</p>
     </div>
     <div class="section level2">
     <h2 id="three-intervals">Three intervals<a class="anchor" aria-label="anchor" href="#three-intervals"></a></h2>
     <p>The value of <code>interval</code> selects the uncertainty that the interval describes.</p><dl><dt><code>"confidence"</code></dt>
-<dd><p>the default, with <code>se = TRUE</code>: the uncertainty of
-the estimates alone. For a term set aside by <code>random</code> it is the
-interval of the typical group's value, which a new group's value
-falls outside of far more often than the level implies.</p></dd>
+<dd><p>the default, with <code>se = TRUE</code>: only the uncertainty
+of the estimates. For a term set aside by <code>random</code> it is the
+interval of the typical group's value, and the value of a new group
+falls outside that interval far more often than the level implies.</p></dd>
 
 <dt><code>"group"</code></dt>
 <dd><p>the interval of a new group's parameter, with <code>random = "zero"</code> or <code>"marginal"</code>. A new group's parameter is
@@ -317,14 +319,16 @@ effects of a new group drawn from the prior, in the parameter's own
 equation, so a random effect on <code>sigma</code> widens the interval for
 <code>sigma</code>. Under Gaussian priors the variance of \(\eta^*\) is
 \(se^2 + z^\top \Sigma_b z\), the standard error that glmmTMB
-reports at a new level on the link scale. The interval's ends are quantiles of
+reports at a new level on the link scale. The interval's ends are
+quantiles of
 \(\eta^*\) carried through the inverse link, which is monotone, so
 they are the quantiles of \(\theta^*\) under any link; under a prior
 that is not Gaussian they are the quantiles of the mixture of
 <code><a href="predictive_mixture.html">predictive_mixture()</a></code>. Where the interval of \(\eta^*\) leaves
 the domain of the link (a square root link and a negative predictor),
 the ends are <code>NA</code> at that row, with a warning. The standard error is
-the standard deviation of \(\theta^*\), not the delta method, and is <code>NA</code> where it is not
+the standard deviation of \(\theta^*\), not the delta method, and is
+<code>NA</code> where it is not
 known to exist (see <code><a href="group_interval.html">group_interval()</a></code>). The fit is the typical
 group's value under <code>random = "zero"</code> and the population average
 under <code>"marginal"</code>. Implies <code>se = TRUE</code>.</p></dd>
@@ -332,16 +336,17 @@ under <code>"marginal"</code>. Implies <code>se = TRUE</code>.</p></dd>
 <dt><code>"prediction"</code></dt>
 <dd><p>an interval for a new observation of the response,
 with <code>what = "response"</code>. The family is averaged over the predictors of
-every parameter, taken jointly Gaussian – correlated across equations
-where a label ties them – and the interval's ends are quantiles of that
-average and the fit is its median, which every family has, so no
-location parameter is needed; <code>se</code> is the standard deviation of the
-average, <code>NA</code> where the family's variance does not exist. For a
-discrete family the ends are values of the support, so the coverage is
-at least the level rather than equal to it. Effects read
-<code>"conditional"</code> enter with their own estimates, so this is also the
-interval of a new observation of a group the fit saw. What the average
-is over is <code>predictive</code>, below.</p></dd>
+every parameter, which are taken to be jointly Gaussian (correlated
+across equations where a label ties them). The interval's ends are
+quantiles of that average, and the fit is its median, which every
+family has, so the family does not need a location parameter. <code>se</code> is
+the standard deviation of the average, and is <code>NA</code> where the family's
+variance does not exist. For a discrete family the ends are values of
+the support, so the coverage is at least the level rather than equal
+to it. Effects read <code>"conditional"</code> enter with their own estimates, so
+this is also the interval of a new observation of a group that is
+present in the fitting data. The quantities over which the average is
+taken are set by <code>predictive</code>, described below.</p></dd>
 
 
 </dl><p><code>interval = "group"</code> and <code>interval = "prediction"</code> are rejected for a
@@ -355,9 +360,9 @@ move the recursion as well.</p>
     <p>A new observation varies for three reasons: the family itself, the effects
 of a new group where <code>random</code> sets them aside, and the error in the
 estimates. The first two are random in the model and always enter. The
-third is what <code>predictive</code> decides. It does so for every parameter alike,
-whether the family has one parameter (a Poisson) or several, and whether or
-not a parameter has covariates.</p><dl><dt><code>"averaged"</code></dt>
+third enters according to <code>predictive</code>, for every parameter alike, whether
+the family has one parameter (a Poisson) or several, and whether or not a
+parameter has covariates.</p><dl><dt><code>"averaged"</code></dt>
 <dd><p>the default. The family is averaged over the
 predictors at the fit's estimates with the covariance of the estimates
 from <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> plus the covariance that the effects add.
@@ -366,22 +371,23 @@ predictive distribution of Harris (1989): the estimates are averaged
 over their approximate sampling distribution, centered at the fit. For
 a Gaussian with a constant \(\sigma = e^{\gamma_0}\),
 \(\hat\gamma_0\) of variance \(v\), the variance of a new observation is
-\(\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}\), the
-last term being the average of \(\hat\sigma^{*2}\) over that
+\(\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}\), where
+the last term is the average of \(\hat\sigma^{*2}\) over that
 distribution.</p></dd>
 
 <dt><code>"plugin"</code></dt>
-<dd><p>the family at the estimates, averaged over the effects
-alone: the estimative interval, which ignores the error in the
+<dd><p>the family at the estimates, averaged only over the
+effects: the estimative interval, which ignores the error in the
 estimates and so covers less than the level in a small sample.</p></dd>
 
 <dt><code>"bootstrap"</code></dt>
 <dd><p>the parametric bootstrap predictive distribution
-itself: <code>n_boot</code> responses simulated from the fit, with the random
-effects drawn afresh, each refitted, and the family at each refit
-averaged over the effects. <code>boot_refit = "coefficients"</code> refits at the
-fit's hyperparameters; <code>"full"</code> chooses them again on every replica, so
-their uncertainty enters too, at the cost of a whole fit each. It is
+itself: <code>n_boot</code> responses are simulated from the fit with the random
+effects drawn afresh, each response is refitted, and the family at each
+refit is averaged over the effects. <code>boot_refit = "coefficients"</code>
+refits at the fit's hyperparameters; <code>"full"</code> chooses them again on
+every replica, so their uncertainty enters too, at the cost of a whole
+fit each. It is
 rejected for a model with a block that moves with its coefficients
 (<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>,
 <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>), for a response that is not one number per
@@ -402,8 +408,8 @@ quantile nodes, which do not depend on the seed; and any other combination
 of priors by Monte Carlo, which does (see <code><a href="predictive_mixture.html">predictive_mixture()</a></code>). A term
 that shares a label with an effect read with its own estimate, or with one
 written inside a subformula, is rejected.</p>
-<p>A forecast's standard error, with <code>se = TRUE</code>, is the uncertainty of the
-estimated parameters alone, carried by the delta method through the
+<p>A forecast's standard error, with <code>se = TRUE</code>, is only the uncertainty of
+the estimated parameters, carried by the delta method through the
 continued recursion, whose derivative is exact. A forecast also carries
 the uncertainty of the future scores, which the delta method does not
 reach, so the standard error and the interval leave it out, and a warning
@@ -418,7 +424,8 @@ families. <em>Biometrika</em>, 76, 675–684.</p>
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="fitted.StatmodFit.html">fitted.StatmodFit()</a></code> for one parameter's fitted values,
 <code><a href="residuals.StatmodFit.html">residuals.StatmodFit()</a></code> for the matched diagnostic,
-<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> for the variance the standard errors come from.</p></div>
+<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> for the variance from which the standard errors are
+computed.</p></div>
     </div>
 
     <div class="section level2">
@@ -428,24 +435,24 @@ families. <em>Biometrika</em>, 76, 675–684.</p>
 <span class="r-in"><span><span class="va">dd</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">dd</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, sd <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">|</span> <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># One parameter, and one of the family's moments.</span></span></span>
+<span class="r-in"><span><span class="co"># One parameter and one of the family's moments are predicted.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.598797 1.804267 2.191116 2.837415 1.475789 2.818493</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"variance"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.16546123 0.14306587 0.10879810 0.06885779 0.18051281 0.06978618</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># A parameter's predictor instead of its value.</span></span></span>
+<span class="r-in"><span><span class="co"># The predictor of a parameter is returned instead of its value.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"link:sigma"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] -0.8995092 -0.9722251 -1.1091307 -1.3378560 -0.8559768 -1.3311596</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># For a Gaussian the mean is mu and the variance is sigma squared, which</span></span></span>
-<span class="r-in"><span><span class="co"># is what the moments come to.</span></span></span>
+<span class="r-in"><span><span class="co"># For a Gaussian the mean is mu and the variance is sigma squared, and the</span></span></span>
+<span class="r-in"><span><span class="co"># moments of the fit return these values.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mean"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"variance"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"sigma"</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># With an interval.</span></span></span>
+<span class="r-in"><span><span class="co"># The result carries an interval as well.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu"</span>, se <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        fit         se    lower    upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 1.598797 0.07204781 1.457586 1.740008</span>
@@ -455,13 +462,14 @@ families. <em>Biometrika</em>, 76, 675–684.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 1.475789 0.08102934 1.316975 1.634604</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 2.818493 0.06586368 2.689403 2.947584</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Every parameter at once, on either scale.</span></span></span>
+<span class="r-in"><span><span class="co"># Every parameter is returned at once, on either scale.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"parameter"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ mu   : num [1:60] 1.6 1.8 2.19 2.84 1.48 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ sigma: num [1:60] 0.407 0.378 0.33 0.262 0.425 ...</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># A new group: the typical one, and the population average.</span></span></span>
+<span class="r-in"><span><span class="co"># For a new group, the prediction is the typical one or the population</span></span></span>
+<span class="r-in"><span><span class="co"># average.</span></span></span>
 <span class="r-in"><span><span class="va">gg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, each <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">gg</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">0.5</span> <span class="op">+</span> <span class="fl">0.3</span> <span class="op">*</span> <span class="va">gg</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">12</span>, sd <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span><span class="op">[</span><span class="va">gg</span><span class="op">$</span><span class="va">g</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -473,7 +481,8 @@ families. <em>Biometrika</em>, 76, 675–684.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fg</span>, <span class="st">"mu"</span>, <span class="va">new</span>, random <span class="op">=</span> <span class="st">"marginal"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.786905</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># The interval of a new group's mean, and of a new count from it.</span></span></span>
+<span class="r-in"><span><span class="co"># The calls return the interval of a new group's mean and of a new count</span></span></span>
+<span class="r-in"><span><span class="co"># from it.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fg</span>, <span class="st">"mu"</span>, <span class="va">new</span>, random <span class="op">=</span> <span class="st">"zero"</span>, interval <span class="op">=</span> <span class="st">"group"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        fit        se     lower    upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 1.593882 0.9711082 0.5944571 4.273577</span>

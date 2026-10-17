@@ -13,7 +13,7 @@ net's \(\alpha\) all appear here."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,15 +63,15 @@ net's \(\alpha\) all appear here.</p>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p><code>"parameter"</code> (the default) or <code>"link"</code>. Matched with
-<code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>.</p></dd>
+<dd><p><code>"parameter"</code> (the default) or <code>"link"</code>. The argument is
+matched with <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with one row per hyperparameter and the columns:</p><dl><dt><code>parameter</code></dt>
-<dd><p>the distribution parameter whose equation the
-penalized term sits in. For a covariance class that spans several
+<dd><p>the distribution parameter whose equation contains
+the penalized term. For a covariance class that spans several
 equations, the names of all of them, separated by commas.</p></dd>
 
 <dt><code>term</code></dt>
@@ -94,8 +94,8 @@ equations, the names of all of them, separated by commas.</p></dd>
 shared.</p></dd>
 
 
-</dl><p>A data frame of no rows, with those columns, where the model carries no
-penalty at all.</p>
+</dl><p>The result is a data frame of no rows, with those columns, where the
+model carries no penalty at all.</p>
     </div>
     <div class="section level2">
     <h2 id="a-hyperparameter-is-not-a-coefficient">A hyperparameter is not a coefficient<a class="anchor" aria-label="anchor" href="#a-hyperparameter-is-not-a-coefficient"></a></h2>
@@ -130,9 +130,9 @@ value of its term.</p></li>
 </ul><p>The distinction matters for inference. A value chosen by <code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code>
 or <code><a href="cv.html">cv()</a></code>, whether by the outer search or along a path, is the argument of
 a minimum of a prediction-error criterion and not the root of the
-derivative of a likelihood, so no standard error follows from it. A value
-that <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> estimated carries a standard error, computed from
-the curvature of that criterion, and <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> prints it.</p>
+derivative of a likelihood, so the value does not yield a standard error.
+A value that <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> estimated carries a standard error, computed
+from the curvature of that criterion, and <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> prints it.</p>
     </div>
     <div class="section level2">
     <h2 id="why-two-rows-may-carry-the-same-number">Why two rows may carry the same number<a class="anchor" aria-label="anchor" href="#why-two-rows-may-carry-the-same-number"></a></h2>
@@ -157,19 +157,19 @@ errors, <code><a href="statmod_held.html">statmod_held()</a></code> for which ar
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">d</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fl">3</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">0</span>, <span class="fl">0.3</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Estimated by REML, which the source column records.</span></span></span>
+<span class="r-in"><span><span class="co"># The hyperparameter is estimated by REML, which the source column records.</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, <span class="fu">bspline_smooth</span><span class="op">(</span>k <span class="op">=</span> <span class="fl">6</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>               <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">d</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hyper</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameter                        term   name estimate  held source   id</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu s(x, bspline_smooth(k = 6)) lambda 29.31279 FALSE   reml &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># The same value on the scale the outer search ran on.</span></span></span>
+<span class="r-in"><span><span class="co"># The same value is shown on the scale on which the outer search ran.</span></span></span>
 <span class="r-in"><span><span class="fu">hyper</span><span class="op">(</span><span class="va">fit</span>, scale <span class="op">=</span> <span class="st">"link"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameter                        term   name estimate  held source   id</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu s(x, bspline_smooth(k = 6)) lambda 3.378024 FALSE   reml &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Held by the term instead, and reported as fixed.</span></span></span>
+<span class="r-in"><span><span class="co"># Here the term holds the value instead, and it is reported as fixed.</span></span></span>
 <span class="r-in"><span><span class="va">held</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, <span class="fu">bspline_smooth</span><span class="op">(</span>k <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>, hyper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">d</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hyper</span><span class="op">(</span><span class="va">held</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"estimate"</span>, <span class="st">"held"</span>, <span class="st">"source"</span><span class="op">)</span><span class="op">]</span></span></span>

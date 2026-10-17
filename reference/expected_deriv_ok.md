@@ -1,6 +1,6 @@
 # Does the Family Supply the Expected Information's Derivative?
 
-Whether
+Determines whether
 [`distributions7::distrib_dexpected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html)
 returns a value for this family. The generic is called once, at a probe
 value, and the result is not inferred from the family's class.

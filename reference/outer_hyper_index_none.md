@@ -1,9 +1,9 @@
 # The Outer Index With No Hyperparameter
 
-The empty index
+Returns the empty index that
 [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
-returns where nothing is estimated, with the same columns and attributes
-as a full one.
+returns where no hyperparameter is estimated, with the same columns and
+attributes as a full one.
 
 ## Usage
 

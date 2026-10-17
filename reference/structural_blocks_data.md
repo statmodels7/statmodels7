@@ -1,13 +1,14 @@
 # The Same Pieces as Data for the Compiled Recursion
 
-The quantities that the callback of
+Lays out the quantities that the callback of
 [`.structural_blocks()`](https://statmodels7.github.io/statmodels7/reference/dot-structural_blocks.md)
-reads, laid out as matrices so that the compiled routes of `modelterms7`
-can read them without calling back into R: the mixed second derivatives
-one column per distribution parameter (the filter's own column zero, the
-loop skips it), the third derivatives one column per parameter pair with
-pair \\(r, r_2)\\ at column \\(r-1)\\n_p + r_2\\, the static jacobian
-rows densified, and the filter's parameter index.
+reads as matrices, so that the compiled routes of `modelterms7` can read
+them without calling back into R. The mixed second derivatives have one
+column per distribution parameter (the filter's own column is zero and
+the loop skips it). The third derivatives have one column per parameter
+pair, and the pair \\(r, r_2)\\ is at column \\(r-1)\\n_p + r_2\\. The
+static jacobian rows are densified, and the filter's parameter index is
+included.
 
 ## Usage
 

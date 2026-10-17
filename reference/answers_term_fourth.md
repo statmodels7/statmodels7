@@ -1,8 +1,11 @@
 # Does a Term Supply Its Fourth Derivative?
 
-[`answers_term_third()`](https://statmodels7.github.io/statmodels7/reference/answers_term_third.md)'s
-question one order up, and read the same way: from the class the method
-is registered on, never from a list of class names.
+Determines whether the term implements
+[`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html),
+which is the question of
+[`answers_term_third()`](https://statmodels7.github.io/statmodels7/reference/answers_term_third.md)
+one order up, and reads it the same way: from the class on which the
+method is registered, never from a list of class names.
 
 ## Usage
 

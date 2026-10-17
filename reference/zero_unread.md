@@ -19,4 +19,4 @@ zero_unread(V)
 
 ## Value
 
-`V` with those rows and columns set to zero.
+`V`, in which those rows and columns are set to zero.

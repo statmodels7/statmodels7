@@ -1,8 +1,8 @@
 # The Rows of a Block Formatted for Printing
 
-The six numeric columns of a summary table rendered as strings, with the
-cells that have no number for a hyperparameter row left empty and the
-name of each such row carrying the origin of its value.
+Renders the six numeric columns of a summary table as strings. The cells
+that have no number for a hyperparameter row are left empty, and the
+name of each such row carries the origin of its value.
 
 ## Usage
 
@@ -22,7 +22,7 @@ format_block_cells(tb, digits = 4L, stat = "z")
 
 - stat:
 
-  What to head the statistic column with.
+  The label at the head of the statistic column.
 
 ## Value
 
@@ -33,8 +33,8 @@ row labels.
 
 A hyperparameter row prints numbers where there are any: one estimated
 by a marginal criterion carries a standard error and an interval. Where
-there is none the columns are blank. What put the value there goes in
-the name of every hyperparameter row, in square brackets (the role
+there is none the columns are blank. The name of every hyperparameter
+row carries, in square brackets, the origin of its value (the role
 `"fixed"` or the criterion that chose the value).
 
 The whole block is formatted in one call, its own rows and every

@@ -1,8 +1,8 @@
 # The Coordinates of a Term's Own Covariance
 
-The within-group column names of a random-effect term, which are what
-the coordinates of its own multivariate prior are, or nothing for a term
-that has no grouping.
+Returns the within-group column names of a random-effect term, which are
+the coordinates of its own multivariate prior, or an empty vector for a
+term that has no grouping.
 
 ## Usage
 
@@ -30,7 +30,7 @@ A character vector, possibly empty.
 Where the prior covers some of the within-group columns and not all of
 them, as the null-space prior of a smooth random effect does, `ii` gives
 the entry's positions in the block and the labels are those of the
-columns it covers, in the order of the block.
+columns that it covers, in the order of the block.
 
 ## See also
 

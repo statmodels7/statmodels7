@@ -1,6 +1,6 @@
 # The Predictive Mixture Over a New Group's Effects
 
-The components
+Returns the components that
 [`predictive_response()`](https://statmodels7.github.io/statmodels7/reference/predictive_response.md)
 reads for one set of estimates: the predictors' mean `eta` and the
 covariance `C0` of their estimation error, widened by the effects of a
@@ -81,9 +81,9 @@ or multivariate over a group, is a scale mixture of Gaussians, \$\$b
 ([`gamma_nodes()`](https://statmodels7.github.io/statmodels7/reference/gamma_nodes.md)),
 each with the Gaussian covariance \\z^\top\Sigma z/w\\ and the node's
 weight; two such terms give the product of the two rules. One univariate
-prior of another family (a logistic, a Laplace, a Cauchy), when no
-Student t term is set aside as well, gives one component per quantile
-node, \\b_k = Q((k - 1/2)/K)\\ with \\K = 1000\\
+prior of another family (a logistic, a Laplace, a Cauchy), when the
+terms set aside with it carry no Student t prior, gives one component
+per quantile node, \\b_k = Q((k - 1/2)/K)\\ with \\K = 1000\\
 ([`group_quantile_nodes()`](https://statmodels7.github.io/statmodels7/reference/group_quantile_nodes.md)),
 so the result does not depend on the random seed. Any other prior
 (several such terms, a Student t term beside such a term, a prior over
