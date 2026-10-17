@@ -1,7 +1,8 @@
-# The Values a Caller Wrote Out
+# The Values That a Caller Wrote Out
 
-The grid the term named, ordered from the emptiest fit towards the
-fullest so that the warm starts run the way every other path here runs.
+Returns the grid that the term named, ordered from the emptiest fit
+towards the fullest so that the warm starts run in the same direction as
+in every other path here.
 
 ## Usage
 
@@ -39,9 +40,9 @@ Laplace prior written by its scale narrows with \\\sigma\\. The order is
 therefore taken from the sign of the exponent that
 [`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)
 reads, descending where the kink widens with the hyperparameter and
-ascending otherwise. No other rule is applied: the value that empties
-the block does not cap the grid and `min_ratio` does not extend it, both
-of those being ways to build a grid.
+ascending otherwise. The function applies no other rule: the value that
+empties the block does not cap the grid, `min_ratio` does not extend it,
+and both of those are ways to build a grid.
 
 ## See also
 

@@ -1,9 +1,8 @@
-# Reject a Quantity That Needs Trials the Rows Lack
+# Reject a Quantity That Needs Trials That the Rows Lack
 
-Signals an error where the family's numbers of trials are missing, which
-is what
+Signals an error where the family's numbers of trials are missing, as
 [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
-leaves when a prediction is made at rows with no response.
+leaves them when a prediction is made at rows with no response.
 
 ## Usage
 

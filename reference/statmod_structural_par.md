@@ -1,8 +1,8 @@
 # The Structural Terms' Estimated Parameters
 
-One named vector per structural term, on the scale that the term's own
-documentation uses for its parameters, together with the unconstrained
-values that were estimated.
+Returns one named vector per structural term, on the scale that the
+term's own documentation uses for its parameters, together with the
+unconstrained values that were estimated.
 
 ## Usage
 
@@ -27,7 +27,7 @@ A named list, one entry per structural term, each a list with
 `parameter` (the named vector on the parameter scale), `unconstrained`,
 `equation` (the distribution parameter in which the term sits) and
 `held` (the names of the parameters that an intercept of the equation
-carries). Empty when there is none.
+carries). The list is empty when the model has no such term.
 
 ## See also
 

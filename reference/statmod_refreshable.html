@@ -17,7 +17,7 @@ time."><meta property="og:image" content="https://statmodels7.github.io/statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,26 +71,26 @@ equation.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with one element per refreshable term, in the order the
-design holds them: equations in the family's parameter order, and terms
-within an equation in the order they were written. Each element is a
-list of two:</p><dl><dt><code>param</code></dt>
-<dd><p>the distribution parameter whose equation the term sits
-in, a string.</p></dd>
+    <p>A list with one element per refreshable term, in the order in which
+the design holds them: equations in the family's parameter order, and
+terms within an equation in the order in which they were written. Each
+element is a list of two:</p><dl><dt><code>param</code></dt>
+<dd><p>the distribution parameter in whose equation the term
+sits, a string.</p></dd>
 
 <dt><code>term</code></dt>
 <dd><p>the name of the term within that equation, a string
 (for example <code>"seg(x)"</code>).</p></dd>
 
 
-</dl><p>An empty list when no term refreshes, which is the common case.</p>
+</dl><p>The list is empty when no term refreshes, which is the common case.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Membership is decided by testing whether the term registers a
-<code>term_refresh()</code> method of its own, which is <code><a href="refreshes_own_block.html">refreshes_own_block()</a></code>. The
-base method on <code>model_term</code> is the identity, so a term written later is
-covered without an edit here.</p>
+    <p>Membership is determined by <code><a href="refreshes_own_block.html">refreshes_own_block()</a></code>, which tests whether
+the term registers a <code>term_refresh()</code> method of its own. The base method
+on <code>model_term</code> is the identity, so a term written later is covered without
+an edit here.</p>
 <p>The design stores this list, and every other function in the file walks
 it. When it is empty, a model of ordinary terms incurs no cost from the
 refresh machinery.</p>

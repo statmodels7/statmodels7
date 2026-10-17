@@ -1,6 +1,7 @@
 # Invert the Size of the Kink Through a Power Law
 
-The value giving each target size, checked against the size it produces.
+Returns, for each target size, the value that gives it, checked against
+the size that the value produces.
 
 ## Usage
 
@@ -24,7 +25,7 @@ kink_by_power(pen, theta, name, target, pw)
 
 - target:
 
-  The sizes the kink should have.
+  The sizes that the kink should have.
 
 - pw:
 
@@ -34,8 +35,8 @@ kink_by_power(pen, theta, name, target, pw)
 
 ## Value
 
-A numeric vector as long as `target`, `NA` where the power law did not
-answer.
+A numeric vector as long as `target`, `NA` where the power law gives no
+value.
 
 ## Details
 

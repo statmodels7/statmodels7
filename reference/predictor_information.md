@@ -1,8 +1,9 @@
 # The Expected Information of Each Predictor at the Intercept-Only Fit
 
-For each distribution parameter, the mean over the observations of the
-expected information of its linear predictor, \\-\mathrm{E}\[\partial^2
-\ell / \partial \eta^2\]\\, at the parameters of the intercept-only fit.
+Computes, for each distribution parameter, the mean over the
+observations of the expected information of its linear predictor,
+\\-\mathrm{E}\[\partial^2 \ell / \partial \eta^2\]\\, at the parameters
+of the intercept-only fit.
 
 ## Usage
 

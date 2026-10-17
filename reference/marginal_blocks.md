@@ -1,6 +1,6 @@
 # The Pieces of the Block Variance Over the Estimated Coefficients
 
-The quantities that
+Returns the quantities that
 [`marginal_vcov()`](https://statmodels7.github.io/statmodels7/reference/marginal_vcov.md)
 and
 [`marginal_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/marginal_edf_correction.md)
@@ -19,7 +19,7 @@ marginal_blocks(mc, coef, hyper, method, A, keep, full = TRUE)
 
 - mc:
 
-  The list
+  The list that
   [`fit_marginal_context()`](https://statmodels7.github.io/statmodels7/reference/fit_marginal_context.md)
   returns.
 
@@ -31,7 +31,7 @@ marginal_blocks(mc, coef, hyper, method, A, keep, full = TRUE)
 
   The
   [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-  the fit ran.
+  that the fit ran.
 
 - A:
 

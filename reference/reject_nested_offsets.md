@@ -19,12 +19,12 @@ reject_nested_offsets(eq, param)
 
 - param:
 
-  The parameter the equation belongs to, named in the message.
+  The parameter to which the equation belongs, named in the message.
 
 ## Value
 
-`NULL`, invisibly, when nothing is found. Signals an error naming
-`param` and the offending call otherwise.
+`NULL`, invisibly, when the walk finds no offset. Signals an error
+naming `param` and the offending call otherwise.
 
 ## Details
 

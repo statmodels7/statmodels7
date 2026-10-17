@@ -1,9 +1,9 @@
 # The Dimensionless Reading of the Stopping Rule
 
-The absolute \\\max\lvert g\rvert / n\\ read per equation against that
-equation's own information scale, \\\max_j \lvert g_j\rvert / (n\\s_p)\\
-with \\s_p = \sqrt{\mathrm{median}\_j H\_{jj} / n}\\ over the equation's
-coordinates.
+Returns the absolute \\\max\lvert g\rvert / n\\ read per equation
+against that equation's own information scale, \\\max_j \lvert g_j\rvert
+/ (n\\s_p)\\ with \\s_p = \sqrt{\mathrm{median}\_j H\_{jj} / n}\\ over
+the equation's coordinates.
 
 ## Usage
 
@@ -27,7 +27,7 @@ iwls_score(g, hj, groups, n)
 - groups:
 
   A list of integer index vectors, one per equation, giving the
-  coordinates that equation owns.
+  coordinates belonging to that equation.
 
 - n:
 
@@ -54,12 +54,12 @@ This reading arbitrates the final verdict and never drives the loop.
 
 A per-coordinate normalization by \\(H+S)\_{jj}\\ is dimensionless too,
 but at extreme shrinkage the penalized coordinates converge loosely and
-the envelope identities lose their footing.
+the envelope identities cease to hold.
 
-Using the per-equation form to drive the loop works at small \\y\\ and
-cannot be met at large \\y\\. At \\y \times 10^4\\ the magnitude of the
-objective grows with \\\log y\\, so the stall guard on the objective
-stops the run before a rule \\1/s_p\\ stricter can be met.
+When the per-equation form drives the loop, the rule works at small
+\\y\\ and cannot be met at large \\y\\. At \\y \times 10^4\\ the
+magnitude of the objective grows with \\\log y\\, so the stall guard on
+the objective stops the run before a rule \\1/s_p\\ stricter can be met.
 
 ## See also
 

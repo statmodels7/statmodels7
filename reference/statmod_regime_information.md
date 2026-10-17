@@ -1,9 +1,9 @@
 # The Observed Information of a Model Carrying a Mixture Term
 
-The observed information over the coefficients of every equation
-together with the own parameters of a structural term of the likelihood
-shape (a regime term or a marginal break-point term), from the exact
-Hessian of the mixed log-likelihood.
+Computes the observed information over the coefficients of every
+equation together with the own parameters of a structural term of the
+likelihood shape (a regime term or a marginal break-point term), from
+the exact Hessian of the mixed log-likelihood.
 
 ## Usage
 
@@ -42,7 +42,7 @@ free parameters.
 
 ## Details
 
-The matrix
+The matrix that
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 assembles for a mixture is the complete-data information, the ordinary
 one averaged over the smoothed states. It serves as a scoring matrix and

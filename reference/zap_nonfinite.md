@@ -19,18 +19,18 @@ zap_nonfinite(S)
 
 ## Value
 
-`S` with its non-finite entries replaced by zero, in the storage it
-arrived in.
+`S`, in which the non-finite entries are replaced by zero, and which
+keeps the storage in which it arrived.
 
 ## Details
 
 The assignment `S[!is.finite(S)] <- 0` is correct on a base matrix. On a
 sparse matrix the logical index is a dense \\p \times p\\ matrix, so the
-storage the accumulator exists to keep would be lost.
+sparse storage that the accumulator is meant to preserve would be lost.
 
-On a sparse matrix only the **stored** values can be non-finite, a
-structural zero being finite by construction, so the same result comes
-from the value slot alone in \\O(\mathrm{nnz})\\ operations.
+On a sparse matrix only the stored values can be non-finite, because a
+structural zero is finite by construction, so the same result comes from
+the value slot alone in \\O(\mathrm{nnz})\\ operations.
 
 ## See also
 

@@ -54,8 +54,8 @@ A list with the following elements:
 
 - `par`:
 
-  the full stacked coefficient vector, with the block's positions
-  replaced.
+  the full stacked coefficient vector, in which the block's positions
+  are replaced.
 
 - `value`:
 
@@ -93,7 +93,7 @@ A list with the following elements:
 
 The objective handed to the optimizer is the full one restricted to
 `idx`: the coefficients outside the block enter it as constants, so the
-value it reports is the model's objective, never a block's own.
+value that it reports is the model's objective, never a block's own.
 
 With
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)

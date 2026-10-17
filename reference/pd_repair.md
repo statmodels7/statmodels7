@@ -1,8 +1,8 @@
 # Floor the Eigenvalues of a Curvature Matrix
 
 Returns the matrix unchanged when it is positive definite, and otherwise
-the matrix rebuilt from its eigendecomposition with the eigenvalues
-floored.
+returns the matrix rebuilt from its eigendecomposition after the
+eigenvalues are floored.
 
 ## Usage
 
@@ -27,8 +27,8 @@ non-finite entry. A matrix with no rows is returned as it is.
 
 ## Details
 
-Abandoning a start because the curvature is indefinite is what
-[`solve()`](https://rdrr.io/r/base/solve.html) forces and what a repair
-avoids; the floor is relative to the largest absolute eigenvalue, since
-an absolute one means nothing across scales. Positive definiteness is
-tested by a Cholesky factorization.
+A start at an indefinite curvature has to be abandoned if
+[`solve()`](https://rdrr.io/r/base/solve.html) is used, and the repair
+avoids this. The floor is relative to the largest absolute eigenvalue,
+since an absolute floor has no meaning across scales. Positive
+definiteness is tested by a Cholesky factorization.

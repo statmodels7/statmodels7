@@ -3,7 +3,8 @@
 Computes \\A^\top A\\ for a square-root design, through the package's
 threaded kernel above a work threshold and through `crossprod(A)`
 everywhere else. The argument is a design that has already been scaled
-by the square root of the working weights, so no weight vector enters.
+by the square root of the working weights, so the function takes no
+weight vector.
 
 ## Usage
 
@@ -34,26 +35,27 @@ dimnames when `A` has them.
 ## Symmetry, and independence of the thread count
 
 Only the upper triangle is accumulated: one thread owns column \\k\\ and
-walks \\j = 1, \ldots, k\\, and each entry it computes is written to
-both \\(j,k)\\ and \\(k,j)\\. The two halves are therefore the same
-number, one rounding shared, so the result is exactly symmetric with
-nothing to symmetrize away. Each pair belongs to exactly one thread, so
-the mirrored write is disjoint, and no accumulation is split, so the
-answer is identical bit for bit at any thread count.
+walks \\j = 1, \ldots, k\\, and each entry that it computes is written
+to both \\(j,k)\\ and \\(k,j)\\. The two halves are therefore the same
+number, rounded once, so the result is exactly symmetric and needs no
+symmetrization. Each pair belongs to exactly one thread, so the mirrored
+write is disjoint. The kernel splits no accumulation, so the answer is
+identical bit for bit at any thread count.
 
-That halving is what the reference `dsyrk` behind
-[`crossprod()`](https://rdrr.io/r/base/crossprod.html) does too, and it
-accumulates in the same ascending row order, so the two routes agree to
-the last bit there. An optimized BLAS blocks its accumulations and
-agrees to the rounding of one dot product.
+The reference `dsyrk` behind
+[`crossprod()`](https://rdrr.io/r/base/crossprod.html) also halves the
+work in this way and accumulates in the same ascending row order, so the
+two routes agree to the last bit there. An optimized BLAS blocks its
+accumulations and agrees to the rounding of one dot product.
 
 Only the upper triangle is computed, as `dsyrk` does, because computing
 all \\p^2\\ entries gave no gain.
 
 ## When the kernel is used
 
-`threads > 1`, `A` a base dense matrix, and \\n \times p^2\\ at least
-`2e5`. This kernel writes \\p^2\\ outputs where
+The kernel is used when `threads > 1`, `A` is a base dense matrix, and
+\\n \times p^2\\ is at least `2e5`. This kernel writes \\p^2\\ outputs
+where
 [`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)
 writes \\p\\, so a design wide enough to reach the threshold here can be
 too narrow to reach it there.

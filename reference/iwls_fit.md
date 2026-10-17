@@ -72,21 +72,21 @@ iwls_fit(
 
   Positions held at their starting values, an integer vector in the same
   numbering. They are dropped from every solve, so the run maximizes
-  over the rest, and the stopping rule reads the free coordinates alone:
-  a held coordinate's score is what the constrained optimum leaves there
-  and does not vanish.
+  over the rest, and the stopping rule reads only the free coordinates,
+  because the constrained optimum leaves in a held coordinate a score
+  that does not vanish.
 
 - backup_at:
 
-  `NULL`, or a function like `pieces_at` building the pieces on the
-  expected information, which takes the step where the observed step
-  finds no acceptable point. An observed penalized information that is
-  not positive definite is first repaired by
+  `NULL`, or a function, like `pieces_at`, that builds the pieces on the
+  expected information. The expected information takes the step where
+  the observed step finds no acceptable point. An observed penalized
+  information that is not positive definite is first repaired by
   [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
   and its step tried. A trial point whose objective raises an error is
   read as rejected.
   [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
-  passes one for a method
+  passes one for a method that
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
   settled with the fallback.
 
@@ -118,41 +118,41 @@ iwls_fit(
 - newton_at:
 
   `NULL`, or a function of the coefficients returning the full Hessian
-  of the objective, the scoring pieces' curvature plus the term a block
-  moving with its coefficients adds. Where the scoring step is rejected
-  or shrunk below a tenth, the Newton step on it is tried by
+  of the objective, the scoring pieces' curvature plus the term that a
+  block moving with its coefficients adds. Where the scoring step is
+  rejected or shrunk below a tenth, the Newton step on it is tried by
   [`iwls_newton_step()`](https://statmodels7.github.io/statmodels7/reference/iwls_newton_step.md)
   and the one that decreases the objective more is taken.
 
 - switch_at:
 
-  `NULL`, or a function like `pieces_at` building the pieces on the
+  `NULL`, or a function, like `pieces_at`, that builds the pieces on the
   observed information. After `switch_after` iterations without
   convergence, or earlier when
   [`iwls_slow()`](https://statmodels7.github.io/statmodels7/reference/iwls_slow.md)
   reports a slow contraction of the score, it takes the place of
   `pieces_at`, and `pieces_at` that of `backup_at`.
   [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
-  passes one for a method
+  passes one for a method that
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
   settled on the expected information from `"auto"`.
 
 - switch_after:
 
-  The iteration after which `switch_at` takes over.
+  The iteration after which `switch_at` replaces `pieces_at`.
 
 ## Value
 
-A list of ten: the six below; `note`, the reason a run stopped or
-`NULL`; `aliased`, the coordinates the pivot left out; `switched`, the
-iteration at which the run moved to `switch_at`, or 0; and `fallback`, a
-named integer vector of four counts. The count `indefinite` is the
-number of iterations at which the observed penalized information was not
-positive definite, `search` the number at which the expected pieces
-stepped in for a step that found no acceptable point, `error` the number
-of trial points whose objective raised, and `newton` the number of
-iterations at which the Newton step on the full Hessian was taken in
-place of the scoring step. Of the six:
+A list of ten: the six below; `note`, the reason for which a run stopped
+or `NULL`; `aliased`, the coordinates that the pivot left out;
+`switched`, the iteration at which the run moved to `switch_at`, or 0;
+and `fallback`, a named integer vector of four counts. The count
+`indefinite` is the number of iterations at which the observed penalized
+information was not positive definite, `search` the number at which the
+expected pieces stepped in for a step that found no acceptable point,
+`error` the number of trial points whose objective raised, and `newton`
+the number of iterations at which the Newton step on the full Hessian
+was taken in place of the scoring step. The six are:
 
 - `par`:
 
@@ -160,12 +160,12 @@ place of the scoring step. Of the six:
 
 - `value`:
 
-  the penalized objective there, unaveraged.
+  the penalized objective there, not averaged over the observations.
 
 - `converged`:
 
-  a single logical: whether a stopping rule fired, the dimensionless
-  verdict included.
+  a single logical: whether a stopping rule fired, including the
+  dimensionless verdict.
 
 - `iterations`:
 
@@ -204,10 +204,10 @@ The absolute score of a location equation carries the units \\1/y\\. On
 a response three decades small its rounding floor sits above any fixed
 threshold, and a run stalled exactly at the optimum reads as a failure.
 
-The verdict therefore adds a second, dimensionless reading, \$\$\max_j
-\lvert g_j \rvert / (n\\s_p), \qquad s_p = \sqrt{\mathrm{median}\_j
-H\_{jj} / n},\$\$ with \\s_p\\ taken over the equation each coordinate
-belongs to.
+The verdict therefore includes a second, dimensionless reading,
+\$\$\max_j \lvert g_j \rvert / (n\\s_p), \qquad s_p =
+\sqrt{\mathrm{median}\_j H\_{jj} / n},\$\$ where \\s_p\\ is taken over
+the equation to which each coordinate belongs.
 
 It can relabel a run that has already stopped as converged, and it never
 stops a run that is still moving. Driving the loop with it would make

@@ -1,7 +1,7 @@
 # Whether Two Terms Are of the Same Kind
 
-`TRUE` when two built terms have the same class, which is what keeps the
-stem of
+Returns `TRUE` when two built terms have the same class. This test keeps
+the stem of
 [`block_stem()`](https://statmodels7.github.io/statmodels7/reference/block_stem.md)
 from pairing a smooth with something else that happens to name its
 coefficients the same way.

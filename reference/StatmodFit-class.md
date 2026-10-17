@@ -1,11 +1,10 @@
 # A Fitted Model
 
-What
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-returns. It holds three things: the specification kept whole, so the
-model can be read back and reapplied to new data; the coefficients,
-hyperparameters and structural parameters the fit reached; and the
-record of how it got there.
+returns an object of this class. It holds three things: the
+specification kept whole, so the model can be read back and reapplied to
+new data; the coefficients, hyperparameters and structural parameters
+that the fit reached; and the record of the run that produced them.
 
 Reach the contents through the accessors rather than the properties
 where one exists:
@@ -64,11 +63,11 @@ StatmodFit(
 - loglik:
 
   The weighted log-likelihood at the fitted coefficients, a single
-  number. It is the **conditional** one.
+  number. It is the conditional one.
 
 - objective:
 
-  The penalized objective there, unaveraged.
+  The penalized objective there, not averaged.
 
 - edf:
 
@@ -83,7 +82,7 @@ StatmodFit(
 
 - converged:
 
-  A single logical. Where the model has nothing to alternate between, it
+  A single logical. Where the fit does not alternate between blocks, it
   is the verdict of the inner method. Where the model has a kinked block
   or a structural term, it is read at the point reached: the Newton
   decrement of the smooth part and the optimality decrement of every
@@ -104,9 +103,9 @@ StatmodFit(
   design column has vanished. The vector is empty where the design has
   full rank. The estimate, standard error and interval of a listed
   coefficient are reported as missing, and it is not counted in the
-  degrees of freedom. The stored coefficient keeps the value it had when
-  the coordinate was left out of the increment, so every predictor reads
-  the vector unchanged.
+  degrees of freedom. The stored coefficient keeps the value that it had
+  when the coordinate was left out of the increment, so every predictor
+  reads the vector unchanged.
 
 - elapsed:
 
@@ -121,8 +120,8 @@ StatmodFit(
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   or
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
-  including the criterion that swept the path of a kinked penalty. `NA`
-  when no criterion ran.
+  including the criterion that swept the path of a kinked penalty. The
+  value is `NA` when no criterion ran.
 
 - history:
 
@@ -131,8 +130,8 @@ StatmodFit(
 
 - methods:
 
-  A list of what the fit decided, which can differ from what was
-  supplied: `smooth`, the inner method after
+  A list of what was settled during the run, which can differ from what
+  was supplied: `smooth`, the inner method after
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   has settled its information (never `"auto"`); `outer`, the criterion
   after resolution, `NULL` when no marginal or prediction-error
@@ -141,7 +140,7 @@ StatmodFit(
   determinant; `kkt`, the edge violations that survived the restarts;
   `sparse`, the blocks of kinked penalties; `sparse_criterion`, the
   criterion that swept their paths; and `sparse_hyper`, the
-  hyperparameters it reached.
+  hyperparameters that it reached.
 
 - call:
 
@@ -171,7 +170,7 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 S7::S7_inherits(fit, StatmodFit)
 #> [1] TRUE
 
-# One coefficient vector per parameter of the family.
+# The coefficients form one vector per parameter of the family.
 fit@coefficients
 #> $mu
 #> [1] 1.030728 1.985136

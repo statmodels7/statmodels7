@@ -1,4 +1,4 @@
-# Reject Missing Values in the Data a Fit Reads
+# Reject Missing Values in the Data That a Fit Reads
 
 Signals an error naming the response, or the first variable of the data
 that an equation names, where it holds a missing value, with the rows. A
@@ -28,4 +28,4 @@ reject_missing(response, equations, data)
 
 ## Value
 
-`NULL`, invisibly, when nothing is missing.
+`NULL`, invisibly, when every value is present.

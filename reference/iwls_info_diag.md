@@ -1,8 +1,8 @@
-# The Diagonal of the Information a Step Uses
+# The Diagonal of the Information That a Step Uses
 
-Returns the diagonal of the information
+Returns the diagonal of the information by which
 [`iwls_score()`](https://statmodels7.github.io/statmodels7/reference/iwls_score.md)
-normalizes by, one entry per stacked coefficient.
+normalizes, one entry per stacked coefficient.
 
 ## Usage
 
@@ -33,8 +33,8 @@ so the penalty does not enter.
 On the assembled route it is the diagonal of the matrix itself, which
 folds the penalty in. That is a different normalizer. It is accepted
 because the reading only arbitrates a verdict and does not drive the
-loop, and because the assembled route is used either where no square
-root exists or when `"chol"` is requested.
+loop, and because the assembled route is used either where the square
+root does not exist or when `"chol"` is requested.
 
 ## See also
 

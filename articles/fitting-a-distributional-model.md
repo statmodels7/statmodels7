@@ -231,8 +231,8 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.616546    effective df 7.26
 #> cAIC 739.762    cBIC 766.668
-#> fitted in 361 ms
-#> inner   max |grad|/se 1.3e-15   min eigen 1
+#> fitted in 259 ms
+#> inner   max |grad|/se 3.7e-16   min eigen 1
 #> outer   max |grad|/se 2.1e-08   min eigen 0.99
 #> 1 note: print(summary(fit), notes = TRUE)
 ```
@@ -264,7 +264,7 @@ hyperparameters.
 cert <- statmod_certificate(f4)
 c(state = cert$state, mode_error = signif(cert$mode_error, digits = 3))
 #>       state  mode_error 
-#> "converged"  "6.77e-30"
+#> "converged"  "4.93e-30"
 ```
 
 `mode_error` is how far above its own penalized mode the inner fit

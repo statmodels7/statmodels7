@@ -1,7 +1,7 @@
 # The Score in a Structural Term's Own Parameters
 
-The derivative of the weighted log-likelihood in the unconstrained
-parameters of each structural term, one entry per term.
+Computes the derivative of the weighted log-likelihood in the
+unconstrained parameters of each structural term, one entry per term.
 
 ## Usage
 
@@ -29,16 +29,16 @@ statmod_structural_score(spec, coef, design = statmod_design(spec))
 
 A named list of numeric vectors, one entry per structural term, keyed by
 the term's key in the specification, each as long as that term has
-parameters. An empty list when the model carries no structural term.
+parameters. The list is empty when the model carries no structural term.
 
 ## Details
 
-The filter's Jacobian is already the **total** derivative of the
-predictor in the term's own parameters, with the recursion propagated
-inside it. So a chain rule over the observations is the whole of the
-work here and no reverse pass is needed.
+The filter's Jacobian is already the total derivative of the predictor
+in the term's own parameters, and the recursion is propagated inside it.
+So the function needs only a chain rule over the observations, and it
+does not need a reverse pass.
 
-The reverse pass answers a different question: the derivative in the
+The reverse pass computes a different quantity: the derivative in the
 coefficients of the equations, where a coefficient reaches the level
 only through the scores at earlier times. That is
 [`modelterms7::term_adjoint()`](https://statmodels7.github.io/modelterms7/reference/term_adjoint.html).
@@ -50,6 +50,6 @@ parameters, weighted by the observation weights.
 ## See also
 
 [`statmod_filter_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)
-for the filter run this reads,
+for the filter run that this reads,
 [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
 for the coefficients' own score.

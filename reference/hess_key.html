@@ -9,7 +9,7 @@ keyed by distributions7::hess_names() and never by position."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,17 +59,17 @@ keyed by <code><a href="https://statmodels7.github.io/distributions7/reference/h
 
 <dt id="arg-a-b">a, b<a class="anchor" aria-label="anchor" href="#arg-a-b"></a></dt>
 <dd><p>Indices into <code>params</code>, in either order: the Hessian is
-symmetric and this returns the key the list actually holds.</p></dd>
+symmetric and this returns the key that the list actually holds.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single string, one of the names of the list
+    <p>A single string, one of the names of the list that
 <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_hessian.html" class="external-link">distributions7::distrib_hessian()</a></code> returns.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The key is built by pasting the two parameter names in the order
+    <p>The key is built by pasting the two parameter names in the order that
 <code><a href="https://statmodels7.github.io/distributions7/reference/hess_names.html" class="external-link">distributions7::hess_names()</a></code> uses, and is never parsed back out of a
 name. For a family whose parameter name contains the separator, splitting
 <code>"log_scale_mu"</code> on the underscore gives the wrong pair, whereas generating

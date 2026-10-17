@@ -1,7 +1,7 @@
-# The Value Each Sharing Label Is Held At
+# The Value at Which Each Sharing Label Is Held
 
-One entry per label a member holds its hyperparameter at, keyed by the
-label.
+Returns one entry, keyed by the label, for each sharing label whose
+hyperparameter a member holds at a value.
 
 ## Usage
 

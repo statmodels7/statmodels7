@@ -1,11 +1,11 @@
 # The Terms as the Fit Left Them
 
-Returns the specification with every refreshable term replaced by the
-term at which the fit arrived. A break-point, a nonlinear parameter and
-the design block they imply are then read off the fitted object, and the
-specification that a caller passed to
+Returns a specification in which every refreshable term is replaced by
+the term at which the fit arrived. A break-point, a nonlinear parameter
+and the design block that they imply are then read off the fitted
+object, and the specification that a caller passed to
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-no longer decides what
+no longer determines what
 [`summary()`](https://rdrr.io/r/base/summary.html),
 [`predict()`](https://rdrr.io/r/stats/predict.html) or
 [`modelterms7::seg_psi()`](https://statmodels7.github.io/modelterms7/reference/seg_psi.html)
@@ -23,7 +23,7 @@ statmod_fitted_spec(spec, coef, design)
 
   A
   [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md),
-  the one the fit started from.
+  the one from which the fit started.
 
 - coef:
 
@@ -45,11 +45,11 @@ of a structural term, when the design carries one.
 
 ## Details
 
-This is what a
+A
 [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
-stores in its `spec` property. The commit is `which = "jacobian"`: a
-frozen block was committed by its own phase at exactly these
-coefficients, and committing a
+stores this specification in its `spec` property. The commit is
+`which = "jacobian"`: a frozen block was committed by its own phase at
+exactly these coefficients, and committing a
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
 again at the same point would take a further step of its incremental
 read-off, so the break-points reported would not be the fitted ones.
@@ -63,6 +63,6 @@ loadings are read off the fit as well.
 ## See also
 
 [`statmod_commit_refresh()`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
-for the commit this performs,
+for the commit that this performs,
 [`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md)
 for the terms replaced.

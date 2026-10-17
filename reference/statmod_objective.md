@@ -1,7 +1,8 @@
 # The Objective, Its Gradient and Its Hessian, Stacked
 
-\\F(\beta) = -\ell(\beta) + \sum_t \rho_t\\, unaveraged, over the
-coefficients of every parameter stacked into one vector.
+Builds the objective \\F(\beta) = -\ell(\beta) + \sum_t \rho_t\\, which
+is not averaged over the observations, over the coefficients of every
+parameter stacked into one vector.
 
 ## Usage
 
@@ -29,7 +30,7 @@ statmod_objective(
 
 - design:
 
-  The design. Rebuilt from `spec` when absent.
+  The design. The function rebuilds it from `spec` when it is absent.
 
 - expected:
 
@@ -59,7 +60,7 @@ A list with the elements
 
 - `gr_sub(b, idx)`:
 
-  the gradient at the positions `idx` alone.
+  the gradient only at the positions `idx`.
 
 - `he(b)`:
 
@@ -78,11 +79,12 @@ A list with the elements
 ## The objective is not divided by the sample size
 
 A penalty is a negative log-prior at full size, and a posterior adds a
-log-likelihood and a log-prior at full size. Averaging the likelihood
-alone would make a hyperparameter mean something that depends on \\n\\.
+log-likelihood and a log-prior at full size. Averaging only the
+likelihood would make a hyperparameter mean something that depends on
+\\n\\.
 
-What is scaled instead is the stopping rule, in the one place it is
-read. See
+Instead, the stopping rule is scaled, in the one place where it is read.
+See
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
 and
 [`iwls_score()`](https://statmodels7.github.io/statmodels7/reference/iwls_score.md).
@@ -90,8 +92,8 @@ and
 ## The closures share one design
 
 The functions `fn`, `gr`, `gr_sub` and `he` close over `design` and
-`hyper`, and `he` also over the two information settings, so that a
-change of a hyperparameter requires a new objective. The outer search
+`hyper`, and `he` also closes over the two information settings, so that
+a change of a hyperparameter requires a new objective. The outer search
 builds a new objective at every point that it visits.
 
 ## See also

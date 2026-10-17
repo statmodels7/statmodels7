@@ -1,7 +1,7 @@
 # Fit the Smooth Block Around a Frozen Working Linearization
 
-The iteration of Fasola, Muggeo and Kuchenhoff (2018) for a term whose
-block is a working linearization with a frozen weight
+Runs the iteration of Fasola, Muggeo and Kuchenhoff (2018) for a term
+whose block is a working linearization with a frozen weight
 ([`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
 and
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)).
@@ -88,15 +88,14 @@ iteration proper the list also carries a `note` element, which is
 
 ## Details
 
-The sequencing is the whole of the difference from
-[`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
-and it is the sequencing of the segmented package. The fixed-point
-iteration these constructions belong to is not a descent method on the
-objective of the model: its early steps under a large scaling factor
-move uphill on purpose, which is how it leaves a spurious optimum.
-Embedding the read-off inside the objective of the inner optimizer would
-put a sufficient-decrease line search in its way and stall it. During
-the working fit the frozen blocks contribute \\X\beta\\ and nothing else
+The two functions differ only in this sequencing, which is the
+sequencing of the segmented package. The fixed-point iteration to which
+these constructions belong is not a descent method on the objective of
+the model: its early steps under a large scaling factor move uphill on
+purpose, and in this way it leaves a spurious optimum. Embedding the
+read-off inside the objective of the inner optimizer would put a
+sufficient-decrease line search in its way and stall it. During the
+working fit the frozen blocks contribute \\X\beta\\ and nothing else
 (`st$working`), which makes the inner fit the plain penalized working
 fit of the papers; the commit then advances the read-off, the scaling
 schedule and any relabeling of crossed break-point lineages, once per
@@ -112,27 +111,27 @@ fit is solved afresh at a frozen block, so a method that carries exact
 curvature closes it in a step or two, while a quasi-Newton method
 rebuilds its own curvature from nothing every time.
 
-The exit is at a fixed point of the iteration or in the cycle it settles
-into, judged on the working objective. The iteration stops when the
-read-off has settled
+The exit is at a fixed point of the iteration or in the cycle into which
+it settles, judged on the working objective. The iteration stops when
+the read-off has settled
 ([`modelterms7::term_converged()`](https://statmodels7.github.io/modelterms7/reference/term_converged.html))
 with the objective stalled, when the objective has stalled three times
 in a row, or when the objective equals its value two iterations back
 twice (the period-two cycle of the break-point that Muggeo documents,
-which a consecutive-change rule never sees). Only at a fixed point does
-the working objective coincide with the model's, so no best-so-far
-iterate is kept: mid-travel, the committed contribution of a good
-working value can sit orders of magnitude off the data. Running out of
-the budget reports `FALSE`.
+which a consecutive-change rule cannot detect). Only at a fixed point
+does the working objective coincide with the model's, so the fit does
+not keep a best-so-far iterate: mid-travel, the committed contribution
+of a good working value can sit orders of magnitude off the data. If the
+budget runs out, the verdict is `FALSE`.
 
 A phase that cannot settle is ended early and reports `FALSE` as well.
 This happens where every break-point that has not settled sits at the
 floor of its scaling factor
 ([`modelterms7::term_stalled()`](https://statmodels7.github.io/modelterms7/reference/term_stalled.html))
 for `stall_limit` consecutive working fits: the factor can shrink no
-further, and nothing is left to bring the break-point to rest. The
-profile objective of a discontinuous term is constant between
-consecutive observations, so such a break-point passes from one
+further, and there is nothing left with which to bring the break-point
+to rest. The profile objective of a discontinuous term is constant
+between consecutive observations, so such a break-point passes from one
 observation to the next for as long as the budget lasts. The default
 `stall_limit` of 20 ends such a phase, and the stall and cycle rules are
 read first at every working fit.

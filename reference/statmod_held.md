@@ -1,7 +1,8 @@
 # Which Hyperparameters the Terms Hold
 
-One key per hyperparameter a term fixed in its constructor, as
-`parameter`, the penalty's key and its name joined by a carriage return.
+Returns one key per hyperparameter that a term fixed in its constructor,
+composed of `parameter`, the penalty's key and the hyperparameter's name
+joined by a carriage return.
 
 ## Usage
 

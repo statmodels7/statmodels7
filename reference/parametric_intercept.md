@@ -1,7 +1,7 @@
 # Where an Equation's Intercept Is
 
-The position of the intercept of one equation's parametric block, or
-`NA` where it has none.
+Returns the position of the intercept of one equation's parametric
+block, or `NA` where the block has none.
 
 ## Usage
 
@@ -30,8 +30,8 @@ An integer position into the equation's coefficient vector, or
 
 ## Details
 
-The position searched for is a column of the parametric block, which is
-a stricter test than a coefficient whose name ends in `(Intercept)`.
+The intercept is located as a column of the parametric block, which is a
+stricter test than a coefficient whose name ends in `(Intercept)`.
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
 names the intercept of each of its own parameters the same way, and
 those coefficients lie on the charts of the parameters of the term and

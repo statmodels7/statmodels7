@@ -1,7 +1,7 @@
 # The Curvature's Own Scale at One Point
 
-The largest diagonal entry of the penalized information, read off the
-pieces without assembling it.
+Returns the largest diagonal entry of the penalized information, read
+off the pieces without assembling it.
 
 ## Usage
 
@@ -19,9 +19,9 @@ iwls_scale(pieces)
 
 ## Value
 
-A single positive number: the largest diagonal entry. `1` where the
-pieces carry nothing usable, which makes the damping schedule absolute
-there instead of relative.
+A single positive number: the largest diagonal entry. The value is `1`
+where the pieces carry nothing usable, which makes the damping schedule
+absolute there instead of relative.
 
 ## Details
 

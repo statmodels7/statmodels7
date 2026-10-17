@@ -1,7 +1,7 @@
 # Start at the Origin
 
-Every coefficient at zero on the unconstrained scale, which for each
-distribution parameter is the value its link maps zero to.
+Sets every coefficient to zero on the unconstrained scale, which for
+each distribution parameter is the value to which its link maps zero.
 
 ## Usage
 
@@ -31,7 +31,7 @@ link, since zero is then an ordinary interior value of the parameter.
 
 The function is named `start_origin()` and not `start_zeros()`, because
 optimizers7 already exports `start_zeros()` for the starting point of an
-optimizer, and no two members of this toolkit export the same name. A
+optimizer, and the members of this toolkit export distinct names. A
 collision would be reported by
 [`statmodels7_conflicts()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md),
 and the function reached by a caller would depend on the order in which
@@ -53,7 +53,7 @@ dd <- data.frame(x = runif(40))
 dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.3)
 spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 
-# Every coefficient of every equation is zero, intercepts included.
+# Every coefficient of every equation is zero, including the intercepts.
 s <- start_at(start_origin(), spec, statmod_design(spec), NULL)
 s
 #> $mu

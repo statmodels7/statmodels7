@@ -24,12 +24,13 @@ assert_criterion_information(distrib, method, approx)
 
 - approx:
 
-  The approximation the fit reads the expected information with, from
+  The approximation with which the fit reads the expected information,
+  taken from
   [`inner_settings()`](https://statmodels7.github.io/statmodels7/reference/inner_settings.md).
 
 ## Value
 
-`NULL`, invisibly. Called for the error.
+`NULL`, invisibly. The function is called for the error.
 
 ## Details
 
@@ -41,17 +42,17 @@ the Fisher information \\\mathcal{I}(\theta_i) =
 function of the parameters alone. Where a family writes that information
 out,
 [`distributions7::expected_hessian_exact()`](https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html)
-answers `TRUE` and no check is made. Where a family does not write it
-out, for example a family written outside the toolkit, the information
-falls back on the strategy `approx` names, and the default, `"opg"`,
-returns \\s_i s_i^\top\\ with \\s_i\\ the score at \\y_i\\. That is an
-unbiased estimate of \\\mathcal{I}(\theta_i)\\ from one observation, not
-the information itself: it depends on the response, as the observed
-curvature does, and it is neither of them. The criterion built on it is
-neither the Laplace approximation nor its Fisher variant, and it has no
-exact outer gradient, so its search is derivative-free and
+returns `TRUE` and the check is skipped. Where a family does not write
+it out, for example a family written outside the toolkit, the
+information falls back on the strategy named by `approx`, and the
+default, `"opg"`, returns \\s_i s_i^\top\\ with \\s_i\\ the score at
+\\y_i\\. That is an unbiased estimate of \\\mathcal{I}(\theta_i)\\ from
+one observation, not the information itself: it depends on the response,
+as the observed curvature does, and it is neither of them. The criterion
+built on it is neither the Laplace approximation nor its Fisher variant,
+and it has no exact outer gradient, so its search is derivative-free and
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
-answers `unknown`.
+returns `unknown`.
 
 A criterion on the observed information has an exact outer gradient and
 Hessian and is searched with Newton's method; the outer-product route

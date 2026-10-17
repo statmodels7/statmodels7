@@ -4,9 +4,9 @@ Compares a fit restarted by
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 (after
 [`edge_violations()`](https://statmodels7.github.io/statmodels7/reference/edge_violations.md),
-or from a score-driven term's own start) with the one it replaces. The
-comparison is made on the criterion that chose the hyperparameters,
-where one ran, in the direction of that criterion, and on the penalized
+or from a score-driven term's own start) with the one that it replaces.
+The comparison uses the criterion that chose the hyperparameters, where
+one ran, in the direction of that criterion, and uses the penalized
 objective otherwise.
 
 ## Usage
@@ -29,7 +29,7 @@ edge_restart_better(new, old, crit, outer_criterion, sparse_criterion)
 
 - crit:
 
-  The criterion `old` reached, `NA` where none ran.
+  The criterion that `old` reached, or `NA` if no criterion ran.
 
 - outer_criterion, sparse_criterion:
 

@@ -1,8 +1,8 @@
 # A Unit's Own Coordinates, in the Joint Vector's Order
 
-The values whose positions
+Returns the values whose positions
 [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
-gives, returned in the order that function returns those positions in.
+gives, in the order in which that function returns those positions.
 
 ## Usage
 
@@ -40,15 +40,16 @@ answer.
 
 The three kinds are read from two different places. An ordinary unit's
 coordinates are coefficients and come from `coef`. A structural unit's
-are a filter's own parameters and come from the design's structural
-state, on the unconstrained scale, which is the scale the recursion is
-differentiated on and the one the penalty covers. A mixed class holds
-some of each and interleaves them group by group, so its pieces are read
-separately and put back in the class's own order, which is what
+coordinates are a filter's own parameters and come from the design's
+structural state, on the unconstrained scale, which is the scale on
+which the recursion is differentiated and which the penalty covers. A
+mixed class holds some of each and interleaves them group by group, so
+its pieces are read separately and put back in the class's own order,
+which
 [`class_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_joint_pieces.md)
 records.
 
-Written beside
+This function is written beside
 [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
 because a value and its position must follow the same convention. A
 caller that composed them separately could place one unit's values at
@@ -57,4 +58,4 @@ another unit's positions.
 ## See also
 
 [`unit_beta()`](https://statmodels7.github.io/statmodels7/reference/unit_beta.md),
-the coefficient-only case this generalizes.
+the coefficient-only case that this function generalizes.

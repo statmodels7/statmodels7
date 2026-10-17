@@ -9,7 +9,7 @@ statistic, the likelihood ratio, Rao's score or Terrell's gradient."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,8 +62,8 @@ the distribution parameter and the coefficient's name in its equation.</p></dd>
 
 
 <dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>
-<dd><p>The value under the null, a single number. <code>0</code> by default,
-which is what a summary reports.</p></dd>
+<dd><p>The value under the null, a single number. The default is
+<code>0</code>, which is the value that a summary reports.</p></dd>
 
 
 <dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
@@ -84,10 +84,10 @@ which is what a summary reports.</p></dd>
     <p><code>summary(fit, test =)</code> reports one of the four statistics for the rows of
 the coefficient tables that can be held (not a row under a kinked penalty,
 not an aliased one, and none for a model with a structural term), always
-against zero. This function tests one coefficient against any value, which
-is a question that a summary cannot answer: whether a slope is one, whether
-an elasticity is unity, whether a coefficient matches a value fixed outside
-the data.</p>
+against zero. This function tests one coefficient against any value, for
+questions that a summary cannot answer, such as whether a slope is one,
+whether an elasticity is unity, or whether a coefficient matches a value
+fixed outside the data.</p>
 <p>The statistics, the quantities that they read and their cost are described
 at <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>. The last three are built on the restricted fit of
 <code><a href="statmod_restrict.html">statmod_restrict()</a></code>, and inverting one gives the interval of
@@ -101,7 +101,7 @@ the interval do not read the mode error.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> for the rows that can be held, against zero,
-<code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code> for the interval a test inverts.</p></div>
+<code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code> for the interval that a test inverts.</p></div>
     </div>
 
     <div class="section level2">

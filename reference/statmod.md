@@ -2,9 +2,9 @@
 
 Fits a distributional regression. One formula carries an equation per
 parameter of the response distribution, so a scale or a shape is modeled
-as readily as a mean; the terms those equations name are assembled into
-a penalized likelihood and fitted, and any smoothing parameters or prior
-scales are estimated from the data.
+as readily as a mean; the terms that those equations name are assembled
+into a penalized likelihood and fitted, and any smoothing parameters or
+prior scales are estimated from the data.
 
 Returns a
 [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md),
@@ -105,8 +105,8 @@ statmod(
   or `NULL`. With `NULL` the hyperparameter is held at its value, unless
   the model also carries a smooth penalty and `outer_criterion` is a
   prediction-error criterion, which then sweeps the path. A marginal
-  criterion is rejected here, being read at a mode that sits on the
-  kink.
+  criterion is rejected here, because it is read at a mode that sits on
+  the kink.
 
 - outer_optimizer:
 
@@ -141,8 +141,8 @@ statmod(
   How the unpenalized parametric block is built, as
   [`linpar_options()`](https://statmodels7.github.io/statmodels7/reference/linpar_options.md)
   returns it: the storage and the contrasts for its factors. It reaches
-  the implicit term, the one the bare covariates collapse into and which
-  a caller never writes; a
+  the implicit term, the one into which the bare covariates collapse and
+  which a caller never writes; a
   [`modelterms7::linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html)
   written out takes them directly. The argument and the function are
   named differently on purpose, as
@@ -200,8 +200,8 @@ The equations are separated by `|`, and the first carries the response:
 
         y ~ x1 + ridge(R) + lasso(L)  |  sigma ~ z  |  nu ~ 1
 
-A parameter with no equation of its own gets an intercept, so `y ~ x` on
-a two-parameter family fits a constant scale.
+A parameter with no equation of its own is given an intercept, so
+`y ~ x` on a two-parameter family fits a constant scale.
 [`statmod_equations()`](https://statmodels7.github.io/statmodels7/reference/statmod_equations.md)
 does the split. R's operator precedence nests the equations on the left,
 so the right-hand side of the whole formula holds only the last
@@ -243,15 +243,15 @@ gives the identity.
 
 ## The fitting scheme
 
-The terms split in two by a property each one already reports.
+The terms split in two by a property that each one already reports.
 
-A term whose penalty is **twice differentiable** in its coefficients, an
+A term whose penalty is twice differentiable in its coefficients, an
 unpenalized block, a ridge, a spline or a random effect, is estimated in
 one system by `inner_optimizer`. Their joint curvature exists, and using
-it is what closes a fit in a handful of iterations.
+it closes a fit in a handful of iterations.
 
-A term whose penalty has a **kink**, a lasso, an elastic net, a SCAD or
-an MCP, is estimated as a block of its own with the other blocks held
+A term whose penalty has a kink, a lasso, an elastic net, a SCAD or an
+MCP, is estimated as a block of its own while the other blocks are held
 fixed. The block is fitted by a compiled coordinate descent where the
 penalty describes its proximal operator as a table at the step taken,
 and otherwise by an accelerated proximal gradient. Where the equation
@@ -271,14 +271,14 @@ structural term is present, the point reached must in addition satisfy
 the optimality conditions of the smooth part and of every coefficient
 held at a kink, and `converged` reports that reading.
 
-## The objective is unaveraged
+## The objective is not averaged
 
-Minus the weighted log-likelihood, plus the penalties at full size. A
-penalty is a negative log-prior, and a posterior adds a log-likelihood
-and a log-prior at full size; averaging one of them would make a
-hyperparameter mean something that depends on \\n\\. What is scaled
-instead is the stopping rule, so a threshold means the same at \\n =
-10\\ and at \\n = 10^7\\.
+The objective is minus the weighted log-likelihood plus the penalties at
+full size. A penalty is a negative log-prior, and a posterior adds a
+log-likelihood and a log-prior at full size; averaging one of them would
+make a hyperparameter mean something that depends on \\n\\. The stopping
+rule is scaled instead, so a threshold means the same at \\n = 10\\ and
+at \\n = 10^7\\.
 
 The weights multiply the log-likelihood, so they act as frequency
 weights: a constant weight \\c\\ on every row is \\c\\ copies of the
@@ -306,12 +306,12 @@ Every hyperparameter left `NULL`, which is each term's default, is
 estimated from the data. A hyperparameter is held in the term and
 nowhere else, so that the model has one statement of each held value.
 
-The **smooth** hyperparameters go to `outer_criterion`,
+The smooth hyperparameters go to `outer_criterion`,
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-by default, with `outer_optimizer` searching over them and the
-coefficients refitted at each point.
+by default. `outer_optimizer` searches over them, and the coefficients
+are refitted at each point.
 
-A **kinked** penalty has its own argument. `sparse_criterion`,
+A kinked penalty has its own argument. `sparse_criterion`,
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) by
 default, sweeps its hyperparameters along a path of their own values,
 from the kink that empties the block down to a fraction of it. The
@@ -320,12 +320,12 @@ turning a corner whenever a coefficient joins the active set or leaves
 it, so a gradient search on a criterion read there would meet those
 corners.
 
-The top of that path depends on the data **and on the rest of the
-model**: it is the kink that empties the block, found at the
-coefficients in hand and not at a refitted null, so the fits of the
-other terms enter it.
+The top of that path is the kink that empties the block, found at the
+coefficients in hand and not at a refitted null. It therefore depends on
+the data and on the rest of the model, since the fits of the other terms
+enter it.
 
-Where a model carries both kinds the path is outside and the marginal
+Where a model carries both kinds, the path is outside and the marginal
 criterion is estimated inside each of its points, so a smoothing
 parameter can come from REML and a lasso's \\\lambda\\ from BIC in one
 fit.
@@ -381,7 +381,8 @@ set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- 1 + 2 * dd$x + rnorm(200, sd = exp(0.3 * dd$x))
 
-# An ordinary regression: the scale gets an intercept it was not given.
+# An ordinary regression: the scale receives an intercept that the
+# formula does not specify.
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 coef(fit)
 #> $mu
@@ -393,7 +394,7 @@ coef(fit)
 #>  0.07592502 
 #> 
 
-# The scale modeled too, which is what the framework is for. The data
+# The scale is modeled too, which is the purpose of the framework. The data
 # were drawn with log sigma = 0.3 x, and the interval covers it.
 both <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 coef(both)$sigma

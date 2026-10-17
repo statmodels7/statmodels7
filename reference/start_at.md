@@ -1,8 +1,8 @@
 # Where a Fit Begins
 
-The one generic a starting-value strategy implements. Given the model,
-it returns one starting vector per distribution parameter, on the
-coefficient scale, ready for the fit to begin from.
+This is the one generic that a starting-value strategy implements. Given
+the model, it returns one starting vector per distribution parameter, on
+the coefficient scale, as the point from which the fit begins.
 
 ## Usage
 
@@ -15,8 +15,8 @@ start_at(strategy, spec, design, obj, ...)
 - strategy:
 
   A
-  [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md),
-  which decides the method.
+  [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md);
+  its class determines the method that is used.
 
 - spec:
 
@@ -45,7 +45,7 @@ start_at(strategy, spec, design, obj, ...)
 
 - ...:
 
-  Passed to methods. No shipped method reads it.
+  Passed to methods. The shipped methods do not read it.
 
 ## Value
 
@@ -54,9 +54,9 @@ family's order, each as long as that parameter's design is wide.
 
 ## Details
 
-Write a method on your own subclass of
-[`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
-to add a strategy. The shipped methods show the range:
+To add a strategy, write a method on a user-defined subclass of
+[`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md).
+The shipped methods show the range:
 [`start_origin()`](https://statmodels7.github.io/statmodels7/reference/start_origin.md)
 reads only the design's widths,
 [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)
@@ -67,9 +67,9 @@ draws from the caller's generator, and
 runs an optimizer over `obj`.
 
 A method must return a full-length vector for every distribution
-parameter, including the ones it does not set. Zero is the conventional
-filler, and it is the value at which the penalty of a penalized block is
-smallest.
+parameter, including the ones that it does not set. Zero is the
+conventional filler, and it is the value at which the penalty of a
+penalized block is smallest.
 
 ## Examples
 

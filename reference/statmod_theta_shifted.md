@@ -1,7 +1,7 @@
 # The Parameters Under One Regime
 
-The distribution's parameters at every observation with the equation of
-the term shifted by the level of one component.
+Returns the distribution's parameters at every observation, with the
+equation of the term shifted by the level of one component.
 
 ## Usage
 
@@ -22,7 +22,7 @@ statmod_theta_shifted(spec, eta_static, param, shift)
 
 - param:
 
-  The equation the term sits in.
+  The equation in which the term sits.
 
 - shift:
 

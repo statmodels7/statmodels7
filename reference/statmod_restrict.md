@@ -1,8 +1,8 @@
 # Refit With One Coefficient Held at a Value
 
 Maximizes the penalized likelihood over every coefficient but one, which
-is held at `value`. What comes back is the restricted maximum, the
-coefficients that attain it and the score there.
+is held at `value`. It returns the restricted maximum, the coefficients
+that attain it and the score there.
 
 ## Usage
 
@@ -30,7 +30,7 @@ statmod_restrict(fit, param, coefname, value)
 
 - value:
 
-  The value to hold it at, a single number.
+  The value at which to hold it, a single number.
 
 ## Value
 
@@ -53,7 +53,7 @@ A list:
 
   the penalized score at the restricted point, a numeric vector over the
   stacked coefficients. Its free entries are zero to the tolerance; the
-  held one is what the statistics read.
+  statistics read the held one.
 
 - `at`:
 
@@ -67,8 +67,9 @@ A list:
 
   a function of no arguments returning the penalized information at the
   restricted point. It is read at most once however often it is called,
-  and not at all where nothing calls it, which is the ordinary case: the
-  likelihood ratio and the gradient statistic need no matrix.
+  and it is not read if the function is never called, which is the
+  ordinary case: the likelihood ratio and the gradient statistic need no
+  matrix.
 
 - `mode_error`:
 
@@ -92,9 +93,9 @@ A list:
 ## Details
 
 The hold is written on the specification and enforced in the solve, so
-no formula is rewritten and no term is rebuilt: a design whose bases
-were rebuilt would carry different knots and answer for a different
-model. See
+the refit does not rewrite the formula and does not rebuild any term: a
+design whose bases were rebuilt would carry different knots and would
+correspond to a different model. See
 [`held_positions()`](https://statmodels7.github.io/statmodels7/reference/held_positions.md)
 and
 [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
@@ -128,8 +129,9 @@ because the contribution of the term is the state of a recursion and not
 
 A coefficient under a penalty that is twice differentiable is held like
 any other: a smooth's linear column and its rotated coordinates, a
-ridge, a random effect. What such a fit means is stated at
-[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md).
+ridge, a random effect.
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md)
+states the meaning of such a fit.
 
 ## See also
 

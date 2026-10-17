@@ -1,8 +1,8 @@
 # The Joint Prior of a Covariance Class
 
-The penalty over a class's stacked coefficients: the distribution one of
-its members named, or the centered multivariate Gaussian that is the
-default.
+Returns the penalty over a class's stacked coefficients: the
+distribution that one of its members named, or the centered multivariate
+Gaussian that is the default.
 
 ## Usage
 
@@ -24,7 +24,7 @@ A penalties7 penalty over `m * dim` coefficients.
 
 ## Details
 
-The prior describes the effects of **one group** over every column the
+The prior describes the effects of one group over every column that the
 label collects, so its dimension is the class's total and the penalty
 covers \\m\\ such blocks. The default prior is a centered multivariate
 Gaussian whose covariance is written by

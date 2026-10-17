@@ -1,10 +1,10 @@
 # Whether Scoring Pieces Carry a Positive Definite Curvature
 
-`TRUE` where the pieces are square roots, which are positive
+Returns `TRUE` where the pieces are square roots, which are positive
 semidefinite by construction, or where the assembled matrix has its
 smallest eigenvalue above a relative floor.
 [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
-reads it to decide whether the observed pieces can take the step.
+uses the result to check whether the observed pieces can take the step.
 
 ## Usage
 
@@ -28,10 +28,9 @@ pieces_definite(pc, rel = 1e-08)
 
 ## Value
 
-A single logical. A matrix with a non-finite entry answers `TRUE`, the
-boundary being
-[`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)'s
-to hold.
+A single logical. The result is `TRUE` for a matrix with a non-finite
+entry; holding the boundary is left to
+[`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md).
 
 ## See also
 

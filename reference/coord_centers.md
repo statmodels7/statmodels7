@@ -1,7 +1,7 @@
 # Whether a Penalized Block Is Solved with Its Equation's Intercept Profiled
 
-`TRUE` where the equation carries an unpenalized intercept that is free
-to move, in which case
+Returns `TRUE` where the equation carries an unpenalized intercept that
+is free to move, in which case
 [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
 centers the block's columns with the working weights and solves it with
 the intercept profiled out.
@@ -55,7 +55,7 @@ fit with centered predictors reaches.
 Solving with the intercept profiled out is the Frisch-Waugh-Lovell
 reading of an unpenalized constant: the coefficients of the block are
 those of the centered columns against the centered working response, and
-they do not depend on the value the intercept holds.
+they do not depend on the value that the intercept holds.
 [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
 then sets the intercept to the value that goes with them, the weighted
 mean of the working response net of the block, so its step is a joint

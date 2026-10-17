@@ -26,4 +26,4 @@ hyper_set(hyper, row, value)
 
 ## Value
 
-The hyperparameters, with that one changed.
+The hyperparameters, in which that one is changed.

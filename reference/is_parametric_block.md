@@ -1,6 +1,7 @@
 # Whether a Term Is the Equation's Parametric Block
 
-`TRUE` for the block of unpenalized parametric columns, which is the one
+Returns `TRUE` for the block of unpenalized parametric columns, which is
+the block that
 [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md)
 matches column by column.
 
@@ -42,4 +43,4 @@ name does not imply a shared meaning.
 ## See also
 
 [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md),
-which uses it to decide how a block is matched.
+which uses it to determine how a block is matched.

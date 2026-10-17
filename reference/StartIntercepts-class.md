@@ -1,6 +1,6 @@
 # S7 Classes for the Shipped Strategies
 
-The five classes that
+These are the five classes that
 [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md),
 [`start_origin()`](https://statmodels7.github.io/statmodels7/reference/start_origin.md),
 [`start_random()`](https://statmodels7.github.io/statmodels7/reference/start_random.md),
@@ -40,22 +40,23 @@ StartFrom(label = character(0), fit = NULL, rest = NULL)
 
 - fn:
 
-  The generator a random start draws from, called as `fn(n, ...)`.
-  `StartRandom` only.
+  The generator from which a random start draws, called as `fn(n, ...)`.
+  Only `StartRandom` carries this property.
 
 - args:
 
-  A list of further arguments to `fn`. `StartRandom` only.
+  A list of further arguments to `fn`. Only `StartRandom` carries this
+  property.
 
 - center:
 
   A single logical: whether the draw is added to the intercept-only
-  start. `StartRandom` only.
+  start. Only `StartRandom` carries this property.
 
 - optimizer, over:
 
   An optimizers7 optimizer and an optional character vector of
-  coefficient labels. `StartSearch` only.
+  coefficient labels. Only `StartSearch` carries these properties.
 
 - fit, rest:
 
@@ -63,7 +64,7 @@ StartFrom(label = character(0), fit = NULL, rest = NULL)
   [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
   and a
   [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md).
-  `StartFrom` only.
+  Only `StartFrom` carries these properties.
 
 ## Value
 

@@ -1,8 +1,8 @@
 # The Covariance Classes of a Specification
 
-The groups of terms that share a covariance block: those carrying the
-same label and the same grouping variable, collected across the
-equations.
+Returns the groups of terms that share a covariance block: those
+carrying the same label and the same grouping variable, collected across
+the equations.
 
 ## Usage
 
@@ -27,12 +27,13 @@ class, each with `tag`, `group` (the deparsed expression), `levels`,
 where the class touches one), `penalty` and `pieces`. The pieces are one
 per member, as
 [`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md)
-returns them, in the order the equations were walked. Empty where no
-term carries a label.
+returns them, in the order in which the equations were walked. The list
+is empty if the terms carry no label.
 
 ## What identifies a class
 
-A label and a grouping, both. The label comes from
+A class is identified by both a label and a grouping. The label comes
+from
 [`modelterms7::term_tag()`](https://statmodels7.github.io/modelterms7/reference/term_tag.html)
 and the grouping from
 [`modelterms7::term_group()`](https://statmodels7.github.io/modelterms7/reference/term_group.html),
@@ -50,22 +51,23 @@ label used on two groupings is an error naming both.
 
 The joint prior belongs to the class and not to any of its members. At
 most one term may name a `distrib`, and its dimension must be the
-class's total; where none does, the default is a centered multivariate
-Gaussian on
+class's total; if no term names one, the default is a centered
+multivariate Gaussian on
 [`parameters7::dr_prod()`](https://statmodels7.github.io/parameters7/reference/dr_prod.html),
 whose coordinates are the log standard deviations and the correlations'
-angles, so a printed hyperparameter is the quantity it names. At a total
-of one column there is no correlation and the default is the centered
-univariate Gaussian that a single unlabeled term would have built.
+angles, so a printed hyperparameter is the quantity that it names. At a
+total of one column there is no correlation and the default is the
+centered univariate Gaussian that a single unlabeled term would have
+built.
 
-A class whose members carry priors of **different families** (a Gaussian
+A class whose members carry priors of different families (a Gaussian
 intercept correlated with a Student t slope) is a copula and not an
 elliptical family. modelterms7 rejects a univariate `distrib` on a
-labeled term for that reason, and this function never sees the case.
+labeled term for that reason, so the case does not reach this function.
 
 ## See also
 
 [`statmod_penalty_keys()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_keys.md),
 which turns each into one penalized unit;
 [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
-for the interleaved index it is read at.
+for the interleaved index at which it is read.

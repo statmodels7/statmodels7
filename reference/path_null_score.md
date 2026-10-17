@@ -1,7 +1,7 @@
-# The Largest Score a Kinked Block Has to Beat
+# The Largest Score That a Kinked Block Has to Beat
 
-\\\max_j \|\partial(-\ell)/\partial\beta_j\|\\ over the block's own
-coefficients, with the block held at the kink.
+Returns \\\max_j \|\partial(-\ell)/\partial\beta_j\|\\ over the block's
+own coefficients, evaluated while the block is held at the kink.
 
 ## Usage
 
@@ -29,9 +29,10 @@ path_null_score(obj, beta, block, hyper, also = NULL)
 
 - also:
 
-  Other blocks to hold at their kinks while the score is read, each a
-  list with the stacked positions `index` and the value `at`; the
-  members of a shared hyperparameter other than `block`.
+  Other blocks to hold at their kinks while the score is read. Each
+  block is a list with the stacked positions `index` and the value `at`,
+  and these blocks are the members of a shared hyperparameter other than
+  `block`.
 
 ## Value
 

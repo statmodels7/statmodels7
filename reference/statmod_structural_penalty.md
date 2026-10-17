@@ -1,7 +1,7 @@
 # The Penalty Over a Structural Term's Own Parameters
 
-The value, gradient or Hessian of the penalties that a structural term
-declares, in the term's own parameters.
+Computes the value, gradient or Hessian of the penalties that a
+structural term declares, in the term's own parameters.
 [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
 evaluates the penalties on the coefficients.
 

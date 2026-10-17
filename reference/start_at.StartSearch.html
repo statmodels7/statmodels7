@@ -9,7 +9,7 @@ and, where the model has one, over a structural term's own parameters."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,12 +66,12 @@ and, where the model has one, over a structural term's own parameters.</p>
 are held in the design's structural state, and the objective reads them
 from there. The search therefore sets them into that state and evaluates
 the likelihood, exactly as <code><a href="statmod_fit_joint.html">statmod_fit_joint()</a></code> does, and leaves the
-best it found in place — which is how a strategy returning coefficients
-can nonetheless start a filter somewhere better than its own
+best point that it found in place. In this way a strategy that returns
+coefficients can still start a filter somewhere better than its own
 <code>term_start()</code>.</p>
 <p>The objective <code>obj</code> is required, and an error is signaled when it is
-<code>NULL</code>. A coefficient named in <code>over</code> is resolved by its label, with a bare
-name accepted where one equation alone carries it.</p>
+<code>NULL</code>. A coefficient named in <code>over</code> is resolved by its label, and a bare
+name is accepted where only one equation carries it.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

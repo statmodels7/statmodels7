@@ -2,11 +2,11 @@
 
 Turns an
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-left at `hessian = "auto"` into the method a fit runs: the expected
-information where the family writes it exactly and at an acceptable
-cost, and otherwise the observed information, with the expected one
-taking the step where the observed step finds no acceptable point. A
-method whose curvature was named is returned as it is.
+left at `hessian = "auto"` into the method that a fit runs. The method
+uses the expected information where the family writes it exactly and at
+an acceptable cost; otherwise it uses the observed information, and the
+expected one takes the step where the observed step finds no acceptable
+point. A method whose curvature was named is returned as it is.
 
 ## Usage
 
@@ -24,19 +24,20 @@ iwls_resolve(method, distrib)
 
 - distrib:
 
-  The distribution the fit is of.
+  The distribution to which the model is fitted.
 
 ## Value
 
 An
 [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
-object whose `hessian` is `"expected"` or `"observed"`, with `fallback`
-`TRUE` exactly where `"auto"` was settled on the observed information.
+object whose `hessian` is `"expected"` or `"observed"` and whose
+`fallback` is `TRUE` exactly where `"auto"` was settled on the observed
+information.
 
 ## Details
 
 [`distributions7::expected_hessian_exact()`](https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html)
-is the first question. Where it answers `FALSE` the expected information
+is the first question. Where it returns `FALSE` the expected information
 is an approximation, the outer product of the scores by default, and the
 method is settled on the observed information. An observed penalized
 information that is not positive definite is first repaired by

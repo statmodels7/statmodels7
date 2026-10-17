@@ -1,7 +1,7 @@
 # The Blocks of a Design
 
-The per-parameter blocks, before any refreshable term is recomputed at
-coefficients.
+Returns the per-parameter blocks, before any refreshable term is
+recomputed at coefficients.
 
 ## Usage
 

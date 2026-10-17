@@ -1,11 +1,11 @@
 # Start at the Intercept-Only Fit
 
-The default: each equation's intercept at the maximum likelihood
-estimate of the model with every covariate removed. Where the first
-parameter is a location or a mean on the identity link, the slopes of
-its parametric columns start at a least-squares fit, and a term with a
-starting value of its own starts at the value that the term declares.
-The remaining coefficients start at zero.
+This is the default strategy: each equation's intercept starts at the
+maximum likelihood estimate of the model that has no covariates. Where
+the first parameter is a location or a mean on the identity link, the
+slopes of its parametric columns start at a least-squares fit, and a
+term with a starting value of its own starts at the value that the term
+declares. The remaining coefficients start at zero.
 
 ## Usage
 
@@ -20,7 +20,7 @@ A `StartIntercepts` object, inheriting from
 
 ## Details
 
-The model with no covariates is the model with every slope set to zero,
+The model with no covariates is the model in which every slope is zero,
 so its maximum likelihood estimate is a natural starting point for the
 intercepts of the model with covariates. It requires one small fit, on
 an intercept-only design.
@@ -44,21 +44,21 @@ Three further rules apply:
 
 Two adjustments apply to the intercepts:
 
-- The mean of an **offset** is subtracted from the intercept before the
-  value is written, because the intercept-only fit does not see the
-  offset and the predictor would otherwise start displaced by it.
+- The mean of an offset is subtracted from the intercept before the
+  value is written, because the intercept-only fit is computed without
+  the offset and the predictor would otherwise start displaced by it.
 
-- The value is written to a **parametric intercept** and to nothing
-  else. A term such as
+- The value is written to a parametric intercept and to nothing else. A
+  term such as
   [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
   also names the intercept of each of its own parameters `(Intercept)`,
   but those coefficients lie on the chart of that parameter and not on
   the scale of the predictor.
 
-This is what
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-does when `start` is `NULL`. The constructor exists so that the default
-can be named, compared with other strategies and passed on.
+uses this strategy when `start` is `NULL`. The constructor exists so
+that the default can be named, compared with other strategies and passed
+on.
 
 ## See also
 

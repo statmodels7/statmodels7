@@ -4,11 +4,11 @@ The change of coordinates under which
 [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)
 searches a free level: the level \\\omega\\ of a score-driven term is
 replaced by \\L = \omega / \prod_k (1 - r_k)\\, the level around which
-the predictor fluctuates, \\r_k\\ being the partial autocorrelations
+the predictor fluctuates, where \\r_k\\ are the partial autocorrelations
 that carry the persistence (by the Durbin-Levinson recursion, \\1 -
-\sum_k \xi_k = \prod_k (1 - r_k)\\, \\\xi_k\\ being the autoregressive
-coefficients that the term reports). The other coordinates are
-unchanged.
+\sum_k \xi_k = \prod_k (1 - r_k)\\, where \\\xi_k\\ are the
+autoregressive coefficients that the term reports). The other
+coordinates are unchanged.
 
 ## Usage
 
@@ -36,10 +36,10 @@ coordinates), `from`, `grad` and `hess`.
 
 ## Details
 
-The chart applies where the level is one free, undeveloped coordinate on
-the identity link and the term has at least one persistence, every
-persistence being a free scalar partial autocorrelation; in any other
-case the result is `NULL` and the fit runs on the term's own
-coordinates. With \\\omega = L P(\rho)\\, the gradient is \\J^\top g\\
-and the Hessian \\J^\top H J + g\_\omega \nabla^2 \omega\\, \\J\\ the
-Jacobian of the map.
+The chart applies where the level is one free coordinate that is not
+developed, the link is the identity, the term has at least one
+persistence, and every persistence is a free scalar partial
+autocorrelation; in any other case the result is `NULL` and the fit runs
+on the term's own coordinates. With \\\omega = L P(\rho)\\, the gradient
+is \\J^\top g\\ and the Hessian \\J^\top H J + g\_\omega \nabla^2
+\omega\\, \\J\\ the Jacobian of the map.

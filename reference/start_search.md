@@ -1,9 +1,9 @@
 # Search the Likelihood for a Starting Point
 
 Runs a global search once, before the fit begins, over the coordinates
-where the likelihood is not convex. Built for a model whose objective
-has several local optima: a break-point term, a nonlinear term, a
-score-driven filter or a latent-state mixture.
+where the likelihood is not convex. The strategy is built for a model
+whose objective has several local optima: a break-point term, a
+nonlinear term, a score-driven filter or a latent-state mixture.
 
 ## Usage
 
@@ -15,7 +15,8 @@ start_search(optimizer = optimizers7::sa(), over = NULL)
 
 - optimizer:
 
-  The optimizer to search with, any optimizers7 optimizer. Defaults to
+  The optimizer that performs the search, any optimizers7 optimizer.
+  Defaults to
   [`optimizers7::sa()`](https://statmodels7.github.io/optimizers7/reference/sa.html),
   simulated annealing, which is the one built for a multimodal surface.
 
@@ -54,8 +55,8 @@ different model.
 
 ## Which coordinates are searched
 
-The non-convex ones, which the toolkit can name: the parameters of a
-structural term
+The search covers the non-convex coordinates, which the toolkit can
+name: the parameters of a structural term
 ([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
 [`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)),
 the coefficients of a term that recomputes its own block
@@ -69,14 +70,14 @@ from any start, and a search over a thousand random-effect coefficients
 would spend the budget on the part of the model that needs a search
 least.
 
-A penalized coordinate is excluded **wherever it sits**, including
-inside a non-convex term. A sub-formula can develop a break-point or a
-nonlinear parameter over groups, and the group deviations are columns of
-the block of that term. On the likelihood alone nothing identifies these
-deviations, because the penalty identifies them, so a search over them
-would fit the points of each group and move away from the penalized
-mode. In a `jseg()` term with `by = ~random(~1|id)`, most coordinates
-are such deviations.
+A penalized coordinate is excluded wherever it sits, including inside a
+non-convex term. A sub-formula can develop a break-point or a nonlinear
+parameter over groups, and the group deviations are columns of the block
+of that term. Without the penalty these deviations are not identified,
+because only the penalty identifies them, so a search over them would
+fit the points of each group and move away from the penalized mode. In a
+`jseg()` term with `by = ~random(~1|id)`, most coordinates are such
+deviations.
 
 The argument `over` replaces this choice by naming the coefficients. A
 structural term's own parameters are searched in either case.
@@ -84,10 +85,10 @@ structural term's own parameters are searched in either case.
 ## The hyperparameters
 
 The search does not cover the hyperparameters. Its objective is the
-likelihood with the penalties off, in which no hyperparameter appears,
-so no proposal can change one.
+likelihood with the penalties off, in which the hyperparameters do not
+appear, so a proposal cannot change them.
 
-A global search over the hyperparameters is a search over the **outer**
+A global search over the hyperparameters is a search over the outer
 criterion, where each proposal requires a full refit and not one
 likelihood evaluation. It is requested by
 `statmod(outer_optimizer = optimizers7::sa())`. The hyperparameters of a

@@ -1,7 +1,7 @@
-# The Values a Path Visits
+# The Values That a Path Visits
 
-A geometric grid of kink sizes from the one that empties the block down
-to `min_ratio` of it, carried back onto the hyperparameter.
+Returns a geometric grid of kink sizes from the one that empties the
+block down to `min_ratio` of it, carried back onto the hyperparameter.
 
 ## Usage
 
@@ -45,8 +45,8 @@ fullest.
 The grid is geometric in the size of the kink, never in the
 hyperparameter, so that a penalty whose kink narrows as its
 hyperparameter grows is swept in the same order as one whose kink
-widens: from the empty model towards the full one. Values the penalty
-cannot reach are dropped.
+widens: from the empty model towards the full one. Values that the
+penalty cannot reach are dropped.
 
 The exponent relating the two is read once by
 [`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)

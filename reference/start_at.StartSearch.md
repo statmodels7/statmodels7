@@ -26,10 +26,10 @@ they are held in the design's structural state, and the objective reads
 them from there. The search therefore sets them into that state and
 evaluates the likelihood, exactly as
 [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)
-does, and leaves the best it found in place — which is how a strategy
-returning coefficients can nonetheless start a filter somewhere better
-than its own `term_start()`.
+does, and leaves the best point that it found in place. In this way a
+strategy that returns coefficients can still start a filter somewhere
+better than its own `term_start()`.
 
 The objective `obj` is required, and an error is signaled when it is
-`NULL`. A coefficient named in `over` is resolved by its label, with a
-bare name accepted where one equation alone carries it.
+`NULL`. A coefficient named in `over` is resolved by its label, and a
+bare name is accepted where only one equation carries it.

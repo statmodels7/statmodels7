@@ -17,7 +17,7 @@ matrix with one column per level."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,9 +73,10 @@ the design.</p></dd>
 
 <dt id="arg-contrasts">contrasts<a class="anchor" aria-label="anchor" href="#arg-contrasts"></a></dt>
 <dd><p>The contrasts for the block's factors, a named list of
-the kind <code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">stats::model.matrix()</a></code>'s <code>contrasts.arg</code> takes, or <code>NULL</code> for
-the session's <code>options("contrasts")</code>. Carried on the specification, so a
-fold of <code><a href="cv.html">cv()</a></code> reproduces them instead of re-reading the option.</p></dd>
+the kind that <code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">stats::model.matrix()</a></code>'s <code>contrasts.arg</code> takes, or <code>NULL</code>
+for the session's <code>options("contrasts")</code>. The contrasts are carried on
+the specification, so that a fold of <code><a href="cv.html">cv()</a></code> reproduces them instead of
+re-reading the option.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -86,17 +87,18 @@ fold of <code><a href="cv.html">cv()</a></code> reproduces them instead of re-re
     </div>
     <div class="section level2">
     <h2 id="which-term-it-reaches">Which term it reaches<a class="anchor" aria-label="anchor" href="#which-term-it-reaches"></a></h2>
-    <p>The <strong>implicit</strong> <code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">modelterms7::linpar()</a></code> term: the one the bare covariates
-of a formula collapse into, which a caller never writes and so has no
-other way to configure. A <code>linpar()</code> written out in the formula takes
-these arguments directly and ignores this.</p>
+    <p>This function configures the implicit <code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">modelterms7::linpar()</a></code> term, which
+is the term into which the bare covariates of a formula collapse. A caller
+never writes this term and so has no other way to configure it. A
+<code>linpar()</code> written out in the formula takes these arguments directly and
+ignores this.</p>
     </div>
     <div class="section level2">
     <h2 id="sparse-storage">Sparse storage<a class="anchor" aria-label="anchor" href="#sparse-storage"></a></h2>
     <p><code>sparse = TRUE</code> builds the block through
-<code><a href="https://rdrr.io/pkg/Matrix/man/sparse.model.matrix.html" class="external-link">Matrix::sparse.model.matrix()</a></code>, which <strong>builds</strong> it sparse instead of
-building a dense matrix and compressing it, so no dense intermediate is
-formed. Sparse storage pays where the formula carries a factor of many
+<code><a href="https://rdrr.io/pkg/Matrix/man/sparse.model.matrix.html" class="external-link">Matrix::sparse.model.matrix()</a></code>, which builds it sparse instead of
+building a dense matrix and compressing it, so that it forms no dense
+intermediate. Sparse storage pays where the formula carries a factor of many
 levels. A numeric covariate has no zeros to exploit, and its sparse block
 costs more than it saves.</p>
     </div>
@@ -107,7 +109,7 @@ coefficients back is a remedy for a conditioning that squares, as forming
 \(X'X\) does. <code><a href="iwls.html">iwls()</a></code> with its default <code>decomposition = "qr"</code> fits
 through a QR factorization of the augmented design and does not form
 \(X'X\), and its final convergence verdict is read on a dimensionless
-scale, so the scale of a column does not decide it.</p>
+scale, so the scale of a column does not affect that verdict.</p>
     </div>
     <div class="section level2">
     <h2 id="the-name-of-the-argument">The name of the argument<a class="anchor" aria-label="anchor" href="#the-name-of-the-argument"></a></h2>
@@ -120,7 +122,7 @@ reason.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="statmod.html">statmod()</a></code> for where it is passed,
-<code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">modelterms7::linpar()</a></code> for the term it configures.</p></div>
+<code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">modelterms7::linpar()</a></code> for the term that it configures.</p></div>
     </div>
 
     <div class="section level2">
@@ -130,7 +132,7 @@ reason.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># The whole point: a factor of many levels.</span></span></span>
+<span class="r-in"><span><span class="co"># Sparse storage matters for a factor of many levels.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">2000</span></span></span>
 <span class="r-in"><span><span class="va">dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">200</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -141,7 +143,8 @@ reason.</p>
 <span class="r-in"><span><span class="va">Xd</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod_design.html">statmod_design</a></span><span class="op">(</span><span class="va">dense</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span><span class="op">$</span><span class="va">X</span></span></span>
 <span class="r-in"><span><span class="va">Xs</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod_design.html">statmod_design</a></span><span class="op">(</span><span class="va">sparse</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span><span class="op">$</span><span class="va">X</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Same numbers, stored in much less memory.</span></span></span>
+<span class="r-in"><span><span class="co"># The two blocks hold the same numbers, and the sparse one uses much less</span></span></span>
+<span class="r-in"><span><span class="co"># memory.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>dense <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">Xd</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, sparse <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">Xs</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       dense      sparse </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    "matrix" "dgCMatrix" </span>

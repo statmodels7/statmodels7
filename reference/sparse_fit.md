@@ -1,15 +1,15 @@
-# Fit One Non-Smooth Block, the Others Held Fixed
+# Fit One Non-Smooth Block While the Others Are Held Fixed
 
-Estimates the coefficients of one block with a kinked penalty, the other
-coefficients held fixed. A penalty over a structural term's own
-parameters is fitted by
+Estimates the coefficients of one block with a kinked penalty while the
+other coefficients are held fixed. A penalty over a structural term's
+own parameters is fitted by
 [`sparse_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit_structural.md).
 Otherwise a compiled coordinate descent,
 [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md),
 is used where the penalty describes its proximal operator as a table,
 and an accelerated proximal gradient iteration runs on the block where
-it does not, the smooth part of the objective supplying the gradient and
-the penalty its proximal operator.
+it does not, in which the smooth part of the objective supplies the
+gradient and the penalty supplies its proximal operator.
 
 ## Usage
 
@@ -69,7 +69,7 @@ sparse_fit(
 
   A
   [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
-  With `spec` or `design` `NULL` the coordinate descent is skipped.
+  If `spec` or `design` is `NULL`, the coordinate descent is skipped.
 
 - design:
 

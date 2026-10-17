@@ -1,7 +1,7 @@
 # Choose a Point of the Path
 
-The index of the smallest criterion, or of the largest kink whose
-criterion is within one standard error of it.
+Returns the index of the smallest criterion, or of the largest kink
+whose criterion is within one standard error of it.
 
 ## Usage
 
@@ -25,7 +25,7 @@ path_pick(value, se = NULL, rule = "min")
 
 ## Value
 
-A single index, or `NA` where no point was usable.
+A single index, or `NA` if every point was unusable.
 
 ## Details
 

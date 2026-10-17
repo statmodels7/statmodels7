@@ -1,7 +1,8 @@
 # The Two Vector Products of the Coordinate-Descent Loop
 
-The two per-sweep reads of the compiled coordinate descent, each one
-vector of length `p` over an `n x p` design.
+`xtv()` and `wxsq()` compute the two per-sweep reads of the compiled
+coordinate descent; each returns one vector of length `p` over an
+`n x p` design.
 
 `xtv()` computes \\X^\top v\\, one dot product per column. It is the
 gradient read: `v` is the running residual, or the residual times the
@@ -14,7 +15,7 @@ the `n x p` matrix of squares, whereas the sequential expression does.
 Both take the package's threaded kernel above a work threshold, the one
 constant that
 [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)
-also uses, and otherwise evaluate the expressions they replace,
+also uses, and otherwise evaluate the expressions that they replace,
 `as.numeric(crossprod(X, v))` and `as.numeric(crossprod(w, X^2))`.
 
 ## Usage
@@ -33,8 +34,8 @@ wxsq(X, w, threads = 1L)
 
 - v:
 
-  The vector \\X^\top v\\ is taken against, length `n`. Read by `xtv()`
-  only.
+  The vector against which \\X^\top v\\ is taken, length `n`. Only
+  `xtv()` reads it.
 
 - threads:
 
@@ -44,32 +45,35 @@ wxsq(X, w, threads = 1L)
 
 - w:
 
-  Per-observation weights, length `n`. Read by `wxsq()` only, and
-  multiplied onto the squared entry.
+  Per-observation weights, length `n`. Only `wxsq()` reads it, and it
+  multiplies the squared entry.
 
 ## Value
 
 An unnamed numeric vector of length `ncol(X)`: for `xtv()` the column
-dot products with `v`, for `wxsq()` the weighted sums of squares.
-Neither carries the column names of `X`, since both feed arithmetic
-indexed by position.
+dot products with `v`, for `wxsq()` the weighted sums of squares. Both
+functions omit the column names of `X`, because their results feed
+arithmetic indexed by position.
 
 ## Why the answer does not depend on the thread count
 
 Each element of the output is one column's accumulation, owned in full
-by one thread and summed in ascending row order. Nothing is split
-between threads, so the result is identical bit for bit at any count.
+by one thread and summed in ascending row order. The kernel never splits
+an accumulation between threads, so the result is identical bit for bit
+at any count.
 
-The elementwise product inside each term is formed in the order the
-replaced expression forms it: `v` arrives already multiplied by whatever
-the caller wanted, and in `wxsq()` the entry is squared before the
-weight multiplies it. Against an optimized BLAS, which blocks its own
-accumulations, the two routes agree to the rounding of one dot product.
+The elementwise product inside each term is formed in the order in which
+the replaced expression forms it: `v` arrives already multiplied by
+whatever the caller wanted, and in `wxsq()` the entry is squared before
+the weight multiplies it. Against an optimized BLAS, which blocks its
+own accumulations, the two routes agree to the rounding of one dot
+product.
 
 ## When the kernel is used
 
-`threads > 1`, `X` a base dense matrix, the vector of length `nrow(X)`,
-and \\n \times p\\ at least `2e5`. A sparse `X` takes the Matrix route.
+The kernel is used when `threads > 1`, `X` is a base dense matrix, the
+vector has length `nrow(X)`, and \\n \times p\\ is at least `2e5`. A
+sparse `X` takes the Matrix route.
 
 ## See also
 

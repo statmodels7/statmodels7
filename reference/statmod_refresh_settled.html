@@ -13,7 +13,7 @@ fit."><meta property="og:image" content="https://statmodels7.github.io/statmodel
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,9 +74,10 @@ checked.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single logical. <code>TRUE</code> when every term checked reports that it
-has settled, and <code>TRUE</code> when there is nothing to check, so a model with
-no refreshable term never blocks a fit's verdict on this.</p>
+    <p>A single logical. The value is <code>TRUE</code> when every term checked
+reports that it has settled, and also <code>TRUE</code> when there is nothing to
+check, so that a model with no refreshable term never blocks a fit's
+verdict on this.</p>
     </div>
     <div class="section level2">
     <h2 id="the-score-of-the-working-model">The score of the working model<a class="anchor" aria-label="anchor" href="#the-score-of-the-working-model"></a></h2>
@@ -84,7 +85,7 @@ no refreshable term never blocks a fit's verdict on this.</p>
 the model's objective is the model's own gradient and its vanishing is
 the test. Where the block is a working linearization with a frozen
 weight, as in a discontinuous break-point term, the gradient belongs to
-the working model alone, and the profile objective there is a step
+the working model only, and the profile objective there is a step
 function in the break-point with no gradient to vanish at all.</p>
 <p>A fit of a discontinuous break-point term can report convergence at a
 position where the score of the working model is very large, because the
@@ -93,8 +94,8 @@ annealed, so that a stopping rule reading that score would not stop.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://statmodels7.github.io/modelterms7/reference/term_converged.html" class="external-link">modelterms7::term_converged()</a></code> for what each construction
-answers, <code><a href="statmod_design_at.html">statmod_design_at()</a></code> for the refresh,
+    <div class="dont-index"><p><code><a href="https://statmodels7.github.io/modelterms7/reference/term_converged.html" class="external-link">modelterms7::term_converged()</a></code> for the verdict that each
+construction reports, <code><a href="statmod_design_at.html">statmod_design_at()</a></code> for the refresh,
 <code><a href="statmod_commit_refresh.html">statmod_commit_refresh()</a></code> for the state that it reads.</p></div>
     </div>
 

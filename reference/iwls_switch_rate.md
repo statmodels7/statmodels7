@@ -1,6 +1,6 @@
-# The Contraction Rate Above Which Fisher Scoring Yields
+# The Contraction Rate Above Which a Run Switches to the Observed Information
 
-The ratio of consecutive scores above which
+Returns the ratio of consecutive scores above which
 [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
 continues on the observed information before
 [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md)

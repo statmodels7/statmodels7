@@ -1,7 +1,7 @@
 # The Variance Where the Criterion Estimates Coefficients
 
-The variance of the coefficients of a fit whose marginal criterion
-estimated some of them
+Returns the variance of the coefficients of a fit whose marginal
+criterion estimated some of them
 ([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)),
 in the block form of the penalized information with the curvature of the
 criterion in place of the Schur complement of those coefficients.
@@ -53,7 +53,7 @@ K\_{uu}^{-1} + B\\V_v B^\top,\qquad V_v =
 padded with zeros on \\\gamma\\ and \\B\\ holds one direction per
 coordinate of \\v\\. For `type = "bayesian"` \\v = \gamma\\ and the
 hyperparameters are held; for `type = "unconditional"` \\v = (\eta,
-\gamma)\\, the hyperparameters' directions being
+\gamma)\\ and the hyperparameters' directions are
 \\-K\_{uu}^{-1}\partial^2\rho/\partial u\\\partial\eta\\.
 
 Replacing \\-\nabla^2\_{\gamma\gamma}\ell_M\\ by the Schur complement

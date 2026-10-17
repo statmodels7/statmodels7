@@ -1,10 +1,11 @@
 # S7 Class for a Starting-Value Strategy
 
-The abstract parent of the starting-value strategies. A strategy defines
-where a fit begins as a procedure and not as a vector of numbers: fit
-the intercept-only model, draw around it, search the likelihood for a
-basin, or reuse the estimates of another fit. `statmod(start =)` accepts
-a strategy, or a named list of coefficient vectors.
+This class is the abstract parent of the starting-value strategies. A
+strategy defines where a fit begins as a procedure and not as a vector
+of numbers: fit the intercept-only model, draw around it, search the
+likelihood for a basin, or reuse the estimates of another fit.
+`statmod(start =)` accepts a strategy, or a named list of coefficient
+vectors.
 
 ## Usage
 
@@ -18,8 +19,8 @@ start_strategy(label = character(0))
 
   A short name, printed by
   [`print.start_strategy()`](https://statmodels7.github.io/statmodels7/reference/print.start_strategy.md).
-  A single string. Set by each subclass's constructor, since the class
-  itself cannot be built.
+  It is a single string, and the constructor of each subclass sets it,
+  since the class itself cannot be built.
 
 ## Value
 
@@ -38,10 +39,10 @@ step of that alternation, which is why a global search belongs here:
 given to `inner_optimizer` it would rerun at every hyperparameter value
 that the outer search tries and reach the same point each time.
 
-**The class is abstract and cannot be instantiated.** Calling
-`start_strategy()` signals an error; what the class is for is to be
-subclassed and to make a membership test possible. To write a strategy
-of your own, subclass it and register a
+The class is abstract and cannot be instantiated. Calling
+`start_strategy()` signals an error. The class exists to be subclassed
+and to make a membership test possible. To write a user-defined
+strategy, subclass it and register a
 [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md)
 method on the subclass. That method receives the specification, the
 design and the objective, and returns one vector per distribution
@@ -58,7 +59,7 @@ and
 [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md)
 for the five shipped strategies,
 [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md)
-for the generic they implement.
+for the generic that they implement.
 
 ## Examples
 
@@ -69,7 +70,7 @@ S7::S7_inherits(start_origin(), start_strategy)
 S7::S7_inherits(start_search(), start_strategy)
 #> [1] TRUE
 
-# Every one of them carries the label the class defines.
+# Every one of them carries the label that the class defines.
 vapply(list(start_intercepts(), start_origin(), start_random(),
             start_search()),
        function(s) s@label, character(1))

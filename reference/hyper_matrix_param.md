@@ -1,8 +1,8 @@
 # The Matrix Parameter of a Multivariate Prior
 
-The chart, the names of its free values among the family's parameters,
-and whether the matrix is a precision, read from a multivariate family
-under any number of
+Returns the chart, the names of its free values among the family's
+parameters, and whether the matrix is a precision, read from a
+multivariate family under any number of
 [`distributions7::fixed()`](https://statmodels7.github.io/distributions7/reference/fixed.html)
 wrappers.
 

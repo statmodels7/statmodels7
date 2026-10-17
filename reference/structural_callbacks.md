@@ -1,8 +1,9 @@
-# The Score and Curvature a Filter Is Driven By
+# The Score and Curvature That Drive a Filter
 
-The derivative of the log-density in one distribution parameter's
-predictor, and its second derivative, as functions of that predictor at
-one observation, with every other parameter held where it is.
+Returns the derivative of the log-density in one distribution
+parameter's predictor, and its second derivative, as functions of that
+predictor at one observation, while every other parameter stays where it
+is.
 
 ## Usage
 
@@ -25,7 +26,7 @@ structural_callbacks(spec, theta, p, scaling = 0)
 
 - p:
 
-  The distribution parameter the term sits in.
+  The distribution parameter in whose equation the term sits.
 
 - scaling:
 
@@ -34,12 +35,12 @@ structural_callbacks(spec, theta, p, scaling = 0)
   where it is not zero, `score` returns \\u = s\\\mathcal{I}^{-d}\\ and
   `curvature` its derivative in the predictor, \\u' =
   s'\\\mathcal{I}^{-d} - d\\s\\\mathcal{I}^{-d-1}\mathcal{I}'\\, and the
-  compiled context carries `scaling`, its kernel composing the same
+  compiled context carries `scaling`, and its kernel composes the same
   quantities from the family's scalar entry points.
 
 ## Value
 
-A list with `score`, `curvature`, `logdens` and `fast`, the last being
+A list with `score`, `curvature`, `logdens` and `fast`, where `fast` is
 the context for the compiled filter, or `NULL` where the registries of
 distributions7 and linkfunctions7 do not cover the family and the link.
 

@@ -1,9 +1,9 @@
 # Whether the Alternation Has Reached Its Point
 
-Reads, at the point the alternation reached, how far the smooth part is
-from its mode and how far each coefficient that a kinked penalty sets to
-zero is from its optimality condition, both in log-likelihood units, and
-compares them with
+Reads, at the point that the alternation reached, how far the smooth
+part is from its mode and how far each coefficient that a kinked penalty
+sets to zero is from its optimality condition, both in log-likelihood
+units, and compares them with
 [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md).
 
 ## Usage
@@ -45,14 +45,14 @@ alternation_settled(
 
 - aliased:
 
-  The positions the scoring step's pivot left out.
+  The positions that the scoring step's pivot left out.
 
 ## Value
 
-`alternation_readings()` a named vector of `mode` and `kkt`, the second
-`NA` where no coefficient sits at a kink and `Inf` where one does and
-its reading cannot be computed; `alternation_settled()` a single
-logical.
+`alternation_readings()` returns a named vector of `mode` and `kkt`,
+where `kkt` is `NA` if no coefficient sits at a kink and `Inf` if one
+does and its reading cannot be computed; `alternation_settled()` a
+single logical.
 
 ## Details
 
@@ -70,7 +70,7 @@ beside a structural term). A coefficient that a kinked penalty holds at
 zero is optimal where the pull of the likelihood, \\s_j\\, does not
 exceed the size \\\kappa_j\\ of the kink, and its reading is the KKT
 decrement \$\$\frac{\max(0,\\ \lvert s_j\rvert -
-\kappa_j)^2}{2\\c_j},\$\$ the gain a Newton step on that coordinate
+\kappa_j)^2}{2\\c_j},\$\$ the gain that a Newton step on that coordinate
 alone would predict, with \\c_j\\ the diagonal of the unpenalized
 information. The largest such decrement is reported.
 

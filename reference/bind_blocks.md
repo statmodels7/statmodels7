@@ -19,14 +19,14 @@ bind_blocks(mats, n)
 - n:
 
   The number of observations, used only when `mats` is empty, where
-  there is no block to read a row count from.
+  there is no block from which to read a row count.
 
 ## Value
 
 An `n x p` matrix with `p` the total width of the blocks: a Matrix
-object when any input is sparse, a base matrix otherwise. An `n x 0`
-base matrix for an empty `mats`, as an equation carrying only a
-structural term gives.
+object when any input is sparse, a base matrix otherwise. For an empty
+`mats` the result is an `n x 0` base matrix, which is the design of an
+equation that carries only a structural term.
 
 ## Details
 
@@ -39,8 +39,8 @@ when all of them are base matrices. When any block is sparse, they are
 bound with [`Matrix::cbind2()`](https://rdrr.io/r/methods/cbind2.html),
 so that the result is a Matrix object whatever the order of the blocks.
 
-The result is sparse when **one** block is. Sparsity is a property of
-the assembled matrix and not of its pieces: a dense fixed block beside a
+The result is sparse when one block is. Sparsity is a property of the
+assembled matrix and not of its pieces: a dense fixed block beside a
 large indicator leaves a matrix that is still overwhelmingly zero, and
 its factorization stays sparse under a fill-reducing ordering.
 
@@ -49,4 +49,4 @@ its factorization stays sparse under a fill-reducing ordering.
 [`design_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
 for the same test applied to a whole design,
 [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
-for the assembly this serves.
+for the assembly that this serves.

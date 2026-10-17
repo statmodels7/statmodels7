@@ -11,7 +11,7 @@ the one-standard-error rule."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -117,9 +117,9 @@ the one-standard-error rule.</p>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>The data the fit was called on, which cross-validation needs
-in order to refit on part of it; the weights and offsets are those held
-by <code>spec</code>.</p></dd>
+<dd><p>The data with which the fit was called, which cross-validation
+needs in order to refit on part of it; the weights and offsets are those
+held by <code>spec</code>.</p></dd>
 
 
 <dt id="arg-rows">rows<a class="anchor" aria-label="anchor" href="#arg-rows"></a></dt>
@@ -152,30 +152,30 @@ of it, so the sweep goes from the sparsest fit towards the fullest and every
 fit starts from the previous one's coefficients. The top of the grid is
 computed at the coefficients in hand and not at a refitted null; where the
 fit at the top does not empty the block, the top is doubled until it does.</p>
-<p>A term that carries several of these hyperparameters has every combination
-visited where it sets <code>search = "grid"</code> and one coordinate at a time where
-it sets <code>"cyclic"</code>. Between terms the alternation is cyclic either way, so
-that the cost is the product within a term and the sum across terms. Each
-axis is built at the settings of the axes outside it, which makes the
+<p>For a term that carries several of these hyperparameters, every combination
+is visited where the term sets <code>search = "grid"</code> and one coordinate at a
+time where it sets <code>"cyclic"</code>. Between terms the alternation is cyclic either
+way, so that the cost is the product within a term and the sum across terms.
+Each axis is built at the settings of the axes outside it, which makes the
 elastic net's grid a family of \(\lambda\) axes and not a single one, and
 the axis swept by kink size is put innermost so that the warm starts walk
-along it. The runs of a product grid are independent and are distributed
-over worker processes where the specification requests them.</p>
+along it. The runs of a product grid are independent and are distributed over
+worker processes where the specification requests them.</p>
 <p>A pass that would visit the points scored by the previous one is not run.
 The top of the path is computed again at every pass, because the rest of
 the model moves, and where it has not moved the grid is the one already in
-hand. At most <code>sweeps</code> passes are made, and only where more than one
-hyperparameter is selected.</p>
+hand. The function makes at most <code>sweeps</code> passes, and only where more than
+one hyperparameter is selected.</p>
 <p>Where the model also carries hyperparameters that are twice differentiable,
 those are estimated by <code><a href="outer_fit.html">outer_fit()</a></code> inside each point of the path, by
 <code>nested_method</code>, so that the two kinds are not mixed into one search. The
 unpenalized coefficients of a dispersion are then held at the joint mode
 along the path when <code>nested_method</code> is a marginal criterion, and are
 estimated on that criterion once, at the setting chosen.</p>
-<p>An error is signaled where <code>method</code> is <code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code> or <code><a href="cv.html">cv()</a></code> and no
-point of a path is scored. A warning is signaled where the rule is <code>"min"</code>,
+<p>An error is signaled where <code>method</code> is <code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code> or <code><a href="cv.html">cv()</a></code> and the
+path scores no point. A warning is signaled where the rule is <code>"min"</code>,
 the axis is swept by kink size, and the minimum lies at the dense end of the
-path with the criterion still falling there.</p>
+path and the criterion is still falling there.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

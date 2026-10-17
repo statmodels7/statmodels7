@@ -17,5 +17,6 @@ hyper_plain(hyper)
 
 ## Value
 
-The same list with each entry converted to a named numeric vector, and
-the distribution parameters that carry no penalized term dropped.
+The same list, in which each entry is converted to a named numeric
+vector and the distribution parameters that carry no penalized term are
+dropped.

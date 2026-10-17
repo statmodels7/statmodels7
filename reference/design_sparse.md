@@ -1,9 +1,9 @@
-# Is a Design Sparse, and the Zero Matrix to Accumulate It Into
+# Is a Design Sparse, and the Zero Matrix into Which to Accumulate It
 
 `design_sparse()` reports whether any equation's block is sparse, and
-`zero_information()` gives the square zero matrix of the right kind to
-accumulate the information into. `as_dense()` and `as_sparse()` convert
-a matrix to the other storage.
+`zero_information()` gives the square zero matrix of the right kind,
+into which the information is accumulated. `as_dense()` and
+`as_sparse()` convert a matrix to the other storage.
 
 ## Usage
 
@@ -21,8 +21,8 @@ zero_information(design, total)
 
 - design:
 
-  The design, a list with one entry per distribution parameter, each
-  carrying its block as `X`.
+  The design, a list with one entry per distribution parameter, and each
+  entry holds its block as `X`.
 
 - A:
 
@@ -55,4 +55,4 @@ follows the design.
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md),
 which accumulates into it,
 [`zap_nonfinite()`](https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.md)
-for the other place the two storages meet.
+for the other place where the two storages meet.

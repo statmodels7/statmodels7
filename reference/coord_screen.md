@@ -1,8 +1,8 @@
 # Which Coordinates a Path Point Has to Visit
 
-The sequential strong rule: a coordinate whose gradient at the previous
-point of the path is below \\2s_k - s\_{k-1}\\ is left out of the
-sweeps.
+Selects the coordinates to visit by the sequential strong rule: a
+coordinate whose gradient at the previous point of the path is below
+\\2s_k - s\_{k-1}\\ is left out of the sweeps.
 
 ## Usage
 
@@ -41,7 +41,7 @@ coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L, center = FALSE)
 
 - threads:
 
-  The thread count the gradient read may use, a plain integer.
+  The thread count that the gradient read may use, a plain integer.
 
 - center:
 
@@ -52,18 +52,19 @@ coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L, center = FALSE)
 ## Value
 
 An integer vector of one-based column indices to visit, in ascending
-order. Every column when `s_prev` is `NULL` or either kink size is not
-usable. A coordinate already away from zero is always kept, whatever its
-gradient, so the rule can only ever add coordinates to the active set.
-Never empty: where the test discards everything, the column with the
-largest gradient is kept.
+order. The result is every column when `s_prev` is `NULL` or either kink
+size is not usable. A coordinate already away from zero is always kept,
+whatever its gradient, so the rule can only ever add coordinates to the
+active set. The result is never empty: where the test discards
+everything, the column with the largest gradient is kept.
 
 ## Details
 
-The rule rests on the gradient moving no faster than the threshold does.
-That is an assumption and not a bound, so the rule screens without
-proving, and the caller checks what it discarded. With no previous point
-there is nothing to screen against and every coordinate is visited.
+The rule assumes that the gradient moves no faster than the threshold
+does. That is an assumption and not a bound, so the rule screens without
+proving, and the caller checks what it discarded. If there is no
+previous point, the screening has no reference and every coordinate is
+visited.
 
 ## See also
 

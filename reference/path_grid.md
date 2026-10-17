@@ -1,6 +1,6 @@
-# The Values a Path Visits Over a Hyperparameter Not Swept by Kink Size
+# The Values That a Path Visits Over a Hyperparameter Not Swept by Kink Size
 
-The grid of a hyperparameter that
+Returns the grid of a hyperparameter that
 [`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
 does not reach: equally spaced points strictly inside its interval where
 the interval is bounded, and a geometric grid above
@@ -46,11 +46,11 @@ A numeric vector of values for `name`.
 [`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
 walks the size of the kink, from the value that empties the block down,
 and a bounded hyperparameter cannot reach that end: the elastic net's
-kink is \\\lambda\alpha\\, so at a given \\\lambda\\ no admissible
-\\\alpha\\ empties the block and every point of such a path is dropped.
-A bounded hyperparameter is therefore swept over its interval, with
-\\\alpha\\ running between the ridge and the lasso. The kink still moves
-through \\\lambda\\, which is swept on its own axis.
+kink is \\\lambda\alpha\\, so at a given \\\lambda\\ the block stays
+nonempty for every admissible \\\alpha\\ and every point of such a path
+is dropped. A bounded hyperparameter is therefore swept over its
+interval, and \\\alpha\\ runs between the ridge and the lasso. The kink
+still moves through \\\lambda\\, which is swept on its own axis.
 
 The endpoints are excluded because the bounds are open: the elastic net
 at \\\alpha = 0\\ has no kink at all, and the path would be scoring a
@@ -65,10 +65,10 @@ operator is set-valued or the penalty is not defined.
 
 The floor is the smallest value at which the block can be fitted, which
 [`shape_floor()`](https://statmodels7.github.io/statmodels7/reference/shape_floor.md)
-derives from the proximal condition at the steps the block's coordinate
-descent takes, and not the constant the penalty is defined over. The two
-coincide on an ordinary well-conditioned block and differ where the
-steps are long.
+derives from the proximal condition at the steps that the block's
+coordinate descent takes, and not the constant over which the penalty is
+defined. The two coincide on an ordinary well-conditioned block and
+differ where the steps are long.
 
 ## See also
 

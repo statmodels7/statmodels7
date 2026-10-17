@@ -1,8 +1,8 @@
-# Every Labeled Effect in a Term, Its Sub-Terms Included
+# Every Labeled Effect in a Term, Including Its Sub-Terms
 
-One piece per labeled random effect reachable from a term: the term
-itself where it carries a label, and the sub-terms developing its own
-parameters otherwise, walked to any depth.
+Returns one piece per labeled random effect reachable from a term: the
+term itself where it carries a label, and the sub-terms developing its
+own parameters otherwise, walked to any depth.
 
 ## Usage
 
@@ -25,11 +25,11 @@ label_pieces(
 
 - param:
 
-  The distribution parameter its equation belongs to.
+  The distribution parameter to which its equation belongs.
 
 - nm:
 
-  The equation-level term's name, which is what the design is keyed by.
+  The equation-level term's name, by which the design is keyed.
 
 - within:
 
@@ -49,15 +49,15 @@ label_pieces(
 
   Whether `within` indexes a structural term's own parameters rather
   than columns of the design. `NULL` at the top level, where it is read
-  from the term; a recursive call passes the value it received.
+  from the term; a recursive call passes the value that it received.
 
 ## Value
 
 A list of pieces, each with `param`, `term`, `within`, `path`, `dim`,
 `tag`, `group` (as
 [`modelterms7::term_group()`](https://statmodels7.github.io/modelterms7/reference/term_group.html)
-returns it), `structural` and `distrib`. Empty where nothing under the
-term is labeled.
+returns it), `structural` and `distrib`. The list is empty if nothing
+under the term is labeled.
 
 ## Why a sub-term is reachable at all
 
@@ -69,17 +69,16 @@ columns that
 [`modelterms7::term_components()`](https://statmodels7.github.io/modelterms7/reference/term_components.html)
 reports as that component's `sub_index`, so a piece records them as
 `within`, positions in the parent's block, and the design turns them
-into positions in the stacked vector the same way it does for any other
-term.
+into positions in the stacked vector as it does for any other term.
 
-A labeled effect written in a subformula of an **additive** term lives
-in the same vector as one written in an equation, so the same positions
+A labeled effect written in a subformula of an additive term lives in
+the same vector as one written in an equation, so the same positions
 apply.
 
-A **structural** parent addresses its coefficients differently: they are
-the term's own parameters, which contribute no design column and live in
-the design's structural state. The walk is the same and the positions it
-composes are the same numbers (for a labeled effect inside
+A structural parent addresses its coefficients differently: they are the
+term's own parameters, which contribute no design column and live in the
+design's structural state. The walk is the same and the positions that
+it composes are the same numbers (for a labeled effect inside
 `gas(kappa1 ~ 1 + random(~ 1 | u | g))` they are the `cols` at which the
 unlabeled sub-term's own penalty is read), so a piece records which
 vector the positions index and not a different arithmetic.

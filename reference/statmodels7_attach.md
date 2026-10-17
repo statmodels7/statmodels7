@@ -14,9 +14,9 @@ statmodels7_attach()
 
 ## Value
 
-The names of the packages this call attached, a character vector,
-invisibly. Empty when every installed member was already on the search
-path.
+The names of the packages that this call attached, a character vector,
+invisibly. The vector is empty when every installed member was already
+on the search path.
 
 ## Details
 
@@ -39,4 +39,4 @@ would report it.
 [`statmodels7_packages()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.md)
 for the members,
 [`statmodels7_conflicts()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md)
-for what the suppressed warnings would have said.
+for the conflicts that the suppressed warnings would have reported.

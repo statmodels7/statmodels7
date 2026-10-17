@@ -25,7 +25,7 @@ kink_solve(pen, theta, name, target)
 
 - target:
 
-  The size the kink should have.
+  The size that the kink should have.
 
 ## Value
 

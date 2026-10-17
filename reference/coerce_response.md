@@ -27,21 +27,21 @@ attribute `"response_levels"`.
 
 ## Details
 
-A binary outcome recorded as a factor is how these data are ordinarily
-written, and [`glm()`](https://rdrr.io/r/stats/glm.html) accepts one:
-its binomial family reads the first level as the failure. The conversion
-makes the response a number before it reaches the density, which would
-otherwise receive a factor.
+A binary outcome is ordinarily recorded as a factor, and
+[`glm()`](https://rdrr.io/r/stats/glm.html) accepts one: its binomial
+family reads the first level as the failure. The conversion makes the
+response a number before it reaches the density, which would otherwise
+receive a factor.
 
 The first level is the failure, which is
 [`glm()`](https://rdrr.io/r/stats/glm.html)'s rule, so a model moved
 from [`glm()`](https://rdrr.io/r/stats/glm.html) keeps its signs. The
-conversion is made for every family and not only for the binary ones,
+conversion applies to every family and not only to the binary ones,
 which differs from base R, where `glm(f ~ x, gaussian)` on a factor `f`
 signals *"NA/NaN/Inf in 'y'"* after three warnings from `Ops.factor`. A
 two-level factor has one numeric reading and this is it; on a gaussian
-family the result is the linear probability model, which is what
-`as.numeric(f == "b")` gives.
+family the result is the linear probability model for the response
+`as.numeric(f == "b")`.
 
 The levels used are returned as the attribute `"response_levels"`, which
 lets

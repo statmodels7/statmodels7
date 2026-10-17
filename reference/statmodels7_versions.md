@@ -2,7 +2,7 @@
 
 Reports the version of each member package as it is installed on this
 machine, one row per member. A member that is not installed has `NA` as
-its version and is kept, so the result always has one row per name
+its version and is kept, so the result always has one row per name that
 [`statmodels7_packages()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.md)
 returns and a missing member is visible.
 
@@ -57,7 +57,7 @@ v
 #> 1         basis7  0.15.1
 #> 2 distributions7  0.80.2
 #> 3 linkfunctions7   0.5.4
-#> 4    modelterms7  0.99.1
+#> 4    modelterms7  0.99.3
 #> 5    numericals7  0.23.3
 #> 6    optimizers7  0.15.1
 #> 7    parameters7  0.26.0

@@ -25,10 +25,10 @@ One line per axis, with a `members` list column and no `id`.
 It plays for a path the role that
 [`index_group()`](https://statmodels7.github.io/statmodels7/reference/index_group.md)
 plays for the outer search. The axis is identified by its first member,
-so everything that reads `parameter`/`term`/`name` – the block it
-belongs to, whether it scales the kink, the history a reader reads –
-goes on reading the same fields, and the `members` list column says
-which hyperparameters the axis stands for.
+so the code that reads `parameter`, `term` and `name` (to find the block
+to which the axis belongs, to find whether it scales the kink, or to
+read the history) continues to read the same fields, and the `members`
+list column lists the hyperparameters that the axis represents.
 
-Where nothing is shared, each line is its own axis and carries itself as
-its single member.
+If a line shares its label with no other line, it is its own axis and
+carries itself as its single member.

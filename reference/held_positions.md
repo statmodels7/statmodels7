@@ -1,8 +1,8 @@
 # Where a Specification's Held Coefficients Sit in the Stacked Vector
 
 Translates `spec@held_coef`, which names coefficients, into positions in
-the stacked coefficient vector the objective works on, with the values
-beside them.
+the stacked coefficient vector on which the objective works, with the
+values beside them.
 
 ## Usage
 
@@ -34,7 +34,8 @@ held_positions(spec, design, obj, beta)
 ## Value
 
 A list of two numeric vectors of equal length, `where` (integer
-positions) and `value`. Both are empty where nothing is held.
+positions) and `value`. Both are empty if the model holds no
+coefficient.
 
 ## Details
 

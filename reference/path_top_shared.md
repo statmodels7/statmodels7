@@ -1,7 +1,7 @@
 # The Top of a Path Over Every Member of an Axis
 
-The size of the kink, in the axis's own block's units, at which every
-member of the axis has all its coefficients at the kink.
+Returns the size of the kink, in the axis's own block's units, at which
+every member of the axis has all its coefficients at the kink.
 
 ## Usage
 
@@ -17,7 +17,7 @@ path_top_shared(obj, beta, blocks, row, hyper, b)
 
 - beta:
 
-  The coefficients the scores are read at.
+  The coefficients at which the scores are read.
 
 - blocks:
 
@@ -44,17 +44,17 @@ A single number, a size of `b`'s kink.
 ## Details
 
 A shared axis is one value multiplying several penalties, which may sit
-in different equations – a lasso on the mean and a lasso on the scale
-with one `id`. Each member's top is read from its own score, with every
-member held at its kink, and carried onto the value of the
+in different equations (a lasso on the mean and a lasso on the scale
+with one `id`). Each member's top is read from its own score, while
+every member is held at its kink, and carried onto the value of the
 hyperparameter through its own penalty; the axis starts at the largest
 of those values, written back as a size of the first member's kink,
-which is the size the rest of the path speaks. Two blocks of one
-equation sharing an `id` therefore start where a single block over both
-starts, the score of a column not depending on how the columns were
-grouped. Where nothing is shared this is
+which is the size in which the rest of the path is expressed. Two blocks
+of one equation sharing an `id` therefore start where a single block
+over both starts, because the score of a column does not depend on how
+the columns were grouped. If the axis has a single member, this is
 [`path_null_score()`](https://statmodels7.github.io/statmodels7/reference/path_null_score.md)
-of the one block.
+of that block.
 
 ## See also
 

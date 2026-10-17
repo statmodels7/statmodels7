@@ -2,11 +2,12 @@
 
 Raises
 [`order_shortfall()`](https://statmodels7.github.io/statmodels7/reference/order_shortfall.md)'s
-message when the family does not carry the two derivatives every
-criterion reads. Called from
+message when the family does not carry the two derivatives that every
+criterion reads.
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-once the criterion is known to have something to do, so that a model
-whose criterion is inert does not signal an error that cannot arise.
+calls the function once the criterion is known to have something to do,
+so that a model whose criterion is inert does not signal an error that
+cannot arise.
 
 ## Usage
 
@@ -28,7 +29,7 @@ assert_criterion_order(distrib, method)
 
 ## Value
 
-`NULL`, invisibly. Called for the error.
+`NULL`, invisibly. The function is called for the error.
 
 ## See also
 

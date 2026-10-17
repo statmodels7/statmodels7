@@ -4,8 +4,8 @@ Signals the error that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 gives when
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) is
-passed as `outer_criterion` to a model in which no penalty with a kink
-has a hyperparameter left to estimate.
+passed as `outer_criterion` to a model in which there is no penalty with
+a kink that has a hyperparameter left to estimate.
 
 ## Usage
 

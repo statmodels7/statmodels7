@@ -1,6 +1,6 @@
 # A Score Over the Coordinates That a Kink Leaves Free
 
-Zeroes the entries of a score at the coordinates
+Zeroes the entries of a score at the coordinates that
 [`zero_kinked()`](https://statmodels7.github.io/statmodels7/reference/zero_kinked.md)
 returns.
 

@@ -1,9 +1,9 @@
 # How the Size of the Kink Scales With a Hyperparameter
 
-The exponent \\k\\ in \\s(v) = c\\v^k\\, read from the size of the kink
-at the current value and at twice it (or at half it, where twice it is
-outside the hyperparameter's interval), or `NULL` where there is no such
-exponent to read.
+Returns the exponent \\k\\ in \\s(v) = c\\v^k\\, read from the size of
+the kink at the current value and at twice it (or at half it, where
+twice it is outside the hyperparameter's interval), or `NULL` where
+there is no such exponent to read.
 
 ## Usage
 
@@ -27,9 +27,9 @@ kink_power(pen, theta, name)
 
 ## Value
 
-A list of the exponent `k`, the value `v0` it was read at and the size
-`s0` there; `NULL` where the size does not move or where either size or
-the value is not positive and finite.
+A list of the exponent `k`, the value `v0` at which it was read and the
+size `s0` there; `NULL` where the size does not move or where either
+size or the value is not positive and finite.
 
 ## Details
 
@@ -39,7 +39,7 @@ of it. The exponent is one for the lasso, for SCAD and MCP in
 \\\lambda\\ and for the elastic net in both \\\lambda\\ and \\\alpha\\.
 For the shapes of SCAD and MCP, which do not move the kink, there is no
 exponent and the result is `NULL`. A Laplace prior written by its scale
-has exponent \\-1\\, its kink narrowing as the hyperparameter grows.
+has exponent \\-1\\, and its kink narrows as the hyperparameter grows.
 
 The exponent is measured and not assumed, and
 [`kink_by_power()`](https://statmodels7.github.io/statmodels7/reference/kink_by_power.md)

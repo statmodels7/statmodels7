@@ -1,8 +1,8 @@
 # Take the Offsets Out of an Equation
 
 Splits a one-sided formula into the
-[`offset()`](https://rdrr.io/r/stats/offset.html) terms it names and
-whatever is left, and the interpreter is given the second.
+[`offset()`](https://rdrr.io/r/stats/offset.html) terms that it names
+and whatever is left, and passes the second part to the interpreter.
 
 ## Usage
 
@@ -22,18 +22,18 @@ A list of two:
 
 - `formula`:
 
-  `eq` with the offset terms removed. `~ 1` where the equation held
-  nothing else.
+  `eq` with the offset terms removed. The formula is `~ 1` where the
+  equation held nothing else.
 
 - `offsets`:
 
-  a list of the expressions taken out, unevaluated. Empty when there
-  were none.
+  a list of the expressions taken out, unevaluated. The list is empty
+  when there were none.
 
 ## Details
 
 An offset is a column of the linear predictor whose coefficient is known
-to be one, and `y ~ x + offset(log_n)` is how R has always written it.
+to be one, and it is written in R as in `y ~ x + offset(log_n)`.
 
 The offset has to be taken out before the interpreter reads the
 equation. Left in, the term would reach `model.matrix` through

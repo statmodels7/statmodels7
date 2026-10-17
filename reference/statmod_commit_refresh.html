@@ -11,7 +11,7 @@ iteration advances one step."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,28 +65,30 @@ parameter.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
-<dd><p>The design, whose refresh state is what this advances.</p></dd>
+<dd><p>The design, whose refresh state this function advances.</p></dd>
 
 
 <dt id="arg-which">which<a class="anchor" aria-label="anchor" href="#arg-which"></a></dt>
 <dd><p>Which entries to commit: <code>"all"</code> (the default), <code>"jacobian"</code>
 or <code>"frozen"</code>. The alternation's pass level and <code><a href="statmod_fitted_spec.html">statmod_fitted_spec()</a></code>
-both pass <code>"jacobian"</code>, the frozen terms having been committed already
-by their own phase.</p></dd>
+both pass <code>"jacobian"</code>, because their own phase has already committed
+the frozen terms.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The coefficient list, invisibly, with each committed term's
-stretch replaced by the coefficients that term stored. Identical to
-<code>coef</code> when nothing was committed or when no term relabeled.</p>
+    <p>The coefficient list, invisibly. The stretch of each committed
+term is replaced by the coefficients that the term stored. The result is
+identical to <code>coef</code> if the function commits no term or if no term
+relabels.</p>
     </div>
     <div class="section level2">
     <h2 id="what-moves">What moves<a class="anchor" aria-label="anchor" href="#what-moves"></a></h2>
-    <p>The rescaling factor of a discontinuous break-point term, and the
-direction it last traveled in, which <span class="pkg">modelterms7</span> halves on a
-reversal. Advancing that once per objective evaluation would anneal at
-the speed of the line search instead of the speed of the fit; never
+    <p>The state that moves is the rescaling factor of a discontinuous
+break-point term and the direction in which it last traveled;
+<span class="pkg">modelterms7</span> halves the factor on a reversal. Advancing that once
+per objective evaluation would anneal at the speed of the line search
+instead of the speed of the fit; never
 advancing it would solve a permanently smoothed problem, whose fixed
 point is not the model's. The alternation commits the Jacobian entries
 once per pass (<code>which = "jacobian"</code>), and <code><a href="fit_working.html">fit_working()</a></code> commits the
@@ -107,8 +109,9 @@ so a second commit at the same coefficients takes a further hidden step
 and changes the contribution. And a refresh
 may relabel crossed break-point lineages, after which the caller's own
 copy of the coefficients names them in the old order.</p>
-<p>The relabeling is why the committed coefficients are returned. A caller
-continues from what the terms stored, not from what it passed in.</p>
+<p>Because of this relabeling, the function returns the committed
+coefficients. A caller continues from what the terms stored, not from what
+it passed in.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

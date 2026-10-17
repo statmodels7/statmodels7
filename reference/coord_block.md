@@ -1,8 +1,8 @@
-# The Penalized Block, in the Storage It Arrived In
+# The Penalized Block, in the Storage in Which It Arrived
 
 Slices a penalized term's columns out of its equation's design without
 densifying a sparse one, and normalizes a Matrix to the
-compressed-column class the kernel reads.
+compressed-column class that the kernel reads.
 
 ## Usage
 
@@ -31,7 +31,7 @@ A dense slice of a base matrix is returned as it is. Any Matrix is
 carried to `dgCMatrix`: the general compressed-column form is the one
 whose slots the kernel walks, and a symmetric or triangular compression
 would describe the same entries differently. A dense Matrix class is
-materialized as a base matrix instead, there being nothing to save.
+materialized as a base matrix instead, because there is nothing to save.
 
 ## See also
 

@@ -1,7 +1,7 @@
 # The Coefficients That a Marginal Criterion Estimates
 
-The positions, in the stacked coefficient vector, of the coordinates
-that
+Returns the positions, in the stacked coefficient vector, of the
+coordinates that
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 and
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
@@ -37,15 +37,16 @@ marginal_coords(spec, design, method)
 
 A list with `where` (integer positions in the stacked vector), `param`
 and `name` (the equation and the coefficient name of each position), and
-`skipped`, a named character vector giving, for every parameter that has
-coefficients, that the default named and that this function left out,
-the reason. Every field is empty where nothing is estimated this way.
+`skipped`, a named character vector that gives the reason for every
+parameter that has coefficients, was named by the default and was left
+out by this function. Every field is empty if the criterion estimates no
+coefficient this way.
 
 ## Details
 
-A coefficient qualifies when no penalty covers it, or when it lies in
-the null space of the quadratic penalty that covers it and that null
-space is spanned by coordinates. The free columns of
+A coefficient qualifies when it is covered by no penalty, or when it
+lies in the null space of the quadratic penalty that covers it and that
+null space is spanned by coordinates. The free columns of
 [`modelterms7::s()`](https://statmodels7.github.io/modelterms7/reference/s.html)
 are the second case: the null space of the Demmler-Reinsch penalty is
 spanned by the coordinates of the linear part.
@@ -54,11 +55,11 @@ A coefficient that a penalty with a kink covers (lasso, SCAD, MCP) does
 not qualify: it stays at the joint mode, and the criterion leaves it out
 of its determinant
 ([`laplace_pinned()`](https://statmodels7.github.io/statmodels7/reference/laplace_pinned.md)).
-Beside a penalty with a kink the default names no parameter, so no
-coefficient is estimated on the criterion. A parameter that the caller
-names in `marginal` has its unpenalized coefficients estimated on the
-criterion, which corrects a dispersion's intercept for the columns of
-the mean that are fitted with it.
+Beside a penalty with a kink the default names no parameter, so the
+criterion estimates no coefficient. A parameter that the caller names in
+`marginal` has its unpenalized coefficients estimated on the criterion,
+which corrects a dispersion's intercept for the columns of the mean that
+are fitted with it.
 
 The following configurations are not covered yet. For each one, a
 parameter that the caller names in `marginal` signals an error, and a

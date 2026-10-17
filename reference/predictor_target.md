@@ -1,9 +1,10 @@
 # The Response on the Scale of a Predictor
 
-The response carried onto the scale of one equation's linear predictor.
+Returns the response carried onto the scale of one equation's linear
+predictor.
 [`modelterms7::term_coef_start()`](https://statmodels7.github.io/modelterms7/reference/term_coef_start.html)
 takes it to estimate a term's own parameters from the data, which is the
-one thing a term cannot work out for itself.
+one thing that a term cannot work out for itself.
 
 ## Usage
 

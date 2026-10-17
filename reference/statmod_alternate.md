@@ -86,12 +86,13 @@ statmod_alternate(
 - hold_refresh:
 
   `TRUE` holds every frozen break-point block at its committed
-  positions: the fit is then an ordinary smooth fit, no read-off runs
-  and no schedule advances. The outer machinery passes it at every
+  positions: the fit is then an ordinary smooth fit, and the schedule is
+  neither read off nor advanced. The outer machinery passes it at every
   criterion evaluation, path point and fold. A working phase inside each
   evaluation would multiply the cost of the fit, and a break-point that
   moves between evaluations makes the criterion depend on the path of
   the search. The positions are refined once, by the full alternation
+  that
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   runs at the chosen hyperparameters before the restarts.
 
@@ -105,7 +106,7 @@ A list of nine:
 
 - `value`:
 
-  the penalized objective there, unaveraged.
+  the penalized objective there, not averaged.
 
 - `converged`:
 
@@ -114,12 +115,12 @@ A list of nine:
   of the smooth block is not part of it. Beside a kinked block or a
   structural term it also requires
   [`alternation_settled()`](https://statmodels7.github.io/statmodels7/reference/alternation_readings.md)
-  at the point. Where nothing alternates, it is the flag of the inner
-  method.
+  at the point. Where the fit does not alternate between blocks, it is
+  the flag of the inner method.
 
 - `obj`:
 
-  the objective object the last pass used.
+  the objective object that the last pass used.
 
 - `note`:
 
@@ -139,9 +140,9 @@ A list of nine:
 
 - `hist_inner`:
 
-  a list of data frames, one for each pass whose smooth fit recorded
-  steps, holding the inner history with the columns `pass` and `block`
-  added.
+  a list of data frames, one for each pass in which the smooth fit
+  recorded steps, holding the inner history with the columns `pass` and
+  `block` added.
 
 - `spec`:
 
@@ -157,10 +158,11 @@ fit at one point of the search is one call.
 One pass fits the smooth block (beside a structural term of the filter
 shape, the joint system of the coefficients and the term's parameters),
 then the structural block of a term of the likelihood shape, then each
-kinked block with the other blocks held, and then commits the schedule
-of any refreshable term. The passes stop when the relative change of the
-objective falls below `tol`. The verdict is the inner fit's flag where
-there is nothing to alternate with. Otherwise it also requires
+kinked block while the other blocks are held, and then commits the
+schedule of any refreshable term. The passes stop when the relative
+change of the objective falls below `tol`. The verdict is the inner
+fit's flag where the fit does not alternate between blocks. Otherwise it
+also requires
 [`alternation_settled()`](https://statmodels7.github.io/statmodels7/reference/alternation_readings.md)
 (the Newton decrement of the smooth part and the KKT decrement of each
 coefficient that a kinked penalty holds at zero, both within
@@ -172,10 +174,10 @@ where the model has refreshable terms.
 ## See also
 
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-for the fit this performs,
+for the fit that this performs,
 [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
 and
 [`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)
-for the two halves of a pass,
+for the two halves of a pass, and
 [`statmod_boot_restart()`](https://statmodels7.github.io/statmodels7/reference/statmod_boot_restart.md),
 which calls this repeatedly.

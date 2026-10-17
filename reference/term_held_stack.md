@@ -1,11 +1,11 @@
-# The Stacked Positions the Terms Hold
+# The Stacked Positions That the Terms Hold
 
-The positions, in the stacked coefficient vector, of the coefficients
-the model's terms hold
-([`modelterms7::term_held()`](https://statmodels7.github.io/modelterms7/reference/term_held.html)):
-the slot of a held break-point. The terms are read from the design's
-state where the fit carries one, so a term held during the fit is seen
-at once, and from the specification otherwise.
+Returns the positions, in the stacked coefficient vector, of the
+coefficients that the model's terms hold
+([`modelterms7::term_held()`](https://statmodels7.github.io/modelterms7/reference/term_held.html)),
+namely the slot of a held break-point. The terms are read from the
+design's state where the fit carries one, so a term held during the fit
+is seen at once, and from the specification otherwise.
 
 ## Usage
 

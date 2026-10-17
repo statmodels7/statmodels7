@@ -11,7 +11,7 @@ smallest for a rule built by crit_all()."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,18 +62,18 @@ by <code>crit_any()</code> or <code>crit_all()</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single number. <code><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">optimizers7::crit_grad()</a></code>'s own default where
-the criterion carries no tolerance at all, read from that function's
-formals.</p>
+    <p>A single number. The value is <code><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">optimizers7::crit_grad()</a></code>'s own
+default where the criterion carries no tolerance at all, read from that
+function's formals.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A rule built by <code>crit_any()</code> stops when <strong>any</strong> part holds, so the loop it
+    <p>A rule built by <code>crit_any()</code> stops when any part holds, so the loop that it
 drives is no more precise than its loosest part, and the maximum is taken.
 A rule built by <code>crit_all()</code> stops only when every part holds, so the loop
 reaches the precision of its tightest part, and the minimum is taken. The
-value is the precision that the loop delivers, which is what a caller of
-<code><a href="method_budget.html">method_budget()</a></code> needs.</p>
+value is the precision that the loop delivers, and a caller of
+<code><a href="method_budget.html">method_budget()</a></code> needs that value.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

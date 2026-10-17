@@ -1,7 +1,7 @@
 # The Factor of a Diagonal Penalty
 
-One row per coordinate that the penalty reaches, carrying the square
-root of that coordinate's entry, which is the value of
+Returns one row per coordinate that the penalty reaches, and each row
+carries the square root of that coordinate's entry. This is the value of
 [`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)
 where the matrix is diagonal.
 
@@ -20,14 +20,15 @@ diagonal_sqrt(S, p)
 
 - p:
 
-  Its dimension. Passed in so that the caller's own count is used and no
-  dimension is inferred here.
+  Its dimension. The caller supplies it, so that the function uses the
+  caller's own count and does not infer a dimension.
 
 ## Value
 
-A matrix with `p` columns and one row per retained coordinate, each row
-zero except for the square root of that coordinate's entry. Its class
-mirrors `S`'s. `NULL` when any entry is negative beyond the tolerance.
+A matrix with `p` columns and one row per retained coordinate, in which
+each row is zero except for the square root of that coordinate's entry.
+Its class mirrors `S`'s. `NULL` when any entry is negative beyond the
+tolerance.
 
 ## Details
 

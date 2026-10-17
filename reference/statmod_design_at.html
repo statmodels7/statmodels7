@@ -9,9 +9,10 @@ $$\mathrm{adj} = \mathrm{term\_value}(\beta) - X(\beta)\,\beta$$
 For a term whose block is a Jacobian, modelterms7::seg(),
 modelterms7::nl() and a smoothed modelterms7::jump() or
 modelterms7::jseg(), the adjustment is non-zero and the resulting
-scoring step is the Gauss-Newton one. A sharp, unheld modelterms7::jump()
-or modelterms7::jseg() is a frozen block instead. It is not recomputed
-at a trial point. Inside fit_working() its columns give the predictor
+scoring step is the Gauss-Newton one. A sharp modelterms7::jump()
+or modelterms7::jseg() that is not held is a frozen block instead. It is
+not recomputed at a trial point. Inside fit_working() its columns give
+the predictor
 exactly, so that the adjustment is zero and the working fit is the
 fixed-point iteration of Fasola et al.; elsewhere the adjustment is
 anchored at the committed coefficients."><meta property="og:description" content="Recomputes the design block of every refreshable term at the coefficients
@@ -24,9 +25,10 @@ $$\mathrm{adj} = \mathrm{term\_value}(\beta) - X(\beta)\,\beta$$
 For a term whose block is a Jacobian, modelterms7::seg(),
 modelterms7::nl() and a smoothed modelterms7::jump() or
 modelterms7::jseg(), the adjustment is non-zero and the resulting
-scoring step is the Gauss-Newton one. A sharp, unheld modelterms7::jump()
-or modelterms7::jseg() is a frozen block instead. It is not recomputed
-at a trial point. Inside fit_working() its columns give the predictor
+scoring step is the Gauss-Newton one. A sharp modelterms7::jump()
+or modelterms7::jseg() that is not held is a frozen block instead. It is
+not recomputed at a trial point. Inside fit_working() its columns give
+the predictor
 exactly, so that the adjustment is zero and the working fit is the
 fixed-point iteration of Fasola et al.; elsewhere the adjustment is
 anchored at the committed coefficients."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
@@ -37,7 +39,7 @@ anchored at the committed coefficients."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,9 +79,10 @@ block as an ordinary design while the predictor stays exact:</p>
 <p>For a term whose block is a Jacobian, <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>,
 <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> and a smoothed <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> or
 <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>, the adjustment is non-zero and the resulting
-scoring step is the Gauss-Newton one. A sharp, unheld <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>
-or <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> is a frozen block instead. It is not recomputed
-at a trial point. Inside <code><a href="fit_working.html">fit_working()</a></code> its columns give the predictor
+scoring step is the Gauss-Newton one. A sharp <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>
+or <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> that is not held is a frozen block instead. It is
+not recomputed at a trial point. Inside <code><a href="fit_working.html">fit_working()</a></code> its columns give
+the predictor
 exactly, so that the adjustment is zero and the working fit is the
 fixed-point iteration of Fasola et al.; elsewhere the adjustment is
 anchored at the committed coefficients.</p>
@@ -109,10 +112,10 @@ parameter, each as long as its equation's design is wide.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A design of the same shape as <code>design</code>, with the refreshable
-terms' column blocks replaced and the <code>adj</code> of each equation that carries
-a refreshable term set to the per-observation adjustment above. <code>design</code>
-itself when nothing refreshes.</p>
+    <p>A design of the same shape as <code>design</code>. The column blocks of the
+refreshable terms are replaced, and the <code>adj</code> of each equation that
+carries a refreshable term is set to the per-observation adjustment
+above. The function returns <code>design</code> itself when no term refreshes.</p>
     </div>
     <div class="section level2">
     <h2 id="models-without-a-refreshable-term">Models without a refreshable term<a class="anchor" aria-label="anchor" href="#models-without-a-refreshable-term"></a></h2>
@@ -131,14 +134,14 @@ the specification each time would reset that factor to its starting value
 and solve a permanently smoothed problem, whose fixed point is not the
 model's.</p>
 <p>The state advances only when <code><a href="statmod_commit_refresh.html">statmod_commit_refresh()</a></code> is called, so
-every trial point of a line search sees one schedule and the schedule
+every trial point of a line search uses one schedule and the schedule
 advances once per sweep.</p>
     </div>
     <div class="section level2">
     <h2 id="new-data">New data<a class="anchor" aria-label="anchor" href="#new-data"></a></h2>
-    <p>When the specification carries new data, nothing is refreshed. The design
-block is the one in <code>design</code>, and the contribution on the new rows is
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_value.html" class="external-link">modelterms7::term_value()</a></code> at the coefficients in hand, or at the
+    <p>When the specification carries new data, the function refreshes no block.
+The design block is the one in <code>design</code>, and the contribution on the new
+rows is <code><a href="https://statmodels7.github.io/modelterms7/reference/term_value.html" class="external-link">modelterms7::term_value()</a></code> at the coefficients in hand, or at the
 committed coefficients for a frozen block.</p>
     </div>
     <div class="section level2">

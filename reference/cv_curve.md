@@ -21,7 +21,7 @@ cv_curve(spec, data, inner_optimizer, hypers, folds, run = NULL)
 
 - data:
 
-  The data the fit was called on.
+  The data with which the fit was called.
 
 - inner_optimizer:
 
@@ -37,9 +37,9 @@ cv_curve(spec, data, inner_optimizer, hypers, folds, run = NULL)
 
 - run:
 
-  Which combination of the outer axes each point belongs to. The warm
-  start begins again at the head of each, the kink jumping back up
-  there. `NULL` treats the whole list as one run.
+  The combination of the outer axes to which each point belongs. The
+  warm start begins again at the head of each combination, where the
+  kink jumps back up. `NULL` treats the whole list as one run.
 
 ## Value
 
@@ -47,7 +47,7 @@ A list with `cvm`, the mean over folds at each point; `cvse`, its
 standard error across the folds with a finite value; `n_fail`, the
 number of folds without a value at each point; and `error`, the message
 of the first fold that could not rebuild the model, or `NULL`. `cvm` is
-missing at a point where no fold has a value.
+missing at a point where every fold lacks a value.
 
 ## Details
 
@@ -62,12 +62,12 @@ alone would not cover a held-out row beyond their range, and the fold
 would fail.
 
 The training rows and the held-out rows carry the weights and offsets of
-`spec` at those rows, the offsets given through the `offsets` argument
-of
-[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-included. Where the fit of a fold at a point does not converge, or its
-criterion is not finite, the fold's value at that point is missing and
-is counted in `n_fail`.
+`spec` at those rows, including the offsets given through the `offsets`
+argument of
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md).
+Where the fit of a fold at a point does not converge, or its criterion
+is not finite, the fold's value at that point is missing and is counted
+in `n_fail`.
 
 ## See also
 

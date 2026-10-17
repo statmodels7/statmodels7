@@ -1,6 +1,6 @@
 # The Coordinates Left Out of the Marginal Determinant
 
-The positions that
+Returns the positions that
 [`pin_boundary()`](https://statmodels7.github.io/statmodels7/reference/pin_boundary.md)
 pins besides a boundary: the coefficients that the criterion estimates,
 which the specification holds, and the coordinates that the model does

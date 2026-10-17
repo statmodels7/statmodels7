@@ -31,7 +31,7 @@ iwls_line_search(obj, beta, value, g, pc, method, damp, frozen, guard = FALSE)
 
 - pc:
 
-  The pieces
+  The pieces that
   [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
   reads.
 
@@ -60,7 +60,7 @@ number of trial points whose objective raised.
 
 ## Details
 
-It is the body
+It is the body that
 [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
 ran inline, moved into a function so that the step can be tried twice at
 one iterate, first on the observed information and then on the expected

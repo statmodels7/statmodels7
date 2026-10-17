@@ -1,6 +1,6 @@
 # Where a Penalized Unit's Coordinates Are in the Joint Vector
 
-The same positions as
+Returns the same positions as
 [`unit_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_positions.md),
 carried onto the one vector \\\[\beta; \zeta\_{\mathrm{free}}\]\\ that
 the inner step, the marginal criterion and the variance all assemble, so
@@ -31,22 +31,23 @@ unit_joint_positions(u, spec, design)
 ## Value
 
 An integer vector of positions, empty where the unit names a coordinate
-the joint vector does not carry.
+that the joint vector does not carry.
 
 ## Details
 
 The three kinds are addressed in three different vectors, and a caller
 that forms a trace needs one. A mixed class already records the answer,
-its `joint` field being built by
-[`class_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_joint_pieces.md).
-A structural unit records positions among all of a term's parameters,
-where the joint vector holds only the free ones, so a held coordinate
-has to be mapped out rather than offset past. An ordinary unit's stacked
-index is already a position in the joint vector, coefficients coming
-first and none of them being held.
+because
+[`class_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_joint_pieces.md)
+builds its `joint` field. A structural unit records positions among all
+of a term's parameters, where the joint vector holds only the free ones,
+so a held coordinate has to be mapped out rather than offset past. An
+ordinary unit's stacked index is already a position in the joint vector,
+because the coefficients come first and every one of them is a free
+coordinate.
 
-Written once so that the convention is composed in one place and not in
-three.
+This function is written once so that the convention is composed in one
+place and not in three.
 
 ## See also
 

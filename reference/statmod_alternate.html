@@ -11,7 +11,7 @@ stops moving."><meta property="og:image" content="https://statmodels7.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,13 +122,14 @@ pass a short one: an excursion needs to travel, not to converge.</p></dd>
 
 <dt id="arg-hold-refresh">hold_refresh<a class="anchor" aria-label="anchor" href="#arg-hold-refresh"></a></dt>
 <dd><p><code>TRUE</code> holds every frozen break-point block at
-its committed positions: the fit is then an ordinary smooth fit, no
-read-off runs and no schedule advances. The outer machinery passes it
-at every criterion evaluation, path point and fold. A working phase
+its committed positions: the fit is then an ordinary smooth fit, and
+the schedule is neither read off nor advanced. The outer
+machinery passes it at every criterion evaluation, path point and fold. A
+working phase
 inside each evaluation would multiply the cost of the fit, and a
 break-point that moves between evaluations makes the criterion depend on
 the path of the search. The positions are refined once, by the full
-alternation <code><a href="statmod.html">statmod()</a></code> runs at the chosen hyperparameters before the
+alternation that <code><a href="statmod.html">statmod()</a></code> runs at the chosen hyperparameters before the
 restarts.</p></dd>
 
 </dl></div>
@@ -138,18 +139,18 @@ restarts.</p></dd>
 <dd><p>the stacked coefficients reached.</p></dd>
 
 <dt><code>value</code></dt>
-<dd><p>the penalized objective there, unaveraged.</p></dd>
+<dd><p>the penalized objective there, not averaged.</p></dd>
 
 <dt><code>converged</code></dt>
 <dd><p>a single logical. Where a term recomputes its own
 block, the verdict is the objective's together with that term's own
 flags, and the flag of the smooth block is not part of it. Beside a
 kinked block or a structural term it also requires
-<code><a href="alternation_readings.html">alternation_settled()</a></code> at the point. Where nothing alternates, it
-is the flag of the inner method.</p></dd>
+<code><a href="alternation_readings.html">alternation_settled()</a></code> at the point. Where the fit does not
+alternate between blocks, it is the flag of the inner method.</p></dd>
 
 <dt><code>obj</code></dt>
-<dd><p>the objective object the last pass used.</p></dd>
+<dd><p>the objective object that the last pass used.</p></dd>
 
 <dt><code>note</code></dt>
 <dd><p>the <code>note</code> element of the last smooth fit, as
@@ -165,9 +166,9 @@ fitted in each pass, with <code>pass</code>, <code>block</code>, <code>objective
 <code>iterations</code> and <code>converged</code>.</p></dd>
 
 <dt><code>hist_inner</code></dt>
-<dd><p>a list of data frames, one for each pass whose
-smooth fit recorded steps, holding the inner history with the columns
-<code>pass</code> and <code>block</code> added.</p></dd>
+<dd><p>a list of data frames, one for each pass in which
+the smooth fit recorded steps, holding the inner history with the
+columns <code>pass</code> and <code>block</code> added.</p></dd>
 
 <dt><code>spec</code></dt>
 <dd><p>the specification after the last pass, with the SCAD and
@@ -183,19 +184,19 @@ at one point of the search is one call.</p>
 <p>One pass fits the smooth block (beside a structural term of the filter
 shape, the joint system of the coefficients and the term's parameters),
 then the structural block of a term of the likelihood shape, then each
-kinked block with the other blocks held, and then commits the schedule of
-any refreshable term. The passes stop when the relative change of the
-objective falls below <code>tol</code>. The verdict is the inner fit's flag where
-there is nothing to alternate with. Otherwise it also requires
-<code><a href="alternation_readings.html">alternation_settled()</a></code> (the Newton decrement of the smooth part and the
-KKT decrement of each coefficient that a kinked penalty holds at zero,
-both within <code><a href="mode_error_limit.html">mode_error_limit()</a></code>), and <code><a href="statmod_refresh_settled.html">statmod_refresh_settled()</a></code> where
-the model has refreshable terms.</p>
+kinked block while the other blocks are held, and then commits the
+schedule of any refreshable term. The passes stop when the relative change of
+the objective falls below <code>tol</code>. The verdict is the inner fit's flag where
+the fit does not alternate between blocks. Otherwise it also requires
+<code><a href="alternation_readings.html">alternation_settled()</a></code> (the Newton decrement of the smooth part and the KKT
+decrement of each coefficient that a kinked penalty holds at zero, both
+within <code><a href="mode_error_limit.html">mode_error_limit()</a></code>), and <code><a href="statmod_refresh_settled.html">statmod_refresh_settled()</a></code> where the model
+has refreshable terms.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod.html">statmod()</a></code> for the fit this performs,
-<code><a href="fit_smooth.html">fit_smooth()</a></code> and <code><a href="sparse_fit.html">sparse_fit()</a></code> for the two halves of a pass,
+    <div class="dont-index"><p><code><a href="statmod.html">statmod()</a></code> for the fit that this performs,
+<code><a href="fit_smooth.html">fit_smooth()</a></code> and <code><a href="sparse_fit.html">sparse_fit()</a></code> for the two halves of a pass, and
 <code><a href="statmod_boot_restart.html">statmod_boot_restart()</a></code>, which calls this repeatedly.</p></div>
     </div>
 

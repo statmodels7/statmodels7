@@ -1,8 +1,8 @@
 # Every Penalty in a Model, Without the Design
 
-The same enumeration as
+Returns the same enumeration as
 [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
-minus the column positions, for the callers that need to know which
+without the column positions, for the callers that need to know which
 penalties exist before a design has been built.
 
 ## Usage

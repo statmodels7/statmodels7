@@ -1,5 +1,35 @@
 # Changelog
 
+## statmodels7 0.203.2
+
+- Documentation and messages of the inner fit (the specification, the
+  design blocks,
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
+  the coordinate descent, the paths, the starting strategies, the
+  objective and the structural terms): relative clauses without a
+  relative pronoun, stranded prepositions, absolute constructions,
+  sentences without a verb (example captions and later sentences of
+  `@return` included), emphasis in bold, negated subjects, cleft
+  sentences and personified descriptions of the code rewritten as plain
+  clauses. The bold paragraph labels in the details of
+  [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  are section headings. Error messages and notes of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
+  [`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md),
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
+  [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md),
+  [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
+  and the response checks of the specification are reworded; where a
+  test matches a message, its pattern changes with it
+  ([`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  given both `tol` and `criterion`, and the note of a line search that
+  finds no step even with damping).
+- The documentation of the internal
+  [`unit_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_positions.md)
+  said that a unit carries its positions in two fields; it carries them
+  in one of three (`index`, `cols` or `joint`).
+
 ## statmodels7 0.203.1
 
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)

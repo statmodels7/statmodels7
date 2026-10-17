@@ -1,7 +1,7 @@
 # The Criterion That a Fit Maximized, Rebuilt From the Fit
 
-The specification and the design on which a fit's marginal criterion was
-maximized: the coefficients that
+Returns the specification and the design on which a fit's marginal
+criterion was maximized: the coefficients that
 [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)
 names are held at their fitted values, and the coordinates left out of
 the determinant are recorded on the design.
@@ -30,7 +30,7 @@ fit_marginal_context(spec, design, coef, method, pinned = NULL)
 
   The
   [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-  the fit ran, or `NULL`.
+  that the fit ran, or `NULL`.
 
 - pinned:
 
@@ -49,6 +49,6 @@ A consumer that reads the criterion's derivatives at a fitted object has
 to read them on this criterion. On the fit's own specification, which
 holds nothing, the same functions return the derivatives of a criterion
 that integrates the estimated coefficients, which is another function.
-Where
+If
 [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)
-signals an error, no coefficient is treated as estimated.
+signals an error, the function treats no coefficient as estimated.

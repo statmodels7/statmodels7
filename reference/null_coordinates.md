@@ -1,7 +1,7 @@
 # The Null Coordinates of a Penalty
 
-The positions, within a penalty's block, that span its null space, or
-`NULL` where the null space is not spanned by coordinates.
+Returns the positions, within a penalty's block, that span its null
+space, or `NULL` where the null space is not spanned by coordinates.
 
 ## Usage
 

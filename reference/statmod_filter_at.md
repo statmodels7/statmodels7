@@ -1,7 +1,8 @@
 # Run the Structural Terms at the Current Parameters
 
-The level that each filter adds to the equation in which it sits,
-together with the derivative of that level in the term's own parameters.
+Returns the level that each filter adds to the equation in which it
+sits, together with the derivative of that level in the term's own
+parameters.
 
 ## Usage
 
@@ -26,13 +27,13 @@ statmod_filter_at(spec, design, eta_static, theta_static)
 
 - theta_static:
 
-  The parameters they give.
+  The parameters that they give.
 
 ## Value
 
 A named list, one entry per structural term, carrying its predictor, the
 derivative of that predictor in the term's own parameters, and the
-curvature the recursion read at each step.
+curvature that the recursion read at each step.
 
 ## Details
 

@@ -1,8 +1,8 @@
 # The Penalized Objective at the Unrestricted Joint Mode
 
-The minimum of the penalized objective over every coefficient at the
-fitted hyperparameters, which is the unrestricted side of the likelihood
-ratio
+Computes the minimum of the penalized objective over every coefficient
+at the fitted hyperparameters, which is the unrestricted side of the
+likelihood ratio that
 [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md)
 computes.
 
@@ -43,10 +43,10 @@ the point that the fit returned is not the joint mode, and
 against `fit@objective` then contains the difference between the
 objective at the fitted point and at the joint mode.
 
-The full model is therefore refitted with nothing held, from the fitted
-coefficients, which are already close to the joint mode, at the fitted
-hyperparameters. Where the criterion estimated nothing, the fit is at
-the joint mode and `fit@objective` is returned unchanged.
+The full model is therefore refitted from the fitted coefficients, which
+are already close to the joint mode, at the fitted hyperparameters, and
+no coefficient is held. Where the criterion estimated nothing, the fit
+is at the joint mode and `fit@objective` is returned unchanged.
 
 ## See also
 

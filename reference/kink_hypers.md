@@ -1,6 +1,6 @@
 # Which Hyperparameters Set the Size of the Kink
 
-The names of the hyperparameters whose value changes
+Returns the names of the hyperparameters whose value changes
 [`kink_scale()`](https://statmodels7.github.io/statmodels7/reference/kink_scale.md).
 
 ## Usage
@@ -21,8 +21,8 @@ kink_hypers(pen, theta, unbounded = TRUE)
 
 - unbounded:
 
-  Whether to keep only those with an infinite upper bound. `TRUE` by
-  default.
+  Whether to keep only those with an infinite upper bound. The default
+  is `TRUE`.
 
 ## Value
 
@@ -31,7 +31,7 @@ A character vector, possibly empty.
 ## Details
 
 Each hyperparameter is moved to another admissible value and the size of
-the kink is read again, so that no list of families is consulted. The
+the kink is read again, so that a list of families is not consulted. The
 shape parameters of SCAD and MCP leave the subdifferential at zero
 unchanged and govern how fast the penalty flattens further out, while
 \\\lambda\\ and the elastic net's \\\alpha\\ both scale it.

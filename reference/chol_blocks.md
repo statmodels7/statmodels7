@@ -22,7 +22,7 @@ chol_blocks(Om)
 An \\n \times K \times K\\ numeric array, lower triangular in its last
 two indices, with `Om[i, , ] == L[i, , ] %*% t(L[i, , ])` for every `i`.
 `NULL` as soon as any block fails to be positive definite, so a single
-bad observation declines for the whole sample.
+bad observation makes the result `NULL` for the whole sample.
 
 ## Details
 
@@ -30,8 +30,8 @@ bad observation declines for the whole sample.
 family, whereas \\n\\, the number of observations, can be large. The
 standard Cholesky recursion is therefore written out over the \\K\\
 indices and evaluated over all \\n\\ observations at once, one
-vectorized pass per entry of the factor, so no loop runs over
-observations.
+vectorized pass per entry of the factor, so the function does not loop
+over observations.
 
 A block that is not positive definite produces a non-positive pivot, and
 the function returns `NULL` at that point instead of taking its square

@@ -1,9 +1,9 @@
 # Evaluate a Formula's Terms With modelterms7 in Front
 
-Returns a fresh environment holding every function modelterms7 exports,
-whose parent is `env`. A term call evaluated there reaches modelterms7's
-function whatever the caller has attached, and every other name the
-caller wrote resolves as usual, one step further out.
+Returns a fresh environment holding every function that modelterms7
+exports, whose parent is `env`. A term call evaluated there reaches
+modelterms7's function whatever the caller has attached, and every other
+name that the caller wrote resolves as usual, one step further out.
 
 ## Usage
 
@@ -15,8 +15,8 @@ terms_first(env)
 
 - env:
 
-  The environment the formula carried, which becomes the parent of the
-  result. Everything visible from `env` stays visible.
+  The environment that the formula carried, which becomes the parent of
+  the result. Everything visible from `env` stays visible.
 
 ## Value
 
@@ -25,8 +25,8 @@ modelterms7, with `env` as its parent.
 
 ## Details
 
-mgcv exports `s()` and `te()`, and segmented exports `seg()`. With
-either package attached, a
+mgcv exports `s()` and `te()`, and segmented exports `seg()`. If either
+package is attached, a
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 formula that uses one of these names would call that package's function,
 whose value is not a model term. The failure then occurs inside
@@ -40,7 +40,7 @@ writes `mgcv::s(x)`, which reaches past the shim; the formula
 interpreter of modelterms7 then rejects the value, naming the class
 returned and the call as written.
 
-A binding is made for each export of modelterms7 for which
+The function binds each export of modelterms7 for which
 [`is.function()`](https://rdrr.io/r/base/is.function.html) is `TRUE`.
 The S7 class generators of that package are functions and are copied
 with the others.
@@ -48,6 +48,6 @@ with the others.
 ## See also
 
 [`statmod_equations()`](https://statmodels7.github.io/statmodels7/reference/statmod_equations.md)
-for the formula this is used to interpret,
+for the formula that is interpreted with this function,
 [`modelterms7::interpret_formula()`](https://statmodels7.github.io/modelterms7/reference/interpret_formula.html)
-for the reading it feeds.
+for the reading that it feeds.

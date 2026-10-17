@@ -23,30 +23,32 @@ statmod_commit_refresh(spec, coef, design, which = "all")
 
 - design:
 
-  The design, whose refresh state is what this advances.
+  The design, whose refresh state this function advances.
 
 - which:
 
   Which entries to commit: `"all"` (the default), `"jacobian"` or
   `"frozen"`. The alternation's pass level and
   [`statmod_fitted_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_fitted_spec.md)
-  both pass `"jacobian"`, the frozen terms having been committed already
-  by their own phase.
+  both pass `"jacobian"`, because their own phase has already committed
+  the frozen terms.
 
 ## Value
 
-The coefficient list, invisibly, with each committed term's stretch
-replaced by the coefficients that term stored. Identical to `coef` when
-nothing was committed or when no term relabeled.
+The coefficient list, invisibly. The stretch of each committed term is
+replaced by the coefficients that the term stored. The result is
+identical to `coef` if the function commits no term or if no term
+relabels.
 
 ## What moves
 
-The rescaling factor of a discontinuous break-point term, and the
-direction it last traveled in, which modelterms7 halves on a reversal.
-Advancing that once per objective evaluation would anneal at the speed
-of the line search instead of the speed of the fit; never advancing it
-would solve a permanently smoothed problem, whose fixed point is not the
-model's. The alternation commits the Jacobian entries once per pass
+The state that moves is the rescaling factor of a discontinuous
+break-point term and the direction in which it last traveled;
+modelterms7 halves the factor on a reversal. Advancing that once per
+objective evaluation would anneal at the speed of the line search
+instead of the speed of the fit; never advancing it would solve a
+permanently smoothed problem, whose fixed point is not the model's. The
+alternation commits the Jacobian entries once per pass
 (`which = "jacobian"`), and
 [`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
 commits the frozen entries, which include the discontinuous terms, once
@@ -70,8 +72,9 @@ further hidden step and changes the contribution. And a refresh may
 relabel crossed break-point lineages, after which the caller's own copy
 of the coefficients names them in the old order.
 
-The relabeling is why the committed coefficients are returned. A caller
-continues from what the terms stored, not from what it passed in.
+Because of this relabeling, the function returns the committed
+coefficients. A caller continues from what the terms stored, not from
+what it passed in.
 
 ## See also
 

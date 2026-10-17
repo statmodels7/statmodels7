@@ -1,8 +1,8 @@
 # One Penalized Unit, by Parameter and Key
 
-The entry of
+Returns the entry of
 [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
-a hyperparameter row names, or `NULL` where there is none.
+that a hyperparameter row names, or `NULL` where there is none.
 
 ## Usage
 

@@ -1,7 +1,7 @@
 # Validate Offsets
 
-Returns a named list with one offset per parameter, `NULL` where none
-was given.
+Returns a named list with one offset per parameter, `NULL` for a
+parameter whose offset was not given.
 
 ## Usage
 
@@ -25,8 +25,8 @@ check_offsets(offsets, params, n)
 
 ## Value
 
-A named list of length `length(params)`, each entry a numeric vector of
-length `n` or `NULL`.
+A named list of length `length(params)`, and each entry is a numeric
+vector of length `n` or `NULL`.
 
 ## Details
 

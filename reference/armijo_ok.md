@@ -1,7 +1,8 @@
 # Armijo's Sufficient-Decrease Condition
 
-Whether a trial point may be accepted: the objective has fallen by at
-least a fixed share of what the model predicted over that step.
+Tests whether a trial point may be accepted. The trial point is accepted
+when the objective has fallen by at least a fixed share of what the
+model predicted over that step.
 
 ## Usage
 

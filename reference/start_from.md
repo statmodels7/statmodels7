@@ -17,14 +17,13 @@ start_from(fit, rest = start_intercepts())
 
   A
   [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
-  to take the estimates from.
+  from which to take the estimates.
 
 - rest:
 
-  The strategy for whatever the two models do not share.
-  [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)
-  by default, which is what a fit given no strategy uses. It receives
-  the objective, so
+  The strategy for whatever the two models do not share. The default is
+  [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md),
+  which a fit given no strategy uses. It receives the objective, so
   [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
   can serve as `rest`.
 
@@ -42,8 +41,8 @@ second than a rule that uses only the response.
 
 ## What is matched, and what is projected
 
-The two designs are compared block by block, a block being the columns
-of one term, and a block is treated in one of three ways:
+The two designs are compared block by block, where a block is the
+columns of one term, and each block is treated in one of three ways:
 
 - the parametric block:
 
@@ -65,13 +64,13 @@ The third rule makes two bases comparable. The coefficients of a smooth
 are coordinates in a basis that the fit rotates, so
 `s(x, bspline_smooth(k = 6))` and `s(x, bspline_smooth(k = 10))` carry
 the names `s(x).z1` to `s(x).z4` in common but give them different
-meanings, and one name does not identify one function. What the two
-bases share is the fitted function, so the coefficients are found by
-projecting it, \$\$\hat\beta_S = \arg\min\_\beta \lVert X_S\beta -
-r\rVert^2, \qquad r = \eta^{\mathrm{ref}} - \eta\_{-S},\$\$ over the
-pending columns \\S\\ alone, where \\\eta^{\mathrm{ref}}\\ is the
-reference's predictor and \\\eta\_{-S}\\ is the new model's predictor
-with the pending columns at zero. Both predictors are the actual
+meanings, and one name does not identify one function. The two bases
+share the fitted function, so the coefficients are found by projecting
+it, \$\$\hat\beta_S = \arg\min\_\beta \lVert X_S\beta - r\rVert^2,
+\qquad r = \eta^{\mathrm{ref}} - \eta\_{-S},\$\$ over the pending
+columns \\S\\ alone, where \\\eta^{\mathrm{ref}}\\ is the reference's
+predictor and \\\eta\_{-S}\\ is the new model's predictor when the
+pending columns are set to zero. Both predictors are the actual
 predictors of their models, including the value of a block that moves
 with its coefficients (a break-point or a nonlinear term). The equality
 of the two blocks, \\B\_{\mathrm{new}}\beta\_{\mathrm{new}} =
@@ -79,8 +78,8 @@ B\_{\mathrm{old}}\beta\_{\mathrm{old}}\\, has a solution only if the old
 span lies inside the new one, and the projection gives the closest
 function that the new basis can represent. Where the spans are nested
 the projection is exact, and where the two bases coincide it returns the
-coefficients it was given, so the second rule above is a shortcut and
-not a different answer.
+coefficients that it was given, so the second rule above is a shortcut
+and not a different answer.
 
 Two blocks are paired by the stem of their coefficient names and by the
 class of the term, and not by the key of the block, which is the
@@ -117,8 +116,8 @@ dd <- data.frame(x = runif(200), z = runif(200))
 dd$y <- rpois(200, exp(0.4 + 0.6 * dd$x - 0.3 * dd$z))
 full <- statmod(y ~ x + z, distributions7::poisson_distrib(), dd)
 
-# the same model with one covariate dropped, started where the other
-# one ended
+# The same model is refitted after one covariate is dropped, and the fit
+# starts where the full model ended.
 sub <- statmod(y ~ z, distributions7::poisson_distrib(), dd,
                start = start_from(full))
 coef(sub)
@@ -127,7 +126,7 @@ coef(sub)
 #>   0.7674242  -0.2566149 
 #> 
 
-# what was taken, and from where
+# The attribute "taken" records what was taken, and from where.
 spec <- statmod_spec(y ~ z, distributions7::poisson_distrib(), dd)
 attr(start_at(start_from(full), spec, statmod_design(spec), NULL), "taken")
 #>   parameter   term coefficient      value     how

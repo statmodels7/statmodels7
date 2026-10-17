@@ -1,6 +1,7 @@
 # The Penalized Information at a Point
 
-\\H + S\\, dense, with the penalty's non-finite entries zeroed.
+Returns \\H + S\\ as a dense matrix and sets the penalty's non-finite
+entries to zero.
 
 ## Usage
 
@@ -47,8 +48,8 @@ A dense symmetric matrix over the coefficients of every equation.
 
 ## Details
 
-The matrix a penalized fit's curvature is read from: the model's
-information from
+This is the matrix from which a penalized fit's curvature is read: the
+model's information from
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 and the penalty's Hessian from
 [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md).

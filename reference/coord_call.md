@@ -1,7 +1,7 @@
 # Run the Compiled Coordinate Descent on Either Storage
 
 Sends the block to the dense kernel or to the sparse one, taking a
-`dgCMatrix` apart into the slots the second reads.
+`dgCMatrix` apart into the slots that the second reads.
 
 ## Usage
 
@@ -31,7 +31,7 @@ coord_call(X, z, w, b0, tab, screen, tol, covariance, means = numeric(0))
 
 - screen:
 
-  The **zero-based** positions the strong rule kept, for the C++
+  The zero-based positions that the strong rule kept, for the C++
   indexing.
 
 - tol:
@@ -43,7 +43,7 @@ coord_call(X, z, w, b0, tab, screen, tol, covariance, means = numeric(0))
   `TRUE` to hold the gradient itself and cache Gram columns, `FALSE` to
   hold the running residual.
   [`coord_covariance()`](https://statmodels7.github.io/statmodels7/reference/coord_covariance.md)
-  decides.
+  returns the value to use.
 
 - means:
 

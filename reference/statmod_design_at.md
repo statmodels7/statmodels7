@@ -18,11 +18,12 @@ and a smoothed
 or
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html),
 the adjustment is non-zero and the resulting scoring step is the
-Gauss-Newton one. A sharp, unheld
+Gauss-Newton one. A sharp
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
 or
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
-is a frozen block instead. It is not recomputed at a trial point. Inside
+that is not held is a frozen block instead. It is not recomputed at a
+trial point. Inside
 [`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
 its columns give the predictor exactly, so that the adjustment is zero
 and the working fit is the fixed-point iteration of Fasola et al.;
@@ -54,10 +55,10 @@ statmod_design_at(spec, coef, design)
 
 ## Value
 
-A design of the same shape as `design`, with the refreshable terms'
-column blocks replaced and the `adj` of each equation that carries a
-refreshable term set to the per-observation adjustment above. `design`
-itself when nothing refreshes.
+A design of the same shape as `design`. The column blocks of the
+refreshable terms are replaced, and the `adj` of each equation that
+carries a refreshable term is set to the per-observation adjustment
+above. The function returns `design` itself when no term refreshes.
 
 ## Models without a refreshable term
 
@@ -77,14 +78,14 @@ problem, whose fixed point is not the model's.
 
 The state advances only when
 [`statmod_commit_refresh()`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
-is called, so every trial point of a line search sees one schedule and
+is called, so every trial point of a line search uses one schedule and
 the schedule advances once per sweep.
 
 ## New data
 
-When the specification carries new data, nothing is refreshed. The
-design block is the one in `design`, and the contribution on the new
-rows is
+When the specification carries new data, the function refreshes no
+block. The design block is the one in `design`, and the contribution on
+the new rows is
 [`modelterms7::term_value()`](https://statmodels7.github.io/modelterms7/reference/term_value.html)
 at the coefficients in hand, or at the committed coefficients for a
 frozen block.

@@ -29,4 +29,4 @@ reject_duplicate_names(terms)
 
 ## Value
 
-`NULL`, invisibly. Called for the error.
+`NULL`, invisibly. The function is called for its error.

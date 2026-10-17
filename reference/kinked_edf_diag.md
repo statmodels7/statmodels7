@@ -1,9 +1,10 @@
 # The Count of Each Coordinate Where a Block Has a Kink
 
-The diagonal of \\(H\_{AA} + S\_{AA})^{-1}H\_{AA}\\ over the coordinates
-\\A\\ away from a kink, and zero elsewhere: the count
+Returns the diagonal of \\(H\_{AA} + S\_{AA})^{-1}H\_{AA}\\ over the
+coordinates \\A\\ away from a kink, and zero elsewhere. This is the
+count with which
 [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)
-prices a point of a path with, one coordinate at a time.
+prices a point of a path, one coordinate at a time.
 
 ## Usage
 
@@ -32,7 +33,7 @@ kinked_edf_diag(
 
 - aliased:
 
-  Stacked positions the fit did not estimate.
+  Stacked positions that the fit did not estimate.
 
 ## Value
 
@@ -49,9 +50,10 @@ through the same Cholesky factor. A coordinate in the concave zone of
 SCAD or MCP has a negative penalty curvature and counts more than one,
 which is Stein's count for those penalties.
 
-It answers only for a model with a kinked block and no structural term,
-and declines (`NULL`) where the penalty has no curvature over the active
-coordinates and the count of one per column cannot be certified
+It returns a value only for a model with a kinked block and no
+structural term, and returns `NULL` where the penalty has no curvature
+over the active coordinates and the count of one per column cannot be
+certified
 ([`design_count_exact()`](https://statmodels7.github.io/statmodels7/reference/design_count_exact.md)
 is `FALSE`, where
 [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)

@@ -1,7 +1,7 @@
 # A Symmetric Matrix From Its Upper Blocks
 
 Binds a symmetric matrix out of the blocks on and above its block
-diagonal, the ones below being the transposes of those above.
+diagonal; the blocks below are the transposes of those above.
 
 ## Usage
 
@@ -20,7 +20,7 @@ assemble_blocks(blocks, sparse)
 
   Whether the result is a `dgCMatrix`, as
   [`design_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
-  decides for the accumulator it replaces.
+  determines for the accumulator that it replaces.
 
 ## Value
 
@@ -33,9 +33,10 @@ It replaces writing each block into a zero accumulator. With a sparse
 design that accumulator is a `dgCMatrix`, and a sub-assignment into it
 rebuilds the compressed columns at every assignment. Binding the blocks
 once avoids that and does no arithmetic on them, so the entries are the
-ones the products gave.
+ones that the products gave.
 
 ## See also
 
 [`zero_information()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md),
-the accumulator this replaces where every block is written exactly once.
+the accumulator that this replaces where every block is written exactly
+once.

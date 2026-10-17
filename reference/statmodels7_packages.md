@@ -16,7 +16,7 @@ statmodels7_packages()
 ## Value
 
 A character vector of package names, sorted alphabetically, with one
-element per member. The result does not say whether a member is
+element per member. The result does not record whether a member is
 installed;
 [`statmodels7_versions()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.md)
 reports that.
@@ -31,8 +31,8 @@ are stripped, since a constraint is attached to a name and is not part
 of it.
 
 Reading the field keeps one enumeration. A member added to `Imports` is
-a member here after the next install, and no second list has to be kept
-in step.
+a member here after the next install, and a second list does not have to
+be kept in step.
 
 ## The exclusion of `S7`
 

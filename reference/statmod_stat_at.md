@@ -1,7 +1,8 @@
 # One Likelihood Statistic for One Coefficient
 
-The Wald, likelihood-ratio, Rao score or Terrell gradient statistic for
-the hypothesis that one coefficient equals `value`, with its p-value.
+Computes the Wald, likelihood-ratio, Rao score or Terrell gradient
+statistic for the hypothesis that one coefficient equals `value`, with
+its p-value.
 
 ## Usage
 
@@ -32,7 +33,7 @@ statmod_stat_at(
 
 - value:
 
-  The value under the null, a single number. `0` by default.
+  The value under the null, a single number. The default is `0`.
 
 - test:
 
@@ -48,8 +49,8 @@ statmod_stat_at(
 
   Whether to read how far above its mode the restricted fit stopped
   ([`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md)).
-  `FALSE` by default, because it costs one Hessian where the likelihood
-  ratio and the gradient statistic need none.
+  The default is `FALSE`, because reading it costs one Hessian where the
+  likelihood ratio and the gradient statistic need none.
   [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
   which calls this once per row, and
   [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md),
@@ -70,14 +71,15 @@ and `mode_error`, `NA` unless it is requested.
 
 ## Details
 
-All four read the penalized objective, which is the function the fit
-maximizes. Writing \\\ell_p(\beta) = \ell(\beta) - \rho(\beta;\theta)\\
-for it, \\\hat\beta\\ for the unrestricted estimates, \\\tilde\beta\\
-for those with \\\beta_j\\ held at \\b\\, \\U = \partial\ell_p\\ for its
-score and \\K\\ for the penalized information, the four are \$\$W =
-(\hat\beta_j - b)^2 / \widehat{\mathrm{Var}}(\hat\beta_j), \qquad LR =
-2\\\ell_p(\hat\beta) - \ell_p(\tilde\beta)\\,\$\$ \$\$S =
-U_j(\tilde\beta)^2 \\ \[K(\tilde\beta)^{-1}\]\_{jj}, \qquad T =
+All four read the penalized objective, which is the function that the
+fit maximizes. Writing \\\ell_p(\beta) = \ell(\beta) -
+\rho(\beta;\theta)\\ for it, \\\hat\beta\\ for the unrestricted
+estimates, \\\tilde\beta\\ for those with \\\beta_j\\ held at \\b\\, \\U
+= \partial\ell_p\\ for its score and \\K\\ for the penalized
+information, the four are \$\$W = (\hat\beta_j - b)^2 /
+\widehat{\mathrm{Var}}(\hat\beta_j), \qquad LR = 2\\\ell_p(\hat\beta) -
+\ell_p(\tilde\beta)\\,\$\$ \$\$S = U_j(\tilde\beta)^2 \\
+\[K(\tilde\beta)^{-1}\]\_{jj}, \qquad T =
 U_j(\tilde\beta)\\(\hat\beta_j - b),\$\$ each compared with a
 \\\chi^2_1\\. Where the model carries no penalty \\\ell_p\\ is the
 log-likelihood and these are the classical four.
@@ -109,13 +111,14 @@ inversion adds the asymmetry.
 
 ## Differences between the statistics
 
-The Wald statistic reads the unrestricted fit alone and needs no refit,
+The Wald statistic reads only the unrestricted fit and needs no refit,
 which is why the summary reports it by default. It depends on how the
 parameter is written: a nonlinear reparametrization of the coefficient
 changes it, whereas the likelihood ratio, a difference of objective
 values at the same two points, is not changed. The Wald statistic also
-loses power against a distant alternative (the Hauck-Donner effect), the
-curvature being read at \\\hat\beta\\ rather than under the null.
+loses power against a distant alternative (the Hauck-Donner effect),
+because the curvature is read at \\\hat\beta\\ rather than under the
+null.
 
 The gradient statistic needs the restricted fit and no matrix inversion:
 it is the score contracted with the distance between the two fits.

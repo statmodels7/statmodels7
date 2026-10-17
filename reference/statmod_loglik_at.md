@@ -24,18 +24,18 @@ statmod_loglik_at(spec, coef, design = statmod_design(spec))
 
 - design:
 
-  The design. Rebuilt from `spec` when absent, which is convenient at
-  the console and wasteful in a loop.
+  The design. The function rebuilds it from `spec` when it is absent,
+  which is convenient at the console and wasteful in a loop.
 
 ## Value
 
-A single number. `-Inf` where the density is zero at some observation,
-and `NaN` where the parameters are outside the family's support, both of
-which a search reads as an unusable point.
+A single number. The value is `-Inf` where the density is zero at some
+observation and `NaN` where the parameters are outside the family's
+support; a search reads both as an unusable point.
 
 ## Details
 
-No penalty enters. This is the likelihood alone;
+The log-likelihood contains no penalty;
 [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
 gives the other half of the objective, and
 [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
@@ -50,4 +50,4 @@ log-densities at the observations.
 [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
 for its derivative,
 [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
-for the penalized objective it enters.
+for the penalized objective that it enters.

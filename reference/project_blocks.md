@@ -42,7 +42,7 @@ project_blocks(spec, design, ref, rdesign, out, pending)
 - pending:
 
   A list, one entry per distribution parameter, of `list(nm, idx)` pairs
-  naming a block and the columns it occupies.
+  naming a block and the columns that it occupies.
 
 ## Value
 
@@ -60,34 +60,35 @@ Two bases of the same term span different subspaces, so
 of the fitted function that the new basis allows. Only the pending
 columns \\S\\ are estimated. The vector \\r\\ is the partial residual of
 the reference's predictor \\\eta^{\mathrm{ref}}\\ after the blocks
-already matched by name are removed at the values they were given
-(\\\eta\_{-S}\\ is the new model's predictor with the pending columns at
-zero). Both predictors are read through
+already matched by name are removed at the values that they were given
+(\\\eta\_{-S}\\ is the new model's predictor when the pending columns
+are set to zero). Both predictors are read through
 [`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md),
 so a block that moves with its coefficients (a break-point or a
 nonlinear term) contributes its value and not its linearization
 \\X\beta\\. Where every block matched exactly there is nothing to solve,
-and a refit whose bases all agree returns the coefficients it was given.
+and a refit whose bases all agree returns the coefficients that it was
+given.
 
 The projection is exact when the reference's function lies in the span
 of the new basis, and it reduces to the identity when the two bases
 coincide, so the name match above is a shortcut and not a different
-answer. Whatever the reference explains and the new model has no column
-for, such as a covariate that the formula dropped, stays in \\r\\ and is
-absorbed by the pending blocks.
+answer. Any part of the predictor that the reference explains and for
+which the new model has no column, such as a covariate that the formula
+dropped, stays in \\r\\ and is absorbed by the pending blocks.
 
-Three conditions restrict the projection. The two responses must be
-identical, so that the two designs are read at the same rows: the
-projection compares two predictors observation by observation and has no
-meaning across different data. Neither model may carry a structural
-term, whose contribution is the state of a recursion and not a function
-of the coefficients. Where either of these two conditions fails, the
-coefficients are returned unchanged. A pending block that itself moves
-with its coefficients (for example `seg(x)` refitted as
-`seg(x, npsi = 2)`) is not projected, because its coefficients are not
-those of a linear block, and it keeps the values given by the fallback
-strategy. The pending columns of an equation are also left to the
-fallback when their design has more than \\5 \times 10^7\\ entries.
+The two responses must be identical, so that the two designs are read at
+the same rows: the projection compares two predictors observation by
+observation and has no meaning across different data. Both models must
+be free of structural terms, whose contribution is the state of a
+recursion and not a function of the coefficients. Where either of these
+two conditions fails, the coefficients are returned unchanged. A pending
+block that itself moves with its coefficients (for example `seg(x)`
+refitted as `seg(x, npsi = 2)`) is not projected, because its
+coefficients are not those of a linear block, and it keeps the values
+given by the fallback strategy. The pending columns of an equation are
+also left to the fallback when their design has more than \\5 \times
+10^7\\ entries.
 
 ## See also
 

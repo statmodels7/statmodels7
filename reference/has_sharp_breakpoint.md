@@ -1,12 +1,12 @@
 # Whether a Model Carries a Sharp Break-Point Term
 
-`TRUE` where some equation carries
+Returns `TRUE` where some equation carries
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
 or
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
-with neither `smoothed` nor `marginal = TRUE`, whose contribution has a
-kink in the break-point at the observations.
+with neither `smoothed` nor `marginal = TRUE`, a term whose contribution
+has a kink in the break-point at the observations.
 
 ## Usage
 

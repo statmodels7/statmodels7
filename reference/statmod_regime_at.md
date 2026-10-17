@@ -1,8 +1,8 @@
 # Run the Terms of the Likelihood Shape at the Current Parameters
 
-The smoothed posterior over the components of each structural term of
-the likelihood shape (the states of a regime term, the intervals or
-nodes of a marginal break-point term), the shifts that the components
+Computes the smoothed posterior over the components of each structural
+term of the likelihood shape (the states of a regime term, the intervals
+or nodes of a marginal break-point term), the shifts that the components
 add to the predictor, and the posterior-weighted predictor that these
 give.
 
@@ -29,7 +29,7 @@ statmod_regime_at(spec, design, eta_static, theta_static)
 
 - theta_static:
 
-  The parameters they give.
+  The parameters that they give.
 
 ## Value
 
@@ -53,8 +53,8 @@ posterior-weighted derivative of the ordinary one. A caller therefore
 differentiates its own log-density once per component, vectorized, and
 weights.
 
-The predictor reported for the equation the term sits in is the
-posterior-weighted one, and that is what a fitted value means here.
+The predictor reported for the equation in which the term sits is the
+posterior-weighted one, and a fitted value here is that predictor.
 
 ## See also
 

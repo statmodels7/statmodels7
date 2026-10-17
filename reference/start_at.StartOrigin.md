@@ -1,6 +1,6 @@
 # Starting Values at Zero
 
-Every coefficient at zero.
+Returns a start with every coefficient at zero.
 
 ## Arguments
 

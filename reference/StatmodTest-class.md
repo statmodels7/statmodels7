@@ -1,8 +1,7 @@
 # A Test of One Coefficient Against One Value
 
-The result of testing that one coefficient of a fit equals one value,
-carrying the statistic, its distribution, the p-value and what was
-tested.
+Holds the result of testing that one coefficient of a fit equals one
+value: the statistic, its distribution, the p-value and what was tested.
 
 ## Usage
 
@@ -45,7 +44,7 @@ StatmodTest(
 
 - null_value:
 
-  The value it was tested against.
+  The value against which the coefficient was tested.
 
 - parameter, coefficient:
 
@@ -74,7 +73,7 @@ always 1 and the object holds one kind of quantity whatever produced it.
 
 `mode_error` and `converged` both describe the restricted refit and both
 are `NA` for the Wald statistic, which reads the unrestricted fit and
-refits nothing. They answer different questions and only the first is
+refits nothing. They measure different things, and only the first is
 printed.
 
 `converged` is the inner optimizer's flag: whether a stopping rule

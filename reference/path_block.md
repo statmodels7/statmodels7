@@ -1,6 +1,6 @@
-# The Block a Path Row Belongs To
+# The Block to Which a Path Row Belongs
 
-The Block a Path Row Belongs To
+The Block to Which a Path Row Belongs
 
 ## Usage
 

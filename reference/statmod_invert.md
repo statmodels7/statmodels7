@@ -1,7 +1,8 @@
 # A Confidence Interval by Inverting a Test
 
-The set of values a test does not reject at `level`, found by locating
-the two points where the statistic crosses its critical value.
+Returns the set of values that a test does not reject at `level`, found
+by locating the two points where the statistic crosses its critical
+value.
 
 ## Usage
 
@@ -44,7 +45,7 @@ statmod_invert(
 
 - maxit:
 
-  How many widenings to try on each side before giving up.
+  How many widenings to try on each side before the search stops.
 
 ## Value
 
@@ -57,8 +58,8 @@ error of the coefficient is not finite and positive.
 
 An interval by inversion is \\\\b : T(b) \le \chi^2\_{1,\alpha}\\\\, and
 it is not symmetric about the estimate unless the statistic is a
-parabola in \\b\\. The Wald statistic is a parabola by construction, the
-curvature being read once at \\\hat\beta\\, and the other three
+parabola in \\b\\. The Wald statistic is a parabola by construction,
+because the curvature is read once at \\\hat\beta\\, and the other three
 statistics are not. The asymmetry is the reason to invert one of the
 other three: the interval follows the shape of the likelihood and not a
 quadratic fitted at its maximum.
@@ -75,4 +76,4 @@ hyperparameters, so the interval requires no outer search.
 ## See also
 
 [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md),
-the statistic being inverted.
+the statistic that is inverted.

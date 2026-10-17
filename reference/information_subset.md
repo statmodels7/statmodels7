@@ -1,9 +1,9 @@
 # The Information Over Some of the Coefficients
 
-The rows and columns of
+Computes the rows and columns of
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
-at the given positions, assembled from those columns of the designs
-alone.
+at the given positions, assembling them only from those columns of the
+designs.
 
 ## Usage
 
@@ -49,7 +49,7 @@ equation's design is sparse, a base matrix otherwise.
 ## Details
 
 Block \\(a, b)\\ of the result is \\X\_{a,J_a}'\\\mathrm{diag}(w\\
-h\_{ab})\\X\_{b,J_b}\\ over the columns \\J_a\\ and \\J_b\\ the
+h\_{ab})\\X\_{b,J_b}\\ over the columns \\J_a\\ and \\J_b\\ that the
 positions select in each equation, which is exactly the corresponding
 submatrix of the whole information and costs a cross product over those
 columns instead of over all of them. A mixture over regimes sums the

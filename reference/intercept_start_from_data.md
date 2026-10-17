@@ -1,10 +1,10 @@
 # Data-Based Intercepts of Families That Supply Them
 
-Overwrites, in the list
+Overwrites, in the list that
 [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
-builds, the intercept of each parameter
+builds, the intercept of each parameter for which
 [`distributions7::distrib_intercept_start()`](https://statmodels7.github.io/distributions7/reference/distrib_intercept_start.html)
-answers for, carried onto that parameter's own link.
+returns a value, carried onto that parameter's own link.
 
 ## Usage
 
@@ -25,7 +25,7 @@ intercept_start_from_data(spec, eta)
 
 ## Value
 
-`eta`, with the answered entries replaced.
+`eta`, in which the answered entries are replaced.
 
 ## Details
 
@@ -38,9 +38,9 @@ has methods of their own. For the mixing weight, the overdispersion of
 the parent can absorb the excess zeros without covariates, the weight
 goes to the edge of its domain, and the link is flat there, so that a
 model with covariates started from it does not leave the edge. The
-family answers with the observed proportion of zeros, and the value is
-mapped through the parameter's link, so a probit or a cloglog chart gets
-its own linear predictor and not a logit.
+family returns the observed proportion of zeros, and the value is mapped
+through the parameter's link, so a probit or a cloglog chart has its own
+linear predictor and not a logit.
 
 ## See also
 

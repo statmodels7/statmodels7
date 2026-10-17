@@ -1,8 +1,10 @@
 # The Penalized Block, Kept on the Design
 
+Returns the
 [`coord_block()`](https://statmodels7.github.io/statmodels7/reference/coord_block.md)
-of an equation's columns, kept in the design's `eta_memo` environment so
-a descent called many times over one design copies the block once.
+of an equation's columns and keeps it in the design's `eta_memo`
+environment, so that a descent called many times over one design copies
+the block once.
 
 ## Usage
 
@@ -37,10 +39,10 @@ returns for `X` and `cols`.
 ## Details
 
 Only a design whose blocks do not move with the coefficients carries
-that environment; any other gets a fresh
+that environment; for any other design, a fresh
 [`coord_block()`](https://statmodels7.github.io/statmodels7/reference/coord_block.md)
-at each call, as before. The entry is keyed on the equation and the
-columns.
+is built at each call, as before. The entry is keyed on the equation and
+the columns.
 
 ## See also
 

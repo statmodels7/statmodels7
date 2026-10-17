@@ -1,12 +1,12 @@
 # Run Independent Units, in This Process or Over Workers
 
-Applies a body to each of `n` independent units – a cross-validation
-fold, a combination of a path's product grid – over the worker processes
+Applies a body to each of `n` independent units (a cross-validation
+fold, a combination of a path's product grid) over the worker processes
 that the specification requests (`spec@workers`, from
 [`n_threads(workers =)`](https://statmodels7.github.io/numericals7/reference/n_threads.html))
 and in this process otherwise. Results come back in unit order whatever
-the number of workers, and that is what makes the answer independent of
-the count: the units share nothing, so the same bodies run either way.
+the number of workers, which makes the answer independent of the count:
+the units share nothing, so the same bodies run either way.
 
 ## Usage
 
@@ -39,10 +39,10 @@ A list of the bodies' results, in unit order.
 
 ## Details
 
-The units are independent by construction – a fold is a complete refit
-on its own rows, a path combination restarts its warm chain from the
-sweep's own starting coefficients – so they go by processes, with the
-safeguards
+The units are independent by construction (a fold is a complete refit on
+its own rows, a path combination restarts its warm chain from the
+sweep's own starting coefficients), so they go by processes, with the
+safeguards that
 [`optimizers7::multistart`](https://statmodels7.github.io/optimizers7/reference/multistart.html)
 records: under `pkgload` the run stays sequential, because a worker
 loads the installed copy and S7 objects built in the development

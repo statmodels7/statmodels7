@@ -13,7 +13,7 @@ did not name, and returns the specification unchanged for anything else."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,7 @@ did not name, and returns the specification unchanged for anything else.</p>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>The data frame the term is built against.</p></dd>
+<dd><p>The data frame against which the term is built.</p></dd>
 
 
 <dt id="arg-response">response<a class="anchor" aria-label="anchor" href="#arg-response"></a></dt>
@@ -74,26 +74,27 @@ did not name, and returns the specification unchanged for anything else.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>tm</code>, with <code>psi</code> set to the grid's choice where the rule applies,
 and unchanged where it does not: a term of another kind, a term whose
-<code>psi</code> the caller named, or a response the rule cannot score against.</p>
+<code>psi</code> the caller named, or a response against which the rule cannot
+score.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The objective has local optima in the break-points, and the iteration
 converges from within a basin around its starting position, so the start
-decides which optimum is found. The term's own default is a conventional
+determines which optimum is found. The term's own default is a conventional
 start, the interior quantiles of the covariate, which depend on the
 covariate and not on the response. Scoring a grid of candidate positions on
 the response gives a start in the basin of the best fit of the linear part.</p>
 <p><code><a href="https://statmodels7.github.io/modelterms7/reference/seg_start.html" class="external-link">modelterms7::seg_start()</a></code> performs one linear fit for each increasing
 combination of <code>npsi</code> points of a grid of ten, <code>choose(10, npsi)</code> fits
 in all. The score is exact for a gaussian response, so the rule places a
-starting value and does not fit. The rule is applied whatever equation the
-term sits in, the response being what there is to score against even where
-the term develops a scale. It is skipped where the response is not plain
-numbers (a censored one, a matrix or one with missing values), because
-those have no reading here.</p>
-<p>A term whose <code>psi</code> the caller names keeps it, and naming <code>psi</code> is also how
-the grid is turned off.</p>
+starting value and does not fit. The rule is applied in whichever equation
+the term sits, because the response is the quantity against which the rule
+scores, even where the term develops a scale. It is skipped where the
+response is not plain numbers (a censored one, a matrix or one with
+missing values), because those have no reading here.</p>
+<p>A term whose <code>psi</code> the caller names keeps it, and naming <code>psi</code> also turns
+off the grid.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -9,7 +9,7 @@ character or logical to 0 and 1 and leaving anything else alone."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,17 +68,17 @@ attribute <code>"response_levels"</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A binary outcome recorded as a factor is how these data are ordinarily
-written, and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> accepts one: its binomial family reads the first
-level as the failure. The conversion makes the response a number before it
-reaches the density, which would otherwise receive a factor.</p>
+    <p>A binary outcome is ordinarily recorded as a factor, and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> accepts
+one: its binomial family reads the first level as the failure. The
+conversion makes the response a number before it reaches the density,
+which would otherwise receive a factor.</p>
 <p>The first level is the failure, which is <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>'s rule, so a model moved
-from <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> keeps its signs. The conversion is made for every family and
-not only for the binary ones, which differs from base R, where
+from <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> keeps its signs. The conversion applies to every family and
+not only to the binary ones, which differs from base R, where
 <code>glm(f ~ x, gaussian)</code> on a factor <code>f</code> signals <em>"NA/NaN/Inf in 'y'"</em> after
 three warnings from <code>Ops.factor</code>. A two-level factor has one numeric
 reading and this is it; on a gaussian family the result is the linear
-probability model, which is what <code>as.numeric(f == "b")</code> gives.</p>
+probability model for the response <code>as.numeric(f == "b")</code>.</p>
 <p>The levels used are returned as the attribute <code>"response_levels"</code>, which
 lets <code><a href="statmod_respec.html">statmod_respec()</a></code> reproduce the same mapping on other rows. A factor
 carries its levels through a subset, but a character vector does not, so a

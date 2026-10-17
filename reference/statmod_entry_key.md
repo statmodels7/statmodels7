@@ -1,8 +1,9 @@
 # The Key of One of a Term's Penalties
 
-What a hyperparameter row is filed under: the term's name where the term
-carries one penalty or the entry has no name, and `term::entry` where
-the term carries several penalties and the entry is named.
+Returns the key under which a hyperparameter row is filed: the term's
+name where the term carries one penalty or the entry has no name, and
+`term::entry` where the term carries several penalties and the entry is
+named.
 
 ## Usage
 
@@ -33,5 +34,6 @@ A single string.
 ## Details
 
 The composition is written once so that every caller reading a
-hyperparameter by key uses the same key. A term carrying one penalty
-keys by its name alone, whatever the entry is called.
+hyperparameter by key uses the same key. A term carrying one penalty is
+keyed by its name without the entry's name, whatever the entry is
+called.

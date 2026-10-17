@@ -1,9 +1,9 @@
 # Where a Mixed Covariance Class's Members Sit in the Joint Vector
 
-One entry per member of a class split between the design's coefficients
-and a filter's own parameters, each with its positions in the joint
-vector \\\[\beta; \zeta\_{\mathrm{free}}\]\\ that the inner step, the
-marginal criterion and the variance all assemble.
+Returns one entry per member of a class split between the design's
+coefficients and a filter's own parameters, each with its positions in
+the joint vector \\\[\beta; \zeta\_{\mathrm{free}}\]\\ that the inner
+step, the marginal criterion and the variance all assemble.
 
 ## Usage
 
@@ -34,33 +34,34 @@ class_joint_pieces(cl, design, params, offs)
 ## Value
 
 A list of lists, one per member, each the piece with `joint` added. A
-coefficient member also gets `cols` and `index`. A structural member
-gets `zcols` (positions among the term's own parameters) and has `cols`
-and `index` set to `NULL`.
+coefficient member also carries `cols` and `index`. A structural member
+carries `zcols` (positions among the term's own parameters), and its
+`cols` and `index` are `NULL`.
 
 ## Details
 
-The joint order is the one those three already write and is not invented
-here: the stacked coefficients first, then the free parameters of the
-one structural term of the filter shape, in the order the term holds
-them less whichever a linear intercept already carries.
+The joint order is the one that those three already write and is not
+invented here: the stacked coefficients first, then the free parameters
+of the one structural term of the filter shape, in the order in which
+the term holds them, less whichever one a linear intercept already
+carries.
 
 A coefficient member's positions are its parameter's offset plus its
 columns, exactly as
 [`class_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_pieces.md)
-gives them. A structural member's are `nb` plus its place among the free
-parameters, which is not its place among all of them: a held one is not
-in the joint vector at all.
+gives them. A structural member's positions are `nb` plus its place
+among the free parameters, which is not its place among all of them,
+because a held parameter is not in the joint vector at all.
 
 ## A held coordinate cannot be in a class
 
 The prior's dimension is fixed when the class is assembled, from the
-members' widths. If one of the coordinates it collects is then held (the
-level of a filter is, wherever a linear intercept in the same equation
-already carries the constant), the class has fewer coordinates than its
-prior describes and there is no covariance matrix of the prior's
-dimension to estimate. It is rejected here, where the held set is
-visible, naming the coordinate and the two ways out.
+members' widths. If one of the coordinates that it collects is then held
+(the level of a filter is, wherever a linear intercept in the same
+equation already carries the constant), the class has fewer coordinates
+than its prior describes and there is no covariance matrix of the
+prior's dimension to estimate. It is rejected here, where the held set
+is visible, naming the coordinate and the two ways out.
 
 ## See also
 

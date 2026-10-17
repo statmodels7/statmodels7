@@ -35,8 +35,8 @@ print(x, ...)
   `"expected"` for Fisher scoring, `"observed"` for Newton, or `"auto"`,
   which
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
-  turns into one of the two once the distribution is known. A single
-  string.
+  turns into one of the two once the distribution is known. The value is
+  a single string.
 
 - approx:
 
@@ -66,7 +66,7 @@ print(x, ...)
   The number of halvings tried after the full step before a step is
   abandoned, a single non-negative whole number. The line search tries
   the full step and then at most `step_halving` halved steps, so `0`
-  tries the full step alone.
+  tries only the full step.
 
 - x:
 
@@ -100,7 +100,7 @@ scoring, and `"observed"` inverts the observed Hessian, which is Newton.
 The expected information is positive definite wherever the family is
 regular, so Fisher scoring takes usable steps from a poor start where
 Newton's matrix may be indefinite; Newton converges faster near the
-optimum and is what the exact outer gradient needs.
+optimum, and the exact outer gradient requires the observed information.
 
 `"auto"`, the default, is settled against the family when the fit
 starts, by
@@ -118,7 +118,8 @@ On a family that
 [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
 settles on the expected information from `"auto"`, a run continues on
 the observed information as soon as Fisher scoring contracts the score
-slowly, each of two consecutive ratios of the score being above
+slowly, which means that each of two consecutive ratios of the score is
+above
 [`iwls_switch_rate()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_rate.md),
 and at the latest after
 [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md)
@@ -141,13 +142,13 @@ objective by more than a relative \\10^{-8}\\: a sufficient-decrease
 test at a point already under the rule would accept or reject by the
 last bits, and the criterion would jump between nearby hyperparameters.
 
-`approx` reaches distributions7 and is read only where the family has no
-closed expected information; elsewhere the family's own method answers
-and the argument does not enter. The argument is accepted for every
-family because an `iwls()` object is built before it meets a
-distribution and can be passed to any number of fits, so whether the
-family has a closed expected information cannot be checked at
-construction.
+`approx` is passed to distributions7 and is read only where the family
+has no closed expected information; elsewhere the family's own method
+supplies the information and the argument is not used. The argument is
+accepted for every family because an `iwls()` object is built before a
+distribution is supplied and can be passed to any number of fits, so
+whether the family has a closed expected information cannot be checked
+at construction.
 [`distributions7::expected_hessian_exact()`](https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html)
 is the predicate that records which case a family is in.
 
@@ -155,12 +156,12 @@ Its default is `"opg"`, the outer product of the observed scores, which
 costs one gradient. The alternative readings evaluate the expectation
 itself (a sum over the support for a discrete family, a quadrature for a
 continuous one) and cost much more inside a loop that rebuilds the
-curvature at every iteration. What the cheap matrix gives up is variance
-and not the answer: the score is exact, so a scoring step driven by any
-positive definite matrix reaches the same stationary point, and the
-outer product is positive semidefinite by construction where the
-observed Hessian need not be. The information behind a standard error is
-chosen separately; see
+curvature at every iteration. The price of the cheap matrix is paid in
+variance and not in the answer: the score is exact, so a scoring step
+driven by any positive definite matrix reaches the same stationary
+point, and the outer product is positive semidefinite by construction,
+whereas the observed Hessian need not be. The information behind a
+standard error is chosen separately; see
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
 
 ## The decomposition
@@ -205,11 +206,11 @@ the response. When the loop ends without meeting the rule, the
 dimensionless reading of
 [`iwls_score()`](https://statmodels7.github.io/statmodels7/reference/iwls_score.md)
 can relabel the stopped run as converged. Any optimizers7 criterion may
-drive the loop instead. It replaces the whole built-in rule, the
-decrement condition and the dimensionless reading included, and `tol` is
-then not read, so passing both is an error.
+drive the loop instead. It replaces the whole built-in rule, including
+the decrement condition and the dimensionless reading, and `tol` is then
+not read, so passing both is an error.
 
-The state that a criterion receives is the one
+The state that a criterion receives is the one that
 [`optimizers7::crit_met()`](https://statmodels7.github.io/optimizers7/reference/crit_met.html)
 documents. In this loop the state has three properties:
 
@@ -224,14 +225,14 @@ documents. In this loop the state has three properties:
   the objective therefore depends on the sample size; a rule that reads
   its relative change does not.
 
-- On the first iteration `f_old` and `x_old` are `NULL`, there being no
-  previous point, so a rule reading a change returns `FALSE` there by
-  construction.
+- On the first iteration `f_old` and `x_old` are `NULL`, because there
+  is no previous point, so a rule reading a change returns `FALSE` there
+  by construction.
 
-A criterion that needs a quantity the step does not compute is rejected
-at construction. A stationarity measure is an example: it belongs to the
-derivative-free methods, and a rule that requires one would remain in
-the loop without ever being met.
+A criterion that needs a quantity that the step does not compute is
+rejected at construction. A stationarity measure is an example: it
+belongs to the derivative-free methods, and a rule that requires one
+would remain in the loop without ever being met.
 
 ## See also
 
@@ -249,14 +250,16 @@ iwls()
 #> iwls: auto information, qr
 #>   maxit 1000, tol 1e-06
 
-# Newton instead of Fisher scoring, solved through an SVD, which reports a
-# numerical rank where a deficient block would make a Cholesky fail.
+# This call uses Newton instead of Fisher scoring and solves through an
+# SVD, which reports a numerical rank where a deficient block would make a
+# Cholesky fail.
 iwls(hessian = "observed", decomposition = "svd")
 #> iwls: observed information, svd
 #>   maxit 1000, tol 1e-06
 
-# An optimizers7 stopping rule in place of tol. The gradient in the state
-# that the rule receives is the score per observation, as for tol.
+# This call uses an optimizers7 stopping rule in place of tol. The
+# gradient in the state that the rule receives is the score per
+# observation, as for tol.
 iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
                                        optimizers7::crit_rel_obj(1e-12)))
 #> iwls: auto information, qr
@@ -264,6 +267,6 @@ iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
 
 # Both at once is an error: tol would not be read.
 try(iwls(tol = 1e-8, criterion = optimizers7::crit_grad(1e-8)))
-#> Error : 'tol' and 'criterion' both say when to stop: pass one.
+#> Error : 'tol' and 'criterion' both set the stopping rule: pass one.
 #>   'tol' belongs to the built-in rule, which a criterion replaces.
 ```

@@ -3,8 +3,8 @@
 Estimates each structural term's parameters on the unconstrained scale
 of
 [`modelterms7::term_links()`](https://statmodels7.github.io/modelterms7/reference/term_links.html),
-the coefficients held where they are, by a general optimizer with the
-exact gradient.
+while the coefficients stay where they are, by a general optimizer with
+the exact gradient.
 
 ## Usage
 

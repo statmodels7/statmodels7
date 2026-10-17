@@ -1,7 +1,7 @@
 # Whether Fisher Scoring Is Contracting Slowly
 
-`TRUE` where the last two ratios of consecutive scores both exceed
-`rate`.
+Returns `TRUE` where the last two ratios of consecutive scores both
+exceed `rate`.
 
 ## Usage
 
@@ -17,8 +17,8 @@ iwls_slow(scores, rate)
 
 - rate:
 
-  The ratio above which a step counts as slow, or `NA` to never answer
-  `TRUE`.
+  The ratio above which a step counts as slow, or `NA`, for which the
+  function never returns `TRUE`.
 
 ## Value
 

@@ -1,9 +1,9 @@
 # The Scoring Pieces of a Subset of the Coefficients
 
-The penalized information over the coordinates `idx`, in the assembled
-form
+Returns the penalized information over the coordinates `idx`, in the
+assembled form that
 [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
-reads when a block is solved with the others held.
+reads when a block is solved while the others are held.
 
 ## Usage
 
@@ -34,7 +34,7 @@ subset_pieces(spec, design, coef, hyper, method, idx)
 
   An
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-  method, its `hessian` read.
+  method, whose `hessian` is read.
 
 - idx:
 

@@ -1,8 +1,8 @@
 # Solve a Scoring Step From a Sparse Square-Root Design
 
-The same increment
+Returns the same increment that
 [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
-returns, taken through a sparse QR of \\\[R;\\ C\]\\.
+returns, computed through a sparse QR of \\\[R;\\ C\]\\.
 
 ## Usage
 
@@ -27,14 +27,14 @@ sparse_augmented_solve(R, C, u, how)
 - how:
 
   The decomposition requested. Only `"qr"` is served; `"svd"` has no
-  sparse counterpart and declines.
+  sparse counterpart, so the function returns `NULL` for it.
 
 ## Value
 
 A list with `delta` (numeric, length `p`) and `rank` (integer, equal to
-`p`), or `NULL` when the route declines: `how` is not `"qr"`, the
-stacked matrix has fewer rows than columns, a column has zero norm, the
-factorization or the triangular solves fail, or the equilibrated
+`p`), or `NULL` when the route yields no solution: `how` is not `"qr"`,
+the stacked matrix has fewer rows than columns, a column has zero norm,
+the factorization or the triangular solves fail, or the equilibrated
 diagonal shows that the matrix is deficient. Unlike
 [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md),
 the list has no `dropped` element.
@@ -44,12 +44,12 @@ the list has no `dropped` element.
 The augmented form exists so that \\X'X\\ is never formed and the
 conditioning is never squared. A sparse QR is a QR and keeps that
 property. A sparse Cholesky factorization of the normal equations would
-be faster and would give it up.
+be faster but would lose that property.
 
 ## The factor is not back-permuted
 
 A sparse QR reorders the columns to reduce fill, so \\AP = QR\\ for the
-permutation \\P\\ that the decomposition chose, and \\(A'A)^{-1} =
+permutation \\P\\ that the decomposition selected, and \\(A'A)^{-1} =
 P(R'R)^{-1}P'\\. The increment is two triangular solves between a
 permutation and its inverse, which is the bookkeeping that the dense
 route does with the pivot of [`qr()`](https://rdrr.io/r/base/qr.html).
@@ -61,9 +61,9 @@ against it is a general solve instead of two triangular ones.
 ## The rank test
 
 The rank is read off the diagonal of the triangular factor, since a
-sparse QR does not report a rank. The test is on the
-**Jacobi-equilibrated** diagonal, each entry divided by its column's
-norm, and the route declines when the smallest ratio is at most
+sparse QR does not report a rank. The test is on the Jacobi-equilibrated
+diagonal, in which each entry is divided by its column's norm, and the
+route returns `NULL` when the smallest ratio is at most
 `ncol(A) * .Machine$double.eps` times the largest.
 
 Without the equilibration the raw diagonal would reject matrices that
@@ -77,8 +77,8 @@ between two sparse matrices, which intersects their index sets and is
 slower.
 
 Where the matrix is rank deficient there is no unique increment, and
-this route declines instead of choosing one. The caller falls back to
-the dense route, which drops columns and reports the rank and the
+this route returns `NULL` instead of choosing one. The caller falls back
+to the dense route, which drops columns and reports the rank and the
 dropped columns.
 
 ## See also

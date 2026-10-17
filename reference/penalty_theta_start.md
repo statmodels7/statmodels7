@@ -23,7 +23,7 @@ penalty_theta_start(pen, unit = 1)
 - pen:
 
   A penalties7 penalty object, read for its `params_bounds` property
-  alone.
+  only.
 
 - unit:
 
@@ -35,8 +35,8 @@ penalty_theta_start(pen, unit = 1)
 ## Value
 
 A named numeric vector, one entry per hyperparameter of `pen`, named as
-the penalty names them. `numeric(0)` for a penalty with none, which a
-fixed prior is.
+the penalty names them. The value is `numeric(0)` for a penalty with
+none, which a fixed prior is.
 
 ## Details
 
@@ -47,12 +47,12 @@ chart, and for a chart the value one has no such meaning: on
 `dr_prod(2)` it gives standard deviations of \\e^1 = 2.718\\ and a
 correlation of -0.664. Zero is the neutral point of the chart, with unit
 standard deviations and no correlation, so that a coordinate unbounded
-on both sides starts at zero. This is also where an ordinary random
-effect starts, because its own scale is bounded below and starts at
+on both sides starts at zero. An ordinary random effect also starts at
+that neutral point, because its own scale is bounded below and starts at
 `lower + 1`.
 
 The value is a starting point only, and the criterion moves it. A start
-that the inner fit cannot converge from can end the search, and the
+from which the inner fit cannot converge can end the search, and the
 neutral point of an unbounded coordinate converges in cases where a
 start at one does not. A hyperparameter bounded on both sides starts at
 the midpoint of its bounds, and one bounded on one side starts one

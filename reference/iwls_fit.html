@@ -11,7 +11,7 @@ coefficients and the history of the run."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,19 +107,19 @@ group, which is right where the whole vector is being fitted.</p></dd>
 <dt id="arg-frozen">frozen<a class="anchor" aria-label="anchor" href="#arg-frozen"></a></dt>
 <dd><p>Positions held at their starting values, an integer vector
 in the same numbering. They are dropped from every solve, so the run
-maximizes over the rest, and the stopping rule reads the free
-coordinates alone: a held coordinate's score is what the constrained
-optimum leaves there and does not vanish.</p></dd>
+maximizes over the rest, and the stopping rule reads only the free
+coordinates, because the constrained optimum leaves in a held coordinate
+a score that does not vanish.</p></dd>
 
 
 <dt id="arg-backup-at">backup_at<a class="anchor" aria-label="anchor" href="#arg-backup-at"></a></dt>
-<dd><p><code>NULL</code>, or a function like <code>pieces_at</code> building the pieces
-on the expected information, which takes the step where the observed
-step finds no acceptable point. An observed penalized information that
-is not positive definite is first repaired by <code><a href="pd_repair.html">pd_repair()</a></code> and its step
-tried. A trial point whose objective raises an error is read as
-rejected. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method <code><a href="iwls_resolve.html">iwls_resolve()</a></code> settled
-with the fallback.</p></dd>
+<dd><p><code>NULL</code>, or a function, like <code>pieces_at</code>, that builds the
+pieces on the expected information. The expected information takes the
+step where the observed step finds no acceptable point. An observed
+penalized information that is not positive definite is first repaired by
+<code><a href="pd_repair.html">pd_repair()</a></code> and its step tried. A trial point whose objective raises an
+error is read as rejected. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method that
+<code><a href="iwls_resolve.html">iwls_resolve()</a></code> settled with the fallback.</p></dd>
 
 
 <dt id="arg-damp-on-reject">damp_on_reject<a class="anchor" aria-label="anchor" href="#arg-damp-on-reject"></a></dt>
@@ -146,45 +146,47 @@ there, with the verdict of the constrained fit.</p></dd>
 <dt id="arg-newton-at">newton_at<a class="anchor" aria-label="anchor" href="#arg-newton-at"></a></dt>
 <dd><p><code>NULL</code>, or a function of the coefficients returning the
 full Hessian of the objective, the scoring pieces' curvature plus the
-term a block moving with its coefficients adds. Where the scoring step
+term that a block moving with its coefficients adds. Where the scoring step
 is rejected or shrunk below a tenth, the Newton step on it is tried by
 <code><a href="iwls_newton_step.html">iwls_newton_step()</a></code> and the one that decreases the objective more is
 taken.</p></dd>
 
 
 <dt id="arg-switch-at">switch_at<a class="anchor" aria-label="anchor" href="#arg-switch-at"></a></dt>
-<dd><p><code>NULL</code>, or a function like <code>pieces_at</code> building the pieces
-on the observed information. After <code>switch_after</code> iterations without
+<dd><p><code>NULL</code>, or a function, like <code>pieces_at</code>, that builds the
+pieces on the observed information. After <code>switch_after</code> iterations without
 convergence, or earlier when <code><a href="iwls_slow.html">iwls_slow()</a></code> reports a slow contraction of
 the score, it takes the place of <code>pieces_at</code>, and <code>pieces_at</code> that of
-<code>backup_at</code>. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method <code><a href="iwls_resolve.html">iwls_resolve()</a></code>
+<code>backup_at</code>. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method that <code><a href="iwls_resolve.html">iwls_resolve()</a></code>
 settled on the expected information from <code>"auto"</code>.</p></dd>
 
 
 <dt id="arg-switch-after">switch_after<a class="anchor" aria-label="anchor" href="#arg-switch-after"></a></dt>
-<dd><p>The iteration after which <code>switch_at</code> takes over.</p></dd>
+<dd><p>The iteration after which <code>switch_at</code> replaces
+<code>pieces_at</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of ten: the six below; <code>note</code>, the reason a run stopped or
-<code>NULL</code>; <code>aliased</code>, the coordinates the pivot left out; <code>switched</code>, the
-iteration at which the run moved to <code>switch_at</code>, or 0; and <code>fallback</code>, a
-named integer vector of four counts. The count <code>indefinite</code> is the number
-of iterations at which the observed penalized information was not
-positive definite, <code>search</code> the number at which the expected pieces
-stepped in for a step that found no acceptable point, <code>error</code> the number
-of trial points whose objective raised, and <code>newton</code> the number of
-iterations at which the Newton step on the full Hessian was taken in
-place of the scoring step. Of the six:</p><dl><dt><code>par</code></dt>
+    <p>A list of ten: the six below; <code>note</code>, the reason for which a run
+stopped or <code>NULL</code>; <code>aliased</code>, the coordinates that the pivot left out;
+<code>switched</code>, the iteration at which the run moved to <code>switch_at</code>, or 0; and
+<code>fallback</code>, a named integer vector of four counts. The count <code>indefinite</code>
+is the number of iterations at which the observed penalized information was
+not positive definite, <code>search</code> the number at which the expected pieces
+stepped in for a step that found no acceptable point, <code>error</code> the number of
+trial points whose objective raised, and <code>newton</code> the number of iterations
+at which the Newton step on the full Hessian was taken in place of the
+scoring step. The six are:</p><dl><dt><code>par</code></dt>
 <dd><p>the stacked coefficients reached, a numeric vector.</p></dd>
 
 <dt><code>value</code></dt>
-<dd><p>the penalized objective there, unaveraged.</p></dd>
+<dd><p>the penalized objective there, not averaged over the
+observations.</p></dd>
 
 <dt><code>converged</code></dt>
 <dd><p>a single logical: whether a stopping rule fired,
-the dimensionless verdict included.</p></dd>
+including the dimensionless verdict.</p></dd>
 
 <dt><code>iterations</code></dt>
 <dd><p>the index of the iteration at which the loop
@@ -221,10 +223,10 @@ scale.</p>
     <p>The absolute score of a location equation carries the units \(1/y\). On
 a response three decades small its rounding floor sits above any fixed
 threshold, and a run stalled exactly at the optimum reads as a failure.</p>
-<p>The verdict therefore adds a second, dimensionless reading,
+<p>The verdict therefore includes a second, dimensionless reading,
 $$\max_j \lvert g_j \rvert / (n\,s_p), \qquad
       s_p = \sqrt{\mathrm{median}_j H_{jj} / n},$$
-with \(s_p\) taken over the equation each coordinate belongs to.</p>
+where \(s_p\) is taken over the equation to which each coordinate belongs.</p>
 <p>It can relabel a run that has already stopped as converged, and it never
 stops a run that is still moving. Driving the loop with it would make the
 tolerance unreachable at the other end of the scale, where the magnitude of

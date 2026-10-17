@@ -9,7 +9,7 @@ every observation, as a \(n \times K \times K\) array."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,7 @@ read.</p></dd>
     <p>An \(n \times K \times K\) numeric array, lower triangular in
 its last two indices, with <code>Om[i, , ] == L[i, , ] %*% t(L[i, , ])</code> for
 every <code>i</code>. <code>NULL</code> as soon as any block fails to be positive definite,
-so a single bad observation declines for the whole sample.</p>
+so a single bad observation makes the result <code>NULL</code> for the whole sample.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -71,7 +71,7 @@ so a single bad observation declines for the whole sample.</p>
 family, whereas \(n\), the number of observations, can be large. The
 standard Cholesky recursion is therefore written out over the
 \(K\) indices and evaluated over all \(n\) observations at once, one
-vectorized pass per entry of the factor, so no loop runs over
+vectorized pass per entry of the factor, so the function does not loop over
 observations.</p>
 <p>A block that is not positive definite produces a non-positive pivot, and
 the function returns <code>NULL</code> at that point instead of taking its square

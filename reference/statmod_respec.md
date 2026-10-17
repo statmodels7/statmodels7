@@ -1,7 +1,8 @@
 # The Same Model Read on Other Rows
 
-A specification carrying the fitted terms and a new data frame, so that
-every block is reapplied to those rows rather than rebuilt from them.
+Builds a specification that carries the fitted terms and a new data
+frame, so that every block is reapplied to those rows rather than
+rebuilt from them.
 
 ## Usage
 
@@ -29,13 +30,13 @@ statmod_respec(spec, data, need_response = TRUE)
 
 A
 [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
-carrying the fitted terms, with `newdata` set to `data`, `n_obs` its row
-count, and the response and the offsets named in the formula evaluated
-there. The weights are reset to ones, the family carries the numbers of
-trials of these rows (missing where the rows have no response and the
-family holds one per observation), and a structural term is rebuilt on
-them where they carry a complete response. Every other property is
-`spec`'s.
+that carries the fitted terms. Its `newdata` is `data`, its `n_obs` is
+the row count of `data`, and the response and the offsets named in the
+formula are evaluated on `data`. The weights are reset to ones, the
+family carries the numbers of trials of these rows (missing where the
+rows have no response and the family holds one per observation), and a
+structural term is rebuilt on them where they carry a complete response.
+Every other property is `spec`'s.
 
 ## Details
 
@@ -61,15 +62,15 @@ not apply to other rows.
 
 `n_obs` is `nrow(data)` and never the length of whatever the response
 expression evaluates to. `eval(expr, data, env)` falls through to the
-formula's environment for anything `data` does not carry, and a
+formula's environment for anything that `data` does not carry, and a
 prediction grid carries the covariates and not the response. A response
 expression would then resolve to a variable of that name in scope, such
 as the fit's own response, and the row count would be that variable's.
 
-So a response whose variables are not columns of `data` is **absent**
-where `need_response` is `FALSE`, and one of a length other than
-`nrow(data)` is an error where it is `TRUE`, rather than a vector
-recycled into a different model.
+So a response whose variables are not columns of `data` is absent where
+`need_response` is `FALSE`, and one of a length other than `nrow(data)`
+is an error where it is `TRUE`, rather than a vector recycled into a
+different model.
 
 ## See also
 

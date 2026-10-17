@@ -1,7 +1,7 @@
 # Add Two Sets of Offsets
 
-Combines the offsets a formula names with those the `offsets` argument
-supplies, per parameter.
+Combines the offsets that a formula names with those that the `offsets`
+argument supplies, per parameter.
 
 ## Usage
 
@@ -18,17 +18,17 @@ add_offsets(a, b)
 
 ## Value
 
-`a` with each entry summed with the entry of `b` for the same parameter
-where both are present, and replaced by `b`'s where only `b` names one.
-A parameter named only in `b` is not added, and the result is `NULL`
-when `a` is.
+`a`, in which each entry is summed with the entry of `b` for the same
+parameter where both are present, and is replaced by `b`'s where only
+`b` names one. A parameter named only in `b` is not added, and the
+result is `NULL` when `a` is.
 
 ## Details
 
-Where both name an offset for the same parameter the two are **summed**,
-as [`stats::glm()`](https://rdrr.io/r/stats/glm.html) does with a
-formula offset and an `offset` argument together. Where only one does,
-that one is taken.
+Where both name an offset for the same parameter the two are summed, as
+[`stats::glm()`](https://rdrr.io/r/stats/glm.html) does with a formula
+offset and an `offset` argument together. Where only one does, that one
+is taken.
 
 ## See also
 

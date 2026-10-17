@@ -32,10 +32,10 @@ iwls_solve(pieces, u, how, damp = 0, frozen = integer(0))
 
 - frozen:
 
-  Positions the caller holds at their current values, an integer vector.
-  They are dropped from the system exactly as a coordinate whose
+  Positions that the caller holds at their current values, an integer
+  vector. They are dropped from the system exactly as a coordinate whose
   curvature is not finite is, so the step is that of the problem reduced
-  to the rest. Empty by default.
+  to the rest. The default is empty.
 
 ## Value
 
@@ -59,7 +59,7 @@ A list of five:
 - `held`:
 
   the positions dropped from the system, an integer vector, empty when
-  nothing was held.
+  every coordinate was free.
 
 - `dropped`:
 
@@ -99,13 +99,13 @@ every coordinate alike and leave the disparity exactly where it was.
 
 ## A coordinate at a boundary is held
 
-Where a parameter has reached the clamp its link keeps it strictly
-inside, the family's curvature there is zero or `NaN`, and no step can
-move that coordinate. Those coordinates are dropped from the system and
-the rest is solved, which is the active set the boundary defines; the
-step stays a descent step for the reduced problem. Coordinates in
-`frozen` and coordinates with a non-finite right-hand side are held in
-the same way.
+Where a parameter has reached the clamp with which its link keeps it
+strictly inside its bounds, the family's curvature there is zero or
+`NaN`, and that coordinate cannot be moved by any step. Those
+coordinates are dropped from the system and the rest is solved, which is
+the active set that the boundary defines; the step stays a descent step
+for the reduced problem. Coordinates in `frozen` and coordinates with a
+non-finite right-hand side are held in the same way.
 
 Holding them keeps a single boundary coordinate from preventing the
 others from moving: a `NaN` in one entry of the curvature would
@@ -117,12 +117,12 @@ the assembled route the test is on the diagonal of the curvature. A
 boundary coordinate makes its entire row non-finite, cross terms
 included, so a test over whole columns would mark its neighbors too and
 hold coordinates that can move. After the diagonal test, the columns of
-the reduced matrix are tested again, and the test repeats until none is
-non-finite.
+the reduced matrix are tested again, and the test repeats until every
+column is finite.
 
 ## See also
 
 [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
 for the input,
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-for the `decomposition` argument this serves.
+for the `decomposition` argument that this function serves.

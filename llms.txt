@@ -516,7 +516,7 @@ helper functions. None of it is needed to use the package.
   : Reject a Number of Trials That Cannot Follow These Rows
 
 - [`check_trials_known()`](https://statmodels7.github.io/statmodels7/reference/check_trials_known.md)
-  : Reject a Quantity That Needs Trials the Rows Lack
+  : Reject a Quantity That Needs Trials That the Rows Lack
 
 - [`check_weights()`](https://statmodels7.github.io/statmodels7/reference/check_weights.md)
   : Validate Prior Weights
@@ -544,7 +544,7 @@ helper functions. None of it is needed to use the package.
   : Where a Covariance Class's Members Sit in the Stacked Vector
 
 - [`class_space()`](https://statmodels7.github.io/statmodels7/reference/class_space.md)
-  : Which Vector a Covariance Class Is Addressed In
+  : The Vector in Which a Covariance Class Is Addressed
 
 - [`class_unit_of()`](https://statmodels7.github.io/statmodels7/reference/class_unit_of.md)
   : The Covariance Class One Term Belongs To
@@ -589,7 +589,7 @@ helper functions. None of it is needed to use the package.
   : The Fourth Derivative of the Objective Contracted Twice
 
 - [`coord_block()`](https://statmodels7.github.io/statmodels7/reference/coord_block.md)
-  : The Penalized Block, in the Storage It Arrived In
+  : The Penalized Block, in the Storage in Which It Arrived
 
 - [`coord_block_at()`](https://statmodels7.github.io/statmodels7/reference/coord_block_at.md)
   : The Penalized Block, Kept on the Design
@@ -609,7 +609,8 @@ helper functions. None of it is needed to use the package.
 
 - [`coord_curv_bounded()`](https://statmodels7.github.io/statmodels7/reference/coord_curv_bounded.md)
   [`coord_curv()`](https://statmodels7.github.io/statmodels7/reference/coord_curv_bounded.md)
-  : Whether Every Column Curvature Is Finite and Positive, Without Them
+  : Whether Every Column Curvature Is Finite and Positive, Decided
+  Without Computing Them
 
 - [`coord_decrement()`](https://statmodels7.github.io/statmodels7/reference/coord_decrement.md)
   : What One Coordinate Alone Would Buy
@@ -630,7 +631,7 @@ helper functions. None of it is needed to use the package.
   : Which Coordinates a Path Point Has to Visit
 
 - [`coord_table_penalty()`](https://statmodels7.github.io/statmodels7/reference/coord_table_penalty.md)
-  : The Penalty a Coordinate Descent Builds Its Table From
+  : The Penalty from Which a Coordinate Descent Builds Its Table
 
 - [`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md)
   : The Working Response and Weights of One Equation
@@ -678,7 +679,7 @@ helper functions. None of it is needed to use the package.
   : Check That a Context Belongs to the Point Read
 
 - [`curv_blocks()`](https://statmodels7.github.io/statmodels7/reference/curv_blocks.md)
-  : The Blocks With the Penalties a Specification Now Carries
+  : The Blocks With the Penalties That a Specification Now Carries
 
 - [`curv_centered()`](https://statmodels7.github.io/statmodels7/reference/curv_centered.md)
   : Whether a Kinked Block's Curvature Is Read Centered
@@ -726,7 +727,7 @@ helper functions. None of it is needed to use the package.
   [`as_dense()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`as_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`zero_information()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
-  : Is a Design Sparse, and the Zero Matrix to Accumulate It Into
+  : Is a Design Sparse, and the Zero Matrix into Which to Accumulate It
 
 - [`df.residual(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/df.residual.StatmodFit.md)
   : Residual Degrees of Freedom of a Fitted Model
@@ -759,7 +760,7 @@ helper functions. None of it is needed to use the package.
   : Which Sub-Term a Penalty Entry Belongs To
 
 - [`eval_offsets()`](https://statmodels7.github.io/statmodels7/reference/eval_offsets.md)
-  : Evaluate the Offsets a Formula Names
+  : Evaluate the Offsets That a Formula Names
 
 - [`expected_deriv2_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv2_ok.md)
   : Does the Family Supply the Expected Information's Second Derivative?
@@ -933,7 +934,7 @@ helper functions. None of it is needed to use the package.
   : How Far Above Its Mode the Inner Fit Stopped
 
 - [`inner_settings()`](https://statmodels7.github.io/statmodels7/reference/inner_settings.md)
-  : What the Inner Method Says About How to Fit
+  : The Settings Read From the Inner Method
 
 - [`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md)
   : The Subspace a Marginal Criterion Integrates Over
@@ -964,7 +965,7 @@ helper functions. None of it is needed to use the package.
   : Fit the Smooth Block by Iterated Weighted Least Squares
 
 - [`iwls_info_diag()`](https://statmodels7.github.io/statmodels7/reference/iwls_info_diag.md)
-  : The Diagonal of the Information a Step Uses
+  : The Diagonal of the Information That a Step Uses
 
 - [`iwls_line_search()`](https://statmodels7.github.io/statmodels7/reference/iwls_line_search.md)
   : One Scoring Step and Its Line Search
@@ -976,7 +977,7 @@ helper functions. None of it is needed to use the package.
   : One Newton Step on the Full Hessian and Its Line Search
 
 - [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
-  : The Pieces One Scoring Step Needs
+  : The Pieces That One Scoring Step Needs
 
 - [`iwls_polish()`](https://statmodels7.github.io/statmodels7/reference/iwls_polish.md)
   : Whether an Inner Fit Takes One Step Past Its Stopping Rule
@@ -1004,7 +1005,8 @@ helper functions. None of it is needed to use the package.
   : When a Run on the Expected Information Continues on the Observed One
 
 - [`iwls_switch_rate()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_rate.md)
-  : The Contraction Rate Above Which Fisher Scoring Yields
+  : The Contraction Rate Above Which a Run Switches to the Observed
+  Information
 
 - [`iwls_tied()`](https://statmodels7.github.io/statmodels7/reference/iwls_tied.md)
   : The Scoring Fit on the Subspace That a Kink Leaves Free
@@ -1059,7 +1061,7 @@ helper functions. None of it is needed to use the package.
   : The Count of Each Coordinate Where a Block Has a Kink
 
 - [`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md)
-  : Every Labeled Effect in a Term, Its Sub-Terms Included
+  : Every Labeled Effect in a Term, Including Its Sub-Terms
 
 - [`laplace_pinned()`](https://statmodels7.github.io/statmodels7/reference/laplace_pinned.md)
   : The Coordinates That the Marginal Determinant Leaves Out
@@ -1233,7 +1235,7 @@ helper functions. None of it is needed to use the package.
   : Where an Equation's Intercept Is
 
 - [`path_block()`](https://statmodels7.github.io/statmodels7/reference/path_block.md)
-  : The Block a Path Row Belongs To
+  : The Block to Which a Path Row Belongs
 
 - [`path_bounded()`](https://statmodels7.github.io/statmodels7/reference/path_bounded.md)
   : Is a Hyperparameter Bounded Above?
@@ -1242,23 +1244,23 @@ helper functions. None of it is needed to use the package.
   : Is a Hyperparameter Swept by the Size of Its Kink?
 
 - [`path_fallbacks()`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md)
-  : What a Path Does Where the Term Says Nothing
+  : Default Grid Settings of a Path
 
 - [`path_forced()`](https://statmodels7.github.io/statmodels7/reference/path_forced.md)
-  : The Values a Caller Wrote Out
+  : The Values That a Caller Wrote Out
 
 - [`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)
-  : The Values a Path Visits Over a Hyperparameter Not Swept by Kink
-  Size
+  : The Values That a Path Visits Over a Hyperparameter Not Swept by
+  Kink Size
 
 - [`path_group()`](https://statmodels7.github.io/statmodels7/reference/path_group.md)
   : Collapse the Shared Hyperparameters of a Path
 
 - [`path_member_index()`](https://statmodels7.github.io/statmodels7/reference/path_member_index.md)
-  : The Coefficients an Axis Covers, Across Its Members
+  : The Coefficients That an Axis Covers, Across Its Members
 
 - [`path_null_score()`](https://statmodels7.github.io/statmodels7/reference/path_null_score.md)
-  : The Largest Score a Kinked Block Has to Beat
+  : The Largest Score That a Kinked Block Has to Beat
 
 - [`path_pick()`](https://statmodels7.github.io/statmodels7/reference/path_pick.md)
   : Choose a Point of the Path
@@ -1267,13 +1269,13 @@ helper functions. None of it is needed to use the package.
   : Which Hyperparameters a Path Has to Select
 
 - [`path_steps()`](https://statmodels7.github.io/statmodels7/reference/path_steps.md)
-  : The Step a Coordinate Descent Would Take on a Block
+  : The Step That a Coordinate Descent Would Take on a Block
 
 - [`path_top_shared()`](https://statmodels7.github.io/statmodels7/reference/path_top_shared.md)
   : The Top of a Path Over Every Member of an Axis
 
 - [`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
-  : The Values a Path Visits
+  : The Values That a Path Visits
 
 - [`pd_factor()`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md)
   : Factorize a Penalized Information Once
@@ -1462,13 +1464,13 @@ helper functions. None of it is needed to use the package.
   : Combinations of Terms That Are Not a Model
 
 - [`reject_missing()`](https://statmodels7.github.io/statmodels7/reference/reject_missing.md)
-  : Reject Missing Values in the Data a Fit Reads
+  : Reject Missing Values in the Data That a Fit Reads
 
 - [`reject_nested_offsets()`](https://statmodels7.github.io/statmodels7/reference/reject_nested_offsets.md)
   : Reject an Offset Buried Inside a Term
 
 - [`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
-  : Reject a Term the Fitting Scheme Does Not Cover
+  : Reject a Term That the Fitting Scheme Does Not Cover
 
 - [`residuals(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.md)
   : The Residuals of a Fitted Model
@@ -1569,7 +1571,7 @@ helper functions. None of it is needed to use the package.
   : Solve a Scoring Step From a Sparse Square-Root Design
 
 - [`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)
-  : Fit One Non-Smooth Block, the Others Held Fixed
+  : Fit One Non-Smooth Block While the Others Are Held Fixed
 
 - [`sparse_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit_structural.md)
   : Fit a Kinked Penalty Over a Structural Term's Own Parameters
@@ -1629,7 +1631,7 @@ helper functions. None of it is needed to use the package.
   : Advance the Refresh State
 
 - [`statmod_curv()`](https://statmodels7.github.io/statmodels7/reference/statmod_curv.md)
-  : The Curvature a SCAD or MCP Penalty Is Scaled By
+  : The Curvature by Which a SCAD or MCP Penalty Is Scaled
 
 - [`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md)
   : The Design at Given Coefficients
@@ -1648,7 +1650,7 @@ helper functions. None of it is needed to use the package.
   : The Key of One of a Term's Penalties
 
 - [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
-  : The Linear Predictors and the Parameters They Give
+  : The Linear Predictors and the Parameters That They Give
 
 - [`statmod_eta_continued()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta_continued.md)
   : Predictors at Rows That Continue the Series
@@ -1680,7 +1682,7 @@ helper functions. None of it is needed to use the package.
   : Which Hyperparameters the Terms Hold
 
 - [`statmod_held_ids()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_ids.md)
-  : The Value Each Sharing Label Is Held At
+  : The Value at Which Each Sharing Label Is Held
 
 - [`statmod_held_levels()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.md)
   : Which Structural Levels a Linear Intercept Already Carries
@@ -1698,7 +1700,7 @@ helper functions. None of it is needed to use the package.
   : Start the Matrix Prior of a Random Effect at the Scale of the Data
 
 - [`statmod_hyper_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.md)
-  : The Hyperparameters a Specification Starts From
+  : The Hyperparameters from Which a Specification Starts
 
 - [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
   : The Variance of the Hyperparameters a Marginal Criterion Estimated
@@ -1806,7 +1808,7 @@ helper functions. None of it is needed to use the package.
   : How a Term Covers Its Own Hyperparameters
 
 - [`statmod_select()`](https://statmodels7.github.io/statmodels7/reference/statmod_select.md)
-  : Estimate the Hyperparameters, by Whichever Route Each One Admits
+  : Estimate the Hyperparameters by the Route That Each One Admits
 
 - [`statmod_settle_breakpoints()`](https://statmodels7.github.io/statmodels7/reference/statmod_settle_breakpoints.md)
   : Settle the Sharp Break-Points on the Profile and Hold Them
@@ -1860,7 +1862,7 @@ helper functions. None of it is needed to use the package.
   : One Penalized Unit, by Parameter and Key
 
 - [`statmod_values()`](https://statmodels7.github.io/statmodels7/reference/statmod_values.md)
-  : The Values a Term Wrote Out for One Hyperparameter
+  : The Values That a Term Wrote Out for One Hyperparameter
 
 - [`statmodels7`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   [`statmodels7-package`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
@@ -1879,7 +1881,7 @@ helper functions. None of it is needed to use the package.
   : The Same Pieces as Data for the Compiled Recursion
 
 - [`structural_callbacks()`](https://statmodels7.github.io/statmodels7/reference/structural_callbacks.md)
-  : The Score and Curvature a Filter Is Driven By
+  : The Score and Curvature That Drive a Filter
 
 - [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
   : The Chain Term of the Joint Gradient Along a Direction
@@ -1940,7 +1942,7 @@ helper functions. None of it is needed to use the package.
   : Which Structural Term a Model Carries, If Any
 
 - [`structural_zeta_start()`](https://statmodels7.github.io/statmodels7/reference/structural_zeta_start.md)
-  : The Parameters a Structural Term Starts From
+  : The Starting Parameters of a Structural Term
 
 - [`subset_pieces()`](https://statmodels7.github.io/statmodels7/reference/subset_pieces.md)
   : The Scoring Pieces of a Subset of the Coefficients
@@ -1969,10 +1971,10 @@ helper functions. None of it is needed to use the package.
   : The Width a Term Drew a Penalty's Coordinates At
 
 - [`term_held_stack()`](https://statmodels7.github.io/statmodels7/reference/term_held_stack.md)
-  : The Stacked Positions the Terms Hold
+  : The Stacked Positions That the Terms Hold
 
 - [`term_tags_deep()`](https://statmodels7.github.io/statmodels7/reference/term_tags_deep.md)
-  : The Covariance Labels a Term Carries, Its Sub-Terms Included
+  : The Covariance Labels That a Term Carries, Including Its Sub-Terms
 
 - [`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
   : Evaluate a Formula's Terms With modelterms7 in Front
@@ -2002,7 +2004,7 @@ helper functions. None of it is needed to use the package.
   : Which Coordinates a Singular Information Carries Nothing About
 
 - [`unit_beta()`](https://statmodels7.github.io/statmodels7/reference/unit_beta.md)
-  : The Coefficients a Penalized Unit Covers
+  : The Coefficients That a Penalized Unit Covers
 
 - [`unit_draw_targets()`](https://statmodels7.github.io/statmodels7/reference/unit_draw_targets.md)
   : Where a Penalty's Coordinates Sit in the Vectors a Simulation Draws

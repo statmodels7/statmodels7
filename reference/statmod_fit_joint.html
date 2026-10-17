@@ -11,7 +11,7 @@ system, instead of alternating between the two blocks."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@ system, instead of alternating between the two blocks.</p>
 
 
 <dt id="arg-beta">beta<a class="anchor" aria-label="anchor" href="#arg-beta"></a></dt>
-<dd><p>The coefficients to start from.</p></dd>
+<dd><p>The coefficients from which to start.</p></dd>
 
 
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
@@ -105,12 +105,12 @@ of both blocks and the exact observed information over both together
 (<code><a href="statmod_full_information.html">statmod_full_information()</a></code>, plus the penalty's Hessian), run to its own
 stopping rule. An alternation would hand the term's parameters to an
 optimizer of their own at every pass, and every iteration of that
-optimizer would run the recursion and its adjoint again with the
-coefficients held at a point that is about to move.</p>
-<p>The unknowns are ordered as the information orders them, the coefficients
-first and the term's free parameters after, so no permutation is needed;
-a level an intercept in the same equation carries is held and leaves the
-system, exactly as it leaves the information.</p>
+optimizer would run the recursion and its adjoint again while the
+coefficients are held at a point that is about to move.</p>
+<p>The unknowns are in the same order as in the information (the coefficients
+first, then the term's free parameters), so the system needs no
+permutation; a level that an intercept in the same equation carries is
+held and leaves the system, exactly as it leaves the information.</p>
 <p>The objective is evaluated once outside the guard, so that a term that
 cannot be evaluated at all raises where it can be read; inside the search
 a non-finite value belongs to the point (a filter whose loadings put it
@@ -119,8 +119,8 @@ back from that point instead of abandoning the run.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_fit_structural.html">statmod_fit_structural()</a></code>, which fits the term's
-parameters alone and is what a term of the likelihood shape still uses.</p></div>
+    <div class="dont-index"><p><code><a href="statmod_fit_structural.html">statmod_fit_structural()</a></code>, which fits only the term's
+parameters and which a term of the likelihood shape still uses.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

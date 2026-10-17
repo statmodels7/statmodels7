@@ -13,7 +13,7 @@ strategy."><meta property="og:image" content="https://statmodels7.github.io/stat
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,13 +59,13 @@ strategy.</p>
 
 
 <dl><dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
-<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit()</a></code> to take the estimates from.</p></dd>
+<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit()</a></code> from which to take the estimates.</p></dd>
 
 
 <dt id="arg-rest">rest<a class="anchor" aria-label="anchor" href="#arg-rest"></a></dt>
 <dd><p>The strategy for whatever the two models do not share.
-<code><a href="start_intercepts.html">start_intercepts()</a></code> by default, which is what a fit given no strategy
-uses. It receives the objective, so <code><a href="start_search.html">start_search()</a></code> can serve as <code>rest</code>.</p></dd>
+The default is <code><a href="start_intercepts.html">start_intercepts()</a></code>, which a fit given no strategy uses.
+It receives the objective, so <code><a href="start_search.html">start_search()</a></code> can serve as <code>rest</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -81,8 +81,8 @@ rule that uses only the response.</p>
     </div>
     <div class="section level2">
     <h2 id="what-is-matched-and-what-is-projected">What is matched, and what is projected<a class="anchor" aria-label="anchor" href="#what-is-matched-and-what-is-projected"></a></h2>
-    <p>The two designs are compared block by block, a block being the columns of
-one term, and a block is treated in one of three ways:</p><dl><dt>the parametric block</dt>
+    <p>The two designs are compared block by block, where a block is the columns
+of one term, and each block is treated in one of three ways:</p><dl><dt>the parametric block</dt>
 <dd><p>is matched column by column, by name. The
 names of a model matrix are variables, levels and interactions, so a
 covariate that is added or dropped leaves the other columns matched.</p></dd>
@@ -101,21 +101,21 @@ carried across do not explain.</p></dd>
 coordinates in a basis that the fit rotates, so
 <code>s(x, bspline_smooth(k = 6))</code> and <code>s(x, bspline_smooth(k = 10))</code> carry the
 names <code>s(x).z1</code> to <code>s(x).z4</code> in common but give them different meanings,
-and one name does not identify one function. What the two bases share is
-the fitted function, so the coefficients are found by projecting it,
+and one name does not identify one function. The two bases share the
+fitted function, so the coefficients are found by projecting it,
 $$\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
 r = \eta^{\mathrm{ref}} - \eta_{-S},$$
 over the pending columns \(S\) alone, where \(\eta^{\mathrm{ref}}\) is
 the reference's predictor and \(\eta_{-S}\) is the new model's predictor
-with the pending columns at zero. Both predictors are the actual predictors
-of their models, including the value of a block that moves with its
-coefficients (a break-point or a nonlinear term). The equality of the two
+when the pending columns are set to zero. Both predictors are the actual
+predictors of their models, including the value of a block that moves with
+its coefficients (a break-point or a nonlinear term). The equality of the two
 blocks, \(B_{\mathrm{new}}\beta_{\mathrm{new}} =
 B_{\mathrm{old}}\beta_{\mathrm{old}}\), has a solution only if the old span
 lies inside the new one, and the projection gives the closest function that
 the new basis can represent. Where the spans are nested the projection is
-exact, and where the two bases coincide it returns the coefficients it was
-given, so the second rule above is a shortcut and not a different answer.</p>
+exact, and where the two bases coincide it returns the coefficients that it
+was given, so the second rule above is a shortcut and not a different answer.</p>
 <p>Two blocks are paired by the stem of their coefficient names and by the
 class of the term, and not by the key of the block, which is the deparsed
 call of the term and therefore differs as soon as <code>k</code> does.</p>
@@ -145,8 +145,8 @@ inversion, or with a model built up one term at a time.</p>
 <span class="r-in"><span><span class="va">dd</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">0.4</span> <span class="op">+</span> <span class="fl">0.6</span> <span class="op">*</span> <span class="va">dd</span><span class="op">$</span><span class="va">x</span> <span class="op">-</span> <span class="fl">0.3</span> <span class="op">*</span> <span class="va">dd</span><span class="op">$</span><span class="va">z</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">full</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">+</span> <span class="va">z</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/poisson_distrib.html" class="external-link">poisson_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># the same model with one covariate dropped, started where the other</span></span></span>
-<span class="r-in"><span><span class="co"># one ended</span></span></span>
+<span class="r-in"><span><span class="co"># The same model is refitted after one covariate is dropped, and the fit</span></span></span>
+<span class="r-in"><span><span class="co"># starts where the full model ended.</span></span></span>
 <span class="r-in"><span><span class="va">sub</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">z</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/poisson_distrib.html" class="external-link">poisson_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span>,</span></span>
 <span class="r-in"><span>               start <span class="op">=</span> <span class="fu">start_from</span><span class="op">(</span><span class="va">full</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">sub</span><span class="op">)</span></span></span>
@@ -155,7 +155,7 @@ inversion, or with a model built up one term at a time.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.7674242  -0.2566149 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># what was taken, and from where</span></span></span>
+<span class="r-in"><span><span class="co"># The attribute "taken" records what was taken, and from where.</span></span></span>
 <span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod_spec.html">statmod_spec</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">z</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/poisson_distrib.html" class="external-link">poisson_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="fu"><a href="start_at.html">start_at</a></span><span class="op">(</span><span class="fu">start_from</span><span class="op">(</span><span class="va">full</span><span class="op">)</span>, <span class="va">spec</span>, <span class="fu"><a href="statmod_design.html">statmod_design</a></span><span class="op">(</span><span class="va">spec</span><span class="op">)</span>, <span class="cn">NULL</span><span class="op">)</span>, <span class="st">"taken"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   term coefficient      value     how</span>

@@ -1,8 +1,8 @@
-# The Pieces One Scoring Step Needs
+# The Pieces That One Scoring Step Needs
 
 Assembles, at the current coefficients, whichever of the square-root
-design, the penalty's factor and the penalized information the requested
-decomposition will actually use.
+design, the penalty's factor and the penalized information that the
+requested decomposition will actually use.
 
 ## Usage
 

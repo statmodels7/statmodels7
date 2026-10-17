@@ -1,6 +1,6 @@
 # Refreshable Terms That Have Stalled
 
-`TRUE` when at least one refreshable term reports, through
+Returns `TRUE` when at least one refreshable term reports, through
 [`modelterms7::term_stalled()`](https://statmodels7.github.io/modelterms7/reference/term_stalled.html),
 that it has not settled and has no step control left, and every other
 term checked has either settled or reports the same.

@@ -31,8 +31,8 @@ statmod_hyper_merge(spec, start, user)
 
 ## Value
 
-The same structure as `start`, with the caller's values merged in.
-`start` unchanged when `user` is `NULL`.
+The same structure as `start`, into which the caller's values are
+merged. The result is `start` unchanged when `user` is `NULL`.
 
 ## Details
 

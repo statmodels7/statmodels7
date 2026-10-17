@@ -1,8 +1,8 @@
 # Fit a Kinked Penalty Over a Structural Term's Own Parameters
 
-A proximal gradient iteration over the parameters of a score-driven
-filter that a penalty with a kink covers, the coefficients and the
-term's other parameters held where the rest of the pass left them.
+Runs a proximal gradient iteration over the parameters of a score-driven
+filter that a penalty with a kink covers, while the coefficients and the
+term's other parameters stay where the rest of the pass left them.
 
 ## Usage
 
@@ -67,9 +67,9 @@ A list shaped like
 
 ## Details
 
-Neither route
+The two routes that
 [`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)
-takes for a block of coefficients can be taken here. A coordinate
+takes for a block of coefficients cannot be taken here. A coordinate
 descent reads the block's columns and its running residual, and a
 structural term contributes no column; the proximal branch reads
 `beta[block$index]`, and such a penalty covers no entry of the stacked
@@ -91,7 +91,7 @@ criterion
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md))
 that would select it is rejected by
 [`assert_criterion_reach()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_reach.md),
-because such a criterion works over the coefficients alone, where this
+because such a criterion works only over the coefficients, where this
 penalty covers nothing.
 
 The convergence flag of a fit that uses this route is the flag of the

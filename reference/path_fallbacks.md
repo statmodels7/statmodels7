@@ -1,7 +1,7 @@
-# What a Path Does Where the Term Says Nothing
+# Default Grid Settings of a Path
 
-The number of values and the depth used for a kinked hyperparameter
-whose term named neither.
+Returns the number of values and the depth used for a kinked
+hyperparameter whose term named neither.
 
 ## Usage
 
@@ -23,9 +23,9 @@ and
 [`modelterms7::mcp()`](https://statmodels7.github.io/modelterms7/reference/mcp.html)
 carry these settings on their own signatures, for example
 `lasso(x, n_lambda = 25, min_ratio = 1e-4)` and
-`enet(x, n_lambda = 25, n_alpha = 5)`, so that nothing here is used for
-them. The settings here are used by a term that declares a kinked
-penalty without an argument for the grid, such as
+`enet(x, n_lambda = 25, n_alpha = 5)`, so that these constructors do not
+use the settings here. The settings here are used by a term that
+declares a kinked penalty without an argument for the grid, such as
 [`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
 under a Laplace prior, whose hyperparameters are those of the effects'
 distribution.

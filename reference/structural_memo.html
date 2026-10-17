@@ -11,7 +11,7 @@ returned; otherwise compute() runs and replaces it."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,10 +84,11 @@ cache returns the previously computed object itself, so a hit is
 bit-identical to recomputing by construction, and the key is compared
 with <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> on the full numeric inputs, so a collision
 cannot happen.</p>
-<p>It stands aside where the design carries refreshable terms: a
+<p>The memo is not used where the design carries refreshable terms: a
 break-point block advances its rescaling schedule as the alternation
 commits, so the same coefficients do not imply the same design there,
-and a key that cannot see the schedule must not answer.</p>
+and a key that does not include the schedule cannot justify returning a
+stored value.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

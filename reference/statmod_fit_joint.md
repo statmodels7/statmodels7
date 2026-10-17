@@ -37,7 +37,7 @@ statmod_fit_joint(
 
 - beta:
 
-  The coefficients to start from.
+  The coefficients from which to start.
 
 - hyper:
 
@@ -68,13 +68,14 @@ information over both together
 plus the penalty's Hessian), run to its own stopping rule. An
 alternation would hand the term's parameters to an optimizer of their
 own at every pass, and every iteration of that optimizer would run the
-recursion and its adjoint again with the coefficients held at a point
-that is about to move.
+recursion and its adjoint again while the coefficients are held at a
+point that is about to move.
 
-The unknowns are ordered as the information orders them, the
-coefficients first and the term's free parameters after, so no
-permutation is needed; a level an intercept in the same equation carries
-is held and leaves the system, exactly as it leaves the information.
+The unknowns are in the same order as in the information (the
+coefficients first, then the term's free parameters), so the system
+needs no permutation; a level that an intercept in the same equation
+carries is held and leaves the system, exactly as it leaves the
+information.
 
 The objective is evaluated once outside the guard, so that a term that
 cannot be evaluated at all raises where it can be read; inside the
@@ -85,5 +86,5 @@ search steps back from that point instead of abandoning the run.
 ## See also
 
 [`statmod_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_structural.md),
-which fits the term's parameters alone and is what a term of the
-likelihood shape still uses.
+which fits only the term's parameters and which a term of the likelihood
+shape still uses.

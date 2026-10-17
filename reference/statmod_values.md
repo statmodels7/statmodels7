@@ -1,6 +1,7 @@
-# The Values a Term Wrote Out for One Hyperparameter
+# The Values That a Term Wrote Out for One Hyperparameter
 
-The grid the term specifies, or `NULL` where the path builds one.
+Returns the grid that the term specifies, or `NULL` where the path
+builds one.
 
 ## Usage
 
@@ -27,11 +28,11 @@ A numeric vector, or `NULL`.
 
 ## Details
 
-The third state of a hyperparameter's argument, beside holding it at one
-number and leaving it to be estimated over a grid the path constructs.
-It travels with the penalty's entry like the grid size and the depth, so
-a penalty reached through a sub-term of a structural term carries it
-too.
+This is the third state of a hyperparameter's argument, beside holding
+it at one number and leaving it to be estimated over a grid that the
+path constructs. It travels with the penalty's entry like the grid size
+and the depth, so a penalty reached through a sub-term of a structural
+term carries it too.
 
 ## See also
 

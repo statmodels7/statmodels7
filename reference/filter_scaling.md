@@ -1,6 +1,6 @@
 # The Scaling Exponent of a Filter
 
-The `scaling` of a
+Returns the `scaling` of a
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
 term, and zero for a structural term that has none.
 

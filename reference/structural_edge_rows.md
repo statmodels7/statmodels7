@@ -1,6 +1,6 @@
 # The Quantities of a Structural Term That Read a Coordinate at an Edge
 
-Marks each quantity
+Marks each quantity that
 [`modelterms7::term_readable()`](https://statmodels7.github.io/modelterms7/reference/term_readable.html)
 reports for a structural term according to whether it depends on a free
 coordinate that has run past the edge of a chart mapping onto a bounded
@@ -38,19 +38,19 @@ A logical vector with one element per reported quantity.
 
 ## Details
 
-The coordinates checked are those
+The coordinates checked are those that
 [`modelterms7::term_charted()`](https://statmodels7.github.io/modelterms7/reference/term_charted.html)
 names, and a coordinate is at the edge when its free value exceeds
-`edge` in absolute value, the rule
+`edge` in absolute value, the rule that
 [`edge_violations()`](https://statmodels7.github.io/statmodels7/reference/edge_violations.md)
 and
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
 use, on a side where its chart maps onto a finite bound: a log link has
 an edge towards zero and none towards infinity. The dependence is read
-off the Jacobian evaluated with those coordinates moved back to
+off the Jacobian evaluated after those coordinates are moved back to
 \\\pm\\`edge`: at the fitted point the derivative of a saturated chart
-can underflow to zero, which would hide the dependence it is meant to
-reveal.
+can underflow to zero, which would hide the dependence that it is meant
+to reveal.
 
 ## See also
 

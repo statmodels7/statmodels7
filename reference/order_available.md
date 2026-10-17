@@ -1,10 +1,11 @@
 # Whether a Family Carries Enough Derivatives
 
-`TRUE` when the log-density has at least `need` continuous derivatives
-in every parameter the model carries an equation for. Used as a gate by
-the consumers that can fall back on something else, and through
+Returns `TRUE` when the log-density has at least `need` continuous
+derivatives in every parameter for which the model carries an equation.
+The consumers that can fall back on something else use the result as a
+gate, and the consumers that cannot use it through
 [`order_shortfall()`](https://statmodels7.github.io/statmodels7/reference/order_shortfall.md)
-as an error message by the ones that cannot.
+as an error message.
 
 ## Usage
 
@@ -28,8 +29,8 @@ order_available(distrib, need)
 ## Value
 
 A single logical. `NA` orders count as unavailable: a wrapper of a
-kinked family records the kink without declaring its order, and an
-unestablished order is not evidence of smoothness.
+kinked family records the kink without declaring its order, and an order
+that has not been established is not evidence of smoothness.
 
 ## See also
 

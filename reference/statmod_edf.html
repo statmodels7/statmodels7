@@ -15,7 +15,7 @@ modelterms7's edf() for the remaining terms."><meta property="og:image" content=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,10 +113,10 @@ equation, and not only the coefficients and hyperparameters of the term.
 That curvature is computed once for all terms and not per term.</p>
 <p>A term may carry more than one penalty, over different parameters of its
 own, and each has hyperparameters of its own filed under a key of its own.
-The row stays per term, which is the granularity of a table of terms,
-and the hyperparameters are handed over keyed by the penalty names
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_penalties.html" class="external-link">modelterms7::term_penalties()</a></code> gives, which is the shape
-<code>edf()</code> reads them in. Passing the hyperparameters of one penalty for
+The result has one row per term, the granularity of a table of terms,
+and the hyperparameters are handed over keyed by the penalty names that
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_penalties.html" class="external-link">modelterms7::term_penalties()</a></code> returns, which is the shape in which
+<code>edf()</code> reads them. Passing the hyperparameters of one penalty for
 a term carrying two would count the whole block against it.</p>
 <p>The arguments of <code>edf()</code> are passed by name: its third argument is the
 curvature and its fourth the hyperparameters.</p>

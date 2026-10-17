@@ -1,7 +1,8 @@
 # Every Penalized Unit of a Specification
 
-One entry per penalty in the model, whatever term it belongs to and
-whether or not that term has more than one.
+Returns one entry per penalty in the model, regardless of the term to
+which the penalty belongs and of whether that term has more than one
+penalty.
 
 ## Usage
 
@@ -46,17 +47,17 @@ covariance class (see
 is one unit over the stacked columns of its members. The callers that
 need the penalties of a model read this one enumeration.
 
-**The key** is the term's name in the formula, with the entry's own name
-appended after `::` when the term carries more than one penalty and the
-entry is named. Two `ridge()` terms are two terms with two keys and two
-hyperparameters. A term with one penalty has its name alone as key, so a
-hyperparameter is read by the term's name.
+The key is the term's name in the formula. When the term carries more
+than one penalty and the entry is named, the entry's own name is
+appended after `::`. Two `ridge()` terms are two terms with two keys and
+two hyperparameters. A term with one penalty has only its name as key,
+so a hyperparameter is read by the term's name.
 
 `statmod_penalized_units()` builds the list. `statmod_penalized()`
-returns it from the design's `eta_memo` environment where the design has
-one and the terms and the family's parameters are the ones it was built
-for, which is what an objective evaluated many times over one design
-reads.
+returns the list from the design's `eta_memo` environment when the
+design has one and the terms and the family's parameters are the ones
+for which the design was built. An objective evaluated many times over
+one design reads the list from there.
 
 ## See also
 

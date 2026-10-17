@@ -51,15 +51,15 @@ A list with the elements `delta`, `rank` and `dropped`:
 
 - `delta`:
 
-  the increment, an unnamed numeric vector of length `p`. Zero in every
-  coordinate that the pivoted route dropped.
+  the increment, an unnamed numeric vector of length `p`. It is zero in
+  every coordinate that the pivoted route dropped.
 
 - `rank`:
 
-  the rank used, an integer. Always `p` on the threaded and sparse
-  routes, which decline on a deficient matrix instead of reporting a
-  smaller rank, and the number of retained singular values on the
-  `"svd"` route.
+  the rank used, an integer. It is always `p` on the threaded and sparse
+  routes, which hand a deficient matrix to the dense route instead of
+  reporting a smaller rank, and it is the number of retained singular
+  values on the `"svd"` route.
 
 - `dropped`:
 
@@ -71,33 +71,33 @@ A list with the elements `delta`, `rank` and `dropped`:
 
 The routes are tried in this order.
 
-1.  **Sparse QR**, when either factor is a Matrix object. The pair is
-    passed to
+1.  Sparse QR, when either factor is a Matrix object. The pair is passed
+    to
     [`sparse_augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.md),
-    which declines on a rank-deficient matrix.
+    which returns `NULL` on a rank-deficient matrix.
 
-2.  **SVD**, when `how = "svd"`. The singular values below \\\max(\dim
+2.  SVD, when `how = "svd"`. The singular values below \\\max(\dim
     A)\\\epsilon\\\sigma\_{\max}\\ are dropped and the increment is
-    built from the retained right singular vectors, so a deficient
-    system gets the minimum-norm solution.
+    built from the retained right singular vectors, so the solution of a
+    deficient system is the minimum-norm one.
 
-3.  **The threaded triangular factor**, when `how = "qr"`, `threads > 1`
-    and \\m p^2\\ is at least `5e7`, where \\m\\ is the number of rows
-    of \\A\\. Only the triangular factor is read, so a kernel that
-    produces it without accumulating \\Q\\ does the whole job.
+3.  The threaded triangular factor, when `how = "qr"`, `threads > 1` and
+    \\m p^2\\ is at least `5e7`, where \\m\\ is the number of rows of
+    \\A\\. Only the triangular factor is read, so a kernel that produces
+    it without accumulating \\Q\\ does the whole job.
 
-4.  **[`qr()`](https://rdrr.io/r/base/qr.html)**, the pivoted LINPACK
-    route, which returns a rank and can drop columns. A sparse solve
-    that declined continues here on densified factors.
+4.  [`qr()`](https://rdrr.io/r/base/qr.html), the pivoted LINPACK route,
+    which returns a rank and can drop columns. A sparse solve that
+    returned `NULL` continues here on densified factors.
 
 ## Why the rank test is equilibrated
 
 The threaded route is taken only where the matrix has full rank by a
 comfortable margin. The test reads the diagonal of the triangular factor
-**divided by each column's norm**. Writing \\T\\ for the triangular
-factor of \\A\\, so that \\A'A = T'T\\, scaling the columns of \\A\\
-scales the diagonal of \\T\\ by the same factors, so the ratio is the
-diagonal of a decomposition with unit column norms.
+divided by each column's norm. Writing \\T\\ for the triangular factor
+of \\A\\, so that \\A'A = T'T\\, scaling the columns of \\A\\ scales the
+diagonal of \\T\\ by the same factors, so the ratio is the diagonal of a
+decomposition with unit column norms.
 
 The raw diagonal would report a matrix as near-singular whenever its
 columns differ in size, and a large smoothing parameter produces that

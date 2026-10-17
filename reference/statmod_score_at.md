@@ -33,14 +33,15 @@ statmod_score_at(spec, coef, design = statmod_design(spec), index = NULL)
 - index:
 
   `NULL` for every coefficient, or integer positions in the stacked
-  coefficients: only those columns enter the final products, which is
-  what a fit over a few coordinates of a wide model reads.
+  coefficients, in which case only those columns enter the final
+  products; a fit over a few coordinates of a wide model uses this form.
 
 ## Value
 
 A named list of numeric vectors, one per distribution parameter in the
 family's order, each as long as that equation's design is wide. With
-`index`, a numeric vector over those positions, in the order given.
+`index`, the value is a numeric vector over those positions, in the
+order given.
 
 ## Details
 

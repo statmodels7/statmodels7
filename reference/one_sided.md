@@ -1,10 +1,10 @@
 # Build a One-Sided Formula From an Expression
 
 Wraps a term expression as `~ expr` and attaches `env` to it, so that
-the symbols in a term resolve where the caller wrote them. Used by
+the symbols in a term resolve where the caller wrote them.
 [`statmod_equations()`](https://statmodels7.github.io/statmodels7/reference/statmod_equations.md)
-on each piece it collects, and on `quote(1)` for a parameter with no
-equation.
+uses it on each piece that it collects, and on `quote(1)` for a
+parameter with no equation.
 
 ## Usage
 
@@ -17,8 +17,8 @@ one_sided(expr, env)
 - expr:
 
   A language object, the right-hand side to wrap: a symbol, a call, or
-  the literal `1`. Substituted unevaluated, so a term call is not run
-  here.
+  the literal `1`. It is substituted unevaluated, so a term call is not
+  run here.
 
 - env:
 

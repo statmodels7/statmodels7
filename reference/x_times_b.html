@@ -11,7 +11,7 @@ corresponding columns are skipped."><meta property="og:image" content="https://s
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,13 +70,13 @@ corresponding columns are skipped.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A term \(0 \cdot x_{ij}\) adds exactly zero to the running sum, so
-leaving those columns out gives the same number, the remaining products
-being summed in the same column order. The design is subset only where
-fewer than all the coefficients are nonzero; with none, the result is a
-vector of zeros. A non-finite coefficient keeps the full product. The
-design itself is taken to be finite, as a model matrix is: an infinite
-entry in a column whose coefficient is zero would make the full product
-<code>NaN</code> and this one not.</p>
+leaving those columns out gives the same number, because the remaining
+products are summed in the same column order. The design is subset only where
+fewer than all the coefficients are nonzero; when all of them are zero, the
+result is a vector of zeros. A non-finite coefficient keeps the full
+product. The design itself is taken to be finite, as a model matrix is: an
+infinite entry in a column whose coefficient is zero would make the full
+product <code>NaN</code> but would not affect this one.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

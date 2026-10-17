@@ -1,7 +1,8 @@
 # The Shift of One Mixture Component
 
-The level a component adds to the predictor: one number for a regime or
-a side pattern, one value per observation for a quadrature node.
+Returns the level that a component adds to the predictor: one number for
+a regime or a side pattern, one value per observation for a quadrature
+node.
 
 ## Usage
 

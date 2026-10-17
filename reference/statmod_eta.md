@@ -1,9 +1,9 @@
-# The Linear Predictors and the Parameters They Give
+# The Linear Predictors and the Parameters That They Give
 
-Turns a coefficient structure into the per-observation parameters every
-distributions7 generic takes. Each equation's design, coefficients,
-offset and adjustment give a linear predictor \\\eta_k\\, and the
-parameter's own link inverts it to \\\theta_k\\.
+Turns a coefficient structure into the per-observation parameters that
+every distributions7 generic takes. Each equation's design,
+coefficients, offset and adjustment give a linear predictor \\\eta_k\\,
+and the parameter's own link inverts it to \\\theta_k\\.
 
 ## Usage
 
@@ -63,7 +63,7 @@ A list with the elements
 \$\$\eta_k = X_k \beta_k + o_k + a_k, \qquad \theta_k =
 g_k^{-1}(\eta_k)\$\$
 
-with \\o_k\\ the equation's offset and \\a_k\\ the adjustment a
+with \\o_k\\ the equation's offset and \\a_k\\ the adjustment that a
 refreshable term contributes, zero for an ordinary design.
 
 The inverse link is evaluated by

@@ -1,8 +1,8 @@
-# The Blocks With the Penalties a Specification Now Carries
+# The Blocks With the Penalties That a Specification Now Carries
 
-Replaces the penalty of every kinked block with the one the
-specification carries under the same key, leaving everything else the
-block records where it was.
+Replaces the penalty of every kinked block with the one that the
+specification carries under the same key, leaving everything else that
+the block records where it was.
 
 ## Usage
 
@@ -24,7 +24,7 @@ curv_blocks(blocks, spec, design)
 
 ## Value
 
-`blocks`, with the `penalty` of each kinked entry replaced.
+`blocks`, in which the `penalty` of each kinked entry is replaced.
 
 ## Details
 
@@ -32,8 +32,8 @@ curv_blocks(blocks, spec, design)
 rewrites a scaled SCAD or MCP's curvature at every pass. Rebuilding the
 blocks with
 [`statmod_blocks()`](https://statmodels7.github.io/statmodels7/reference/statmod_blocks.md)
-would lose what a path has written onto them, the previous point's kink
-among it, so only the penalty is replaced.
+would lose what a path has written onto them, including the previous
+point's kink, so only the penalty is replaced.
 
 ## See also
 

@@ -19,7 +19,7 @@ can be passed to any number of fits."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,7 +81,7 @@ can be passed to any number of fits.</p>
 <dl><dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
 <dd><p><code>"expected"</code> for Fisher scoring, <code>"observed"</code> for Newton,
 or <code>"auto"</code>, which <code><a href="iwls_resolve.html">iwls_resolve()</a></code> turns into one of the two once the
-distribution is known. A single string.</p></dd>
+distribution is known. The value is a single string.</p></dd>
 
 
 <dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
@@ -111,7 +111,7 @@ in place of <code>tol</code>, or <code>NULL</code> for the built-in rule.</p></d
 <dd><p>The number of halvings tried after the full step before
 a step is abandoned, a single non-negative whole number. The line search
 tries the full step and then at most <code>step_halving</code> halved steps, so <code>0</code>
-tries the full step alone.</p></dd>
+tries only the full step.</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
@@ -140,7 +140,7 @@ scoring, and <code>"observed"</code> inverts the observed Hessian, which is Newt
 The expected information is positive definite wherever the family is
 regular, so Fisher scoring takes usable steps from a poor start where
 Newton's matrix may be indefinite; Newton converges faster near the
-optimum and is what the exact outer gradient needs.</p>
+optimum, and the exact outer gradient requires the observed information.</p>
 <p><code>"auto"</code>, the default, is settled against the family when the fit starts,
 by <code><a href="iwls_resolve.html">iwls_resolve()</a></code>. The expected information is used where the family
 writes it exactly and at an acceptable cost. Otherwise the observed
@@ -152,13 +152,13 @@ rejected. The fit records the settled method, so <code>fit@methods$smooth</code>
 shows which curvature ran.</p>
 <p>On a family that <code><a href="iwls_resolve.html">iwls_resolve()</a></code> settles on the expected information from
 <code>"auto"</code>, a run continues on the observed information as soon as Fisher
-scoring contracts the score slowly, each of two consecutive ratios of the
-score being above <code><a href="iwls_switch_rate.html">iwls_switch_rate()</a></code>, and at the latest after
-<code><a href="iwls_switch_after.html">iwls_switch_after()</a></code> scoring steps. The expected information then takes
-the step only where the observed step finds no acceptable point. Fisher
-scoring converges only linearly near the mode wherever the two informations
-differ there, which they do whenever the dispersion has an equation of its
-own, whereas Newton's step converges quadratically.</p>
+scoring contracts the score slowly, which means that each of two
+consecutive ratios of the score is above <code><a href="iwls_switch_rate.html">iwls_switch_rate()</a></code>, and at the
+latest after <code><a href="iwls_switch_after.html">iwls_switch_after()</a></code> scoring steps. The expected information
+then takes the step only where the observed step finds no acceptable
+point. Fisher scoring converges only linearly near the mode wherever the
+two informations differ there, which they do whenever the dispersion has an
+equation of its own, whereas Newton's step converges quadratically.</p>
 <p>Where the rule is met, the run takes one more full step. The step uses the
 observed information if the method was settled on the expected information
 from <code>"auto"</code> and has not yet switched, and otherwise the information that
@@ -172,24 +172,25 @@ unless it raises the objective by more than a relative \(10^{-8}\): a
 sufficient-decrease test at a point already under the rule would accept or
 reject by the last bits, and the criterion would jump between nearby
 hyperparameters.</p>
-<p><code>approx</code> reaches <span class="pkg">distributions7</span> and is read only where the family
-has no closed expected information; elsewhere the family's own method
-answers and the argument does not enter. The argument is accepted for every
-family because an <code>iwls()</code> object is built before it meets a distribution
-and can be passed to any number of fits, so whether the family has a
-closed expected information cannot be checked at construction.
+<p><code>approx</code> is passed to <span class="pkg">distributions7</span> and is read only where the
+family has no closed expected information; elsewhere the family's own
+method supplies the information and the argument is not used. The
+argument is accepted for every family because an <code>iwls()</code> object is built
+before a distribution is supplied and can be passed to any number of fits, so
+whether the family has a closed expected information cannot be checked at
+construction.
 <code><a href="https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html" class="external-link">distributions7::expected_hessian_exact()</a></code> is the predicate that records
 which case a family is in.</p>
 <p>Its default is <code>"opg"</code>, the outer product of the observed scores, which
 costs one gradient. The alternative readings evaluate the expectation
 itself (a sum over the support for a discrete family, a quadrature for a
 continuous one) and cost much more inside a loop that rebuilds the
-curvature at every iteration. What the cheap matrix gives up is variance
-and not the answer: the score is exact, so a scoring step driven by any
-positive definite matrix reaches the same stationary point, and the outer
-product is positive semidefinite by construction where the observed Hessian
-need not be. The information behind a standard error is chosen separately;
-see <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p>
+curvature at every iteration. The price of the cheap matrix is paid in
+variance and not in the answer: the score is exact, so a scoring step
+driven by any positive definite matrix reaches the same stationary point,
+and the outer product is positive semidefinite by construction, whereas
+the observed Hessian need not be. The information behind a standard error
+is chosen separately; see <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="the-decomposition">The decomposition<a class="anchor" aria-label="anchor" href="#the-decomposition"></a></h2>
@@ -229,10 +230,12 @@ in log-likelihood units and does not depend on the scale of the response.
 When the loop ends without meeting the rule, the dimensionless reading of
 <code><a href="iwls_score.html">iwls_score()</a></code> can relabel the stopped run as converged. Any
 <span class="pkg">optimizers7</span> criterion may drive the loop instead. It replaces the
-whole built-in rule, the decrement condition and the dimensionless reading
-included, and <code>tol</code> is then not read, so passing both is an error.</p>
-<p>The state that a criterion receives is the one <code><a href="https://statmodels7.github.io/optimizers7/reference/crit_met.html" class="external-link">optimizers7::crit_met()</a></code>
-documents. In this loop the state has three properties:</p><ul><li><p>Its <code>gradient</code> is the score per observation, the quantity that the
+whole built-in rule, including the decrement condition and the
+dimensionless reading, and <code>tol</code> is then not read, so passing both is an
+error.</p>
+<p>The state that a criterion receives is the one that
+<code><a href="https://statmodels7.github.io/optimizers7/reference/crit_met.html" class="external-link">optimizers7::crit_met()</a></code> documents. In this loop the state has three
+properties:</p><ul><li><p>Its <code>gradient</code> is the score per observation, the quantity that the
 built-in rule compares with <code>tol</code>. The threshold of
 <code>optimizers7::crit_grad(t)</code> therefore applies to the same quantity as
 <code>tol = t</code> and has the same meaning at \(n = 10\) and at
@@ -242,13 +245,13 @@ log-likelihood, not divided by the sample size, which is the scale on
 which the penalty is added. A rule that reads the absolute value of the
 objective therefore depends on the sample size; a rule that reads its
 relative change does not.</p></li>
-<li><p>On the first iteration <code>f_old</code> and <code>x_old</code> are <code>NULL</code>, there being no
-previous point, so a rule reading a change returns <code>FALSE</code> there by
+<li><p>On the first iteration <code>f_old</code> and <code>x_old</code> are <code>NULL</code>, because there is
+no previous point, so a rule reading a change returns <code>FALSE</code> there by
 construction.</p></li>
-</ul><p>A criterion that needs a quantity the step does not compute is rejected at
-construction. A stationarity measure is an example: it belongs to the
-derivative-free methods, and a rule that requires one would remain in the
-loop without ever being met.</p>
+</ul><p>A criterion that needs a quantity that the step does not compute is
+rejected at construction. A stationarity measure is an example: it belongs
+to the derivative-free methods, and a rule that requires one would remain
+in the loop without ever being met.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -263,14 +266,16 @@ criteria that can replace it.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iwls: auto information, qr</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 1000, tol 1e-06</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Newton instead of Fisher scoring, solved through an SVD, which reports a</span></span></span>
-<span class="r-in"><span><span class="co"># numerical rank where a deficient block would make a Cholesky fail.</span></span></span>
+<span class="r-in"><span><span class="co"># This call uses Newton instead of Fisher scoring and solves through an</span></span></span>
+<span class="r-in"><span><span class="co"># SVD, which reports a numerical rank where a deficient block would make a</span></span></span>
+<span class="r-in"><span><span class="co"># Cholesky fail.</span></span></span>
 <span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span>hessian <span class="op">=</span> <span class="st">"observed"</span>, decomposition <span class="op">=</span> <span class="st">"svd"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iwls: observed information, svd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 1000, tol 1e-06</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># An optimizers7 stopping rule in place of tol. The gradient in the state</span></span></span>
-<span class="r-in"><span><span class="co"># that the rule receives is the score per observation, as for tol.</span></span></span>
+<span class="r-in"><span><span class="co"># This call uses an optimizers7 stopping rule in place of tol. The</span></span></span>
+<span class="r-in"><span><span class="co"># gradient in the state that the rule receives is the score per</span></span></span>
+<span class="r-in"><span><span class="co"># observation, as for tol.</span></span></span>
 <span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span>criterion <span class="op">=</span> <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_any.html" class="external-link">crit_any</a></span><span class="op">(</span><span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">crit_grad</a></span><span class="op">(</span><span class="fl">1e-8</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                                       <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_rel_obj.html" class="external-link">crit_rel_obj</a></span><span class="op">(</span><span class="fl">1e-12</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iwls: auto information, qr</span>
@@ -278,7 +283,7 @@ criteria that can replace it.</p></div>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Both at once is an error: tol would not be read.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">iwls</span><span class="op">(</span>tol <span class="op">=</span> <span class="fl">1e-8</span>, criterion <span class="op">=</span> <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">crit_grad</a></span><span class="op">(</span><span class="fl">1e-8</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : 'tol' and 'criterion' both say when to stop: pass one.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : 'tol' and 'criterion' both set the stopping rule: pass one.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   'tol' belongs to the built-in rule, which a criterion replaces.</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

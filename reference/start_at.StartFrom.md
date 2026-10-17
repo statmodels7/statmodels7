@@ -1,7 +1,7 @@
 # Starting Values From Another Fit
 
-The reference fit's estimates where the two models share a coefficient,
-the fallback strategy's answer everywhere else.
+Returns the reference fit's estimates where the two models share a
+coefficient and the fallback strategy's answer everywhere else.
 
 ## Arguments
 

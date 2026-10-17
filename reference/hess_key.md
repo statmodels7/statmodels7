@@ -21,17 +21,17 @@ hess_key(params, a, b)
 - a, b:
 
   Indices into `params`, in either order: the Hessian is symmetric and
-  this returns the key the list actually holds.
+  this returns the key that the list actually holds.
 
 ## Value
 
-A single string, one of the names of the list
+A single string, one of the names of the list that
 [`distributions7::distrib_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_hessian.html)
 returns.
 
 ## Details
 
-The key is built by pasting the two parameter names in the order
+The key is built by pasting the two parameter names in the order that
 [`distributions7::hess_names()`](https://statmodels7.github.io/distributions7/reference/hess_names.html)
 uses, and is never parsed back out of a name. For a family whose
 parameter name contains the separator, splitting `"log_scale_mu"` on the

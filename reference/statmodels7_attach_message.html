@@ -13,7 +13,7 @@ not, and the two columns are filled down the left one first."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,15 +61,16 @@ not, and the two columns are filled down the left one first.</p>
 <dl><dt id="arg-versions">versions<a class="anchor" aria-label="anchor" href="#arg-versions"></a></dt>
 <dd><p>A data frame as <code><a href="statmodels7_versions.html">statmodels7_versions()</a></code> returns, with
 character columns <code>package</code> and <code>version</code> and <code>NA</code> in <code>version</code> for a
-member that is not installed. Not validated: this is called from
-<code>.onAttach()</code> with that function's own result.</p></dd>
+member that is not installed. The argument is not validated, because
+<code>.onAttach()</code> calls this function with the result of that function.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A character vector with <code>ceiling(nrow(versions) / 2)</code> elements, one
-per row of the two-column layout, each already trimmed of trailing
-spaces. <code>character(0)</code> when <code>versions</code> has no rows.</p>
+per row of the two-column layout, in which trailing spaces are already
+trimmed from each element. The result is <code>character(0)</code> when <code>versions</code>
+has no rows.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

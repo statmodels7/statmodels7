@@ -1,7 +1,8 @@
 # Which Coefficients Are Not Sitting at a Kink
 
-A logical vector over the stacked coefficients, `FALSE` where one lies
-at a point its penalty is not differentiable at.
+Returns a logical vector over the stacked coefficients, with `FALSE`
+where a coefficient lies at a point at which its penalty is not
+differentiable.
 
 ## Usage
 
@@ -32,7 +33,8 @@ statmod_active(spec, blocks, beta, hyper, tol = 1e-08)
 
 - tol:
 
-  How close to a kink counts as at it.
+  The distance to a kink within which a coefficient is taken to be at
+  the kink.
 
 ## Value
 
@@ -44,10 +46,10 @@ The kink locations come from
 [`penalties7::penalty_kinks()`](https://statmodels7.github.io/penalties7/reference/penalty_kinks.html)
 read at the hyperparameters in force, and a coefficient is inactive when
 it sits at one of them. Everything outside a kinked block is active,
-having no kink to sit at.
+because it has no kink at which to sit.
 
 A kinked penalty reaches this function with no map or with a diagonal
-map, which is what `standardize = TRUE` writes. A separable penalty
+map; `standardize = TRUE` writes a diagonal map. A separable penalty
 under a general map is the generalized-lasso problem, which
 [`penalties7::penalty_prox()`](https://statmodels7.github.io/penalties7/reference/penalty_prox.html)
 rejects. A block that reaches this function therefore penalizes its

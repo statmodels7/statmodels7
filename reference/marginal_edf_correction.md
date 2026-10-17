@@ -1,6 +1,6 @@
 # The Correction for the Estimated Hyperparameters, With Estimated Coefficients
 
-The branch of
+Computes the branch of
 [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md)
 for a fit whose criterion also estimated coefficients. The correction is
 the trace of the information against the part of the unconditional
@@ -17,7 +17,7 @@ marginal_edf_correction(mc, coef, hyper, method, idx, expected, approx, zero)
 
 - mc:
 
-  The list
+  The list that
   [`fit_marginal_context()`](https://statmodels7.github.io/statmodels7/reference/fit_marginal_context.md)
   returns.
 
@@ -29,7 +29,7 @@ marginal_edf_correction(mc, coef, hyper, method, idx, expected, approx, zero)
 
   The
   [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-  the fit ran.
+  that the fit ran.
 
 - idx:
 

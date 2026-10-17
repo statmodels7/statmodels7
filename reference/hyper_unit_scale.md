@@ -1,9 +1,9 @@
 # The Units of the Free Values of a Matrix Prior
 
-One multiplier per row of `idx`: the factor that turns the outer
-curvature in a hyperparameter's free value into the curvature in a free
-value without units. It is 1 except for a free value of a matrix prior
-that scales with the matrix.
+Computes one multiplier per row of `idx`: the factor that turns the
+outer curvature in a hyperparameter's free value into the curvature in a
+free value without units. It is 1 except for a free value of a matrix
+prior that scales with the matrix.
 
 ## Usage
 

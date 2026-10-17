@@ -26,29 +26,29 @@ statmod_refreshable(spec)
 
 ## Value
 
-A list with one element per refreshable term, in the order the design
-holds them: equations in the family's parameter order, and terms within
-an equation in the order they were written. Each element is a list of
-two:
+A list with one element per refreshable term, in the order in which the
+design holds them: equations in the family's parameter order, and terms
+within an equation in the order in which they were written. Each element
+is a list of two:
 
 - `param`:
 
-  the distribution parameter whose equation the term sits in, a string.
+  the distribution parameter in whose equation the term sits, a string.
 
 - `term`:
 
   the name of the term within that equation, a string (for example
   `"seg(x)"`).
 
-An empty list when no term refreshes, which is the common case.
+The list is empty when no term refreshes, which is the common case.
 
 ## Details
 
-Membership is decided by testing whether the term registers a
-`term_refresh()` method of its own, which is
-[`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md).
-The base method on `model_term` is the identity, so a term written later
-is covered without an edit here.
+Membership is determined by
+[`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md),
+which tests whether the term registers a `term_refresh()` method of its
+own. The base method on `model_term` is the identity, so a term written
+later is covered without an edit here.
 
 The design stores this list, and every other function in the file walks
 it. When it is empty, a model of ordinary terms incurs no cost from the

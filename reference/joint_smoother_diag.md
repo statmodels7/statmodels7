@@ -1,8 +1,8 @@
 # The Model's Smoother Over the Coefficients and a Filter's Parameters
 
-The diagonal of \\F = (K+S)^{-1}K\\ on the vector a model carrying a
-score-driven filter actually estimates: the coefficients of every
-equation followed by the term's own free parameters.
+Returns the diagonal of \\F = (K+S)^{-1}K\\ on the vector that a model
+carrying a score-driven filter actually estimates: the coefficients of
+every equation followed by the term's own free parameters.
 
 ## Usage
 
@@ -32,12 +32,13 @@ joint_smoother_diag(spec, coef, design, hyper)
 
 A list with `beta`, the diagonal over the stacked coefficients, `zeta`,
 the diagonal over the structural term's free parameters, named as the
-term names them, and `failed`. `NULL` where the model carries no joint
-vector at all, and a list whose `failed` is `TRUE` where it carries one
-that could not be read. The two are different answers: the first leaves
-a caller free to fall back on a rule that is right for such a model, and
-the second leaves it with no reading, so that the count is reported
-missing rather than taken from a rule meaning something else.
+term names them, and `failed`. The result is `NULL` where the model
+carries no joint vector at all, and a list whose `failed` is `TRUE`
+where it carries one that could not be read. The two results differ:
+with the first, the caller may fall back on a rule that is right for
+such a model, and with the second, the caller has no reading, so that
+the count is reported missing rather than taken from a rule that means
+something else.
 
 ## Details
 
@@ -49,7 +50,7 @@ reads it directly. A filter's parameters are estimated beside the
 coefficients and may carry a penalty of their own, so for such a model
 the same definition is read on the joint vector: \\K\\ is
 [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
-and \\K+S\\ the matrix the criterion's own determinant is taken of,
+and \\K+S\\ the matrix whose determinant the criterion takes,
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md).
 
 ## The count of an unpenalized parameter
@@ -60,19 +61,20 @@ M^{-1}(M - S) = I - M^{-1}S,\$\$ and for \\j\\ outside \\P\\ the whole
 column \\S\_{\cdot j}\\ vanishes, which makes \\F\_{jj}\\ exactly one.
 The rule that counts one degree of freedom per free parameter of a
 structural term, on the reading that those parameters are estimated and
-unpenalized, is therefore what this matrix gives wherever that rule is
+unpenalized, therefore agrees with this matrix wherever that rule is
 right. The count differs for a coordinate that a prior shrinks, which a
 filter's own parameters may be (for example the deviations of a
 developed loading, or the parameters under a covariance class); such a
 coordinate counts less than one.
 
 A structural term that mixes over latent states rather than shifting the
-predictor has no such joint determinant,
+predictor has no such joint determinant, because
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
-answering `NULL` for it, and falls back to the coefficient-only reading.
+returns `NULL` for it, so the count falls back to the coefficient-only
+reading.
 
-The joint route reads the observed information, there being no expected
-one for a filter:
+The joint route reads the observed information, because a filter has no
+expected one:
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
 assembles from
 [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html),

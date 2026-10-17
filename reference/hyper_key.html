@@ -11,7 +11,7 @@ caller, and statmod() does not use it."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@ caller, and <code><a href="statmod.html">statmod()</a></code> does not use it.</
 
 
 <dt id="arg-p">p<a class="anchor" aria-label="anchor" href="#arg-p"></a></dt>
-<dd><p>The distribution parameter whose equation to look in, a string.</p></dd>
+<dd><p>The distribution parameter in whose equation to look, a string.</p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
@@ -73,9 +73,9 @@ caller, and <code><a href="statmod.html">statmod()</a></code> does not use it.</
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single string, the key <code>start[[p]]</code> holds the term under.
-Signals an error when <code>name</code> matches nothing, and when it matches the
-labels of two terms at once.</p>
+    <p>A single string, the key under which <code>start[[p]]</code> holds the term.
+The function signals an error when <code>name</code> matches nothing, and when it
+matches the labels of two terms at once.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

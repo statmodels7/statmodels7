@@ -1,7 +1,7 @@
 # The Stem Shared by a Block's Coefficient Names
 
-Returns the part every coefficient name of a block has in common before
-its own suffix, which is what identifies the term across two models
+Returns the part that every coefficient name of a block has in common
+before its own suffix. This part identifies the term across two models
 written on different bases.
 
 ## Usage
@@ -27,8 +27,8 @@ A block is keyed in the design by the term's deparsed call, so
 different keys and never meet by name. Their coefficients, on the other
 hand, are `s(x).lin`, `s(x).z1`, ... on both sides, so the stem `s(x)`
 names the term without naming the basis. The suffix is taken from the
-last dot and not the first, so a covariate whose own name carries one –
-`s(my.var)` – keeps it.
+last dot and not the first, so a covariate whose own name carries one
+(`s(my.var)`) keeps it.
 
 `NA` is returned where the names do not reduce to one common stem, as
 for the parametric block of several columns, whose columns are variables

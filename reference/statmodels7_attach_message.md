@@ -18,14 +18,16 @@ statmodels7_attach_message(versions)
   A data frame as
   [`statmodels7_versions()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.md)
   returns, with character columns `package` and `version` and `NA` in
-  `version` for a member that is not installed. Not validated: this is
-  called from `.onAttach()` with that function's own result.
+  `version` for a member that is not installed. The argument is not
+  validated, because `.onAttach()` calls this function with the result
+  of that function.
 
 ## Value
 
 A character vector with `ceiling(nrow(versions) / 2)` elements, one per
-row of the two-column layout, each already trimmed of trailing spaces.
-`character(0)` when `versions` has no rows.
+row of the two-column layout, in which trailing spaces are already
+trimmed from each element. The result is `character(0)` when `versions`
+has no rows.
 
 ## Details
 

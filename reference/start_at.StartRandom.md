@@ -1,6 +1,7 @@
 # Starting Values From a Random Draw
 
-The draw, added to the intercept-only fit unless `center` is `FALSE`.
+Returns the draw, added to the intercept-only fit unless `center` is
+`FALSE`.
 
 ## Arguments
 

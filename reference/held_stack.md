@@ -25,4 +25,4 @@ held_stack(spec, design)
 
 ## Value
 
-An integer vector of positions, empty where nothing is held.
+An integer vector of positions, empty if no coefficient is held.

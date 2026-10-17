@@ -1,7 +1,8 @@
 # The Penalty of a Specification at Given Coefficients
 
-The sum of every penalized term's `penalty_value()`, with its gradient
-and Hessian placed in the columns that term owns.
+Computes the sum of every penalized term's `penalty_value()`. The
+gradient and Hessian of that sum are placed in the columns that each
+term owns.
 
 ## Usage
 
@@ -45,7 +46,8 @@ Depends on `what`:
 
 - `"value"`:
 
-  a single number, the penalties summed. `0` for an unpenalized model.
+  a single number, the sum of the penalties. The value is `0` for an
+  unpenalized model.
 
 - `"gradient"`:
 

@@ -1,7 +1,7 @@
 # Name Stacked Positions
 
-The equation and the coefficient name of each position in the stacked
-coefficient vector, in the form that
+Returns the equation and the coefficient name of each position in the
+stacked coefficient vector, in the form that
 [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)
 returns.
 

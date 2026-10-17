@@ -1,6 +1,6 @@
 # Which Shape a Structural Term Implements
 
-`"filter"` when the term registers its own
+Returns `"filter"` when the term registers its own
 [`modelterms7::term_filter()`](https://statmodels7.github.io/modelterms7/reference/term_filter.html)
 method, `"loglik"` when it registers its own
 [`modelterms7::term_loglik()`](https://statmodels7.github.io/modelterms7/reference/term_loglik.html)

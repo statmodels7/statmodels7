@@ -24,8 +24,8 @@ statmod_test(fit, param, coefname, value = 0, test = "wald", type = "bayesian")
 
 - value:
 
-  The value under the null, a single number. `0` by default, which is
-  what a summary reports.
+  The value under the null, a single number. The default is `0`, which
+  is the value that a summary reports.
 
 - test:
 
@@ -47,8 +47,8 @@ A
 of the coefficient tables that can be held (not a row under a kinked
 penalty, not an aliased one, and none for a model with a structural
 term), always against zero. This function tests one coefficient against
-any value, which is a question that a summary cannot answer: whether a
-slope is one, whether an elasticity is unity, whether a coefficient
+any value, for questions that a summary cannot answer, such as whether a
+slope is one, whether an elasticity is unity, or whether a coefficient
 matches a value fixed outside the data.
 
 The statistics, the quantities that they read and their cost are
@@ -70,7 +70,7 @@ the interval do not read the mode error.
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 for the rows that can be held, against zero,
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
-for the interval a test inverts.
+for the interval that a test inverts.
 
 ## Examples
 

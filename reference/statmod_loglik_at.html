@@ -13,7 +13,7 @@ counts an observation twice."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,21 +68,20 @@ parameter.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
-<dd><p>The design. Rebuilt from <code>spec</code> when absent, which is
-convenient at the console and wasteful in a loop.</p></dd>
+<dd><p>The design. The function rebuilds it from <code>spec</code> when it is
+absent, which is convenient at the console and wasteful in a loop.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single number. <code>-Inf</code> where the density is zero at some
-observation, and <code>NaN</code> where the parameters are outside the family's
-support, both of which a search reads as an unusable point.</p>
+    <p>A single number. The value is <code>-Inf</code> where the density is zero at
+some observation and <code>NaN</code> where the parameters are outside the family's
+support; a search reads both as an unusable point.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>No penalty enters. This is the likelihood alone; <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code>
-gives the other half of the objective, and <code><a href="statmod_objective.html">statmod_objective()</a></code> combines
-them.</p>
+    <p>The log-likelihood contains no penalty; <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code> gives the
+other half of the objective, and <code><a href="statmod_objective.html">statmod_objective()</a></code> combines them.</p>
 <p>For a model with a term of the likelihood shape, a mixture over latent
 states, the log-likelihood of the term replaces the sum of the log-densities
 at the observations.</p>
@@ -90,7 +89,7 @@ at the observations.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="statmod_score_at.html">statmod_score_at()</a></code> for its derivative,
-<code><a href="statmod_objective.html">statmod_objective()</a></code> for the penalized objective it enters.</p></div>
+<code><a href="statmod_objective.html">statmod_objective()</a></code> for the penalized objective that it enters.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

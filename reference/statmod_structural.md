@@ -1,6 +1,6 @@
 # The Structural Terms of a Specification
 
-The parameter, name and shape of every structural term in a
+Returns the parameter, name and shape of every structural term in a
 specification.
 
 ## Usage

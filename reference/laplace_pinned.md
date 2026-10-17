@@ -1,7 +1,8 @@
 # The Coordinates That the Marginal Determinant Leaves Out
 
+Returns the positions of
 [`pinned_coords()`](https://statmodels7.github.io/statmodels7/reference/pinned_coords.md)
-and the coordinates that a penalty with a kink covers.
+together with the coordinates that a penalty with a kink covers.
 
 ## Usage
 
@@ -28,10 +29,10 @@ An integer vector of stacked positions, possibly empty.
 
 A kinked penalty has no curvature at the coordinates that it sets to
 zero, so a Laplace expansion around them is not defined, and the
-coordinates it leaves away from zero are chosen by the same selection.
-The criterion holds all of them at the joint mode and integrates the
-rest, which is the restricted likelihood of Verbyla (1993) with those
-coefficients treated as known.
+coordinates that it leaves away from zero are chosen by the same
+selection. The criterion holds all of them at the joint mode and
+integrates the rest, which is the restricted likelihood of Verbyla
+(1993) in which those coefficients are treated as known.
 
 The mode's own movement is not affected: it is read over every
 coordinate, see

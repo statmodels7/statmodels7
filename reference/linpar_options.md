@@ -27,10 +27,11 @@ linpar_options(sparse = NULL, contrasts = NULL)
 
 - contrasts:
 
-  The contrasts for the block's factors, a named list of the kind
+  The contrasts for the block's factors, a named list of the kind that
   [`stats::model.matrix()`](https://rdrr.io/r/stats/model.matrix.html)'s
   `contrasts.arg` takes, or `NULL` for the session's
-  `options("contrasts")`. Carried on the specification, so a fold of
+  `options("contrasts")`. The contrasts are carried on the
+  specification, so that a fold of
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
   reproduces them instead of re-reading the option.
 
@@ -43,21 +44,22 @@ A named list with the element `sparse` (possibly `NULL`) and, when
 
 ## Which term it reaches
 
-The **implicit**
+This function configures the implicit
 [`modelterms7::linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html)
-term: the one the bare covariates of a formula collapse into, which a
-caller never writes and so has no other way to configure. A `linpar()`
-written out in the formula takes these arguments directly and ignores
-this.
+term, which is the term into which the bare covariates of a formula
+collapse. A caller never writes this term and so has no other way to
+configure it. A `linpar()` written out in the formula takes these
+arguments directly and ignores this.
 
 ## Sparse storage
 
 `sparse = TRUE` builds the block through
 [`Matrix::sparse.model.matrix()`](https://rdrr.io/pkg/Matrix/man/sparse.model.matrix.html),
-which **builds** it sparse instead of building a dense matrix and
-compressing it, so no dense intermediate is formed. Sparse storage pays
-where the formula carries a factor of many levels. A numeric covariate
-has no zeros to exploit, and its sparse block costs more than it saves.
+which builds it sparse instead of building a dense matrix and
+compressing it, so that it forms no dense intermediate. Sparse storage
+pays where the formula carries a factor of many levels. A numeric
+covariate has no zeros to exploit, and its sparse block costs more than
+it saves.
 
 ## Scaling of the columns
 
@@ -68,7 +70,7 @@ forming \\X'X\\ does.
 with its default `decomposition = "qr"` fits through a QR factorization
 of the augmented design and does not form \\X'X\\, and its final
 convergence verdict is read on a dimensionless scale, so the scale of a
-column does not decide it.
+column does not affect that verdict.
 
 ## The name of the argument
 
@@ -86,7 +88,7 @@ kept apart for the same reason.
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 for where it is passed,
 [`modelterms7::linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html)
-for the term it configures.
+for the term that it configures.
 
 ## Examples
 
@@ -96,7 +98,7 @@ linpar_options(sparse = TRUE)
 #> [1] TRUE
 #> 
 
-# The whole point: a factor of many levels.
+# Sparse storage matters for a factor of many levels.
 set.seed(1)
 n <- 2000
 dd <- data.frame(y = rnorm(n), g = factor(sample(200, n, replace = TRUE)))
@@ -107,7 +109,8 @@ sparse <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), dd,
 Xd <- statmod_design(dense)$mu$X
 Xs <- statmod_design(sparse)$mu$X
 
-# Same numbers, stored in much less memory.
+# The two blocks hold the same numbers, and the sparse one uses much less
+# memory.
 c(dense = class(Xd)[1], sparse = class(Xs)[1])
 #>       dense      sparse 
 #>    "matrix" "dgCMatrix" 

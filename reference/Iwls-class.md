@@ -1,6 +1,6 @@
 # The Iterated Weighted Least Squares Method
 
-The S7 class of the scoring step
+`Iwls` is the S7 class of the scoring step that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 uses for the jointly fitted smooth block. An object of this class
 carries the whole configuration of that step: which curvature to invert,
@@ -32,8 +32,8 @@ Iwls(
   `"expected"` for Fisher scoring, `"observed"` for Newton, or `"auto"`,
   which
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
-  turns into one of the two once the distribution is known. A single
-  string.
+  turns into one of the two once the distribution is known. The value is
+  a single string.
 
 - approx:
 
@@ -63,7 +63,7 @@ Iwls(
   The number of halvings tried after the full step before a step is
   abandoned, a single non-negative whole number. The line search tries
   the full step and then at most `step_halving` halved steps, so `0`
-  tries the full step alone.
+  tries only the full step.
 
 - fallback:
 
@@ -91,8 +91,8 @@ Iwls(
 
 ## Value
 
-An object of class `Iwls` with one property per argument above, each
-holding what was passed.
+An object of class `Iwls` with one property per argument above, and each
+property holds the value that was passed.
 
 ## See also
 

@@ -1,10 +1,11 @@
 # The Specification of a Model, Before It Is Fitted
 
-Everything the formula, the data and the distribution produce, before
-any fitting: one equation per distribution parameter, the terms each
-equation names built against the data, the response, and the prior
-weights and offsets. A fit keeps one of these in its `spec` property, so
-it is also what [`summary()`](https://rdrr.io/r/base/summary.html),
+The specification holds everything that the formula, the data and the
+distribution produce before any fitting: one equation per distribution
+parameter, the terms that each equation names built against the data,
+the response, and the prior weights and offsets. A fit keeps one of
+these in its `spec` property, so it is also what
+[`summary()`](https://rdrr.io/r/base/summary.html),
 [`predict()`](https://rdrr.io/r/stats/predict.html) and the accessors
 read.
 
@@ -39,7 +40,7 @@ StatmodSpec(
 
 - formula:
 
-  The model formula, as given, bars included.
+  The model formula as given, including the bars.
 
 - distrib:
 
@@ -79,12 +80,12 @@ StatmodSpec(
 
 - newdata:
 
-  The rows a respecification reads, or `NULL` for the fitting rows.
+  The rows that a respecification reads, or `NULL` for the fitting rows.
 
 - structural:
 
   A named list of the parameters of the structural term, keyed by the
-  term; empty where no fit has set them.
+  term; empty until a fit sets them.
 
 - linpar:
 
@@ -96,7 +97,7 @@ StatmodSpec(
 
   A named list, one entry per distribution parameter, of coefficients
   held at a value, each a named numeric vector keyed by coefficient
-  name. Empty by default.
+  name. The list is empty by default.
 
 - threads:
 
@@ -113,7 +114,7 @@ An object of class `StatmodSpec` with one property per argument above
 and the properties described next. `linpar` holds the options of the
 implicit parametric block and is set by
 [`statmod_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_spec.md).
-`newdata` holds the rows a respecification reads, `NULL` until
+`newdata` holds the rows that a respecification reads, `NULL` until
 [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
 sets it. `structural` holds the parameters of a structural term where a
 fit has set them. `held_coef` holds coefficients held at a value, by
@@ -137,7 +138,8 @@ spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 S7::S7_inherits(spec, StatmodSpec)
 #> [1] TRUE
 
-# One equation per parameter of the family, whatever the formula wrote.
+# The specification has one equation per parameter of the family, whatever
+# the formula wrote.
 names(spec@equations)
 #> [1] "mu"    "sigma"
 spec@n_obs

@@ -1,6 +1,6 @@
-# What the Inner Method Says About How to Fit
+# The Settings Read From the Inner Method
 
-The information matrix, its approximation and the budget, read from the
+Reads the information matrix, its approximation and the budget from the
 inner method in one place.
 
 ## Usage
@@ -43,10 +43,10 @@ observed information; the expected information is a different matrix, so
 a Newton step on it would be Fisher scoring under another name. Where a
 family writes neither out, the expected information is also far more
 expensive to form than the observed one. `approx` is `"opg"` for such a
-method, which is what
+method, the default of
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-itself defaults to; it is read only where `expected` is `TRUE`, so for
-an optimizer it records a default and not a choice.
+itself; it is read only where `expected` is `TRUE`, so for an optimizer
+it records a default and not a choice.
 
 ## See also
 

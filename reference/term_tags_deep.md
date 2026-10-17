@@ -1,7 +1,8 @@
-# The Covariance Labels a Term Carries, Its Sub-Terms Included
+# The Covariance Labels That a Term Carries, Including Its Sub-Terms
 
-Every covariance label reachable from a term: its own, and those of the
-sub-terms developing its own parameters, walked to any depth.
+Returns every covariance label reachable from a term: its own, and those
+of the sub-terms that develop its own parameters, found by walking to
+any depth.
 
 ## Usage
 
@@ -18,11 +19,12 @@ term_tags_deep(term, what = "it")
 - what:
 
   How to name this term in the result's names. Defaults to the term
-  itself, and a recursive call passes the path it came by.
+  itself, and a recursive call passes the path by which the term was
+  reached.
 
 ## Value
 
-A named character vector, empty where no label is reachable.
+A named character vector, empty when the term has no reachable label.
 
 ## Details
 
@@ -36,8 +38,8 @@ sub-terms are reached through
 whose `subs` field is the list of them, and the walk recurses because a
 sub-term is an ordinary term and may develop parameters of its own.
 
-The names of the result say where each label was found, so a message can
-name the sub-term rather than the equation's term alone.
+The names of the result record where each label was found, so a message
+can name the sub-term rather than only the equation's term.
 
 ## See also
 

@@ -1,8 +1,9 @@
 # A Covariance Class Split Between the Coefficients and a Filter's Parameters
 
-The value, gradient and Hessian of every penalty whose coordinates are
-part coefficients and part a structural term's own parameters, placed in
-the joint vector \\\[\beta; \zeta\_{\mathrm{free}}\]\\.
+Computes the value, gradient and Hessian of every penalty whose
+coordinates are part coefficients and part a structural term's own
+parameters, and places them in the joint vector \\\[\beta;
+\zeta\_{\mathrm{free}}\]\\.
 
 ## Usage
 
@@ -43,23 +44,24 @@ joint_penalty_at(
 - n:
 
   The length of the joint vector, `nb` plus the number of free
-  parameters. Read from the caller, which has already computed it.
+  parameters. The function reads it from the caller, which has already
+  computed it.
 
 ## Value
 
 For `"value"` a single number; for `"gradient"` a numeric vector of
-length `n`; for `"hessian"` an `n` by `n` matrix. Zero throughout where
-no class is mixed.
+length `n`; for `"hessian"` an `n` by `n` matrix. The result is zero
+throughout if no class is mixed.
 
 ## One function for both parts
 
 The prior of a class is one object over one stacked vector. penalties7
 computes one gradient and one Hessian over that vector, in the order of
-the class, and has no notion of the split: it treats the coordinates as
-\\m\\ blocks of \\d\\ numbers with a covariance in common. Splitting the
-result into a coefficient part and a parameter part would report each as
-though the other were absent and would lose the cross block, the only
-place where the correlation between the two enters.
+the class, and does not represent the split: it treats the coordinates
+as \\m\\ blocks of \\d\\ numbers with a covariance in common. Splitting
+the result into a coefficient part and a parameter part would give each
+part as though the other were absent, and the cross block, which is the
+only place where the correlation between the two enters, would be lost.
 
 The scatter is therefore written once, and the three assemblies that
 build the joint matrix add what it returns: the inner step

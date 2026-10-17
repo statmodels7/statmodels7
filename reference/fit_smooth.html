@@ -11,7 +11,7 @@ statmod_alternate()."><meta property="og:image" content="https://statmodels7.git
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,8 +90,8 @@ kinked block at its current values. This is the smooth half of one pass of
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with the following elements:</p><dl><dt><code>par</code></dt>
-<dd><p>the full stacked coefficient vector, with the block's
-positions replaced.</p></dd>
+<dd><p>the full stacked coefficient vector, in which the block's
+positions are replaced.</p></dd>
 
 <dt><code>value</code></dt>
 <dd><p>the objective there.</p></dd>
@@ -122,8 +122,8 @@ for an <span class="pkg">optimizers7</span> method.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The objective handed to the optimizer is the full one restricted to <code>idx</code>:
-the coefficients outside the block enter it as constants, so the value it
-reports is the model's objective, never a block's own.</p>
+the coefficients outside the block enter it as constants, so the value that
+it reports is the model's objective, never a block's own.</p>
 <p>With <code><a href="iwls.html">iwls()</a></code> the step is solved by the scoring loop of <code><a href="iwls_fit.html">iwls_fit()</a></code>, which
 reads the expected or the observed information, as the settled method
 specifies. With an <span class="pkg">optimizers7</span> optimizer the objective's <code>fn</code>, <code>gr</code> and

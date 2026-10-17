@@ -9,7 +9,7 @@ result sparse whenever any block is."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,15 +59,15 @@ each dense or sparse. May be empty.</p></dd>
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
 <dd><p>The number of observations, used only when <code>mats</code> is empty, where
-there is no block to read a row count from.</p></dd>
+there is no block from which to read a row count.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code>n x p</code> matrix with <code>p</code> the total width of the blocks: a
 <span class="pkg">Matrix</span> object when any input is sparse, a base matrix otherwise.
-An <code>n x 0</code> base matrix for an empty <code>mats</code>, as an equation
-carrying only a structural term gives.</p>
+For an empty <code>mats</code> the result is an <code>n x 0</code> base matrix, which is the
+design of an equation that carries only a structural term.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -77,7 +77,7 @@ so a random effect over \(m\) groups has density \(1/m\), and
 <p>Blocks are bound with <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind()</a></code> when all of them are base matrices. When
 any block is sparse, they are bound with <code><a href="https://rdrr.io/r/methods/cbind2.html" class="external-link">Matrix::cbind2()</a></code>, so that the
 result is a <span class="pkg">Matrix</span> object whatever the order of the blocks.</p>
-<p>The result is sparse when <strong>one</strong> block is. Sparsity is a property of the
+<p>The result is sparse when one block is. Sparsity is a property of the
 assembled matrix and not of its pieces: a dense fixed block beside a large
 indicator leaves a matrix that is still overwhelmingly zero, and its
 factorization stays sparse under a fill-reducing ordering.</p>
@@ -85,7 +85,7 @@ factorization stays sparse under a fill-reducing ordering.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="design_sparse.html">design_sparse()</a></code> for the same test applied to a whole design,
-<code><a href="statmod_design.html">statmod_design()</a></code> for the assembly this serves.</p></div>
+<code><a href="statmod_design.html">statmod_design()</a></code> for the assembly that this serves.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

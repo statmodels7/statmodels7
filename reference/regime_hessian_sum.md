@@ -1,8 +1,9 @@
 # The Second-Derivative Components of a Mixture, Averaged Over Its States
 
-For a likelihood mixed over states, each second-derivative component of
-the family averaged over the states with their smoothed probabilities,
-\\\bar h\_{ab,i} = \sum_k \gamma\_{ik} h\_{ab}(\theta\_{ik})\\.
+Computes, for a likelihood mixed over states, each second-derivative
+component of the family averaged over the states with their smoothed
+probabilities, \\\bar h\_{ab,i} = \sum_k \gamma\_{ik}
+h\_{ab}(\theta\_{ik})\\.
 
 ## Usage
 

@@ -5,7 +5,7 @@ and for
 [`start_random()`](https://statmodels7.github.io/statmodels7/reference/start_random.md)
 whether the draw is centered, for
 [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
-which optimizer it searches with.
+the optimizer that performs the search.
 
 ## Arguments
 

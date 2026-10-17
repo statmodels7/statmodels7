@@ -2,8 +2,8 @@
 
 Assembles \\\Omega_i\\, the \\K \times K\\ information of observation
 \\i\\ with respect to the \\K\\ link-scale predictors, multiplied by
-that observation's prior weight. This is the per-observation curvature a
-scoring step is built from, before any design enters.
+that observation's prior weight. This is the per-observation curvature
+from which a scoring step is built, before any design enters.
 
 ## Usage
 
@@ -33,8 +33,9 @@ info_blocks(spec, theta, expected = TRUE, approx = "opg", H = NULL)
 
   How the expected information is approximated for a family that has no
   closed form, passed through to distributions7: `"opg"` (the default),
-  `"bartlett"`, `"integrate"` or `"mc"`. Ignored when `expected` is
-  `FALSE` or when the family computes its expected information exactly.
+  `"bartlett"`, `"integrate"` or `"mc"`. It is ignored when `expected`
+  is `FALSE` or when the family computes its expected information
+  exactly.
 
 - H:
 
@@ -51,12 +52,12 @@ indices, with \\K\\ the number of distribution parameters.
 ## Details
 
 The derivatives come from the family on the link scale, so the chain
-rule onto \\\eta\\ has already been applied by distributions7 and
-nothing here multiplies by a link's derivative. With `expected = TRUE`
-the expected information is taken and the blocks are positive definite
-wherever the family is regular; with `expected = FALSE` the observed
-Hessian is negated, which far from the optimum is routinely indefinite.
-In that case
+rule onto \\\eta\\ has already been applied by distributions7 and the
+function does not multiply by a link's derivative. With
+`expected = TRUE` the expected information is taken and the blocks are
+positive definite wherever the family is regular; with
+`expected = FALSE` the observed Hessian is negated, which far from the
+optimum is routinely indefinite. In that case
 [`chol_blocks()`](https://statmodels7.github.io/statmodels7/reference/chol_blocks.md)
 returns `NULL`.
 

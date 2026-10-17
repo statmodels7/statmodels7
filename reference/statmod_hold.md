@@ -1,6 +1,6 @@
 # A Specification With Coefficients Held
 
-Writes values for the coefficients
+Writes values for the coefficients that
 [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)
 returned into the specification's `held_coef`, which the inner fit
 enforces.
@@ -30,4 +30,4 @@ statmod_hold(spec, coords, values)
 ## Value
 
 `spec` with `held_coef` set. The holds already present are kept for
-coefficients `coords` does not name.
+coefficients that `coords` does not name.

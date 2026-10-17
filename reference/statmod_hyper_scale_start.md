@@ -34,7 +34,7 @@ statmod_hyper_scale_start(spec, design, hyper)
 
 ## Value
 
-`hyper`, with the free values of each matrix parameter moved.
+`hyper`, in which the free values of each matrix parameter are moved.
 
 ## Details
 

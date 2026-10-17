@@ -1,4 +1,4 @@
-# Estimate the Hyperparameters, by Whichever Route Each One Admits
+# Estimate the Hyperparameters by the Route That Each One Admits
 
 Routes the twice differentiable hyperparameters to
 [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
@@ -77,9 +77,9 @@ statmod_select(
 
 - data:
 
-  The data the fit was called on, which cross-validation needs in order
-  to refit on part of it; the weights and offsets are those held by
-  `spec`.
+  The data with which the fit was called, which cross-validation needs
+  in order to refit on part of it; the weights and offsets are those
+  held by `spec`.
 
 - sparse_method:
 
@@ -89,22 +89,22 @@ statmod_select(
 
 ## Value
 
-The list
+The list that
 [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
 or
 [`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)
 returns, with the element `criterion_by`, the
 [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-whose value is `criterion`; the list
+whose value is `criterion`; the list that
 [`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md)
-returns where no criterion runs.
+returns when the fit runs without a criterion.
 
 ## Details
 
-The split is the same one that decides how the coefficients are fitted,
-so a term whose penalty has a kink has both its coefficients and its
-hyperparameters handled by methods that do not require a curvature that
-the penalty does not have.
+The split is the same one that determines how the coefficients are
+fitted, so for a term whose penalty has a kink, both the coefficients
+and the hyperparameters are handled by methods that do not require a
+curvature that the penalty does not have.
 
 ## See also
 

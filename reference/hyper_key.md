@@ -27,7 +27,7 @@ hyper_key(spec, start, p, name)
 
 - p:
 
-  The distribution parameter whose equation to look in, a string.
+  The distribution parameter in whose equation to look, a string.
 
 - name:
 
@@ -35,9 +35,9 @@ hyper_key(spec, start, p, name)
 
 ## Value
 
-A single string, the key `start[[p]]` holds the term under. Signals an
-error when `name` matches nothing, and when it matches the labels of two
-terms at once.
+A single string, the key under which `start[[p]]` holds the term. The
+function signals an error when `name` matches nothing, and when it
+matches the labels of two terms at once.
 
 ## Details
 

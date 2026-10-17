@@ -43,7 +43,7 @@ assert_criterion_reach(
 
 ## Value
 
-`NULL`, invisibly. Called for the error.
+`NULL`, invisibly. The function is called for the error.
 
 ## Details
 
@@ -69,7 +69,7 @@ own parameters by a proximal route, without a criterion.
 Which penalties a criterion reaches depends on its role, and only those
 are checked: an `outer_criterion` reaches the smooth penalties, and the
 kinked ones as well when no `sparse_criterion` is given, while a
-`sparse_criterion` reaches the kinked ones alone.
+`sparse_criterion` reaches only the kinked ones.
 
 ## See also
 

@@ -1,8 +1,8 @@
 # Which Coefficients a Restricted Fit Can Hold
 
-The stacked positions of the coefficients the three restricted
-statistics are defined for: every coordinate less the ones under a
-kinked penalty, less the aliased ones, and none at all where the model
+Returns the stacked positions of the coefficients for which the three
+restricted statistics are defined: every coordinate less the ones under
+a kinked penalty, less the aliased ones, and none at all where the model
 carries a structural term.
 
 ## Usage
@@ -25,7 +25,7 @@ testable_coords(fit, spec = fit@spec, design = statmod_design(spec))
 ## Value
 
 An integer vector of stacked positions, possibly empty, named by the
-labels
+labels that
 [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
 gives them.
 
@@ -42,9 +42,9 @@ before its refit is computed and not after.
 A coordinate under a penalty that is twice differentiable is included: a
 smooth's linear column and its rotated coordinates, a ridge, a random
 effect. The restricted fit holds it exactly as it holds an unpenalized
-one,
+one, because
 [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
-enforcing the hold in the solve. Only a kinked penalty is excluded, for
+enforces the hold in the solve. Only a kinked penalty is excluded, for
 the reasons that
 [`statmod_restrict()`](https://statmodels7.github.io/statmodels7/reference/statmod_restrict.md)
 gives.

@@ -1,6 +1,7 @@
-# Evaluate the Offsets a Formula Names
+# Evaluate the Offsets That a Formula Names
 
-The offset per distribution parameter, evaluated in the data.
+Returns the offset of each distribution parameter, evaluated in the
+data.
 
 ## Usage
 
@@ -26,7 +27,8 @@ eval_offsets(formula, params, data, env, n)
 
 - env:
 
-  The environment the formula carried, the enclosure of the evaluation.
+  The environment that the formula carried, the enclosure of the
+  evaluation.
 
 - n:
 
@@ -39,8 +41,8 @@ vector of length `n` or `NULL` where that equation names no offset.
 
 ## Details
 
-The expressions are kept and re-evaluated, not carried as numbers, which
-is how an offset written in the formula applies in prediction.
+The expressions are kept and re-evaluated, not carried as numbers, so
+that an offset written in the formula applies in prediction.
 [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
 calls this against the new data; a vector supplied through
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)'s

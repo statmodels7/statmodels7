@@ -1,7 +1,7 @@
 # The Information of the Weighted Log-Likelihood
 
-The negative Hessian in the coefficients, assembled block by block from
-the distribution's own link-scale second derivatives.
+Computes the negative Hessian in the coefficients, assembled block by
+block from the distribution's own link-scale second derivatives.
 
 ## Usage
 
@@ -54,21 +54,21 @@ statmod_information_at(
 
   `NULL` for the whole matrix, or integer positions in the stacked
   coefficients: the submatrix over those positions, in the order given,
-  assembled from those columns alone.
+  assembled only from those columns.
 
 ## Value
 
-A symmetric `p x p` matrix over the stacked coefficients, `p` being
-their total count across the equations. A Matrix object when any
-equation's design is sparse, a base matrix otherwise.
+A symmetric `p x p` matrix over the stacked coefficients, where `p` is
+their total count across the equations. The matrix is a Matrix object
+when any equation's design is sparse and a base matrix otherwise.
 
 ## Details
 
 Block \\(a, b)\\ is \\X_a'\\\mathrm{diag}(w\\h\_{ab})\\X_b\\ with
 \\h\_{ab}\\ the per-observation second derivative of the log-density in
 \\(\eta_a, \eta_b)\\, negated. The blocks are assembled in the storage
-the designs call for, so a model with a sparse equation gets a sparse
-information.
+type of the designs, so the information is sparse for a model with a
+sparse equation.
 
 `expected = TRUE` gives the expected information, which Fisher scoring
 inverts and which is positive definite wherever the family is regular.
@@ -94,6 +94,7 @@ fit comes from
 [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
 for the first derivative,
 [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
-for the per-observation blocks a square-root route uses instead, and
+for the per-observation blocks that a square-root route uses instead,
+and
 [`statmod_family_hessian()`](https://statmodels7.github.io/statmodels7/reference/statmod_family_hessian.md)
 for the components both read.

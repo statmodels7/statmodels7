@@ -59,6 +59,6 @@ Bruno's formula over the set partitions \\\pi\\ of \\B\\ gives \$\$w_B =
 \mathcal{I}\_\beta, \qquad \phi^{(k)}(x) = (-d)(-d-1)\cdots(-d-k+1)\\
 x^{-d-k}.\$\$ The derivatives \\\mathcal{I}\_\beta\\ are minus those of
 [`distributions7::distrib_dexpected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html)
-and its higher-order siblings, all on the link scale. The highest array
-given sets the order: `D5` needs the fourth derivative of the
-information.
+and its higher-order siblings, and all of them are on the link scale.
+The highest array given sets the order: `D5` needs the fourth derivative
+of the information.

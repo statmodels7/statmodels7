@@ -1,7 +1,7 @@
 # A Structural Term's Parameters, With Standard Errors
 
-The estimated parameters of every structural term, on their own scale,
-with standard errors and intervals taken from the joint observed
+Returns the estimated parameters of every structural term, on their own
+scale, with standard errors and intervals taken from the joint observed
 information.
 
 ## Usage
@@ -27,9 +27,10 @@ A data frame with one row per quantity that each structural term reports
 and the columns `parameter`, `term`, `name`, `estimate`, `se`, `lower`,
 `upper`, `held` (the quantity is a held parameter), `edge` (it depends
 on a coordinate past the edge of its chart), `component` and `position`
-(which of the term's own parameters the quantity belongs to, and where
-in the parameter vector it sits, both read off the Jacobian's support).
-`NULL` where the model carries no structural term.
+(the one of the term's own parameters to which the quantity belongs, and
+where in the parameter vector it sits; both are read off the Jacobian's
+support). The value is `NULL` where the model carries no structural
+term.
 
 ## Details
 
@@ -67,9 +68,9 @@ any quantity whose Jacobian row reads a held parameter.
 
 A quantity that depends on a coordinate past the edge of its chart (see
 [`structural_edge_rows()`](https://statmodels7.github.io/statmodels7/reference/structural_edge_rows.md))
-is reported without a standard error and an interval, for the reason a
-correlation at the boundary is: the chart's derivative tends to zero
-there, so the delta method reports a standard error that collapses
+is reported without a standard error and an interval, for the reason
+that a correlation at the boundary is: the chart's derivative tends to
+zero there, so the delta method reports a standard error that collapses
 exactly where the quantity stops being identified.
 
 ## See also

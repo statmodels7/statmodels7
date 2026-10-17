@@ -37,10 +37,10 @@ edge_violations(spec, design, coef, edge = 8, tol = mode_error_limit())
 
 A data frame with one row per violating coordinate and columns `kind`
 (`"structural"` or `"coefficient"`), `param`, `term`, `name`, `eta` (the
-free value), `target` (the value it is moved to) and `gain`; zero rows
-where every coordinate at an edge points outward, and also where the
-log-likelihood at the fit is not finite. The design's structural state
-is left as it was found.
+free value), `target` (the value to which it is moved) and `gain`; zero
+rows where every coordinate at an edge points outward, and also where
+the log-likelihood at the fit is not finite. The design's structural
+state is left as it was found.
 
 ## Details
 
@@ -52,21 +52,20 @@ vanishing score, and a certificate a vanishing mode error, at a point
 where the log-likelihood still rises towards the interior. The condition
 for a maximum on the boundary of a bounded parameter (Karush, Kuhn and
 Tucker) is that the derivative on the bounded scale points outward, and
-that is what is checked.
+the function checks this condition.
 
 The derivative is read as a one-sided difference: each coordinate beyond
-`edge` in absolute value is moved, one at a time and with the others
+`edge` in absolute value is moved, one at a time while the others are
 held, to \\\pm\\`edge`, and the log-likelihood is evaluated there. A
 coordinate is reported where the gain exceeds `tol`, in log-likelihood
 units. The coordinates checked are those that
 [`modelterms7::term_charted()`](https://statmodels7.github.io/modelterms7/reference/term_charted.html)
-names for a structural term (leaving out the ones the term holds) and
-for
+names for a structural term (leaving out the ones that the term holds)
+and for
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
 and the intercept of an equation that has no other column and carries a
-link that is not the identity. The comparison is made on the
-log-likelihood alone, and a penalty on these coordinates is not
-included.
+link that is not the identity. The comparison uses only the
+log-likelihood and excludes any penalty on these coordinates.
 
 ## See also
 

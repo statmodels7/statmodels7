@@ -1,10 +1,11 @@
 # A Filter's Second-Order Recursion at the Fitted Point
 
+Runs
 [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
-run at the parameters the filter was fitted at, with the family's
-derivatives looked up instead of evaluated again, returning the forward
-Jacobian of the filtered predictor beside the contracted second
-derivative.
+at the parameters at which the filter was fitted. The family's
+derivatives are looked up instead of evaluated again, and the function
+returns the forward Jacobian of the filtered predictor beside the
+contracted second derivative.
 
 ## Usage
 
@@ -45,12 +46,12 @@ filter_curvature(spec, design, f, ap, Vs, gl, H, D3, theta)
 
 - theta:
 
-  The per-observation parameters they were read at, from which the
+  The per-observation parameters at which they were read, from which the
   expected information is read where the filter scales its score.
 
 ## Value
 
-The list
+The list that
 [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
 returns.
 
@@ -79,5 +80,5 @@ The assembly of the callback is written once, in
 [`.structural_blocks()`](https://statmodels7.github.io/statmodels7/reference/dot-structural_blocks.md):
 the exact gradient of a penalized filter needs the same pieces at one
 order higher. The same pieces are also passed as data, with which an
-eligible term runs its second-order recursion compiled, the callback
-being kept for the cases that the kernel declines.
+eligible term runs its second-order recursion compiled, and the callback
+is kept for the cases that the kernel does not handle.

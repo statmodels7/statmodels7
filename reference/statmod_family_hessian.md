@@ -26,7 +26,7 @@ statmod_family_hessian(spec, theta, expected = TRUE, approx = "opg")
 
 - approx:
 
-  The strategy the expected information uses when the family has no
+  The strategy that the expected information uses when the family has no
   closed form, passed through to
   [`distributions7::distrib_expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_expected_hessian.html).
 
