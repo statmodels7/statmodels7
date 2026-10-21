@@ -1,3 +1,15 @@
+# statmodels7 0.205.0
+
+* The joint filter of several `gas()` terms is faster. The family is
+  evaluated at each observation with its methods and the names of its
+  components resolved once and the chain rule onto the link scale written
+  out; the reverse pass reads the curvature that the filter stored instead
+  of running the filter again; and where the joint registry of
+  distributions7 covers the family (the Gaussian and the Student t), the
+  filter and the reverse pass run compiled (modelterms7 0.101.0). On 500
+  daily returns with the Student t's scale and degrees of freedom filtered,
+  the fit with `scaling = 1/2` takes 1.3 s, where it took 46 s.
+
 # statmodels7 0.204.0
 
 * Several `gas()` terms in different equations are fitted together:

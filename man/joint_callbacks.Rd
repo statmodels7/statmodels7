@@ -15,9 +15,9 @@ joint_callbacks(spec, tm, eta)
 parameters.}
 }
 \value{
-A list with \code{score} and \code{curvature}, functions \verb{(e, i)}, and
+A list with \code{score} and \code{curvature}, functions \verb{(e, i)},
 \code{score_y} and \code{curvature_y}, the same at a response \code{y} given as their
-first argument.
+first argument, and \code{fast}, the compiled route's context or \code{NULL}.
 }
 \description{
 Returns the callbacks that \code{\link[modelterms7:term_filter]{modelterms7::term_filter()}} reads for a
@@ -33,5 +33,12 @@ With \eqn{g} the link-scale gradient, \eqn{H} the Hessian and
   + \sum_c \frac{\partial S_{lc}}{\partial\eta_k}\, g_c .}
 The two callbacks are called in turn at the same point, so the family is
 evaluated once per point.
+
+Where the response is a vector and the C registries of
+\pkg{distributions7} and \pkg{linkfunctions7} know the family and every
+link, the result also carries \code{fast}, the context with which
+\code{\link[modelterms7:term_filter]{modelterms7::term_filter()}} runs the recursion compiled and reads the
+family through the joint registry; a family that the joint registry does
+not cover leaves that context inert, and the callbacks run.
 }
 \keyword{internal}

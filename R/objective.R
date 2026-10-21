@@ -338,13 +338,15 @@ statmod_score_obs <- function(spec, coef, design) {
   # reproduces its `deta`, the curvature being the second derivative there.
   for (f in ev$filters) {
     if (isTRUE(f$joint)) {
-      # the reverse pass of the joint recursion: the derivative in each
-      # driving score reaches every predictor through that score's own
-      # derivative there
+      # the reverse pass of the joint recursion, reading the curvature that
+      # the filter stored: the derivative in each driving score reaches
+      # every predictor through that score's own derivative there
       gm <- vapply(f$params, function(p) gv[[p]], numeric(n))
       ad <- modelterms7::term_adjoint(f$tm, f$eta_static, spec@response,
                                       f$cb$score, f$cb$curvature, f$psi,
-                                      g = matrix(gm, n, length(f$params)))
+                                      g = matrix(gm, n, length(f$params)),
+                                      stored_curv = f$curv, fast = f$cb$fast,
+                                      threads = spec@threads)
       H <- distributions7::distrib_hessian(spec@distrib, spec@response,
                                            ev$theta, scale = "link",
                                            threads = spec@threads)

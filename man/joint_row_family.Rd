@@ -27,10 +27,21 @@ and its derivative in each predictor.
 \details{
 A joint filter reads its driving vector at the predictor that it has just
 produced, one observation at a time, so the family is evaluated at one
-point per call. The S7 methods are resolved once, and the chain rule onto
-the link scale is applied here: with \eqn{h_a} the inverse link of
-parameter \eqn{a}, the gradient is \eqn{\ell_a h_a'} and the Hessian
+point per call. The S7 methods of the family and of its links, and the
+names of the components, are resolved once, and the chain rule onto the
+link scale is applied here: with \eqn{h_a} the inverse link of parameter
+\eqn{a}, the gradient is \eqn{\ell_a h_a'} and the Hessian
 \eqn{\ell_{ab} h_a' h_b' + \delta_{ab}\,\ell_a h_a''}; the expected
-information carries no \eqn{h''} term, because the score has mean zero.
+information \eqn{\mathcal{I}_{ab} = -\mathbb{E}[\ell_{ab}]\,h_a' h_b'}
+carries no \eqn{h''} term, because the score has mean zero, and its
+derivative in the predictor of parameter \eqn{c} is
+\deqn{-\frac{\partial \mathbb{E}[\ell_{ab}]}{\partial\theta_c}\,
+  h_c' h_a' h_b' - \mathbb{E}[\ell_{ab}]\,(\delta_{ac} h_a'' h_b'
+  + \delta_{bc} h_a' h_b''),}
+as \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} composes it. Where the
+family's expected information is not written out
+(\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is \code{FALSE}) or its derivative
+is the default difference, the two generics are called on the link scale
+instead, so that their own approximation is the one read.
 }
 \keyword{internal}

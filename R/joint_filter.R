@@ -71,11 +71,22 @@ is_joint_filter <- function(tm) S7::S7_inherits(tm, modelterms7::GasJoint)
 #' @details
 #' A joint filter reads its driving vector at the predictor that it has just
 #' produced, one observation at a time, so the family is evaluated at one
-#' point per call. The S7 methods are resolved once, and the chain rule onto
-#' the link scale is applied here: with \eqn{h_a} the inverse link of
-#' parameter \eqn{a}, the gradient is \eqn{\ell_a h_a'} and the Hessian
+#' point per call. The S7 methods of the family and of its links, and the
+#' names of the components, are resolved once, and the chain rule onto the
+#' link scale is applied here: with \eqn{h_a} the inverse link of parameter
+#' \eqn{a}, the gradient is \eqn{\ell_a h_a'} and the Hessian
 #' \eqn{\ell_{ab} h_a' h_b' + \delta_{ab}\,\ell_a h_a''}; the expected
-#' information carries no \eqn{h''} term, because the score has mean zero.
+#' information \eqn{\mathcal{I}_{ab} = -\mathbb{E}[\ell_{ab}]\,h_a' h_b'}
+#' carries no \eqn{h''} term, because the score has mean zero, and its
+#' derivative in the predictor of parameter \eqn{c} is
+#' \deqn{-\frac{\partial \mathbb{E}[\ell_{ab}]}{\partial\theta_c}\,
+#'   h_c' h_a' h_b' - \mathbb{E}[\ell_{ab}]\,(\delta_{ac} h_a'' h_b'
+#'   + \delta_{bc} h_a' h_b''),}
+#' as [distributions7::distrib_dexpected_hessian()] composes it. Where the
+#' family's expected information is not written out
+#' ([distributions7::expected_hessian_exact()] is `FALSE`) or its derivative
+#' is the default difference, the two generics are called on the link scale
+#' instead, so that their own approximation is the one read.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param info Whether the expected information and its derivative are read.
@@ -95,42 +106,79 @@ joint_row_family <- function(spec, info = FALSE) {
   cls <- S7::S7_class(d)
   m_grad <- S7::method(distributions7::distrib_gradient, cls)
   m_hess <- S7::method(distributions7::distrib_hessian, cls)
+  # the expected information and its derivative are read on the parameter
+  # scale only where both are written out: the default derivative differences
+  # on the scale it is asked for, so it is left to the generic
+  exact <- info && distributions7::expected_hessian_exact(d)
+  if (exact) {
+    m_E <- S7::method(distributions7::distrib_expected_hessian, cls)
+    m_dE <- S7::method(distributions7::distrib_dexpected_hessian, cls)
+    exact <- !identical(m_dE, S7::method(
+      distributions7::distrib_dexpected_hessian, distributions7::distrib))
+  }
   lks <- d@link_params[params]
+  m_inv <- lapply(lks, function(lk)
+    S7::method(linkfunctions7::linkinv, S7::S7_class(lk)))
+  m_h1 <- lapply(lks, function(lk)
+    S7::method(linkfunctions7::dlinkinv, S7::S7_class(lk)))
+  m_h2 <- lapply(lks, function(lk)
+    S7::method(linkfunctions7::d2linkinv, S7::S7_class(lk)))
+  bounds <- lapply(lks, function(lk) lk@link_bounds)
+  # the keys of the components, built once: hkeys[a, b] indexes hk, and
+  # dkeys[a, b, c] indexes dk
   hkeys <- matrix("", P, P)
   for (a in seq_len(P)) for (b in seq_len(P)) hkeys[a, b] <- hess_key(params, a, b)
-  inv <- function(lk, e) linkfunctions7::link_bounds_clamp(
-    linkfunctions7::linkinv(lk, e), lk@link_bounds)
-  function(i, e, yi = y[i]) {
-    th <- stats::setNames(lapply(seq_len(P), function(a) inv(lks[[a]], e[a])),
-                          params)
-    h1 <- vapply(seq_len(P), function(a)
-      linkfunctions7::dlinkinv(lks[[a]], e[a]), numeric(1))
-    h2 <- vapply(seq_len(P), function(a)
-      linkfunctions7::d2linkinv(lks[[a]], e[a]), numeric(1))
-    gp <- m_grad(d, yi, th, scale = "parameter")
-    hp <- m_hess(d, yi, th, scale = "parameter")
-    gr <- vapply(params, function(a) as.numeric(gp[[a]]), numeric(1))
-    H <- matrix(0, P, P)
-    for (a in seq_len(P)) for (b in seq_len(P)) {
-      H[a, b] <- as.numeric(hp[[hkeys[a, b]]]) * h1[a] * h1[b]
+  hk <- unique(as.vector(hkeys))
+  hidx <- match(hkeys, hk)
+  dk <- character(0)
+  didx <- integer(0)
+  if (info) {
+    dkeys <- array("", c(P, P, P))
+    for (a in seq_len(P)) for (b in seq_len(P)) for (c in seq_len(P)) {
+      dkeys[a, b, c] <- distributions7::dexpected_key(params, a, b, c)
     }
+    dk <- unique(as.vector(dkeys))
+    didx <- match(dkeys, dk)
+  }
+  pick <- function(x, keys) unlist(x[keys], use.names = FALSE)
+  function(i, e, yi = y[i]) {
+    th <- vector("list", P)
+    h1 <- numeric(P)
+    h2 <- numeric(P)
+    for (a in seq_len(P)) {
+      th[[a]] <- linkfunctions7::link_bounds_clamp(
+        m_inv[[a]](lks[[a]], e[a]), bounds[[a]])
+      h1[a] <- m_h1[[a]](lks[[a]], e[a])
+      h2[a] <- m_h2[[a]](lks[[a]], e[a])
+    }
+    names(th) <- params
+    gr <- pick(m_grad(d, yi, th, scale = "parameter"), params)
+    hh <- h1 %o% h1
+    # (l_ab h_a') h_b', in the order of the Hessian's chain rule
+    H <- matrix(pick(m_hess(d, yi, th, scale = "parameter"), hk)[hidx], P, P) *
+      h1 * rep(h1, each = P)
     diag(H) <- diag(H) + gr * h2
     out <- list(g = gr * h1, H = H)
     if (!info) return(out)
-    E <- distributions7::distrib_expected_hessian(d, yi, th, scale = "link")
-    dE <- distributions7::distrib_dexpected_hessian(d, yi, th,
-                                                    scale = "link")
-    I <- matrix(0, P, P)
-    dI <- array(0, c(P, P, P))
-    for (a in seq_len(P)) for (b in seq_len(P)) {
-      I[a, b] <- -as.numeric(E[[hkeys[a, b]]])
+    if (exact) {
+      E <- matrix(pick(m_E(d, yi, th, scale = "parameter"), hk)[hidx], P, P)
+      dE <- array(pick(m_dE(d, yi, th, scale = "parameter"), dk)[didx],
+                  c(P, P, P))
+      dI <- array(0, c(P, P, P))
       for (c in seq_len(P)) {
-        dI[a, b, c] <- -as.numeric(dE[[distributions7::dexpected_key(
-          params, a, b, c)]])
+        x <- -dE[, , c] * h1[c] * hh
+        x[c, ] <- x[c, ] - E[c, ] * h2[c] * h1
+        x[, c] <- x[, c] - E[, c] * h1 * h2[c]
+        dI[, , c] <- x
       }
+      out$I <- -E * hh
+      out$dI <- dI
+      return(out)
     }
-    out$I <- I
-    out$dI <- dI
+    E <- distributions7::distrib_expected_hessian(d, yi, th, scale = "link")
+    dE <- distributions7::distrib_dexpected_hessian(d, yi, th, scale = "link")
+    out$I <- -matrix(pick(E, hk)[hidx], P, P)
+    out$dI <- -array(pick(dE, dk)[didx], c(P, P, P))
     out
   }
 }
@@ -201,14 +249,21 @@ joint_scale_matrix <- function(I, dI, d) {
 #' The two callbacks are called in turn at the same point, so the family is
 #' evaluated once per point.
 #'
+#' Where the response is a vector and the C registries of
+#' \pkg{distributions7} and \pkg{linkfunctions7} know the family and every
+#' link, the result also carries `fast`, the context with which
+#' [modelterms7::term_filter()] runs the recursion compiled and reads the
+#' family through the joint registry; a family that the joint registry does
+#' not cover leaves that context inert, and the callbacks run.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param tm The joint filter.
 #' @param eta The static predictors, a named list over the distribution
 #'   parameters.
 #'
-#' @return A list with `score` and `curvature`, functions `(e, i)`, and
+#' @return A list with `score` and `curvature`, functions `(e, i)`,
 #'   `score_y` and `curvature_y`, the same at a response `y` given as their
-#'   first argument.
+#'   first argument, and `fast`, the compiled route's context or `NULL`.
 #'
 #' @keywords internal
 joint_callbacks <- function(spec, tm, eta) {
@@ -248,7 +303,52 @@ joint_callbacks <- function(spec, tm, eta) {
   list(score = function(e, i) at(e, i)$u,
        curvature = function(e, i) at(e, i)$C,
        score_y = function(y, e, i) at(e, i, y)$u,
-       curvature_y = function(y, e, i) at(e, i, y)$C)
+       curvature_y = function(y, e, i) at(e, i, y)$C,
+       fast = joint_fast_context(spec, G, d, E))
+}
+
+
+#' The Compiled Route's Context of a Joint Filter
+#'
+#' @description
+#' Returns the list that [modelterms7::term_filter()] reads to run a joint
+#' filter compiled, or `NULL` where the response is a matrix or the scalar
+#' registries do not know the family or one of the links.
+#'
+#' @details
+#' [distributions7::distrib_scalar_route()] gives the name under which the
+#' registry knows the family and its constants, and
+#' [linkfunctions7::link_scalar_route()] the name and the parameters of each
+#' link. Whether the family's joint entries are written out is read by the
+#' compiled code, which leaves the context inert where they are not.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param G The positions of the filtered parameters.
+#' @param d The scaling.
+#' @param E The static predictors of every parameter, one column each.
+#'
+#' @return A list, or `NULL`.
+#'
+#' @keywords internal
+joint_fast_context <- function(spec, G, d, E) {
+  dist <- spec@distrib
+  y <- spec@response
+  if (is.matrix(y)) return(NULL)
+  route <- distributions7::distrib_scalar_route(dist)
+  if (is.null(route)) return(NULL)
+  lks <- dist@link_params[dist@params]
+  lroutes <- lapply(lks, linkfunctions7::link_scalar_route)
+  if (any(vapply(lroutes, is.null, logical(1)))) return(NULL)
+  n <- spec@n_obs
+  list(family = route$name,
+       constants = lapply(route$constants, function(v) {
+         v <- as.numeric(v)
+         if (length(v) == 1L) v else rep_len(v, n)
+       }),
+       links = vapply(lroutes, function(r) r$name, character(1)),
+       link_par = lapply(lroutes, function(r) r$par),
+       bounds = lapply(lks, function(lk) as.numeric(lk@link_bounds)),
+       y = as.numeric(y), eta = E, filtered = as.integer(G), scaling = d)
 }
 
 
@@ -348,7 +448,8 @@ joint_filter_entry <- function(spec, u, tm, psi, eta_static) {
   es <- matrix(es, n, length(tm@params), dimnames = list(NULL, tm@params))
   cb <- joint_callbacks(spec, tm, eta_static)
   f <- modelterms7::term_filter(tm, es, spec@response, cb$score,
-                                cb$curvature, psi)
+                                cb$curvature, psi, fast = cb$fast,
+                                threads = spec@threads)
   list(param = tm@params[1L], params = tm@params, joint = TRUE,
        term = u$term, tm = tm, eta = f$eta, jacobian = f$jacobian,
        curv = f$curv, psi = psi, cb = cb, eta_static = es)
