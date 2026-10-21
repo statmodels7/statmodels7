@@ -221,23 +221,23 @@ test_that("a model with no structural term carries none of this", {
   expect_length(fit@structural, 0L)
 })
 
-test_that("two structural terms are refused, and named", {
+test_that("two structural terms are rejected, and named", {
   dd <- sim_gas(80, 0.3, 0.4, 0.7)
   err <- tryCatch(
     statmod_spec(y ~ gas(1, 1, time = t) + gas(2, 1, time = t) - 1,
                  distributions7::gaussian1_distrib(), dd),
     error = conditionMessage)
-  expect_match(err, "at most one structural term", fixed = TRUE)
+  expect_match(err, "carries two gas() terms", fixed = TRUE)
   expect_match(err, "gas(1, 1, time = t)", fixed = TRUE)
   expect_match(err, "gas(2, 1, time = t)", fixed = TRUE)
 
-  # in different equations too: each is driven by a score that depends on
-  # the other's state, which is one recursion written as two
+  # a structural term other than gas() beside another one, in whatever
+  # equation; gas() terms in different equations are filtered jointly
   err2 <- tryCatch(
     statmod_spec(y ~ gas(1, 1, time = t) - 1 | sigma ~ regime(2),
                  distributions7::gaussian1_distrib(), dd),
     error = conditionMessage)
-  expect_match(err2, "at most one structural term", fixed = TRUE)
+  expect_match(err2, "fits one structural term", fixed = TRUE)
 })
 
 # --- the likelihood shape ---------------------------------------------------

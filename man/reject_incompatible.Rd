@@ -17,12 +17,13 @@ Rejects a formula carrying more than one structural term, in whatever
 equations they sit.
 }
 \details{
-Two of them are not a model that the layer could fit and then report. A
-filter is driven by the score of the log-likelihood at the predictor that
-it has just produced, so two filters in one equation are two levels adding
-up, with nothing to tell one from the other; in two equations, each is
-driven by a score that depends on the other's state, and the pair is one
-recursion written as two, which is not implemented by either term.
+A filter is driven by the score of the log-likelihood at the predictor
+that it has just produced, so two filters in one equation are two levels
+adding up, with nothing to tell one from the other, and are rejected.
+Score-driven terms in different equations are accepted: each is driven by
+a score that depends on the others' state, so together they are one
+recursion, which \code{\link[=join_gas_terms]{join_gas_terms()}} assembles. Any other structural term
+beside a second one is rejected.
 A term whose contribution is a likelihood mixed over latent states does not
 report a predictor at all, so it cannot be combined with anything that
 expects one.

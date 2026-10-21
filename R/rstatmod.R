@@ -719,7 +719,8 @@ rstatmod_eta <- function(spec, design, coef, psi = NULL) {
                 structural = NULL))
   }
   if (length(su) > 1L) {
-    stop("a formula carries at most one structural term.", call. = FALSE)
+    stop("a formula carries at most one structural term, the joint filter of several gas() terms counting as one.",
+         call. = FALSE)
   }
   u <- su[[1L]]
 
@@ -742,6 +743,9 @@ rstatmod_eta <- function(spec, design, coef, psi = NULL) {
   # drawn once by rstatmod_truth(), so the replicates share it
   if (is.null(psi)) {
     psi <- structural_psi(tm, statmod_structural_state(design)$zeta[[u$term]])
+  }
+  if (is_joint_filter(tm)) {
+    return(rstatmod_eta_joint(spec, tm, eta, theta, psi))
   }
   p <- u$param
   lk <- links[[p]]

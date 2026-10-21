@@ -1099,6 +1099,9 @@ statmod_terms <- function(equations, data, env, response = NULL,
   # named twice or of the wrong dimension, is reported where the formula was
   # read rather than at the first evaluation of a criterion
   statmod_classes(out_terms)
+  # several gas() terms in different equations are one recursion, and the
+  # rest of the layer sees them as one structural term
+  out_terms <- join_gas_terms(out_terms)
   list(terms = out_terms, intercepts = intercepts)
 }
 
@@ -1313,6 +1316,19 @@ statmod_held_levels <- function(spec, design) {
   for (u in su) {
     out[[u$term]] <- character(0)
     tm <- spec@terms[[u$param]][[u$term]]
+    if (is_joint_filter(tm)) {
+      # each level adds a constant to its own equation, so each is held when
+      # that equation's design spans the constant
+      lv <- modelterms7::term_level_param(tm)
+      for (k in seq_along(tm@params)) {
+        Xk <- design[[tm@params[k]]]$X
+        if (is.null(Xk) || !ncol(Xk)) next
+        if (max(abs(qr.resid(qr(Xk), rep(1, n)))) < 1e-8) {
+          out[[u$term]] <- c(out[[u$term]], lv[k])
+        }
+      }
+      next
+    }
     lvl <- modelterms7::term_level_param(tm)
     X <- design[[u$param]]$X
     if (is.null(X) || !ncol(X)) next
@@ -1361,12 +1377,13 @@ statmod_held_levels <- function(spec, design) {
 #' equations they sit.
 #'
 #' @details
-#' Two of them are not a model that the layer could fit and then report. A
-#' filter is driven by the score of the log-likelihood at the predictor that
-#' it has just produced, so two filters in one equation are two levels adding
-#' up, with nothing to tell one from the other; in two equations, each is
-#' driven by a score that depends on the other's state, and the pair is one
-#' recursion written as two, which is not implemented by either term.
+#' A filter is driven by the score of the log-likelihood at the predictor
+#' that it has just produced, so two filters in one equation are two levels
+#' adding up, with nothing to tell one from the other, and are rejected.
+#' Score-driven terms in different equations are accepted: each is driven by
+#' a score that depends on the others' state, so together they are one
+#' recursion, which [join_gas_terms()] assembles. Any other structural term
+#' beside a second one is rejected.
 #' A term whose contribution is a likelihood mixed over latent states does not
 #' report a predictor at all, so it cannot be combined with anything that
 #' expects one.
@@ -1384,20 +1401,42 @@ statmod_held_levels <- function(spec, design) {
 #' @keywords internal
 reject_incompatible <- function(terms) {
   found <- character(0)
+  gas_eq <- character(0)
+  other <- 0L
   for (p in names(terms)) {
     for (nm in names(terms[[p]])) {
-      if (S7::S7_inherits(terms[[p]][[nm]], modelterms7::structural_term)) {
+      tm <- terms[[p]][[nm]]
+      if (S7::S7_inherits(tm, modelterms7::structural_term)) {
         found <- c(found, sprintf("'%s' in '%s'", nm, p))
+        if (S7::S7_inherits(tm, modelterms7::GasTerm)) {
+          gas_eq <- c(gas_eq, p)
+        } else {
+          other <- other + 1L
+        }
       }
     }
   }
   if (length(found) <= 1L) return(invisible(NULL))
-  stop(sprintf(paste0("statmod() fits at most one structural term and this",
-                      " model has %d:\n  %s.\n",
+  # score-driven terms in DIFFERENT equations, with nothing structural beside
+  # them, are filtered as one recursion by join_gas_terms()
+  if (other == 0L && !anyDuplicated(gas_eq)) return(invisible(NULL))
+  if (other == 0L) {
+    p <- gas_eq[anyDuplicated(gas_eq)]
+    stop(sprintf(paste0("the equation of '%s' carries two gas() terms:\n",
+                        "  %s.\n",
+                        "  Two levels in one predictor add up, with nothing to",
+                        " tell one from the other.\n  One gas() term in each",
+                        " of several equations is filtered jointly."),
+                 p, paste(found[gas_eq == p], collapse = ", ")),
+         call. = FALSE)
+  }
+  stop(sprintf(paste0("statmod() fits one structural term, or one gas() term",
+                      " in each of several\n  equations, and this model has",
+                      " %d:\n  %s.\n",
                       "  Each rewrites the predictor or the likelihood at",
-                      " which the others would be read,\n  so the pair is one",
-                      " recursion written as two, which is not implemented",
-                      " by either term."),
+                      " which the others would be read,\n  and a structural",
+                      " term other than gas() beside another one is not",
+                      " implemented."),
                length(found), paste(found, collapse = ", ")), call. = FALSE)
 }
 

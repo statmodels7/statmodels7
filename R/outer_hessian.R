@@ -1540,6 +1540,7 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
 #'
 #' @keywords internal
 structural_dk_matrix <- function(spec, design, jd, st, v) {
+  if (isTRUE(jd$f$joint)) return(joint_dk_matrix(spec, design, jd, st, v))
   params <- jd$params
   n <- jd$n
   ap <- jd$ap
@@ -1629,6 +1630,9 @@ structural_dk_matrix <- function(spec, design, jd, st, v) {
 #'
 #' @keywords internal
 structural_chain_extra2 <- function(spec, design, jd, M, st, blk4, v, w) {
+  if (isTRUE(jd$f$joint)) {
+    return(joint_chain_extra2(spec, design, jd, M, st, v, w))
+  }
   params <- jd$params
   np <- length(params)
   n <- jd$n
@@ -1938,6 +1942,14 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
     if (is.null(inner)) return(NULL)
     A %*% inner %*% t(A)
   }
+  if (isTRUE(jd$f$joint)) {
+    # the joint pieces carry the driving vector's derivatives to the fourth
+    # order, which read the family's fifth, and need no blocks factory
+    st <- tryCatch(joint_grad_parts(spec, design, coef, jd, M, order = 4L),
+                   error = function(e) NULL)
+    if (is.null(st)) return(NULL)
+    blk4 <- NULL
+  } else {
   st <- structural_grad_parts(spec, design, coef, jd, M)
   # the fifth derivative is read HERE and not in structural_grad_parts(),
   # whose result the gradient shares: the gradient never needs it, and it
@@ -1958,6 +1970,7 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
   attr(blk4, "data") <- structural_blocks_data(jd$params, jd$ap, jd$V, dr4$H,
                                                dr4$D3, jd$n, D4 = dr4$D4,
                                                D5 = dr4$D5)
+  }
 
   nh <- nrow(idx)
   pieces <- structural_outer_pieces(spec, design, coef, hyper, idx, jd)

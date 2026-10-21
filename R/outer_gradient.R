@@ -896,9 +896,15 @@ filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3) {
                                          threads = spec@threads)
   H <- distributions7::distrib_hessian(d, spec@response, th, scale = "link",
                                        threads = spec@threads)
-  cv <- filter_curvature(spec, design, jd$f, jd$ap, jd$V, gl, H, D3, th)
   V <- jd$V
-  V[[jd$ap]] <- cv$jacobian
+  if (isTRUE(jd$f$joint)) {
+    cv <- joint_filter_curvature(spec, design, jd$f, jd$V, gl, H, D3, th)
+    GF <- match(jd$f$params, jd$params)
+    for (k in seq_along(GF)) V[[GF[k]]] <- cv$jacobian[[k]]
+  } else {
+    cv <- filter_curvature(spec, design, jd$f, jd$ap, jd$V, gl, H, D3, th)
+    V[[jd$ap]] <- cv$jacobian
+  }
   list(rows = lapply(V, function(x) x[, jd$keep, drop = FALSE]),
        solve = function(z) {
          zz <- numeric(width)
@@ -1594,6 +1600,7 @@ structural_grad_parts <- function(spec, design, coef, jd, M) {
 #' @rdname structural_grad_parts
 #' @keywords internal
 structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
+  if (isTRUE(jd$f$joint)) return(joint_grad_parts(spec, design, coef, jd, M))
   params <- jd$params
   n <- jd$n
   w <- spec@weights
@@ -1689,6 +1696,9 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
 #'
 #' @keywords internal
 structural_chain_extra <- function(spec, design, jd, M, st, v) {
+  if (isTRUE(jd$f$joint)) {
+    return(joint_chain_extra(spec, design, jd, M, st, v))
+  }
   params <- jd$params
   n <- jd$n
   ap <- jd$ap

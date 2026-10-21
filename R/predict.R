@@ -1066,6 +1066,12 @@ structural_se_columns <- function(spec, design, ep, p, coef) {
     return(loglik_shift_jacobian(spec, design, coef))
   }
   fs <- ep$filters
+  in_joint <- any(vapply(fs, function(f) isTRUE(f$joint) && p %in% f$params,
+                         logical(1)))
+  if (in_joint) {
+    fj <- joint_filter_jacobian(spec, design, coef)
+    return(list(X = fj$V[[p]], key = fj$key))
+  }
   if (!length(fs) ||
       !any(vapply(fs, function(f) identical(f$param, p), logical(1)))) {
     return(NULL)
@@ -1178,8 +1184,9 @@ loglik_shift_jacobian <- function(spec, design, coef) {
 #' ([statmod_full_information()]): each equation's design placed in its own
 #' columns, and for the filter's equation the Jacobian that
 #' [modelterms7::term_curvature()] propagates beside the state. A model
-#' carries at most one structural term, so every other equation is static
-#' and its design is its derivative.
+#' carries at most one such filter, so every other equation is static and
+#' its design is its derivative; a joint filter is read by
+#' [joint_filter_jacobian()].
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design Its design.
@@ -1318,6 +1325,33 @@ statmod_eta_continued <- function(fit, spec, design, deriv = FALSE) {
   for (f in oep$filters) {
     tm <- ospec@terms[[f$param]][[f$term]]
     psi <- structural_psi(tm, ost$zeta[[f$term]])
+    if (isTRUE(f$joint)) {
+      # the levels and the driving vector at the observed rows, from which
+      # the joint recursion continues
+      f_past <- f$eta - f$eta_static
+      s_past <- t(vapply(seq_len(nrow(f$eta)), function(i)
+        as.numeric(f$cb$score(as.numeric(f$eta[i, ]), i)),
+        numeric(length(f$params))))
+      s_past <- matrix(s_past, nrow(f$eta), length(f$params))
+      dv <- if (isTRUE(deriv)) {
+        joint_continued_deriv_inputs(ospec, odesign, coef, ost)
+      } else NULL
+      cont <- modelterms7::term_continue(tm, psi, f_past, s_past, nd,
+                                         deriv = dv$deriv)
+      for (k in seq_along(f$params)) {
+        pk <- f$params[k]
+        eta[[pk]] <- eta[[pk]] + as.numeric(cont[, k])
+        theta[[pk]] <- linkfunctions7::linkinv(links[[pk]], eta[[pk]])
+        if (!is.null(dv)) {
+          jac <- attr(cont, "jacobian")[[k]]
+          if (d2[[pk]]$npar) {
+            jac[, dv$cols[[k]]] <- jac[, dv$cols[[k]]] + as.matrix(d2[[pk]]$X)
+          }
+          cont_cols[[pk]] <- list(X = jac, key = dv$key)
+        }
+      }
+      next
+    }
     p <- f$param
     f_past <- as.numeric(f$eta) - as.numeric(f$eta_static)
     # the driving quantity, read at the predictor the recursion produced --

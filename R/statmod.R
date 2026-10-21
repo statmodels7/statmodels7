@@ -142,9 +142,10 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' [modelterms7::te()], [modelterms7::random()], [modelterms7::ridge()],
 #' [modelterms7::lasso()], [modelterms7::seg()], [modelterms7::nl()],
 #' [modelterms7::gas()] and the rest. Bare covariates collapse into one
-#' parametric block. A formula can carry at most one structural term, which
-#' is [modelterms7::gas()], [modelterms7::regime()] or the marginal
-#' break-point term.
+#' parametric block. A formula can carry one structural term, which is
+#' [modelterms7::gas()], [modelterms7::regime()] or the marginal break-point
+#' term, or one [modelterms7::gas()] term in each of several equations,
+#' which are filtered jointly as one recursion.
 #'
 #' A structural term whose level adds a constant to the predictor, the
 #' \eqn{\omega} of [modelterms7::gas()] or the first level of

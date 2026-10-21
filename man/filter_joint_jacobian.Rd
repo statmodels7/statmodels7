@@ -34,8 +34,9 @@ The rows are those from which the joint information is assembled
 (\code{\link[=statmod_full_information]{statmod_full_information()}}): each equation's design placed in its own
 columns, and for the filter's equation the Jacobian that
 \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} propagates beside the state. A model
-carries at most one structural term, so every other equation is static
-and its design is its derivative.
+carries at most one such filter, so every other equation is static and
+its design is its derivative; a joint filter is read by
+\code{\link[=joint_filter_jacobian]{joint_filter_jacobian()}}.
 }
 \seealso{
 \code{\link[=structural_se_columns]{structural_se_columns()}}, \code{\link[=continued_deriv_inputs]{continued_deriv_inputs()}}

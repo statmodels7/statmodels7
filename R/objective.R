@@ -111,6 +111,14 @@ statmod_eta <- function(spec, design, coef) {
     eta_static <- eta
     filters <- statmod_filter_at(spec, design, eta, theta)
     for (f in filters) {
+      if (isTRUE(f$joint)) {
+        for (k in seq_along(f$params)) {
+          pk <- f$params[k]
+          eta[[pk]] <- as.numeric(f$eta[, k])
+          theta[[pk]] <- linkfunctions7::linkinv(links[[pk]], eta[[pk]])
+        }
+        next
+      }
       eta[[f$param]] <- f$eta
       theta[[f$param]] <- linkfunctions7::linkinv(links[[f$param]], f$eta)
     }
@@ -329,6 +337,27 @@ statmod_score_obs <- function(spec, coef, design) {
   # second derivative of the log-density. For the filter's own equation this
   # reproduces its `deta`, the curvature being the second derivative there.
   for (f in ev$filters) {
+    if (isTRUE(f$joint)) {
+      # the reverse pass of the joint recursion: the derivative in each
+      # driving score reaches every predictor through that score's own
+      # derivative there
+      gm <- vapply(f$params, function(p) gv[[p]], numeric(n))
+      ad <- modelterms7::term_adjoint(f$tm, f$eta_static, spec@response,
+                                      f$cb$score, f$cb$curvature, f$psi,
+                                      g = matrix(gm, n, length(f$params)))
+      H <- distributions7::distrib_hessian(spec@distrib, spec@response,
+                                           ev$theta, scale = "link",
+                                           threads = spec@threads)
+      dd <- joint_drive_data(spec, f$tm, g, H, order = 1L,
+                             theta = ev$theta)
+      add <- stats::setNames(lapply(seq_along(params), function(q) {
+        out <- numeric(n)
+        for (l in seq_along(f$params)) out <- out + ad$dscore[, l] * dd$U1[, l, q]
+        out
+      }), params)
+      for (q in params) gv[[q]] <- gv[[q]] + add[[q]]
+      next
+    }
     ad <- modelterms7::term_adjoint(f$tm, f$eta_static, spec@response,
                                     f$cb$score, f$cb$curvature, f$psi,
                                     g = gv[[f$param]],
@@ -410,8 +439,16 @@ statmod_structural_score <- function(spec, coef,
   n <- spec@n_obs
   out <- list()
   for (f in ev$filters) {
-    gp <- spec@weights * rep_len(g[[f$param]], n)
-    dpsi <- as.numeric(crossprod(f$jacobian, gp))
+    if (isTRUE(f$joint)) {
+      dpsi <- 0
+      for (p in f$params) {
+        gp <- spec@weights * rep_len(g[[p]], n)
+        dpsi <- dpsi + as.numeric(crossprod(f$jacobian[[p]], gp))
+      }
+    } else {
+      gp <- spec@weights * rep_len(g[[f$param]], n)
+      dpsi <- as.numeric(crossprod(f$jacobian, gp))
+    }
     links <- modelterms7::term_links(f$tm)
     z <- sst$zeta[[f$term]]
     chain <- vapply(names(z), function(j)

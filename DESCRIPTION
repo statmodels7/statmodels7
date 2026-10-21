@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.203.3
+Version: 0.204.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Fits distributional regression models, and installs and attaches
@@ -29,7 +29,7 @@ Imports:
     linkfunctions7 (>= 0.5.0),
     Matrix (>= 1.6.2),
     methods,
-    modelterms7 (>= 0.99.0),
+    modelterms7 (>= 0.100.0),
     numericals7 (>= 0.21.0),
     optimizers7 (>= 0.12.1),
     parallel,
@@ -94,6 +94,13 @@ Collate:
     'path.R'
     'coord.R'
     'filter_driving.R'
+    'refresh.R'
+    'structural.R'
+    'joint_filter.R'
+    'joint_scaling.R'
+    'joint_predict.R'
+    'joint_outer.R'
+    'joint_outer_hessian.R'
     'kkt.R'
     'marginal.R'
     'order.R'
@@ -104,11 +111,9 @@ Collate:
     'predict_prior.R'
     'predict_group.R'
     'predict_nested.R'
-    'refresh.R'
     'restricted.R'
     'rstatmod.R'
     'start.R'
     'statmodels7-package.R'
-    'structural.R'
     'threads.R'
     'update.R'

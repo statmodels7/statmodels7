@@ -709,8 +709,11 @@ coef_structural <- function(spec, fit, p, readable) {
   sp <- fit@structural
   if (!length(sp)) return(out)
   for (nm in names(sp)) {
-    if (!identical(sp[[nm]]$equation, p)) next
-    term <- spec@terms[[p]][[nm]]
+    eq <- sp[[nm]]$equation
+    term <- spec@terms[[eq]][[nm]]
+    if (!identical(eq, p) && !(is_joint_filter(term) && p %in% term@params)) {
+      next
+    }
     z <- sp[[nm]]$unconstrained
     if (isTRUE(readable)) {
       rd <- tryCatch(modelterms7::term_readable(term, z),
@@ -720,9 +723,9 @@ coef_structural <- function(spec, fit, p, readable) {
     } else {
       w <- unlist(z)
     }
-    lb <- tryCatch(term@label, error = function(e) "")
-    if (length(lb) == 1L && nzchar(lb)) names(w) <- paste(lb, names(w),
-                                                          sep = ".")
+    ds <- structural_display(term, eq, names(w))
+    w <- w[ds$param == p]
+    names(w) <- ds$name[ds$param == p]
     out <- c(out, w)
   }
   out

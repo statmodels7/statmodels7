@@ -528,10 +528,9 @@ structural_tail_names <- function(spec, design) {
   for (u in su) {
     tm <- spec@terms[[u$param]][[u$term]]
     free <- setdiff(modelterms7::term_params(tm), sst$held[[u$term]])
-    lb <- tryCatch(tm@label, error = function(e) "")
-    if (length(lb) == 1L && nzchar(lb)) free <- paste(lb, free, sep = ".")
-    out <- c(out, stats::setNames(paste(u$param, free, sep = ":"),
-                                  rep(u$param, length(free))))
+    ds <- structural_display(tm, u$param, free)
+    out <- c(out, stats::setNames(paste(ds$param, ds$name, sep = ":"),
+                                  ds$param))
   }
   out
 }
@@ -726,15 +725,14 @@ readable_joint <- function(spec, design, fit) {
     z <- sst$zeta[[tl$u$term]]
     rd <- tryCatch(modelterms7::term_readable(tl$tm, z),
                    error = function(e) NULL)
-    lb <- tryCatch(tl$tm@label, error = function(e) "")
     if (is.null(rd) || !length(rd$name)) {
       vals <- unlist(z)[tl$free]
+      ds <- structural_display(tl$tm, tl$u$param, tl$free)
       for (k in seq_along(tl$free)) {
         j <- numeric(njoint)
         j[tl$at + k] <- 1
-        nmk <- if (nzchar(lb)) paste(lb, tl$free[[k]], sep = ".") else
-          tl$free[[k]]
-        add(nmk, vals[[k]], tl$u$param, tl$u$term, ident, FALSE, j)
+        add(ds$name[[k]], vals[[k]], ds$param[[k]], tl$u$term, ident, FALSE,
+            j)
       }
       next
     }
@@ -747,15 +745,15 @@ readable_joint <- function(spec, design, fit) {
     # variance to report either: see statmod_structural_table()
     edge_q <- tryCatch(structural_edge_rows(tl$tm, z, tl$nm),
                        error = function(e) rep(FALSE, length(rd$name)))
+    ds <- structural_display(tl$tm, tl$u$param, rd$name)
     for (k in seq_along(rd$name)) {
       j <- numeric(njoint)
       j[tl$at + seq_along(fi)] <- rd$jacobian[k, fi]
       touches <- (length(tl$held) > 0L &&
         any(rd$jacobian[k, match(tl$held, tl$nm)] != 0)) || isTRUE(edge_q[[k]])
-      nmk <- if (nzchar(lb)) paste(lb, rd$name[[k]], sep = ".") else
-        rd$name[[k]]
       sc <- if (is.null(rd$scale)) ident else rd$scale[[k]]
-      add(nmk, rd$value[[k]], tl$u$param, tl$u$term, sc, touches, j)
+      add(ds$name[[k]], rd$value[[k]], ds$param[[k]], tl$u$term, sc, touches,
+          j)
     }
   }
 
@@ -3219,7 +3217,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # two lambdas in one block, one on the slope changes and one on the jumps,
   # are not the same number and cannot appear under the same name.
   hyper_parts <- function(nm) {
-    ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
+    ent <- modelterms7::term_penalties(term_of_equation(spec, p, nm))
     des <- statmod_design(spec)
     # A LABELLED term declares no penalty of its own: the covariance class
     # carries it. The class's hyperparameters are reported ONCE, under its
@@ -3740,6 +3738,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     term <- spec@terms[[p]][[nm]]
     kind <- term_block_kind(term)
     if (identical(kind, "parametric")) next
+    # a joint filter is reported under each of its equations below
+    if (is_joint_filter(term)) next
     k <- length(design[[p]]$blocks[[nm]])
     if (!k) {
       # no design columns: a structural term, reported by what it says it
@@ -3824,6 +3824,20 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       table = tb, head = NULL, components = list(), classes = hp$classes,
       note = class_note(nm),
       spread = if (identical(kind, "random")) effect_spread(term, cr$estimate))
+  }
+  # a joint filter spans several equations and is reported under each, by
+  # the rows of the structural table that belong to this one, under the
+  # name its term had in the formula and with the parameters it spends here
+  for (jf in joint_filters_of(spec, p)) {
+    if (is.null(st) || !any(st$parameter == p & st$term == jf$key)) next
+    b <- structural_block(jf$key, jf$term)
+    r <- st[st$parameter == p & st$term == jf$key, , drop = FALSE]
+    if (length(jf$term@keys) && !is.null(jf$term@keys[p]) &&
+        !is.na(jf$term@keys[p])) {
+      b$term <- unname(jf$term@keys[p])
+    }
+    b$edf <- sum(!r$held)
+    blocks[[length(blocks) + 1L]] <- b
   }
   blocks
 }

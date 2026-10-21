@@ -681,8 +681,15 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
   # parameters over the same static predictor, so the two agree by
   # construction and the callback need not evaluate the family again.
   #
-  cv <- filter_curvature(spec, design, f, ap, Vs, gl, H, D3, ev$theta)
-  Vs[[ap]] <- cv$jacobian
+  if (isTRUE(f$joint)) {
+    cv <- joint_filter_curvature(spec, design, f, Vs, gl, H, D3, ev$theta)
+    for (k in seq_along(f$params)) {
+      Vs[[match(f$params[k], params)]] <- cv$jacobian[[k]]
+    }
+  } else {
+    cv <- filter_curvature(spec, design, f, ap, Vs, gl, H, D3, ev$theta)
+    Vs[[ap]] <- cv$jacobian
+  }
 
   out <- matrix(0, m, m)
   for (a in seq_along(params)) {
@@ -1557,6 +1564,11 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
   for (u in su) {
     if (!identical(u$kind, "filter")) next
     tm <- spec@terms[[u$param]][[u$term]]
+    if (is_joint_filter(tm)) {
+      out[[u$term]] <- joint_filter_entry(
+        spec, u, tm, structural_psi(tm, st$zeta[[u$term]]), eta_static)
+      next
+    }
     cb <- structural_callbacks(spec, theta_static, u$param,
                                scaling = filter_scaling(tm))
     psi <- structural_psi(tm, st$zeta[[u$term]])
@@ -1743,8 +1755,10 @@ statmod_structural_table <- function(fit, level = 0.95) {
         hi <- ends[2L]
       }
       ow <- owner(i)
+      ds <- structural_display(tm, u$param, rd$name[[i]])
+      nm_i <- if (is_joint_filter(tm)) ds$name else rd$name[[i]]
       rows[[length(rows) + 1L]] <- data.frame(
-        parameter = u$param, term = u$term, name = rd$name[[i]],
+        parameter = ds$param, term = u$term, name = nm_i,
         estimate = as.numeric(val), se = s, lower = lo, upper = hi,
         held = is_held[[i]], edge = edge_q[[i]], component = ow[[1L]],
         position = ow[[2L]], stringsAsFactors = FALSE)

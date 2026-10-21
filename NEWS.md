@@ -1,3 +1,20 @@
+# statmodels7 0.204.0
+
+* Several `gas()` terms in different equations are fitted together:
+  `statmod()` joins them into one `modelterms7::GasJoint` kept under the key
+  `gas_joint`, and the fit, the observed information, `summary()`, `coef()`,
+  `vcov()`, `predict()` (with standard errors, at the fitted rows and past
+  the series), `rstatmod()` and the exact outer gradient and Hessian of
+  `reml()` and `ml()` read the joint recursion. The parameters of each term
+  are reported in the equation of its parameter under the name its term had.
+* The joint scaling: with `scaling = 1/2` or `1` in every term the driving
+  vector is the score times the inverse square root (symmetric) or the
+  inverse of the expected information of the filtered parameters; the
+  derivatives of the scaling matrix are exact to the fourth order.
+* Two `gas()` terms in one equation, and any other structural term beside a
+  second one, are rejected with a message that names the terms and the
+  reason.
+
 # statmodels7 0.203.3
 
 * Documentation and messages of the outer criterion, inference, prediction
