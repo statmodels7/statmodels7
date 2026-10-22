@@ -9,7 +9,7 @@ equations they sit."><meta property="og:image" content="https://statmodels7.gith
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.205.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,12 +62,13 @@ equations they sit.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Two of them are not a model that the layer could fit and then report. A
-filter is driven by the score of the log-likelihood at the predictor that
-it has just produced, so two filters in one equation are two levels adding
-up, with nothing to tell one from the other; in two equations, each is
-driven by a score that depends on the other's state, and the pair is one
-recursion written as two, which is not implemented by either term.
+    <p>A filter is driven by the score of the log-likelihood at the predictor
+that it has just produced, so two filters in one equation are two levels
+adding up, with nothing to tell one from the other, and are rejected.
+Score-driven terms in different equations are accepted: each is driven by
+a score that depends on the others' state, so together they are one
+recursion, which <code><a href="join_gas_terms.html">join_gas_terms()</a></code> assembles. Any other structural term
+beside a second one is rejected.
 A term whose contribution is a likelihood mixed over latent states does not
 report a predictor at all, so it cannot be combined with anything that
 expects one.</p>

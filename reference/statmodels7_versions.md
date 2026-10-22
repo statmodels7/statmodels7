@@ -54,14 +54,14 @@ to install or update the members.
 v <- statmodels7_versions()
 v
 #>          package version
-#> 1         basis7  0.15.1
-#> 2 distributions7  0.80.2
-#> 3 linkfunctions7   0.5.4
-#> 4    modelterms7  0.99.3
-#> 5    numericals7  0.23.3
-#> 6    optimizers7  0.15.1
-#> 7    parameters7  0.26.0
-#> 8     penalties7  0.33.0
+#> 1         basis7  0.15.2
+#> 2 distributions7  0.82.0
+#> 3 linkfunctions7   0.5.6
+#> 4    modelterms7 0.102.0
+#> 5    numericals7  0.23.5
+#> 6    optimizers7  0.15.2
+#> 7    parameters7  0.26.1
+#> 8     penalties7  0.33.1
 
 # One row per member, and every column is character.
 nrow(v) == length(statmodels7_packages())

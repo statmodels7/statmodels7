@@ -217,10 +217,13 @@ The terms available are modelterms7's:
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
 and the rest. Bare covariates collapse into one parametric block. A
-formula can carry at most one structural term, which is
+formula can carry one structural term, which is
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
 [`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)
-or the marginal break-point term.
+or the marginal break-point term, or one
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
+term in each of several equations, which are filtered jointly as one
+recursion.
 
 A structural term whose level adds a constant to the predictor, the
 \\\omega\\ of

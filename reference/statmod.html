@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.203.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.205.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -225,9 +225,10 @@ only the last equation, and the split walks down the left side instead.</p>
 <code><a href="https://statmodels7.github.io/modelterms7/reference/te.html" class="external-link">modelterms7::te()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/ridge.html" class="external-link">modelterms7::ridge()</a></code>,
 <code><a href="https://statmodels7.github.io/modelterms7/reference/lasso.html" class="external-link">modelterms7::lasso()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>,
 <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> and the rest. Bare covariates collapse into one
-parametric block. A formula can carry at most one structural term, which
-is <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code> or the marginal
-break-point term.</p>
+parametric block. A formula can carry one structural term, which is
+<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code> or the marginal break-point
+term, or one <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> term in each of several equations,
+which are filtered jointly as one recursion.</p>
 <p>A structural term whose level adds a constant to the predictor, the
 \(\omega\) of <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> or the first level of
 <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>, is confounded with an intercept in the same

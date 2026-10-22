@@ -695,6 +695,9 @@ helper functions. Using the package does not require any of it.
 - [`is_count()`](https://statmodels7.github.io/statmodels7/reference/is_count.md)
   : A Positive Whole Number
 
+- [`is_joint_filter()`](https://statmodels7.github.io/statmodels7/reference/is_joint_filter.md)
+  : Is a Structural Term a Joint Filter?
+
 - [`is_parametric_block()`](https://statmodels7.github.io/statmodels7/reference/is_parametric_block.md)
   : Whether a Term Is the Equation's Parametric Block
 
@@ -758,11 +761,54 @@ helper functions. Using the package does not require any of it.
 - [`jacobian_depends()`](https://statmodels7.github.io/statmodels7/reference/jacobian_depends.md)
   : Which Readings a Chart's Coordinate Enters
 
+- [`join_gas_terms()`](https://statmodels7.github.io/statmodels7/reference/join_gas_terms.md)
+  : Join the Score-Driven Terms of Several Equations
+
+- [`joint_callbacks()`](https://statmodels7.github.io/statmodels7/reference/joint_callbacks.md)
+  : The Driving Vector of a Joint Filter, One Observation at a Time
+
+- [`joint_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/joint_chain_extra.md)
+  : The Chain Term of the Joint Gradient Along a Direction, Joint Filter
+
+- [`joint_chain_extra2()`](https://statmodels7.github.io/statmodels7/reference/joint_chain_extra2.md)
+  : The Joint Second Derivative of the Penalized Information, Joint
+  Filter
+
+- [`joint_continued_deriv_inputs()`](https://statmodels7.github.io/statmodels7/reference/joint_continued_deriv_inputs.md)
+  : The Inputs to the Derivative of a Continued Joint Filter
+
 - [`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md)
   : The Newton Decrement of a Criterion at a Point
 
 - [`joint_design_rows()`](https://statmodels7.github.io/statmodels7/reference/joint_design_rows.md)
   : The Rows of the Joint Predictor Derivative
+
+- [`joint_dk_matrix()`](https://statmodels7.github.io/statmodels7/reference/joint_dk_matrix.md)
+  : The Derivative of the Joint Matrix Along a Direction, Joint Filter
+
+- [`joint_drive_data()`](https://statmodels7.github.io/statmodels7/reference/joint_drive_data.md)
+  : The Driving Vector's Derivatives in Every Predictor, at the Fit
+
+- [`joint_drive_scaled()`](https://statmodels7.github.io/statmodels7/reference/joint_drive_scaled.md)
+  : The Scaled Driving Vector's Derivatives in Every Predictor
+
+- [`joint_fast_context()`](https://statmodels7.github.io/statmodels7/reference/joint_fast_context.md)
+  : The Compiled Route's Context of a Joint Filter
+
+- [`joint_filter_curvature()`](https://statmodels7.github.io/statmodels7/reference/joint_filter_curvature.md)
+  : A Joint Filter's Second-Order Recursion at the Fitted Point
+
+- [`joint_filter_entry()`](https://statmodels7.github.io/statmodels7/reference/joint_filter_entry.md)
+  : Run a Joint Filter at the Current Parameters
+
+- [`joint_filter_jacobian()`](https://statmodels7.github.io/statmodels7/reference/joint_filter_jacobian.md)
+  : The Derivative Rows of Every Equation Under a Joint Filter
+
+- [`joint_filters_of()`](https://statmodels7.github.io/statmodels7/reference/joint_filters_of.md)
+  : The Joint Filters That Span an Equation
+
+- [`joint_grad_parts()`](https://statmodels7.github.io/statmodels7/reference/joint_grad_parts.md)
+  : The Direction-Free Quantities of the Joint Chain Term, Joint Filter
 
 - [`joint_level_chart()`](https://statmodels7.github.io/statmodels7/reference/joint_level_chart.md)
   : The Level Chart of a Filter's Joint Fit
@@ -773,6 +819,15 @@ helper functions. Using the package does not require any of it.
 - [`joint_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/joint_penalty_at.md)
   : A Covariance Class Split Between the Coefficients and a Filter's
   Parameters
+
+- [`joint_row_family()`](https://statmodels7.github.io/statmodels7/reference/joint_row_family.md)
+  : The Family at One Observation, in Every Predictor
+
+- [`joint_scale_derivs()`](https://statmodels7.github.io/statmodels7/reference/joint_scale_derivs.md)
+  : The Derivatives of the Scaling Matrix in the Predictors
+
+- [`joint_scale_matrix()`](https://statmodels7.github.io/statmodels7/reference/joint_scale_matrix.md)
+  : The Scaling Matrix of a Joint Filter and Its First Derivative
 
 - [`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md)
   : The Model's Smoother Over the Coefficients and a Filter's Parameters
@@ -1252,6 +1307,9 @@ helper functions. Using the package does not require any of it.
 - [`rstatmod_eta()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_eta.md)
   : The Predictor and Parameters of a Simulation
 
+- [`rstatmod_eta_joint()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_eta_joint.md)
+  : Simulate a Model Carrying a Joint Filter
+
 - [`rstatmod_hyper()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_hyper.md)
   : Draw One Penalty's Hyperparameters
 
@@ -1635,6 +1693,9 @@ helper functions. Using the package does not require any of it.
 - [`structural_chain_extra2()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra2.md)
   : The Joint Second Derivative of the Penalized Information, Traced
 
+- [`structural_display()`](https://statmodels7.github.io/statmodels7/reference/structural_display.md)
+  : The Equation and the Reported Name of a Structural Term's Parameters
+
 - [`structural_dk_matrix()`](https://statmodels7.github.io/statmodels7/reference/structural_dk_matrix.md)
   : The Joint Derivative of the Penalized Information Along One
   Direction
@@ -1718,6 +1779,9 @@ helper functions. Using the package does not require any of it.
 
 - [`term_held_stack()`](https://statmodels7.github.io/statmodels7/reference/term_held_stack.md)
   : The Stacked Positions That the Terms Hold
+
+- [`term_of_equation()`](https://statmodels7.github.io/statmodels7/reference/term_of_equation.md)
+  : A Term of an Equation, a Joint Filter Included
 
 - [`term_tags_deep()`](https://statmodels7.github.io/statmodels7/reference/term_tags_deep.md)
   : The Covariance Labels That a Term Carries, Including Its Sub-Terms

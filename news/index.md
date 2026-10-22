@@ -1,5 +1,45 @@
 # Changelog
 
+## statmodels7 0.205.0
+
+- The joint filter of several `gas()` terms is faster. The family is
+  evaluated at each observation with its methods and the names of its
+  components resolved once and the chain rule onto the link scale
+  written out; the reverse pass reads the curvature that the filter
+  stored instead of running the filter again; and where the joint
+  registry of distributions7 covers the family (the Gaussian and the
+  Student t), the filter and the reverse pass run compiled (modelterms7
+  0.101.0). On 500 daily returns with the Student t’s scale and degrees
+  of freedom filtered, the fit with `scaling = 1/2` takes 1.3 s, where
+  it took 46 s.
+
+## statmodels7 0.204.0
+
+- Several `gas()` terms in different equations are fitted together:
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  joins them into one
+  [`modelterms7::GasJoint`](https://statmodels7.github.io/modelterms7/reference/GasJoint.html)
+  kept under the key `gas_joint`, and the fit, the observed information,
+  [`summary()`](https://rdrr.io/r/base/summary.html),
+  [`coef()`](https://rdrr.io/r/stats/coef.html),
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html),
+  [`predict()`](https://rdrr.io/r/stats/predict.html) (with standard
+  errors, at the fitted rows and past the series),
+  [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+  and the exact outer gradient and Hessian of
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  read the joint recursion. The parameters of each term are reported in
+  the equation of its parameter under the name its term had.
+- The joint scaling: with `scaling = 1/2` or `1` in every term the
+  driving vector is the score times the inverse square root (symmetric)
+  or the inverse of the expected information of the filtered parameters;
+  the derivatives of the scaling matrix are exact to the fourth order.
+- Two `gas()` terms in one equation, and any other structural term
+  beside a second one, are rejected with a message that names the terms
+  and the reason.
+
 ## statmodels7 0.203.3
 
 - Documentation and messages of the outer criterion, inference,

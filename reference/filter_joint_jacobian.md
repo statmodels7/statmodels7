@@ -44,9 +44,10 @@ The rows are those from which the joint information is assembled
 each equation's design placed in its own columns, and for the filter's
 equation the Jacobian that
 [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
-propagates beside the state. A model carries at most one structural
-term, so every other equation is static and its design is its
-derivative.
+propagates beside the state. A model carries at most one such filter, so
+every other equation is static and its design is its derivative; a joint
+filter is read by
+[`joint_filter_jacobian()`](https://statmodels7.github.io/statmodels7/reference/joint_filter_jacobian.md).
 
 ## See also
 
