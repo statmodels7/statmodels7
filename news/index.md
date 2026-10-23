@@ -1,5 +1,12 @@
 # Changelog
 
+## statmodels7 0.205.1
+
+- The test of a scaled score-driven fit over a family without the second
+  derivative of its expected information uses a family with its density
+  alone: every family of distributions7 0.84.0 carries that derivative,
+  the elastic net included.
+
 ## statmodels7 0.205.0
 
 - The joint filter of several `gas()` terms is faster. The family is

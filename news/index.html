@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.205.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.205.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.205.1" id="statmodels7-02051">statmodels7 0.205.1<a class="anchor" aria-label="anchor" href="#statmodels7-02051"></a></h2>
+<ul><li>The test of a scaled score-driven fit over a family without the second derivative of its expected information uses a family with its density alone: every family of distributions7 0.84.0 carries that derivative, the elastic net included.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.205.0" id="statmodels7-02050">statmodels7 0.205.0<a class="anchor" aria-label="anchor" href="#statmodels7-02050"></a></h2>
 <ul><li>The joint filter of several <code>gas()</code> terms is faster. The family is evaluated at each observation with its methods and the names of its components resolved once and the chain rule onto the link scale written out; the reverse pass reads the curvature that the filter stored instead of running the filter again; and where the joint registry of distributions7 covers the family (the Gaussian and the Student t), the filter and the reverse pass run compiled (modelterms7 0.101.0). On 500 daily returns with the Student t’s scale and degrees of freedom filtered, the fit with <code>scaling = 1/2</code> takes 1.3 s, where it took 46 s.</li>
