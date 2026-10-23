@@ -145,8 +145,25 @@ test_that("a constant information only rescales the loading", {
 test_that("a family without the information's second derivative is rejected", {
   set.seed(2)
   dl <- data.frame(t = 1:60, y = stats::rnorm(60))
+  # every shipped family carries it (the elastic net since distributions7
+  # 0.84.0); a family with its density alone does not
+  DensityOnlySm <- S7::new_class("DensityOnlySm",
+                                 parent = distributions7::continuous_distrib,
+                                 package = NULL)
+  distrib_pdf <- distributions7::distrib_pdf
+  S7::method(distrib_pdf, DensityOnlySm) <- function(
+      distrib, y, theta, log = FALSE, ...) {
+    stats::dnorm(y, theta[[1]], theta[[2]], log = log)
+  }
+  d <- DensityOnlySm(
+    distrib_name = "density only", dimension = "univariate",
+    bounds = c(-Inf, Inf), params = c("mu", "sigma"),
+    params_interpretation = c(mu = "mean", sigma = "sd"), n_params = 2,
+    params_bounds = list(mu = c(-Inf, Inf), sigma = c(0, Inf)),
+    link_params = list(mu = linkfunctions7::identity_link(),
+                       sigma = linkfunctions7::log_link()))
   expect_error(statmod(y ~ gas(p = 1, q = 1, time = t, scaling = 1),
-                       distrib = enet_distrib(), data = dl),
+                       distrib = d, data = dl),
                "analytic second derivative")
 })
 
