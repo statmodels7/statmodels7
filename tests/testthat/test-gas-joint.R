@@ -378,11 +378,88 @@ test_that("a joint filter carries subformulas on its terms' parameters", {
                sigma ~ gas(p = 1, q = 1, by = g, time = t),
              outer_criterion = reml())
   expect_true(is.finite(as.numeric(logLik(dev))))
-  # each equation reports its own term's components: the development of mu's
-  # loading appears under mu and not under sigma
+  # each equation reports its own term's components, named and written as in
+  # that term's formula: the development of mu's loading appears under mu and
+  # not under sigma
   out <- utils::capture.output(print(summary(dev)))
   at_sigma <- grep("^=== sigma", out)
-  expect_length(grep("mu.kappa1", out[seq_len(at_sigma)]), 1L)
-  expect_length(grep("mu.kappa1", out[-seq_len(at_sigma)]), 0L)
+  hdr <- "^  kappa1 ~ 1 \\+ random\\(~1 \\| g\\)$"
+  expect_length(grep(hdr, out[seq_len(at_sigma)]), 1L)
+  expect_length(grep(hdr, out[-seq_len(at_sigma)]), 0L)
+  expect_length(grep("mu\\.kappa1", out), 0L)
+  # a coordinate of a development that the fit holds is marked as held: the
+  # intercept of omega ~ x is aliased with sigma's own intercept
+  dx <- dp
+  dx$x <- stats::rnorm(nrow(dx))
+  dsx <- statmod(y ~ gas(p = 1, q = 1, by = g, time = t) |
+                   sigma ~ gas(p = 1, q = 1, by = g, time = t, omega ~ x),
+                 distributions7::gaussian1_distrib(), dx)
+  ox <- utils::capture.output(print(summary(dsx)))
+  expect_length(grep("^  omega ~ x$", ox), 1L)
+  expect_length(grep("^    \\(Intercept\\) \\(held\\)", ox), 1L)
   expect_true(all(is.finite(predict(dev, what = "mu", newdata = nd))))
+})
+
+# a panel whose leverage loading (the signed residual's loading in log sigma)
+# varies by group
+lev_panel <- function(m, n, seed = 5) {
+  set.seed(seed)
+  kg <- stats::rnorm(m, -0.06, 0.06)
+  y <- numeric(m * n)
+  for (i in seq_len(m)) {
+    f1 <- 0; f2 <- 0
+    for (t in seq_len(n)) {
+      r <- (i - 1L) * n + t
+      mu <- 0.2 + f1
+      ls <- f2
+      y[r] <- stats::rnorm(1, mu, exp(ls))
+      s1 <- (y[r] - mu) / exp(2 * ls)
+      s2 <- (y[r] - mu)^2 / exp(2 * ls) - 1
+      f1 <- 0.2 * s1 * exp(2 * ls) + 0.5 * f1
+      f2 <- 0.08 * s2 + kg[i] * s1 * exp(2 * ls) + 0.85 * f2
+    }
+  }
+  data.frame(y = y, g = factor(rep(seq_len(m), each = n)),
+             t = rep(seq_len(n), m))
+}
+
+test_that("a cross loading carries a subformula, reported under its equation", {
+  skip_on_cran()
+  dl <- lev_panel(6L, 150L)
+  fit <- function(f, ...) statmod(f, distributions7::gaussian1_distrib(), dl, ...)
+  plain <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, cross = "a") |
+                 sigma ~ gas(p = 1, q = 1, by = g, time = t, cross = "a"))
+  one <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, cross = "a") |
+               sigma ~ gas(p = 1, q = 1, by = g, time = t, cross = "a",
+                           kappa1_mu ~ 1))
+  expect_equal(as.numeric(logLik(one)), as.numeric(logLik(plain)),
+               tolerance = 1e-8)
+  dev <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, cross = "a") |
+               sigma ~ gas(p = 1, q = 1, by = g, time = t, cross = "a",
+                           kappa1_mu ~ 1 + random(~ 1 | g)),
+             outer_criterion = reml())
+  out <- utils::capture.output(print(summary(dev)))
+  at_sigma <- grep("^=== sigma", out)
+  hdr <- which(out == "  kappa1_mu ~ 1 + random(~1 | g)")
+  expect_length(hdr, 1L)
+  expect_gt(hdr, at_sigma)
+  # the random effect's standard deviation is shown with it, although the
+  # joint filter keeps its hyperparameters under mu
+  sd_row <- startsWith(out, "      sigma [reml]")
+  expect_identical(sum(sd_row[-seq_len(at_sigma)]), 1L)
+  expect_identical(sum(sd_row[seq_len(at_sigma)]), 0L)
+})
+
+test_that("a random effect in the second term of a joint filter shows its scale", {
+  skip_on_cran()
+  dl <- lev_panel(6L, 100L, seed = 7)
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, time = t) |
+                   sigma ~ gas(p = 1, q = 1, by = g, time = t,
+                               kappa1 ~ 1 + random(~ 1 | g)),
+                 distributions7::gaussian1_distrib(), dl,
+                 outer_criterion = reml())
+  out <- utils::capture.output(print(summary(fit)))
+  at_sigma <- grep("^=== sigma", out)
+  sd_row <- startsWith(out, "      sigma [reml]")
+  expect_identical(sum(sd_row[-seq_len(at_sigma)]), 1L)
 })

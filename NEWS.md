@@ -1,3 +1,15 @@
+# statmodels7 0.207.0
+
+* A cross loading of a joint score-driven filter may carry a subformula
+  (modelterms7 0.106.0); its penalties reach the outer criterion, whose
+  gradient and Hessian are exact beside it.
+* `summary()` of a joint filter names each component as the formula of its
+  term writes it (`kappa1 ~ 1 + random(~1 | g)`, without the prefix of the
+  equation), marks a held coordinate of a development as held, and shows
+  the hyperparameters of every term, which the joint filter keeps under
+  the equation of its first term: the standard deviation of a random effect
+  in the second term was not shown.
+
 # statmodels7 0.206.0
 
 * A model whose score-driven terms are filtered jointly may develop their

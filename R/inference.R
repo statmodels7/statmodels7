@@ -3216,7 +3216,9 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # there are several the hyperparameter is named for the penalty as well:
   # two lambdas in one block, one on the slope changes and one on the jumps,
   # are not the same number and cannot appear under the same name.
-  hyper_parts <- function(nm) {
+  hyper_parts <- function(nm, at = p) {
+    # `at` is the equation in which the term is kept: a joint filter keeps its
+    # hyperparameters there, whichever equation's block is being built
     ent <- modelterms7::term_penalties(term_of_equation(spec, p, nm))
     des <- statmod_design(spec)
     # A LABELLED term declares no penalty of its own: the covariance class
@@ -3248,9 +3250,9 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       key <- if (is.null(e$class_key)) {
         statmod_entry_key(nm, utils::head(ent, own), e)
       } else e$class_key
-      th <- fit@hyper[[p]][[key]]
+      th <- fit@hyper[[at]][[key]]
       if (is.null(th) || !length(th)) return(empty)
-      u <- statmod_unit(spec, des, p, key)
+      u <- statmod_unit(spec, des, at, key)
       if (is.null(u)) return(empty)
       # the entry's name is prefixed where the term carries several, so two
       # sigmas in one table stay apart; the prefix is recorded so that a
@@ -3259,7 +3261,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       pre <- if (length(ent) > 1L && nzchar(e$name)) paste0(e$name, ".") else ""
       lab <- paste0(pre, names(th))
       marginal <- outer_ran && !penalty_has_kink(u$penalty)
-      hk <- paste(p, key, names(th), sep = "\r")
+      hk <- paste(at, key, names(th), sep = "\r")
       # PER HYPERPARAMETER, and the test has to be the vector one: `ifelse`
       # returns a result the length of its TEST, so a scalar `marginal`
       # returned one answer and recycled it over a penalty carrying two
@@ -3290,7 +3292,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         z <- stats::qnorm(1 - (1 - level) / 2)
         lk <- attr(Vh, "idx")
         for (i in seq_along(th)) {
-          k <- paste(p, key, names(th)[[i]], sep = "\r")
+          k <- paste(at, key, names(th)[[i]], sep = "\r")
           j <- match(k, rownames(Vh))
           # a shared hyperparameter has one row, under its first member, and
           # the member table says which row every other member reads
@@ -3525,7 +3527,12 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     rr <- rows_at(ix)
     nms <- tryCatch(modelterms7::term_coef_names(s),
                     error = function(e) character(0))
-    if (length(nms) == nrow(rr)) rr$name <- nms
+    # the sub-term's own names, keeping the mark of a coordinate the fit
+    # holds (structural_rows() appends it)
+    if (length(nms) == nrow(rr)) {
+      rr$name <- ifelse(endsWith(rr$name, " (held)"), paste0(nms, " (held)"),
+                        nms)
+    }
     # AN ALIASED COEFFICIENT IS NOT A SELECTED ONE. Its estimate is `NA`,
     # so `!= 0` is `NA`, and a logical `NA` indexes a row of nothing but
     # `NA`s: the block's label column then carried one, `max(nchar(labs))`
@@ -3703,19 +3710,29 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       p_value = NA_real_, lower = r$lower, upper = r$upper,
       role = "coefficient", source = "", stringsAsFactors = FALSE), all_cols)
   }
-  structural_block <- function(nm, term, prefix = NULL) {
+  structural_block <- function(nm, term, prefix = NULL, at = p) {
     r <- st[st$parameter == p & st$term == nm, , drop = FALSE]
-    hp <- hyper_parts(nm)
+    hp <- hyper_parts(nm, at = at)
     cp_all <- developed(term, length(modelterms7::term_params(term)))
     dev <- cp_all[vapply(cp_all, function(z) length(z$subs) > 0L, logical(1))]
     # a joint filter is reported under each of its equations: this block
     # shows the components of this equation's term, and the hyperparameters
     # of the other equations' components are shown under those
     other <- list()
+    shown <- term
     if (!is.null(prefix)) {
       mine <- startsWith(names(dev), prefix)
       other <- dev[!mine]
       dev <- dev[mine]
+      # inside the equation's block a component is named and described as
+      # the term of that equation names it: kappa1, with its formula
+      if (is_joint_filter(term)) {
+        shown <- term@terms[[substring(prefix, 1L, nchar(prefix) - 1L)]]
+        dev <- lapply(dev, function(cp) {
+          cp$name <- substring(cp$name, nchar(prefix) + 1L)
+          cp
+        })
+      }
     }
     rows_at <- function(ix) {
       structural_rows(r[!is.na(r$position) & r$position %in% ix, ,
@@ -3728,7 +3745,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
          n_coef = nrow(r), edf = term_edf(nm), n_zero = 0L,
          table = if (is.null(tb)) empty else tb,
          head = NULL,
-         components = compartments(term, rows_at, dev, hp),
+         components = compartments(shown, rows_at, dev, hp),
          classes = hp$classes, note = class_note(nm))
   }
 
@@ -3843,7 +3860,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # name its term had in the formula and with the parameters it spends here
   for (jf in joint_filters_of(spec, p)) {
     if (is.null(st) || !any(st$parameter == p & st$term == jf$key)) next
-    b <- structural_block(jf$key, jf$term, prefix = paste0(p, "."))
+    b <- structural_block(jf$key, jf$term, prefix = paste0(p, "."),
+                          at = jf$param)
     r <- st[st$parameter == p & st$term == jf$key, , drop = FALSE]
     if (length(jf$term@keys) && !is.null(jf$term@keys[p]) &&
         !is.na(jf$term@keys[p])) {

@@ -617,3 +617,48 @@ test_that("the outer gradient and Hessian are exact beside a developed joint fil
   expect_lt(e2, e1)
   expect_lt(e2 / abs(A[1, 1]), 1e-3)
 })
+
+test_that("the outer gradient and Hessian are exact beside a developed cross loading", {
+  skip_on_cran()
+  set.seed(5)
+  m2 <- 6L
+  n2 <- 200L
+  kg <- stats::rnorm(m2, -0.06, 0.06)
+  yy <- numeric(m2 * n2)
+  for (i in seq_len(m2)) {
+    f1 <- 0; f2 <- 0
+    for (t in seq_len(n2)) {
+      r <- (i - 1L) * n2 + t
+      mu <- 0.2 + f1
+      ls <- f2
+      yy[r] <- stats::rnorm(1, mu, exp(ls))
+      s1 <- (yy[r] - mu) / exp(2 * ls)
+      s2 <- (yy[r] - mu)^2 / exp(2 * ls) - 1
+      f1 <- 0.2 * s1 * exp(2 * ls) + 0.5 * f1
+      f2 <- 0.08 * s2 + kg[i] * s1 * exp(2 * ls) + 0.85 * f2
+    }
+  }
+  dp <- data.frame(y = yy, id = factor(rep(seq_len(m2), each = n2)),
+                   t = rep(seq_len(n2), m2))
+  form <- y ~ gas(p = 1, q = 1, by = id, time = t, cross = "a") |
+    sigma ~ gas(p = 1, q = 1, by = id, time = t, cross = "a",
+                kappa1_mu ~ 1 + random(~1 | id))
+  method <- reml(hessian = "observed")
+  h <- struct_harness(form, dp, method)
+  expect_true(h$fit0@converged)
+  for (d in c(0, -0.5)) {
+    eta <- h$eta0 + d
+    expect_equal(h$gr(eta), central(h$fn, eta), tolerance = 1e-6,
+                 info = sprintf("eta0 %+0.1f", d))
+  }
+  spec <- h$fit0@spec
+  design <- statmod_design(spec)
+  A <- statmod_structural_hess(spec, design, h$fit0@coefficients,
+                               h$fit0@hyper, method, h$idx,
+                               integrated_basis(spec, design, method@kind))
+  fd <- function(hh) (h$gr(h$eta0 + hh) - h$gr(h$eta0 - hh)) / (2 * hh)
+  e1 <- abs(fd(1e-2) - A[1, 1])
+  e2 <- abs(fd(5e-3) - A[1, 1])
+  expect_lt(e2, e1 / 2)
+  expect_lt(e2 / abs(A[1, 1]), 1e-4)
+})
