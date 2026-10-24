@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.206.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.207.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,12 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.207.0" id="statmodels7-02070">statmodels7 0.207.0<a class="anchor" aria-label="anchor" href="#statmodels7-02070"></a></h2>
+<ul><li>A cross loading of a joint score-driven filter may carry a subformula (modelterms7 0.106.0); its penalties reach the outer criterion, whose gradient and Hessian are exact beside it.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> of a joint filter names each component as the formula of its term writes it (<code>kappa1 ~ 1 + random(~1 | g)</code>, without the prefix of the equation), marks a held coordinate of a development as held, and shows the hyperparameters of every term, which the joint filter keeps under the equation of its first term: the standard deviation of a random effect in the second term was not shown.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.206.0" id="statmodels7-02060">statmodels7 0.206.0<a class="anchor" aria-label="anchor" href="#statmodels7-02060"></a></h2>
 <ul><li>A model whose score-driven terms are filtered jointly may develop their parameters with subformulas, with penalties chosen by the outer criterion; its outer gradient and Hessian are exact (they read the joint filter’s third and fourth derivatives).</li>
