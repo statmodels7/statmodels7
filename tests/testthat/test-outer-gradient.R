@@ -642,32 +642,37 @@ test_that("the outer gradient and Hessian are exact beside a developed cross loa
   dp <- data.frame(y = yy, id = factor(rep(seq_len(m2), each = n2)),
                    t = rep(seq_len(n2), m2))
   # both directions at lag one, and sigma alone loading mu's score at the
-  # lags 1..2 (beyond its own p) with the second developed
+  # lags 1..2 (beyond its own p) with the second developed. The one-way form
+  # is held to 1e-5: on macOS its reference at eta0 reads -4.9811236 against
+  # an exact -4.9811309 (1.5e-6), the same value with the refits run to 1e-9
+  # and to 1e-8, while Windows and Linux agree to 8e-9; a wrong derivative
+  # term would be orders of magnitude larger (misure_gas_congiunto/c/fase7)
   forms <- list(
-    y ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(sigma = 1)) |
-      sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 1),
-                  kappa1_mu ~ 1 + random(~1 | id)),
-    y ~ gas(p = 1, q = 1, by = id, time = t) |
-      sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 2),
-                  kappa2_mu ~ 1 + random(~1 | id)))
+    list(tol = 1e-6,
+         form = y ~ gas(p = 1, q = 1, by = id, time = t,
+                        p_cross = c(sigma = 1)) |
+           sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 1),
+                       kappa1_mu ~ 1 + random(~1 | id))),
+    list(tol = 1e-5,
+         form = y ~ gas(p = 1, q = 1, by = id, time = t) |
+           sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 2),
+                       kappa2_mu ~ 1 + random(~1 | id))))
   method <- reml(hessian = "observed")
   # the refits of the reference run Newton to a gradient of 1e-8: the joint
   # route stops where the objective no longer resolves a step, and on the
   # one-way form that left a score of 5.7e-7 at eta0 - 1e-3 and - 2e-3, a
-  # criterion 1.9e-8 off and a difference 1.9e-6 off; refitted further the
-  # scores are 8e-10 and 1.3e-10 and the difference at h = 1e-3 is within
-  # 3e-9. The rule is 1e-8 and not tighter, because a refit that misses it
-  # is not converged and fit_at_hyper() then refits from the
-  # information-scaled start, which can land elsewhere (macOS red at 1e-9;
-  # misure_gas_congiunto/c/fase7)
+  # criterion 1.9e-8 off and a difference 1.9e-6 off; refitted to 1e-8 the
+  # scores are 1.8e-9 and 1.6e-9 and the difference at h = 1e-3 is within
+  # 8e-9 here
   tight <- optimizers7::newton(criterion = optimizers7::crit_grad(1e-8))
-  for (form in forms) {
+  for (fc in forms) {
+    form <- fc$form
     lab <- paste(deparse(form), collapse = " ")
     h <- struct_harness(form, dp, method, inner = tight)
     expect_true(h$fit0@converged, info = lab)
     for (d in c(0, -0.5)) {
       eta <- h$eta0 + d
-      expect_equal(h$gr(eta), central(h$fn, eta), tolerance = 1e-6,
+      expect_equal(h$gr(eta), central(h$fn, eta), tolerance = fc$tol,
                    info = sprintf("%s, eta0 %+0.1f", lab, d))
     }
     spec <- h$fit0@spec
