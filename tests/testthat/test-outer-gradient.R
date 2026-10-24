@@ -586,3 +586,34 @@ test_that("the gradient pays from the second hyperparameter on", {
   expect_equal(fast@criterion, slow@criterion, tolerance = 1e-5)
   expect_lt(nrow(fast@history$outer), nrow(slow@history$outer))
 })
+
+test_that("the outer gradient and Hessian are exact beside a developed joint filter", {
+  # the penalty covers a parameter of one term of a joint filter, so the
+  # chain term reads the joint recursion's third derivative and the Hessian
+  # its fourth
+  skip_on_cran()
+  dp <- sim_gas_panel(7, 3L, 35L)
+  form <- y ~ x +
+    gas(p = 1, q = 1, omega ~ random(~1 | id), by = id, time = t) |
+    sigma ~ gas(p = 1, q = 1, by = id, time = t)
+  method <- reml(hessian = "observed")
+  h <- struct_harness(form, dp, method)
+  expect_true(h$fit0@converged)
+  for (d in c(0, -0.5)) {
+    eta <- h$eta0 + d
+    expect_equal(h$gr(eta), central(h$fn, eta), tolerance = 1e-4,
+                 info = sprintf("eta0 %+0.1f", d))
+  }
+  spec <- h$fit0@spec
+  design <- statmod_design(spec)
+  A <- statmod_structural_hess(spec, design, h$fit0@coefficients,
+                               h$fit0@hyper, method, h$idx,
+                               integrated_basis(spec, design, method@kind))
+  expect_false(is.null(A))
+  # central differences of the exact gradient approach it as h^2
+  fd <- function(hh) (h$gr(h$eta0 + hh) - h$gr(h$eta0 - hh)) / (2 * hh)
+  e1 <- abs(fd(1e-2) - A[1, 1])
+  e2 <- abs(fd(5e-3) - A[1, 1])
+  expect_lt(e2, e1)
+  expect_lt(e2 / abs(A[1, 1]), 1e-3)
+})

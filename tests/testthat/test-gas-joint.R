@@ -338,10 +338,51 @@ test_that("joint filters that cannot be fitted are rejected by name", {
   expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t, cross = "a") |
                               sigma ~ gas(p = 1, q = 1, time = t), g, dd),
                "one gas\\(\\) term only")
-  expect_error(statmod_spec(y ~ gas(p = 1, q = 1, omega ~ x, time = t) |
-                              sigma ~ gas(p = 1, q = 1, time = t), g, dd),
-               "subformula")
   expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t) +
                               gas(p = 2, q = 1, time = t, label = "g2"), g, dd),
                "carries two gas\\(\\) terms")
+})
+
+test_that("a joint filter carries subformulas on its terms' parameters", {
+  skip_on_cran()
+  set.seed(31)
+  m <- 6L
+  ni <- 30L
+  u <- stats::rnorm(m, sd = 0.6)
+  g <- factor(rep(seq_len(m), each = ni))
+  y <- unlist(lapply(seq_len(m), function(i) {
+    f <- 0
+    out <- numeric(ni)
+    for (t in seq_len(ni)) {
+      mu <- 0.4 + f
+      out[t] <- stats::rnorm(1, mu, 1)
+      f <- 0.25 * exp(u[i]) * (out[t] - mu) + 0.6 * f
+    }
+    out
+  }))
+  dp <- data.frame(y = y, g = g, t = rep(seq_len(ni), m))
+  fit <- function(f, ...) statmod(f, distributions7::gaussian1_distrib(), dp, ...)
+  plain <- fit(y ~ gas(p = 1, q = 1, by = g, time = t) |
+                 sigma ~ gas(p = 1, q = 1, by = g, time = t))
+  one <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, kappa1 ~ 1) |
+               sigma ~ gas(p = 1, q = 1, by = g, time = t))
+  # a subformula of one is the scalar loading on its log chart
+  expect_equal(as.numeric(logLik(one)), as.numeric(logLik(plain)),
+               tolerance = 1e-8)
+  nd <- data.frame(g = factor(rep(1:2, each = 2), levels = levels(dp$g)),
+                   t = rep(ni + 1:2, 2))
+  expect_equal(predict(one, what = "mu", newdata = nd),
+               predict(plain, what = "mu", newdata = nd), tolerance = 1e-6)
+  dev <- fit(y ~ gas(p = 1, q = 1, by = g, time = t,
+                     kappa1 ~ 1 + random(~ 1 | g)) |
+               sigma ~ gas(p = 1, q = 1, by = g, time = t),
+             outer_criterion = reml())
+  expect_true(is.finite(as.numeric(logLik(dev))))
+  # each equation reports its own term's components: the development of mu's
+  # loading appears under mu and not under sigma
+  out <- utils::capture.output(print(summary(dev)))
+  at_sigma <- grep("^=== sigma", out)
+  expect_length(grep("mu.kappa1", out[seq_len(at_sigma)]), 1L)
+  expect_length(grep("mu.kappa1", out[-seq_len(at_sigma)]), 0L)
+  expect_true(all(is.finite(predict(dev, what = "mu", newdata = nd))))
 })

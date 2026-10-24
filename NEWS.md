@@ -1,3 +1,13 @@
+# statmodels7 0.206.0
+
+* A model whose score-driven terms are filtered jointly may develop their
+  parameters with subformulas, with penalties chosen by the outer
+  criterion; its outer gradient and Hessian are exact (they read the joint
+  filter's third and fourth derivatives).
+* `summary()` reports the components of a joint filter under the equation
+  of the term that carries them, and a component with no quantity to show
+  no longer stops the report.
+
 # statmodels7 0.205.1
 
 * The test of a scaled score-driven fit over a family without the second

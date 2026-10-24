@@ -3694,23 +3694,36 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # sits with the coordinates it shrinks rather than in a block of its own
   # carrying nothing else.
   structural_rows <- function(r) {
+    # a component with no reported quantity at these positions gives no
+    # rows, which the callers read as "nothing to show"
+    if (!nrow(r)) return(empty)
     stats::setNames(data.frame(
       name = ifelse(r$held, paste0(r$name, " (held)"), r$name),
       estimate = r$estimate, se = r$se, statistic = NA_real_,
       p_value = NA_real_, lower = r$lower, upper = r$upper,
       role = "coefficient", source = "", stringsAsFactors = FALSE), all_cols)
   }
-  structural_block <- function(nm, term) {
+  structural_block <- function(nm, term, prefix = NULL) {
     r <- st[st$parameter == p & st$term == nm, , drop = FALSE]
     hp <- hyper_parts(nm)
     cp_all <- developed(term, length(modelterms7::term_params(term)))
     dev <- cp_all[vapply(cp_all, function(z) length(z$subs) > 0L, logical(1))]
+    # a joint filter is reported under each of its equations: this block
+    # shows the components of this equation's term, and the hyperparameters
+    # of the other equations' components are shown under those
+    other <- list()
+    if (!is.null(prefix)) {
+      mine <- startsWith(names(dev), prefix)
+      other <- dev[!mine]
+      dev <- dev[mine]
+    }
     rows_at <- function(ix) {
       structural_rows(r[!is.na(r$position) & r$position %in% ix, ,
                         drop = FALSE])
     }
-    own <- structural_rows(r[!(r$component %in% names(dev)), , drop = FALSE])
-    tb <- do.call(rbind, c(own_hyper(hp, dev), list(own)))
+    own <- structural_rows(r[!(r$component %in% c(names(dev), names(other))),
+                             , drop = FALSE])
+    tb <- do.call(rbind, c(own_hyper(hp, c(dev, other)), list(own)))
     list(kind = "structural", label = block_label("structural"), term = nm,
          n_coef = nrow(r), edf = term_edf(nm), n_zero = 0L,
          table = if (is.null(tb)) empty else tb,
@@ -3830,7 +3843,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # name its term had in the formula and with the parameters it spends here
   for (jf in joint_filters_of(spec, p)) {
     if (is.null(st) || !any(st$parameter == p & st$term == jf$key)) next
-    b <- structural_block(jf$key, jf$term)
+    b <- structural_block(jf$key, jf$term, prefix = paste0(p, "."))
     r <- st[st$parameter == p & st$term == jf$key, , drop = FALSE]
     if (length(jf$term@keys) && !is.null(jf$term@keys[p]) &&
         !is.na(jf$term@keys[p])) {
