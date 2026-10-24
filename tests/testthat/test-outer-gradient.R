@@ -640,25 +640,40 @@ test_that("the outer gradient and Hessian are exact beside a developed cross loa
   }
   dp <- data.frame(y = yy, id = factor(rep(seq_len(m2), each = n2)),
                    t = rep(seq_len(n2), m2))
-  form <- y ~ gas(p = 1, q = 1, by = id, time = t, cross = "a") |
-    sigma ~ gas(p = 1, q = 1, by = id, time = t, cross = "a",
-                kappa1_mu ~ 1 + random(~1 | id))
+  # both directions at lag one, and sigma alone loading mu's score at the
+  # lags 1..2 (beyond its own p) with the second developed
+  forms <- list(
+    y ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(sigma = 1)) |
+      sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 1),
+                  kappa1_mu ~ 1 + random(~1 | id)),
+    y ~ gas(p = 1, q = 1, by = id, time = t) |
+      sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 2),
+                  kappa2_mu ~ 1 + random(~1 | id)))
   method <- reml(hessian = "observed")
-  h <- struct_harness(form, dp, method)
-  expect_true(h$fit0@converged)
-  for (d in c(0, -0.5)) {
-    eta <- h$eta0 + d
-    expect_equal(h$gr(eta), central(h$fn, eta), tolerance = 1e-6,
-                 info = sprintf("eta0 %+0.1f", d))
+  for (form in forms) {
+    lab <- paste(deparse(form), collapse = " ")
+    h <- struct_harness(form, dp, method)
+    expect_true(h$fit0@converged, info = lab)
+    # the reference is the median of three steps: on the one-way form one
+    # refit at eta0 +- 1e-3 lands 2e-8 off in the criterion, which moves
+    # that difference by 1.9e-6 while 4e-3 and 5e-4 agree with the exact
+    # gradient to 4e-8 and 5e-10 (misure_gas_congiunto/c/fase7)
+    for (d in c(0, -0.5)) {
+      eta <- h$eta0 + d
+      ref <- stats::median(vapply(c(1e-3, 5e-4, 2.5e-4), function(s)
+        central(h$fn, eta, s), 0))
+      expect_equal(h$gr(eta), ref, tolerance = 1e-6,
+                   info = sprintf("%s, eta0 %+0.1f", lab, d))
+    }
+    spec <- h$fit0@spec
+    design <- statmod_design(spec)
+    A <- statmod_structural_hess(spec, design, h$fit0@coefficients,
+                                 h$fit0@hyper, method, h$idx,
+                                 integrated_basis(spec, design, method@kind))
+    fd <- function(hh) (h$gr(h$eta0 + hh) - h$gr(h$eta0 - hh)) / (2 * hh)
+    e1 <- abs(fd(1e-2) - A[1, 1])
+    e2 <- abs(fd(5e-3) - A[1, 1])
+    expect_lt(e2, e1 / 2, label = lab)
+    expect_lt(e2 / abs(A[1, 1]), 1e-4, label = lab)
   }
-  spec <- h$fit0@spec
-  design <- statmod_design(spec)
-  A <- statmod_structural_hess(spec, design, h$fit0@coefficients,
-                               h$fit0@hyper, method, h$idx,
-                               integrated_basis(spec, design, method@kind))
-  fd <- function(hh) (h$gr(h$eta0 + hh) - h$gr(h$eta0 - hh)) / (2 * hh)
-  e1 <- abs(fd(1e-2) - A[1, 1])
-  e2 <- abs(fd(5e-3) - A[1, 1])
-  expect_lt(e2, e1 / 2)
-  expect_lt(e2 / abs(A[1, 1]), 1e-4)
 })

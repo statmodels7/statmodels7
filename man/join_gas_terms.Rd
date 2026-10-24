@@ -23,7 +23,8 @@ of the first of them under the key \code{"gas_joint"}.
 \code{\link[=reject_incompatible]{reject_incompatible()}} has already checked that each equation carries at
 most one such term and that no other structural term sits beside them.
 \code{\link[modelterms7:gas_joint]{modelterms7::gas_joint()}} checks that the terms walk the same series and
-share one \code{scaling}, and fills the cross loadings of the terms that share
-a \code{cross} label.
+share one \code{scaling}, and fills the cross loadings that the \code{p_cross} of
+each term declares. A single score-driven term is left as it is, after
+the same check of its \code{p_cross}.
 }
 \keyword{internal}

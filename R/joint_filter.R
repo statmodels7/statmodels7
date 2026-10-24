@@ -20,8 +20,9 @@ NULL
 #' [reject_incompatible()] has already checked that each equation carries at
 #' most one such term and that no other structural term sits beside them.
 #' [modelterms7::gas_joint()] checks that the terms walk the same series and
-#' share one `scaling`, and fills the cross loadings of the terms that share
-#' a `cross` label.
+#' share one `scaling`, and fills the cross loadings that the `p_cross` of
+#' each term declares. A single score-driven term is left as it is, after
+#' the same check of its `p_cross`.
 #'
 #' @param terms The built terms, a named list of named lists, one per
 #'   distribution parameter.
@@ -39,9 +40,15 @@ join_gas_terms <- function(terms) {
       }
     }
   }
-  if (length(found) < 2L) return(terms)
+  if (!length(found)) return(terms)
   parts <- stats::setNames(lapply(found, function(f)
     terms[[f$param]][[f$term]]), vapply(found, `[[`, "", "param"))
+  # one term alone is filtered as it is, and gas_joint() only checks its
+  # p_cross, which can name no partner with a term of its own
+  if (length(found) < 2L) {
+    modelterms7::gas_joint(parts)
+    return(terms)
+  }
   jt <- modelterms7::gas_joint(parts)
   jt@keys <- stats::setNames(vapply(found, `[[`, "", "term"), names(parts))
   for (f in found) terms[[f$param]][[f$term]] <- NULL

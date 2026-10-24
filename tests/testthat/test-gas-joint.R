@@ -86,8 +86,8 @@ test_that("gas() terms in several equations are joined into one structural term"
 
 test_that("a joint fit maximizes the log-likelihood of the recursion written out", {
   dd <- jt_sim()
-  fit <- statmod(y ~ x + gas(p = 1, q = 1, time = t, cross = "a") |
-                   sigma ~ gas(p = 1, q = 1, time = t, cross = "a"),
+  fit <- statmod(y ~ x + gas(p = 1, q = 1, time = t, p_cross = c(sigma = 1)) |
+                   sigma ~ gas(p = 1, q = 1, time = t, p_cross = c(mu = 1)),
                  distributions7::gaussian1_distrib(), dd)
   cf <- coef(fit)
   ll_of <- function(v) {
@@ -128,11 +128,20 @@ test_that("the gradient and the information of a joint filter are exact", {
                  distributions7::gaussian1_distrib(), dd,
                  c(0.9, 0.4, -0.1, 0, log(0.2), 0.8, 0, log(0.08), 1.1))
   expect_lt(max(g), 1e-7)
-  g <- jt_derivs(y ~ x + gas(p = 1, q = 2, time = t, cross = "a") |
-                   sigma ~ gas(p = 2, q = 1, time = t, cross = "a"),
+  g <- jt_derivs(y ~ x + gas(p = 1, q = 2, time = t, p_cross = c(sigma = 1)) |
+                   sigma ~ gas(p = 2, q = 1, time = t, p_cross = c(mu = 2)),
                  distributions7::gaussian1_distrib(), dd,
                  c(0.9, 0.4, -0.1, 0, log(0.2), 0.8, 0.2, 0.05,
                    0, log(0.08), log(0.03), 1.1, -0.1, 0.07))
+  expect_lt(max(g), 1e-7)
+  # one way only, at lags beyond the term's own p: mu loads sigma's score at
+  # the lags 1..3, sigma loads its own score only
+  g <- jt_derivs(y ~ x + gas(p = 1, q = 1, time = t,
+                             p_cross = c(sigma = 3)) |
+                   sigma ~ gas(p = 1, q = 1, time = t),
+                 distributions7::gaussian1_distrib(), dd,
+                 c(0.9, 0.4, -0.1, 0, log(0.2), 0.8, 0.05, -0.03, 0.02,
+                   0, log(0.08), 1.1))
   expect_lt(max(g), 1e-7)
   # scaled jointly: the information of a Student t couples sigma and nu
   set.seed(3)
@@ -149,8 +158,8 @@ test_that("the gradient and the information of a joint filter are exact", {
 test_that("the derivative rows of a joint filter and of its continuation are exact", {
   skip_if_not_installed("numDeriv")
   dd <- jt_sim(80)
-  fit <- statmod(y ~ x + gas(p = 1, q = 1, time = t, cross = "a") |
-                   sigma ~ gas(p = 1, q = 1, time = t, cross = "a"),
+  fit <- statmod(y ~ x + gas(p = 1, q = 1, time = t, p_cross = c(sigma = 1)) |
+                   sigma ~ gas(p = 1, q = 1, time = t, p_cross = c(mu = 1)),
                  distributions7::gaussian1_distrib(), dd)
   spec <- fit@spec
   des <- statmod_design(spec)
@@ -335,9 +344,14 @@ test_that("joint filters that cannot be fitted are rejected by name", {
   expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t) |
                               sigma ~ gas(p = 1, q = 1, time = t, scaling = 1),
                             g, dd), "same 'scaling'")
-  expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t, cross = "a") |
+  # a score from an equation without a gas() term, with one term or two
+  expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t,
+                                    p_cross = c(sigma = 1)), g, dd),
+               "'sigma' has no gas\\(\\) term")
+  expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t,
+                                    p_cross = c(nu = 1)) |
                               sigma ~ gas(p = 1, q = 1, time = t), g, dd),
-               "one gas\\(\\) term only")
+               "'nu' has no gas\\(\\) term")
   expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t) +
                               gas(p = 2, q = 1, time = t, label = "g2"), g, dd),
                "carries two gas\\(\\) terms")
@@ -427,15 +441,15 @@ test_that("a cross loading carries a subformula, reported under its equation", {
   skip_on_cran()
   dl <- lev_panel(6L, 150L)
   fit <- function(f, ...) statmod(f, distributions7::gaussian1_distrib(), dl, ...)
-  plain <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, cross = "a") |
-                 sigma ~ gas(p = 1, q = 1, by = g, time = t, cross = "a"))
-  one <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, cross = "a") |
-               sigma ~ gas(p = 1, q = 1, by = g, time = t, cross = "a",
+  plain <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, p_cross = c(sigma = 1)) |
+                 sigma ~ gas(p = 1, q = 1, by = g, time = t, p_cross = c(mu = 1)))
+  one <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, p_cross = c(sigma = 1)) |
+               sigma ~ gas(p = 1, q = 1, by = g, time = t, p_cross = c(mu = 1),
                            kappa1_mu ~ 1))
   expect_equal(as.numeric(logLik(one)), as.numeric(logLik(plain)),
                tolerance = 1e-8)
-  dev <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, cross = "a") |
-               sigma ~ gas(p = 1, q = 1, by = g, time = t, cross = "a",
+  dev <- fit(y ~ gas(p = 1, q = 1, by = g, time = t, p_cross = c(sigma = 1)) |
+               sigma ~ gas(p = 1, q = 1, by = g, time = t, p_cross = c(mu = 1),
                            kappa1_mu ~ 1 + random(~ 1 | g)),
              outer_criterion = reml())
   out <- utils::capture.output(print(summary(dev)))

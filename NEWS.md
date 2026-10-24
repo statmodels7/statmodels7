@@ -1,3 +1,11 @@
+# statmodels7 0.208.0
+
+* The cross loadings of score-driven terms are declared per term with
+  `p_cross` (modelterms7 0.107.0), which replaces `cross`. A model with a
+  single gas() term whose `p_cross` names another parameter with a positive
+  count is rejected, since that parameter has no gas() term whose score
+  could drive the filter.
+
 # statmodels7 0.207.0
 
 * A cross loading of a joint score-driven filter may carry a subformula
