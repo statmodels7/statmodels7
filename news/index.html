@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.207.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.208.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.208.0" id="statmodels7-02080">statmodels7 0.208.0<a class="anchor" aria-label="anchor" href="#statmodels7-02080"></a></h2>
+<ul><li>The cross loadings of score-driven terms are declared per term with <code>p_cross</code> (modelterms7 0.107.0), which replaces <code>cross</code>. A model with a single gas() term whose <code>p_cross</code> names another parameter with a positive count is rejected, since that parameter has no gas() term whose score could drive the filter.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.207.0" id="statmodels7-02070">statmodels7 0.207.0<a class="anchor" aria-label="anchor" href="#statmodels7-02070"></a></h2>
 <ul><li>A cross loading of a joint score-driven filter may carry a subformula (modelterms7 0.106.0); its penalties reach the outer criterion, whose gradient and Hessian are exact beside it.</li>

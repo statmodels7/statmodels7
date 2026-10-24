@@ -30,4 +30,6 @@ has already checked that each equation carries at most one such term and
 that no other structural term sits beside them.
 [`modelterms7::gas_joint()`](https://statmodels7.github.io/modelterms7/reference/gas_joint.html)
 checks that the terms walk the same series and share one `scaling`, and
-fills the cross loadings of the terms that share a `cross` label.
+fills the cross loadings that the `p_cross` of each term declares. A
+single score-driven term is left as it is, after the same check of its
+`p_cross`.
