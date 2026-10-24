@@ -124,7 +124,7 @@ gradient(fit, par = list(mu = c(0, 0), sigma = 0))
 # component is minus the number of mu coefficients (here -2).
 gradient(fit)
 #> $mu
-#> [1] 1.953993e-14 6.217249e-15
+#> [1] 1.421085e-14 7.105427e-15
 #> 
 #> $sigma
 #> [1] -2
