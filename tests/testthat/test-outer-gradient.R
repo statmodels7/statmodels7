@@ -375,7 +375,7 @@ sim_gas_panel <- function(seed, m_grp, ti, a = 0.25, b = 0.55, beta = 0.5) {
 # the criterion and its gradient with the mode refitted, read at the REFITTED
 # design: a structural term's own parameters live in the design's state, so a
 # design built once and reused would read them at a non-stationary point
-struct_harness <- function(form, data, method) {
+struct_harness <- function(form, data, method, inner = iwls()) {
   fit0 <- statmod(form, distributions7::gaussian1_distrib(), data,
                   outer_criterion = NULL)
   idx <- outer_hyper_index(fit0@spec,
@@ -383,7 +383,8 @@ struct_harness <- function(form, data, method) {
                                           statmod_design(fit0@spec)))
   refit <- function(eta) {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
-    a <- fit_at_hyper(form, distributions7::gaussian1_distrib(), data, hy)
+    a <- fit_at_hyper(form, distributions7::gaussian1_distrib(), data, hy,
+                      inner = inner)
     list(f = a, d = a$design, hy = hy,
          basis = integrated_basis(a$spec, a$design, method@kind))
   }
@@ -650,19 +651,19 @@ test_that("the outer gradient and Hessian are exact beside a developed cross loa
       sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 2),
                   kappa2_mu ~ 1 + random(~1 | id)))
   method <- reml(hessian = "observed")
+  # the refits of the reference run Newton to a gradient of 1e-9: the joint
+  # route stops where the objective no longer resolves a step, and on the
+  # one-way form that left a score of 5.7e-7 at eta0 - 1e-3 and - 2e-3, a
+  # criterion 1.9e-8 off and a difference 1.9e-6 off; refitted to 1e-10 the
+  # difference at h = 1e-3 is within 3e-9 (misure_gas_congiunto/c/fase7)
+  tight <- optimizers7::newton(criterion = optimizers7::crit_grad(1e-9))
   for (form in forms) {
     lab <- paste(deparse(form), collapse = " ")
-    h <- struct_harness(form, dp, method)
+    h <- struct_harness(form, dp, method, inner = tight)
     expect_true(h$fit0@converged, info = lab)
-    # the reference is the median of three steps: on the one-way form one
-    # refit at eta0 +- 1e-3 lands 2e-8 off in the criterion, which moves
-    # that difference by 1.9e-6 while 4e-3 and 5e-4 agree with the exact
-    # gradient to 4e-8 and 5e-10 (misure_gas_congiunto/c/fase7)
     for (d in c(0, -0.5)) {
       eta <- h$eta0 + d
-      ref <- stats::median(vapply(c(1e-3, 5e-4, 2.5e-4), function(s)
-        central(h$fn, eta, s), 0))
-      expect_equal(h$gr(eta), ref, tolerance = 1e-6,
+      expect_equal(h$gr(eta), central(h$fn, eta), tolerance = 1e-6,
                    info = sprintf("%s, eta0 %+0.1f", lab, d))
     }
     spec <- h$fit0@spec
