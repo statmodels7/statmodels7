@@ -651,12 +651,16 @@ test_that("the outer gradient and Hessian are exact beside a developed cross loa
       sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 2),
                   kappa2_mu ~ 1 + random(~1 | id)))
   method <- reml(hessian = "observed")
-  # the refits of the reference run Newton to a gradient of 1e-9: the joint
+  # the refits of the reference run Newton to a gradient of 1e-8: the joint
   # route stops where the objective no longer resolves a step, and on the
   # one-way form that left a score of 5.7e-7 at eta0 - 1e-3 and - 2e-3, a
-  # criterion 1.9e-8 off and a difference 1.9e-6 off; refitted to 1e-10 the
-  # difference at h = 1e-3 is within 3e-9 (misure_gas_congiunto/c/fase7)
-  tight <- optimizers7::newton(criterion = optimizers7::crit_grad(1e-9))
+  # criterion 1.9e-8 off and a difference 1.9e-6 off; refitted further the
+  # scores are 8e-10 and 1.3e-10 and the difference at h = 1e-3 is within
+  # 3e-9. The rule is 1e-8 and not tighter, because a refit that misses it
+  # is not converged and fit_at_hyper() then refits from the
+  # information-scaled start, which can land elsewhere (macOS red at 1e-9;
+  # misure_gas_congiunto/c/fase7)
+  tight <- optimizers7::newton(criterion = optimizers7::crit_grad(1e-8))
   for (form in forms) {
     lab <- paste(deparse(form), collapse = " ")
     h <- struct_harness(form, dp, method, inner = tight)
