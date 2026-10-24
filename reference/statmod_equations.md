@@ -113,11 +113,11 @@ e$response
 e$equations
 #> $mu
 #> ~x1 + x2
-#> <environment: 0x5588e74c1228>
+#> <environment: 0x55ea6cf8b808>
 #> 
 #> $sigma
 #> ~z
-#> <environment: 0x5588e74c1228>
+#> <environment: 0x55ea6cf8b808>
 #> 
 
 # Every parameter receives an equation; a parameter without one receives an
