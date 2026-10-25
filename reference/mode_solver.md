@@ -50,8 +50,8 @@ mode_solver(spec, design, coef, K, Kinv, Dm, npar, offs)
 
 A list with `solve`, a function of \\c\\ that returns \\v\\ without the
 sign; `J`, the curvature used in the solve; `Dm`, the curvature in which
-the held rows and columns are set to zero; and `hold`, the held
-positions.
+the held rows and columns are set to zero; `hold`, the held positions;
+and `Ak`, the kink constraints.
 
 ## Details
 

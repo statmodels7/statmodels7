@@ -82,7 +82,7 @@ for the names of the members.
 v <- statmodels7_update()
 #> statmodels7 toolkit, installed versions:
 #>   basis7           0.15.2
-#>   distributions7   0.87.0
+#>   distributions7   0.88.1
 #>   linkfunctions7   0.5.6
 #>   modelterms7      0.108.0
 #>   numericals7      0.23.5

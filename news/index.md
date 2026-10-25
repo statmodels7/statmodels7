@@ -1,5 +1,18 @@
 # Changelog
 
+## statmodels7 0.209.1
+
+- A break-point that `jump()` holds at the minimum of its profile is
+  held on the joint vector of a score-driven filter as well: the outer
+  gradient’s movement of the mode and the structural parameters’ table
+  inverted the joint information whole, whose row for that break-point
+  is zero, so the certificate read “the outer gradient is not finite”
+  and the filter’s loading and persistence carried no standard error.
+  Measured on pig2 with
+  `jump(tt) + gas(p = 1, q = 1, time = t) | alpha ~ s(tt)`: the exact
+  gradient now agrees with a central difference of the criterion to 5e-6
+  and the fit is certified.
+
 ## statmodels7 0.209.0
 
 - A gas() term may load the score of a parameter that carries no gas()

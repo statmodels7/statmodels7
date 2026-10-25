@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.209.1" id="statmodels7-02091">statmodels7 0.209.1<a class="anchor" aria-label="anchor" href="#statmodels7-02091"></a></h2>
+<ul><li>A break-point that <code>jump()</code> holds at the minimum of its profile is held on the joint vector of a score-driven filter as well: the outer gradient’s movement of the mode and the structural parameters’ table inverted the joint information whole, whose row for that break-point is zero, so the certificate read “the outer gradient is not finite” and the filter’s loading and persistence carried no standard error. Measured on pig2 with <code>jump(tt) + gas(p = 1, q = 1, time = t) | alpha ~ s(tt)</code>: the exact gradient now agrees with a central difference of the criterion to 5e-6 and the fit is certified.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.209.0" id="statmodels7-02090">statmodels7 0.209.0<a class="anchor" aria-label="anchor" href="#statmodels7-02090"></a></h2>
 <ul><li>A gas() term may load the score of a parameter that carries no gas() term, which then drives the filter with a static predictor (modelterms7 0.108.0): <code>y ~ gas(p = 1, q = 1, p_cross = c(sigma = 1)) | sigma ~ x</code>. The parameter must be one of the family’s. The exact gradient, information and outer derivatives cover it.</li>

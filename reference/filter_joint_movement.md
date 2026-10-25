@@ -11,7 +11,17 @@ the movement of the determinant is read.
 ## Usage
 
 ``` r
-filter_joint_movement(spec, design, coef, S, Dm, total, D3)
+filter_joint_movement(
+  spec,
+  design,
+  coef,
+  S,
+  Dm,
+  total,
+  D3,
+  hold = integer(0),
+  Ak = NULL
+)
 ```
 
 ## Arguments
@@ -46,6 +56,19 @@ filter_joint_movement(spec, design, coef, S, Dm, total, D3)
 
   The family's third derivative on the link scale at the fitted
   predictors, which the recursion reads where the memo misses.
+
+- hold:
+
+  The positions of the coefficients that
+  [`mode_solver()`](https://statmodels7.github.io/statmodels7/reference/mode_solver.md)
+  holds (a break-point held at the minimum of its profile), which stay
+  where they are when the mode moves. The default is `integer(0)`.
+
+- Ak:
+
+  The kink constraints over the stacked coefficients, from
+  [`mode_solver()`](https://statmodels7.github.io/statmodels7/reference/mode_solver.md),
+  or `NULL` for none.
 
 ## Value
 
