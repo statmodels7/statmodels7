@@ -726,7 +726,8 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
                  function(su) identical(su$kind, "filter"), logical(1)))) {
     joint <- filter_joint_movement(
       spec, design0, coef, ctx_penalty(ctx, spec, design, coef, hyper), Dm,
-      total, ctx_deriv(ctx, spec, design, coef, hyper, 3L))
+      total, ctx_deriv(ctx, spec, design, coef, hyper, 3L),
+      hold = ms$hold, Ak = ms$Ak)
     if (is.null(joint)) return(NULL)
     msolve <- joint$solve
   }
@@ -860,6 +861,11 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
 #' @param total The number of stacked coefficients.
 #' @param D3 The family's third derivative on the link scale at the fitted
 #'   predictors, which the recursion reads where the memo misses.
+#' @param hold The positions of the coefficients that [mode_solver()] holds
+#'   (a break-point held at the minimum of its profile), which stay where
+#'   they are when the mode moves. The default is `integer(0)`.
+#' @param Ak The kink constraints over the stacked coefficients, from
+#'   [mode_solver()], or `NULL` for none.
 #'
 #' @return A list with `rows`, one matrix per distribution parameter over the
 #'   estimated coordinates, and `solve`, a function of a vector over the
@@ -870,7 +876,8 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
 #'   [statmod_full_information()]
 #'
 #' @keywords internal
-filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3) {
+filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3,
+                                  hold = integer(0), Ak = NULL) {
   jd <- joint_design_rows(spec, design, coef)
   if (is.null(jd)) return(NULL)
   J <- tryCatch(as_dense(statmod_full_information(spec, coef, design)),
@@ -879,17 +886,35 @@ filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3) {
   if (is.null(J) || nrow(J) != width || !all(is.finite(J))) return(NULL)
   ib <- seq_len(total)
   J[ib, ib] <- J[ib, ib] + as_dense(S) + Dm
-  fac <- tryCatch(chol(J), error = function(e) NULL)
-  solver <- if (!is.null(fac)) {
-    function(z) backsolve(fac, forwardsolve(t(fac), z))
+  # ⚠️ THE COORDINATES THAT mode_solver() HOLDS STAY HELD ON THE JOINT VECTOR.
+  # A break-point that a jump() term holds at the minimum of its profile has
+  # a zero row and column in the joint curvature, and a kink is a linear
+  # constraint on the coefficients; without either the joint matrix is
+  # singular and the gradient was lost. Measured on pig2 with jump(tt) +
+  # gas(1, 1) | alpha ~ s(tt): the break-point's row of J is exactly zero,
+  # the smallest eigenvalue -8.6e-13, and the certificate read "the outer
+  # gradient is not finite". The movement is solved on the directions that
+  # the held coordinates and the kink rows leave free, the filter's own
+  # parameters among them, as mode_solver() does on the coefficients.
+  B <- matrix(0, length(hold), width)
+  if (length(hold)) B[cbind(seq_along(hold), hold)] <- 1
+  if (!is.null(Ak) && nrow(Ak) > 0L) {
+    B <- rbind(cbind(as.matrix(Ak), matrix(0, nrow(Ak), width - total)), B)
+  }
+  N <- null_basis(B, width)
+  R <- crossprod(N, J %*% N)
+  fac <- tryCatch(chol(R), error = function(e) NULL)
+  rsolve <- if (!is.null(fac)) {
+    function(r) backsolve(fac, forwardsolve(t(fac), r))
   } else {
     # the true joint curvature may lose definiteness where it is still
     # invertible, and a mode's movement is worth having from it: the implicit
     # function theorem asks for a nonsingular matrix, not a definite one
-    Ji <- tryCatch(solve(J), error = function(e) NULL)
-    if (is.null(Ji)) return(NULL)
-    function(z) Ji %*% z
+    Ri <- tryCatch(solve(R), error = function(e) NULL)
+    if (is.null(Ri)) return(NULL)
+    function(r) Ri %*% r
   }
+  solver <- function(z) N %*% rsolve(crossprod(N, as.numeric(z)))
   d <- spec@distrib
   th <- jd$ev$theta
   gl <- distributions7::distrib_gradient(d, spec@response, th, scale = "link",

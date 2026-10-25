@@ -1683,7 +1683,15 @@ statmod_structural_table <- function(fit, level = 0.95) {
     # cross block is what identifies the two halves together
     I <- I + as.matrix(joint_penalty_at(spec, design, fit@coefficients,
                                         fit@hyper, "hessian", nrow(I)))
-    solve(I)
+    # the slot of a held break-point is a column of zeros by design, as
+    # vcov() records, and is left out of the inverse rather than making the
+    # whole matrix singular: beside a jump() the filter's loading and
+    # persistence lost their standard errors to that one zero row (pig2 with
+    # jump(tt) + gas(1, 1) | alpha ~ s(tt))
+    keep <- setdiff(seq_len(nrow(I)), term_held_stack(spec, design))
+    Vk <- matrix(0, nrow(I), nrow(I))
+    Vk[keep, keep] <- solve(I[keep, keep, drop = FALSE])
+    Vk
   }, error = function(e) NULL)
   z <- stats::qnorm(1 - (1 - level) / 2)
 

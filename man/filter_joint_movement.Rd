@@ -4,7 +4,17 @@
 \alias{filter_joint_movement}
 \title{How the Mode Moves Where an Unpenalized Filter Moves With It}
 \usage{
-filter_joint_movement(spec, design, coef, S, Dm, total, D3)
+filter_joint_movement(
+  spec,
+  design,
+  coef,
+  S,
+  Dm,
+  total,
+  D3,
+  hold = integer(0),
+  Ak = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -22,6 +32,13 @@ filter_joint_movement(spec, design, coef, S, Dm, total, D3)
 
 \item{D3}{The family's third derivative on the link scale at the fitted
 predictors, which the recursion reads where the memo misses.}
+
+\item{hold}{The positions of the coefficients that \code{\link[=mode_solver]{mode_solver()}} holds
+(a break-point held at the minimum of its profile), which stay where
+they are when the mode moves. The default is \code{integer(0)}.}
+
+\item{Ak}{The kink constraints over the stacked coefficients, from
+\code{\link[=mode_solver]{mode_solver()}}, or \code{NULL} for none.}
 }
 \value{
 A list with \code{rows}, one matrix per distribution parameter over the

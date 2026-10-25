@@ -25,8 +25,8 @@ it with \code{laplace = FALSE}.}
 \value{
 A list with \code{solve}, a function of \eqn{c} that returns \eqn{v}
 without the sign; \code{J}, the curvature used in the solve; \code{Dm}, the
-curvature in which the held rows and columns are set to zero; and
-\code{hold}, the held positions.
+curvature in which the held rows and columns are set to zero; \code{hold},
+the held positions; and \code{Ak}, the kink constraints.
 }
 \description{
 Builds the solve that gives the movement of the penalized mode under a

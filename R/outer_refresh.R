@@ -205,8 +205,8 @@ null_basis <- function(B, p = ncol(B)) {
 #'
 #' @return A list with `solve`, a function of \eqn{c} that returns \eqn{v}
 #'   without the sign; `J`, the curvature used in the solve; `Dm`, the
-#'   curvature in which the held rows and columns are set to zero; and
-#'   `hold`, the held positions.
+#'   curvature in which the held rows and columns are set to zero; `hold`,
+#'   the held positions; and `Ak`, the kink constraints.
 #'
 #' @seealso [statmod_marginal_grad()], [statmod_marginal_hess()],
 #'   [null_basis()]
@@ -260,7 +260,7 @@ mode_solver <- function(spec, design, coef, K, Kinv, Dm, npar, offs) {
       }
     }
   }
-  list(solve = solve, J = J, Dm = Dm, hold = hold)
+  list(solve = solve, J = J, Dm = Dm, hold = hold, Ak = Ak)
 }
 
 
