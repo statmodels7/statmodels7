@@ -1,5 +1,17 @@
 # Changelog
 
+## statmodels7 0.209.0
+
+- A gas() term may load the score of a parameter that carries no gas()
+  term, which then drives the filter with a static predictor
+  (modelterms7 0.108.0):
+  `y ~ gas(p = 1, q = 1, p_cross = c(sigma = 1)) | sigma ~ x`. The
+  parameter must be one of the family’s. The exact gradient, information
+  and outer derivatives cover it.
+- The level coordinates of a joint filter that an equation’s intercept
+  holds are read by the prefix of their equation; they were read by
+  position, which assumed one level per filtered parameter.
+
 ## statmodels7 0.208.0
 
 - The cross loadings of score-driven terms are declared per term with

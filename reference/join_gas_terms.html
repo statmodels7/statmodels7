@@ -11,7 +11,7 @@ of the first of them under the key "gas_joint".'><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.208.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,8 +71,11 @@ more.</p>
 most one such term and that no other structural term sits beside them.
 <code><a href="https://statmodels7.github.io/modelterms7/reference/gas_joint.html" class="external-link">modelterms7::gas_joint()</a></code> checks that the terms walk the same series and
 share one <code>scaling</code>, and fills the cross loadings that the <code>p_cross</code> of
-each term declares. A single score-driven term is left as it is, after
-the same check of its <code>p_cross</code>.</p>
+each term declares. A parameter that a <code>p_cross</code> names and that carries no
+gas() term joins the filter as a driver
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/GasDriver.html" class="external-link">modelterms7::GasDriver()</a></code>): its predictor stays static and its score
+enters the driving vector. A single score-driven term with no driver is
+left as it is, after the same check of its <code>p_cross</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

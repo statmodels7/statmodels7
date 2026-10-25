@@ -31,5 +31,9 @@ that no other structural term sits beside them.
 [`modelterms7::gas_joint()`](https://statmodels7.github.io/modelterms7/reference/gas_joint.html)
 checks that the terms walk the same series and share one `scaling`, and
 fills the cross loadings that the `p_cross` of each term declares. A
-single score-driven term is left as it is, after the same check of its
-`p_cross`.
+parameter that a `p_cross` names and that carries no gas() term joins
+the filter as a driver
+([`modelterms7::GasDriver()`](https://statmodels7.github.io/modelterms7/reference/GasDriver.html)):
+its predictor stays static and its score enters the driving vector. A
+single score-driven term with no driver is left as it is, after the same
+check of its `p_cross`.
