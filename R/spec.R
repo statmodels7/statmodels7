@@ -1319,12 +1319,17 @@ statmod_held_levels <- function(spec, design) {
     if (is_joint_filter(tm)) {
       # each level adds a constant to its own equation, so each is held when
       # that equation's design spans the constant
+      # the level coordinates are read by the prefix of their equation: a
+      # driver (modelterms7::GasDriver) has none, and a developed level may
+      # have several
       lv <- modelterms7::term_level_param(tm)
       for (k in seq_along(tm@params)) {
+        lvk <- lv[startsWith(lv, paste0(tm@params[k], "."))]
+        if (!length(lvk)) next
         Xk <- design[[tm@params[k]]]$X
         if (is.null(Xk) || !ncol(Xk)) next
         if (max(abs(qr.resid(qr(Xk), rep(1, n)))) < 1e-8) {
-          out[[u$term]] <- c(out[[u$term]], lv[k])
+          out[[u$term]] <- c(out[[u$term]], lvk)
         }
       }
       next

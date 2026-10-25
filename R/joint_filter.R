@@ -21,8 +21,11 @@ NULL
 #' most one such term and that no other structural term sits beside them.
 #' [modelterms7::gas_joint()] checks that the terms walk the same series and
 #' share one `scaling`, and fills the cross loadings that the `p_cross` of
-#' each term declares. A single score-driven term is left as it is, after
-#' the same check of its `p_cross`.
+#' each term declares. A parameter that a `p_cross` names and that carries no
+#' gas() term joins the filter as a driver
+#' ([modelterms7::GasDriver()]): its predictor stays static and its score
+#' enters the driving vector. A single score-driven term with no driver is
+#' left as it is, after the same check of its `p_cross`.
 #'
 #' @param terms The built terms, a named list of named lists, one per
 #'   distribution parameter.
@@ -43,13 +46,26 @@ join_gas_terms <- function(terms) {
   if (!length(found)) return(terms)
   parts <- stats::setNames(lapply(found, function(f)
     terms[[f$param]][[f$term]]), vapply(found, `[[`, "", "param"))
-  # one term alone is filtered as it is, and gas_joint() only checks its
-  # p_cross, which can name no partner with a term of its own
-  if (length(found) < 2L) {
+  # a parameter that a p_cross names with a positive count and that carries
+  # no gas() term drives the filter with its score: it must be a parameter
+  # of the family, whose equations are the names of `terms`
+  named <- unique(unlist(lapply(parts, function(tm)
+    names(tm@p_cross)[tm@p_cross > 0L])))
+  bad <- setdiff(named, names(terms))
+  if (length(bad)) {
+    stop(sprintf(paste0(
+      "a gas() term loads the score of '%s' (p_cross), which is not a ",
+      "parameter of the family;\n  the parameters are %s."), bad[1L],
+      paste(names(terms), collapse = ", ")), call. = FALSE)
+  }
+  drivers <- setdiff(named, names(parts))
+  # one term alone, with no driver, is filtered as it is, and gas_joint()
+  # only checks its p_cross
+  if (length(found) < 2L && !length(drivers)) {
     modelterms7::gas_joint(parts)
     return(terms)
   }
-  jt <- modelterms7::gas_joint(parts)
+  jt <- modelterms7::gas_joint(parts, drivers = drivers)
   jt@keys <- stats::setNames(vapply(found, `[[`, "", "term"), names(parts))
   for (f in found) terms[[f$param]][[f$term]] <- NULL
   terms[[found[[1L]]$param]][["gas_joint"]] <- jt

@@ -84,6 +84,65 @@ test_that("gas() terms in several equations are joined into one structural term"
                               modelterms7::GasTerm))
 })
 
+test_that("a static parameter drives a filtered level through p_cross", {
+  skip_if_not_installed("numDeriv")
+  dd <- jt_sim()
+  g1 <- distributions7::gaussian1_distrib()
+  form <- y ~ x + gas(p = 1, q = 1, time = t, p_cross = c(sigma = 1)) |
+    sigma ~ x
+  spec <- statmod_spec(form, g1, dd)
+  jt <- spec@terms$mu$gas_joint
+  expect_true(S7::S7_inherits(jt, modelterms7::GasJoint))
+  expect_identical(jt@params, c("mu", "sigma"))
+  expect_true(S7::S7_inherits(jt@terms$sigma, modelterms7::GasDriver))
+  # exact gradient and information, at lags beyond the term's own p
+  g <- jt_derivs(y ~ x + gas(p = 1, q = 1, time = t, p_cross = c(sigma = 2)) |
+                   sigma ~ x, g1, dd,
+                 c(0.9, 0.4, -0.1, 0.2, 0, log(0.2), 0.8, 0.05, -0.03))
+  expect_lt(max(g), 1e-7)
+  # the fit maximizes the log-likelihood of the recursion written out
+  fit <- statmod(form, g1, dd)
+  cf <- coef(fit)
+  ll_of <- function(v) {
+    f <- 0
+    ll <- 0
+    for (t in seq_len(nrow(dd))) {
+      mu <- v[1] + v[2] * dd$x[t] + f
+      ls <- v[3] + v[4] * dd$x[t]
+      s2 <- exp(2 * ls)
+      ll <- ll + stats::dnorm(dd$y[t], mu, sqrt(s2), log = TRUE)
+      r <- dd$y[t] - mu
+      f <- v[5] * r / s2 + v[6] * (r^2 / s2 - 1) + v[7] * f
+    }
+    ll
+  }
+  v0 <- c(cf$mu[["(Intercept)"]], cf$mu[["x"]], cf$sigma[["(Intercept)"]],
+          cf$sigma[["x"]], cf$mu[["gas.kappa1"]],
+          cf$mu[["gas.kappa1_sigma"]], cf$mu[["gas.xi1"]])
+  expect_equal(ll_of(v0), as.numeric(logLik(fit)), tolerance = 1e-10)
+  w <- c(v0[1:4], log(v0[5]), v0[6], atanh(v0[7]))
+  back <- function(w) c(w[1:4], exp(w[5]), w[6], tanh(w[7]))
+  expect_lt(max(abs(numDeriv::grad(function(w) ll_of(back(w)), w))), 1e-4)
+  expect_identical(names(cf$sigma), c("(Intercept)", "x"))
+  expect_output(print(summary(fit)), "kappa1_sigma")
+})
+
+test_that("a driver is scaled with the filtered parameters", {
+  skip_if_not_installed("numDeriv")
+  # the information of a Student t couples sigma and nu; nu is static and
+  # its score drives the level of sigma
+  set.seed(3)
+  dt <- data.frame(t = 1:70, y = stats::rt(70, df = 5) * 1.2)
+  for (d in c(0, 0.5, 1)) {
+    g <- jt_derivs(stats::as.formula(sprintf(paste0(
+      "y ~ 1 | sigma ~ gas(p = 1, q = 1, time = t, scaling = %s, ",
+      "p_cross = c(nu = 1)) | nu ~ 1"), d)),
+      distributions7::student_t1_distrib(), dt,
+      c(0.1, 0.2, 1.6, 0, log(0.1), 0.7, 0.05))
+    expect_lt(max(g), 1e-6, label = sprintf("scaling %g", d))
+  }
+})
+
 test_that("a joint fit maximizes the log-likelihood of the recursion written out", {
   dd <- jt_sim()
   fit <- statmod(y ~ x + gas(p = 1, q = 1, time = t, p_cross = c(sigma = 1)) |
@@ -344,14 +403,15 @@ test_that("joint filters that cannot be fitted are rejected by name", {
   expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t) |
                               sigma ~ gas(p = 1, q = 1, time = t, scaling = 1),
                             g, dd), "same 'scaling'")
-  # a score from an equation without a gas() term, with one term or two
+  # a score of a parameter that the family does not have, with one term or
+  # two; a parameter of the family without a gas() term is a driver
   expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t,
-                                    p_cross = c(sigma = 1)), g, dd),
-               "'sigma' has no gas\\(\\) term")
+                                    p_cross = c(nu = 1)), g, dd),
+               "'nu' \\(p_cross\\), which is not a\\s+parameter of the family")
   expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t,
                                     p_cross = c(nu = 1)) |
                               sigma ~ gas(p = 1, q = 1, time = t), g, dd),
-               "'nu' has no gas\\(\\) term")
+               "'nu' \\(p_cross\\), which is not a\\s+parameter of the family")
   expect_error(statmod_spec(y ~ gas(p = 1, q = 1, time = t) +
                               gas(p = 2, q = 1, time = t, label = "g2"), g, dd),
                "carries two gas\\(\\) terms")

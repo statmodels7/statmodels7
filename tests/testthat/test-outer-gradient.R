@@ -656,7 +656,14 @@ test_that("the outer gradient and Hessian are exact beside a developed cross loa
     list(tol = 1e-5,
          form = y ~ gas(p = 1, q = 1, by = id, time = t) |
            sigma ~ gas(p = 1, q = 1, by = id, time = t, p_cross = c(mu = 2),
-                       kappa2_mu ~ 1 + random(~1 | id))))
+                       kappa2_mu ~ 1 + random(~1 | id))),
+    # sigma static, its score driving the level of mu through a cross
+    # loading with a random effect by group
+    list(tol = 1e-6,
+         form = y ~ gas(p = 1, q = 1, by = id, time = t,
+                        p_cross = c(sigma = 1),
+                        kappa1_sigma ~ 1 + random(~1 | id)) |
+           sigma ~ 1))
   method <- reml(hessian = "observed")
   # the refits of the reference run Newton to a gradient of 1e-8: the joint
   # route stops where the objective no longer resolves a step, and on the

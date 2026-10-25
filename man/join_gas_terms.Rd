@@ -24,7 +24,10 @@ of the first of them under the key \code{"gas_joint"}.
 most one such term and that no other structural term sits beside them.
 \code{\link[modelterms7:gas_joint]{modelterms7::gas_joint()}} checks that the terms walk the same series and
 share one \code{scaling}, and fills the cross loadings that the \code{p_cross} of
-each term declares. A single score-driven term is left as it is, after
-the same check of its \code{p_cross}.
+each term declares. A parameter that a \code{p_cross} names and that carries no
+gas() term joins the filter as a driver
+(\code{\link[modelterms7:GasDriver]{modelterms7::GasDriver()}}): its predictor stays static and its score
+enters the driving vector. A single score-driven term with no driver is
+left as it is, after the same check of its \code{p_cross}.
 }
 \keyword{internal}
