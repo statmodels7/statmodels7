@@ -1198,12 +1198,13 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 }
 
 
-#' Fit the Coefficients and a Filter's Parameters in One System
+#' Fit the Coefficients and a Structural Term's Parameters in One System
 #'
 #' @description
 #' Minimizes the objective over the stacked coefficients of every equation
-#' and the free parameters of a structural term of the filter shape in one
-#' system, instead of alternating between the two blocks.
+#' and the free parameters of a structural term (of the filter shape or of the
+#' likelihood shape) in one system, instead of alternating between the two
+#' blocks.
 #'
 #' @details
 #' The default optimizer is [optimizers7::newton()], with the exact gradient
@@ -1239,12 +1240,13 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 #'   `converged` and `iterations`.
 #'
 #' @seealso [statmod_fit_structural()], which fits only the term's
-#'   parameters and which a term of the likelihood shape still uses.
+#'   parameters, with the coefficients held.
 #'
 #' @keywords internal
 statmod_fit_joint <- function(spec, design, obj, beta, hyper,
                               optimizer = NULL, verbose = FALSE) {
-  jp <- statmod_joint_pieces(spec, design, obj, hyper)
+  jp <- statmod_joint_pieces(spec, design, obj, hyper,
+                             kinds = c("filter", "loglik"))
   u0 <- c(beta, jp$zeta())
   jp$raw(u0)
   if (is.null(optimizer)) optimizer <- optimizers7::newton()

@@ -1,3 +1,20 @@
+# statmodels7 0.210.0
+
+* A structural term of the likelihood shape (`regime()`, a marginal
+  `jump()`) is fitted by two routes from the same start, and the better fit
+  is kept by the rule that the multistarts use. The first route solves the
+  coefficients and the term's own parameters in one system. The second
+  alternates between the two blocks and then solves the joint system from
+  the point that the alternation reached. On `MASS::geyser`,
+  `waiting ~ regime(k = 2)` stopped 1.3e-3 below the maximum with the
+  convergence flag `FALSE`, and it now reaches -1099.6321, the value of
+  `waiting ~ 0 + regime(k = 2)`.
+* `statmod_certificate()` reads the mode error over the coefficients and
+  the free parameters of a structural term together. It read the
+  coefficients alone, so a fit that stopped short in the term's own
+  parameters was certified `converged` while its convergence flag was
+  `FALSE`.
+
 # statmodels7 0.209.1
 
 * A break-point that `jump()` holds at the minimum of its profile is held on

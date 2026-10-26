@@ -814,6 +814,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # same point carried the flag FALSE. filter_decrement() reads the decrement
   # over the coefficients and the filter's own parameters.
   sst0 <- statmod_structural_state(design)
+  z_start <- if (!is.null(sst0)) sst0$zeta else NULL
   alt <- if (!is.null(sst0)) sst0$info_start else NULL
   if (length(alt)) {
     f1 <- tryCatch(fit_once(beta), error = function(e) e)
@@ -851,6 +852,38 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   hyper <- f1$hyper
   crit <- f1$crit
   spec_h <- f1$spec_h
+
+  # TWO ROUTES FOR A TERM OF THE LIKELIHOOD SHAPE. The fit above solved the
+  # coefficients and the term's own parameters in one system from the start;
+  # the model is fitted once more from the same start by the alternation,
+  # which ends in the joint system from the point it reached
+  # (statmod_alternate()), and the better of the two is kept by the rule the
+  # multistarts below use. Neither route dominates (measured on the battery:
+  # regime-2 -1019.855 against -1019.368, the marginal jump() -859.796
+  # against -859.898). The route that won stays recorded in the structural
+  # state, so the edge restarts below take it too.
+  su0 <- attr(design, "structural")
+  two_routes <- !is.null(sst0) && length(blocks$smooth) &&
+    any(vapply(su0, function(u) identical(u$kind, "loglik"), logical(1))) &&
+    all(vapply(su0, function(u) u$kind %in% c("filter", "loglik"),
+               logical(1)))
+  if (two_routes) {
+    zfirst <- sst0$zeta
+    sst0$zeta <- z_start
+    sst0$route <- "alternate"
+    f2 <- tryCatch(fit_once(beta), error = function(e) NULL)
+    if (!is.null(f2) && edge_restart_better(f2$res, res, crit,
+                                            outer_criterion,
+                                            sparse_criterion)) {
+      res <- f2$res
+      hyper <- f2$hyper
+      crit <- f2$crit
+      spec_h <- f2$spec_h
+    } else {
+      sst0$zeta <- zfirst
+      sst0$route <- NULL
+    }
+  }
 
   # SEVERAL STARTS, WHERE A STRUCTURAL TERM ASKS FOR THEM. The likelihood of
   # a regime model has several maxima and one start reaches the basin it lies
@@ -1136,15 +1169,33 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
   frozen_stalled <- FALSE
   struct_ok <- TRUE
 
-  # A structural term of the FILTER shape is fitted in the same system as the
-  # coefficients rather than alternated with them: the joint gradient and the
-  # joint observed information both exist, and the alternation was paying for
-  # one optimizer per pass whose every iteration re-ran the recursion. A term
-  # of the likelihood shape -- a regime -- keeps the alternation, its
-  # information being assembled by a different route.
-  joint <- has_structural && length(blocks$smooth) &&
+  # A structural term is fitted in the same system as the coefficients rather
+  # than alternated with them: the joint gradient and the joint observed
+  # information both exist, and the alternation was paying for one optimizer
+  # per pass whose every iteration re-ran the recursion. This holds for a term
+  # of the FILTER shape and for one of the LIKELIHOOD shape (a regime, a
+  # marginal break-point), whose observed information
+  # statmod_full_information() assembles from the forward-backward pass or
+  # the quadrature.
+  #
+  # A term of the likelihood shape is also fitted by the second route, the
+  # alternation followed by the joint system from the point it reached, and
+  # statmod() keeps the better of the two (`sst$route`, set there). Neither
+  # route dominates. On MASS::geyser, `waiting ~ regime(k = 2)` alternated
+  # stopped 1.3e-3 below the maximum (the intercept and the level gap sit in
+  # different blocks and move together, the alternation zig-zagged between
+  # them at a ratio of about 0.6 per pass, and the relative stopping rule
+  # ended it with the joint Newton decrement at 1.275e-3); both routes reach
+  # the maximum. On the battery's regime-2 the joint system from the start
+  # reaches a stationary point at -1019.855, and the alternation with the
+  # joint step -1019.368. On the battery's marginal jump() it is the other
+  # way round: -859.796 in 1.8 s against -859.898 in 22.9 s.
+  sst_route <- statmod_structural_state(design)
+  alternate_route <- !is.null(sst_route) &&
+    identical(sst_route$route, "alternate")
+  joint <- has_structural && length(blocks$smooth) && !alternate_route &&
     all(vapply(attr(design, "structural"),
-               function(u) identical(u$kind, "filter"), logical(1)))
+               function(u) u$kind %in% c("filter", "loglik"), logical(1)))
 
   # A SCAD or MCP scaled by the curvature of the likelihood is scaled
   # self-consistently: the curvature is read again at the start of every
@@ -1318,9 +1369,9 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     # one system, so there is no second block for a second pass to move.
     # Every such fit therefore paid one extra pass to discover a relative
     # change of exactly zero -- visible in the trace as a second pass of one
-    # iteration. The alternation is still entered where a term of the
-    # LIKELIHOOD shape (a regime) is present, or a sparse block, or a term
-    # that recomputes its own design, because those really do alternate.
+    # iteration. The alternation is still entered where a sparse block is
+    # present, or a term that recomputes its own design, because those really
+    # do alternate.
     # a working phase that stopped for want of step control will stop the
     # same way at the next pass, the schedule staying at its floor, so the
     # alternation ends here too instead of repeating it up to maxit times
@@ -1361,6 +1412,34 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
                               approx, aliased)
       }
       break
+    }
+  }
+  # THE SECOND ROUTE ENDS IN THE JOINT SYSTEM, from the point the alternation
+  # reached. The step is taken where nothing else alternates (no kinked block,
+  # no block that recomputes itself), and kept only where it does not raise
+  # the objective; the flag is then the joint system's own, as on the first
+  # route.
+  if (alternate_route && has_structural && length(blocks$smooth) &&
+      !length(blocks$sparse) && !has_refresh) {
+    v0 <- value
+    zsave <- sst_route$zeta
+    rp <- tryCatch(statmod_fit_joint(spec, design, obj, beta, hyper,
+                                     verbose = vb$blocks),
+                   error = function(e) NULL)
+    if (!is.null(rp) && is.finite(rp$value) && rp$value <= value) {
+      beta <- rp$par
+      value <- rp$value
+      converged <- isTRUE(rp$converged)
+      hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
+        pass = pass, block = "joint", objective = value,
+        change = v0 - value, iterations = rp$iterations,
+        converged = rp$converged
+      )
+    } else {
+      # statmod_fit_joint() writes the term's parameters into the state
+      sst_route$zeta <- zsave
+      sst_route$key <- NULL
+      sst_route$value <- NULL
     }
   }
   list(par = beta, value = value, converged = converged, obj = obj,

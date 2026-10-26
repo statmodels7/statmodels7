@@ -54,16 +54,53 @@ test_that("the false point is flagged and a true boundary maximum is not", {
                                     f0@coefficients)), 0L)
 })
 
+# the regime term started at the false point itself
+false_start <- function(term, ...) {
+  z <- zero_start(term)
+  z[c("level1", "gap2", "alr1.1", "alr2.1")] <-
+    c(0, 3.015777, -2.105419, 26.600657)
+  z
+}
+
+with_false_start <- function(expr) {
+  gen <- modelterms7::term_start
+  RT <- modelterms7::RegimeTerm
+  keep <- S7::method(gen, RT)
+  S7::method(gen, RT) <- false_start
+  on.exit(S7::method(gen, RT) <- keep, add = TRUE)
+  suppressMessages(expr)
+}
+
 test_that("the fit restarts from the edge and reaches the maximum", {
-  # negative control: with the old start and the check switched off, the fit
-  # stops at the false point, so the case really reaches the code
+  # negative control: started at the false point with the check switched off,
+  # the fit stays there, so the case really reaches the code. The zero start
+  # served as the control while the regime was alternated with the
+  # coefficients; fitted in one system, it reaches the maximum by itself.
   local_mocked_bindings(edge_violations = function(...) {
     data.frame(kind = character(0), param = character(0),
                term = character(0), name = character(0), eta = numeric(0),
                target = numeric(0), gain = numeric(0))
   })
-  old <- with_zero_start(statmod(waiting ~ regime(k = 2), G, geyser_df()))
+  old <- with_false_start(statmod(waiting ~ regime(k = 2), G, geyser_df()))
   expect_lt(as.numeric(logLik(old)), -1130)
+})
+
+test_that("with the check, the false start ends at the maximum", {
+  fit <- with_false_start(statmod(waiting ~ regime(k = 2), G, geyser_df()))
+  expect_gt(as.numeric(logLik(fit)), -1099.7)
+  expect_identical(statmod_certificate(fit)$state, "converged")
+})
+
+test_that("the intercept and the regime are fitted to the same maximum", {
+  # alternated, the intercept spelling stopped 1.3e-3 below the maximum with
+  # the flag FALSE and the certificate, read on the coefficients alone,
+  # `converged`
+  f1 <- statmod(waiting ~ regime(k = 2), G, geyser_df())
+  f0 <- statmod(waiting ~ 0 + regime(k = 2), G, geyser_df())
+  expect_true(f1@converged)
+  expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f0)),
+               tolerance = 1e-9)
+  expect_lt(statmod_certificate(f1)$mode_error, 1e-6)
 })
 
 test_that("with the check, the old start still ends at the maximum", {

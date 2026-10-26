@@ -1,8 +1,9 @@
 # A structural term that asks for several starts through
 # modelterms7::term_starts() is fitted from each, and the best is kept. On
 # MASS::geyser with three regimes the start at the quantiles reaches the
-# maximum, -1053.39, and a displaced start reaches a local maximum, -1210.49;
-# starting from the second and offering the first must end at the first.
+# maximum, -1053.39, and a start placed at a local maximum stays there,
+# -1210.49; starting from the second and offering the first must end at the
+# first.
 
 geyser3 <- function() data.frame(waiting = geyser_waiting)
 G <- distributions7::gaussian1_distrib()
@@ -10,15 +11,15 @@ G <- distributions7::gaussian1_distrib()
 # the quantile start, taken before any test replaces the method
 quant_start <- S7::method(modelterms7::term_start, modelterms7::RegimeTerm)
 
-# the displaced start that lands on the local maximum: the third of
-# term_starts(regime(k = 3, n_start = 3)), drawn with the seed 102
+# a start at the local maximum, with two transition probabilities near their
+# edge. The displaced start this replaced (the third of
+# term_starts(regime(k = 3, n_start = 3)), seed 102) reached the local
+# maximum while the regime was alternated with the coefficients; fitted in
+# one system, it reaches the maximum, -1053.39.
 bad_start <- function(term, target) {
   z <- quant_start(term, target = target)
-  a <- startsWith(names(z), "alr")
-  g <- startsWith(names(z), "gap")
-  set.seed(102)
-  z[a] <- stats::rnorm(sum(a), 0, 2)
-  z[g] <- z[g] + stats::rnorm(sum(g), 0, 0.7)
+  z[c("gap2", "gap3", "alr1.1", "alr1.2", "alr2.1", "alr2.2", "alr3.1",
+      "alr3.2")] <- c(3.718, 1.816, -2.451, 3.584, -5.527, 8, -5.048, 8)
   z
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{statmod_fit_joint}
 \alias{statmod_fit_joint}
-\title{Fit the Coefficients and a Filter's Parameters in One System}
+\title{Fit the Coefficients and a Structural Term's Parameters in One System}
 \usage{
 statmod_fit_joint(
   spec,
@@ -37,8 +37,9 @@ parameters are written into the design's structural state), \code{value},
 }
 \description{
 Minimizes the objective over the stacked coefficients of every equation
-and the free parameters of a structural term of the filter shape in one
-system, instead of alternating between the two blocks.
+and the free parameters of a structural term (of the filter shape or of the
+likelihood shape) in one system, instead of alternating between the two
+blocks.
 }
 \details{
 The default optimizer is \code{\link[optimizers7:newton]{optimizers7::newton()}}, with the exact gradient
@@ -62,6 +63,6 @@ back from that point instead of abandoning the run.
 }
 \seealso{
 \code{\link[=statmod_fit_structural]{statmod_fit_structural()}}, which fits only the term's
-parameters and which a term of the likelihood shape still uses.
+parameters, with the coefficients held.
 }
 \keyword{internal}

@@ -5288,6 +5288,59 @@ certificate_core <- function(fit, tol, flat, edge) {
           out$mode_error <- 0.5 * sum(sc * db)
         }
       }
+      # A STRUCTURAL TERM'S OWN PARAMETERS ARE PART OF THE INNER FIT, so the
+      # mode error is read over the joint vector, as alternation_settled()
+      # reads it for the convergence flag. Read on the coefficients alone,
+      # with the term held, it missed the direction in which the coefficients
+      # and the term move together: on MASS::geyser, `waiting ~ regime(k = 2)`
+      # stopped 1.3e-3 below the maximum with a joint decrement of 1.275e-3,
+      # and the certificate read 2.4e-4 and `converged` while the flag read
+      # FALSE. The coefficients' part of the gradient is the one read above,
+      # with the held and kinked coordinates set to zero.
+      su <- attr(design, "structural")
+      if (length(su) && !is.null(obj) && !is.null(sc) &&
+          all(is.finite(sc)) && is.finite(out$mode_error)) {
+        mj <- tryCatch({
+          jp <- statmod_joint_pieces(spec, design, obj, hy,
+                                     kinds = c("filter", "loglik"))
+          u <- c(obj$stack(cf), jp$zeta())
+          if (!is.finite(jp$raw(u))) stop("not evaluable")
+          z <- jp$zeta()
+          gj <- c(sc, jp$gr(u)[jp$ix])
+          Kj <- as_dense(jp$he(u))
+          Kj <- (Kj + t(Kj)) / 2
+          # a parameter of the term that a kinked penalty holds at zero has a
+          # score in the subdifferential, as a kinked coefficient does, so it
+          # is left out (measured on gas(by = g, omega ~ 0 + lasso(~ g)): read
+          # with those parameters, the mode error was 8.6e-3 at a KKT point
+          # where the coefficients read 2.1e-9)
+          nm <- names(statmod_structural_state(design)$zeta[[jp$key]])
+          zk <- integer(0)
+          for (bl in statmod_blocks(spec, design)$sparse) {
+            if (!isTRUE(bl$structural) || !identical(bl$zterm, jp$key)) next
+            pos <- match(nm[bl$cols], jp$free)
+            pos <- pos[!is.na(pos)]
+            zk <- c(zk, pos[z[pos] == 0])
+          }
+          sz <- setdiff(seq_along(jp$ix), zk)
+          if (is.null(kc)) {
+            keep <- c(seq_along(sc), length(sc) + sz)
+            dep <- deficient_coords(Kj[keep, keep, drop = FALSE])
+            if (length(dep)) keep <- keep[-dep]
+            0.5 * sum(gj[keep] * solve(Kj[keep, keep, drop = FALSE],
+                                       gj[keep]))
+          } else {
+            nz <- length(jp$ix)
+            Nk <- null_basis(kc, length(sc))
+            Iz <- diag(nz)[, sz, drop = FALSE]
+            N <- rbind(cbind(Nk, matrix(0, nrow(Nk), ncol(Iz))),
+                       cbind(matrix(0, nz, ncol(Nk)), Iz))
+            gn <- crossprod(N, gj)
+            0.5 * sum(gn * solve(crossprod(N, Kj %*% N), gn))
+          }
+        }, error = function(e) NA_real_)
+        if (length(mj) == 1L && is.finite(mj)) out$mode_error <- abs(mj)
+      }
       # THE TWO NUMBERS summary() PRINTS for the inner fit, over the
       # coordinates vcov() reports: a coefficient a kinked penalty set to zero
       # has a score that lies in the subdifferential rather than vanishing, a
@@ -5308,16 +5361,18 @@ certificate_core <- function(fit, tol, flat, edge) {
           out$zeros <- tryCatch(zero_readings(spec, design, obj, cf, hy, lab),
                                 error = function(e) NULL)
         }
-        # A FILTER'S OWN PARAMETERS ARE ESTIMATED BESIDE THE COEFFICIENTS, in
-        # one system, so the inner reading is over that joint vector: read on
+        # A STRUCTURAL TERM'S OWN PARAMETERS (a filter's or a regime's) ARE
+        # ESTIMATED BESIDE THE COEFFICIENTS, in one system, so the inner
+        # reading is over that joint vector: read on
         # the coefficients alone, a model whose equation is one intercept and
         # a gas() term reports an equilibrated eigenvalue of exactly 1 whatever
         # the filter's curvature is. The closures are the fit's own.
-        su <- attr(design, "structural")
         if (length(su) && !is.null(obj) &&
-            all(vapply(su, function(u) identical(u$kind, "filter"), TRUE))) {
+            all(vapply(su, function(u) u$kind %in% c("filter", "loglik"),
+                       TRUE))) {
           out$inner <- tryCatch({
-            jp <- statmod_joint_pieces(spec, design, obj, hy)
+            jp <- statmod_joint_pieces(spec, design, obj, hy,
+                                       kinds = c("filter", "loglik"))
             u <- c(obj$stack(cf), jp$zeta())
             if (!is.finite(jp$raw(u))) stop("not evaluable")
             kink_readings(jp$gr(u), jp$he(u), c(keep, jp$ix), kc)
