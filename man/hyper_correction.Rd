@@ -39,8 +39,8 @@ Returns \eqn{J V_\theta J'}, the movement of the penalized mode under the
 estimated hyperparameters, as a matrix to be added to \eqn{V_b}.
 }
 \details{
-The matrices that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} returns for \code{type = "bayesian"} and
-\code{type = "frequentist"} are conditional on the hyperparameters: each is read
+The matrices that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} returns for \code{\link[=bayesian_vcov]{bayesian_vcov()}} and
+\code{\link[=frequentist_vcov]{frequentist_vcov()}} are conditional on the hyperparameters: each is read
 at the value at which the outer search stopped, as though that value were
 known. The value was estimated from the same data, and the cost of that is
 \deqn{V' = V_b + J V_\theta J', \qquad

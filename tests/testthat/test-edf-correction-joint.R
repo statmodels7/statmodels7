@@ -205,7 +205,7 @@ test_that("the correction is the trace vcov()'s two matrices already imply", {
   #   tr((V' - V_b) H) == statmod_edf_correction()$total
   # -- extended to a model carrying a filter. It was BROKEN there before this
   # change and not by a little: hyper_correction(), which
-  # vcov(type = "unconditional") reads, has passed joint = TRUE since
+  # vcov(type = unconditional_vcov()) reads, has passed joint = TRUE since
   # 0.114.0 while the correction passed joint = FALSE, so one consumer of
   # hyper_mode_cross() counted the movement and the other counted zero.
   d <- edf_panel()
@@ -213,7 +213,7 @@ test_that("the correction is the trace vcov()'s two matrices already imply", {
                  gaussian1_distrib(), d, outer_criterion = reml())
   dz <- statmod_design(fit@spec)
   K <- as.matrix(statmod_full_information(fit@spec, fit@coefficients, dz))
-  C <- as.matrix(vcov(fit, type = "unconditional", readable = FALSE)) -
+  C <- as.matrix(vcov(fit, type = unconditional_vcov(), readable = FALSE)) -
     as.matrix(vcov(fit, readable = FALSE))
   expect_equal(dim(C), dim(K))
 

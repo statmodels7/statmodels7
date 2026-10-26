@@ -84,11 +84,11 @@ test_that("predict() rejects arguments that no route reads", {
   nd <- data.frame(x = c(0, 1))
   expect_error(predict(fit, what = "mu", newdata = nd, bogus = 3),
                "takes no argument 'bogus'")
-  expect_error(predict(fit, what = "mu", newdata = nd, type = "unconditional"),
+  expect_error(predict(fit, what = "mu", newdata = nd, type = unconditional_vcov()),
                "read only with")
   expect_error(predict(fit, what = "mu", se = TRUE, readable = FALSE),
                "takes no argument 'readable'")
-  a <- predict(fit, what = "mu", newdata = nd, se = TRUE, type = "frequentist")
+  a <- predict(fit, what = "mu", newdata = nd, se = TRUE, type = frequentist_vcov())
   expect_true(all(is.finite(a$se)))
 })
 
@@ -202,7 +202,7 @@ test_that("a restricted test reaches the rows of a break-point term", {
   pick <- function(s) Filter(function(b) identical(b$term, "seg(x)"),
                             s@tables$mu)[[1L]]$table
   tw <- pick(summary(f))
-  tl <- pick(summary(f, test = "lr"))
+  tl <- pick(summary(f, test = lr_test()))
   r <- match("gamma1", tw$name)
   expect_false(isTRUE(all.equal(tw$statistic[r], tl$statistic[r])))
   expect_true(is.na(tl$statistic[match("psi1", tl$name)]))

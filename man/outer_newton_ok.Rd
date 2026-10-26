@@ -40,7 +40,7 @@ the saving in evaluations.
 
 The availability of the Hessian still governs the rest: it is supplied to an
 optimizer that the caller names, \code{statmod_hyper_vcov()} and
-\code{vcov(type = "unconditional")} read it, and it is recorded as
+\code{vcov(type = unconditional_vcov())} read it, and it is recorded as
 \code{exact_hessian}. Only the default direction is held back.
 
 The block width is read from the \code{block} property of the penalty where it

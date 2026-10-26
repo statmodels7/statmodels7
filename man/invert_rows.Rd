@@ -13,9 +13,9 @@ invert_rows(fit, out, level, test, type)
 
 \item{level}{The confidence level.}
 
-\item{test}{Which test to invert.}
+\item{test}{The \link{test_statistic} to invert.}
 
-\item{type}{Which variance sets the starting bracket.}
+\item{type}{The \link{vcov_type} that sets the starting bracket.}
 }
 \value{
 \code{out}, in which the \code{lower} and \code{upper} columns are replaced.

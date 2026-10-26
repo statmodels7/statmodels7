@@ -1194,8 +1194,8 @@ hyper_mode_cross <- function(spec, design, coef, hyper, idx, n,
 #' estimated hyperparameters, as a matrix to be added to \eqn{V_b}.
 #'
 #' @details
-#' The matrices that [vcov.StatmodFit()] returns for `type = "bayesian"` and
-#' `type = "frequentist"` are conditional on the hyperparameters: each is read
+#' The matrices that [vcov.StatmodFit()] returns for [bayesian_vcov()] and
+#' [frequentist_vcov()] are conditional on the hyperparameters: each is read
 #' at the value at which the outer search stopped, as though that value were
 #' known. The value was estimated from the same data, and the cost of that is
 #' \deqn{V' = V_b + J V_\theta J', \qquad

@@ -465,9 +465,9 @@ stack_coords <- function(spec, design, pos) {
 #' \deqn{\mathrm{Var}(\hat\beta) = K_{uu}^{-1} + B\,V_v B^\top,\qquad
 #'   V_v = \big[-\nabla^2_{vv}\ell_M\big]^{-1},}
 #' where \eqn{K_{uu}^{-1}} is padded with zeros on \eqn{\gamma} and \eqn{B}
-#' holds one direction per coordinate of \eqn{v}. For `type = "bayesian"`
+#' holds one direction per coordinate of \eqn{v}. For [bayesian_vcov()]
 #' \eqn{v = \gamma} and the hyperparameters are held; for
-#' `type = "unconditional"` \eqn{v = (\eta, \gamma)} and the hyperparameters'
+#' [unconditional_vcov()] \eqn{v = (\eta, \gamma)} and the hyperparameters'
 #' directions are \eqn{-K_{uu}^{-1}\partial^2\rho/\partial u\,\partial\eta}.
 #'
 #' Replacing \eqn{-\nabla^2_{\gamma\gamma}\ell_M} by the Schur complement
@@ -480,7 +480,8 @@ stack_coords <- function(spec, design, pos) {
 #' @param A The penalized information over the kept coordinates.
 #' @param keep The kept coordinates, a logical vector over the stacked
 #'   coefficients.
-#' @param type `"bayesian"` or `"unconditional"`.
+#' @param type The `name` of a [vcov_type] object, `"bayesian"` or
+#'   `"unconditional"`.
 #'
 #' @return The variance over the kept coordinates, or `NULL` where the fit
 #'   estimated no coefficient on its criterion, where the model carries a

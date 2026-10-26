@@ -9,8 +9,8 @@ statmod_stat_at(
   param,
   coefname,
   value = 0,
-  test = "wald",
-  type = "bayesian",
+  test = wald_test(),
+  type = bayesian_vcov(),
   mode_error = FALSE,
   objective0 = NULL
 )
@@ -23,10 +23,11 @@ statmod_stat_at(
 \item{value}{The value under the null, a single number. The default is
 \code{0}.}
 
-\item{test}{One of \code{"wald"}, \code{"lr"}, \code{"score"}, \code{"gradient"}.}
+\item{test}{A \link{test_statistic} object: \code{\link[=wald_test]{wald_test()}}, \code{\link[=lr_test]{lr_test()}},
+\code{\link[=score_test]{score_test()}} or \code{\link[=gradient_test]{gradient_test()}}.}
 
-\item{type}{Which variance the Wald statistic reads, as
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} takes it.}
+\item{type}{A \link{vcov_type} object, the variance that the Wald statistic
+reads, as \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} takes it.}
 
 \item{mode_error}{Whether to read how far above its mode the restricted
 fit stopped (\code{\link[=restricted_mode_error]{restricted_mode_error()}}). The default is \code{FALSE}, because
@@ -40,7 +41,8 @@ as \code{\link[=joint_objective]{joint_objective()}} returns it, for a caller th
 likelihood ratio many times on one fit. \code{NULL} computes it here.}
 }
 \value{
-A list with \code{test}, \code{statistic}, \code{df}, \code{p.value}, \code{converged} --
+A list with \code{test} (the \link{test_statistic} object), \code{statistic}, \code{df},
+\code{p.value}, \code{converged} --
 \code{NA} for the Wald statistic and the restricted fit's flag for the other
 three -- and \code{mode_error}, \code{NA} unless it is requested.
 }
@@ -75,10 +77,10 @@ The likelihood ratio is taken on \eqn{\ell_p} and not on \eqn{\ell}.
 \eqn{\ell(\hat\beta)} and the difference of log-likelihoods can be
 negative. The other three statistics read the penalized objective as well:
 \eqn{U} and \eqn{K} are its gradient and its curvature, and the Wald
-variance is \eqn{(H+S)^{-1}} under \code{type = "bayesian"}.
+variance is \eqn{(H+S)^{-1}} under \code{type = bayesian_vcov()}.
 
 For a shrunk coordinate this is the reading that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} gives
-under \code{type = "bayesian"}: the penalty is a log-prior, so \eqn{\ell_p} is
+under \code{type = bayesian_vcov()}: the penalty is a log-prior, so \eqn{\ell_p} is
 a log posterior at the hyperparameters in force, and the interval by
 inversion is the set that the posterior does not reject, conditional on
 them. The interpretation that the Wald interval on such a row carries

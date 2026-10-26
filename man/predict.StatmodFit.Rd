@@ -73,9 +73,10 @@ read only where \code{predictive = "bootstrap"}.}
 at the fit's hyperparameters, or \code{"full"}, choosing them again. It is
 read only where \code{predictive = "bootstrap"}.}
 
-\item{...}{Only \code{type}, the variance type of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: the
-Bayesian variance, the frequentist one or the unconditional one, which
-also accounts for the estimated smoothing parameters. It is read where
+\item{...}{Only \code{type}, a \link{vcov_type} object that selects the variance
+convention of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
+\code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}, which also accounts for
+the estimated smoothing parameters. It is read where
 \code{se} is \code{TRUE}, with \code{interval = "group"}, and with
 \code{interval = "prediction"} and \code{predictive = "averaged"}, and it signals an
 error elsewhere. Any other argument signals an error that names it. The

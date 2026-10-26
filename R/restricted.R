@@ -291,10 +291,10 @@ kinked_coords <- function(spec, design) {
 #' \eqn{\ell(\hat\beta)} and the difference of log-likelihoods can be
 #' negative. The other three statistics read the penalized objective as well:
 #' \eqn{U} and \eqn{K} are its gradient and its curvature, and the Wald
-#' variance is \eqn{(H+S)^{-1}} under `type = "bayesian"`.
+#' variance is \eqn{(H+S)^{-1}} under `type = bayesian_vcov()`.
 #'
 #' For a shrunk coordinate this is the reading that [vcov.StatmodFit()] gives
-#' under `type = "bayesian"`: the penalty is a log-prior, so \eqn{\ell_p} is
+#' under `type = bayesian_vcov()`: the penalty is a log-prior, so \eqn{\ell_p} is
 #' a log posterior at the hyperparameters in force, and the interval by
 #' inversion is the set that the posterior does not reject, conditional on
 #' them. The interpretation that the Wald interval on such a row carries
@@ -319,9 +319,10 @@ kinked_coords <- function(spec, design) {
 #' @param param,coefname Which coefficient, as in [statmod_restrict()].
 #' @param value The value under the null, a single number. The default is
 #'   `0`.
-#' @param test One of `"wald"`, `"lr"`, `"score"`, `"gradient"`.
-#' @param type Which variance the Wald statistic reads, as
-#'   [vcov.StatmodFit()] takes it.
+#' @param test A [test_statistic] object: [wald_test()], [lr_test()],
+#'   [score_test()] or [gradient_test()].
+#' @param type A [vcov_type] object, the variance that the Wald statistic
+#'   reads, as [vcov.StatmodFit()] takes it.
 #' @param mode_error Whether to read how far above its mode the restricted
 #'   fit stopped ([restricted_mode_error()]). The default is `FALSE`, because
 #'   reading it costs one Hessian where the likelihood ratio and the gradient
@@ -332,17 +333,20 @@ kinked_coords <- function(spec, design) {
 #'   as [joint_objective()] returns it, for a caller that reads the
 #'   likelihood ratio many times on one fit. `NULL` computes it here.
 #'
-#' @return A list with `test`, `statistic`, `df`, `p.value`, `converged` --
+#' @return A list with `test` (the [test_statistic] object), `statistic`, `df`,
+#'   `p.value`, `converged` --
 #'   `NA` for the Wald statistic and the restricted fit's flag for the other
 #'   three -- and `mode_error`, `NA` unless it is requested.
 #'
 #' @seealso [statmod_restrict()], which the three restricted statistics read.
 #'
 #' @keywords internal
-statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
-                         type = "bayesian", mode_error = FALSE,
-                         objective0 = NULL) {
-  test <- match.arg(test, c("wald", "lr", "score", "gradient"))
+statmod_stat_at <- function(fit, param, coefname, value = 0,
+                         test = wald_test(), type = bayesian_vcov(),
+                         mode_error = FALSE, objective0 = NULL) {
+  test <- as_test_statistic(test)
+  type <- as_vcov_type(type)
+  tname <- test@name
   spec <- fit@spec
   design <- statmod_design(spec)
   params <- spec@distrib@params
@@ -359,7 +363,7 @@ statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
          converged = conv, mode_error = me)
   }
 
-  if (identical(test, "wald")) {
+  if (!test_restricted(test)) {
     # the only one that needs no refit, and the only one a reparametrization
     # moves. Nothing was refitted, so there is no mode to be above
     V <- stats::vcov(fit, type = type)
@@ -371,7 +375,7 @@ statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
 
   r <- statmod_restrict(fit, param, coefname, value)
   me <- if (isTRUE(mode_error)) r$mode_error() else NA_real_
-  if (identical(test, "lr")) {
+  if (identical(tname, "lr")) {
     # 2 times the rise in the PENALIZED OBJECTIVE, which is the function both
     # fits maximize, so the difference is non-negative by construction. Read
     # on the log-likelihood alone it is not: the restricted point maximizes
@@ -387,7 +391,7 @@ statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
     return(out(2 * (r$objective - o0), r$converged, me))
   }
   u <- r$score[[r$at]]
-  if (identical(test, "gradient")) {
+  if (identical(tname, "gradient")) {
     return(out(u * (bhat - value), r$converged, me))
   }
   K <- r$information()
@@ -483,7 +487,9 @@ joint_objective <- function(fit) {
 #' with a class attribute and no declared structure, so that it cannot be
 #' validated.
 #'
-#' @param test Which of the four statistics was computed.
+#' @param test The [test_statistic] object that was computed: [wald_test()],
+#'   [lr_test()], [score_test()] or [gradient_test()]. Its `label` is the name
+#'   under which `print()` shows the statistic.
 #' @param statistic Its value, compared with a \eqn{\chi^2_1}.
 #' @param df One, always.
 #' @param p.value The upper tail of that \eqn{\chi^2_1}.
@@ -513,8 +519,9 @@ joint_objective <- function(fit) {
 #' @export
 StatmodTest <- S7::new_class("StatmodTest",
   properties = list(
-    # which of the four statistics, as `statmod_test()` was asked for it
-    test = S7::class_character,
+    # which of the four statistics, as the object `statmod_test()` received;
+    # print() reads its label
+    test = test_statistic,
     statistic = S7::class_numeric,
     df = S7::class_integer,
     p.value = S7::class_numeric,
@@ -549,9 +556,7 @@ StatmodTest <- S7::new_class("StatmodTest",
 #'
 #' @keywords internal
 print.StatmodTest <- function(x, digits = 4L, ...) {
-  nm <- c(wald = "Wald", lr = "Likelihood-ratio", score = "Rao score",
-          gradient = "Terrell gradient")[[x@test]]
-  cat("\n\t", nm, " test on a statmod fit\n\n", sep = "")
+  cat("\n\t", x@test@label, " test on a statmod fit\n\n", sep = "")
   cat("coefficient:  ", x@parameter, ":", x@coefficient, "\n", sep = "")
   cat("X-squared = ", format(x@statistic, digits = digits),
       ",  df = ", x@df,
@@ -618,14 +623,22 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #'   the distribution parameter and the coefficient's name in its equation.
 #' @param value The value under the null, a single number. The default is
 #'   `0`, which is the value that a summary reports.
-#' @param test One of `"wald"`, `"lr"`, `"score"`, `"gradient"`.
-#' @param type Which variance the Wald statistic reads, passed to
-#'   [vcov.StatmodFit()].
+#' @param test A [test_statistic] object: [wald_test()] (the default),
+#'   [lr_test()], [score_test()] or [gradient_test()]. The first reads the
+#'   unrestricted fit only; the other three cost one restricted refit. The
+#'   four are compared at [test_statistic]. A character string is rejected with
+#'   an error that names the constructor.
+#' @param type A [vcov_type] object, the variance that the Wald statistic
+#'   reads, passed to [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
+#'   [frequentist_vcov()] or [unconditional_vcov()]. The conventions are
+#'   compared at [vcov_type].
 #'
 #' @return A [StatmodTest()].
 #'
-#' @seealso [summary.StatmodFit()] for the rows that can be held, against zero,
-#'   [confint.StatmodFit()] for the interval that a test inverts.
+#' @seealso [test_statistic] for the four statistics, [vcov_type] for the
+#'   variance conventions, [summary.StatmodFit()] for the rows that can be
+#'   held, against zero, [confint.StatmodFit()] for the interval that a test
+#'   inverts.
 #'
 #' @examples
 #' set.seed(1)
@@ -633,12 +646,14 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #' dd$y <- rpois(200, exp(0.3 + dd$x))
 #' fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
 #' ## the summary tests whether the slope is zero; this tests whether it is one
-#' statmod_test(fit, param = "mu", coefname = "x", value = 1, test = "lr")
-#' statmod_test(fit, param = "mu", coefname = "x", value = 0, test = "lr")
+#' statmod_test(fit, param = "mu", coefname = "x", value = 1, test = lr_test())
+#' statmod_test(fit, param = "mu", coefname = "x", value = 0, test = lr_test())
 #'
 #' @export
-statmod_test <- function(fit, param, coefname, value = 0, test = "wald",
-                         type = "bayesian") {
+statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
+                         type = bayesian_vcov()) {
+  test <- as_test_statistic(test)
+  type <- as_vcov_type(type)
   # the mode error is asked for HERE and nowhere else: this is the one
   # surface a reader reads one row of, so one extra Hessian is affordable,
   # where the two loops that call the same helper in quantity are not
@@ -682,9 +697,10 @@ statmod_test <- function(fit, param, coefname, value = 0, test = "wald",
 #' @param fit A [StatmodFit()].
 #' @param param,coefname Which coefficient, as in [statmod_restrict()].
 #' @param level The confidence level, a single number in (0, 1).
-#' @param test One of `"lr"`, `"score"`, `"gradient"`, `"wald"`.
-#' @param type Which variance sets the starting bracket, and which the Wald
-#'   statistic reads.
+#' @param test The [test_statistic] to invert: [lr_test()] (the default),
+#'   [score_test()], [gradient_test()] or [wald_test()].
+#' @param type The [vcov_type] that sets the starting bracket, and that the
+#'   Wald statistic reads.
 #' @param maxit How many widenings to try on each side before the search
 #'   stops.
 #'
@@ -696,8 +712,11 @@ statmod_test <- function(fit, param, coefname, value = 0, test = "wald",
 #' @seealso [statmod_stat_at()], the statistic that is inverted.
 #'
 #' @keywords internal
-statmod_invert <- function(fit, param, coefname, level = 0.95, test = "lr",
-                           type = "bayesian", maxit = 40L) {
+statmod_invert <- function(fit, param, coefname, level = 0.95,
+                           test = lr_test(), type = bayesian_vcov(),
+                           maxit = 40L) {
+  test <- as_test_statistic(test)
+  type <- as_vcov_type(type)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
          call. = FALSE)
@@ -721,7 +740,7 @@ statmod_invert <- function(fit, param, coefname, level = 0.95, test = "lr",
   if (!isTRUE(is.finite(se)) || se <= 0) return(c(lower = NA_real_,
                                                   upper = NA_real_))
 
-  o0 <- if (identical(test, "lr")) joint_objective(fit) else NULL
+  o0 <- if (identical(test@name, "lr")) joint_objective(fit) else NULL
   gap <- function(b) {
     s <- statmod_stat_at(fit, param, coefname, b, test, type,
                          objective0 = o0)$statistic

@@ -22,8 +22,8 @@ StatmodSummary(
   converged = logical(0),
   elapsed = integer(0),
   level = integer(0),
-  type = character(0),
-  test = "wald",
+  type = vcov_type(),
+  test = wald_test(),
   max_coef = NULL,
   notes = character(0),
   certificate = NULL

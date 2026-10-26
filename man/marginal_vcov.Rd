@@ -16,7 +16,8 @@ marginal_vcov(object, design, A, keep, type)
 \item{keep}{The kept coordinates, a logical vector over the stacked
 coefficients.}
 
-\item{type}{\code{"bayesian"} or \code{"unconditional"}.}
+\item{type}{The \code{name} of a \link{vcov_type} object, \code{"bayesian"} or
+\code{"unconditional"}.}
 }
 \value{
 The variance over the kept coordinates, or \code{NULL} where the fit
@@ -38,9 +39,9 @@ mode of the penalized likelihood at \eqn{\gamma}, and
 \deqn{\mathrm{Var}(\hat\beta) = K_{uu}^{-1} + B\,V_v B^\top,\qquad
   V_v = \big[-\nabla^2_{vv}\ell_M\big]^{-1},}
 where \eqn{K_{uu}^{-1}} is padded with zeros on \eqn{\gamma} and \eqn{B}
-holds one direction per coordinate of \eqn{v}. For \code{type = "bayesian"}
+holds one direction per coordinate of \eqn{v}. For \code{\link[=bayesian_vcov]{bayesian_vcov()}}
 \eqn{v = \gamma} and the hyperparameters are held; for
-\code{type = "unconditional"} \eqn{v = (\eta, \gamma)} and the hyperparameters'
+\code{\link[=unconditional_vcov]{unconditional_vcov()}} \eqn{v = (\eta, \gamma)} and the hyperparameters'
 directions are \eqn{-K_{uu}^{-1}\partial^2\rho/\partial u\,\partial\eta}.
 
 Replacing \eqn{-\nabla^2_{\gamma\gamma}\ell_M} by the Schur complement

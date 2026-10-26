@@ -2380,7 +2380,7 @@ outer_default_optimizer <- function(exact, use_hess, mixed = FALSE,
 #'
 #' The availability of the Hessian still governs the rest: it is supplied to an
 #' optimizer that the caller names, `statmod_hyper_vcov()` and
-#' `vcov(type = "unconditional")` read it, and it is recorded as
+#' `vcov(type = unconditional_vcov())` read it, and it is recorded as
 #' `exact_hessian`. Only the default direction is held back.
 #'
 #' The block width is read from the `block` property of the penalty where it
@@ -2425,7 +2425,7 @@ outer_newton_ok <- function(spec, design, exact2, method = NULL) {
   # What the Hessian's availability still governs is untouched, exactly as
   # for the covariance class below: it is supplied to an optimizer the
   # caller NAMES, it is what statmod_hyper_vcov() and
-  # vcov(type = "unconditional") read, and it is recorded as `exact_hessian`.
+  # vcov(type = unconditional_vcov()) read, and it is recorded as `exact_hessian`.
   if (length(attr(design, "structural"))) return(FALSE)
   units <- tryCatch(statmod_penalized(spec, design),
                     error = function(e) list())

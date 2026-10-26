@@ -4,7 +4,14 @@
 \alias{statmod_test}
 \title{Test One Coefficient Against One Value}
 \usage{
-statmod_test(fit, param, coefname, value = 0, test = "wald", type = "bayesian")
+statmod_test(
+  fit,
+  param,
+  coefname,
+  value = 0,
+  test = wald_test(),
+  type = bayesian_vcov()
+)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -15,10 +22,16 @@ the distribution parameter and the coefficient's name in its equation.}
 \item{value}{The value under the null, a single number. The default is
 \code{0}, which is the value that a summary reports.}
 
-\item{test}{One of \code{"wald"}, \code{"lr"}, \code{"score"}, \code{"gradient"}.}
+\item{test}{A \link{test_statistic} object: \code{\link[=wald_test]{wald_test()}} (the default),
+\code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} or \code{\link[=gradient_test]{gradient_test()}}. The first reads the
+unrestricted fit only; the other three cost one restricted refit. The
+four are compared at \link{test_statistic}. A character string is rejected with
+an error that names the constructor.}
 
-\item{type}{Which variance the Wald statistic reads, passed to
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
+\item{type}{A \link{vcov_type} object, the variance that the Wald statistic
+reads, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
+\code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}. The conventions are
+compared at \link{vcov_type}.}
 }
 \value{
 A \code{\link[=StatmodTest]{StatmodTest()}}.
@@ -53,11 +66,13 @@ dd <- data.frame(x = rnorm(200))
 dd$y <- rpois(200, exp(0.3 + dd$x))
 fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
 ## the summary tests whether the slope is zero; this tests whether it is one
-statmod_test(fit, param = "mu", coefname = "x", value = 1, test = "lr")
-statmod_test(fit, param = "mu", coefname = "x", value = 0, test = "lr")
+statmod_test(fit, param = "mu", coefname = "x", value = 1, test = lr_test())
+statmod_test(fit, param = "mu", coefname = "x", value = 0, test = lr_test())
 
 }
 \seealso{
-\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the rows that can be held, against zero,
-\code{\link[=confint.StatmodFit]{confint.StatmodFit()}} for the interval that a test inverts.
+\link{test_statistic} for the four statistics, \link{vcov_type} for the
+variance conventions, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the rows that can be
+held, against zero, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} for the interval that a test
+inverts.
 }

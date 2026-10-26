@@ -322,9 +322,10 @@ predict_moments <- function() {
 #' @param boot_refit `"coefficients"` (the default), refitting each replica
 #'   at the fit's hyperparameters, or `"full"`, choosing them again. It is
 #'   read only where `predictive = "bootstrap"`.
-#' @param ... Only `type`, the variance type of [vcov.StatmodFit()]: the
-#'   Bayesian variance, the frequentist one or the unconditional one, which
-#'   also accounts for the estimated smoothing parameters. It is read where
+#' @param ... Only `type`, a [vcov_type] object that selects the variance
+#'   convention of [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
+#'   [frequentist_vcov()] or [unconditional_vcov()], which also accounts for
+#'   the estimated smoothing parameters. It is read where
 #'   `se` is `TRUE`, with `interval = "group"`, and with
 #'   `interval = "prediction"` and `predictive = "averaged"`, and it signals an
 #'   error elsewhere. Any other argument signals an error that names it. The
@@ -445,6 +446,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
                  paste0("'", ifelse(nzchar(bad), bad, "<unnamed>"), "'",
                         collapse = ", ")), call. = FALSE)
   }
+  if ("type" %in% dn) as_vcov_type(dots[["type"]])
   if (length(dots) &&
       ((!isTRUE(se) && identical(interval, "confidence")) ||
        (identical(interval, "prediction") &&
