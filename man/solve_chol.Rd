@@ -4,18 +4,24 @@
 \alias{solve_chol}
 \title{The Cholesky Solver}
 \usage{
-solve_chol()
+solve_chol(floor = 1e-08)
+}
+\arguments{
+\item{floor}{The relative floor of the eigenvalues, a single positive
+number. A penalized matrix that is not positive definite is rebuilt from
+its eigendecomposition with every eigenvalue below \code{floor} times the
+largest absolute eigenvalue raised to that level. The default is \code{1e-8}.}
 }
 \value{
 An S7 object of class \code{SolveChol}, which inherits from \link{IwlsSolver},
-with no properties.
+with the property \code{floor}.
 }
 \description{
 Selects a Cholesky decomposition of the assembled penalized information
 \eqn{X^\top W X + S} for the scoring step of \code{\link[=iwls]{iwls()}}. The information is
 formed explicitly, so the condition number of the system is squared; a
-matrix that is not positive definite has its eigenvalues floored, at a
-relative \eqn{10^{-8}}, before it is factored. The decomposition names no
+matrix that is not positive definite has its eigenvalues floored, at the
+relative level \code{floor}, before it is factored. The decomposition names no
 coordinate, so none is reported as aliased. It is the route that
 \code{\link[=solve_qr]{solve_qr()}} and \code{\link[=solve_svd]{solve_svd()}} follow where the square root of the curvature
 does not exist.
@@ -24,13 +30,14 @@ does not exist.
 }
 \examples{
 solve_chol()
+solve_chol(floor = 1e-10)
 
 set.seed(1)
 dd <- data.frame(x = runif(120, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(120, sd = 0.3)
 G <- distributions7::gaussian1_distrib()
 fit <- statmod(y ~ s(x, bspline_smooth(k = 8)), G, dd,
-               inner_optimizer = iwls(solver = solve_chol()))
+               inner_optimizer = iwls(solver = solve_chol(floor = 1e-10)))
 fit@methods$smooth
 
 }

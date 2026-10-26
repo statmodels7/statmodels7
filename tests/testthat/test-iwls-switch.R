@@ -1,15 +1,23 @@
-# iwls(information = auto_info()) settled on the expected information continues on the
-# observed one after iwls_switch_after() scoring steps.
+# An auto_info() settled on the expected information continues on the observed
+# one after the `switch_after` scoring steps of iwls().
 
 test_that("an auto iwls() on an exact family switches, a named one does not", {
   g <- iwls_resolve(iwls(), distributions7::gaussian1_distrib())
   expect_identical(info_label(g@hessian), "expected")
-  expect_identical(g@switch_after, iwls_switch_after())
+  expect_true(g@switching)
+  expect_identical(g@switch_after, 10)
   p <- iwls_resolve(iwls(), distributions7::pig1_distrib())
-  expect_identical(p@switch_after, Inf)
-  e <- iwls_resolve(iwls(information = expected_info()), distributions7::gaussian1_distrib())
-  expect_identical(e@switch_after, Inf)
-  expect_identical(iwls()@switch_after, Inf)
+  expect_false(p@switching)
+  e <- iwls_resolve(iwls(), distributions7::gaussian1_distrib(),
+                    expected_info())
+  expect_false(e@switching)
+  expect_false(iwls()@switching)
+  # the constants are arguments
+  expect_identical(iwls(switch_after = 4)@switch_after, 4)
+  expect_identical(iwls(switch_rate = 0.7)@switch_rate, 0.7)
+  expect_true(is.na(iwls(switch_rate = NA)@switch_rate))
+  expect_error(iwls(switch_after = -1), "switch_after")
+  expect_error(iwls(switch_rate = "a"), "switch_rate")
 })
 
 test_that("a scoring run that converges slowly moves to the observed pieces", {
@@ -21,12 +29,13 @@ test_that("a scoring run that converges slowly moves to the observed pieces", {
               gr = function(b) as.numeric(Q %*% (b - m)))
   expd <- function(b) list(R = NULL, C = NULL, A = diag(diag(Q)))
   obsd <- function(b) list(R = NULL, C = NULL, A = Q)
-  meth <- iwls(information = expected_info(), tol = 1e-10)
+  meth <- iwls_resolve(iwls(tol = 1e-10), NULL, expected_info())
   slow <- iwls_fit(obj, c(0, 0), meth, 1, expd)
   # the count alone: the rate rule off, the switch comes after three steps
   local({
-    local_mocked_bindings(iwls_switch_rate = function() NA_real_)
-    fast <- iwls_fit(obj, c(0, 0), meth, 1, expd, switch_at = obsd,
+    meth_na <- iwls_resolve(iwls(tol = 1e-10, switch_rate = NA), NULL,
+                            expected_info())
+    fast <- iwls_fit(obj, c(0, 0), meth_na, 1, expd, switch_at = obsd,
                      switch_after = 3)
     expect_true(fast$converged)
     expect_equal(fast$par, m, tolerance = 1e-8)
@@ -69,25 +78,21 @@ test_that("a gaussian with smooths in the mean and in sigma is fitted", {
     sigma ~ s(Time, bspline_smooth(k = 8))
   fit <- statmod(f, distrib = gaussian1_distrib(), data = cw)
   ref <- statmod(f, distrib = gaussian1_distrib(), data = cw,
-                 inner_optimizer = iwls(information = observed_info()))
+                 inner_information = observed_info())
   expect_identical(statmod_certificate(fit)$state, "converged")
   expect_equal(as.numeric(logLik(fit, loglik_type = "marginal")),
                as.numeric(logLik(ref, loglik_type = "marginal")), tolerance = 1e-7)
   expect_equal(hyper(fit)$estimate, hyper(ref)$estimate, tolerance = 1e-4)
   # without either switch the first inner fit exhausts a budget of 100
   # scoring steps and the criterion is unavailable at its start
-  local({
-    local_mocked_bindings(iwls_switch_after = function() Inf,
-                          iwls_switch_rate = function() NA_real_)
-    expect_error(statmod(f, distrib = gaussian1_distrib(), data = cw,
-                         inner_optimizer = iwls(maxit = 100)),
-                 "unavailable at the starting hyperparameters")
-  })
+  expect_error(statmod(f, distrib = gaussian1_distrib(), data = cw,
+                       inner_optimizer = iwls(maxit = 100, switch_after = Inf,
+                                              switch_rate = NA)),
+               "unavailable at the starting hyperparameters")
   # the rate rule alone is enough at that budget (an infinite count would
-  # turn the switch off altogether, as a named iwls(information = expected_info()) does)
-  local_mocked_bindings(iwls_switch_after = function() 1e6)
+  # turn the switch off altogether, as a named expected_info() does)
   byrate <- statmod(f, distrib = gaussian1_distrib(), data = cw,
-                    inner_optimizer = iwls(maxit = 100))
+                    inner_optimizer = iwls(maxit = 100, switch_after = 1e6))
   expect_equal(as.numeric(logLik(byrate, loglik_type = "marginal")),
                as.numeric(logLik(ref, loglik_type = "marginal")), tolerance = 1e-7)
 })
@@ -96,9 +101,8 @@ test_that("a run that converges within the switch is unchanged", {
   cw <- as.data.frame(ChickWeight)
   f <- weight ~ s(Time, bspline_smooth(k = 8)) + random(~ 1 | Chick)
   a <- statmod(f, distrib = gaussian1_distrib(), data = cw)
-  local_mocked_bindings(iwls_switch_after = function() Inf,
-                        iwls_switch_rate = function() NA_real_)
-  b <- statmod(f, distrib = gaussian1_distrib(), data = cw)
+  b <- statmod(f, distrib = gaussian1_distrib(), data = cw,
+               inner_optimizer = iwls(switch_after = Inf, switch_rate = NA))
   expect_identical(a@coefficients, b@coefficients)
   expect_identical(hyper(a)$estimate, hyper(b)$estimate)
 })

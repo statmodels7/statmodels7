@@ -4,7 +4,7 @@
 \alias{check_information}
 \title{Check That an Argument Is an Information Object}
 \usage{
-check_information(x, arg = "information", fn = "iwls", auto = TRUE)
+check_information(x, arg = "information", fn = "reml", auto = TRUE)
 }
 \arguments{
 \item{x}{The value to check.}
@@ -19,11 +19,9 @@ check_information(x, arg = "information", fn = "iwls", auto = TRUE)
 \code{x}, invisibly.
 }
 \description{
-Returns \code{x} invisibly when it inherits from \link{Information} and signals an
-error otherwise. A character string of the former interface
-(\code{"observed"}, \code{"expected"} or \code{"auto"}) produces a message that names the
-constructor that replaces it. With \code{auto = FALSE}, an \code{\link[=auto_info]{auto_info()}} object is
-rejected as well.
+Returns \code{x} invisibly when it inherits from
+\link[distributions7:Information]{distributions7::Information} and signals an error otherwise. With
+\code{auto = FALSE}, an \code{\link[=auto_info]{auto_info()}} object is rejected as well.
 }
 \seealso{
 \link{information_objects}

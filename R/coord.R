@@ -233,7 +233,7 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     # Where the OBSERVED curvature of this equation is not positive at some
     # observation there are no working weights to read, and abandoning the
     # descent sends the block to the proximal route. The expected information
-    # stands in instead, as iwls(information = auto_info()) does for the smooth block:
+    # stands in instead, as inner_information = auto_info() does for the smooth block:
     # the mode is the same, only the weights of the step change. Measured on
     # a negbin2 lasso over mu and theta at n = 1500, 164 of 198 theta-block
     # fits fell back and the fit took 486.9 s; it takes 20.5 s, and where the

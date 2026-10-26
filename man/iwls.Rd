@@ -6,30 +6,23 @@
 \title{Iterated Weighted Least Squares}
 \usage{
 iwls(
-  information = auto_info(),
   solver = solve_qr(),
   maxit = 1000L,
   tol = 1e-06,
   criterion = NULL,
-  step_halving = 30L
+  step_halving = 30L,
+  decrement_limit = 1e-06,
+  switch_after = 10,
+  switch_rate = 0.5
 )
 
 \method{print}{Iwls}(x, ...)
 }
 \arguments{
-\item{information}{The matrix that the step inverts, an object that
-inherits from \link{Information}. \code{\link[=observed_info]{observed_info()}} gives Newton,
-\code{\link[=expected_info]{expected_info()}} gives Fisher scoring (with an \code{approx} for a family that
-has no closed-form expected information), and \code{\link[=auto_info]{auto_info()}} is settled
-against the family when the fit starts. The default is \code{\link[=auto_info]{auto_info()}},
-which carries \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} as its approximation.
-\link{information_objects} compares the three. A character string signals an
-error that names the object to use.}
-
 \item{solver}{The factorization with which each step is solved, an object
 that inherits from \link{IwlsSolver}: \code{\link[=solve_qr]{solve_qr()}} (the default), \code{\link[=solve_svd]{solve_svd()}}
-or \code{\link[=solve_chol]{solve_chol()}}. \link{iwls_solvers} compares the three. A character string
-signals an error that names the object to use.}
+or \code{\link[=solve_chol]{solve_chol()}}. \link{iwls_solvers} compares the three and gives their
+tolerances.}
 
 \item{maxit}{The iteration budget, a single positive whole number.}
 
@@ -44,24 +37,39 @@ a step is abandoned, a single non-negative whole number. The line search
 tries the full step and then at most \code{step_halving} halved steps, so \code{0}
 tries only the full step.}
 
+\item{decrement_limit}{The value under which the Newton decrement is read as
+small by the built-in stopping rule, a single positive number. The
+default is \code{1e-6}.}
+
+\item{switch_after}{The iteration after which a run settled on the expected
+information from \code{\link[=auto_info]{auto_info()}} continues on the observed information, a
+single positive number; \code{Inf} never switches. The default is \code{10}.}
+
+\item{switch_rate}{The ratio of consecutive scores above which two
+consecutive steps count as a slow contraction of Fisher scoring, a single
+number or \code{NA}, which never counts a run as slow. The default is \code{0.5}.}
+
 \item{x}{An \code{\link[=Iwls]{Iwls()}} object.}
 
 \item{...}{Unused.}
 }
 \value{
 An \code{\link[=Iwls]{Iwls()}} object holding the settings given and no data. Its
-\code{fallback} is \code{FALSE} and its \code{switch_after} is \code{Inf} until
-\code{\link[=iwls_resolve]{iwls_resolve()}} settles an \code{\link[=auto_info]{auto_info()}}.
+\code{hessian} is an unsettled \code{\link[=auto_info]{auto_info()}} until \code{\link[=statmod]{statmod()}} settles the
+argument \code{inner_information}.
 }
 \description{
 Configures the scoring step with which \code{statmod()} fits the smooth block,
 and returns it as an object to pass as \code{inner_optimizer}. This is the default,
 so \code{statmod(...)} and \code{statmod(..., inner_optimizer = iwls())} fit the
-same model; call it by name to change the information, the solver, the
-budget or the stopping rule.
+same model; call it by name to change the solver, the budget, the stopping
+rule or the constants of the loop.
 
-Every argument has a default, and the object carries no data: one \code{iwls()}
-can be passed to any number of fits.
+The matrix that the step inverts is chosen by the argument
+\code{inner_information} of \code{\link[=statmod]{statmod()}} (see \link{information_objects}), and not by
+\code{iwls()}: the step is a Newton method on whatever curvature the objective
+offers. Every argument of \code{iwls()} has a default, and the object carries no
+data, so one \code{iwls()} can be passed to any number of fits.
 }
 \section{The name}{
 The name abbreviates iterated weighted least squares. The word iterated
@@ -69,38 +77,38 @@ already implies the re-weighting, so the abbreviation \code{irls} is not used.
 }
 
 \section{The curvature}{
-\code{information = expected_info()} inverts the expected information, which is
-Fisher scoring, and \code{observed_info()} inverts the observed Hessian, which is
-Newton.
+The step inverts the matrix that \code{inner_information} of \code{\link[=statmod]{statmod()}}
+selects. With \code{\link[distributions7:expected_info]{distributions7::expected_info()}} it inverts the expected
+information, which is Fisher scoring, and with
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} the observed Hessian, which is Newton.
 The expected information is positive definite wherever the family is
 regular, so Fisher scoring takes usable steps from a poor start where
 Newton's matrix may be indefinite; Newton converges faster near the
-optimum, and the exact outer gradient requires the observed information.
+optimum. An explicit choice is the only matrix that the step uses: the
+observed information is never replaced by the expected one.
 
-\code{auto_info()}, the default, is settled against the family when the fit
-starts, by \code{\link[=iwls_resolve]{iwls_resolve()}}. The expected information is used where the family
+The default \code{inner_information = auto_info()} is settled against the family
+when the fit starts. The expected information is used where the family
 writes it exactly and at an acceptable cost. Otherwise the observed
-information is used. An observed penalized information that is not
-positive definite is first repaired by flooring its eigenvalues, and the
-expected information takes the step only where the repaired step finds no
+information is used, and the expected information takes the step where the
+observed step, after the repair of an indefinite matrix, finds no
 acceptable point. A trial point whose objective raises an error is read as
-rejected. The fit records the settled method, so \code{fit@methods$smooth}
-shows which curvature ran.
+rejected. The fit records the settled choice, so \code{fit@methods$smooth} shows
+which curvature ran.
 
-On a family that \code{\link[=iwls_resolve]{iwls_resolve()}} settles on the expected information from
-\code{auto_info()}, a run continues on the observed information as soon as Fisher
-scoring contracts the score slowly, which means that each of two
-consecutive ratios of the score is above \code{\link[=iwls_switch_rate]{iwls_switch_rate()}}, and at the
-latest after \code{\link[=iwls_switch_after]{iwls_switch_after()}} scoring steps. The expected information
-then takes the step only where the observed step finds no acceptable
-point. Fisher scoring converges only linearly near the mode wherever the
-two informations differ there, which they do whenever the dispersion has an
-equation of its own, whereas Newton's step converges quadratically.
+On a family that \code{\link[=auto_info]{auto_info()}} settles on the expected information, a run
+continues on the observed information as soon as Fisher scoring contracts
+the score slowly, which means that each of two consecutive ratios of the
+score is above \code{switch_rate}, and at the latest after \code{switch_after}
+scoring steps. Fisher scoring converges only linearly near the mode
+wherever the two informations differ there, which they do whenever the
+dispersion has an equation of its own, whereas Newton's step converges
+quadratically.
 
-Where the rule is met, the run takes one more full step. The step uses the
-observed information if the method was settled on the expected information
-from \code{auto_info()} and has not yet switched, and otherwise the information that
-the run is using. The marginal criterion carries
+Where the stopping rule is met, the run takes one more full step. The step
+uses the observed information if the choice was settled on the expected
+information from \code{\link[=auto_info]{auto_info()}} and has not yet switched, and otherwise the
+information that the run is using. The marginal criterion carries
 \eqn{\log\lvert K(\beta)\rvert}, which is not stationary in \eqn{\beta},
 so a mode left short by \eqn{\delta} enters it at first order; a
 warm-started fit whose score is already under the rule would stop
@@ -111,20 +119,12 @@ sufficient-decrease test at a point already under the rule would accept or
 reject by the last bits, and the criterion would jump between nearby
 hyperparameters.
 
-The \code{approx} carried by \code{\link[=expected_info]{expected_info()}} and \code{\link[=auto_info]{auto_info()}} is passed to
-\pkg{distributions7} and is read only where the family has no closed
-expected information; elsewhere the family's own method supplies the
-information and the approximation is not used. It is accepted for every
-family because an \code{iwls()} object is built before a distribution is supplied
-and can be passed to any number of fits, so whether the family has a closed
-expected information cannot be checked at construction.
-\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is the predicate that records
-which case a family is in. \code{\link[=observed_info]{observed_info()}} carries no approximation, and
-the expected information that stands in for it as a fallback uses
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}.
-
-The default is \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the outer product of the
-observed scores, which costs one gradient. The alternative readings evaluate the expectation
+The \code{approx} carried by \code{\link[distributions7:expected_info]{distributions7::expected_info()}} and \code{\link[=auto_info]{auto_info()}}
+is passed to \pkg{distributions7} and is read only where the family has no
+closed expected information. \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is
+the predicate that records which case a family is in. The default is
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the outer product of the observed scores,
+which costs one gradient. The alternative readings evaluate the expectation
 itself (a sum over the support for a discrete family, a quadrature for a
 continuous one) and cost much more inside a loop that rebuilds the
 curvature at every iteration. The price of the cheap matrix is paid in
@@ -132,7 +132,7 @@ variance and not in the answer: the score is exact, so a scoring step
 driven by any positive definite matrix reaches the same stationary point,
 and the outer product is positive semidefinite by construction, whereas
 the observed Hessian need not be. The information behind a standard error
-is chosen separately; see \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.
+is chosen separately; see \link{vcov_method}.
 }
 
 \section{The solver}{
@@ -156,7 +156,7 @@ formed explicitly, so the condition number is squared.}
 \code{\link[=solve_qr]{solve_qr()}} and \code{\link[=solve_svd]{solve_svd()}} need a square root of the per-observation
 curvature and of the penalty. Where either does not exist, the step uses
 the assembled information, as \code{\link[=solve_chol]{solve_chol()}} does. \link{iwls_solvers} compares
-the three.
+the three and gives the tolerances that each one takes.
 }
 
 \section{The stopping rule}{
@@ -166,7 +166,7 @@ that ends the loop belongs to the caller.
 With \code{criterion = NULL}, the default, the built-in rule applies. The rule
 is met when the score per observation \eqn{\max_j \lvert g_j \rvert / n},
 taken over the free coordinates, is below \code{tol} and the Newton decrement
-\eqn{g^\top (H+S)^{-1} g / 2} is at most \eqn{10^{-6}}. The decrement is
+\eqn{g^\top (H+S)^{-1} g / 2} is at most \code{decrement_limit}. The decrement is
 in log-likelihood units and does not depend on the scale of the response.
 When the loop ends without meeting the rule, the dimensionless reading of
 \code{\link[=iwls_score]{iwls_score()}} can relabel the stopped run as converged. Any
@@ -200,17 +200,25 @@ to the derivative-free methods, and a rule that requires one would remain
 in the loop without ever being met.
 }
 
+\section{The constants of the loop}{
+Three constants of the loop are arguments. \code{decrement_limit} is the value
+under which the built-in rule reads the Newton decrement as small
+(default \code{1e-6}, three orders under the reading that the outer search uses
+to decide whether a criterion is usable). \code{switch_after} is the iteration
+after which a run settled on the expected information continues on the
+observed one (default \code{10}; \code{Inf} never switches). \code{switch_rate} is the
+ratio of consecutive scores above which two consecutive steps count as a
+slow contraction (default \code{0.5}; \code{NA} never counts one). The last two are
+read only when \code{inner_information} is settled from \code{\link[=auto_info]{auto_info()}} on the
+expected information.
+}
+
 \examples{
 iwls()
 
-# This call uses Newton instead of Fisher scoring and solves through an
-# SVD, which reports a numerical rank where a deficient block would make a
-# Cholesky fail.
-iwls(information = observed_info(), solver = solve_svd())
-
-# Fisher scoring with a Monte Carlo expectation for a family that has no
-# closed-form expected information.
-iwls(information = expected_info(approx = distributions7::expect_mc(nsim = 2000)))
+# This call solves through an SVD, which reports a numerical rank where a
+# deficient block would make a Cholesky fail.
+iwls(solver = solve_svd())
 
 # This call uses an optimizers7 stopping rule in place of tol. The
 # gradient in the state that the rule receives is the score per
@@ -218,13 +226,24 @@ iwls(information = expected_info(approx = distributions7::expect_mc(nsim = 2000)
 iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
                                        optimizers7::crit_rel_obj(1e-12)))
 
+# The matrix is chosen in statmod(): this is Newton, on the observed
+# information.
+set.seed(1)
+dd <- data.frame(x = runif(120, -2, 2))
+dd$y <- sin(1.4 * dd$x) + rnorm(120, sd = 0.3)
+G <- distributions7::gaussian1_distrib()
+fit <- statmod(y ~ s(x, bspline_smooth(k = 8)), G, dd,
+               inner_optimizer = iwls(solver = solve_svd()),
+               inner_information = distributions7::observed_info())
+fit@methods$smooth
+
 # Both at once is an error: tol would not be read.
 try(iwls(tol = 1e-8, criterion = optimizers7::crit_grad(1e-8)))
 
 }
 \seealso{
-\link{information_objects} and \link{iwls_solvers} for the two arguments that
-take objects, \code{\link[=statmod]{statmod()}} for where it is passed, \code{\link[=iwls_score]{iwls_score()}} for the
-built-in rule's final verdict, \code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}} for the
-criteria that can replace it.
+\code{\link[=statmod]{statmod()}} for the argument \code{inner_information} and for where the
+object is passed, \link{information_objects} and \link{iwls_solvers} for the matrix
+and the solver, \code{\link[=iwls_score]{iwls_score()}} for the built-in rule's final verdict,
+\code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}} for the criteria that can replace it.
 }

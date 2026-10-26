@@ -16,18 +16,19 @@ info_label(x)
 info_approx(x)
 }
 \arguments{
-\item{x}{An object inheriting from \link{Information}.}
+\item{x}{An object inheriting from \link[distributions7:Information]{distributions7::Information}.}
 }
 \value{
 A logical, a string or an object inheriting from
 \link[distributions7:ExpectApprox]{distributions7::ExpectApprox}.
 }
 \description{
-\code{info_expected()} returns \code{TRUE} for an \code{\link[=expected_info]{expected_info()}} object and
-\code{info_auto()} for an \code{\link[=auto_info]{auto_info()}} object. \code{info_label()} returns the word
-that names the matrix (\code{"observed"}, \code{"expected"} or \code{"auto"}).
-\code{info_approx()} returns the approximation that the object carries, and
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} for an \code{\link[=observed_info]{observed_info()}} object.
+\code{info_expected()} returns \code{TRUE} for an \code{\link[distributions7:expected_info]{distributions7::expected_info()}}
+object and \code{info_auto()} for an \code{\link[=auto_info]{auto_info()}} object. \code{info_label()}
+returns the word that names the matrix (\code{"observed"}, \code{"expected"} or
+\code{"auto"}). \code{info_approx()} returns the approximation that the object
+carries, and \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} for an
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} object.
 }
 \seealso{
 \link{information_objects}

@@ -4,7 +4,15 @@
 \alias{iwls_solve}
 \title{Solve One Weighted Least Squares Step}
 \usage{
-iwls_solve(pieces, u, how, damp = 0, frozen = integer(0))
+iwls_solve(
+  pieces,
+  u,
+  how,
+  damp = 0,
+  frozen = integer(0),
+  tol = NULL,
+  floor = 1e-08
+)
 }
 \arguments{
 \item{pieces}{A list with \code{R}, \code{C} and \code{A}, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds it.
@@ -22,6 +30,15 @@ number. \code{0}, the default, is the plain scoring step.}
 integer vector. They are dropped from the system exactly as a
 coordinate whose curvature is not finite is, so the step is that of the
 problem reduced to the rest. The default is empty.}
+
+\item{tol}{The tolerance of the factorization, as the solver carries it:
+the pivoted QR tolerance for \code{how = "qr"}, the relative cut of the
+singular values for \code{how = "svd"} (\code{NULL} for the default cut), and
+unused for \code{"chol"}. The default is \code{NULL}.}
+
+\item{floor}{The relative floor of the eigenvalues of an assembled matrix
+that is not positive definite, as \code{\link[=pd_repair]{pd_repair()}} takes it. The default is
+\code{1e-8}.}
 }
 \value{
 A list of five:

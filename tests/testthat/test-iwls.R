@@ -50,7 +50,8 @@ test_that("the augmented route is taken, and says when it is not", {
   expect_true(all(out$res$history$route == "qr"))
   # the observed curvature away from the optimum is routinely indefinite, so
   # the square root does not exist and the step falls back, reporting it
-  out2 <- fit_pieces(spec, iwls(information = observed_info(), solver = solve_qr()))
+  out2 <- fit_pieces(spec, iwls_resolve(iwls(solver = solve_qr()), NULL,
+                                        observed_info()))
   expect_true(out2$res$converged)
   expect_true(any(grepl("chol", out2$res$history$route)))
 })
@@ -209,14 +210,13 @@ test_that("a penalized term shrinks towards zero", {
 
 test_that("iwls states what it rejects and prints itself", {
   expect_error(iwls(solver = "lu"), "solver object")
-  expect_error(iwls(solver = "qr"), "Use solve_qr\\(\\)")
-  expect_error(iwls(information = "expected"), "Use expected_info\\(\\)")
-  expect_error(iwls(information = expected_info(), approx = "opg"),
-               "unused argument")
-  expect_error(iwls(information = expected_info(approx = "opg")),
-               "Use expect_opg\\(\\)")
+  expect_error(iwls(solver = "qr"), "must be a solver object")
+  expect_error(iwls(information = observed_info()), "unused argument")
+  expect_error(iwls(approx = distributions7::expect_opg()), "unused argument")
   expect_error(iwls(maxit = 0), "positive integer")
   expect_error(iwls(tol = -1), "positive number")
-  expect_output(print(iwls()), "auto information, qr")
-  expect_output(print(iwls(information = expected_info())), "expected information, qr")
+  expect_error(iwls(decrement_limit = 0), "decrement_limit")
+  expect_output(print(iwls()), "iwls: qr")
+  expect_output(print(iwls_resolve(iwls(), NULL, expected_info())),
+                "qr, expected information")
 })

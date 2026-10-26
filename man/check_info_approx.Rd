@@ -14,11 +14,9 @@ check_info_approx(approx)
 }
 \description{
 Returns \code{approx} invisibly when it inherits from
-\link[distributions7:ExpectApprox]{distributions7::ExpectApprox} and signals an error otherwise. A character
-string of the former interface produces a message that names the
-constructor that replaces it.
+\link[distributions7:ExpectApprox]{distributions7::ExpectApprox} and signals an error otherwise.
 }
 \seealso{
-\code{\link[=expected_info]{expected_info()}}, \code{\link[=auto_info]{auto_info()}}
+\code{\link[=auto_info]{auto_info()}}
 }
 \keyword{internal}

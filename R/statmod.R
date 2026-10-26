@@ -283,11 +283,34 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' @param offsets Optional named list of offsets, one entry per distribution
 #'   parameter, each of length 1 or \eqn{n}. An offset written in the formula
 #'   is added to the entry for the same parameter.
-#' @param inner_optimizer How the smooth block is fitted: [iwls()] or
-#'   an \pkg{optimizers7} optimizer. Beside a structural term of the filter
-#'   shape, the coefficients and the term's parameters are fitted in one
-#'   system, for which [iwls()] stands for the system's own default optimizer
-#'   and an \pkg{optimizers7} optimizer is used as given.
+#' @param inner_optimizer How the smooth block is fitted: [iwls()] (the
+#'   default) or an \pkg{optimizers7} optimizer. Beside a structural term of
+#'   the filter shape, the coefficients and the term's parameters are fitted in
+#'   one system, for which [iwls()] stands for the system's own default
+#'   optimizer and an \pkg{optimizers7} optimizer is used as given.
+#' @param inner_information The matrix of second derivatives that the inner fit
+#'   uses, an object that inherits from [distributions7::Information]:
+#'   [distributions7::observed_info()] (the observed Hessian),
+#'   [distributions7::expected_info()] (the Fisher information, with an
+#'   `approx` for a family that has no closed form) or [auto_info()] (the
+#'   default), which is settled against the family. With [iwls()] the matrix
+#'   is inverted at each step (Newton for the observed information, Fisher
+#'   scoring for the expected one); with an \pkg{optimizers7} optimizer it is
+#'   the Hessian that the optimizer receives, so that
+#'   `inner_optimizer = optimizers7::newton()` with
+#'   `inner_information = distributions7::expected_info()` takes the expected
+#'   information. A named matrix is the only one that the inner fit uses.
+#'   [auto_info()] chooses the expected information where the family writes it
+#'   exactly and at an acceptable cost, and the observed information
+#'   otherwise; with [iwls()] it also lets the run change matrix and lets the
+#'   expected information take a step that the observed one cannot (see
+#'   [information_objects]). The fitted model records the settled object, and
+#'   every later refit of the model (the folds of a cross-validation, the
+#'   restricted fits of a test, the resampled fits of a bootstrap) reads the
+#'   same one. A model with a structural term is fitted on the observed
+#'   information whatever the object says. The outer criterion has its own
+#'   `information` (see [reml()]) and the standard errors have theirs (see
+#'   [vcov_method]); the three choices are independent.
 #' @param outer_criterion How the smooth hyperparameters are estimated:
 #'   [reml()] (the default), [ml()], [aic()] or [bic()], or `NULL` to hold
 #'   them where their terms left them. [cv()] cross-validates the
@@ -348,9 +371,8 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   route can change where the work is large (the BLAS crossproduct against
 #'   the compiled one, and the pivoted `qr()` against the compiled
 #'   triangular factor), and the results then agree to rounding.
-#' @param ... Not used. A named argument signals an error. `hyper` was
-#'   removed from `statmod()`: a hyperparameter is held in the term that
-#'   carries the penalty.
+#' @param ... Not used. A named argument signals an error. A hyperparameter
+#'   is held in the term that carries the penalty.
 #'
 #' @return A [StatmodFit()] object.
 #'
@@ -380,7 +402,8 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'
 #' @export
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
-                    inner_optimizer = iwls(), outer_criterion = reml(),
+                    inner_optimizer = iwls(), inner_information = auto_info(),
+                    outer_criterion = reml(),
                     sparse_criterion = bic(), outer_optimizer = NULL,
                     # the ARGUMENT and the FUNCTION are deliberately named
                     # differently, as `glm(control = glm.control())` is: with
@@ -416,14 +439,6 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # whenever the two disagreed.
   if (...length()) {
     nm <- ...names()
-    if (length(nm) && any(nm == "hyper")) {
-      stop(paste0("'hyper' has been removed. A hyperparameter is held in",
-                  " the term that\n  carries the penalty, as in",
-                  " lasso(x, lambda = 3), ridge(x, lambda = 0.5),\n",
-                  "  s(x, bspline_smooth(), hyper = c(lambda = 2)) or",
-                  " enet(x, alpha = 0.5), and every one left NULL,\n",
-                  "  which is the default, is estimated."), call. = FALSE)
-    }
     stop(sprintf("unused argument (%s)", nm[[1L]]), call. = FALSE)
   }
   if (!is.list(linpar_control)) {
@@ -446,11 +461,13 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   }
   blocks <- statmod_blocks(spec, design)
 
-  # an iwls() left at "auto" is settled against the family once, here, so the
-  # objective, every refit and the fit's own record read the same curvature
-  if (S7::S7_inherits(inner_optimizer, Iwls)) {
-    inner_optimizer <- iwls_resolve(inner_optimizer, spec@distrib)
-  }
+  # the inner information is settled against the family once, here, and
+  # travels with the method, so the objective, every refit and the fit's own
+  # record read the same curvature
+  check_information(inner_information, arg = "inner_information",
+                    fn = "statmod")
+  inner_optimizer <- inner_bind(inner_optimizer, spec@distrib,
+                                inner_information)
   cfg <- inner_settings(inner_optimizer)
   expected <- cfg$expected
   approx <- cfg$approx
@@ -1042,7 +1059,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       inner = if (length(res$hist_inner)) do.call(rbind, res$hist_inner)
         else NULL
     ),
-    methods = list(smooth = inner_optimizer, outer = outer_criterion,
+    methods = list(smooth = inner_optimizer,
+                   inner_information = inner_information,
+                   outer = outer_criterion,
                    search = res$optimizer,
                    # the coordinates the marginal criterion left out of its
                    # determinant, which statmod_certificate() and vcov() read
@@ -1815,17 +1834,83 @@ method_budget <- function(method) {
 #' @keywords internal
 inner_settings <- function(method, distrib = NULL) {
   b <- method_budget(method)
-  iw <- S7::S7_inherits(method, Iwls)
-  if (iw && info_auto(method@hessian)) {
+  info <- inner_info(method)
+  if (info_auto(info)) {
     if (is.null(distrib)) {
-      stop("iwls(information = auto_info()) is settled by the family: pass 'distrib', ",
-           "or settle it with iwls_resolve() first.", call. = FALSE)
+      stop("auto_info() is settled by the family: pass 'distrib', ",
+           "or settle the method with inner_bind() first.", call. = FALSE)
     }
-    method <- iwls_resolve(method, distrib)
+    method <- inner_bind(method, distrib, info)
+    info <- inner_info(method)
   }
-  list(expected = iw && info_expected(method@hessian),
-       approx = if (iw) method@approx else distributions7::expect_opg(),
+  list(expected = info_expected(info), approx = info_approx(info),
        maxit = b$maxit, tol = b$tol)
+}
+
+
+#' Settle the Inner Information and Bind It to the Method
+#'
+#' @description
+#' Settles `information` against `distrib` and stores the result in the inner
+#' method, so that every function that receives the method reads the same
+#' matrix. For [iwls()] the result is held in the properties `hessian`,
+#' `backup`, `switching` and `repair_floor` (see [iwls_resolve()]). For an
+#' \pkg{optimizers7} optimizer it is held in the attribute
+#' `"inner_information"`.
+#'
+#' @details
+#' A named [distributions7::observed_info()] or [distributions7::expected_info()]
+#' is stored as it is. An [auto_info()] is settled by the rule of
+#' [iwls_resolve()]: the expected information where the family writes it
+#' exactly and at an acceptable cost, and the observed information otherwise.
+#' An optimizer has no fallback and no switch, since both belong to the loop of
+#' [iwls()], so the settled object is the whole of the choice there.
+#'
+#' @param method [iwls()] or an \pkg{optimizers7} optimizer.
+#' @param distrib The distribution to which the model is fitted.
+#' @param information An object that inherits from
+#'   [distributions7::Information].
+#'
+#' @return `method`, with the settled information bound to it.
+#'
+#' @seealso [inner_info()], [inner_settings()], [iwls_resolve()]
+#'
+#' @keywords internal
+inner_bind <- function(method, distrib, information) {
+  if (S7::S7_inherits(method, Iwls)) {
+    return(iwls_resolve(method, distrib, information))
+  }
+  if (info_auto(information)) {
+    exact <- distributions7::expected_hessian_exact(distrib) &&
+      !distributions7::expected_hessian_costly(distrib)
+    information <- if (exact) {
+      distributions7::expected_info(approx = information@approx)
+    } else distributions7::observed_info()
+  }
+  attr(method, "inner_information") <- information
+  method
+}
+
+
+#' The Information Bound to an Inner Method
+#'
+#' @description
+#' Returns the information object that [inner_bind()] stored in `method`: the
+#' property `hessian` of an [iwls()] object, and the attribute
+#' `"inner_information"` of an \pkg{optimizers7} optimizer. An optimizer that
+#' was never bound has the observed information.
+#'
+#' @param method [iwls()] or an \pkg{optimizers7} optimizer.
+#'
+#' @return An object that inherits from [distributions7::Information].
+#'
+#' @seealso [inner_bind()]
+#'
+#' @keywords internal
+inner_info <- function(method) {
+  if (S7::S7_inherits(method, Iwls)) return(method@hessian)
+  info <- attr(method, "inner_information", exact = TRUE)
+  if (is.null(info)) distributions7::observed_info() else info
 }
 
 
@@ -1968,10 +2053,10 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     # penalized information that is not positive definite, or an observed
     # step that finds no acceptable point
     backup_at <- NULL
-    if (isTRUE(method@fallback)) {
+    if (!is.null(method@backup)) {
       m_exp <- method
-      m_exp@hessian <- expected_info(approx = method@approx)
-      m_exp@fallback <- FALSE
+      m_exp@hessian <- method@backup
+      m_exp@backup <- NULL
       backup_at <- function(b) {
         v <- beta
         v[idx] <- b
@@ -1980,14 +2065,14 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
       }
     }
     # AND THE OBSERVED INFORMATION TAKES OVER from the expected one after
-    # iwls_switch_after() scoring steps, on a method iwls_resolve() settled on
+    # switch_after scoring steps, on a method iwls_resolve() settled on
     # the expected information from "auto": see iwls_fit()
     switch_at <- NULL
     sw <- method@switch_after
-    if (info_expected(method@hessian) && length(sw) && is.finite(sw)) {
+    if (isTRUE(method@switching) && length(sw) && is.finite(sw)) {
       m_obs <- method
       m_obs@hessian <- observed_info()
-      m_obs@switch_after <- Inf
+      m_obs@switching <- FALSE
       switch_at <- function(b) {
         v <- beta
         v[idx] <- b
@@ -2103,7 +2188,7 @@ subset_pieces <- function(spec, design, coef, hyper, method, idx) {
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   H <- statmod_information_at(spec, coef, design,
                               info_expected(method@hessian),
-                              method@approx, index = idx)
+                              info_approx(method@hessian), index = idx)
   list(R = NULL, C = NULL, A = H + S[idx, idx, drop = FALSE])
 }
 

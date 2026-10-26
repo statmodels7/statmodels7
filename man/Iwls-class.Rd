@@ -6,30 +6,21 @@
 \title{The Iterated Weighted Least Squares Method}
 \usage{
 Iwls(
-  hessian = Information(),
-  approx = distributions7::ExpectApprox(),
   solver = IwlsSolver(),
   maxit = integer(0),
   tol = integer(0),
   criterion = NULL,
   step_halving = integer(0),
-  fallback = logical(0),
-  switch_after = integer(0)
+  decrement_limit = integer(0),
+  switch_after = integer(0),
+  switch_rate = integer(0),
+  hessian = distributions7::Information(),
+  backup = NULL,
+  switching = logical(0),
+  repair_floor = integer(0)
 )
 }
 \arguments{
-\item{hessian}{The information that the step inverts, an object that
-inherits from \link{Information}: \code{\link[=expected_info]{expected_info()}} for Fisher scoring,
-\code{\link[=observed_info]{observed_info()}} for Newton, or \code{\link[=auto_info]{auto_info()}}, which \code{\link[=iwls_resolve]{iwls_resolve()}}
-turns into one of the two once the distribution is known. \code{\link[=iwls]{iwls()}} sets
-the property from its argument \code{information}.}
-
-\item{approx}{The approximation of the expected information for a family
-with no closed form, an object that inherits from
-\link[distributions7:ExpectApprox]{distributions7::ExpectApprox}. \code{\link[=iwls]{iwls()}} takes it from \code{information}
-(\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} for \code{\link[=observed_info]{observed_info()}}), and the expected
-information that stands in as a fallback reads it.}
-
 \item{solver}{How the step is solved, an object that inherits from
 \link{IwlsSolver}: \code{\link[=solve_qr]{solve_qr()}}, \code{\link[=solve_svd]{solve_svd()}} or \code{\link[=solve_chol]{solve_chol()}}.}
 
@@ -46,21 +37,33 @@ a step is abandoned, a single non-negative whole number. The line search
 tries the full step and then at most \code{step_halving} halved steps, so \code{0}
 tries only the full step.}
 
-\item{fallback}{A single logical: whether the expected information takes
-the step where the observed step finds no acceptable point. An observed
-penalized information that is not positive definite is first repaired by
-flooring its eigenvalues, and the step on the repaired matrix is tried.
-\code{\link[=iwls_resolve]{iwls_resolve()}} sets this argument to \code{TRUE} for \code{\link[=auto_info]{auto_info()}} on a family
-that it does not settle on the expected information.}
+\item{decrement_limit}{The value under which the built-in rule reads the
+Newton decrement as small, a single positive number.}
 
 \item{switch_after}{A single number: the iteration after which a run on
-the expected information continues on the observed one, unless it
-switched earlier because the score contracted slowly (see
-\code{\link[=iwls_slow]{iwls_slow()}}). The expected information then takes the step only where
-the observed step finds no acceptable point. \code{Inf} never switches.
-\code{\link[=iwls_resolve]{iwls_resolve()}} sets it, for \code{\link[=auto_info]{auto_info()}} on a family whose expected
-information is exact and not costly to evaluate, to
-\code{\link[=iwls_switch_after]{iwls_switch_after()}}.}
+the expected information continues on the observed one when the choice
+was settled from \code{\link[=auto_info]{auto_info()}}. \code{Inf} never switches.}
+
+\item{switch_rate}{A single number, or \code{NA}: the ratio of consecutive scores
+above which a run on the expected information counts as contracting
+slowly. \code{NA} never counts a run as slow.}
+
+\item{hessian}{The information that the step inverts, once settled: an
+object that inherits from \link[distributions7:Information]{distributions7::Information}, set by
+\code{\link[=statmod]{statmod()}} from its argument \code{inner_information}. An \code{\link[=auto_info]{auto_info()}} object
+stands for an unsettled choice, which \code{iwls_resolve()} settles against the
+family.}
+
+\item{backup}{\code{NULL}, or the \code{\link[distributions7:expected_info]{distributions7::expected_info()}} object that
+takes the step where the observed step finds no acceptable point. It is
+set only by settling an \code{\link[=auto_info]{auto_info()}} on the observed information.}
+
+\item{switching}{Whether the run continues on the observed information after
+\code{switch_after} iterations or a slow contraction. It is set only by
+settling an \code{\link[=auto_info]{auto_info()}} on the expected information.}
+
+\item{repair_floor}{The \code{repair_floor} of the \code{\link[=auto_info]{auto_info()}} that was
+settled, or \code{NA} when the choice was named.}
 }
 \value{
 An object of class \code{Iwls} with one property per argument above, and
@@ -68,10 +71,14 @@ each property holds the value that was passed.
 }
 \description{
 \code{Iwls} is the S7 class of the scoring step that \code{\link[=statmod]{statmod()}} uses for the
-jointly fitted smooth block. An object of this class carries the whole
-configuration of that step: which curvature to invert, how to solve the
-system, how long to run and when to stop. Build one with \code{\link[=iwls]{iwls()}}, which
-validates every argument; this raw constructor does not.
+jointly fitted smooth block. An object of this class carries the solver,
+the budget, the stopping rule and the constants of the loop. Build one with
+\code{\link[=iwls]{iwls()}}, which validates every argument; this raw constructor does not.
+
+The matrix that the step inverts is not an argument of \code{\link[=iwls]{iwls()}}: it is the
+argument \code{inner_information} of \code{\link[=statmod]{statmod()}}. \code{\link[=statmod]{statmod()}} stores the matrix
+that it settled in the properties \code{hessian}, \code{backup}, \code{switching} and
+\code{repair_floor}, which \code{\link[=iwls]{iwls()}} initializes to an unsettled state.
 }
 \examples{
 S7::S7_inherits(iwls(), Iwls)

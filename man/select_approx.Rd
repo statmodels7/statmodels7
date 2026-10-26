@@ -17,8 +17,8 @@ An object that inherits from \link[distributions7:ExpectApprox]{distributions7::
 \description{
 Returns the approximation of the expected information that the fits made
 for a criterion use: the \code{approx} of the first of \code{sparse_method} and
-\code{method} whose information is an \code{\link[=expected_info]{expected_info()}} object, and \code{approx},
-that of the inner method, when neither is.
+\code{method} whose information is an \code{\link[distributions7:expected_info]{distributions7::expected_info()}} object,
+and \code{approx}, that of the inner method, when neither is.
 }
 \seealso{
 \link{information_objects}

@@ -4,85 +4,127 @@
 \alias{information_objects}
 \title{Information Matrices Available to a Fit}
 \value{
-No value. The topic describes the three objects, of classes
-\link[=Information]{ObservedInfo}, \link[=Information]{ExpectedInfo} and
-\link[=Information]{AutoInfo}, that \code{\link[=observed_info]{observed_info()}}, \code{\link[=expected_info]{expected_info()}} and
-\code{\link[=auto_info]{auto_info()}} return.
+No value. The topic describes the objects returned by
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}}, \code{\link[distributions7:expected_info]{distributions7::expected_info()}} and
+\code{\link[=auto_info]{auto_info()}}.
 }
 \description{
-\code{\link[=iwls]{iwls()}}, \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}} take an argument
-\code{information}, an object that selects the matrix used for a Newton-type step
-or for a Laplace determinant. Three objects are available, built by
-\code{\link[=observed_info]{observed_info()}}, \code{\link[=expected_info]{expected_info()}} and \code{\link[=auto_info]{auto_info()}}; all three inherit
-from \link{Information}. A character string is not accepted.
-}
-\details{
-Let \eqn{\ell(\beta)} be the log-likelihood of the coefficients \eqn{\beta},
-and \eqn{S} the Hessian of the penalty.
+An information object selects the matrix of second derivatives of the
+log-likelihood that a computation inverts or takes the determinant of.
+Three objects are available: \code{\link[distributions7:observed_info]{distributions7::observed_info()}} and
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, which \pkg{distributions7} defines and
+documents, and \code{\link[=auto_info]{auto_info()}}, which \pkg{statmodels7} defines. All three
+inherit from \link[distributions7:Information]{distributions7::Information}. A character string is not
+accepted.
+
+Three arguments take them, and each one selects the matrix for its own
+computation, so that the choices are independent:
 
 \describe{
-\item{\code{\link[=observed_info]{observed_info()}}}{The negative Hessian of the log-likelihood at the
-data, \eqn{-\partial^2 \ell / \partial\beta\,\partial\beta^\top}. In
-\code{\link[=iwls]{iwls()}} this is Newton's method, which converges quadratically near
-the mode. The matrix may be indefinite far from the mode, and for a
-family such as the Student t at an outlier. An observed penalized
-information that is not positive definite is repaired by flooring its
-eigenvalues before the step is taken. The exact outer gradient and
-Hessian of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} are available on this matrix.}
-\item{\code{\link[=expected_info]{expected_info()}}}{The Fisher information,
-\eqn{\mathbb{E}[-\partial^2 \ell / \partial\beta\,\partial\beta^\top]},
-a function of the parameters alone. In \code{\link[=iwls]{iwls()}} this is Fisher scoring.
-The matrix is positive definite wherever the family is regular, so the
-step is usable from a poor start. Where the family writes the
-expectation out, the closed form is used. Where it does not, the
-expectation is approximated by the object in \code{approx}, one of
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, \code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}},
-\code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} and
-\code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}; see
-\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}.}
-\item{\code{\link[=auto_info]{auto_info()}}}{A choice that \code{\link[=statmod]{statmod()}} makes once the family is
-known. In \code{\link[=iwls]{iwls()}}, the expected information is chosen where the family
-writes it exactly and at an acceptable cost, and the observed
-information otherwise, with the expected one taking the step where the
-observed step finds no acceptable point. In \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, the
-expected information is chosen for a Student t, a skew t or a Cauchy
-response (wrapped or not), whose observed information is not positive
-definite at an outlier, and the observed information otherwise. The
-object carries an \code{approx}, which is the approximation used by the
-expected information whenever the choice or a fallback reaches it.
-\code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}} do not accept it.}
+\item{\code{inner_information} of \code{\link[=statmod]{statmod()}}}{The matrix of the inner fit,
+which solves for the coefficients at fixed hyperparameters. With
+\code{\link[=iwls]{iwls()}} the matrix is inverted at each step; with an
+\pkg{optimizers7} optimizer it is the Hessian that the optimizer
+receives. The default is \code{\link[=auto_info]{auto_info()}}.}
+\item{\code{information} of \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}}{The matrix
+of the outer criterion: its determinant enters the Laplace
+approximation of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, and its trace gives the effective
+degrees of freedom of \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}. The default is
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}}.}
+\item{\code{information} of \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=frequentist_vcov]{frequentist_vcov()}} and
+\code{\link[=unconditional_vcov]{unconditional_vcov()}}}{The matrix inverted for the standard errors.
+The default is \code{\link[distributions7:observed_info]{distributions7::observed_info()}}.}
 }
 }
-\section{Which function uses which matrix}{
+\details{
+Let \eqn{\ell(\beta)} be the log-likelihood of the coefficients \eqn{\beta}.
+
 \describe{
-\item{\code{\link[=iwls]{iwls()}}}{The matrix inverted at each step of the inner fit, with
-the penalty added. The default is \code{\link[=auto_info]{auto_info()}}.}
-\item{\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}}{The matrix whose determinant enters the Laplace
-approximation of the marginal likelihood, and whose derivatives enter
-the outer gradient. The default is \code{\link[=observed_info]{observed_info()}}.}
-\item{\code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}}{The matrix whose trace gives the effective
-degrees of freedom of the fit. The default is \code{\link[=observed_info]{observed_info()}}; only
-\code{\link[=observed_info]{observed_info()}} and \code{\link[=expected_info]{expected_info()}} are admissible.}
+\item{\code{\link[distributions7:observed_info]{distributions7::observed_info()}}}{The negative Hessian of the
+log-likelihood at the data,
+\eqn{-\partial^2 \ell / \partial\beta\,\partial\beta^\top}. It is the
+curvature of the likelihood in the sample at hand, and every family has
+it. It may be indefinite far from the mode, and for a family such as
+the Student t at an outlier. It is always the matrix of the data, and
+the expected information is never substituted for it. A step that
+needs a positive definite matrix floors the eigenvalues of the
+penalized matrix (see \code{\link[=solve_chol]{solve_chol()}}). The observed information of a
+coefficient whose second derivative is zero at the estimates, as for
+the location of a Laplace response, is singular, and a variance that
+inverts it is not available there.}
+\item{\code{\link[distributions7:expected_info]{distributions7::expected_info()}}}{The Fisher information,
+\eqn{\mathbb{E}[-\partial^2 \ell / \partial\beta\,\partial\beta^\top]},
+a function of the parameters alone. Where the family writes the
+expectation out, the closed form is used. Where it does not, the
+expectation is approximated by the \code{approx} of the object (see
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}).}
+\item{\code{\link[=auto_info]{auto_info()}}}{A choice that is settled once the family is known.
+The rule depends on where the object is passed and is given below.
+The fitted model records the settled choice.}
 }
+}
+\section{Which function accepts which object}{
+\tabular{lccc}{
+Argument \tab observed \tab expected \tab auto \cr
+\code{inner_information} of \code{\link[=statmod]{statmod()}} \tab yes \tab yes \tab yes (default) \cr
+\code{information} of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} \tab yes (default) \tab yes \tab yes \cr
+\code{information} of \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}} \tab yes (default) \tab yes \tab no \cr
+\code{information} of the three variance objects \tab yes (default) \tab yes
+\tab no \cr
+}
+
+\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and the variance objects reject \code{\link[=auto_info]{auto_info()}} because the
+quantity that they compute is defined on one named matrix.
+}
+
+\section{The rule of auto_info()}{
+In \code{inner_information}, the object is settled by the family and, with
+\code{\link[=iwls]{iwls()}}, by the run.
+\itemize{
+\item The expected information is chosen where the family writes it exactly
+(see \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}) and at an acceptable
+cost (see \code{\link[distributions7:expected_hessian_costly]{distributions7::expected_hessian_costly()}}). The observed
+information is chosen for every other family.
+\item With \code{\link[=iwls]{iwls()}} on the expected information, the run continues on the
+observed information as soon as Fisher scoring contracts the score
+slowly (see \code{switch_after} and \code{switch_rate} in \code{\link[=iwls]{iwls()}}).
+\item With \code{\link[=iwls]{iwls()}} on the observed information, the expected information takes
+the step where the observed step, after the repair of an indefinite
+matrix, finds no acceptable point. The \code{repair_floor} of \code{\link[=auto_info]{auto_info()}}
+sets the relative eigenvalue under which the matrix counts as
+indefinite.
+\item With an \pkg{optimizers7} optimizer, the settled matrix is the Hessian
+that the optimizer receives (the argument \code{he} of
+\code{optimizers7::minimize()}). Neither the switch nor the fallback exists
+there, because both belong to the loop of \code{\link[=iwls]{iwls()}}.
+}
+
+In \code{information} of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, the expected information is chosen
+for a Student t, a skew t or a Cauchy response (wrapped or not), whose
+observed information is not positive definite at an outlier, and the
+observed information otherwise.
 }
 
 \section{The approximation}{
 \code{approx} is read only when the family has no closed-form expected
 information (see \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}). It defaults to
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the outer product of the scores, which costs
-one gradient. In an \code{\link[=iwls]{iwls()}} object \code{approx} applies to the inner fit. In
-\code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}} it applies to the criterion, so that
-the two objects are independent. A criterion on the expected information of
-a family with no closed form is rejected under the default
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the outer product of the scores, which
+costs one gradient. The three arguments above are independent, and so are
+their approximations. A criterion on the expected information of a family
+with no closed form is rejected under the default
 \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, because the outer product of the scores at
 the data is not an expectation; the criterion needs
 \code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}} or another approximation that takes an
 expectation.
+
+A model that carries a structural term (a score-driven filter or a mixture
+over states) is fitted and inverted on the observed information whatever
+the object says, because those terms have no expected information.
 }
 
 \examples{
-observed_info()
-expected_info()
+distributions7::observed_info()
+distributions7::expected_info()
 auto_info(approx = distributions7::expect_bartlett())
 
 set.seed(1)
@@ -90,12 +132,20 @@ dd <- data.frame(x = runif(120, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(120, sd = 0.3)
 G <- distributions7::gaussian1_distrib()
 fit <- statmod(y ~ s(x, bspline_smooth(k = 8)), G, dd,
-               inner_optimizer = iwls(information = expected_info()),
-               outer_criterion = reml(information = observed_info()))
+               inner_information = distributions7::expected_info(),
+               outer_criterion = reml(
+                 information = distributions7::observed_info()))
 fit@methods$smooth
+
+# The standard errors are chosen after the fit, independently of both.
+sqrt(diag(vcov(fit, vcov_type = bayesian_vcov(
+  information = distributions7::expected_info()))))
 }
 \seealso{
-\code{\link[=observed_info]{observed_info()}}, \code{\link[=expected_info]{expected_info()}} and \code{\link[=auto_info]{auto_info()}} for the
-constructors; \code{\link[=iwls]{iwls()}}, \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}} for the
-functions that take the object; \link{Information} for the classes.
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} and
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} for the two matrices, \code{\link[=auto_info]{auto_info()}} for
+the third object, \link{AutoInfo} for its class, \code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}},
+\code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \link{vcov_method} for the functions
+that take an object, and \link{iwls_solvers} for the factorization of the
+matrix.
 }

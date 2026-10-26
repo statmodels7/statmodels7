@@ -4,11 +4,27 @@
 \alias{solve_qr}
 \title{The QR Solver}
 \usage{
-solve_qr()
+solve_qr(tol = 1e-07, floor = 1e-08)
+}
+\arguments{
+\item{tol}{The tolerance of the pivoted QR (the argument \code{tol} of
+\code{\link[base:qr]{base::qr()}}), a single positive number. A column is declared dependent
+on the previous ones when its norm after the projection is under \code{tol}
+times its original norm. The same value is the threshold of the
+equilibrated diagonal under which the threaded triangular factor, used
+for large designs with several threads, defers to the pivoted route. The
+default is \code{1e-7}.}
+
+\item{floor}{The relative floor of the eigenvalues, a single positive
+number, applied when the step is solved from the assembled matrix
+because a square root of the curvature or of the penalty does not exist.
+The eigenvalues of a matrix that is not positive definite are raised to
+\code{floor} times the largest absolute eigenvalue before the factorization.
+The default is \code{1e-8}.}
 }
 \value{
 An S7 object of class \code{SolveQR}, which inherits from \link{IwlsSolver},
-with no properties.
+with the properties \code{tol} and \code{floor}.
 }
 \description{
 Selects a QR decomposition of the augmented design
@@ -26,13 +42,14 @@ with the other two solvers.
 }
 \examples{
 solve_qr()
+solve_qr(tol = 1e-9)
 
 set.seed(1)
 dd <- data.frame(x = runif(120, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(120, sd = 0.3)
 G <- distributions7::gaussian1_distrib()
 fit <- statmod(y ~ s(x, bspline_smooth(k = 8)), G, dd,
-               inner_optimizer = iwls(solver = solve_qr()))
+               inner_optimizer = iwls(solver = solve_qr(tol = 1e-9)))
 fit@methods$smooth
 
 }

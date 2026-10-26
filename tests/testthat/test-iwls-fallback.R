@@ -1,12 +1,12 @@
-# iwls(information = auto_info()), settled against the family, and the expected
-# information taking the step where the observed one cannot.
+# An auto_info(), settled against the family, and the expected information
+# taking the step where the observed one cannot.
 
 test_that("an auto iwls() is settled by the family and a named one is not", {
   a <- iwls()
   expect_identical(info_label(a@hessian), "auto")
   g <- iwls_resolve(a, distributions7::gaussian1_distrib())
   expect_identical(info_label(g@hessian), "expected")
-  expect_false(g@fallback)
+  expect_null(g@backup)
   # an approximated expected information, and an exact one that costs a
   # quadrature per shape or a sum over the support per observation, all
   # settle on the observed information
@@ -17,14 +17,16 @@ test_that("an auto iwls() is settled by the family and a named one is not", {
                  distributions7::pseudohuber_distrib())) {
     r <- iwls_resolve(a, d)
     expect_identical(info_label(r@hessian), "observed")
-    expect_true(r@fallback)
+    expect_identical(info_label(r@backup), "expected")
   }
-  e <- iwls_resolve(iwls(information = expected_info()), distributions7::pig1_distrib())
+  # a named information is the only matrix of the step: no backup, whatever
+  # the family
+  e <- iwls_resolve(iwls(), distributions7::pig1_distrib(), expected_info())
   expect_identical(info_label(e@hessian), "expected")
-  expect_false(e@fallback)
-  o <- iwls_resolve(iwls(information = observed_info()), distributions7::pig1_distrib())
+  expect_null(e@backup)
+  o <- iwls_resolve(iwls(), distributions7::pig1_distrib(), observed_info())
   expect_identical(info_label(o@hessian), "observed")
-  expect_false(o@fallback)
+  expect_null(o@backup)
   # a method nobody settled is refused where the curvature is read
   expect_error(inner_settings(iwls()), "settled by the family")
   expect_true(inner_settings(iwls(), distributions7::gaussian1_distrib())$expected)
@@ -41,18 +43,18 @@ test_that("a fit records the curvature its family settled", {
   d$y <- stats::rpois(n, lam)
   fp <- statmod(y ~ x, distributions7::pig1_distrib(), d)
   expect_identical(info_label(fp@methods$smooth@hessian), "observed")
-  expect_true(fp@methods$smooth@fallback)
+  expect_false(is.null(fp@methods$smooth@backup))
   fe <- statmod(y ~ x, distributions7::pig1_distrib(), d,
-                inner = iwls(information = expected_info()))
+                inner_information = expected_info())
   expect_identical(info_label(fe@methods$smooth@hessian), "expected")
-  expect_false(fe@methods$smooth@fallback)
+  expect_null(fe@methods$smooth@backup)
   # the same maximum, reached through either curvature
   expect_equal(as.numeric(logLik(fp)), as.numeric(logLik(fe)), tolerance = 1e-6)
 
   dg <- data.frame(x = d$x, y = 1 + 2 * d$x + stats::rnorm(n))
   fg <- statmod(y ~ x, distributions7::gaussian1_distrib(), dg)
   expect_identical(info_label(fg@methods$smooth@hessian), "expected")
-  expect_false(fg@methods$smooth@fallback)
+  expect_null(fg@methods$smooth@backup)
 })
 
 test_that("the expected pieces take the step where the observed ones cannot", {
@@ -89,7 +91,7 @@ test_that("the expected pieces take the step where the observed ones cannot", {
     built <<- built + 1L
     list(R = NULL, C = NULL, A = Q3)
   }
-  r0 <- iwls_fit(toy3, c(0, 0, 0.5), iwls(information = observed_info()), 1, neg3,
+  r0 <- iwls_fit(toy3, c(0, 0, 0.5), iwls(), 1, neg3,
                  backup_at = pd3)
   expect_true(r0$converged)
   expect_equal(r0$par, m3, tolerance = 1e-6)
@@ -101,7 +103,7 @@ test_that("the expected pieces take the step where the observed ones cannot", {
   # take it: every eigenvalue of -Q is floored to 1e-8 of the largest, so the
   # repaired step is 1e8 times too long for five halvings
   neg <- function(b) list(R = NULL, C = NULL, A = -Q)
-  r1 <- iwls_fit(toy(), c(0, 0), iwls(information = observed_info(), step_halving = 5),
+  r1 <- iwls_fit(toy(), c(0, 0), iwls(step_halving = 5),
                  1, neg, backup_at = pd)
   expect_true(r1$converged)
   expect_equal(r1$par, m, tolerance = 1e-6)
@@ -111,7 +113,7 @@ test_that("the expected pieces take the step where the observed ones cannot", {
   # a positive definite one whose step is 1e12 times too long, beyond what
   # five halvings can shorten: the search fails and the expected pieces step
   far <- function(b) list(R = NULL, C = NULL, A = Q * 1e-12)
-  short <- iwls(information = observed_info(), step_halving = 5)
+  short <- iwls(step_halving = 5)
   r2 <- iwls_fit(toy(), c(0, 0), short, 1, far, backup_at = pd)
   expect_true(r2$converged)
   expect_equal(r2$par, m, tolerance = 1e-6)
@@ -128,7 +130,7 @@ test_that("the expected pieces take the step where the observed ones cannot", {
                "outside the region")
 
   # and a run that never needed it reports none
-  r4 <- iwls_fit(toy(), c(0, 0), iwls(information = observed_info()), 1, pd, backup_at = pd)
+  r4 <- iwls_fit(toy(), c(0, 0), iwls(), 1, pd, backup_at = pd)
   expect_identical(r4$fallback, c(indefinite = 0L, search = 0L, error = 0L,
                                  newton = 0L))
 })

@@ -15,7 +15,7 @@
 \code{x}, invisibly. The function is called for the output that it writes.
 }
 \description{
-Writes one line naming the factorization.
+Writes one line naming the factorization and its tolerances.
 }
 \examples{
 solve_qr()

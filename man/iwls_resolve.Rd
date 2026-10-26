@@ -4,46 +4,50 @@
 \alias{iwls_resolve}
 \title{Settle the Curvature of an \code{iwls()} Against a Family}
 \usage{
-iwls_resolve(method, distrib)
+iwls_resolve(method, distrib, information = NULL)
 }
 \arguments{
 \item{method}{An \code{\link[=Iwls]{Iwls()}} object.}
 
 \item{distrib}{The distribution to which the model is fitted.}
+
+\item{information}{\code{NULL}, or an object that inherits from
+\link[distributions7:Information]{distributions7::Information} that replaces the one of \code{method}.}
 }
 \value{
-An \code{\link[=Iwls]{Iwls()}} object whose \code{hessian} is an \code{\link[=expected_info]{expected_info()}} or an
-\code{\link[=observed_info]{observed_info()}} object and whose \code{fallback} is \code{TRUE} exactly where
-\code{\link[=auto_info]{auto_info()}} was settled on the observed information.
+An \code{\link[=Iwls]{Iwls()}} object whose \code{hessian} is an
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} or an \code{\link[distributions7:observed_info]{distributions7::observed_info()}}
+object, unless a named choice is returned as it is.
 }
 \description{
-Turns an \code{\link[=iwls]{iwls()}} left at \code{\link[=auto_info]{auto_info()}} into the method that a fit
-runs. The method uses the expected information where the family writes it
-exactly and at an acceptable cost; otherwise it uses the observed
-information, and the expected one takes the step where the observed step
-finds no acceptable point. A method whose curvature was named is returned
-as it is.
+Turns the information of an \code{\link[=iwls]{iwls()}} into the matrix that a fit runs. With
+\code{information} given, that object replaces the one that the method holds;
+without it, a method that holds an unsettled \code{\link[=auto_info]{auto_info()}} is settled and a
+method whose curvature was named is returned as it is.
 }
 \details{
-\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is the first question. Where it
-returns \code{FALSE} the expected information is an approximation, the outer
-product of the scores by default, and the method is settled on the observed
-information. An observed penalized information that is not positive
-definite is first repaired by \code{\link[=pd_repair]{pd_repair()}} and its step tried; the
-expected information takes the step only where that step finds no
-acceptable point.
+A named \code{\link[distributions7:observed_info]{distributions7::observed_info()}} or \code{\link[distributions7:expected_info]{distributions7::expected_info()}}
+is the matrix of the step and nothing else: the method carries no
+fallback and no switch.
+
+An \code{\link[=auto_info]{auto_info()}} is settled by two questions.
+\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is the first. Where it returns
+\code{FALSE} the expected information is an approximation, the outer product of
+the scores by default, and the method is settled on the observed
+information, with the expected information as the \code{backup} that takes the
+step where the observed step finds no acceptable point. An observed
+penalized information that is not positive definite is first floored by
+\code{\link[=pd_repair]{pd_repair()}} and its step tried.
 
 \code{\link[distributions7:expected_hessian_costly]{distributions7::expected_hessian_costly()}} is the second question. A
 family whose expected information is exact but costly is settled on the
 observed information as well, because the expected information of such a
 family requires a quadrature or a sum over the support at each
-observation. The expected information is still used where the observed one
-cannot take the step, and in full where a method or a criterion names it.
+observation. The expected information is the \code{backup} there too.
 
-Only a family settled on the expected information receives a
-\code{switch_after} other than \code{Inf}; see \code{\link[=iwls_switch_after]{iwls_switch_after()}}.
+Only a family settled on the expected information has \code{switching} set.
 }
 \seealso{
-\code{\link[=iwls]{iwls()}}, \code{\link[=fit_smooth]{fit_smooth()}}, which reads \code{fallback}.
+\code{\link[=iwls]{iwls()}}, \code{\link[=fit_smooth]{fit_smooth()}}, which reads \code{backup}.
 }
 \keyword{internal}

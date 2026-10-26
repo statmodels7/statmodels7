@@ -14,9 +14,7 @@ check_solver(x)
 }
 \description{
 Returns \code{x} invisibly when it inherits from \link{IwlsSolver} and signals an
-error otherwise. A character string of the former interface (\code{"qr"},
-\code{"svd"} or \code{"chol"}) produces a message that names the constructor that
-replaces it.
+error otherwise.
 }
 \seealso{
 \link{iwls_solvers}

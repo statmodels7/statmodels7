@@ -9,11 +9,19 @@
 \usage{
 IwlsSolver()
 
-SolveQR()
+SolveQR(tol = integer(0), floor = integer(0))
 
-SolveSVD()
+SolveSVD(tol = NULL, floor = integer(0))
 
-SolveChol()
+SolveChol(floor = integer(0))
+}
+\arguments{
+\item{tol}{For \code{SolveQR}, the tolerance of the pivoted QR, a single positive
+number. For \code{SolveSVD}, \code{NULL} or the relative cut of the singular values,
+a single positive number.}
+
+\item{floor}{The relative floor of the eigenvalues of a penalized matrix
+that is not positive definite, a single positive number.}
 }
 \value{
 An S7 object of the class named, which inherits from \code{IwlsSolver}.
@@ -24,11 +32,16 @@ system of one step of \code{\link[=iwls]{iwls()}} is solved. Its three subclasse
 \code{SolveSVD} and \code{SolveChol}. They are built by \code{\link[=solve_qr]{solve_qr()}}, \code{\link[=solve_svd]{solve_svd()}} and
 \code{\link[=solve_chol]{solve_chol()}}, which are the functions to call; the classes are exported so
 that \code{S7::S7_inherits()} can test an object. \link{iwls_solvers} compares the
-three. The three classes have no properties.
+three.
+
+\code{SolveQR} has the properties \code{tol} and \code{floor}, \code{SolveSVD} has \code{tol} and
+\code{floor}, and \code{SolveChol} has \code{floor}. The raw constructors do not validate
+them; the functions \code{\link[=solve_qr]{solve_qr()}}, \code{\link[=solve_svd]{solve_svd()}} and \code{\link[=solve_chol]{solve_chol()}} do.
 }
 \examples{
 S7::S7_inherits(solve_svd(), IwlsSolver)
 S7::S7_inherits(solve_svd(), SolveSVD)
+solve_svd()@tol
 
 }
 \seealso{

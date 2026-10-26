@@ -29,7 +29,7 @@ writes that information out, \code{\link[distributions7:expected_hessian_exact]{
 returns \code{TRUE} and the check is skipped. Where a family does not write it
 out, for example a family written outside the toolkit, the information
 falls back on the strategy named by the \code{approx} of the criterion's
-\code{\link[=expected_info]{expected_info()}}, and the default, \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}},
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, and the default, \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}},
 returns \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an
 unbiased estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not
 the information itself: it depends on the response, as the observed curvature
@@ -43,7 +43,7 @@ Hessian and is searched with Newton's method; the outer-product route has
 neither and is searched without derivatives.
 
 The expectation can be requested with another \code{approx} in the criterion's
-\code{\link[=expected_info]{expected_info()}}, and this check does not reject it:
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, and this check does not reject it:
 \code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}} sums or integrates over the support and
 gives a genuine expected information, at a much higher cost per evaluation.
 }

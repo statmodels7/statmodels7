@@ -16,10 +16,10 @@ outer_resolve(method, distrib)
 }
 \description{
 Replaces \code{\link[=auto_info]{auto_info()}} by the information that the criterion uses for
-\code{distrib}: \code{\link[=expected_info]{expected_info()}} for a Student t, a skew t or a Cauchy response,
-wrapped or not, and \code{\link[=observed_info]{observed_info()}} for every other family. The
+\code{distrib}: \code{\link[distributions7:expected_info]{distributions7::expected_info()}} for a Student t, a skew t or a Cauchy response,
+wrapped or not, and \code{\link[distributions7:observed_info]{distributions7::observed_info()}} for every other family. The
 approximation that the \code{\link[=auto_info]{auto_info()}} object carries passes to the
-\code{\link[=expected_info]{expected_info()}} object. Any other information is returned unchanged.
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} object. Any other information is returned unchanged.
 }
 \details{
 The log-density of these families is not concave in the location, so
