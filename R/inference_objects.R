@@ -116,16 +116,49 @@ test_statistic <- S7::new_class(
   abstract = TRUE
 )
 
-# The concrete classes are not exported: the constructors are the interface.
+#' @title S7 Classes for the Shipped Test Statistics
+#'
+#' @description
+#' These are the classes that [wald_test()], [lr_test()], [score_test()] and
+#' [gradient_test()] instantiate. Each inherits from [test_statistic] and
+#' carries its `name` and `label`. `RestrictedTest` is the abstract parent of
+#' the three classes whose statistic is evaluated at a restricted refit
+#' (`LrTest`, `ScoreTest` and `GradientTest`), and [test_restricted()] returns
+#' `TRUE` for every object that inherits from it. Use the constructors, which
+#' set the properties.
+#'
+#' @param name,label Single strings: the short name of the statistic and the
+#'   name under which a result prints it.
+#'
+#' @return An S7 object inheriting from [test_statistic], with the properties
+#'   `name` and `label`.
+#'
+#' @seealso [test_statistic] for the comparison of the four statistics.
+#'
+#' @examples
+#' S7::S7_inherits(lr_test(), test_statistic)
+#' class(lr_test())
+#'
+#' @name WaldTest
+#' @aliases WaldTest RestrictedTest LrTest ScoreTest GradientTest
+#' @keywords internal
 WaldTest <- S7::new_class("WaldTest", parent = test_statistic)
 
+#' @rdname WaldTest
+#' @keywords internal
 RestrictedTest <- S7::new_class("RestrictedTest", parent = test_statistic,
                                 abstract = TRUE)
 
+#' @rdname WaldTest
+#' @keywords internal
 LrTest <- S7::new_class("LrTest", parent = RestrictedTest)
 
+#' @rdname WaldTest
+#' @keywords internal
 ScoreTest <- S7::new_class("ScoreTest", parent = RestrictedTest)
 
+#' @rdname WaldTest
+#' @keywords internal
 GradientTest <- S7::new_class("GradientTest", parent = RestrictedTest)
 
 
@@ -467,10 +500,34 @@ vcov_type <- S7::new_class(
   abstract = TRUE
 )
 
+#' @title S7 Classes for the Shipped Variance Conventions
+#'
+#' @description
+#' These are the classes that [bayesian_vcov()], [frequentist_vcov()] and
+#' [unconditional_vcov()] instantiate. Each inherits from [vcov_type] and
+#' carries its `name`. Use the constructors, which set the property.
+#'
+#' @param name A single string, the short name of the convention.
+#'
+#' @return An S7 object inheriting from [vcov_type], with the property `name`.
+#'
+#' @seealso [vcov_type] for the comparison of the three conventions.
+#'
+#' @examples
+#' S7::S7_inherits(bayesian_vcov(), vcov_type)
+#' class(bayesian_vcov())
+#'
+#' @name BayesianVcov
+#' @aliases BayesianVcov FrequentistVcov UnconditionalVcov
+#' @keywords internal
 BayesianVcov <- S7::new_class("BayesianVcov", parent = vcov_type)
 
+#' @rdname BayesianVcov
+#' @keywords internal
 FrequentistVcov <- S7::new_class("FrequentistVcov", parent = vcov_type)
 
+#' @rdname BayesianVcov
+#' @keywords internal
 UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_type)
 
 
