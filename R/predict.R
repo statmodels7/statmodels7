@@ -348,15 +348,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
          call. = FALSE)
   }
   # an argument accepted here and read by nobody would change nothing
-  if (...length()) {
-    dn <- ...names()
-    reject_old_type(dn, "vcov_type",
-                    "predict(fit, se = TRUE, vcov_type = frequentist_vcov())")
-    bad <- if (is.null(dn)) rep("", ...length()) else dn
-    stop(sprintf("predict() takes no argument %s.",
-                 paste0("'", ifelse(nzchar(bad), bad, "<unnamed>"), "'",
-                        collapse = ", ")), call. = FALSE)
-  }
+  check_dots("predict", ...)
   vcov_given <- !missing(vcov_type)
   vcov_type <- as_vcov_method(vcov_type)
   if (vcov_given &&

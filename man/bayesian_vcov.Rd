@@ -4,11 +4,27 @@
 \alias{bayesian_vcov}
 \title{Bayesian Variance of a Fit}
 \usage{
-bayesian_vcov()
+bayesian_vcov(information = distributions7::observed_info())
+}
+\arguments{
+\item{information}{The matrix \eqn{H}, an object that inherits from
+\link[distributions7:Information]{distributions7::Information}:
+\itemize{
+\item \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the default: the negative Hessian of
+the log-likelihood at the data;
+\item \code{\link[distributions7:expected_info]{distributions7::expected_info()}}: the Fisher information, whose \code{approx}
+is read only for a family that has no closed form for it (see
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}).
+}
+
+\code{\link[=auto_info]{auto_info()}} is not accepted. A model with a structural term is inverted
+on the observed information whatever the object says. The choice does not
+depend on how the fit was computed (\code{inner_information} of \code{\link[=statmod]{statmod()}}).
+\link{information_objects} compares the objects.}
 }
 \value{
 A \code{BayesianVcov} object, inheriting from \link{vcov_method}, with the
-property \code{name} equal to \code{"bayesian"}.
+property \code{name} equal to \code{"bayesian"} and the property \code{information}.
 }
 \description{
 Selects the variance \eqn{V_b = (H + S)^{-1}}, the inverse of the
@@ -24,8 +40,6 @@ smoothing bias as variance, and such intervals cover at about their nominal
 rate. It does not include the uncertainty of the hyperparameters, for which
 \code{\link[=unconditional_vcov]{unconditional_vcov()}} is the convention. See \link{vcov_method} for the three side
 by side and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the matrices in full.
-
-The constructor has no arguments.
 }
 \examples{
 set.seed(1)
@@ -35,6 +49,10 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 bayesian_vcov()
 vcov(fit, vcov_type = bayesian_vcov())
 confint(fit, vcov_type = bayesian_vcov())
+
+# the standard errors from the expected information instead
+vcov(fit, vcov_type = bayesian_vcov(
+  information = distributions7::expected_info()))
 }
 \seealso{
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} and \code{\link[=unconditional_vcov]{unconditional_vcov()}} for the siblings,

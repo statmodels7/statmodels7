@@ -3,8 +3,7 @@ NULL
 
 # The two choices that every inference function of a fit shares, written as
 # objects: the statistic with which a coefficient is tested, and the
-# convention that sets the variance matrix. A character string used to select
-# each one. Passing a string signals an error that names the object to use.
+# convention that sets the variance matrix.
 
 
 #' @title Statistics for Testing a Coefficient
@@ -381,9 +380,8 @@ S7::method(print, test_statistic) <- function(x, ...) {
 #' Check the Argument That Selects a Test Statistic
 #'
 #' @description
-#' Returns `test` if it is a [test_statistic] object. A character string
-#' signals an error that names the constructor to use, and any other value
-#' signals an error that lists the four constructors.
+#' Returns `test` if it is a [test_statistic] object and signals an error that
+#' lists the four constructors otherwise.
 #'
 #' @param test The value of a `test` argument.
 #' @param arg The argument's name, for the message.
@@ -393,15 +391,6 @@ S7::method(print, test_statistic) <- function(x, ...) {
 #' @keywords internal
 as_test_statistic <- function(test, arg = "test") {
   if (S7::S7_inherits(test, test_statistic)) return(test)
-  ctor <- c(wald = "wald_test()", lr = "lr_test()", score = "score_test()",
-            gradient = "gradient_test()")
-  if (is.character(test) && length(test) >= 1L && !is.na(test[[1L]]) &&
-      test[[1L]] %in% names(ctor)) {
-    stop(sprintf(paste0("'%s' must be a test_statistic object such as ",
-                        "wald_test(); the string \"%s\" is no longer ",
-                        "accepted. Use %s."),
-                 arg, test[[1L]], ctor[[test[[1L]]]]), call. = FALSE)
-  }
   stop(sprintf(paste0("'%s' must be a test_statistic object: wald_test(), ",
                       "lr_test(), score_test() or gradient_test()."), arg),
        call. = FALSE)
@@ -421,12 +410,26 @@ as_test_statistic <- function(test, arg = "test") {
 #' [bayesian_vcov()].
 #'
 #' `vcov_method` is the abstract parent of the three classes. It cannot be
-#' instantiated, and serves to test membership with `S7::S7_inherits()`.
+#' instantiated, and serves to test membership with `S7::S7_inherits()`. It
+#' has the property `name` only. The three conventions of this topic compute
+#' the variance from the curvature of the likelihood and carry one more
+#' property, `information`, which selects the matrix \eqn{H} (see below).
+#' A convention that does not read the curvature, such as one built on
+#' resampled fits, does not carry it.
 #'
 #' @details
 #' Write \eqn{H} for the information of the log-likelihood and \eqn{S} for the
-#' second derivative of the penalty, both at the estimates. The three matrices
-#' are
+#' second derivative of the penalty, both at the estimates. The argument
+#' `information` of [bayesian_vcov()], [frequentist_vcov()] and
+#' [unconditional_vcov()] selects \eqn{H}: [distributions7::observed_info()]
+#' (the default), the negative Hessian of the log-likelihood at the data, or
+#' [distributions7::expected_info()], the Fisher information, with an `approx`
+#' for a family that has no closed form. [auto_info()] is not accepted, since
+#' the variance is defined on one named matrix. The choice is independent of
+#' the information with which the fit was computed (`inner_information` of
+#' [statmod()]) and of the one of the outer criterion (the `information` of
+#' [reml()]). A model that carries a structural term is inverted on the
+#' observed information whatever the object says. The three matrices are
 #' \deqn{V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}, \qquad
 #'   V' = V_b + J V_\theta J'.}
 #'
@@ -452,6 +455,11 @@ as_test_statistic <- function(test, arg = "test") {
 #'
 #' With no penalty \eqn{S = 0} and \eqn{V_b} and \eqn{V_f} are both
 #' \eqn{H^{-1}} for a coefficient that the outer criterion does not estimate.
+#' Where the observed information is singular at the estimates, as it is for a
+#' coefficient on which the second derivative of the log-likelihood is zero (the
+#' location of a Laplace response), the rows of the coefficients that it does
+#' not identify are missing, and [distributions7::expected_info()] is the
+#' alternative that reads a finite value.
 #' Where no hyperparameter was estimated by a differentiable criterion the
 #' correction of the unconditional matrix is zero and it equals \eqn{V_b}.
 #' The coefficients that [reml()] and [ml()] estimate on the criterion (the
@@ -467,7 +475,8 @@ as_test_statistic <- function(test, arg = "test") {
 #'   it.
 #'
 #' @return Nothing: the class is abstract and its constructor signals an
-#'   error. Every object that inherits from it has the property `name`.
+#'   error. Every object that inherits from it has the property `name`; the
+#'   three conventions of this topic have the property `information` as well.
 #'
 #' @references
 #' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
@@ -491,6 +500,10 @@ as_test_statistic <- function(test, arg = "test") {
 #'   sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]]
 #' }, numeric(1))
 #'
+#' # the matrix H is chosen inside the convention
+#' sqrt(diag(vcov(fs, vcov_type = bayesian_vcov(
+#'   information = distributions7::expected_info()))))[["mu:s(x).z2"]]
+#'
 #' # the class itself is abstract
 #' try(vcov_method(name = "mine"))
 #' @export
@@ -508,27 +521,35 @@ vcov_method <- S7::new_class(
 #' carries its `name`. Use the constructors, which set the property.
 #'
 #' @param name A single string, the short name of the convention.
+#' @param information An object that inherits from
+#'   [distributions7::Information]: [distributions7::observed_info()] or
+#'   [distributions7::expected_info()].
 #'
-#' @return An S7 object inheriting from [vcov_method], with the property `name`.
+#' @return An S7 object inheriting from [vcov_method], with the properties
+#'   `name` and `information`.
 #'
 #' @seealso [vcov_method] for the comparison of the three conventions.
 #'
 #' @examples
 #' S7::S7_inherits(bayesian_vcov(), vcov_method)
 #' class(bayesian_vcov())
+#' bayesian_vcov()@information
 #'
 #' @name BayesianVcov
 #' @aliases BayesianVcov FrequentistVcov UnconditionalVcov
 #' @keywords internal
-BayesianVcov <- S7::new_class("BayesianVcov", parent = vcov_method)
+BayesianVcov <- S7::new_class("BayesianVcov", parent = vcov_method,
+  properties = list(information = distributions7::Information))
 
 #' @rdname BayesianVcov
 #' @keywords internal
-FrequentistVcov <- S7::new_class("FrequentistVcov", parent = vcov_method)
+FrequentistVcov <- S7::new_class("FrequentistVcov", parent = vcov_method,
+  properties = list(information = distributions7::Information))
 
 #' @rdname BayesianVcov
 #' @keywords internal
-UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method)
+UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method,
+  properties = list(information = distributions7::Information))
 
 
 #' @title Bayesian Variance of a Fit
@@ -548,10 +569,21 @@ UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method)
 #' [unconditional_vcov()] is the convention. See [vcov_method] for the three side
 #' by side and [vcov.StatmodFit()] for the matrices in full.
 #'
-#' The constructor has no arguments.
+#' @param information The matrix \eqn{H}, an object that inherits from
+#'   [distributions7::Information]:
+#'   - [distributions7::observed_info()], the default: the negative Hessian of
+#'     the log-likelihood at the data;
+#'   - [distributions7::expected_info()]: the Fisher information, whose `approx`
+#'     is read only for a family that has no closed form for it (see
+#'     [distributions7::expected_derivative_methods]).
+#'
+#'   [auto_info()] is not accepted. A model with a structural term is inverted
+#'   on the observed information whatever the object says. The choice does not
+#'   depend on how the fit was computed (`inner_information` of [statmod()]).
+#'   [information_objects] compares the objects.
 #'
 #' @return A `BayesianVcov` object, inheriting from [vcov_method], with the
-#'   property `name` equal to `"bayesian"`.
+#'   property `name` equal to `"bayesian"` and the property `information`.
 #'
 #' @seealso [frequentist_vcov()] and [unconditional_vcov()] for the siblings,
 #'   [vcov_method] for the comparison, and [vcov.StatmodFit()],
@@ -566,8 +598,16 @@ UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method)
 #' bayesian_vcov()
 #' vcov(fit, vcov_type = bayesian_vcov())
 #' confint(fit, vcov_type = bayesian_vcov())
+#'
+#' # the standard errors from the expected information instead
+#' vcov(fit, vcov_type = bayesian_vcov(
+#'   information = distributions7::expected_info()))
 #' @export
-bayesian_vcov <- function() BayesianVcov(name = "bayesian")
+bayesian_vcov <- function(information = distributions7::observed_info()) {
+  check_information(information, arg = "information", fn = "bayesian_vcov",
+                    auto = FALSE)
+  BayesianVcov(name = "bayesian", information = information)
+}
 
 #' @title Frequentist Variance of a Fit
 #'
@@ -584,10 +624,10 @@ bayesian_vcov <- function() BayesianVcov(name = "bayesian")
 #' less. With no penalty it equals \eqn{H^{-1}}. See [vcov_method] for the three
 #' conventions side by side and [vcov.StatmodFit()] for the matrices in full.
 #'
-#' The constructor has no arguments.
+#' @inheritParams bayesian_vcov
 #'
 #' @return A `FrequentistVcov` object, inheriting from [vcov_method], with the
-#'   property `name` equal to `"frequentist"`.
+#'   property `name` equal to `"frequentist"` and the property `information`.
 #'
 #' @seealso [bayesian_vcov()] and [unconditional_vcov()] for the siblings,
 #'   [vcov_method] for the comparison, and [vcov.StatmodFit()],
@@ -602,8 +642,13 @@ bayesian_vcov <- function() BayesianVcov(name = "bayesian")
 #' frequentist_vcov()
 #' vcov(fit, vcov_type = frequentist_vcov())
 #' summary(fit, vcov_type = frequentist_vcov())
+#' frequentist_vcov(information = distributions7::expected_info())
 #' @export
-frequentist_vcov <- function() FrequentistVcov(name = "frequentist")
+frequentist_vcov <- function(information = distributions7::observed_info()) {
+  check_information(information, arg = "information", fn = "frequentist_vcov",
+                    auto = FALSE)
+  FrequentistVcov(name = "frequentist", information = information)
+}
 
 #' @title Unconditional Variance of a Fit
 #'
@@ -627,10 +672,11 @@ frequentist_vcov <- function() FrequentistVcov(name = "frequentist")
 #' three conventions side by side and [vcov.StatmodFit()] for the matrices in
 #' full.
 #'
-#' The constructor has no arguments.
+#' @inheritParams bayesian_vcov
 #'
 #' @return An `UnconditionalVcov` object, inheriting from [vcov_method], with
-#'   the property `name` equal to `"unconditional"`.
+#'   the property `name` equal to `"unconditional"` and the property
+#'   `information`.
 #'
 #' @seealso [bayesian_vcov()] and [frequentist_vcov()] for the siblings,
 #'   [vcov_method] for the comparison, and [vcov.StatmodFit()],
@@ -645,22 +691,34 @@ frequentist_vcov <- function() FrequentistVcov(name = "frequentist")
 #'               distributions7::gaussian1_distrib(), ds)
 #' unconditional_vcov()
 #' sqrt(diag(vcov(fs, vcov_type = unconditional_vcov())))[["mu:s(x).z2"]]
+#' unconditional_vcov(information = distributions7::expected_info())
 #' @export
-unconditional_vcov <- function() UnconditionalVcov(name = "unconditional")
+unconditional_vcov <- function(information = distributions7::observed_info()) {
+  check_information(information, arg = "information",
+                    fn = "unconditional_vcov", auto = FALSE)
+  UnconditionalVcov(name = "unconditional", information = information)
+}
 
 
 #' @title Print a Variance Convention
 #' @name print.vcov_method
 #' @description
-#' Prints one line, the name of the convention.
+#' Prints one line, the name of the convention and, for the three conventions
+#' that read the curvature, the information that they invert.
 #' @param x A [vcov_method] object.
 #' @param ... Unused.
 #' @return `x`, invisibly.
 #' @examples
 #' print(unconditional_vcov())
+#' print(bayesian_vcov(information = distributions7::expected_info()))
 #' @keywords internal
 S7::method(print, vcov_method) <- function(x, ...) {
-  cat("<vcov> ", x@name, "\n", sep = "")
+  cat("<vcov> ", x@name, sep = "")
+  if (S7::prop_exists(x, "information")) {
+    cat(" (", tolower(substr(info_title(x@information), 1L, 1L)),
+        substring(info_title(x@information), 2L), ")", sep = "")
+  }
+  cat("\n")
   invisible(x)
 }
 
@@ -668,9 +726,8 @@ S7::method(print, vcov_method) <- function(x, ...) {
 #' Check the Argument That Selects a Variance Convention
 #'
 #' @description
-#' Returns `x` if it is a [vcov_method] object. A character string signals an
-#' error that names the constructor to use, and any other value signals an
-#' error that lists the three constructors.
+#' Returns `x` if it is a [vcov_method] object and signals an error that lists
+#' the three constructors otherwise.
 #'
 #' @param x The value of a `vcov_type` argument.
 #' @param arg The argument's name, for the message.
@@ -680,40 +737,44 @@ S7::method(print, vcov_method) <- function(x, ...) {
 #' @keywords internal
 as_vcov_method <- function(x, arg = "vcov_type") {
   if (S7::S7_inherits(x, vcov_method)) return(x)
-  ctor <- c(bayesian = "bayesian_vcov()", frequentist = "frequentist_vcov()",
-            unconditional = "unconditional_vcov()")
-  if (is.character(x) && length(x) >= 1L && !is.na(x[[1L]]) &&
-      x[[1L]] %in% names(ctor)) {
-    stop(sprintf(paste0("'%s' must be a vcov_method object such as ",
-                        "bayesian_vcov(); the string \"%s\" is no longer ",
-                        "accepted. Use %s."),
-                 arg, x[[1L]], ctor[[x[[1L]]]]), call. = FALSE)
-  }
   stop(sprintf(paste0("'%s' must be a vcov_method object: bayesian_vcov(), ",
                       "frequentist_vcov() or unconditional_vcov()."), arg),
        call. = FALSE)
 }
 
 
-#' Reject an Argument That Was Renamed From `type`
+#' The Information of a Variance Convention
 #'
 #' @description
-#' Signals an error when the dots of a method carry an argument named `type`,
-#' which is the name that the variance convention, the residual type and the
-#' log-likelihood type had before they were renamed. The generics of base R
-#' pass such an argument to the method through `...`, where it would
-#' otherwise be ignored.
+#' Returns the `information` property of a [vcov_method] object that has one,
+#' and [distributions7::observed_info()] for a convention that does not.
 #'
-#' @param dots_names The names of the dots, as `...names()` returns them.
-#' @param new The new argument name, a single string.
-#' @param example A call that shows the new spelling, a single string.
+#' @param x A [vcov_method] object.
 #'
-#' @return `NULL`, invisibly, when no argument is named `type`.
+#' @return An object that inherits from [distributions7::Information].
+#'
+#' @seealso [vcov_method]
 #'
 #' @keywords internal
-reject_old_type <- function(dots_names, new, example) {
-  if ("type" %in% dots_names) {
-    stop(sprintf("'type' is now '%s': %s.", new, example), call. = FALSE)
-  }
-  invisible(NULL)
+vcov_information <- function(x) {
+  if (S7::prop_exists(x, "information")) x@information
+  else distributions7::observed_info()
+}
+
+
+#' The Words That Name an Information
+#'
+#' @description
+#' Returns "Observed information", "Expected information" or "Information
+#' chosen against the family" for an information object.
+#'
+#' @param x An object inheriting from [distributions7::Information].
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+info_title <- function(x) {
+  switch(info_label(x), observed = "Observed information",
+         expected = "Expected information",
+         auto = "Information chosen against the family")
 }

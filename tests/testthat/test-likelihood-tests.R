@@ -461,16 +461,13 @@ test_that("a smooth's linear column is tested and a kinked row is not", {
 })
 
 
-test_that("the old name of confint's argument is refused rather than ignored", {
+test_that("an argument that confint does not take is rejected rather than ignored", {
   fit <- pois_fit(pois_data())
-  ## `method` was this argument's name in 0.103.0. It reaches the DOTS here
-  ## rather than any formal -- no formal of confint() begins with it -- and
-  ## from there it would go to vcov(), which has no such argument either, so
-  ## without the guard the request would be answered with the Wald limits in
-  ## silence. That is the failure this exists for, not tidiness.
+  ## the dots of confint() go to vcov(), which takes no such argument, so the
+  ## request is not answered with the Wald limits in silence
   expect_error(confint(fit, "mu:x", method = "lr", readable = FALSE),
-               "'method' is now 'test'", fixed = TRUE)
-  ## the same request under the name summary() already used
+               "takes no argument 'method'", fixed = TRUE)
+  ## the statistic is chosen by `test`
   a <- confint(fit, "mu:x", test = lr_test(), readable = FALSE)
   expect_true(all(is.finite(c(a$lower[[1L]], a$upper[[1L]]))))
 })

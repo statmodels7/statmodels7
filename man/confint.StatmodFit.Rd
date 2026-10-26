@@ -37,10 +37,10 @@ the interval. \code{\link[=wald_test]{wald_test()}} (the default) gives the inte
 symmetric about the estimate, from the variance matrix and with no refit.
 \code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} and \code{\link[=gradient_test]{gradient_test()}} are inverted by
 \code{\link[=statmod_invert]{statmod_invert()}} and cost a few dozen restricted refits per interval.
-The four are compared at \link{test_statistic}. A character string is rejected
-with an error that names the constructor.}
+The four are compared at \link{test_statistic}.}
 
-\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
+\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which signals an error for any
+argument that it does not take.}
 }
 \value{
 A data frame with the parameter, the term, the coefficient, the

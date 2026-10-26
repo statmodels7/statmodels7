@@ -192,19 +192,26 @@ test_that("a failed edf correction is reported as not computed", {
   expect_no_match(nt, "estimated no hyperparameter here")
 })
 
-test_that("the edf correction reads the information that the fit used", {
+test_that("the edf correction reads the information of vcov_type", {
   set.seed(3)
   d <- data.frame(x = stats::runif(300))
   d$y <- sin(4 * d$x) + stats::rt(300, df = 4) * 0.3
   fit <- statmod(y ~ s(x, bspline_smooth(k = 8)),
                  distributions7::pseudohuber_distrib(), d)
-  expect_false(fit_expected(fit))
   ref <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
                                 statmod_design(fit@spec), fit@methods$outer,
                                 expected = FALSE,
                                 pinned = fit@methods$pinned)$total
   expect_equal(summary(fit, correct = TRUE)@df - summary(fit)@df, ref,
                tolerance = 1e-10)
+  ## and the expected information where the convention names it
+  ve <- bayesian_vcov(information = expected_info())
+  ref_e <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
+                                  statmod_design(fit@spec), fit@methods$outer,
+                                  expected = TRUE,
+                                  pinned = fit@methods$pinned)$total
+  expect_equal(summary(fit, correct = TRUE, vcov_type = ve)@df -
+                 summary(fit, vcov_type = ve)@df, ref_e, tolerance = 1e-10)
 })
 
 test_that("frequency weights count as observations in bic() and nobs()", {

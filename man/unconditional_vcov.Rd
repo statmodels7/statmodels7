@@ -4,11 +4,28 @@
 \alias{unconditional_vcov}
 \title{Unconditional Variance of a Fit}
 \usage{
-unconditional_vcov()
+unconditional_vcov(information = distributions7::observed_info())
+}
+\arguments{
+\item{information}{The matrix \eqn{H}, an object that inherits from
+\link[distributions7:Information]{distributions7::Information}:
+\itemize{
+\item \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the default: the negative Hessian of
+the log-likelihood at the data;
+\item \code{\link[distributions7:expected_info]{distributions7::expected_info()}}: the Fisher information, whose \code{approx}
+is read only for a family that has no closed form for it (see
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}).
+}
+
+\code{\link[=auto_info]{auto_info()}} is not accepted. A model with a structural term is inverted
+on the observed information whatever the object says. The choice does not
+depend on how the fit was computed (\code{inner_information} of \code{\link[=statmod]{statmod()}}).
+\link{information_objects} compares the objects.}
 }
 \value{
 An \code{UnconditionalVcov} object, inheriting from \link{vcov_method}, with
-the property \code{name} equal to \code{"unconditional"}.
+the property \code{name} equal to \code{"unconditional"} and the property
+\code{information}.
 }
 \description{
 Selects the variance \eqn{V' = V_b + J V_\theta J'}, which adds to the
@@ -29,8 +46,6 @@ cannot be read the conditional matrix is returned with a warning. It is the
 matrix that mgcv returns for \code{unconditional = TRUE}. See \link{vcov_method} for the
 three conventions side by side and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the matrices in
 full.
-
-The constructor has no arguments.
 }
 \examples{
 set.seed(1)
@@ -40,6 +55,7 @@ fs <- statmod(y ~ s(x, bspline_smooth(k = 10)),
               distributions7::gaussian1_distrib(), ds)
 unconditional_vcov()
 sqrt(diag(vcov(fs, vcov_type = unconditional_vcov())))[["mu:s(x).z2"]]
+unconditional_vcov(information = distributions7::expected_info())
 }
 \seealso{
 \code{\link[=bayesian_vcov]{bayesian_vcov()}} and \code{\link[=frequentist_vcov]{frequentist_vcov()}} for the siblings,

@@ -627,7 +627,7 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #'   [lr_test()], [score_test()] or [gradient_test()]. The first reads the
 #'   unrestricted fit only; the other three cost one restricted refit. The
 #'   four are compared at [test_statistic]. A character string is rejected with
-#'   an error that names the constructor.
+#'   an error.
 #' @param vcov_type A [vcov_method] object, the variance that the Wald statistic
 #'   reads, passed to [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
 #'   [frequentist_vcov()] or [unconditional_vcov()]. The conventions are

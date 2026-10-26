@@ -14,7 +14,8 @@ it.}
 }
 \value{
 Nothing: the class is abstract and its constructor signals an
-error. Every object that inherits from it has the property \code{name}.
+error. Every object that inherits from it has the property \code{name}; the
+three conventions of this topic have the property \code{information} as well.
 }
 \description{
 Three conventions set the variance matrix of the coefficients of a fit:
@@ -26,12 +27,26 @@ an object built by \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=f
 \code{\link[=bayesian_vcov]{bayesian_vcov()}}.
 
 \code{vcov_method} is the abstract parent of the three classes. It cannot be
-instantiated, and serves to test membership with \code{S7::S7_inherits()}.
+instantiated, and serves to test membership with \code{S7::S7_inherits()}. It
+has the property \code{name} only. The three conventions of this topic compute
+the variance from the curvature of the likelihood and carry one more
+property, \code{information}, which selects the matrix \eqn{H} (see below).
+A convention that does not read the curvature, such as one built on
+resampled fits, does not carry it.
 }
 \details{
 Write \eqn{H} for the information of the log-likelihood and \eqn{S} for the
-second derivative of the penalty, both at the estimates. The three matrices
-are
+second derivative of the penalty, both at the estimates. The argument
+\code{information} of \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=frequentist_vcov]{frequentist_vcov()}} and
+\code{\link[=unconditional_vcov]{unconditional_vcov()}} selects \eqn{H}: \code{\link[distributions7:observed_info]{distributions7::observed_info()}}
+(the default), the negative Hessian of the log-likelihood at the data, or
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, the Fisher information, with an \code{approx}
+for a family that has no closed form. \code{\link[=auto_info]{auto_info()}} is not accepted, since
+the variance is defined on one named matrix. The choice is independent of
+the information with which the fit was computed (\code{inner_information} of
+\code{\link[=statmod]{statmod()}}) and of the one of the outer criterion (the \code{information} of
+\code{\link[=reml]{reml()}}). A model that carries a structural term is inverted on the
+observed information whatever the object says. The three matrices are
 \deqn{V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}, \qquad
   V' = V_b + J V_\theta J'.}
 \itemize{
@@ -58,6 +73,11 @@ the other two do not read, and it is the most expensive of the three.
 
 With no penalty \eqn{S = 0} and \eqn{V_b} and \eqn{V_f} are both
 \eqn{H^{-1}} for a coefficient that the outer criterion does not estimate.
+Where the observed information is singular at the estimates, as it is for a
+coefficient on which the second derivative of the log-likelihood is zero (the
+location of a Laplace response), the rows of the coefficients that it does
+not identify are missing, and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} is the
+alternative that reads a finite value.
 Where no hyperparameter was estimated by a differentiable criterion the
 correction of the unconditional matrix is zero and it equals \eqn{V_b}.
 The coefficients that \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} estimate on the criterion (the
@@ -79,6 +99,10 @@ types <- list(frequentist_vcov(), bayesian_vcov(), unconditional_vcov())
 vapply(types, function(ty) {
   sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]]
 }, numeric(1))
+
+# the matrix H is chosen inside the convention
+sqrt(diag(vcov(fs, vcov_type = bayesian_vcov(
+  information = distributions7::expected_info()))))[["mu:s(x).z2"]]
 
 # the class itself is abstract
 try(vcov_method(name = "mine"))

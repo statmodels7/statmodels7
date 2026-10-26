@@ -15,69 +15,83 @@ pig_data <- function(n = 200L, seed = 1L) {
   data.frame(y = stats::rpois(n, lam), x = x)
 }
 
-test_that("fit_expected asks the family as well as the fit", {
+test_that("the standard errors are the observed ones for every fit, whatever the inner information", {
   dd <- pig_data(120L)
-  # a family that approximates its expected information: the step reads the
-  # observed information by default, and where it is asked for the expected
-  # one it uses the approximation; the report does not
-  f_pig <- statmod(y ~ x, pig_bare_distrib(), dd)
-  expect_identical(info_label(f_pig@methods$smooth@hessian), "observed")
-  expect_false(statmodels7:::fit_expected(f_pig))
-  f_pig_e <- statmod(y ~ x, pig_bare_distrib(), dd,
-                     inner = iwls(information = expected_info()))
-  expect_identical(info_label(f_pig_e@methods$smooth@hessian), "expected")
-  expect_false(statmodels7:::fit_expected(f_pig_e))
-  # a family whose expected information is exact but costly: observed by
-  # default, and the expected one reported where it is asked for
-  f_p1 <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
-  expect_identical(info_label(f_p1@methods$smooth@hessian), "observed")
-  expect_false(statmodels7:::fit_expected(f_p1))
-  f_p1e <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
-                   inner = iwls(information = expected_info()))
-  expect_true(statmodels7:::fit_expected(f_p1e))
-
-  # one that writes it out keeps it
+  fam <- list(pig_bare_distrib(), distributions7::pig1_distrib())
+  for (d in fam) {
+    f_def <- statmod(y ~ x, d, dd)
+    f_exp <- statmod(y ~ x, d, dd, inner_information = expected_info())
+    f_obs <- statmod(y ~ x, d, dd, inner_information = observed_info())
+    ## the observed information inverted at each fit's own estimates
+    for (f in list(f_def, f_exp, f_obs)) {
+      expect_identical(vcov(f), vcov(f, vcov_type = bayesian_vcov(
+        information = observed_info())))
+    }
+  }
+  # one that writes its expected information out has the same default
   set.seed(2)
   gd <- data.frame(x = stats::runif(120))
   gd$y <- 1 + 2 * gd$x + stats::rnorm(120, sd = 0.4)
   f_g <- statmod(y ~ x, distributions7::gaussian1_distrib(), gd)
-  expect_true(statmodels7:::fit_expected(f_g))
-
-  # and an explicit "observed" is followed whatever the family
-  f_obs <- statmod(y ~ x, distributions7::gaussian1_distrib(), gd,
-                   inner = iwls(information = observed_info()))
-  expect_false(statmodels7:::fit_expected(f_obs))
+  expect_identical(info_label(f_g@methods$smooth@hessian), "expected")
+  expect_identical(vcov(f_g), vcov(f_g, vcov_type = bayesian_vcov(
+    information = observed_info())))
 })
 
-test_that("the default report is the observed information where the expected one is approximated", {
+test_that("the observed standard errors are the inverse of the observed Hessian", {
   dd <- pig_data(150L)
-  fit <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
-  expect_equal(vcov(fit), vcov(fit, expected = FALSE))
-  expect_false(isTRUE(all.equal(vcov(fit), vcov(fit, expected = TRUE))))
+  fit <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
+                 outer_criterion = NULL)
+  H <- -hessian(fit, expected = FALSE)
+  expect_equal(unname(vcov(fit)), unname(solve(H)), tolerance = 1e-8)
+  Ie <- -hessian(fit, expected = TRUE)
+  expect_equal(unname(vcov(fit, vcov_type = bayesian_vcov(
+    information = expected_info()))), unname(solve(Ie)), tolerance = 1e-8)
+  expect_false(isTRUE(all.equal(vcov(fit), vcov(fit, vcov_type = bayesian_vcov(
+    information = expected_info())))))
 })
 
-test_that("vcov takes approx and it reaches the family", {
+test_that("each analytic convention takes the information, and the abstract class does not", {
+  for (ctor in list(bayesian_vcov, frequentist_vcov, unconditional_vcov)) {
+    o <- ctor()
+    e <- ctor(information = expected_info())
+    expect_true(S7::S7_inherits(o@information, ObservedInfo))
+    expect_true(S7::S7_inherits(e@information, ExpectedInfo))
+    expect_true(S7::S7_inherits(e, vcov_method))
+  }
+  expect_identical(names(vcov_method@properties), "name")
+})
+
+test_that("the information reaches the family through the approximation", {
   # The two readings of the identity differ, which is what says the argument
   # is not being swallowed. bartlett is the dear route, so this runs small.
   # The family must approximate its expected information for approx to mean
   # anything: pig1 computes its own exactly since distributions7 0.65.0.
   dd <- pig_data(60L)
   fit <- statmod(y ~ x, pig_bare_distrib(), dd)
-  V_opg <- vcov(fit, expected = TRUE, approx = distributions7::expect_opg())
-  V_bar <- vcov(fit, expected = TRUE, approx = distributions7::expect_bartlett())
+  V_opg <- vcov(fit, vcov_type = bayesian_vcov(
+    information = expected_info(approx = distributions7::expect_opg())))
+  V_bar <- vcov(fit, vcov_type = bayesian_vcov(
+    information = expected_info(approx = distributions7::expect_bartlett())))
   expect_false(isTRUE(all.equal(V_opg, V_bar)))
   expect_identical(dimnames(V_opg), dimnames(V_bar))
-  # a bad value is refused by name rather than passed on
-  expect_error(vcov(fit, approx = "nonesuch"), "expectation object")
-  expect_error(vcov(fit, approx = "bartlett"), "Use expect_bartlett\\(\\)")
+  # a bad value is rejected by the constructor
+  expect_error(expected_info(approx = "nonesuch"), "ExpectApprox object")
+  # and the arguments that moved into the object are gone from the methods
+  expect_error(vcov(fit, expected = TRUE), "vcov\\(\\) takes no argument 'expected'")
+  expect_error(vcov(fit, approx = distributions7::expect_opg()),
+               "takes no argument 'approx'")
+  expect_error(confint(fit, expected = TRUE), "takes no argument 'expected'")
+  expect_error(summary(fit, expected = TRUE), "takes no argument 'expected'")
 })
 
-test_that("summary passes expected and approx through to vcov", {
+test_that("summary and confint read the information of vcov_type", {
   dd <- pig_data(150L)
   fit <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
+  ve <- bayesian_vcov(information = expected_info())
   s_def <- summary(fit)
-  s_obs <- summary(fit, expected = FALSE)
-  s_exp <- summary(fit, expected = TRUE)
+  s_obs <- summary(fit, vcov_type = bayesian_vcov(information = observed_info()))
+  s_exp <- summary(fit, vcov_type = ve)
 
   # a StatmodSummary's @tables is keyed by distribution parameter, and each
   # entry is a LIST OF BLOCKS (one per term, the shape term_block_kind()
@@ -91,6 +105,8 @@ test_that("summary passes expected and approx through to vcov", {
   expect_false(isTRUE(all.equal(se(s_def), se(s_exp))))
   # the ESTIMATES do not move: only which curvature is read
   expect_equal(est(s_obs), est(s_exp))
+  ci_e <- confint(fit, vcov_type = ve)
+  expect_equal(ci_e$se, sqrt(diag(vcov(fit, vcov_type = ve))), ignore_attr = TRUE)
 })
 
 test_that("the cheap and the dear expected information reach the same fit", {
@@ -99,10 +115,10 @@ test_that("the cheap and the dear expected information reach the same fit", {
   # point. Small n, because the bartlett route sums over the support per row.
   dd <- pig_data(60L)
   f_opg <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
-                   inner = iwls(information = expected_info()))
+                   inner_information = expected_info())
   f_bar <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
-                   inner = iwls(information = expected_info(
-                     approx = distributions7::expect_bartlett())))
+                   inner_information = expected_info(
+                     approx = distributions7::expect_bartlett()))
   expect_equal(unlist(coef(f_opg)), unlist(coef(f_bar)), tolerance = 1e-4)
   expect_equal(as.numeric(logLik(f_opg)), as.numeric(logLik(f_bar)),
                tolerance = 1e-6)
@@ -114,8 +130,8 @@ test_that("a family with a closed form fits identically under either approx", {
   gd$y <- 1 + 2 * gd$x + stats::rnorm(150, sd = 0.4)
   a <- statmod(y ~ x, distributions7::gaussian1_distrib(), gd)
   b <- statmod(y ~ x, distributions7::gaussian1_distrib(), gd,
-               inner = iwls(information = auto_info(
-                   approx = distributions7::expect_bartlett())))
+               inner_information = auto_info(
+                 approx = distributions7::expect_bartlett()))
   expect_equal(unlist(coef(a)), unlist(coef(b)))
   expect_equal(vcov(a), vcov(b))
 })

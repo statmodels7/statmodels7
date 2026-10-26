@@ -432,12 +432,6 @@ group_interval <- function() {
 #'
 #' @export
 prediction_interval <- function(predictive = pred_averaged()) {
-  if (is.character(predictive)) {
-    stop("'predictive' must be a predictive object such as pred_averaged(); ",
-         "the string \"", predictive[1L], "\" is no longer accepted. Use ",
-         "pred_averaged(), pred_plugin() or pred_bootstrap(n = ..., ",
-         "refit = ...).", call. = FALSE)
-  }
   if (!S7::S7_inherits(predictive, predictive_type)) {
     stop("'predictive' must be a predictive object: pred_averaged(), ",
          "pred_plugin() or pred_bootstrap().", call. = FALSE)
@@ -618,13 +612,6 @@ S7::method(print, predictive_type) <- function(x, ...) {
 #'
 #' @keywords internal
 predict_interval_spec <- function(interval) {
-  if (is.character(interval)) {
-    stop("'interval' must be an interval object such as ",
-         "confidence_interval(); the string \"", interval[1L],
-         "\" is no longer accepted. Use confidence_interval(), ",
-         "group_interval() or prediction_interval(predictive = ...).",
-         call. = FALSE)
-  }
   if (!S7::S7_inherits(interval, interval_type)) {
     stop("'interval' must be an interval object: confidence_interval(), ",
          "group_interval() or prediction_interval().", call. = FALSE)

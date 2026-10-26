@@ -58,7 +58,7 @@ test_that("a ridge makes the bayesian variance the larger of the two", {
   expect_true(any(vb > vf * 1.000001))
   # V_f = V_b H V_b is the sandwich the definition states, computed here from
   # the pieces rather than read back from the function under test
-  H <- -hessian(fit, expected = TRUE)
+  H <- -hessian(fit, expected = FALSE)
   Vb <- vcov(fit, vcov_type = bayesian_vcov())
   expect_equal(Vb %*% H %*% Vb, vcov(fit, vcov_type = frequentist_vcov()), tolerance = 1e-8)
 })
@@ -76,7 +76,7 @@ test_that("vcov agrees with a numerical Hessian of the objective", {
   obj <- statmod_objective(spec, fit@hyper, design, expected = FALSE)
   b <- unlist(fit@coefficients[spec@distrib@params], use.names = FALSE)
   Hn <- numDeriv::hessian(obj$fn, b)
-  expect_equal(unname(vcov(fit, expected = FALSE)), solve(Hn),
+  expect_equal(unname(vcov(fit)), solve(Hn),
                tolerance = 1e-5)
 })
 
@@ -1098,8 +1098,13 @@ test_that("the unconditional variance adds a positive semi-definite term", {
   expect_gt(min(ev), -1e-8 * max(ev))
 
   # so the three orderings hold on every coordinate: the frequentist one is
-  # the narrowest, the unconditional one the widest
-  expect_true(all(diag(Vf) <= diag(Vb) * (1 + 1e-10)))
+  # the narrowest, the unconditional one the widest. The coordinates that the
+  # marginal criterion estimates (the scale's intercept here) take its
+  # curvature in the Bayesian matrix and the sandwich of the observed
+  # information in the frequentist one, so the first ordering is read on the
+  # penalized block of the mean
+  mu <- grepl("^mu:", rownames(Vf))
+  expect_true(all(diag(Vf)[mu] <= diag(Vb)[mu] * (1 + 1e-10)))
   expect_true(all(diag(Vb) <= diag(Vu) * (1 + 1e-10)))
   expect_gt(max(sqrt(diag(Vu) / diag(Vb))), 1.01)
 })
@@ -1112,10 +1117,12 @@ test_that("the correction is what the edf correction contracts", {
   # through solve() -- so their agreeing says the mapping is right.
   fit <- smooth_fit$fit
   design <- statmod_design(fit@spec)
-  C <- vcov(fit, vcov_type = unconditional_vcov(), readable = FALSE) -
-    vcov(fit, readable = FALSE)
+  C <- vcov(fit, vcov_type = unconditional_vcov(information = expected_info()),
+            readable = FALSE) -
+    vcov(fit, vcov_type = bayesian_vcov(information = expected_info()),
+         readable = FALSE)
   H <- statmod_information_at(fit@spec, fit@coefficients, design,
-                              fit_expected(fit), distributions7::expect_opg())
+                              TRUE, distributions7::expect_opg())
   want <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
                                  design, fit@methods$outer)$total
   expect_gt(want, 0)
@@ -1334,6 +1341,9 @@ test_that("the frequentist variance survives a sparse design", {
   expect_true(is.matrix(V))
   expect_false(isS4(V))
   expect_equal(dim(V), dim(vcov(f, readable = FALSE)))
-  # and the ordering the three variances stand in is unchanged by it
-  expect_true(all(diag(V) <= diag(vcov(f, readable = FALSE)) * (1 + 1e-10)))
+  # and the ordering the three variances stand in is unchanged by it, read on
+  # the coefficients of the mean (the scale's intercept is estimated on the
+  # marginal criterion, whose curvature the Bayesian matrix takes)
+  mu <- grepl("^mu:", rownames(V))
+  expect_true(all(diag(V)[mu] <= diag(vcov(f, readable = FALSE))[mu] * (1 + 1e-10)))
 })

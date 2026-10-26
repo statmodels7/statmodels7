@@ -1,8 +1,8 @@
 ## The test statistic and the variance convention as objects.
 ##
-## `test` and `vcov_type` used to be character strings. Both are now S7 objects, a
-## string is rejected with an error that names the constructor, and the
-## default object has to give the numbers that the default string gave.
+## `test` and `vcov_type` are S7 objects, a value of another kind is rejected
+## with an error that lists the constructors, and the default object has to give
+## the numbers of the default call.
 
 small_fit <- function() {
   set.seed(1)
@@ -47,13 +47,15 @@ test_that("the three variance constructors build objects of the right classes", 
 test_that("the objects print one line", {
   expect_identical(utils::capture.output(print(lr_test())), "<test> Likelihood-ratio")
   expect_identical(utils::capture.output(print(frequentist_vcov())),
-                   "<vcov> frequentist")
+                   "<vcov> frequentist (observed information)")
+  expect_identical(utils::capture.output(print(bayesian_vcov(
+    information = expected_info()))), "<vcov> bayesian (expected information)")
 })
 
-test_that("a string for test is rejected with the constructor to use", {
+test_that("a string for test is rejected", {
   fit <- small_fit()
   expect_error(statmod_test(fit, param = "mu", coefname = "x", test = "lr"),
-               "'test' must be a test_statistic object.*\"lr\" is no longer accepted.*lr_test\\(\\)")
+               "'test' must be a test_statistic object: wald_test\\(\\)")
   expect_error(summary(fit, test = "wald"), "wald_test\\(\\)")
   expect_error(confint(fit, test = "score", readable = FALSE), "score_test\\(\\)")
   expect_error(statmod_invert(fit, "mu", "x", test = "gradient"),
@@ -64,10 +66,10 @@ test_that("a string for test is rejected with the constructor to use", {
   expect_error(summary(fit, test = bayesian_vcov()), "must be a test_statistic")
 })
 
-test_that("a string for vcov_type is rejected with the constructor to use", {
+test_that("a string for vcov_type is rejected", {
   fit <- small_fit()
   expect_error(vcov(fit, vcov_type = "frequentist"),
-               "'vcov_type' must be a vcov_method object.*\"frequentist\" is no longer accepted.*frequentist_vcov\\(\\)")
+               "'vcov_type' must be a vcov_method object: bayesian_vcov\\(\\)")
   expect_error(confint(fit, vcov_type = "bayesian"), "bayesian_vcov\\(\\)")
   expect_error(summary(fit, vcov_type = "unconditional"), "unconditional_vcov\\(\\)")
   expect_error(statmod_test(fit, param = "mu", coefname = "x",
@@ -126,16 +128,17 @@ test_that("the result of a test keeps the object, and prints its label", {
   expect_error(StatmodTest(test = "lr"), "test")
 })
 
-test_that("the old argument name type is rejected by name in every method", {
+test_that("an argument that a method does not take is rejected by name", {
   fit <- small_fit()
-  expect_error(vcov(fit, type = bayesian_vcov()), "'type' is now 'vcov_type'")
-  expect_error(confint(fit, type = bayesian_vcov()), "'type' is now 'vcov_type'")
-  expect_error(summary(fit, type = bayesian_vcov()), "'type' is now 'vcov_type'")
+  expect_error(vcov(fit, type = bayesian_vcov()), "vcov\\(\\) takes no argument 'type'")
+  expect_error(confint(fit, type = bayesian_vcov()), "takes no argument 'type'")
+  expect_error(summary(fit, type = bayesian_vcov()), "takes no argument 'type'")
   expect_error(predict(fit, what = "mu", se = TRUE, type = bayesian_vcov()),
-               "'type' is now 'vcov_type'")
-  expect_error(residuals(fit, type = "pearson"), "'type' is now 'residual_type'")
-  expect_error(logLik(fit, type = "marginal"), "'type' is now 'loglik_type'")
-  ## any other unknown argument of predict() is still named
+               "predict\\(\\) takes no argument 'type'")
+  expect_error(residuals(fit, type = "pearson"),
+               "residuals\\(\\) takes no argument 'type'")
+  expect_error(logLik(fit, type = "marginal"),
+               "logLik\\(\\) takes no argument 'type'")
   expect_error(predict(fit, what = "mu", bogus = 3), "takes no argument 'bogus'")
 })
 

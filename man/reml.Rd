@@ -11,9 +11,9 @@ ml(information = observed_info(), marginal = NULL)
 }
 \arguments{
 \item{information}{The information that enters the determinant, an object
-that inherits from \link{Information}. \code{\link[=observed_info]{observed_info()}} (the default) is the
+that inherits from \link[distributions7:Information]{distributions7::Information}. \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default) is the
 curvature of the log-likelihood at the data, which makes the criterion the
-Laplace approximation. \code{\link[=expected_info]{expected_info()}} is the Fisher information, a
+Laplace approximation. \code{\link[distributions7:expected_info]{distributions7::expected_info()}} is the Fisher information, a
 function of the parameters alone, and carries an \code{approx} for a family
 that does not write it out. \code{\link[=auto_info]{auto_info()}} is settled against the family by
 \code{\link[=statmod]{statmod()}} through \code{\link[=outer_resolve]{outer_resolve()}}: the expected information for a
@@ -32,7 +32,7 @@ of its scores at the data under the default
 \code{\link[=statmod]{statmod()}} rejects \code{expected_info()} there unless its \code{approx} takes an
 expectation, as \code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}} does: see
 \code{\link[=assert_criterion_information]{assert_criterion_information()}}. \link{information_objects} compares the three
-objects. A character string signals an error that names the object to use.}
+objects. A character string signals an error.}
 
 \item{marginal}{Which distribution parameters have their unpenalized
 coefficients estimated by maximizing this criterion, instead of being

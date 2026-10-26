@@ -7,7 +7,7 @@
 \usage{
 OuterMethod(
   kind = character(0),
-  hessian = Information(),
+  hessian = distributions7::Information(),
   k = integer(0),
   nfolds = integer(0),
   rule = character(0),
@@ -20,8 +20,8 @@ OuterMethod(
 criterion is evaluated and, through \code{\link[=outer_minimize]{outer_minimize()}}, whether it is
 made small or large.}
 
-\item{hessian}{An object that inherits from \link{Information}: \code{\link[=observed_info]{observed_info()}},
-\code{\link[=expected_info]{expected_info()}} or \code{\link[=auto_info]{auto_info()}}. Which information enters the Laplace
+\item{hessian}{An object that inherits from \link[distributions7:Information]{distributions7::Information}: \code{\link[distributions7:observed_info]{distributions7::observed_info()}},
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} or \code{\link[=auto_info]{auto_info()}}. Which information enters the Laplace
 determinant. \code{\link[=statmod]{statmod()}} settles \code{\link[=auto_info]{auto_info()}} against the family through
 \code{\link[=outer_resolve]{outer_resolve()}}. The constructors set it from their argument
 \code{information}.}

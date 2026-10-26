@@ -30,6 +30,7 @@ NULL
 #' nobs(fit)
 #' @keywords internal
 nobs.StatmodFit <- function(object, ...) {
+  check_dots("nobs", ...)
   n <- weight_total(object@spec)
   # an integer where the total is whole, as the row count was
   if (n == round(n) && n <= .Machine$integer.max) as.integer(n) else n
@@ -76,7 +77,10 @@ weight_total <- function(spec) sum(spec@weights)
 #' fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #' formula(fit)
 #' @keywords internal
-formula.StatmodFit <- function(x, ...) x@spec@formula
+formula.StatmodFit <- function(x, ...) {
+  check_dots("formula", ...)
+  x@spec@formula
+}
 S7::method(formula, StatmodFit) <- formula.StatmodFit
 
 
@@ -104,7 +108,10 @@ S7::method(formula, StatmodFit) <- formula.StatmodFit
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' family(fit)@params
 #' @keywords internal
-family.StatmodFit <- function(object, ...) object@spec@distrib
+family.StatmodFit <- function(object, ...) {
+  check_dots("family", ...)
+  object@spec@distrib
+}
 S7::method(family, StatmodFit) <- family.StatmodFit
 
 
@@ -136,7 +143,10 @@ S7::method(family, StatmodFit) <- family.StatmodFit
 #' # The weights are frequencies, so nobs() is their sum.
 #' sum(weights(fit)) == nobs(fit)
 #' @keywords internal
-weights.StatmodFit <- function(object, ...) object@spec@weights
+weights.StatmodFit <- function(object, ...) {
+  check_dots("weights", ...)
+  object@spec@weights
+}
 S7::method(weights, StatmodFit) <- weights.StatmodFit
 
 
@@ -168,6 +178,7 @@ S7::method(weights, StatmodFit) <- weights.StatmodFit
 #' df.residual(fit)
 #' @keywords internal
 df.residual.StatmodFit <- function(object, ...) {
+  check_dots("df.residual", ...)
   ll <- stats::logLik(object)
   weight_total(object@spec) - as.numeric(attr(ll, "df"))
 }
@@ -208,6 +219,7 @@ S7::method(df.residual, StatmodFit) <- df.residual.StatmodFit
 #' head(sigma(fit))
 #' @keywords internal
 sigma.StatmodFit <- function(object, ...) {
+  check_dots("sigma", ...)
   stats::predict(object, "std_dev")
 }
 S7::method(sigma, StatmodFit) <- sigma.StatmodFit
@@ -247,6 +259,7 @@ S7::method(sigma, StatmodFit) <- sigma.StatmodFit
 #' colnames(model.matrix(fit, "sigma"))
 #' @keywords internal
 model.matrix.StatmodFit <- function(object, what = NULL, ...) {
+  check_dots("model.matrix", ...)
   spec <- object@spec
   params <- spec@distrib@params
   p <- if (is.null(what)) params[[1L]] else what
@@ -294,6 +307,7 @@ S7::method(model.matrix, StatmodFit) <- model.matrix.StatmodFit
 #' dim(simulate(fit, nsim = 3))
 #' @keywords internal
 simulate.StatmodFit <- function(object, nsim = 1, seed = NULL, ...) {
+  check_dots("simulate", ...)
   if (!is_count(nsim)) {
     stop("'nsim' must be a positive whole number.", call. = FALSE)
   }
@@ -397,3 +411,28 @@ plot.StatmodFit <- function(x, ...) {
        "to draw.", call. = FALSE)
 }
 S7::method(plot, StatmodFit) <- plot.StatmodFit
+
+
+#' Reject an Argument That a Method Does Not Take
+#'
+#' @description
+#' Signals an error when a method that has `...` for compatibility with its
+#' generic receives an argument in it. The message names each argument, as in
+#' `vcov() takes no argument 'x'.`, and shows `<unnamed>` for an argument
+#' without a name. The check keeps a misspelled or nonexistent argument from
+#' being accepted and ignored.
+#'
+#' @param fn The name of the method's generic, for the message.
+#' @param ... The dots of the method.
+#'
+#' @return `NULL`, invisibly, when the dots are empty.
+#'
+#' @keywords internal
+check_dots <- function(fn, ...) {
+  if (!...length()) return(invisible(NULL))
+  dn <- ...names()
+  bad <- if (is.null(dn)) rep("", ...length()) else dn
+  stop(sprintf("%s() takes no argument %s.", fn,
+               paste0("'", ifelse(nzchar(bad), bad, "<unnamed>"), "'",
+                      collapse = ", ")), call. = FALSE)
+}

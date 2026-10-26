@@ -18,8 +18,8 @@ resolved to \eqn{\log n} when the model is fitted, because the sample
 size is unknown until then.}
 
 \item{information}{The information on which the criterion is built, an
-object that inherits from \link{Information}: \code{\link[=observed_info]{observed_info()}} (the default)
-or \code{\link[=expected_info]{expected_info()}}. \code{\link[=auto_info]{auto_info()}} is not admissible, since the effective
+object that inherits from \link[distributions7:Information]{distributions7::Information}: \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default)
+or \code{\link[distributions7:expected_info]{distributions7::expected_info()}}. \code{\link[=auto_info]{auto_info()}} is not admissible, since the effective
 degrees of freedom are the trace on one named matrix, and signals an
 error. The exact gradient is available on either matrix wherever the
 family writes its expected information out; the Hessian is exact on the
@@ -27,10 +27,9 @@ observed one and is not available on the expected one, where the search
 uses an optimizer that needs only the gradient. A family that does not
 write it out would read the outer product of its scores at the data under
 the default \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, and \code{\link[=statmod]{statmod()}} rejects
-\code{\link[=expected_info]{expected_info()}} there unless its \code{approx} takes an expectation: see
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} there unless its \code{approx} takes an expectation: see
 \code{\link[=assert_criterion_information]{assert_criterion_information()}}. \link{information_objects} compares the
-objects. A character string signals an error that names the object to
-use.}
+objects. A character string signals an error.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object with properties \code{kind} (\code{"aic"} or
@@ -77,7 +76,7 @@ because of the mode's own condition,
 
 The gradient is exact with either information. The Hessian is exact with
 \code{information = observed_info()}, which is the default, and is not available
-with \code{\link[=expected_info]{expected_info()}}.
+with \code{\link[distributions7:expected_info]{distributions7::expected_info()}}.
 }
 
 \section{Which effective degrees of freedom}{

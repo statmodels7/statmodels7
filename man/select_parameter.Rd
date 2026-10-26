@@ -4,12 +4,12 @@
 \alias{select_parameter}
 \title{One Equation's Submatrix of a Variance Matrix}
 \usage{
-select_parameter(V, parameter, spec)
+select_parameter(V, param, spec)
 }
 \arguments{
 \item{V}{A variance matrix whose names are \code{parameter:name}.}
 
-\item{parameter}{The distribution parameters to keep.}
+\item{param}{The distribution parameters to keep.}
 
 \item{spec}{The fitted specification, for the message.}
 }

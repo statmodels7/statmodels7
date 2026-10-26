@@ -328,6 +328,7 @@ par_at <- function(fit, par, design) {
 #' @keywords internal
 S7::method(loglik, StatmodFit) <- function(object, par = NULL, data = NULL,
                                            ...) {
+  check_dots("loglik", ...)
   spec <- spec_at(object, data)
   design <- statmod_design(spec)
   statmod_loglik_at(spec, par_at(object, par, design), design)
@@ -338,6 +339,7 @@ S7::method(loglik, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @keywords internal
 S7::method(gradient, StatmodFit) <- function(object, par = NULL, data = NULL,
                                              ...) {
+  check_dots("gradient", ...)
   spec <- spec_at(object, data)
   design <- statmod_design(spec)
   statmod_score_at(spec, par_at(object, par, design), design)
@@ -348,6 +350,7 @@ S7::method(gradient, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @keywords internal
 S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
                                             expected = FALSE, ...) {
+  check_dots("hessian", ...)
   spec <- spec_at(object, data)
   design <- statmod_design(spec)
   # the information is minus the Hessian, and what is asked for here is the
@@ -412,8 +415,7 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @keywords internal
 logLik.StatmodFit <- function(object,
                               loglik_type = c("conditional", "marginal"), ...) {
-  reject_old_type(...names(), "loglik_type",
-                  "logLik(fit, loglik_type = \"marginal\")")
+  check_dots("logLik", ...)
   loglik_type <- match.arg(loglik_type)
   if (identical(loglik_type, "marginal")) {
     outer <- object@methods$outer
@@ -589,6 +591,7 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #'
 #' @keywords internal
 coef.StatmodFit <- function(object, readable = TRUE, ...) {
+  check_dots("coef", ...)
   spec <- object@spec
   params <- spec@distrib@params
   design <- statmod_design(spec)
@@ -839,8 +842,7 @@ residuals.StatmodFit <- function(object,
                                  residual_type = c("quantile", "pearson",
                                                    "response"),
                                  seed = NULL, ...) {
-  reject_old_type(...names(), "residual_type",
-                  "residuals(fit, residual_type = \"pearson\")")
+  check_dots("residuals", ...)
   residual_type <- match.arg(residual_type)
   spec <- object@spec
   d <- spec@distrib

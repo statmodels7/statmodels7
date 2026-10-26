@@ -151,11 +151,12 @@ test_that("an interval is built on the scale that keeps its quantity in its set"
 test_that("vcov selects one equation's submatrix", {
   fit <- fit_simple()
   V <- vcov(fit)
-  Vm <- vcov(fit, parameter = "mu")
+  Vm <- vcov(fit, param = "mu")
   expect_lt(nrow(Vm), nrow(V))
   expect_true(all(startsWith(rownames(Vm), "mu:")))
   expect_equal(Vm, V[rownames(Vm), rownames(Vm)])
-  expect_error(vcov(fit, parameter = "nope"), "matched nothing")
+  expect_error(vcov(fit, param = "nope"), "matched nothing")
+  expect_error(vcov(fit, parameter = "mu"), "takes no argument 'parameter'")
 })
 
 test_that("a sharp break-point is held and its position alone has no variance", {

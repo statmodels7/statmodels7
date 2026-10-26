@@ -12,9 +12,11 @@
 \code{x}, invisibly.
 }
 \description{
-Prints one line, the name of the convention.
+Prints one line, the name of the convention and, for the three conventions
+that read the curvature, the information that they invert.
 }
 \examples{
 print(unconditional_vcov())
+print(bayesian_vcov(information = distributions7::expected_info()))
 }
 \keyword{internal}

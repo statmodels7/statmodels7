@@ -120,8 +120,7 @@ NULL
 #'   the default [distributions7::expect_opg()], and [statmod()] rejects
 #'   [expected_info()] there unless its `approx` takes an expectation: see
 #'   [assert_criterion_information()]. [information_objects] compares the
-#'   objects. A character string signals an error that names the object to
-#'   use.
+#'   objects. A character string signals an error.
 #'
 #' @return An [OuterMethod()] object with properties `kind` (`"aic"` or
 #'   `"bic"`), `hessian` (the object given as `information`), `k` (the number

@@ -15,8 +15,7 @@ as_vcov_method(x, arg = "vcov_type")
 \code{x}.
 }
 \description{
-Returns \code{x} if it is a \link{vcov_method} object. A character string signals an
-error that names the constructor to use, and any other value signals an
-error that lists the three constructors.
+Returns \code{x} if it is a \link{vcov_method} object and signals an error that lists
+the three constructors otherwise.
 }
 \keyword{internal}

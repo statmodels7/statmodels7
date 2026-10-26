@@ -286,7 +286,7 @@ outer_path_defaults <- function() {
 #'   [statmod()] rejects `expected_info()` there unless its `approx` takes an
 #'   expectation, as [distributions7::expect_bartlett()] does: see
 #'   [assert_criterion_information()]. [information_objects] compares the three
-#'   objects. A character string signals an error that names the object to use.
+#'   objects. A character string signals an error.
 #'
 #' @param marginal Which distribution parameters have their unpenalized
 #'   coefficients estimated by maximizing this criterion, instead of being

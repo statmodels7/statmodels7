@@ -8,8 +8,6 @@
   object,
   level = 0.95,
   vcov_type = bayesian_vcov(),
-  expected = NULL,
-  approx = distributions7::expect_opg(),
   correct = FALSE,
   test = wald_test(),
   max_coef = NULL,
@@ -23,21 +21,13 @@
 
 \item{vcov_type}{A \link{vcov_method} object, the variance matrix, passed to
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
-\code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}. The last carries the
+\code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}. The information from which
+the standard errors are computed is an argument of each of them
+(\code{\link[distributions7:observed_info]{distributions7::observed_info()}} by default). The last carries the
 uncertainty of the hyperparameters into every standard error under it,
 where \code{correct} carries the same uncertainty into the degrees of freedom;
 the two are the same quantity read on two surfaces, and both can be used
 in one call. The conventions are compared at \link{vcov_method}.}
-
-\item{expected}{The information from which the standard errors are computed,
-passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the default, takes the expected
-one where the fit inverted it and the family writes it out, and the
-observed Hessian otherwise; \code{TRUE} or \code{FALSE} selects one.}
-
-\item{approx}{The approximation of the expected information for a family
-with no closed form, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: an object that
-inherits from \link[distributions7:ExpectApprox]{distributions7::ExpectApprox}, with
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} as the default.}
 
 \item{correct}{Whether the degrees of freedom include the cost of
 estimating the hyperparameters. The ordinary count treats them as known
@@ -51,7 +41,7 @@ tables report. \code{\link[=wald_test]{wald_test()}} (the default) reads the var
 refits nothing. \code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} and \code{\link[=gradient_test]{gradient_test()}} cost one
 restricted refit per row and are reported as a signed root. The four are
 compared at \link{test_statistic}; see also \code{\link[=statmod_stat_at]{statmod_stat_at()}}. A character
-string is rejected with an error that names the constructor.}
+string is rejected with an error.}
 
 \item{max_coef}{How many coefficient rows each block of the printed
 summary shows, \code{Inf} or \code{NA} for all of them. \code{NULL}, the default,

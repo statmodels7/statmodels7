@@ -35,17 +35,16 @@ test_that("invalid arguments are rejected", {
   expect_error(pred_bootstrap(n = c(1, 2)), "positive whole number")
   expect_error(pred_bootstrap(refit = "partial"))
   expect_error(prediction_interval(predictive = "plugin"),
-               "no longer accepted")
+               "must be a predictive object: pred_averaged\\(\\)")
   expect_error(prediction_interval(predictive = 1),
                "must be a predictive object")
 })
 
-test_that("a string for interval signals the error naming the object", {
+test_that("a string for interval is rejected", {
   fit <- pobj_fit()
   for (s in c("confidence", "group", "prediction")) {
     expect_error(predict(fit, what = "mu", interval = s),
-                 "must be an interval object such as confidence_interval[(][)]")
-    expect_error(predict(fit, what = "mu", interval = s), "no longer accepted")
+                 "must be an interval object: confidence_interval[(][)]")
   }
   expect_error(predict(fit, what = "mu", interval = 1),
                "must be an interval object")

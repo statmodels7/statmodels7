@@ -15,8 +15,7 @@ as_test_statistic(test, arg = "test")
 \code{test}.
 }
 \description{
-Returns \code{test} if it is a \link{test_statistic} object. A character string
-signals an error that names the constructor to use, and any other value
-signals an error that lists the four constructors.
+Returns \code{test} if it is a \link{test_statistic} object and signals an error that
+lists the four constructors otherwise.
 }
 \keyword{internal}

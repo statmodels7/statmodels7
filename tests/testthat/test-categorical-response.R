@@ -81,7 +81,7 @@ test_that("other rows are coded with the mapping the fit used", {
 
   # e la verosimiglianza a nuovi dati e' quella dei valori adattati li'
   expect_equal(as.numeric(logLik(fit)),
-               as.numeric(logLik(fit, newdata = dd)), tolerance = 1e-8)
+               as.numeric(loglik(fit, data = dd)), tolerance = 1e-8)
 })
 
 test_that("a value the fit never saw is refused rather than coded", {

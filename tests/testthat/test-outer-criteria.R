@@ -76,7 +76,7 @@ test_that("the printed edf reads the information the criterion reads", {
   for (inner_h in c("expected", "observed")) {
     for (crit_h in c("observed", "expected")) {
       f <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gamma1_distrib(), dg,
-                   inner_optimizer = iwls(information = info_of(inner_h)),
+                   inner_information = info_of(inner_h),
                    outer_criterion = aic(information = info_of(crit_h)))
       ll <- as.numeric(stats::logLik(f))
       expect_equal(f@criterion, -2 * ll + 2 * sum(f@edf$edf), tolerance = 1e-10,
@@ -404,7 +404,12 @@ test_that("the edf correction reproduces mgcv's smoothing-parameter term", {
     # bayesian variance and not to this correction, where mgcv's Vc1 keeps it
     u <- statmod(y ~ s(x, bspline_smooth(k = 15)), distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml(marginal = "none"))
-    got <- summary(u, correct = TRUE)@df - summary(u)@df
+    # on the expected information: mgcv takes the scale as known, which is the
+    # block-diagonal Fisher matrix, where the observed information of a model
+    # that estimates the scale carries a cross term between mean and scale
+    ve <- bayesian_vcov(information = expected_info())
+    got <- summary(u, correct = TRUE, vcov_type = ve)@df -
+      summary(u, vcov_type = ve)@df
     # ABSOLUTE, because the quantity is a fraction of a parameter and what
     # is left between the two packages is the difference between their
     # bases: the naive counts differ by the same amount as the corrected

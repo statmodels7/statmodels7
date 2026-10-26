@@ -6,17 +6,28 @@
 \alias{UnconditionalVcov}
 \title{S7 Classes for the Shipped Variance Conventions}
 \usage{
-BayesianVcov(name = character(0))
+BayesianVcov(name = character(0), information = distributions7::Information())
 
-FrequentistVcov(name = character(0))
+FrequentistVcov(
+  name = character(0),
+  information = distributions7::Information()
+)
 
-UnconditionalVcov(name = character(0))
+UnconditionalVcov(
+  name = character(0),
+  information = distributions7::Information()
+)
 }
 \arguments{
 \item{name}{A single string, the short name of the convention.}
+
+\item{information}{An object that inherits from
+\link[distributions7:Information]{distributions7::Information}: \code{\link[distributions7:observed_info]{distributions7::observed_info()}} or
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}.}
 }
 \value{
-An S7 object inheriting from \link{vcov_method}, with the property \code{name}.
+An S7 object inheriting from \link{vcov_method}, with the properties
+\code{name} and \code{information}.
 }
 \description{
 These are the classes that \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=frequentist_vcov]{frequentist_vcov()}} and
@@ -26,6 +37,7 @@ carries its \code{name}. Use the constructors, which set the property.
 \examples{
 S7::S7_inherits(bayesian_vcov(), vcov_method)
 class(bayesian_vcov())
+bayesian_vcov()@information
 
 }
 \seealso{
