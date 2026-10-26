@@ -267,6 +267,37 @@ test_that("the leverage kernel agrees with the dense route", {
   }
 })
 
+# A smooth beside random-effect indicators: 11 nonzeros a row of 210, a
+# product of densities near 0.003. The gate used to send this shape to the
+# dense route; it now compares the work of the two routes.
+test_that("a smooth beside indicators takes the leverage kernel", {
+  skip_if_not_installed("Matrix")
+  set.seed(52)
+  n <- 3000
+  B <- matrix(runif(n * 10), n, 10)
+  g <- factor(sample(200, n, TRUE))
+  X <- cbind(Matrix::Matrix(B, sparse = TRUE),
+             Matrix::sparse.model.matrix(~ 0 + g))
+  p <- ncol(X)
+  A <- matrix(rnorm(p * p), p)
+  M <- crossprod(A) / p
+  design <- list(mu = list(X = X))
+  called <- 0L
+  orig <- leverage_pairs
+  local_mocked_bindings(leverage_pairs = function(...) {
+    called <<- called + 1L
+    orig(...)
+  })
+  G <- block_leverage(design, M, "mu", p, 0L, 1L)
+  expect_identical(called, 1L)
+  dense <- unname(rowSums(as.matrix(X) * (as.matrix(X) %*% t(M))))
+  expect_equal(G[[1]][[1]], dense, tolerance = 1e-13)
+  for (k in c(2L, 16L)) {
+    expect_identical(block_leverage(design, M, "mu", p, 0L, k)[[1]][[1]],
+                     G[[1]][[1]])
+  }
+})
+
 test_that("a fit through the leverage kernel does not depend on threads", {
   set.seed(52)
   n <- 4000

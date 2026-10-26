@@ -35,12 +35,10 @@ as a \eqn{p\times p} matrix in order to be traced against \eqn{M}.
 It is computed once per evaluation point and read by the gradient's
 contraction and by every pair of the Hessian.
 
-Where both blocks are sparse, the product of their densities is below
-\eqn{10^{-3}} and the number of pairs is below \eqn{2 \times 10^{7}}, the
-diagonal is computed by \code{\link[=leverage_pairs]{leverage_pairs()}} from the nonzeros of each row.
-The pair count bounds the work in absolute terms, which the density by
-itself does not. Otherwise the diagonal is read off the dense product that
-has the fewer columns.
+Where both blocks are sparse and the pairs of nonzeros in a row number
+fewer than a quarter of \eqn{p_a p_b}, the diagonal is computed by
+\code{\link[=leverage_pairs]{leverage_pairs()}} from the nonzeros of each row. Otherwise it is read off
+the dense product that has the fewer columns.
 }
 \seealso{
 \code{\link[=u_vector]{u_vector()}}, \code{\link[=trace_design_form]{trace_design_form()}}

@@ -1,3 +1,12 @@
+# statmodels7 0.210.1
+
+* The leverage diagonal of the outer derivatives takes the compiled kernel
+  over the nonzeros of each row whenever its work is below a quarter of the
+  dense route's, in place of a product of densities below 1e-3 and fewer
+  than 2e7 pairs. A smooth beside 200 random-effect levels at n = 20000
+  now costs 3 ms per evaluation where it cost 36 ms (524 ms against 3 ms
+  at 1000 levels), with the same values to 2.5e-15.
+
 # statmodels7 0.210.0
 
 * A structural term of the likelihood shape (`regime()`, a marginal

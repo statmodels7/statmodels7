@@ -2048,12 +2048,10 @@ structural_joint_basis <- function(spec, design, key, free, nb, basis) {
 #' It is computed once per evaluation point and read by the gradient's
 #' contraction and by every pair of the Hessian.
 #'
-#' Where both blocks are sparse, the product of their densities is below
-#' \eqn{10^{-3}} and the number of pairs is below \eqn{2 \times 10^{7}}, the
-#' diagonal is computed by [leverage_pairs()] from the nonzeros of each row.
-#' The pair count bounds the work in absolute terms, which the density by
-#' itself does not. Otherwise the diagonal is read off the dense product that
-#' has the fewer columns.
+#' Where both blocks are sparse and the pairs of nonzeros in a row number
+#' fewer than a quarter of \eqn{p_a p_b}, the diagonal is computed by
+#' [leverage_pairs()] from the nonzeros of each row. Otherwise it is read off
+#' the dense product that has the fewer columns.
 #'
 #' @param design The design.
 #' @param M The matrix against which the traces are taken.
@@ -2069,13 +2067,11 @@ structural_joint_basis <- function(spec, design, key, free, nb, basis) {
 #' @keywords internal
 block_leverage <- function(design, M, params, npar, offs, threads = 1L) {
   np <- length(params)
-  dens <- rep(1, np)
   tri <- vector("list", np)
   for (a in seq_len(np)) {
     if (npar[a] == 0L) next
     X <- design[[params[a]]]$X
     if (methods::is(X, "sparseMatrix")) {
-      dens[a] <- Matrix::nnzero(X) / max(1, prod(dim(X)))
       tri[[a]] <- row_nonzeros(X)
     }
   }
@@ -2092,14 +2088,19 @@ block_leverage <- function(design, M, params, npar, offs, threads = 1L) {
       Xb <- design[[params[b]]]$X
       Mab <- M[offs[a] + seq_len(npar[a]), offs[b] + seq_len(npar[b]),
                drop = FALSE]
-      # The density gate bounds the RATIO of work and says nothing about its
-      # size, and the expansion is materialized: a design carrying many dense
-      # columns beside its indicators can pass the ratio and still ask for
-      # hundreds of megabytes of pairs. The cap is on the absolute count.
+      # The gate compares the work of the two routes: the pairs of nonzeros
+      # the kernel visits against the n pa pb products the dense route forms.
+      # It used to require a product of densities below 1e-3 and fewer than
+      # 2e7 pairs, which kept a smooth beside 200 random-effect levels (11
+      # nonzeros a row of 210, density 0.052) on the dense route: 36 ms
+      # against 3 ms for the same diagonal to 2.5e-15, and 524 ms against 3
+      # ms at 1000 levels (2026-10-26, note/prestazioni.md). The cap dated
+      # from a route that materialized the pairs; the kernel reads the
+      # nonzeros row by row and needs no memory beyond them.
       pairs <- if (is.null(tri[[a]]) || is.null(tri[[b]])) Inf else
         length(tri[[a]]$i) / nrow(Xa) * length(tri[[b]]$i)
       v <- if (!is.null(tri[[a]]) && !is.null(tri[[b]]) && is.matrix(Mab) &&
-               dens[a] * dens[b] < 1e-3 && pairs < 2e7) {
+               4 * pairs < as.double(nrow(Xa)) * npar[a] * npar[b]) {
         leverage_pairs(tri[[a]], tri[[b]], Mab, nrow(Xa), threads)
       } else if (npar[a] <= npar[b]) {
         # the intermediate is n x npar[a] this way round and n x npar[b] the
@@ -2148,9 +2149,9 @@ row_nonzeros <- function(X) {
 #' product computes \eqn{p_a p_b} of them per row to keep one. The compiled
 #' kernel `leverage_pairs_cpp()` reads the nonzeros of the two designs row by
 #' row and sums them without expanding the pairs, and each row is written by
-#' one thread. [block_leverage()] takes this route only where both blocks are
-#' sparse, the product of their densities is below \eqn{10^{-3}} and the number
-#' of pairs is below \eqn{2 \times 10^{7}}.
+#' one thread. [block_leverage()] takes this route where both blocks are
+#' sparse and the pairs of nonzeros in a row number fewer than a quarter of
+#' the products that the dense route forms.
 #'
 #' @param ta,tb The two designs' nonzeros, from [row_nonzeros()].
 #' @param Mab The block of \eqn{M}.
