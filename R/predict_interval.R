@@ -86,7 +86,7 @@ random_blocks <- function(spec, design, fit, aside) {
       if (!isTRUE(pr$gaussian)) {
         stop(sprintf(paste0("The prior of '%s' is not Gaussian, so a new ",
                             "group's interval has no\n  covariance to read. ",
-                            "interval = \"confidence\" is available, and a ",
+                            "confidence_interval() is available, and a ",
                             "group that was in the fitting data is\n  predicted ",
                             "with random = \"conditional\"."), k),
              call. = FALSE)

@@ -200,8 +200,11 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 #' @param design The design, as [statmod_design()] returns it.
 #' @param expected `TRUE` for the expected information in the working weights
 #'   of the coordinate descent, `FALSE` for the observed one.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form, as in [coord_fit()].
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return A list with `par` (the whole vector, updated in this block),
 #'   `value`, `converged`, `iterations` and `method` (`"coordinate descent"`,
@@ -212,7 +215,7 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 #' @keywords internal
 sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
                        verbose = FALSE, spec = NULL, design = NULL,
-                       expected = TRUE, approx = "opg") {
+                       expected = TRUE, emethod = NULL) {
   # A PENALTY OVER A STRUCTURAL TERM'S OWN PARAMETERS COVERS NO COLUMN AND NO
   # ENTRY OF `beta`, so neither route below can address it: the coordinate
   # descent reads `cols` as columns of a design, which those positions are
@@ -228,7 +231,7 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
   # optimizer and lives here. It applies where the penalty can describe its
   # operator as a table; everything else takes the proximal route below.
   if (!is.null(spec) && !is.null(design)) {
-    cd <- coord_fit(obj, beta, block, hyper, spec, design, expected, approx,
+    cd <- coord_fit(obj, beta, block, hyper, spec, design, expected, emethod,
                     tol = tol, prev_kink = block$prev_kink)
     if (!is.null(cd)) return(cd)
   }

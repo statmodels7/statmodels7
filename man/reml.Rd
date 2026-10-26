@@ -5,31 +5,60 @@
 \alias{ml}
 \title{Estimate the Hyperparameters by a Marginal Likelihood}
 \usage{
-reml(hessian = c("observed", "auto", "expected"), marginal = NULL)
+reml(information = observed_info(), marginal = NULL)
 
-ml(hessian = c("observed", "auto", "expected"), marginal = NULL)
+ml(information = observed_info(), marginal = NULL)
 }
 \arguments{
-\item{hessian}{Which information enters the determinant: \code{"observed"}
-(the default), the curvature of the log-likelihood at the data, which
-makes the criterion the Laplace approximation, \code{"expected"}, the Fisher
-information, a function of the parameters alone, or \code{"auto"}, which
-\code{\link[=statmod]{statmod()}} settles against the family through \code{\link[=outer_resolve]{outer_resolve()}}: the
-expected information for a Student t, a skew t or a Cauchy response,
-whose observed information is not positive definite at an outlier, and
-the observed information otherwise. The default is \code{"observed"}; the
-expected information is used where the caller names it, as for a Student t
-whose degrees of freedom are modeled. The fitted model records the
-information used. The argument is matched with \code{\link[=match.arg]{match.arg()}}. On the
-expected route the outer gradient is exact wherever the family writes its
-expected information out, as every shipped family does, and the outer
-Hessian is exact wherever the family also supplies the derivative of that
-information that the Hessian reads (every shipped family except
-\code{\link[distributions7:enet_distrib]{distributions7::enet_distrib()}}). A family that does not write its
-expected information out reads the outer product of its scores at the data
-under the default \code{iwls(approx = "opg")}, which is not an expectation, and
-\code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
-\code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
+\item{information}{The information that enters the determinant, an object
+that inherits from \link[distributions7:Information]{distributions7::Information}:
+\itemize{
+\item \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default): the curvature of the log-likelihood at
+the data, which makes the criterion the Laplace approximation;
+\item \code{\link[distributions7:expected_info]{distributions7::expected_info()}}: the Fisher information, a function of the parameters
+alone. Its \code{method} selects how the expectation is obtained: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise), \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}},
+\code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} or \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}
+(see \link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods});
+\item \code{\link[=auto_info]{auto_info()}}: settled against the family by \code{\link[=statmod]{statmod()}} through
+\code{\link[=outer_resolve]{outer_resolve()}}, as the expected information for a Student t, a skew t
+or a Cauchy response, whose observed information is not positive
+definite at an outlier, and as the observed information otherwise.
+}
+
+The expected information is used where the caller names it, as for a
+Student t whose degrees of freedom are modeled. The fitted model records
+the information used.
+
+On the expected information, the \code{method} object defines the matrix and
+every derivative of it that the exact outer gradient and Hessian read, so
+that the derivatives are those of the criterion that is evaluated. With the
+closed form of the family, the derivative is the closed form of the
+derivative (every shipped family; the Hessian also needs the second
+derivative of the information, which every shipped family supplies except
+\code{\link[distributions7:enet_distrib]{distributions7::enet_distrib()}}). With \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}
+or \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}, it is the derivative of the expectation,
+which moves the density as well as the integrand. With
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the matrix is the outer product of the
+scores at the data and the derivative is its exact derivative at fixed
+data. A family without a closed form reads \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}
+for the matrix and for the derivatives when \code{method} is \code{NULL}. The outer
+product depends on the response, so the criterion built on it has exact
+derivatives and is not the Laplace approximation of an expectation.
+With \code{method = NULL} on a family without a closed form, the matrix of the
+criterion is therefore an estimate of the expected information, noisier
+than a computed expectation and about 25 times cheaper: on a density-only
+family (n = 300, ten basis functions) a fit took 0.8 s against 25.3 s for
+\code{method = expect_integrate(identity = "score")}, with smoothing
+parameters 12.57 and 13.00, against 13.02 for the observed information.
+The computed expectation is selected with
+\code{method = expect_integrate(identity = "score")}.
+\code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} draws a new sample at each call of the
+matrix and of each derivative, so that its derivative is that of the
+expectation and not of the sampled matrix, and the outer search is noisy at
+the level of the Monte Carlo error. \link{information_objects} compares the three
+objects.}
 
 \item{marginal}{Which distribution parameters have their unpenalized
 coefficients estimated by maximizing this criterion, instead of being
@@ -52,8 +81,8 @@ all, and a \code{reml()} or \code{ml()} passed by name is rejected.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \code{"ml"}, whose
-\code{hessian} and \code{marginal} are as supplied and whose path settings are
-unused.
+\code{hessian} holds the object given as \code{information} and whose \code{marginal} is
+as supplied; its path settings are unused.
 }
 \description{
 Build the criterion object that \code{\link[=statmod]{statmod()}} uses to choose a model's smooth
@@ -201,7 +230,7 @@ c(reml = sum(fit@edf$edf), ml = sum(fml@edf$edf))
 
 # The marginal log-likelihood, which these criteria maximize, is only
 # available where one of them ran.
-logLik(fit, type = "marginal")
+logLik(fit, loglik_type = "marginal")
 
 }
 \references{
@@ -211,6 +240,6 @@ likelihood estimation of semiparametric generalized linear models.
 }
 \seealso{
 \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}} for the prediction-error criteria,
-\code{\link[=statmod]{statmod()}} for where these are passed, \code{\link[=hyper]{hyper()}} for reading back what
-they chose.
+\link{information_objects} for the argument \code{information}, \code{\link[=statmod]{statmod()}} for
+where these are passed, \code{\link[=hyper]{hyper()}} for reading back what they chose.
 }

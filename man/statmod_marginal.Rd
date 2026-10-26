@@ -10,7 +10,7 @@ statmod_marginal(
   coef,
   hyper,
   method,
-  approx = "opg",
+  emethod = NULL,
   basis = NULL,
   ctx = NULL
 )
@@ -26,7 +26,11 @@ statmod_marginal(
 
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
-\item{approx}{The approximation for the expected information.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 
 \item{basis}{The integrated subspace, from \code{\link[=integrated_basis]{integrated_basis()}}.}
 

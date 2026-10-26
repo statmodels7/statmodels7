@@ -6,20 +6,22 @@
 \title{A Test of One Coefficient Against One Value}
 \usage{
 StatmodTest(
-  test = character(0),
+  test = test_statistic(),
   statistic = integer(0),
   df = integer(0),
   p.value = integer(0),
   estimate = integer(0),
   null_value = integer(0),
-  parameter = character(0),
+  param = character(0),
   coefficient = character(0),
   mode_error = integer(0),
   converged = logical(0)
 )
 }
 \arguments{
-\item{test}{Which of the four statistics was computed.}
+\item{test}{The \link{test_statistic} object that was computed: \code{\link[=wald_test]{wald_test()}},
+\code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} or \code{\link[=gradient_test]{gradient_test()}}. Its \code{label} is the name
+under which \code{print()} shows the statistic.}
 
 \item{statistic}{Its value, compared with a \eqn{\chi^2_1}.}
 
@@ -31,7 +33,7 @@ StatmodTest(
 
 \item{null_value}{The value against which the coefficient was tested.}
 
-\item{parameter, coefficient}{Which coefficient of which equation.}
+\item{param, coefficient}{Which coefficient of which equation.}
 
 \item{mode_error}{How far above its own mode the restricted refit
 stopped, in log-likelihood units; \code{NA} for the Wald statistic.}

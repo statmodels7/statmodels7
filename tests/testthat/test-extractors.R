@@ -151,11 +151,12 @@ test_that("an interval is built on the scale that keeps its quantity in its set"
 test_that("vcov selects one equation's submatrix", {
   fit <- fit_simple()
   V <- vcov(fit)
-  Vm <- vcov(fit, parameter = "mu")
+  Vm <- vcov(fit, param = "mu")
   expect_lt(nrow(Vm), nrow(V))
   expect_true(all(startsWith(rownames(Vm), "mu:")))
   expect_equal(Vm, V[rownames(Vm), rownames(Vm)])
-  expect_error(vcov(fit, parameter = "nope"), "matched nothing")
+  expect_error(vcov(fit, param = "nope"), "matched nothing")
+  expect_error(vcov(fit, parameter = "mu"), "takes no argument 'parameter'")
 })
 
 test_that("a sharp break-point is held and its position alone has no variance", {
@@ -229,8 +230,8 @@ test_that("the quantile residual sees a modelled scale where a response one cann
   expect_lt(abs(stats::sd(residuals(fit, seed = 1)) - 1), 0.1)
   # the response residual is the numerator alone and carries the varying
   # scale with it
-  expect_gt(abs(stats::sd(residuals(fit, type = "response")) - 1), 0.15)
-  expect_lt(abs(stats::sd(residuals(fit, type = "pearson")) - 1), 0.1)
+  expect_gt(abs(stats::sd(residuals(fit, residual_type = "response")) - 1), 0.15)
+  expect_lt(abs(stats::sd(residuals(fit, residual_type = "pearson")) - 1), 0.1)
 })
 
 test_that("a score-driven term's predictor carries its own uncertainty", {

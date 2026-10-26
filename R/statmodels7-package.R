@@ -19,6 +19,12 @@ NULL
 #' @importFrom Matrix t crossprod tcrossprod solve chol diag rowSums colSums
 NULL
 
+# The information objects belong to distributions7, which defines the abstract
+# class and the observed and expected constructors; this package adds
+# auto_info() and reads the others by name.
+#' @importFrom distributions7 Information ObservedInfo ExpectedInfo observed_info expected_info
+NULL
+
 # S7 methods registered on a BASE generic -- print, summary, coef, vcov,
 # confint, predict, fitted, logLik -- reach S3's dispatch table only when this
 # runs. Under pkgload they are registered as a side effect of evaluating the

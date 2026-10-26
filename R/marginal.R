@@ -465,9 +465,9 @@ stack_coords <- function(spec, design, pos) {
 #' \deqn{\mathrm{Var}(\hat\beta) = K_{uu}^{-1} + B\,V_v B^\top,\qquad
 #'   V_v = \big[-\nabla^2_{vv}\ell_M\big]^{-1},}
 #' where \eqn{K_{uu}^{-1}} is padded with zeros on \eqn{\gamma} and \eqn{B}
-#' holds one direction per coordinate of \eqn{v}. For `type = "bayesian"`
+#' holds one direction per coordinate of \eqn{v}. For [bayesian_vcov()]
 #' \eqn{v = \gamma} and the hyperparameters are held; for
-#' `type = "unconditional"` \eqn{v = (\eta, \gamma)} and the hyperparameters'
+#' [unconditional_vcov()] \eqn{v = (\eta, \gamma)} and the hyperparameters'
 #' directions are \eqn{-K_{uu}^{-1}\partial^2\rho/\partial u\,\partial\eta}.
 #'
 #' Replacing \eqn{-\nabla^2_{\gamma\gamma}\ell_M} by the Schur complement
@@ -480,14 +480,15 @@ stack_coords <- function(spec, design, pos) {
 #' @param A The penalized information over the kept coordinates.
 #' @param keep The kept coordinates, a logical vector over the stacked
 #'   coefficients.
-#' @param type `"bayesian"` or `"unconditional"`.
+#' @param convention The `name` of a [vcov_method] object, `"bayesian"` or
+#'   `"unconditional"`.
 #'
 #' @return The variance over the kept coordinates, or `NULL` where the fit
 #'   estimated no coefficient on its criterion, where the model carries a
 #'   structural term, or where a piece cannot be read.
 #'
 #' @keywords internal
-marginal_vcov <- function(object, design, A, keep, type) {
+marginal_vcov <- function(object, design, A, keep, convention) {
   method <- object@methods$outer
   if (is.null(method) || !method@kind %in% c("ml", "reml")) return(NULL)
   if (length(attr(design, "structural"))) return(NULL)
@@ -495,9 +496,9 @@ marginal_vcov <- function(object, design, A, keep, type) {
                              method, object@methods$pinned)
   if (!length(mc$gam$where)) return(NULL)
   mb <- marginal_blocks(mc, object@coefficients, object@hyper, method, A,
-                        keep, full = !identical(type, "bayesian"))
+                        keep, full = !identical(convention, "bayesian"))
   if (is.null(mb)) return(NULL)
-  if (identical(type, "bayesian") || !mb$nh) {
+  if (identical(convention, "bayesian") || !mb$nh) {
     sel <- mb$nh + seq_len(mb$ng)
     Vv <- hyper_variance(-mb$Hv[sel, sel, drop = FALSE])
     B <- mb$Bg
@@ -629,7 +630,7 @@ zero_unread <- function(V) {
 #' @param coef,hyper The fitted coefficients and hyperparameters.
 #' @param method The [OuterMethod()] that the fit ran.
 #' @param idx The hyperparameters' index.
-#' @param expected,approx Passed to [statmod_information_at()].
+#' @param expected,emethod Passed to [statmod_information_at()].
 #' @param zero The answer where the correction cannot be computed.
 #'
 #' @return A list with `total`, `per` and `n_hyper`, as
@@ -637,10 +638,10 @@ zero_unread <- function(V) {
 #'
 #' @keywords internal
 marginal_edf_correction <- function(mc, coef, hyper, method, idx, expected,
-                                    approx, zero) {
+                                    emethod, zero) {
   spec <- mc$spec
   design <- mc$design
-  H <- as_dense(statmod_information_at(spec, coef, design, expected, approx))
+  H <- as_dense(statmod_information_at(spec, coef, design, expected, emethod))
   S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design, "hessian"))
   A <- as_dense(H + S)
   keep <- rep(TRUE, nrow(A))

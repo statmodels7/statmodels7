@@ -45,7 +45,7 @@ test_that("the edf correction and the unconditional variance of an ml() fit read
     h
   })
   summary(m$fit, correct = TRUE)
-  suppressWarnings(vcov(m$fit, type = "unconditional"))
+  suppressWarnings(vcov(m$fit, vcov_type = unconditional_vcov()))
   expect_gte(length(seen), 2L)
   for (h in seen) expect_equal(as.numeric(h), m$ref, tolerance = 1e-5)
 })
@@ -75,8 +75,8 @@ test_that("the structural table reports standard errors beside a mixed covarianc
   expect_true(all(tab$se[free] > 0))
 })
 
-test_that("a context without an approximation reads the default one", {
-  expect_identical(ctx_approx(NULL), "opg")
+test_that("a context without a method reads the default one", {
+  expect_null(ctx_emethod(NULL))
 })
 
 test_that("statmod_breakpoint_test() rejects k and n_boot that are not whole", {
@@ -135,7 +135,7 @@ test_that("a test whose mode error is missing says that it could not be read", {
   d <- data.frame(x = stats::runif(80))
   d$y <- 1 + d$x + stats::rnorm(80)
   tt <- statmod_test(statmod(y ~ x, g1, d), param = "mu", coefname = "x",
-                     test = "lr")
+                     test = lr_test())
   tt@mode_error <- NA_real_
   out <- paste(utils::capture.output(print(tt)), collapse = "\n")
   expect_match(out, "could not be read")
@@ -153,7 +153,7 @@ test_that("a restart budget of zero proposes nothing", {
   cfg <- inner_settings(fit@methods$smooth)
   res <- statmod_alternate(spec, design, blocks, fit@hyper, fit@methods$smooth,
                            unlist(fit@coefficients, use.names = FALSE),
-                           cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                           cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                            verbosity(0))
   calls <- 0L
   local_mocked_bindings(seg_polish = function(...) {
@@ -162,7 +162,7 @@ test_that("a restart budget of zero proposes nothing", {
   }, .package = "modelterms7")
   out <- statmod_boot_restart(spec, design, blocks, fit@hyper,
                               fit@methods$smooth, res, cfg$expected,
-                              cfg$approx, cfg$maxit, cfg$tol, verbosity(0), 0L)
+                              cfg$emethod, cfg$maxit, cfg$tol, verbosity(0), 0L)
   expect_identical(calls, 0L)
   expect_identical(out$par, res$par)
 })
@@ -192,19 +192,26 @@ test_that("a failed edf correction is reported as not computed", {
   expect_no_match(nt, "estimated no hyperparameter here")
 })
 
-test_that("the edf correction reads the information that the fit used", {
+test_that("the edf correction reads the information of vcov_type", {
   set.seed(3)
   d <- data.frame(x = stats::runif(300))
   d$y <- sin(4 * d$x) + stats::rt(300, df = 4) * 0.3
   fit <- statmod(y ~ s(x, bspline_smooth(k = 8)),
                  distributions7::pseudohuber_distrib(), d)
-  expect_false(fit_expected(fit))
   ref <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
                                 statmod_design(fit@spec), fit@methods$outer,
                                 expected = FALSE,
                                 pinned = fit@methods$pinned)$total
   expect_equal(summary(fit, correct = TRUE)@df - summary(fit)@df, ref,
                tolerance = 1e-10)
+  ## and the expected information where the convention names it
+  ve <- bayesian_vcov(information = expected_info())
+  ref_e <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
+                                  statmod_design(fit@spec), fit@methods$outer,
+                                  expected = TRUE,
+                                  pinned = fit@methods$pinned)$total
+  expect_equal(summary(fit, correct = TRUE, vcov_type = ve)@df -
+                 summary(fit, vcov_type = ve)@df, ref_e, tolerance = 1e-10)
 })
 
 test_that("frequency weights count as observations in bic() and nobs()", {
@@ -231,7 +238,7 @@ kink_fit <- function(hessian) {
   d$y <- sin(4 * d$x) + pmax(d$z - 0.5, 0) * 2 + 0.4 * stats::rt(250, 5)
   g <- distributions7::student_t1_distrib()
   fit <- statmod(y ~ s(x, bspline_smooth(k = 8)) + seg(z, psi = 0.5) |
-                   sigma ~ w, g, d, outer_criterion = reml(hessian = hessian))
+                   sigma ~ w, g, d, outer_criterion = reml(information = info_of(hessian)))
   sp <- fit@spec
   ds <- statmod_design(sp)
   bl <- statmod_blocks(sp, ds)
@@ -253,13 +260,13 @@ kink_fit <- function(hessian) {
     b0 <- beta0
     b0[mc$gam$where] <- v[nh + seq_len(ng)]
     r <- statmod_alternate(spv, mc$design, bl, hy, inner, b0, cfg$expected,
-                           cfg$approx, cfg$maxit, cfg$tol, verbosity(0),
+                           cfg$emethod, cfg$maxit, cfg$tol, verbosity(0),
                            hold_refresh = TRUE)
     list(sp = spv, cf = r$obj$split(r$par), hy = hy)
   }
   value <- function(v) {
     r <- mode(v)
-    statmod_marginal(r$sp, mc$design, r$cf, r$hy, m, "opg", basis)$value
+    statmod_marginal(r$sp, mc$design, r$cf, r$hy, m, NULL, basis)$value
   }
   grad <- function(v) {
     r <- mode(v)
@@ -325,9 +332,9 @@ test_that("a break-point developed over a covariate slides along the hyperplane 
   start[k] <- start[k] + 0.05 * dirn
   cfg <- inner_settings(fit@methods$smooth)
   r <- statmod_alternate(sp, ds, bl, fit@hyper, fit@methods$smooth, start,
-                         cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                         cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                          verbosity(0))
-  obj <- statmod_objective(sp, fit@hyper, ds, FALSE, "opg")
+  obj <- statmod_objective(sp, fit@hyper, ds, FALSE, NULL)
   f <- function(t) {
     b <- r$par
     b[k] <- b[k] + t * dirn

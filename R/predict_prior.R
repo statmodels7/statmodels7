@@ -59,8 +59,8 @@ NULL
 #' tp <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0)
 #' fit <- statmod(y ~ x + random(~ 1 | g, distrib = tp),
 #'                distributions7::gaussian1_distrib(), gg)
-#' predict(fit, "response", data.frame(x = 0, g = "new"), random = "zero",
-#'         interval = "prediction")
+#' predict(fit, what = "response", newdata = data.frame(x = 0, g = "new"),
+#'         random = "zero", interval = prediction_interval())
 #'
 #' @keywords internal
 predictive_mixture <- function(fit, spec, design, aside, eta, C0,
@@ -327,8 +327,8 @@ gamma_nodes <- function(a, h = 0.6, k_min = 40L) {
 #' lp <- distributions7::fixed(distributions7::laplace_distrib(), mu = 0)
 #' fit <- statmod(y ~ x + random(~ 1 | g, distrib = lp),
 #'                distributions7::gaussian1_distrib(), gg)
-#' predict(fit, "response", data.frame(x = 0, g = "new"), random = "zero",
-#'         interval = "prediction")
+#' predict(fit, what = "response", newdata = data.frame(x = 0, g = "new"),
+#'         random = "zero", interval = prediction_interval())
 #'
 #' @keywords internal
 prior_mc <- function(spec, eta, base, heavy, weight, n_draw) {

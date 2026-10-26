@@ -64,8 +64,8 @@ NULL
 #' \eqn{\partial\ell/\partial\beta = \partial\rho/\partial\beta}.
 #'
 #' The gradient is exact with either information. The Hessian is exact with
-#' `hessian = "observed"`, which is the default, and is not available with
-#' `"expected"`.
+#' `information = observed_info()`, which is the default, and is not available
+#' with [expected_info()].
 #'
 #' # Which effective degrees of freedom
 #'
@@ -108,19 +108,30 @@ NULL
 #'   `bic()` does not take it: its \eqn{\kappa} is `NA` on the object and is
 #'   resolved to \eqn{\log n} when the model is fitted, because the sample
 #'   size is unknown until then.
-#' @param hessian The information on which the criterion is built,
-#'   `"observed"` (the default) or `"expected"`. The argument is matched with
-#'   [match.arg()]. The exact
-#'   gradient is available on either wherever the family writes its expected
-#'   information out; the Hessian is exact on the observed one and is not
+#' @param information The information on which the criterion is built, an
+#'   object that inherits from [Information]: [observed_info()] (the default)
+#'   or [expected_info()], whose `method` is `NULL` (the closed form of the
+#'   family where it has one, and [distributions7::expect_opg()] otherwise) or
+#'   one of [distributions7::expect_opg()], [distributions7::expect_integrate()]
+#'   and [distributions7::expect_mc()] (see
+#'   [distributions7::expected_derivative_methods]). [auto_info()] is not
+#'   admissible, since the effective degrees of freedom are the trace on one
+#'   named matrix, and signals an error. The exact gradient is available on
+#'   either matrix; the Hessian is exact on the observed one and is not
 #'   available on the expected one, where the search uses an optimizer that
-#'   needs only the gradient. A family that does not write it out would read the
-#'   outer product of its scores at the data under the default
-#'   `iwls(approx = "opg")`, and [statmod()] rejects `"expected"` there: see
-#'   [assert_criterion_information()].
+#'   needs only the gradient. On the expected information, the `method` object
+#'   defines the matrix and the derivative of it that the gradient reads, as
+#'   described for the `information` of [reml()]. With `method = NULL` on a
+#'   family without a closed form, the matrix is the
+#'   [distributions7::expect_opg()] estimate of the expected information,
+#'   noisier than a computed expectation and about 25 times cheaper (0.8 s
+#'   against 25.3 s for `method = expect_integrate(identity = "score")` on a
+#'   density-only family with n = 300); the computed expectation is selected
+#'   with that method. [information_objects] compares the objects.
 #'
 #' @return An [OuterMethod()] object with properties `kind` (`"aic"` or
-#'   `"bic"`), `hessian` as supplied, `k` (the number given, or `NA_real_`
+#'   `"bic"`), `hessian` (the object given as `information`), `k` (the number
+#'   given, or `NA_real_`
 #'   for `bic()`), `marginal` (`NULL`), and the path settings `nfolds`, `rule`
 #'   and `folds`, which only [cv()] reads.
 #'
@@ -155,18 +166,22 @@ NULL
 #' aic(k = 4)@k
 #'
 #' @export
-aic <- function(k = 2, hessian = c("observed", "expected")) {
+aic <- function(k = 2, information = observed_info()) {
   if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 0) {
     stop("'k' must be a single non-negative number.", call. = FALSE)
   }
-  do.call(OuterMethod, c(list(kind = "aic", hessian = match.arg(hessian),
+  check_information(information, arg = "information", fn = "aic",
+                    auto = FALSE)
+  do.call(OuterMethod, c(list(kind = "aic", hessian = information,
                              k = as.numeric(k)), outer_path_defaults()))
 }
 
 #' @rdname aic
 #' @export
-bic <- function(hessian = c("observed", "expected")) {
-  do.call(OuterMethod, c(list(kind = "bic", hessian = match.arg(hessian),
+bic <- function(information = observed_info()) {
+  check_information(information, arg = "information", fn = "bic",
+                    auto = FALSE)
+  do.call(OuterMethod, c(list(kind = "bic", hessian = information,
                              k = NA_real_), outer_path_defaults()))
 }
 
@@ -348,9 +363,11 @@ outer_tau <- function(J, H, active = NULL) {
 #' @param hyper The hyperparameters, per penalized term.
 #' @param method An [OuterMethod()] of kind `"aic"` or `"bic"`, read for
 #'   `hessian` and for \eqn{\kappa}.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form. The argument is read only when `method@hessian` is
-#'   `"expected"`.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param active Which coefficients are away from a kink, as
 #'   [statmod_active()] reports them, or `NULL` if no penalty has one.
 #'
@@ -369,15 +386,15 @@ outer_tau <- function(J, H, active = NULL) {
 #'
 #' @keywords internal
 statmod_pe <- function(spec, design, coef, hyper, method,
-                       approx = "opg", active = NULL) {
-  expected <- identical(method@hessian, "expected")
+                       emethod = NULL, active = NULL) {
+  expected <- info_expected(method@hessian)
   ll <- statmod_loglik_at(spec, coef, design)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   S <- zap_nonfinite(S)
   # the trace reads the active coordinates alone, so the information is
   # formed over those columns and not over every coefficient
   if (is.null(active)) {
-    H <- statmod_information_at(spec, coef, design, expected, approx)
+    H <- statmod_information_at(spec, coef, design, expected, emethod)
     tau <- outer_tau(H + S, H, NULL)
   } else if (!any(active)) {
     tau <- 0
@@ -388,7 +405,7 @@ statmod_pe <- function(spec, design, coef, hyper, method,
       tau <- if (design_count_exact(design)) length(act) else
         active_rank(design, act)
     } else {
-      H <- statmod_information_at(spec, coef, design, expected, approx,
+      H <- statmod_information_at(spec, coef, design, expected, emethod,
                                   index = act)
       tau <- outer_tau(H + S_aa, H, NULL)
     }
@@ -578,9 +595,11 @@ block_column_rank <- function(X) {
 #' @param method An [OuterMethod()].
 #' @param idx The outer index.
 #' @param order `1` for the gradient alone, `2` for both.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form. The argument is read only when `method@hessian` is
-#'   `"expected"`.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return A list with `grad` and, at order 2, `hess`; or
 #'   `NULL` where the information is not invertible.
@@ -589,7 +608,7 @@ block_column_rank <- function(X) {
 #'
 #' @keywords internal
 statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
-                              order = 1L, approx = "opg") {
+                              order = 1L, emethod = NULL) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -597,7 +616,7 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   nh <- nrow(idx)
   n <- spec@n_obs
   kap <- outer_k(method, weight_total(spec))
-  expected <- identical(method@hessian, "expected")
+  expected <- info_expected(method@hessian)
   if (expected && order >= 2L) {
     stop("the expected route of a prediction-error criterion has no exact",
          " Hessian; use hessian = \"observed\" where the second derivative",
@@ -662,7 +681,7 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
                                                        hyper, v, total))
   add_pm <- function(A, m) if (is.null(Pm[[m]])) A else A + Pm[[m]]
 
-  # ⚠️ THE TRACE ON THE CRITERION'S OWN INFORMATION. aic(hessian = "expected")
+  # ⚠️ THE TRACE ON THE CRITERION'S OWN INFORMATION. aic(information = expected_info())
   # prices tau = tr[(H_E + S)^-1 H_E], so its derivative reads H_E and how H_E
   # moves with the mode, which is dE[l'']/deta and not l''': differentiating an
   # expectation moves the measure as well as the integrand. Only the trace
@@ -671,14 +690,13 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   # the expected one. The array and its key are the ones
   # statmod_marginal_grad() reads on the same route through ctx_kmove().
   if (expected) {
-    HE <- statmod_information_at(spec, coef, design, expected = TRUE, approx)
+    HE <- statmod_information_at(spec, coef, design, expected = TRUE, emethod)
     JEfac <- tryCatch(chol(as_dense(HE + S)), error = function(e) NULL)
     if (is.null(JEfac)) return(NULL)
     PE <- chol2inv(JEfac)
-    dE <- distributions7::distrib_dexpected_hessian(spec@distrib,
-                                                    spec@response, th,
-                                                    scale = "link",
-                                                    approx = approx)
+    dE <- distributions7::distrib_dexpected_hessian(
+      spec@distrib, spec@response, th, scale = "link",
+      method = resolve_emethod(spec@distrib, emethod))
     keyE <- function(a, b, k) distributions7::dexpected_key(params, a, b, k)
     PEH <- PE %*% HE
     g <- numeric(nh)

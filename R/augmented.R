@@ -100,11 +100,11 @@ chol_blocks <- function(Om) {
 #'   named list of \eqn{n}-vectors, one per distribution parameter.
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   negated observed Hessian.
-#' @param approx How the expected information is approximated for a family
-#'   that has no closed form, passed through to \pkg{distributions7}:
-#'   `"opg"` (the default), `"bartlett"`, `"integrate"` or `"mc"`. It is
-#'   ignored when `expected` is `FALSE` or when the family computes its expected
-#'   information exactly.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param H The family's link-scale second derivatives, as
 #'   [statmod_family_hessian()] returns them, when the caller has already
 #'   computed them at `theta`; `NULL` computes them here.
@@ -116,13 +116,13 @@ chol_blocks <- function(Om) {
 #'   [statmod_information_at()] for the assembled \eqn{Z'\Omega Z}.
 #'
 #' @keywords internal
-info_blocks <- function(spec, theta, expected = TRUE, approx = "opg",
+info_blocks <- function(spec, theta, expected = TRUE, emethod = NULL,
                         H = NULL) {
   params <- spec@distrib@params
   K <- length(params)
   n <- spec@n_obs
   # given by the caller where it has already asked for them at this point
-  if (is.null(H)) H <- statmod_family_hessian(spec, theta, expected, approx)
+  if (is.null(H)) H <- statmod_family_hessian(spec, theta, expected, emethod)
   Om <- array(0, dim = c(n, K, K))
   for (a in seq_len(K)) {
     for (b in seq.int(a, K)) {
@@ -370,10 +370,10 @@ diagonal_sqrt <- function(S, p) {
 #' block. Scaling each column to unit norm removes differences in column size
 #' from any source and leaves an exact collinearity exactly singular.
 #'
-#' The route is taken when the smallest equilibrated entry exceeds `1e-7`
-#' times the largest, the tolerance that `dqrdc2` uses, so a matrix that the
-#' pivoted route would call deficient is solved there and its rank is
-#' returned.
+#' The route is taken when the smallest equilibrated entry exceeds `tol`
+#' times the largest (`1e-7` by default, the tolerance that `dqrdc2` uses), so
+#' that a matrix that the pivoted route would call deficient is solved there
+#' and its rank is returned.
 #'
 #' @param R The square-root design, as [sqrt_design()] returns it,
 #'   \eqn{nK \times p}.
@@ -385,6 +385,11 @@ diagonal_sqrt <- function(S, p) {
 #'   `how = "svd"` a sparse pair is densified first.
 #' @param threads How many threads the triangular factor may use, a plain
 #'   integer. With `1L` the threaded route is not used.
+#' @param tol `NULL` for the defaults, or the tolerance of the decomposition:
+#'   with `how = "qr"`, the tolerance of the pivoted `qr()`, which is also the
+#'   threshold of the equilibrated diagonal for the threaded route (default
+#'   `1e-7`); with `how = "svd"`, the relative cut of the singular values
+#'   (default \eqn{\max(\dim A)\,\epsilon}).
 #'
 #' @return A list with the elements `delta`, `rank` and `dropped`:
 #'   \describe{
@@ -403,7 +408,7 @@ diagonal_sqrt <- function(S, p) {
 #'   [sparse_augmented_solve()] for the sparse route.
 #'
 #' @keywords internal
-augmented_solve <- function(R, C, u, how, threads = 1L) {
+augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
   if (isS4(R) || isS4(C)) {
     out <- sparse_augmented_solve(R, C, u, how)
     # it declines rather than dropping anything, so a solve it returns has
@@ -417,8 +422,9 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
   A <- rbind(R, C)
   if (how == "svd") {
     s <- svd(A, nu = 0L)
-    tol <- max(dim(A)) * .Machine$double.eps * max(s$d)
-    keep <- s$d > tol
+    cut <- if (is.null(tol)) max(dim(A)) * .Machine$double.eps * max(s$d)
+           else tol * max(s$d)
+    keep <- s$d > cut
     dinv <- numeric(length(s$d))
     dinv[keep] <- 1 / s$d[keep]^2
     # the svd removes singular DIRECTIONS, which are combinations of columns
@@ -437,6 +443,7 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
   # against qr() at n = 40000 with column scales spread over 1e8: 2.6x at
   # p = 51 and 3.8x at p = 145 to 600 on eight threads, with the increment
   # agreeing to 1.6e-16.
+  qtol <- if (is.null(tol)) 1e-7 else tol
   fast <- NULL
   if (threads > 1L && how == "qr" &&
       as.double(nrow(A)) * ncol(A) * ncol(A) >= 5e7) {
@@ -445,7 +452,7 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
       Rt <- qr_factor_cpp(A, threads)
       dg <- abs(diag(Rt))
       eq <- dg / cn
-      if (all(is.finite(eq)) && max(eq) > 0 && min(eq) > 1e-7 * max(eq)) {
+      if (all(is.finite(eq)) && max(eq) > 0 && min(eq) > qtol * max(eq)) {
         d <- tryCatch(backsolve(Rt, forwardsolve(t(Rt), u)),
                       error = function(e) NULL)
         if (!is.null(d) && all(is.finite(d))) {
@@ -457,7 +464,7 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
   }
   if (!is.null(fast)) return(fast)
 
-  qrA <- qr(A)
+  qrA <- qr(A, tol = qtol)
   # (A'A)^-1 u from the R factor alone: A'A = R_qr' R_qr
   Rf <- qr.R(qrA)[seq_len(qrA$rank), seq_len(qrA$rank), drop = FALSE]
   piv <- qrA$pivot[seq_len(qrA$rank)]

@@ -40,6 +40,24 @@ reference:
   - rstatmod
   - print.StatmodSim
 
+- title: The information matrix and the solver
+  desc: >
+    The matrix that the inner fit inverts, that enters a Laplace determinant
+    or that gives the standard errors is passed as an object: the observed
+    Hessian and the expected (Fisher) information, both defined in
+    distributions7, or a choice settled against the family. The
+    factorization that solves each step is passed as an object too, with its
+    numerical tolerances.
+  contents:
+  - information_objects
+  - auto_info
+  - AutoInfo
+  - iwls_solvers
+  - solve_qr
+  - solve_svd
+  - solve_chol
+  - IwlsSolver
+
 - title: Where a fit begins
   desc: >
     A starting value given as a strategy and not as a vector of numbers, and
@@ -69,6 +87,25 @@ reference:
   - statmod_latent
   - format_duration
 
+- title: Intervals of a prediction
+  desc: >
+    The argument `interval` of `predict()` takes an object that selects the
+    uncertainty that the interval describes: the estimates alone, the estimates
+    and the effects of a new group, or a new observation of the response. A
+    prediction interval holds a second object that sets how the estimation
+    uncertainty enters the predictive distribution.
+  contents:
+  - predict_intervals
+  - interval_type
+  - confidence_interval
+  - group_interval
+  - prediction_interval
+  - predictive_distributions
+  - predictive_type
+  - pred_averaged
+  - pred_plugin
+  - pred_bootstrap
+
 - title: Testing a coefficient
   desc: >
     One coefficient against one value, by Wald's statistic, the likelihood
@@ -80,6 +117,35 @@ reference:
   contents:
   - statmod_test
   - statmod_breakpoint_test
+
+- title: Test statistics
+  desc: >
+    The four statistics with which a coefficient is tested, as objects passed
+    to the argument `test` of `statmod_test()`, `summary()` and `confint()`:
+    Wald's, the likelihood ratio, Rao's score and Terrell's gradient. The
+    overview states the formula of each, what it needs and what it costs, and
+    `test_restricted()` tells whether a statistic refits the model under the
+    restriction.
+  contents:
+  - test_statistic
+  - wald_test
+  - lr_test
+  - score_test
+  - gradient_test
+  - test_restricted
+
+- title: Variance conventions
+  desc: >
+    The three conventions for the variance matrix of the coefficients, as
+    objects passed to the argument `type` of `vcov()`, `confint()`,
+    `summary()`, `statmod_test()` and `predict()`: the Bayesian variance, the
+    frequentist sandwich, and the unconditional variance that adds the
+    uncertainty of the hyperparameters.
+  contents:
+  - vcov_method
+  - bayesian_vcov
+  - frequentist_vcov
+  - unconditional_vcov
 
 - title: Installing and updating
   desc: >

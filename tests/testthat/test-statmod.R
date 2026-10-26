@@ -209,21 +209,15 @@ test_that("a term holds its own hyperparameter, and it reaches the fit", {
                c(1, 500))
 })
 
-test_that("hyper is gone from statmod() and says where to write it", {
-  # two arguments saying the same thing, one of them read by nobody whenever
-  # they disagreed
+test_that("statmod() has no argument for a hyperparameter: its term holds it", {
+  # a hyperparameter is held by the term that carries the penalty, and by
+  # nothing else, so that there is one statement of each held value
   expect_error(statmod(y ~ x + lasso(~ z),
                        distributions7::gaussian1_distrib(), dd,
                        hyper = list(mu = list(lasso = c(lambda = 5)))),
-               "has been removed")
+               "unused argument (hyper)", fixed = TRUE)
   expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(), dd,
                        nonsense = 1), "unused argument")
-  # and the message names the spelling that works
-  msg <- tryCatch(statmod(y ~ x + lasso(~ z),
-                          distributions7::gaussian1_distrib(), dd,
-                          hyper = list(mu = list(lasso = 1))),
-                  error = function(e) conditionMessage(e))
-  expect_match(msg, "lambda = 3", fixed = TRUE)
 })
 
 

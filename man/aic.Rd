@@ -5,9 +5,9 @@
 \alias{bic}
 \title{Prediction-Error Criteria for the Hyperparameters}
 \usage{
-aic(k = 2, hessian = c("observed", "expected"))
+aic(k = 2, information = observed_info())
 
-bic(hessian = c("observed", "expected"))
+bic(information = observed_info())
 }
 \arguments{
 \item{k}{The price of one degree of freedom, a single non-negative finite
@@ -17,20 +17,31 @@ A value that is not a single non-negative finite number is an error.
 resolved to \eqn{\log n} when the model is fitted, because the sample
 size is unknown until then.}
 
-\item{hessian}{The information on which the criterion is built,
-\code{"observed"} (the default) or \code{"expected"}. The argument is matched with
-\code{\link[=match.arg]{match.arg()}}. The exact
-gradient is available on either wherever the family writes its expected
-information out; the Hessian is exact on the observed one and is not
+\item{information}{The information on which the criterion is built, an
+object that inherits from \link[distributions7:Information]{distributions7::Information}: \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default)
+or \code{\link[distributions7:expected_info]{distributions7::expected_info()}}, whose \code{method} is \code{NULL} (the closed form of the
+family where it has one, and \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or
+one of \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}
+and \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} (see
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}). \code{\link[=auto_info]{auto_info()}} is not
+admissible, since the effective degrees of freedom are the trace on one
+named matrix, and signals an error. The exact gradient is available on
+either matrix; the Hessian is exact on the observed one and is not
 available on the expected one, where the search uses an optimizer that
-needs only the gradient. A family that does not write it out would read the
-outer product of its scores at the data under the default
-\code{iwls(approx = "opg")}, and \code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
-\code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
+needs only the gradient. On the expected information, the \code{method} object
+defines the matrix and the derivative of it that the gradient reads, as
+described for the \code{information} of \code{\link[=reml]{reml()}}. With \code{method = NULL} on a
+family without a closed form, the matrix is the
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} estimate of the expected information,
+noisier than a computed expectation and about 25 times cheaper (0.8 s
+against 25.3 s for \code{method = expect_integrate(identity = "score")} on a
+density-only family with n = 300); the computed expectation is selected
+with that method. \link{information_objects} compares the objects.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object with properties \code{kind} (\code{"aic"} or
-\code{"bic"}), \code{hessian} as supplied, \code{k} (the number given, or \code{NA_real_}
+\code{"bic"}), \code{hessian} (the object given as \code{information}), \code{k} (the number
+given, or \code{NA_real_}
 for \code{bic()}), \code{marginal} (\code{NULL}), and the path settings \code{nfolds}, \code{rule}
 and \code{folds}, which only \code{\link[=cv]{cv()}} reads.
 }
@@ -71,8 +82,8 @@ because of the mode's own condition,
 \eqn{\partial\ell/\partial\beta = \partial\rho/\partial\beta}.
 
 The gradient is exact with either information. The Hessian is exact with
-\code{hessian = "observed"}, which is the default, and is not available with
-\code{"expected"}.
+\code{information = observed_info()}, which is the default, and is not available
+with \code{\link[distributions7:expected_info]{distributions7::expected_info()}}.
 }
 
 \section{Which effective degrees of freedom}{

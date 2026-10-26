@@ -22,7 +22,7 @@ penalized_at <- function(formula, data, ...) {
   coef <- obj$split(fit$par)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   S[!is.finite(S)] <- 0
-  statmod_information_at(spec, coef, design, FALSE, "bartlett") + S
+  statmod_information_at(spec, coef, design, FALSE, NULL) + S
 }
 
 

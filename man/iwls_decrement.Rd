@@ -2,12 +2,9 @@
 % Please edit documentation in R/iwls.R
 \name{iwls_decrement}
 \alias{iwls_decrement}
-\alias{iwls_decrement_limit}
 \title{The Newton Decrement of a Scoring Step}
 \usage{
 iwls_decrement(pc, g, method, damp, frozen)
-
-iwls_decrement_limit()
 }
 \arguments{
 \item{pc}{Scoring pieces at the current coefficients.}
@@ -21,21 +18,19 @@ iwls_decrement_limit()
 \item{frozen}{Positions held out of the step.}
 }
 \value{
-\code{iwls_decrement()} returns a number, \code{NA} where the solve fails.
-\code{iwls_decrement_limit()} returns a number.
+A number, \code{NA} where the solve fails.
 }
 \description{
 \code{iwls_decrement()} is \eqn{\tfrac{1}{2} g^\top (H+S)^{-1} g} over the free
 coordinates, read from the step that \code{\link[=iwls_solve]{iwls_solve()}} takes: the decrease in
 the penalized log-likelihood that a full scoring step predicts.
-\code{iwls_decrement_limit()} is the value under which \code{\link[=iwls_fit]{iwls_fit()}}'s built-in
-rule reads the mode as located.
 }
 \details{
 It is in log-likelihood units, so it does not depend on the scale of the
-response, where the score per observation does. The limit is
-\eqn{10^{-6}}, three orders under \code{\link[=mode_error_limit]{mode_error_limit()}}, which is the
-reading used by the outer search to determine whether a criterion is
-usable.
+response, where the score per observation does. \code{\link[=iwls_fit]{iwls_fit()}}'s built-in
+rule reads the mode as located when it is at most the \code{decrement_limit} of
+\code{\link[=iwls]{iwls()}}, whose default \eqn{10^{-6}} is three orders under
+\code{\link[=mode_error_limit]{mode_error_limit()}}, the reading used by the outer search to determine
+whether a criterion is usable.
 }
 \keyword{internal}

@@ -26,7 +26,7 @@ the covariates of the other equations need not be in \code{newdata}: on
 \code{accel ~ s(times) | sigma ~ z}, \code{predict(fit, what = "mu", newdata)} does
 not need \code{z}. Every equation is built where \code{what} is not the name of a
 parameter (\code{"parameter"}, \code{"link"}, \code{"link:<parameter>"} or a moment),
-where \code{interval} is not \code{"confidence"}, or where the model carries a
+where \code{interval} is not \code{\link[=confidence_interval]{confidence_interval()}}, or where the model carries a
 structural term, whose recursion reads the predictors of every equation.
 }
 \keyword{internal}

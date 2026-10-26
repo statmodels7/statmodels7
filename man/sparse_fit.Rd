@@ -15,7 +15,7 @@ sparse_fit(
   spec = NULL,
   design = NULL,
   expected = TRUE,
-  approx = "opg"
+  emethod = NULL
 )
 }
 \arguments{
@@ -44,8 +44,11 @@ coordinate descent is skipped.}
 \item{expected}{\code{TRUE} for the expected information in the working weights
 of the coordinate descent, \code{FALSE} for the observed one.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form, as in \code{\link[=coord_fit]{coord_fit()}}.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 }
 \value{
 A list with \code{par} (the whole vector, updated in this block),

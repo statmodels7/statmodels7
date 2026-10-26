@@ -76,8 +76,8 @@ test_that("the printed edf reads the information the criterion reads", {
   for (inner_h in c("expected", "observed")) {
     for (crit_h in c("observed", "expected")) {
       f <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gamma1_distrib(), dg,
-                   inner_optimizer = iwls(hessian = inner_h),
-                   outer_criterion = aic(hessian = crit_h))
+                   inner_information = info_of(inner_h),
+                   outer_criterion = aic(information = info_of(crit_h)))
       ll <- as.numeric(stats::logLik(f))
       expect_equal(f@criterion, -2 * ll + 2 * sum(f@edf$edf), tolerance = 1e-10,
                    info = paste("inner", inner_h, "criterion", crit_h))
@@ -149,7 +149,7 @@ test_that("the derivatives match numDeriv with two smoothing parameters", {
 })
 
 test_that("the expected route's gradient reads the expected information", {
-  # aic(hessian = "expected") prices tau on the expected information, so its
+  # aic(information = expected_info()) prices tau on the expected information, so its
   # gradient reads how that information moves with the mode, which is
   # dE[l'']/deta and not l'''. The route used to differentiate the observed
   # trace for a criterion reading the expected one. A beta1 smooth is the case
@@ -174,13 +174,13 @@ test_that("the expected route's gradient reads the expected information", {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
     list(hy = hy, fit = fit_at_hyper(formula, distrib, db, hy, inner))
   }
-  for (m in list(aic(hessian = "expected"), bic(hessian = "expected"))) {
+  for (m in list(aic(information = expected_info()), bic(information = expected_info()))) {
     fn <- function(eta) {
       a <- at(eta)
       statmod_pe(spec, design, a$fit$coefficients, a$hy, m)$value
     }
     mo <- m
-    mo@hessian <- "observed"
+    mo@hessian <- observed_info()
     for (shift in c(0.5, -1)) {
       eta <- hyper_to_eta(fit0@hyper, idx) + shift
       a <- at(eta)
@@ -300,14 +300,14 @@ test_that("aic and reml need not agree, and both are stationary", {
   a <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                outer_criterion = aic())
   r <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
-               outer_criterion = reml(hessian = "observed", marginal = "none"))
+               outer_criterion = reml(information = observed_info(), marginal = "none"))
   spec <- a@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   ga <- statmod_pe_derivs(spec, design, a@coefficients, a@hyper, aic(), idx,
                           1L)$grad
   gr <- statmod_marginal_grad(spec, design, r@coefficients, r@hyper,
-                              reml(hessian = "observed", marginal = "none"),
+                              reml(information = observed_info(), marginal = "none"),
                               idx)
   # ⚠️ AT REST IS A STATEMENT ABOUT THE POINT AND NOT ABOUT A GRADIENT'S
   # SIZE, which is the reading 0.127.0 took out of statmod_certificate() for
@@ -404,7 +404,12 @@ test_that("the edf correction reproduces mgcv's smoothing-parameter term", {
     # bayesian variance and not to this correction, where mgcv's Vc1 keeps it
     u <- statmod(y ~ s(x, bspline_smooth(k = 15)), distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml(marginal = "none"))
-    got <- summary(u, correct = TRUE)@df - summary(u)@df
+    # on the expected information: mgcv takes the scale as known, which is the
+    # block-diagonal Fisher matrix, where the observed information of a model
+    # that estimates the scale carries a cross term between mean and scale
+    ve <- bayesian_vcov(information = expected_info())
+    got <- summary(u, correct = TRUE, vcov_type = ve)@df -
+      summary(u, vcov_type = ve)@df
     # ABSOLUTE, because the quantity is a fraction of a parameter and what
     # is left between the two packages is the difference between their
     # bases: the naive counts differ by the same amount as the corrected
@@ -470,7 +475,7 @@ test_that("a term's edf is its share of the WHOLE model's smoother", {
   ref_total <- function(fit) {
     des <- statmod_design(fit@spec)
     H <- statmod_information_at(fit@spec, fit@coefficients, des, TRUE,
-                                "bartlett")
+                                NULL)
     S <- statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper, des,
                             "hessian")
     S[!is.finite(S)] <- 0

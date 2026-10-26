@@ -4,14 +4,14 @@
 \alias{statmod_curv}
 \title{The Curvature by Which a SCAD or MCP Penalty Is Scaled}
 \usage{
-statmod_curv(spec, design, coef, expected, approx)
+statmod_curv(spec, design, coef, expected, emethod)
 }
 \arguments{
 \item{spec, design}{The specification and its design.}
 
 \item{coef}{The coefficients, split by parameter.}
 
-\item{expected, approx}{Which information.}
+\item{expected, emethod}{Which information.}
 }
 \value{
 The specification in which the curvature is written into the terms,

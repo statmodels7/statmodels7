@@ -4,7 +4,7 @@
 \alias{info_blocks}
 \title{The Per-Observation Information Blocks}
 \usage{
-info_blocks(spec, theta, expected = TRUE, approx = "opg", H = NULL)
+info_blocks(spec, theta, expected = TRUE, emethod = NULL, H = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, read for the distribution, the weights and
@@ -16,11 +16,11 @@ named list of \eqn{n}-vectors, one per distribution parameter.}
 \item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
 negated observed Hessian.}
 
-\item{approx}{How the expected information is approximated for a family
-that has no closed form, passed through to \pkg{distributions7}:
-\code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}. It is
-ignored when \code{expected} is \code{FALSE} or when the family computes its expected
-information exactly.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 
 \item{H}{The family's link-scale second derivatives, as
 \code{\link[=statmod_family_hessian]{statmod_family_hessian()}} returns them, when the caller has already

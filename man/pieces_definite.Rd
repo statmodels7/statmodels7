@@ -9,7 +9,8 @@ pieces_definite(pc, rel = 1e-08)
 \arguments{
 \item{pc}{The pieces, as \code{\link[=iwls_pieces]{iwls_pieces()}} returns them.}
 
-\item{rel}{The relative floor, \code{\link[=pd_repair]{pd_repair()}}'s own.}
+\item{rel}{The relative floor, \code{\link[=pd_repair]{pd_repair()}}'s own by default; \code{\link[=iwls_fit]{iwls_fit()}}
+passes \code{\link[=iwls_definite_tol]{iwls_definite_tol()}}.}
 }
 \value{
 A single logical. The result is \code{TRUE} for a matrix with a

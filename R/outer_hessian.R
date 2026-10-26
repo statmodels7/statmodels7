@@ -132,7 +132,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # -2.90568, beta1 -3.24139 against -3.24222), exact only on the Poisson,
   # whose log link is canonical. Where order 2 is not admitted the exact
   # gradient is differenced instead.
-  expected <- identical(method@hessian, "expected")
+  expected <- info_expected(method@hessian)
   if (expected && !outer_gradient_ok(spec, design, idx, method, 2L,
                                      gamma = ng > 0L)) {
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
@@ -187,15 +187,15 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # leaves every expression below untouched.
   units <- refresh_units(spec, design, coef, params, npar, offs)
   Hl <- if (length(units)) {
-    refresh_hessian(spec, design, coef, identical(method@hessian, "expected"),
-                    ctx_approx(ctx))
+    refresh_hessian(spec, design, coef, info_expected(method@hessian),
+                    ctx_emethod(ctx))
   } else NULL
   # the trace of the refresh part of T[v] against M is v'u, with u the same
   # contraction the gradient already forms: term_block_contract() is the
   # adjoint of term_block_deriv(), so no second route to it is needed
   uref <- if (length(units)) {
     u_refresh(spec, design, coef, M, params, npar, offs, total,
-              identical(method@hessian, "expected"), ctx_approx(ctx),
+              info_expected(method@hessian), ctx_emethod(ctx),
               units = units, Hl = Hl)
   } else NULL
   # the weight the block's SECOND derivative is paired with depends on neither
@@ -241,7 +241,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   Hm <- NULL
   if (ng) {
     Hm <- as_dense(ctx_information(ctx, spec, design, coef, hyper, FALSE,
-                                   ctx_approx(ctx))) +
+                                   ctx_emethod(ctx))) +
       as_dense(ctx_penalty(ctx, spec, design, coef, hyper))
     if (!is.null(Dm)) Hm <- Hm + Dm
     for (w in gam$where) {
@@ -644,7 +644,7 @@ statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
       b0[gam$where] <- g
     }
     r <- tryCatch(statmod_alternate(sp, design, blocks, hy, inner, b0,
-                                    cfg$expected, cfg$approx, cfg$maxit,
+                                    cfg$expected, cfg$emethod, cfg$maxit,
                                     cfg$tol, verbosity(0),
                                     hold_refresh = TRUE),
                   error = function(e) NULL)
@@ -962,7 +962,7 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' The two matrices are those that [statmod_marginal_full()] and
 #' [statmod_full_information()] build, so that this function and the
 #' criterion use one assembly. The joint route reads the observed information,
-#' and `expected` and `approx` do not reach it. A model with no structural term
+#' and `expected` and `emethod` do not reach it. A model with no structural term
 #' of the filter shape takes the coefficient route, because
 #' [statmod_marginal_full()] returns `NULL` there.
 #'
@@ -976,8 +976,11 @@ d4_key <- function(params, a, b, k, q, keys) {
 #'   is observed. The
 #'   caller passes the information that the fit used, so that \eqn{V_\beta},
 #'   \eqn{H} and the criterion's Hessian read one information.
-#' @param approx The approximation for the expected information. The argument
-#'   is not read where the model carries a filter.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param pinned The coordinates that the fit left out of the criterion's
 #'   determinant, as it records them in `methods$pinned`.
 #'
@@ -999,7 +1002,7 @@ d4_key <- function(params, a, b, k, q, keys) {
 #'
 #' @keywords internal
 statmod_edf_correction <- function(spec, coef, hyper, design, method,
-                                   expected = TRUE, approx = "opg",
+                                   expected = TRUE, emethod = NULL,
                                    pinned = NULL) {
   # `n_hyper` is what tells a zero correction from an unavailable one: with
   # no estimated hyperparameter there is nothing to propagate and zero is the
@@ -1020,7 +1023,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   mc <- fit_marginal_context(spec, design, coef, method, pinned)
   if (length(mc$gam$where)) {
     return(marginal_edf_correction(mc, coef, hyper, method, idx, expected,
-                                   approx, zero))
+                                   emethod, zero))
   }
 
   # THE VECTOR THE MODE MOVES IN is the one the criterion's determinant
@@ -1040,7 +1043,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   # one place K is, so this reads the two the criterion and vcov() read --
   # measured, an assembly written out here is identical() to the first.
   # The joint route reads the OBSERVED information, there being no expected
-  # one for a filter, so `expected` and `approx` do not reach it.
+  # one for a filter, so `expected` and `emethod` do not reach it.
   #
   # A model with NO filter takes the branch that was here before, by
   # construction rather than by tolerance: statmod_marginal_full() returns
@@ -1056,7 +1059,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   if (joint) {
     Vb <- tryCatch(solve(as.matrix(M)), error = function(e) NULL)
   } else {
-    H <- statmod_information_at(spec, coef, design, expected, approx)
+    H <- statmod_information_at(spec, coef, design, expected, emethod)
     S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
     S <- zap_nonfinite(S)
     Vb <- tryCatch(solve(H + S), error = function(e) NULL)
@@ -1194,8 +1197,8 @@ hyper_mode_cross <- function(spec, design, coef, hyper, idx, n,
 #' estimated hyperparameters, as a matrix to be added to \eqn{V_b}.
 #'
 #' @details
-#' The matrices that [vcov.StatmodFit()] returns for `type = "bayesian"` and
-#' `type = "frequentist"` are conditional on the hyperparameters: each is read
+#' The matrices that [vcov.StatmodFit()] returns for [bayesian_vcov()] and
+#' [frequentist_vcov()] are conditional on the hyperparameters: each is read
 #' at the value at which the outer search stopped, as though that value were
 #' known. The value was estimated from the same data, and the cost of that is
 #' \deqn{V' = V_b + J V_\theta J', \qquad

@@ -1,4 +1,4 @@
-#' @include predict.R
+#' @include predict.R inference_objects.R
 #' @importFrom stats vcov confint
 NULL
 
@@ -114,47 +114,6 @@ aliased_labels <- function(spec, design, idx) {
 }
 
 
-#' Which Information Matrix a Fit Reports
-#'
-#' @description
-#' Returns `TRUE` when [vcov.StatmodFit()] inverts the expected information:
-#' when the fit itself inverted it, which only [iwls()] does and only with
-#' `hessian = "expected"`, and when the family writes that information out in
-#' closed form.
-#'
-#' @details
-#' The default follows the fit, so a standard error comes from the same matrix
-#' that the step used, and a caller obtains the other matrix by setting
-#' `expected` explicitly.
-#'
-#' The second condition does not concern the fit. Where a family has no closed
-#' expected information, the scoring step is driven by an approximation of it,
-#' the outer product of the observed scores, which costs one gradient and is
-#' positive semidefinite by construction. That matrix is adequate for taking a
-#' step, because the score is exact, but it is a poor basis for a standard
-#' error, which it can place far from the one given by the exact expectation.
-#' The report therefore falls back to the observed information there, which
-#' every family has and which is exact.
-#'
-#' @param object A [StatmodFit()].
-#'
-#' @return A single logical.
-#'
-#' @seealso [distributions7::expected_hessian_exact()], the predicate that this
-#'   function reads, and [vcov.StatmodFit()], which follows it.
-#'
-#' @keywords internal
-fit_expected <- function(object) {
-  m <- object@methods$smooth
-  # An optimizers7 optimizer is given the observed information by
-  # inner_settings(), so it did not invert the expected one and the report
-  # must not say it did: the rule above is that a standard error comes from
-  # the matrix the step used.
-  used <- S7::S7_inherits(m, Iwls) && identical(m@hessian, "expected")
-  used && distributions7::expected_hessian_exact(object@spec@distrib)
-}
-
-
 #' @title The Variance Matrix of a Fit
 #' @name vcov.StatmodFit
 #' @description
@@ -174,10 +133,10 @@ fit_expected <- function(object) {
 #' estimate. Under [reml()] or [ml()] with the default `marginal = NULL`, in a
 #' model without a structural term, the unpenalized coefficients of every
 #' distribution parameter other than the first (for example the log standard
-#' deviation of a Gaussian) are estimated on the criterion, and `"bayesian"` and
-#' `"unconditional"` take the curvature of that criterion for them. These two
-#' types then differ from `"frequentist"` for those coefficients even without a
-#' penalty.
+#' deviation of a Gaussian) are estimated on the criterion, and [bayesian_vcov()]
+#' and [unconditional_vcov()] take the curvature of that criterion for them.
+#' These two conventions then differ from [frequentist_vcov()] for those
+#' coefficients even without a penalty.
 #'
 #' For a prior that is not Gaussian, \eqn{V_b} is computed in the same way for
 #' every penalty that is twice differentiable at the mode. \eqn{H + S} is then
@@ -208,11 +167,12 @@ fit_expected <- function(object) {
 #' matters where a smoothing parameter is poorly determined, and it affects the
 #' penalized coordinates much more than the unpenalized ones. It requires the
 #' curvature of the outer criterion, which the two conditional matrices do not
-#' read, so `"unconditional"` is more expensive than the other two types.
+#' read, so [unconditional_vcov()] is more expensive than the other two
+#' conventions.
 #'
 #' Where no hyperparameter was estimated by a differentiable criterion there
-#' is nothing to propagate, the correction is exactly zero and `"unconditional"`
-#' returns \eqn{V_b} itself. Where a hyperparameter was estimated and the
+#' is nothing to propagate, the correction is exactly zero and
+#' [unconditional_vcov()] returns \eqn{V_b} itself. Where a hyperparameter was estimated and the
 #' curvature of the criterion cannot be read at the fitted point, the
 #' conditional matrix is returned with a warning, so that the narrower matrix
 #' is not mistaken for the wider one. Where the curvature can be read for only
@@ -231,54 +191,80 @@ fit_expected <- function(object) {
 #' because a curvature read at the mode does not include the mass that the prior
 #' puts near zero.
 #'
-#' The argument `expected` selects the matrix used as \eqn{H}. Its
-#' default is the expected information where the fit inverted it and the
-#' family writes it out in closed form, and the observed Hessian otherwise
-#' ([fit_expected()]). The two agree asymptotically and not in a sample: one
-#' is the information averaged over the model, and the other is the curvature
-#' of the likelihood at the data in hand. A model that carries a structural
-#' term is always inverted on the observed information, because a filter and a
-#' mixture over states do not have an expected information.
+#' The coefficients that the marginal criterion of [reml()] or [ml()] estimates
+#' take the curvature of that criterion in the Bayesian and the unconditional
+#' matrices, and the criterion reads the information of its own `information`
+#' argument. The `information` of `vcov_type` selects the matrix used as
+#' \eqn{H} everywhere else, in the sandwich of the frequentist matrix and in
+#' the penalized block of the other two.
 #'
-#' Where the family has no closed form, `expected = TRUE` reaches an
-#' approximation, and `approx` selects it. `"opg"`, the default, is the outer
-#' product of the observed scores and costs one gradient; `"bartlett"`
-#' evaluates the expectation itself, a sum over the support for a discrete
-#' family and a quadrature for a continuous one, and is orders of magnitude
-#' more expensive. The expensive route is available and is not the default.
+#' The `information` of `vcov_type` selects the matrix used as \eqn{H}. Its
+#' default is `NULL`, which is resolved for each fit by the family of the fit
+#' with the rule of [distributions7::vcov.distrib_fit()]: the matrix is
+#' [distributions7::observed_info()], the curvature of the likelihood at the
+#' data in hand, when the log-likelihood is twice differentiable in every
+#' parameter of the family (every [distributions7::params_order()] is at least
+#' 2), and [distributions7::expected_info()] with `method = NULL`, for the
+#' whole matrix, otherwise. The choice does not depend on the information with
+#' which the fit was computed (`inner_information` of [statmod()]). An object
+#' in `information` overrides the rule. [distributions7::expected_info()]
+#' selects the Fisher information, the information averaged over the model. The
+#' two agree asymptotically and not in a sample. A model that carries a
+#' structural term is always inverted on the observed information, because a
+#' filter and a mixture over states do not have an expected information.
+#' [summary.StatmodFit()] states the matrix when it is not the observed one.
+#'
+#' The observed information is singular where the second derivative of the
+#' log-likelihood in a coefficient is zero at the estimates, as for the
+#' location of a Laplace response. The family has a kink in that parameter, so
+#' the default `NULL` reads the expected information, which is finite there,
+#' and the variance is available. With `information = observed_info()` the rows
+#' and columns of the coordinates that it does not identify are missing, as
+#' described above for a flat direction.
+#'
+#' The `method` of [distributions7::expected_info()] selects how the expected
+#' information is obtained. With `method = NULL` the closed form of the family
+#' is used where the family has one, and [distributions7::expect_opg()], the
+#' outer product of the observed scores, which costs one gradient, otherwise.
+#' [distributions7::expect_integrate()] evaluates the expectation itself, a sum
+#' over the support for a discrete family and a quadrature for a continuous
+#' one, and is orders of magnitude more expensive;
+#' [distributions7::expect_mc()] simulates it.
+#' [distributions7::expected_derivative_methods] compares the three methods.
 #'
 #' @param object A [StatmodFit()].
-#' @param type `"bayesian"`, `"frequentist"` or `"unconditional"`. The first
-#'   two are conditional on the hyperparameters; the third carries their own
-#'   uncertainty as well.
-#' @param expected Whether the expected information is used. Defaults to
-#'   [fit_expected()], which selects the expected information where the fit
-#'   inverted it and the family writes it out, and the observed Hessian
-#'   otherwise. A model that
-#'   carries a structural term always uses the observed information.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form: `"opg"` (the default), `"bartlett"`, `"integrate"`
-#'   or `"mc"`. Read only when `expected` is `TRUE` and the family has no
-#'   closed form.
+#' @param vcov_type A [vcov_method] object, which selects the convention of the
+#'   matrix and, inside the object, the information \eqn{H}. [bayesian_vcov()]
+#'   (the default) returns \eqn{V_b = (H+S)^{-1}}, the posterior variance
+#'   conditional on the hyperparameters. [frequentist_vcov()] returns the
+#'   sandwich \eqn{V_f = (H+S)^{-1}H(H+S)^{-1}}, conditional on the
+#'   hyperparameters as well. [unconditional_vcov()] returns
+#'   \eqn{V' = V_b + J V_\theta J'}, which adds the uncertainty of the
+#'   hyperparameters. Each takes `information`, which is `NULL` by default (the
+#'   observed information, or the expected information for a family with a kink
+#'   in a parameter, resolved for each fit) and may be [distributions7::observed_info()] or
+#'   [distributions7::expected_info()]. The conventions are compared at
+#'   [vcov_method].
 #' @param readable Whether the matrix is over the quantities that the model
 #'   reports (`TRUE`, the default) or over the coordinates on which it was
 #'   estimated (`FALSE`). A structural term declares its quantities, for
 #'   example a persistence, and their variance is obtained by the delta method.
-#' @param parameter The distribution parameters whose rows and columns are
-#'   kept. `NULL` keeps all of them.
-#' @param ... Unused.
+#' @param param The distribution parameters whose rows and columns are
+#'   kept, a character vector of parameter names. `NULL` keeps all of them.
+#' @param ... Unused. Any argument signals an error.
 #' @return A square matrix with dimnames `parameter:name`. By default it is over
 #'   the quantities that the model reports, which include the own parameters of
 #'   a structural term. With `readable = FALSE` it is over the coefficients of
 #'   every equation, the free parameters of a structural term following those
-#'   of its own equation. `parameter` restricts it to the rows and columns of
+#'   of its own equation. `param` restricts it to the rows and columns of
 #'   the named equations. A coordinate that is held or not identified has `NA`
 #'   in its row and column.
 #' @references
 #' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
 #' selection for general smooth models. *Journal of the American
 #' Statistical Association*, 111(516), 1548--1563.
-#' @seealso [confint.StatmodFit()], [summary.StatmodFit()],
+#' @seealso [vcov_method] for the three conventions side by side,
+#'   [confint.StatmodFit()], [summary.StatmodFit()],
 #'   [hyper_correction()], which builds the third matrix's correction
 #' @examples
 #' set.seed(1)
@@ -292,19 +278,23 @@ fit_expected <- function(object) {
 #' ds <- data.frame(x = runif(200))
 #' ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
 #' fs <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
-#' vapply(c("frequentist", "bayesian", "unconditional"),
-#'        function(ty) sqrt(diag(vcov(fs, type = ty)))[["mu:s(x).z2"]], 0)
+#' vapply(list(frequentist_vcov(), bayesian_vcov(), unconditional_vcov()),
+#'        function(ty) sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]], 0)
+#'
+#' # the information is chosen inside the convention
+#' sqrt(diag(vcov(fit, vcov_type = bayesian_vcov(
+#'   information = distributions7::expected_info()))))
 #' @keywords internal
 vcov.StatmodFit <- function(object,
-                            type = c("bayesian", "frequentist",
-                                     "unconditional"),
-                            expected = NULL,
-                            approx = c("opg", "bartlett", "integrate", "mc"),
+                            vcov_type = bayesian_vcov(),
                             readable = TRUE,
-                            parameter = NULL, ...) {
-  type <- match.arg(type)
-  approx <- match.arg(approx)
-  if (is.null(expected)) expected <- fit_expected(object)
+                            param = NULL, ...) {
+  check_dots("vcov", ...)
+  vcov_type <- as_vcov_method(vcov_type)
+  convention <- vcov_type@name
+  info <- vcov_information(vcov_type, object@spec@distrib)
+  expected <- info_expected(info)
+  emethod <- info_emethod(info)
   spec <- object@spec
   design <- statmod_design(spec)
   coef <- object@coefficients
@@ -320,7 +310,7 @@ vcov.StatmodFit <- function(object,
   # filter nor a mixture over states has an expected information to offer.
   fil <- length(attr(design, "structural")) > 0L
   H <- if (fil) statmod_full_information(spec, coef, design) else
-    statmod_information_at(spec, coef, design, expected, approx)
+    statmod_information_at(spec, coef, design, expected, emethod)
   S <- statmod_penalty_at(spec, coef, object@hyper, design, "hessian")
   nz <- nrow(H) - total
   if (nz > 0L) {
@@ -407,11 +397,11 @@ vcov.StatmodFit <- function(object,
   }
   # the coefficients the marginal criterion estimated carry its curvature in
   # place of their Schur complement; see marginal_vcov()
-  Vm <- if (type %in% c("bayesian", "unconditional")) {
-    tryCatch(marginal_vcov(object, design, A, keep_full, type),
+  Vm <- if (convention %in% c("bayesian", "unconditional")) {
+    tryCatch(marginal_vcov(object, design, A, keep_full, convention),
              error = function(e) NULL)
   } else NULL
-  V <- if (!is.null(Vm)) Vm else switch(type,
+  V <- if (!is.null(Vm)) Vm else switch(convention,
     bayesian = Vb,
     # as_dense() because the information follows the DESIGN's storage: an
     # equation carrying a random effect has a sparse one, the sandwich then
@@ -498,7 +488,7 @@ vcov.StatmodFit <- function(object,
     ord <- order(match(who, spec@distrib@params))
     out <- out[ord, ord, drop = FALSE]
   }
-  if (!is.null(parameter)) out <- select_parameter(out, parameter, spec)
+  if (!is.null(param)) out <- select_parameter(out, param, spec)
   out
 }
 
@@ -589,17 +579,17 @@ readable_vcov <- function(spec, design, fit, V) {
 #' Returns the rows and columns of the named distribution parameters.
 #'
 #' @param V A variance matrix whose names are `parameter:name`.
-#' @param parameter The distribution parameters to keep.
+#' @param param The distribution parameters to keep.
 #' @param spec The fitted specification, for the message.
 #'
 #' @return The submatrix.
 #'
 #' @keywords internal
-select_parameter <- function(V, parameter, spec) {
+select_parameter <- function(V, param, spec) {
   who <- sub(":.*$", "", rownames(V))
-  keep <- who %in% parameter
+  keep <- who %in% param
   if (!any(keep)) {
-    stop(sprintf(paste0("'parameter' matched nothing. The model's ",
+    stop(sprintf(paste0("'param' matched nothing. The model's ",
                         "distribution parameters are %s."),
                  paste(spec@distrib@params, collapse = ", ")), call. = FALSE)
   }
@@ -949,7 +939,7 @@ held_condition <- function(msg) {
 #'
 #' @description
 #' Returns a classed warning, so a caller can catch the one raised when
-#' `vcov(type = "unconditional")` cannot read the hyperparameters' own
+#' `vcov(vcov_type = unconditional_vcov())` cannot read the hyperparameters' own
 #' uncertainty and returns the conditional variance instead.
 #'
 #' @details
@@ -1754,11 +1744,13 @@ warn_aliased <- function(alias) {
 #' The variance comes from [vcov.StatmodFit()], so the same three
 #' conventions apply, and a coefficient that a kinked penalty has set to zero
 #' has `NA` in place of an interval. For an interval around a penalized term,
-#' `type = "unconditional"` does not treat the smoothing parameter as known.
+#' `vcov_type = unconditional_vcov()` does not treat the smoothing parameter as
+#' known.
 #'
 #' # Inverting a test instead
 #'
-#' The argument `test` selects the statistic whose acceptance region is the
+#' The argument `test` takes a [test_statistic] object (see there for the four
+#' statistics) and selects the statistic whose acceptance region is the
 #' interval. The Wald interval is the set of \eqn{b} that the Wald statistic
 #' does not reject, and it is symmetric by construction: that statistic is a
 #' parabola in \eqn{b}, since the curvature is read once at \eqn{\hat\beta}. The
@@ -1783,10 +1775,11 @@ warn_aliased <- function(alias) {
 #' A coefficient under a penalty that is twice differentiable (a smooth's own
 #' coordinates, a ridge, a random effect) is inverted like any other, and the
 #' interval is the credible one that [vcov.StatmodFit()] gives for it under
-#' `type = "bayesian"`, conditional on the hyperparameters that the fit
+#' `vcov_type = bayesian_vcov()`, conditional on the hyperparameters that the fit
 #' reached. See [statmod_stat_at()].
 #'
-#' The three restricted tests (`"lr"`, `"score"` and `"gradient"`) need
+#' The three restricted tests ([lr_test()], [score_test()] and
+#' [gradient_test()], the ones for which [test_restricted()] is `TRUE`) need
 #' `readable = FALSE`, since a test is about one coefficient and a readable
 #' quantity is a function of several at once.
 #' @param object A [StatmodFit()].
@@ -1794,21 +1787,27 @@ warn_aliased <- function(alias) {
 #'   name, a vector of `parameter:coefficient` labels, or `NULL` for all of
 #'   them. With `readable = TRUE`, the name of a quantity is accepted as well.
 #' @param level The confidence level.
-#' @param type Passed to [vcov.StatmodFit()]: `"bayesian"`, `"frequentist"`
-#'   or `"unconditional"`.
+#' @param vcov_type A [vcov_method] object, passed to [vcov.StatmodFit()]:
+#'   [bayesian_vcov()] (the default), [frequentist_vcov()] or
+#'   [unconditional_vcov()]. The conventions are compared at [vcov_method].
 #' @param readable Whether to report the quantities in which the model is written
 #'   (a term's own parameters under the names of the literature) and not the
 #'   raw coordinates. The value is passed to [vcov.StatmodFit()] and must be
-#'   `FALSE` for the three restricted tests.
-#' @param test The test whose acceptance region is the interval: `"wald"`, the
-#'   default, or `"lr"`, `"score"` or `"gradient"`, which [statmod_invert()]
-#'   inverts.
-#' @param ... Passed to [vcov.StatmodFit()].
+#'   `FALSE` for a restricted test ([test_restricted()]).
+#' @param test A [test_statistic] object, the test whose acceptance region is
+#'   the interval. [wald_test()] (the default) gives the interval that is
+#'   symmetric about the estimate, from the variance matrix and with no refit.
+#'   [lr_test()], [score_test()] and [gradient_test()] are inverted by
+#'   [statmod_invert()] and cost a few dozen restricted refits per interval.
+#'   The four are compared at [test_statistic].
+#' @param ... Passed to [vcov.StatmodFit()], which signals an error for any
+#'   argument that it does not take.
 #' @return A data frame with the parameter, the term, the coefficient, the
 #'   estimate, its standard error and the two limits.
-#' @seealso [vcov.StatmodFit()], [summary.StatmodFit()],
-#'   [statmod_test()], which tests one coefficient against a value of its
-#'   own, and [statmod_invert()] and [statmod_stat_at()], the two internal
+#' @seealso [vcov.StatmodFit()], [summary.StatmodFit()], [test_statistic],
+#'   [vcov_method], [statmod_test()], which tests one coefficient against a
+#'   value of its own, and [statmod_invert()] and [statmod_stat_at()], the two
+#'   internal
 #'   functions from which an inverted interval is built
 #' @examples
 #' set.seed(1)
@@ -1817,24 +1816,15 @@ warn_aliased <- function(alias) {
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' confint(fit)
 #' confint(fit, "sigma")
-#' confint(fit, "mu:x", test = "lr", readable = FALSE)
+#' confint(fit, parm = "mu:x", test = lr_test(), readable = FALSE)
 #' @keywords internal
 confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
-                               type = c("bayesian", "frequentist", "unconditional"),
+                               vcov_type = bayesian_vcov(),
                                readable = TRUE,
-                               test = c("wald", "lr", "score", "gradient"),
+                               test = wald_test(),
                                ...) {
-  # `method` was this argument's name in 0.103.0. It is the same choice
-  # summary() spells `test` -- one set of four statistics under two names --
-  # so the two surfaces were aligned. It reaches the dots here rather than
-  # any formal, where it would go to vcov() and be ignored in silence.
-  if ("method" %in% ...names()) {
-    stop("'method' is now 'test', the name that summary() already used for the",
-         "\n  same four statistics: confint(fit, test = \"lr\").",
-         call. = FALSE)
-  }
-  type <- match.arg(type)
-  test <- match.arg(test)
+  vcov_type <- as_vcov_method(vcov_type)
+  test <- as_test_statistic(test)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
          call. = FALSE)
@@ -1842,17 +1832,17 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
   # A TEST IS ABOUT ONE COEFFICIENT and a readable quantity is a function of
   # several at once, so there is no single coordinate to hold: the request is
   # refused rather than answered on the coordinates under the other names.
-  if (!identical(test, "wald") && isTRUE(readable)) {
-    stop(sprintf(paste0("test = \"%s\" inverts a test on one coefficient, ",
+  if (test_restricted(test) && isTRUE(readable)) {
+    stop(sprintf(paste0("test = %s_test() inverts a test on one coefficient, ",
                         "so it needs\n  readable = FALSE. The readable ",
                         "quantities are functions of several\n  ",
                         "coefficients at once, so one coordinate cannot be ",
-                        "held in their place."), test), call. = FALSE)
+                        "held in their place."), test@name), call. = FALSE)
   }
   spec <- object@spec
   design <- statmod_design(spec)
   z <- stats::qnorm((1 + level) / 2)
-  V <- vcov(object, readable = readable, type = type, ...)
+  V <- vcov(object, readable = readable, vcov_type = vcov_type, ...)
   se <- sqrt(diag(V))
   if (isTRUE(readable)) {
     rj <- readable_joint(spec, design, object)
@@ -1930,8 +1920,8 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
     }
     out <- out[keep, , drop = FALSE]
   }
-  if (!identical(test, "wald")) {
-    out <- invert_rows(object, out, level, test, type)
+  if (test_restricted(test)) {
+    out <- invert_rows(object, out, level, test, vcov_type)
   }
   out
 }
@@ -1955,30 +1945,30 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' @param fit A [StatmodFit()].
 #' @param out The table that [confint.StatmodFit()] has built, already subset.
 #' @param level The confidence level.
-#' @param test Which test to invert.
-#' @param type Which variance sets the starting bracket.
+#' @param test The [test_statistic] to invert.
+#' @param vcov_type The [vcov_method] that sets the starting bracket.
 #'
 #' @return `out`, in which the `lower` and `upper` columns are replaced.
 #'
 #' @seealso [statmod_invert()], which does the search.
 #'
 #' @keywords internal
-invert_rows <- function(fit, out, level, test, type) {
+invert_rows <- function(fit, out, level, test, vcov_type) {
   ok <- names(testable_coords(fit))
   hit <- rownames(out) %in% ok
   if (!any(hit)) {
     stop(sprintf(paste0("The requested coefficients cannot be held at a",
-                        " value, so test = \"%s\" has\n  nothing to invert. A ",
+                        " value, so test = %s_test() has\n  nothing to invert. A ",
                         "coefficient under a kinked penalty, an aliased one",
                         "\n  and every coefficient of a model carrying a ",
-                        "structural term are all outside it."), test),
+                        "structural term are all outside it."), test@name),
          call. = FALSE)
   }
   out$lower <- rep(NA_real_, nrow(out))
   out$upper <- rep(NA_real_, nrow(out))
   for (i in which(hit)) {
     ci <- tryCatch(statmod_invert(fit, out$parameter[[i]],
-                                  out$coefficient[[i]], level, test, type),
+                                  out$coefficient[[i]], level, test, vcov_type),
                    error = function(e) c(lower = NA_real_, upper = NA_real_))
     out$lower[[i]] <- ci[["lower"]]
     out$upper[[i]] <- ci[["upper"]]
@@ -2176,7 +2166,7 @@ smooth_linear_cols <- function(term, k) {
 #' @param converged Whether every loop stopped on its own rule.
 #' @param elapsed The elapsed time, in seconds.
 #' @param level The confidence level at which the intervals were built.
-#' @param type Which variance convention was used.
+#' @param vcov_type Which variance convention was used.
 #' @param test Which statistic the coefficient tables report: `"wald"`,
 #'   `"lr"`, `"score"` or `"gradient"`.
 #' @param max_coef The number of coefficient rows that each block prints, or
@@ -2226,12 +2216,15 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     converged = S7::class_logical,
     elapsed = S7::class_numeric,
     level = S7::class_numeric,
-    type = S7::class_character,
+    # the variance convention of the standard errors, as the object that was
+    # passed; print() reads its name
+    vcov_type = vcov_method,
     # which test the statistic column reports. The default is Wald's, which
     # is the only one read off the unrestricted fit; the other three cost a
     # refit per row and are reported as a signed root, so the column keeps
-    # one meaning and the header says which.
-    test = S7::new_property(S7::class_character, default = "wald"),
+    # one meaning and the header says which. Stored as the object, which
+    # carries the label that print() shows.
+    test = S7::new_property(test_statistic, default = quote(wald_test())),
     # how many coefficient rows a block prints, or NULL where the caller
     # said nothing and the option decides. It is carried on the object
     # rather than asked for at print time because an R session prints a
@@ -2242,7 +2235,11 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     # the reading of statmod_certificate(), or NULL where it could not be
     # taken. A list rather than columns: its four readings are of different
     # kinds and one of them is a set of names.
-    certificate = S7::new_property(S7::class_any, default = NULL)
+    certificate = S7::new_property(S7::class_any, default = NULL),
+    # the information object that the standard errors invert, after the
+    # variance object's NULL has been resolved against the family; print()
+    # names it when it is not the observed one
+    information = S7::new_property(S7::class_any, default = NULL)
   )
 )
 
@@ -2393,21 +2390,21 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' }
 #' @param object A [StatmodFit()].
 #' @param level The confidence level.
-#' @param test Which statistic the coefficient tables report: `"wald"`, the
-#'   default, or `"lr"`, `"score"` or `"gradient"`, each of which costs one
-#'   restricted refit per row. See [statmod_stat_at()].
-#' @param type Which variance matrix: passed to [vcov.StatmodFit()]. The
-#'   `"unconditional"` one carries the uncertainty of the hyperparameters into
-#'   every standard error under it, where `correct` carries the same
-#'   uncertainty into the degrees of freedom; the two are the same quantity
-#'   read on two surfaces, and both can be used in one call.
-#' @param expected The information from which the standard errors are computed,
-#'   passed to [vcov.StatmodFit()]. `NULL`, the default, takes the expected
-#'   one where the fit inverted it and the family writes it out, and the
-#'   observed Hessian otherwise; `TRUE` or `FALSE` selects one.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form, passed to [vcov.StatmodFit()]: `"opg"` (the
-#'   default), `"bartlett"`, `"integrate"` or `"mc"`.
+#' @param test A [test_statistic] object, the statistic that the coefficient
+#'   tables report. [wald_test()] (the default) reads the variance matrix and
+#'   refits nothing. [lr_test()], [score_test()] and [gradient_test()] cost one
+#'   restricted refit per row and are reported as a signed root. The four are
+#'   compared at [test_statistic]; see also [statmod_stat_at()]. A character
+#'   string is rejected with an error.
+#' @param vcov_type A [vcov_method] object, the variance matrix, passed to
+#'   [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
+#'   [frequentist_vcov()] or [unconditional_vcov()]. The information from which
+#'   the standard errors are computed is an argument of each of them
+#'   ([distributions7::observed_info()] by default). The last carries the
+#'   uncertainty of the hyperparameters into every standard error under it,
+#'   where `correct` carries the same uncertainty into the degrees of freedom;
+#'   the two are the same quantity read on two surfaces, and both can be used
+#'   in one call. The conventions are compared at [vcov_method].
 #' @param correct Whether the degrees of freedom include the cost of
 #'   estimating the hyperparameters. The ordinary count treats them as known
 #'   although they were estimated from the same data, so a criterion built on
@@ -2424,8 +2421,8 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'   already in hand.
 #' @param ... Passed to [vcov.StatmodFit()].
 #' @return A [StatmodSummary()].
-#' @seealso [vcov.StatmodFit()], [confint.StatmodFit()],
-#'   [statmod_test()], which computes the same four statistics for one
+#' @seealso [vcov.StatmodFit()], [confint.StatmodFit()], [test_statistic],
+#'   [vcov_method], [statmod_test()], which computes the same four statistics for one
 #'   coefficient against a value that need not be zero, and
 #'   [statmod_stat_at()]
 #' @examples
@@ -2436,17 +2433,13 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'                 distributions7::gaussian1_distrib(), dd))
 #' @keywords internal
 summary.StatmodFit <- function(object, level = 0.95,
-                               type = c("bayesian", "frequentist",
-                                        "unconditional"),
-                               expected = NULL,
-                               approx = c("opg", "bartlett", "integrate", "mc"),
+                               vcov_type = bayesian_vcov(),
                                correct = FALSE,
-                               test = c("wald", "lr", "score", "gradient"),
+                               test = wald_test(),
                                max_coef = NULL,
                                ...) {
-  type <- match.arg(type)
-  approx <- match.arg(approx)
-  test <- match.arg(test)
+  vcov_type <- as_vcov_method(vcov_type)
+  test <- as_test_statistic(test)
   # A TERM WHOSE BLOCK IS A WORKING LINEARIZATION says so ONCE, as a note,
   # rather than once per call to vcov() -- of which this function makes more
   # than one. The condition carries a class of its own, so muffling it cannot
@@ -2470,8 +2463,7 @@ summary.StatmodFit <- function(object, level = 0.95,
   # matrix by the design's own coefficient names. Given the readable matrix
   # those keys are not in it, and every delta-method standard error a
   # break-point term reports came back missing.
-  ci <- catch_frozen(confint(object, level = level, type = type,
-                             expected = expected, approx = approx,
+  ci <- catch_frozen(confint(object, level = level, vcov_type = vcov_type,
                              readable = FALSE, ...))
   spec <- object@spec
   design <- statmod_design(spec)
@@ -2493,8 +2485,8 @@ summary.StatmodFit <- function(object, level = 0.95,
   ci$statistic <- ci$estimate / ci$se
   ci$p_value <- 2 * stats::pnorm(-abs(ci$statistic))
   test_msg <- character(0)
-  if (!identical(test, "wald")) {
-    rs <- restricted_stat_rows(object, ci, test, type, spec, design)
+  if (test_restricted(test)) {
+    rs <- restricted_stat_rows(object, ci, test, vcov_type, spec, design)
     ci$statistic <- rs$statistic
     ci$p_value <- rs$p_value
     test_msg <- rs$note
@@ -2513,8 +2505,8 @@ summary.StatmodFit <- function(object, level = 0.95,
 
   # one variance matrix for every block that needs one: a term reported by
   # the quantities it is about carries them across by the delta method
-  V <- catch_frozen(tryCatch(vcov(object, readable = FALSE, type = type,
-                                  expected = expected, approx = approx, ...),
+  V <- catch_frozen(tryCatch(vcov(object, readable = FALSE, vcov_type = vcov_type,
+                                  ...),
                              error = function(e) NULL))
   # A RIDGE OF THE OUTER CRITERION costs every coefficient that moves along it
   # its standard error, its interval and its test: the criterion does not
@@ -2637,14 +2629,19 @@ summary.StatmodFit <- function(object, level = 0.95,
   # and they were estimated from the same data. Adding what that costs is
   # off by default because it changes a number a reader may be comparing
   # with an earlier fit.
+  # the matrix the standard errors invert: the one that the variance object
+  # names, or the family's default where it names none, and the observed one
+  # where a structural term has no expected information
+  info_used <- if (length(attr(design, "structural"))) {
+    distributions7::observed_info()
+  } else vcov_information(vcov_type, spec@distrib)
   corr <- 0
   if (isTRUE(correct)) {
     cc <- tryCatch(statmod_edf_correction(spec, object@coefficients,
                                           object@hyper, design,
                                           object@methods$outer,
-                                          expected = if (is.null(expected))
-                                            fit_expected(object) else expected,
-                                          approx = approx,
+                                          expected = info_expected(info_used),
+                                          emethod = info_emethod(info_used),
                                           pinned = object@methods$pinned),
                    error = function(e)
                      list(total = 0, per = numeric(0), n_hyper = NA_integer_))
@@ -2848,8 +2845,8 @@ summary.StatmodFit <- function(object, level = 0.95,
     aic = -2 * object@loglik + 2 * df,
     bic = -2 * object@loglik + log(weight_total(spec)) * df,
     converged = object@converged, elapsed = object@elapsed,
-    level = level, type = type, test = test, max_coef = max_coef,
-    notes = notes, certificate = cert)
+    level = level, vcov_type = vcov_type, test = test, max_coef = max_coef,
+    notes = notes, certificate = cert, information = info_used)
 }
 S7::method(summary, StatmodFit) <- summary.StatmodFit
 
@@ -2874,8 +2871,9 @@ S7::method(summary, StatmodFit) <- summary.StatmodFit
 #'
 #' @param fit A [StatmodFit()].
 #' @param ci The flat interval table, with the Wald statistic already in it.
-#' @param test Which statistic: `"lr"`, `"score"` or `"gradient"`.
-#' @param type Which variance the Wald bracket reads, passed on.
+#' @param test A restricted [test_statistic]: [lr_test()], [score_test()] or
+#'   [gradient_test()].
+#' @param vcov_type The [vcov_method] that the Wald bracket reads, passed on.
 #' @param spec,design The specification and its design.
 #'
 #' @return A list with `statistic`, `p_value` and `note`, the last a
@@ -2884,16 +2882,16 @@ S7::method(summary, StatmodFit) <- summary.StatmodFit
 #' @seealso [statmod_stat_at()], which computes one of them.
 #'
 #' @keywords internal
-restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
+restricted_stat_rows <- function(fit, ci, test, vcov_type, spec, design) {
   ok <- names(testable_coords(fit, spec, design))
   hit <- rownames(ci) %in% ok
   st <- rep(NA_real_, nrow(ci))
   pv <- rep(NA_real_, nrow(ci))
   bad <- 0L
-  o0 <- if (identical(test, "lr") && any(hit)) joint_objective(fit) else NULL
+  o0 <- if (identical(test@name, "lr") && any(hit)) joint_objective(fit) else NULL
   for (i in which(hit)) {
     s <- tryCatch(statmod_stat_at(fit, ci$parameter[[i]], ci$coefficient[[i]],
-                               0, test, type, objective0 = o0),
+                               0, test, vcov_type, objective0 = o0),
                   error = function(e) NULL)
     if (is.null(s) || !isTRUE(is.finite(s$statistic))) next
     if (isFALSE(s$converged)) bad <- bad + 1L
@@ -2901,7 +2899,7 @@ restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
     pv[[i]] <- s$p.value
   }
   nm <- c(lr = "likelihood-ratio", score = "score",
-          gradient = "gradient")[[test]]
+          gradient = "gradient")[[test@name]]
   note <- sprintf(paste0("The statistic is the %s one, the signed root of ",
                          "its chi-squared value\n  with the sign of the ",
                          "estimate, and its p-value is that value's. Each ",
@@ -3153,7 +3151,7 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols,
 #' @keywords internal
 summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
                            V = NULL, st = NULL, at_edge = character(0),
-                           test = "wald") {
+                           test = wald_test()) {
   rows <- ci[ci$parameter == p, , drop = FALSE]
   cols <- c("name", "estimate", "se", "statistic", "p_value", "lower",
             "upper", "role")
@@ -3459,7 +3457,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     # term's coefficients is that coefficient's restricted statistic; a
     # quantity that mixes coefficients has no restricted statistic, and the
     # Wald value beside the header of another test would be a third thing
-    if (!identical(test, "wald")) {
+    if (test_restricted(test)) {
       cr <- coef_rows(nm)
       for (i in seq_along(st)) {
         nz <- which(rd$jacobian[i, ] != 0)
@@ -4214,7 +4212,8 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL,
     smoother <<- tryCatch({
       js <- joint_smoother_diag(spec, coef, design, hyper)
       if (!is.null(js) && !isTRUE(js$failed)) c(js$beta, js$zeta) else {
-        H <- statmod_information_at(spec, coef, design, TRUE, "opg")
+        H <- statmod_information_at(spec, coef, design, TRUE,
+                                  NULL)
         S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design,
                                               "hessian"))
         diag(solve_pd(as_dense(H + S), "the penalized information") %*%
@@ -4460,7 +4459,7 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
   # to the footer: `z` is the estimate over its standard error and `r` the
   # signed root of a restricted test, and the two are different quantities
   # a reader comparing two summaries would otherwise read as one.
-  tst <- if (length(x@test)) x@test[[1L]] else "wald"
+  tst <- x@test@name
   stat <- if (identical(tst, "wald")) "z" else "r"
 
   # AHEAD OF THE EQUATIONS, because a covariance a label shares belongs to
@@ -4483,7 +4482,12 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
     for (b in blocks) print_block(b, digits, max_coef, stat)
   }
 
-  cat(sprintf("\n%.0f%% intervals, %s variance%s\n", 100 * x@level, x@type,
+  cat(sprintf("\n%.0f%% intervals, %s variance%s%s\n", 100 * x@level,
+              x@vcov_type@name,
+              if (is.null(x@information) ||
+                  !info_expected(x@information)) "" else
+                paste0(" on the ", tolower(info_title(x@information)),
+                       info_method_note(x@information)),
               if (identical(tst, "wald")) "" else
                 sprintf(";  %s test, signed root", tst)))
   # WHICH log-likelihood and WHICH degrees of freedom, because the pairing
@@ -5249,7 +5253,8 @@ certificate_core <- function(fit, tol, flat, edge) {
     spec <- statmod_hold(spec, gam, beta_all[gam$where])
   }
   if (length(fit@methods$pinned)) attr(design, "pinned") <- fit@methods$pinned
-  ctx <- tryCatch(outer_context(spec, design, cf, hy, "bartlett"),
+  ctx <- tryCatch(outer_context(spec, design, cf, hy,
+                       NULL),
                   error = function(e) NULL)
 
   # HOW FAR ABOVE THE MODE, in log-likelihood units: the decrease the mode's
@@ -5258,7 +5263,8 @@ certificate_core <- function(fit, tol, flat, edge) {
     pen <- tryCatch(ctx_penalized(ctx, spec, design, cf, hy, FALSE),
                     error = function(e) NULL)
     if (!is.null(pen)) {
-      obj <- tryCatch(statmod_objective(spec, hy, design, FALSE, "bartlett"),
+      obj <- tryCatch(statmod_objective(spec, hy, design, FALSE,
+                                          NULL),
                       error = function(e) NULL)
       sc <- if (is.null(obj)) NULL else
         tryCatch(obj$gr(obj$stack(cf)), error = function(e) NULL)
@@ -5526,7 +5532,8 @@ certificate_core <- function(fit, tol, flat, edge) {
     # claim more than has been checked. What it can honestly do is name the
     # coordinate, so the reader is not left with "not finite".
     H0 <- tryCatch(ctx_information(ctx, spec, design, cf, hy, FALSE,
-                                   "bartlett"), error = function(e) NULL)
+                                   NULL),
+                   error = function(e) NULL)
     frozen <- if (is.null(H0)) integer(0) else boundary_coords(H0)
     if (length(frozen)) {
       npar <- vapply(design, function(d) d$npar, integer(1))
@@ -5815,8 +5822,8 @@ criterion_differenced <- function(fit, spec, design, blocks, method, idx, cf,
   io <- fit@methods$smooth
   budget <- method_budget(io)
   cfg <- inner_settings(io)
-  approx <- cfg$approx
-  obj <- statmod_objective(spec, hy, design, cfg$expected, approx)
+  emethod <- cfg$emethod
+  obj <- statmod_objective(spec, hy, design, cfg$expected, emethod)
   warm <- obj$stack(cf)
   basis <- integrated_basis(spec, design, method@kind)
   eta0 <- hyper_to_eta(hy, idx)
@@ -5824,11 +5831,11 @@ criterion_differenced <- function(fit, spec, design, blocks, method, idx, cf,
   at <- function(d) {
     hy2 <- eta_to_hyper(eta0 + d, idx, hy)
     res <- statmod_alternate(spec, design, blocks, hy2, io, warm, cfg$expected,
-                             approx, budget$maxit, budget$tol, verbosity(0),
+                             emethod, budget$maxit, budget$tol, verbosity(0),
                              hold_refresh = TRUE)
     cf2 <- res$obj$split(res$par)
-    ctx2 <- outer_context(spec, design, cf2, hy2, approx)
-    m <- statmod_marginal(spec, design, cf2, hy2, method, approx, basis, ctx2)
+    ctx2 <- outer_context(spec, design, cf2, hy2, emethod)
+    m <- statmod_marginal(spec, design, cf2, hy2, method, emethod, basis, ctx2)
     if (is.null(m) || !is.finite(m$value)) stop("no criterion")
     m$value
   }

@@ -12,7 +12,7 @@ coord_fit(
   spec,
   design,
   expected,
-  approx,
+  emethod,
   maxit = 100L,
   tol = 1e-08,
   prev_kink = NULL
@@ -43,8 +43,11 @@ weights, \code{FALSE} for the observed one. Where the observed curvature of
 the equation is not positive at some observation, the expected
 information is used in its place.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 
 \item{maxit}{The budget in weighted least squares iterations, each of
 which rebuilds the weights and runs the compiled sweeps to convergence.}

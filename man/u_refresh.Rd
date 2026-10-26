@@ -14,7 +14,7 @@ u_refresh(
   offs,
   total,
   expected = FALSE,
-  approx = "opg",
+  emethod = NULL,
   units = NULL,
   Hl = NULL
 )
@@ -32,7 +32,11 @@ u_refresh(
 
 \item{expected}{Whether the criterion carries the expected information.}
 
-\item{approx}{The approximation for the expected information.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 
 \item{units}{The refreshable terms, from \code{\link[=refresh_units]{refresh_units()}}, or
 \code{NULL} to resolve them here.}

@@ -130,13 +130,14 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
   }
   # an "auto" that statmod() has not settled reads as "observed", as it does
   # at every other site
-  if (identical(method@hessian, "expected")) {
+  if (info_expected(method@hessian)) {
     # The expected route asks for the same object in the same place -- the
     # movement of K with the coefficients -- but that object is
     # dE[l'']/deta rather than l''', because differentiating an expectation
     # moves the measure as well as the integrand. distributions7 supplies it
-    # wherever the family writes its expected information out and refuses
-    # elsewhere, so the family is ASKED rather than tested.
+    # for the closed form of a family and for each method object, so the
+    # derivative is probed with the method that the criterion carries, a family
+    # without a closed form being read as expect_opg() (see resolve_emethod()).
     #
     # ORDER 2 reads the next order of the same object,
     # d2E[l'']/deta^2, which a family supplies only where it wrote it out
@@ -151,9 +152,14 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
       if (!method@kind %in% c("ml", "reml")) return(FALSE)
       if (length(attr(design, "refresh"))) return(FALSE)
       if (length(attr(design, "structural"))) return(FALSE)
-      if (!expected_deriv2_ok(spec@distrib)) return(FALSE)
+      if (!expected_deriv2_ok(spec@distrib,
+                              resolve_emethod(spec@distrib,
+                                              info_emethod(method@hessian)))) {
+        return(FALSE)
+      }
     }
-    if (!expected_deriv_ok(spec@distrib)) return(FALSE)
+    emethod <- resolve_emethod(spec@distrib, info_emethod(method@hessian))
+    if (!expected_deriv_ok(spec@distrib, emethod)) return(FALSE)
     # and not where a structural term is penalized: there the criterion is
     # statmod_marginal_full(), which assembles the joint curvature from
     # term_curvature() -- the OBSERVED one -- so that branch has no expected
@@ -354,7 +360,7 @@ find_term <- function(spec, key) {
 #' @seealso [outer_gradient_ok()]
 #'
 #' @keywords internal
-expected_deriv_ok <- function(distrib) {
+expected_deriv_ok <- function(distrib, emethod = NULL) {
   th <- tryCatch(distributions7::generate_random_theta(distrib),
                  error = function(e) NULL)
   if (is.null(th)) return(FALSE)
@@ -362,7 +368,8 @@ expected_deriv_ok <- function(distrib) {
                 error = function(e) NULL)
   if (is.null(y)) return(FALSE)
   ok <- tryCatch({
-    distributions7::distrib_dexpected_hessian(distrib, y, th, scale = "link")
+    distributions7::distrib_dexpected_hessian(distrib, y, th, scale = "link",
+                                              method = emethod)
     TRUE
   }, error = function(e) FALSE)
   isTRUE(ok)
@@ -389,7 +396,7 @@ expected_deriv_ok <- function(distrib) {
 #' @seealso [outer_gradient_ok()], [expected_deriv_ok()]
 #'
 #' @keywords internal
-expected_deriv2_ok <- function(distrib) {
+expected_deriv2_ok <- function(distrib, emethod = NULL) {
   th <- tryCatch(distributions7::generate_random_theta(distrib),
                  error = function(e) NULL)
   if (is.null(th)) return(FALSE)
@@ -397,7 +404,8 @@ expected_deriv2_ok <- function(distrib) {
                 error = function(e) NULL)
   if (is.null(y)) return(FALSE)
   ok <- tryCatch({
-    distributions7::distrib_d2expected_hessian(distrib, y, th, scale = "link")
+    distributions7::distrib_d2expected_hessian(distrib, y, th, scale = "link",
+                                               method = emethod)
     TRUE
   }, error = function(e) FALSE)
   isTRUE(ok)
@@ -645,7 +653,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # the information, the penalty, K = H + S and its inverse come from the
   # context when there is one, so a criterion, a gradient and a Hessian read
   # at the same point assemble them once between them
-  expected <- identical(method@hessian, "expected")
+  expected <- info_expected(method@hessian)
   pen <- ctx_penalized(ctx, spec, design, coef, hyper, expected,
                        laplace = TRUE)
   if (is.null(pen)) return(NULL)
@@ -735,13 +743,13 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
     u_vector(spec, design, coef, M, params, npar, offs, total,
              d3 = km$deriv, key = km$key, G = G) +
       u_refresh(spec, design, coef, M, params, npar, offs, total, expected,
-                ctx_approx(ctx))
+                ctx_emethod(ctx))
   } else {
     uj <- u_vector(spec, design, coef, M, params, npar, offs, total,
                    d3 = km$deriv, key = km$key, G = G, rows = joint$rows)
     ib <- seq_len(total)
     uj[ib] <- uj[ib] + u_refresh(spec, design, coef, M, params, npar, offs,
-                                 total, expected, ctx_approx(ctx))
+                                 total, expected, ctx_emethod(ctx))
     uj
   }
   if (length(held)) u[held] <- 0
@@ -803,7 +811,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # coefficient, its row of S being zero, so the envelope leaves the
   # log-likelihood's own score, and the determinant moves along b.
   Hm <- as_dense(ctx_information(ctx, spec, design, coef, hyper, FALSE,
-                                 ctx_approx(ctx))) +
+                                 ctx_emethod(ctx))) +
     as_dense(ctx_penalty(ctx, spec, design, coef, hyper)) + Dm
   sc <- statmod_score_at(spec, coef, design, index = gam$where)
   gout <- numeric(length(gam$where))
@@ -1204,7 +1212,11 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #' @param M The matrix against which the trace is taken.
 #' @param params,npar,offs,total The block bookkeeping.
 #' @param expected Whether the criterion carries the expected information.
-#' @param approx The approximation for the expected information.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param units The refreshable terms, from [refresh_units()], or
 #'   `NULL` to resolve them here.
 #' @param Hl The link-scale curvature, from [refresh_hessian()], or
@@ -1217,14 +1229,14 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #'
 #' @keywords internal
 u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
-                      expected = FALSE, approx = "opg", units = NULL,
+                      expected = FALSE, emethod = NULL, units = NULL,
                       Hl = NULL) {
   out <- numeric(total)
   if (is.null(units)) {
     units <- refresh_units(spec, design, coef, params, npar, offs)
   }
   if (!length(units)) return(out)
-  if (is.null(Hl)) Hl <- refresh_hessian(spec, design, coef, expected, approx)
+  if (is.null(Hl)) Hl <- refresh_hessian(spec, design, coef, expected, emethod)
   for (un in units) {
     cw <- vector("list", length(params))
     for (b in seq_along(params)) {

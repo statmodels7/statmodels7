@@ -196,8 +196,15 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #' @param data A data frame with the columns that the model names. Defaults to
 #'   the data used to fit the model. New data must carry the response, since a
 #'   likelihood needs one.
-#' @param expected `hessian()` only: `TRUE` for the expected information,
-#'   `FALSE` (the default) for the observed Hessian.
+#' @param information `hessian()` only: the matrix whose negative is returned,
+#'   an object that inherits from [distributions7::Information].
+#'   [distributions7::observed_info()] (the default) gives the Hessian of the
+#'   log-likelihood at the data, and [distributions7::expected_info()] gives
+#'   minus the Fisher information, whose `method` selects how the expectation
+#'   is obtained. [auto_info()] is not accepted. The default is
+#'   [distributions7::observed_info()], whatever the family, because the
+#'   result is a Hessian and not a variance; the variance objects resolve a
+#'   `NULL` information by the family (see [information_objects]).
 #' @param ... Passed to methods. The shipped methods do not read it.
 #'
 #' @return `loglik()` gives a single number. `gradient()` gives a named list
@@ -244,7 +251,8 @@ gradient <- S7::new_generic("gradient", "object",
 #' @rdname loglik
 #' @export
 hessian <- S7::new_generic("hessian", "object",
-  function(object, par = NULL, data = NULL, expected = FALSE, ...)
+  function(object, par = NULL, data = NULL,
+           information = distributions7::observed_info(), ...)
     S7::S7_dispatch())
 
 
@@ -328,6 +336,7 @@ par_at <- function(fit, par, design) {
 #' @keywords internal
 S7::method(loglik, StatmodFit) <- function(object, par = NULL, data = NULL,
                                            ...) {
+  check_dots("loglik", ...)
   spec <- spec_at(object, data)
   design <- statmod_design(spec)
   statmod_loglik_at(spec, par_at(object, par, design), design)
@@ -338,6 +347,7 @@ S7::method(loglik, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @keywords internal
 S7::method(gradient, StatmodFit) <- function(object, par = NULL, data = NULL,
                                              ...) {
+  check_dots("gradient", ...)
   spec <- spec_at(object, data)
   design <- statmod_design(spec)
   statmod_score_at(spec, par_at(object, par, design), design)
@@ -347,12 +357,17 @@ S7::method(gradient, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @name hessian.StatmodFit
 #' @keywords internal
 S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
-                                            expected = FALSE, ...) {
+                                            information = distributions7::observed_info(),
+                                            ...) {
+  check_dots("hessian", ...)
+  check_information(information, arg = "information", fn = "hessian",
+                    auto = FALSE)
   spec <- spec_at(object, data)
   design <- statmod_design(spec)
   # the information is minus the Hessian, and what is asked for here is the
   # Hessian of the log-likelihood itself
-  -statmod_information_at(spec, par_at(object, par, design), design, expected)
+  -statmod_information_at(spec, par_at(object, par, design), design,
+                          info_expected(information), info_emethod(information))
 }
 
 
@@ -384,7 +399,7 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #'
 #' # When the marginal one is available
 #'
-#' `type = "marginal"` returns the value of the outer criterion at the fit.
+#' `loglik_type = "marginal"` returns the value of the outer criterion at the fit.
 #' Its degrees of freedom count the parameters that the marginal model
 #' estimates: the coefficients that are not covered by any penalty, the
 #' dimension of the null space of each penalty without a kink (the straight
@@ -399,7 +414,7 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' Where no outer criterion ran, or where it is [aic()] or [bic()], there is
 #' no marginal likelihood, and requesting one signals an error.
 #' @param object A [StatmodFit()].
-#' @param type `"conditional"` (the default) or `"marginal"`.
+#' @param loglik_type `"conditional"` (the default) or `"marginal"`.
 #' @param ... Unused.
 #' @return A `logLik` object: a single number with attributes `df`, the
 #'   degrees of freedom, and `nobs`, the sum of the prior weights (the number
@@ -411,9 +426,10 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @seealso [loglik()]
 #' @keywords internal
 logLik.StatmodFit <- function(object,
-                              type = c("conditional", "marginal"), ...) {
-  type <- match.arg(type)
-  if (identical(type, "marginal")) {
+                              loglik_type = c("conditional", "marginal"), ...) {
+  check_dots("logLik", ...)
+  loglik_type <- match.arg(loglik_type)
+  if (identical(loglik_type, "marginal")) {
     outer <- object@methods$outer
     if (is.null(outer) || !outer@kind %in% c("ml", "reml")) {
       stop(paste0(
@@ -421,7 +437,7 @@ logLik.StatmodFit <- function(object,
         "optimizes,\n  and ",
         if (is.null(outer)) "this fit ran no outer criterion" else
           sprintf("this fit used %s()", outer@kind),
-        ". There is no marginal likelihood to\n  report; logLik(type = ",
+        ". There is no marginal likelihood to\n  report; logLik(loglik_type = ",
         "\"conditional\") is available."), call. = FALSE)
     }
     if (!length(object@criterion) || !is.finite(object@criterion)) {
@@ -587,6 +603,7 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #'
 #' @keywords internal
 coef.StatmodFit <- function(object, readable = TRUE, ...) {
+  check_dots("coef", ...)
   spec <- object@spec
   params <- spec@distrib@params
   design <- statmod_design(spec)
@@ -793,7 +810,8 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #' packages report.
 #'
 #' @param object A [StatmodFit()].
-#' @param type `"quantile"` (the default), `"pearson"` or `"response"`.
+#' @param residual_type `"quantile"` (the default), `"pearson"` or
+#'   `"response"`.
 #'   The argument is matched with [match.arg()].
 #' @param seed An integer used to seed the randomization, or `NULL` for the
 #'   ambient state. Read only where the distribution function jumps, so it
@@ -833,9 +851,11 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #'
 #' @keywords internal
 residuals.StatmodFit <- function(object,
-                                 type = c("quantile", "pearson", "response"),
+                                 residual_type = c("quantile", "pearson",
+                                                   "response"),
                                  seed = NULL, ...) {
-  type <- match.arg(type)
+  check_dots("residuals", ...)
+  residual_type <- match.arg(residual_type)
   spec <- object@spec
   d <- spec@distrib
   y <- spec@response
@@ -844,17 +864,18 @@ residuals.StatmodFit <- function(object,
     stop("The fit carries no fitted parameters against which to compare the response.",
          call. = FALSE)
   }
-  if (identical(type, "response") || identical(type, "pearson")) {
+  if (identical(residual_type, "response") ||
+      identical(residual_type, "pearson")) {
     m <- tryCatch(mean(d, th), error = function(e) {
       warning(sprintf(paste0(
         "The mean of '%s' could not be computed at the fitted parameters, ",
         "so the %s residuals are NA: %s It may not exist there."),
-        d@distrib_name, type, conditionMessage(e)), call. = FALSE)
+        d@distrib_name, residual_type, conditionMessage(e)), call. = FALSE)
       NA_real_
     })
     r <- as.numeric(y) - as.numeric(m)
     if (all(is.na(r))) return(r)
-    if (identical(type, "response")) return(r)
+    if (identical(residual_type, "response")) return(r)
     # A family with no closed-form variance reaches it by quadrature, which
     # does not converge where the variance does not exist (a log-logistic of
     # shape below 2). That used to end in an error listing every observation;

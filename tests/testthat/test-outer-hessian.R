@@ -53,7 +53,7 @@ outer_handles <- function(formula, data, method, distrib = NULL,
 
 test_that("the Hessian of one smoothing parameter matches numDeriv", {
   skip_if_not_installed("numDeriv")
-  h <- outer_handles(y ~ s(x, bspline_smooth(k = 10)), dh, reml(hessian = "observed"))
+  h <- outer_handles(y ~ s(x, bspline_smooth(k = 10)), dh, reml(information = observed_info()))
   for (shift in c(0.4, -1.1)) {
     eta <- h$eta0 + shift
     expect_equal(as.numeric(h$he(eta)),
@@ -64,7 +64,7 @@ test_that("the Hessian of one smoothing parameter matches numDeriv", {
 test_that("the Hessian matches numDeriv with the scale modelled", {
   skip_if_not_installed("numDeriv")
   h <- outer_handles(y ~ s(x, bspline_smooth(k = 8)) | sigma ~ z, dh,
-                     reml(hessian = "observed"))
+                     reml(information = observed_info()))
   eta <- h$eta0 + 0.25
   expect_equal(as.numeric(h$he(eta)),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-7)
@@ -77,7 +77,7 @@ test_that("the Hessian matches numDeriv with two smooths", {
   d2 <- data.frame(a = runif(n2, -2, 2), b = runif(n2, -2, 2))
   d2$y <- sin(1.4 * d2$a) + d2$b^2 + stats::rnorm(n2, sd = 0.3)
   h <- outer_handles(y ~ s(a, bspline_smooth(k = 8)) + s(b, bspline_smooth(k = 8)), d2,
-                     reml(hessian = "observed"))
+                     reml(information = observed_info()))
   eta <- h$eta0 + c(0.5, -0.4)
   got <- h$he(eta)
   expect_identical(dim(got), c(2L, 2L))
@@ -96,7 +96,7 @@ test_that("the Hessian of an anisotropic tensor matches numDeriv", {
   n2 <- 250
   d2 <- data.frame(a = runif(n2, -1, 1), b = runif(n2, -1, 1))
   d2$y <- d2$a^2 + sin(3 * d2$b) + stats::rnorm(n2, sd = 0.3)
-  h <- outer_handles(y ~ te(a, b, smooths = bspline_smooth(k = 4)), d2, reml(hessian = "observed"))
+  h <- outer_handles(y ~ te(a, b, smooths = bspline_smooth(k = 4)), d2, reml(information = observed_info()))
   eta <- h$eta0 + c(0.3, -0.3)
   # this was the loosest tolerance here, 1e-3, on the reading that a tensor
   # design moves its mode least cleanly; with the mode polished it agrees to
@@ -107,7 +107,7 @@ test_that("the Hessian of an anisotropic tensor matches numDeriv", {
 
 test_that("the Hessian matches numDeriv under ml", {
   skip_if_not_installed("numDeriv")
-  h <- outer_handles(y ~ s(x, bspline_smooth(k = 10)), dh, ml(hessian = "observed"))
+  h <- outer_handles(y ~ s(x, bspline_smooth(k = 10)), dh, ml(information = observed_info()))
   eta <- h$eta0 + 0.3
   expect_equal(as.numeric(h$he(eta)),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-7)
@@ -123,7 +123,7 @@ test_that("a variance component is covered, penalty and all", {
                    x = runif(200))
   u <- stats::rnorm(m, sd = 0.7)
   dr$y <- 1 + 2 * dr$x + u[as.integer(dr$g)] + stats::rnorm(200, sd = 0.4)
-  h <- outer_handles(y ~ x + random(~ 1 | g), dr, reml(hessian = "observed"))
+  h <- outer_handles(y ~ x + random(~ 1 | g), dr, reml(information = observed_info()))
   eta <- h$eta0 + 0.2
   # the first comparison's reference is statmod() itself, unpolished, so it
   # keeps its tolerance; the second's is the polished gradient
@@ -134,7 +134,7 @@ test_that("a variance component is covered, penalty and all", {
                  distributions7::gaussian1_distrib(), dr,
                  outer_criterion = reml(marginal = "none"))
     statmod_marginal(a@spec, statmod_design(a@spec), a@coefficients,
-                     a@hyper, reml(hessian = "observed"))$value
+                     a@hyper, reml(information = observed_info()))$value
     # the reference REFITS the mode at every probe, so its own accuracy is
     # what the tolerance has to allow: measured, the two agree to 1.1e-5
     # relative, and the defect this exists for -- a derivative read on the
@@ -149,11 +149,11 @@ test_that("a Newton step on the exact pair lands where the search does", {
   # used to take Newton steps, and they must arrive where an optimizer that
   # only ever sees the value and the gradient arrives
   ref <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dh,
-                 outer_criterion = reml(hessian = "observed", marginal = "none"))
+                 outer_criterion = reml(information = observed_info(), marginal = "none"))
   spec <- ref@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
-  method <- reml(hessian = "observed", marginal = "none")
+  method <- reml(information = observed_info(), marginal = "none")
 
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, ref@hyper)
@@ -191,13 +191,13 @@ test_that("the exact route now covers the penalties it used to refuse", {
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   # a ridge answers penalty_dhessian(), so the gradient and the Hessian are
   # both available where the old test of linearity said they were not
-  expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 1L))
-  expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 2L))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = observed_info()), 1L))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = observed_info()), 2L))
   # the expected information carries the gradient through
   # distrib_dexpected_hessian() and, for a family that writes it out, the
   # Hessian through distrib_d2expected_hessian() -- a gaussian1 does
-  expect_true(outer_gradient_ok(spec, design, idx, reml("expected"), 1L))
-  expect_true(outer_gradient_ok(spec, design, idx, reml("expected"), 2L))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = expected_info()), 1L))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = expected_info()), 2L))
 })
 
 test_that("a variance component's Hessian is exact now, not differenced", {
@@ -212,7 +212,7 @@ test_that("a variance component's Hessian is exact now, not differenced", {
                    x = runif(200))
   u <- stats::rnorm(m, sd = 0.7)
   dr$y <- 1 + 2 * dr$x + u[as.integer(dr$g)] + stats::rnorm(200, sd = 0.4)
-  h <- outer_handles(y ~ x + random(~ 1 | g), dr, reml(hessian = "observed"))
+  h <- outer_handles(y ~ x + random(~ 1 | g), dr, reml(information = observed_info()))
   for (shift in c(0.2, -0.4)) {
     eta <- h$eta0 + shift
     expect_equal(as.numeric(h$he(eta)),
@@ -221,7 +221,7 @@ test_that("a variance component's Hessian is exact now, not differenced", {
   # and the fit runs through newton(), which needs the Hessian at every step
   f <- statmod(y ~ x + random(~ 1 | g),
                distributions7::gaussian1_distrib(), dr,
-               outer_criterion = reml(hessian = "observed"))
+               outer_criterion = reml(information = observed_info()))
   expect_true(is.finite(f@criterion))
   expect_gt(f@hyper$mu[["random(~1 | g)"]][[1L]], 0.3)
 })
@@ -235,7 +235,7 @@ refresh_bits <- function(formula, data, shift = 0.3) {
   inner <- iwls()
   fit0 <- statmod(formula, distributions7::gaussian1_distrib(), data,
                   inner_optimizer = inner,
-                  outer_criterion = reml(hessian = "observed"))
+                  outer_criterion = reml(information = observed_info()))
   spec <- fit0@spec
   design0 <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design0))
@@ -253,7 +253,7 @@ refresh_bits <- function(formula, data, shift = 0.3) {
   list(spec = spec, design = design, coef = cf, hyper = hy, M = M,
        params = params, npar = npar, offs = offs, total = total,
        d3 = ctx_deriv(NULL, spec, design, cf, hy, 3L),
-       Hl = refresh_hessian(spec, design, cf, FALSE, "bartlett"),
+       Hl = refresh_hessian(spec, design, cf, FALSE, NULL),
        units = refresh_units(spec, design, cf, params, npar, offs))
 }
 
@@ -278,7 +278,7 @@ test_that("the Hessian covers a block that moves with its coefficients", {
   a_g <- 3 + stats::rnorm(m, sd = 0.4)
   dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
   h <- outer_handles(y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp)), dn,
-                     reml(hessian = "observed"), polish = FALSE)
+                     reml(information = observed_info()), polish = FALSE)
   eta <- h$eta0 + 0.35
   expect_equal(as.numeric(h$he(eta)),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-3)
@@ -295,7 +295,7 @@ test_that("a break-point term's Hessian is covered too", {
                    id = factor(rep(seq_len(6), length.out = ns)))
   ds$y <- 1 + 0.3 * ds$x + 1.5 * pmax(ds$x - 5, 0) + stats::rnorm(ns, sd = 0.4)
   h <- outer_handles(y ~ seg(x, gamma1 ~ 0 + ridge(~ id)), ds,
-                     reml(hessian = "observed"), polish = FALSE)
+                     reml(information = observed_info()), polish = FALSE)
   eta <- h$eta0 + 0.3
   expect_equal(as.numeric(h$he(eta)),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-4)

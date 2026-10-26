@@ -479,9 +479,11 @@ statmod_structural_score <- function(spec, coef,
 #' @param theta The parameters, one value per observation.
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   observed Hessian.
-#' @param approx The strategy that the expected information uses when the family
-#'   has no closed form, passed through to
-#'   [distributions7::distrib_expected_hessian()].
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return The named list of second-derivative components on the link scale,
 #'   as [distributions7::distrib_expected_hessian()] returns it when
@@ -493,11 +495,11 @@ statmod_structural_score <- function(spec, coef,
 #'
 #' @keywords internal
 statmod_family_hessian <- function(spec, theta, expected = TRUE,
-                                   approx = "opg") {
+                                   emethod = NULL) {
   if (expected) {
     distributions7::distrib_expected_hessian(spec@distrib, spec@response,
                                              theta, scale = "link",
-                                             approx = approx,
+                                             method = emethod,
                                              threads = spec@threads)
   } else {
     distributions7::distrib_hessian(spec@distrib, spec@response, theta,
@@ -524,8 +526,8 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #' `expected = FALSE` gives the negated observed Hessian, which far from the
 #' optimum may be indefinite.
 #'
-#' `approx` reaches \pkg{distributions7} and is read only where the family
-#' has no closed expected information.
+#' `emethod` is the `method` of [distributions7::distrib_expected_hessian()]
+#' and is read only when `expected` is `TRUE`.
 #'
 #' With `index` only the requested columns of each design enter a cross
 #' product, so that reading a few rows and columns does not require
@@ -542,9 +544,11 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #' @param design The design, refreshed at `coef` if any term needs it.
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   negated observed Hessian.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form: `"opg"` (the default), `"bartlett"`, `"integrate"`
-#'   or `"mc"`.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return A symmetric `p x p` matrix over the stacked coefficients, where `p`
 #'   is their total count across the equations. The matrix is a \pkg{Matrix}
@@ -564,14 +568,14 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #'
 #' @keywords internal
 statmod_information_at <- function(spec, coef, design = statmod_design(spec),
-                                   expected = TRUE, approx = "opg",
+                                   expected = TRUE, emethod = NULL,
                                    H = NULL, index = NULL) {
   params <- spec@distrib@params
   ev <- statmod_eta(spec, design, coef)
   th <- ev$theta
   design <- statmod_design_at(spec, coef, design)
   if (!is.null(index)) {
-    return(information_subset(spec, design, ev, expected, approx, H,
+    return(information_subset(spec, design, ev, expected, emethod, H,
                               as.integer(index)))
   }
 
@@ -590,11 +594,11 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
   # and a sparse write per state and block took 242 s of a 451 s fit, most of
   # it in the sparse writes, and 38 s summed first.
   if (length(ev$regimes)) {
-    H <- regime_hessian_sum(spec, ev, expected, approx)
+    H <- regime_hessian_sum(spec, ev, expected, emethod)
   }
 
   # given by the caller where it has already asked for them at this point
-  if (is.null(H)) H <- statmod_family_hessian(spec, th, expected, approx)
+  if (is.null(H)) H <- statmod_family_hessian(spec, th, expected, emethod)
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   total <- sum(npar)
@@ -637,7 +641,7 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
 #' @param spec A [StatmodSpec()].
 #' @param design The design, already refreshed at the coefficients.
 #' @param ev What [statmod_eta()] returns at the coefficients.
-#' @param expected,approx As in [statmod_information_at()].
+#' @param expected,emethod As in [statmod_information_at()].
 #' @param H The second-derivative components, or `NULL` to compute them here.
 #' @param index Integer positions in the stacked coefficients.
 #'
@@ -647,7 +651,7 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
 #' @seealso [statmod_information_at()]
 #'
 #' @keywords internal
-information_subset <- function(spec, design, ev, expected, approx, H, index) {
+information_subset <- function(spec, design, ev, expected, emethod, H, index) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -677,9 +681,9 @@ information_subset <- function(spec, design, ev, expected, approx, H, index) {
     }
   }
   if (length(ev$regimes)) {
-    H <- regime_hessian_sum(spec, ev, expected, approx)
+    H <- regime_hessian_sum(spec, ev, expected, emethod)
   } else if (is.null(H)) {
-    H <- statmod_family_hessian(spec, ev$theta, expected, approx)
+    H <- statmod_family_hessian(spec, ev$theta, expected, emethod)
   }
   add(H, spec@weights)
   -out
@@ -704,13 +708,13 @@ information_subset <- function(spec, design, ev, expected, approx, H, index) {
 #'
 #' @param spec A [StatmodSpec()].
 #' @param ev What [statmod_eta()] returns, carrying `regimes`.
-#' @param expected,approx As in [statmod_information_at()].
+#' @param expected,emethod As in [statmod_information_at()].
 #'
 #' @return A named list of numeric vectors of length `n_obs`, keyed as
 #'   [distributions7::distrib_hessian()] keys its result.
 #'
 #' @keywords internal
-regime_hessian_sum <- function(spec, ev, expected, approx) {
+regime_hessian_sum <- function(spec, ev, expected, emethod) {
   r <- ev$regimes[[1L]]
   K <- component_count(r$mu)
   n <- spec@n_obs
@@ -727,7 +731,7 @@ regime_hessian_sum <- function(spec, ev, expected, approx) {
       if (expected) {
         distributions7::distrib_expected_hessian(spec@distrib, rep(
           spec@response, length.out = length(th[[1L]])), th, scale = "link",
-          approx = approx, threads = spec@threads)
+          method = emethod, threads = spec@threads)
       } else {
         distributions7::distrib_hessian(spec@distrib, rep(
           spec@response, length.out = length(th[[1L]])), th, scale = "link",
@@ -766,7 +770,7 @@ regime_hessian_sum <- function(spec, ev, expected, approx) {
     Hk <- if (expected) {
       distributions7::distrib_expected_hessian(spec@distrib, spec@response,
                                                thk, scale = "link",
-                                               approx = approx,
+                                               method = emethod,
                                                threads = spec@threads)
     } else {
       distributions7::distrib_hessian(spec@distrib, spec@response, thk,
@@ -1589,8 +1593,11 @@ working_response_variance <- function(spec) {
 #'   absent.
 #' @param expected `TRUE` for the expected information in `he`, `FALSE` for
 #'   the observed one.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return A list with the elements
 #'   \describe{
@@ -1613,7 +1620,7 @@ working_response_variance <- function(spec) {
 #'
 #' @keywords internal
 statmod_objective <- function(spec, hyper, design = statmod_design(spec),
-                              expected = TRUE, approx = "opg") {
+                              expected = TRUE, emethod = NULL) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -1665,7 +1672,7 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
     },
     he = function(v) {
       cf <- split(v)
-      H <- statmod_information_at(spec, cf, design, expected, approx) +
+      H <- statmod_information_at(spec, cf, design, expected, emethod) +
         statmod_penalty_at(spec, cf, hyper, design, "hessian")
       if (length(mixed)) H <- H + mixed_at(cf, "hessian")
       H

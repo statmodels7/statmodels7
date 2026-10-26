@@ -1,4 +1,4 @@
-# predict(interval = "group"): the interval and the standard deviation of a
+# predict(interval = group_interval()): the interval and the standard deviation of a
 # new group's parameter, theta* = h^-1(eta*), under every kind of link and
 # prior. Every reference is an integral the package does not compute.
 
@@ -30,8 +30,8 @@ test_that("under a log link the standard deviation is the lognormal one", {
   d <- grp_data()
   f <- statmod(y ~ x + random(~ 1 | g), distributions7::poisson_distrib(), d)
   nd <- data.frame(x = c(0.1, 0.9), g = factor("new"))
-  gl <- predict(f, "link:mu", nd, random = "zero", interval = "group")
-  gp <- predict(f, "mu", nd, random = "zero", interval = "group")
+  gl <- predict(f, "link:mu", nd, random = "zero", interval = group_interval())
+  gp <- predict(f, "mu", nd, random = "zero", interval = group_interval())
   z <- stats::qnorm(0.975)
   expect_equal(gp$lower, exp(gl$fit - z * gl$se), tolerance = 1e-12)
   expect_equal(gp$upper, exp(gl$fit + z * gl$se), tolerance = 1e-12)
@@ -46,14 +46,14 @@ test_that("under a logit the standard deviation is a Gauss-Hermite integral", {
   d <- grp_data(kind = "bern", m = 30, b = stats::rnorm(30, 0, 1.2))
   f <- statmod(y ~ x + random(~ 1 | g), distributions7::bernoulli_distrib(), d)
   nd <- data.frame(x = c(0, 0.5, 1), g = factor("new"))
-  gl <- predict(f, "link:mu", nd, random = "zero", interval = "group")
-  gp <- predict(f, "mu", nd, random = "zero", interval = "group")
+  gl <- predict(f, "link:mu", nd, random = "zero", interval = group_interval())
+  gp <- predict(f, "mu", nd, random = "zero", interval = group_interval())
   ref <- vapply(1:3, function(i) sd_normal(stats::plogis, gl$fit[i],
                                            gl$se[i]), numeric(1))
   expect_equal(gp$se, ref, tolerance = 1e-7)
   # random = "marginal" moves the fit to the population average and leaves
   # the interval of a new group's value where it is
-  gm <- predict(f, "mu", nd, random = "marginal", interval = "group")
+  gm <- predict(f, "mu", nd, random = "marginal", interval = group_interval())
   expect_equal(gm[, c("se", "lower", "upper")],
                gp[, c("se", "lower", "upper")])
   expect_true(all(gm$fit < gp$fit | gm$fit > gp$fit))
@@ -67,7 +67,7 @@ test_that("a Student t prior gives the quantiles of the scale mixture", {
                distributions7::gaussian1_distrib(), d)
   h <- f@hyper$mu[[grep("random", names(f@hyper$mu), value = TRUE)]]
   nd <- data.frame(x = 0.5, g = factor("new"))
-  gp <- predict(f, "mu", nd, random = "zero", interval = "group")
+  gp <- predict(f, "mu", nd, random = "zero", interval = group_interval())
   c0 <- predict(f, "mu", nd, random = "zero", se = TRUE)
   G <- function(e) stats::integrate(function(v) {
     w <- exp(v)
@@ -89,9 +89,9 @@ test_that("another univariate prior gives its own quantiles, seed-free", {
   s <- f@hyper$mu[[grep("random", names(f@hyper$mu), value = TRUE)]][["sigma"]]
   nd <- data.frame(x = 0.5, g = factor("new"))
   set.seed(1)
-  g1 <- predict(f, "mu", nd, random = "zero", interval = "group")
+  g1 <- predict(f, "mu", nd, random = "zero", interval = group_interval())
   set.seed(2)
-  g2 <- predict(f, "mu", nd, random = "zero", interval = "group")
+  g2 <- predict(f, "mu", nd, random = "zero", interval = group_interval())
   expect_identical(g1, g2)
   c0 <- predict(f, "mu", nd, random = "zero", se = TRUE)
   G <- function(e) stats::integrate(function(b) {
@@ -108,7 +108,7 @@ test_that("a prior with no moment generating function has no sd under a log link
   f <- statmod(y ~ x + random(~ 1 | g, distrib = tp),
                distributions7::poisson_distrib(), d)
   gp <- predict(f, "mu", data.frame(x = 0.5, g = factor("new")),
-                random = "zero", interval = "group")
+                random = "zero", interval = group_interval())
   expect_true(is.na(gp$se))
   expect_true(is.finite(gp$lower) && is.finite(gp$upper) &&
                 gp$lower < gp$fit && gp$fit < gp$upper)

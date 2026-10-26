@@ -11,7 +11,7 @@ statmod_edf_correction(
   design,
   method,
   expected = TRUE,
-  approx = "opg",
+  emethod = NULL,
   pinned = NULL
 )
 }
@@ -32,8 +32,11 @@ is observed. The
 caller passes the information that the fit used, so that \eqn{V_\beta},
 \eqn{H} and the criterion's Hessian read one information.}
 
-\item{approx}{The approximation for the expected information. The argument
-is not read where the model carries a filter.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 
 \item{pinned}{The coordinates that the fit left out of the criterion's
 determinant, as it records them in \code{methods$pinned}.}
@@ -105,7 +108,7 @@ the base count and the correction are both computed on the joint vector.
 The two matrices are those that \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} and
 \code{\link[=statmod_full_information]{statmod_full_information()}} build, so that this function and the
 criterion use one assembly. The joint route reads the observed information,
-and \code{expected} and \code{approx} do not reach it. A model with no structural term
+and \code{expected} and \code{emethod} do not reach it. A model with no structural term
 of the filter shape takes the coefficient route, because
 \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} returns \code{NULL} there.
 }

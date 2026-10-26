@@ -283,11 +283,37 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' @param offsets Optional named list of offsets, one entry per distribution
 #'   parameter, each of length 1 or \eqn{n}. An offset written in the formula
 #'   is added to the entry for the same parameter.
-#' @param inner_optimizer How the smooth block is fitted: [iwls()] or
-#'   an \pkg{optimizers7} optimizer. Beside a structural term of the filter
-#'   shape, the coefficients and the term's parameters are fitted in one
-#'   system, for which [iwls()] stands for the system's own default optimizer
-#'   and an \pkg{optimizers7} optimizer is used as given.
+#' @param inner_optimizer How the smooth block is fitted: [iwls()] (the
+#'   default) or an \pkg{optimizers7} optimizer. Beside a structural term of
+#'   the filter shape, the coefficients and the term's parameters are fitted in
+#'   one system, for which [iwls()] stands for the system's own default
+#'   optimizer and an \pkg{optimizers7} optimizer is used as given.
+#' @param inner_information The matrix of second derivatives that the inner fit
+#'   uses, an object that inherits from [distributions7::Information]:
+#'   [distributions7::observed_info()] (the observed Hessian),
+#'   [distributions7::expected_info()] (the Fisher information, whose `method`
+#'   is `NULL` for the closed form of the family or [distributions7::expect_opg()],
+#'   or one of [distributions7::expect_opg()], [distributions7::expect_integrate()]
+#'   and [distributions7::expect_mc()]; see
+#'   [distributions7::expected_derivative_methods]) or [auto_info()] (the
+#'   default), which is settled against the family. With [iwls()] the matrix
+#'   is inverted at each step (Newton for the observed information, Fisher
+#'   scoring for the expected one); with an \pkg{optimizers7} optimizer it is
+#'   the Hessian that the optimizer receives, so that
+#'   `inner_optimizer = optimizers7::newton()` with
+#'   `inner_information = distributions7::expected_info()` takes the expected
+#'   information. A named matrix is the only one that the inner fit uses.
+#'   [auto_info()] chooses the expected information where the family writes it
+#'   exactly and at an acceptable cost, and the observed information
+#'   otherwise; with [iwls()] it also lets the run change matrix and lets the
+#'   expected information take a step that the observed one cannot (see
+#'   [information_objects]). The fitted model records the settled object, and
+#'   every later refit of the model (the folds of a cross-validation, the
+#'   restricted fits of a test, the resampled fits of a bootstrap) reads the
+#'   same one. A model with a structural term is fitted on the observed
+#'   information whatever the object says. The outer criterion has its own
+#'   `information` (see [reml()]) and the standard errors have theirs (see
+#'   [vcov_method]); the three choices are independent.
 #' @param outer_criterion How the smooth hyperparameters are estimated:
 #'   [reml()] (the default), [ml()], [aic()] or [bic()], or `NULL` to hold
 #'   them where their terms left them. [cv()] cross-validates the
@@ -348,9 +374,8 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   route can change where the work is large (the BLAS crossproduct against
 #'   the compiled one, and the pivoted `qr()` against the compiled
 #'   triangular factor), and the results then agree to rounding.
-#' @param ... Not used. A named argument signals an error. `hyper` was
-#'   removed from `statmod()`: a hyperparameter is held in the term that
-#'   carries the penalty.
+#' @param ... Not used. A named argument signals an error. A hyperparameter
+#'   is held in the term that carries the penalty.
 #'
 #' @return A [StatmodFit()] object.
 #'
@@ -380,7 +405,8 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'
 #' @export
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
-                    inner_optimizer = iwls(), outer_criterion = reml(),
+                    inner_optimizer = iwls(), inner_information = auto_info(),
+                    outer_criterion = reml(),
                     sparse_criterion = bic(), outer_optimizer = NULL,
                     # the ARGUMENT and the FUNCTION are deliberately named
                     # differently, as `glm(control = glm.control())` is: with
@@ -416,14 +442,6 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # whenever the two disagreed.
   if (...length()) {
     nm <- ...names()
-    if (length(nm) && any(nm == "hyper")) {
-      stop(paste0("'hyper' has been removed. A hyperparameter is held in",
-                  " the term that\n  carries the penalty, as in",
-                  " lasso(x, lambda = 3), ridge(x, lambda = 0.5),\n",
-                  "  s(x, bspline_smooth(), hyper = c(lambda = 2)) or",
-                  " enet(x, alpha = 0.5), and every one left NULL,\n",
-                  "  which is the default, is estimated."), call. = FALSE)
-    }
     stop(sprintf("unused argument (%s)", nm[[1L]]), call. = FALSE)
   }
   if (!is.list(linpar_control)) {
@@ -434,7 +452,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                        linpar = linpar_control)
   spec@threads <- n_thr
   spec@workers <- numericals7::worker_count(threads)
-  # a marginal criterion left at hessian = "auto" is settled against the
+  # a marginal criterion left at auto_info() is settled against the
   # family here, as an iwls() left at "auto" is below
   if (S7::S7_inherits(outer_criterion, OuterMethod)) {
     outer_criterion <- outer_resolve(outer_criterion, spec@distrib)
@@ -446,15 +464,17 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   }
   blocks <- statmod_blocks(spec, design)
 
-  # an iwls() left at "auto" is settled against the family once, here, so the
-  # objective, every refit and the fit's own record read the same curvature
-  if (S7::S7_inherits(inner_optimizer, Iwls)) {
-    inner_optimizer <- iwls_resolve(inner_optimizer, spec@distrib)
-  }
+  # the inner information is settled against the family once, here, and
+  # travels with the method, so the objective, every refit and the fit's own
+  # record read the same curvature
+  check_information(inner_information, arg = "inner_information",
+                    fn = "statmod")
+  inner_optimizer <- inner_bind(inner_optimizer, spec@distrib,
+                                inner_information)
   cfg <- inner_settings(inner_optimizer)
   expected <- cfg$expected
-  approx <- cfg$approx
-  obj <- statmod_objective(spec, hyper, design, expected, approx)
+  emethod <- cfg$emethod
+  obj <- statmod_objective(spec, hyper, design, expected, emethod)
   beta <- statmod_start(spec, design, obj, start)
 
   if (vb$blocks || vb$outer) {
@@ -463,7 +483,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     vb_say("inner    %s", vb_name(inner_optimizer, "iwls"), indent = 5L)
     vb_say("outer    %s", if (is.null(outer_criterion)) "held" else
       paste0(toupper(outer_criterion@kind), " (",
-             outer_criterion@hessian, " information)"), indent = 5L)
+             info_label(outer_criterion@hessian), " information)"), indent = 5L)
     if (!is.null(start)) {
       vb_say("start    %s",
              if (S7::S7_inherits(start, start_strategy_class())) start@label
@@ -566,13 +586,6 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # which is true and is three layers from the cause.  See R/order.R.
   assert_criterion_order(spec@distrib, outer_criterion)
   assert_criterion_order(spec@distrib, sparse_criterion)
-  # and a criterion on the expected information needs an expectation: where
-  # the family does not write it out, the default approx = "opg" would put the
-  # outer product of the scores AT THE DATA in the determinant, which is
-  # neither the Laplace curvature nor the Fisher information and has no exact
-  # outer derivatives. Refused here with the remedy. See R/order.R.
-  assert_criterion_information(spec@distrib, outer_criterion, approx)
-  assert_criterion_information(spec@distrib, sparse_criterion, approx)
   # and a prediction-error criterion cannot select a penalty over a structural
   # term's own parameters, reading its degrees of freedom over the coefficients
   # alone, where that penalty covers nothing. Refused here, by name, before a
@@ -621,7 +634,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       res <- tryCatch(
         statmod_select(spec, design, blocks, hyper, inner_optimizer,
                        outer_criterion, outer_optimizer, beta_start,
-                       approx, maxit, tol, vb, data,
+                       emethod, maxit, tol, vb, data,
                        sparse_criterion),
         error = function(e) e)
       if (inherits(res, "error")) {
@@ -635,13 +648,13 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     if (!isFALSE(deferred) ||
         (is.null(outer_criterion) && is.null(sparse_criterion))) {
       res <- statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
-                               beta_start, expected, approx, maxit, tol, vb)
+                               beta_start, expected, emethod, maxit, tol, vb)
       crit <- NA_real_
     } else {
       if (!length(attr(design, "refresh")) || is.null(outer_criterion)) {
         res <- statmod_select(spec, design, blocks, hyper, inner_optimizer,
                               outer_criterion, outer_optimizer, beta_start,
-                              approx, maxit, tol, vb, data,
+                              emethod, maxit, tol, vb, data,
                               sparse_criterion)
       }
       hyper <- res$hyper
@@ -661,7 +674,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       if (frozen) {
         ro <- tryCatch(
           statmod_alternate(spec_h, design, blocks, hyper, inner_optimizer,
-                            res$par, expected, approx, maxit, tol, vb),
+                            res$par, expected, emethod, maxit, tol, vb),
           error = function(e) NULL)
         if (!is.null(ro) && is.finite(ro$value)) {
           res[c("par", "value", "converged", "obj", "aliased",
@@ -679,7 +692,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     if (nb > 0L && length(attr(design, "refresh"))) {
       before <- res$par
       res <- statmod_boot_restart(spec_h, design, blocks, hyper, inner_optimizer,
-                                  res, expected, approx, maxit, tol, vb, nb)
+                                  res, expected, emethod, maxit, tol, vb, nb)
       # A RESTART THAT MOVES THE FIT MOVES THE COEFFICIENTS THE CRITERION
       # ESTIMATES TOO. The search above read the criterion in the basin its
       # warm starts stayed in, and the restart may leave that basin; a
@@ -690,7 +703,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       if (length(res$held_coef) && !identical(before, res$par)) {
         r2 <- tryCatch(
           statmod_select(spec, design, blocks, hyper, inner_optimizer,
-                         outer_criterion, outer_optimizer, res$par, approx,
+                         outer_criterion, outer_optimizer, res$par, emethod,
                          maxit, tol, vb, data,
                          sparse_criterion),
           error = function(e) NULL)
@@ -714,10 +727,10 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       # break-point at the confinement limit, where the smoothing parameter had
       # been chosen, and the second moved it to the profile's minimum.
       sg0 <- statmod_settle_seg(spec_h, design, blocks, hyper, inner_optimizer,
-                                res, expected, approx, maxit, tol, vb)
+                                res, expected, emethod, maxit, tol, vb)
       res <- sg0$res
       st0 <- statmod_settle_breakpoints(spec_h, design, blocks, hyper,
-                                        inner_optimizer, res, expected, approx,
+                                        inner_optimizer, res, expected, emethod,
                                         maxit, tol, vb)
       res <- st0$res
       fresh <- !isFALSE(deferred)
@@ -725,7 +738,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
         # the criterion that could not be read at the start, read now
         r2 <- tryCatch(
           statmod_select(spec, design, blocks, hyper, inner_optimizer,
-                         outer_criterion, outer_optimizer, res$par, approx,
+                         outer_criterion, outer_optimizer, res$par, emethod,
                          maxit, tol, vb, data,
                          sparse_criterion),
           error = function(e) NULL)
@@ -770,7 +783,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
           (!is.null(outer_criterion) || !is.null(sparse_criterion))) {
         r2 <- tryCatch(
           statmod_select(spec, design, blocks, hyper, inner_optimizer,
-                         outer_criterion, outer_optimizer, res$par, approx,
+                         outer_criterion, outer_optimizer, res$par, emethod,
                          maxit, tol, vb, data,
                          sparse_criterion),
           error = function(e) NULL)
@@ -795,7 +808,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # knee sits at a lambda / c_j. The blocks are rebuilt from the scaled
   # penalties: left as they were, the coordinate descent would minimize the
   # unscaled penalty while the objective reads the scaled one.
-  sc <- statmod_curv(spec, design, beta, expected, approx)
+  sc <- statmod_curv(spec, design, beta, expected, emethod)
   if (!is.null(sc)) {
     spec <- sc
     blocks <- statmod_blocks(spec, design)
@@ -945,11 +958,11 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     r2 <- tryCatch(
       if (is.null(outer_criterion) && is.null(sparse_criterion)) {
         statmod_alternate(spec_h, design, blocks, hyper, inner_optimizer,
-                          res$obj$stack(cf), expected, approx, maxit, tol, vb)
+                          res$obj$stack(cf), expected, emethod, maxit, tol, vb)
       } else {
         statmod_select(spec, design, blocks, hyper, inner_optimizer,
                        outer_criterion, outer_optimizer, res$obj$stack(cf),
-                       approx, maxit, tol, vb, data,
+                       emethod, maxit, tol, vb, data,
                        sparse_criterion)
       }, error = function(e) NULL)
     if (is.null(r2) || !edge_restart_better(r2, res, crit, outer_criterion,
@@ -970,7 +983,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # a scaled SCAD or MCP carries the curvature at the fitted coefficients, so
   # that what the fit reports -- the objective, the degrees of freedom, the
   # summary -- reads the scaling the alternation settled at
-  sc <- statmod_curv(spec, design, coef, expected, approx)
+  sc <- statmod_curv(spec, design, coef, expected, emethod)
   if (!is.null(sc)) spec <- sc
   fitted <- statmod_eta(spec, design, coef)$theta
   # WHICH COLUMNS THE MODEL DOES NOT IDENTIFY, from the pivot that fitted it
@@ -983,7 +996,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # realistic fit -- 3.02 per cent, or 1.2 ms, of the cheapest one there is.
   alias <- res$aliased
   Kmode <- tryCatch(statmod_penalized_at(spec, coef, design, hyper,
-                                         expected, approx),
+                                         expected, emethod),
                     error = function(e) NULL)
   if (!length(alias) && !is.null(Kmode)) {
     alias <- tryCatch(deficient_coords(Kmode, zero_kinked(spec, design, coef)),
@@ -1019,14 +1032,17 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   tau_reader <- Filter(function(m) !is.null(m) && m@kind %in% c("aic", "bic"),
                        list(sparse_criterion, outer_criterion))
   edf_expected <- if (length(tau_reader)) {
-    identical(tau_reader[[1L]]@hessian, "expected")
+    info_expected(tau_reader[[1L]]@hessian)
   } else expected
+  edf_emethod <- if (length(tau_reader)) {
+    select_emethod(tau_reader[[1L]], NULL, emethod)
+  } else emethod
   StatmodFit(
     spec = spec, coefficients = coef,
     structural = statmod_structural_par(spec, design), hyper = hyper,
     loglik = statmod_loglik_at(spec, coef, design),
     objective = res$value,
-    edf = statmod_edf(spec, coef, design, hyper, edf_expected, approx,
+    edf = statmod_edf(spec, coef, design, hyper, edf_expected, edf_emethod,
                       alias),
     fitted = fitted, converged = res$converged,
     aliased = aliased_labels(spec, design, alias),
@@ -1039,7 +1055,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       inner = if (length(res$hist_inner)) do.call(rbind, res$hist_inner)
         else NULL
     ),
-    methods = list(smooth = inner_optimizer, outer = outer_criterion,
+    methods = list(smooth = inner_optimizer,
+                   inner_information = inner_information,
+                   outer = outer_criterion,
                    search = res$optimizer,
                    # the coordinates the marginal criterion left out of its
                    # determinant, which statmod_certificate() and vcov() read
@@ -1096,8 +1114,11 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #' @param beta The starting coefficients, stacked into one numeric vector.
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   observed one.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param maxit,tol The budget in passes and the relative tolerance on the
 #'   objective, as [method_budget()] read them off `inner_optimizer`.
 #' @param vb The resolved verbosity, as [verbosity()] returns it.
@@ -1146,9 +1167,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #'
 #' @keywords internal
 statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta,
-                              expected, approx, maxit, tol, vb,
+                              expected, emethod, maxit, tol, vb,
                               working_budget = 500L, hold_refresh = FALSE) {
-  obj <- statmod_objective(spec, hyper, design, expected, approx)
+  obj <- statmod_objective(spec, hyper, design, expected, emethod)
   value <- obj$fn(beta)
   hist_blocks <- list()
   hist_inner <- list()
@@ -1209,11 +1230,11 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
 
   for (pass in seq_len(as.integer(maxit))) {
     if (curv_scaled) {
-      sc <- statmod_curv(spec, design, obj$split(beta), expected, approx)
+      sc <- statmod_curv(spec, design, obj$split(beta), expected, emethod)
       if (!is.null(sc)) {
         spec <- sc
         blocks <- curv_blocks(blocks, spec, design)
-        obj <- statmod_objective(spec, hyper, design, expected, approx)
+        obj <- statmod_objective(spec, hyper, design, expected, emethod)
         value <- obj$fn(beta)
       }
     }
@@ -1317,7 +1338,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       }
       res <- sparse_fit(obj, beta, bl, hyper, verbose = vb$optimizer,
                         spec = spec, design = design, expected = expected,
-                        approx = approx)
+                        emethod = emethod)
       # WHICH route ran is reported by the route itself rather than guessed
       # beforehand: whether the compiled coordinate descent applies depends on
       # the penalty's operator being admissible AT THE STEP the fit takes, and
@@ -1409,7 +1430,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       if (length(blocks$sparse) || has_structural) {
         converged <- converged &&
           alternation_settled(spec, design, obj, beta, hyper, expected,
-                              approx, aliased)
+                              emethod, aliased)
       }
       break
     }
@@ -1517,7 +1538,7 @@ curv_blocks <- function(blocks, spec, design) {
 #'
 #' @param spec,design,obj,beta,hyper The fit's specification, design,
 #'   objective, stacked coefficients and hyperparameters.
-#' @param expected,approx Which information the fit uses.
+#' @param expected,emethod Which information the fit uses.
 #' @param aliased The positions that the scoring step's pivot left out.
 #'
 #' @return `alternation_readings()` returns a named vector of `mode` and
@@ -1529,7 +1550,7 @@ curv_blocks <- function(blocks, spec, design) {
 #'
 #' @keywords internal
 alternation_readings <- function(spec, design, obj, beta, hyper, expected,
-                                 approx, aliased = integer(0)) {
+                                 emethod, aliased = integer(0)) {
   out <- c(mode = NA_real_, kkt = NA_real_)
   cf <- obj$split(beta)
   nb <- length(beta)
@@ -1551,7 +1572,7 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
       list(g = g, K = as_dense(jp$he(u)), keep = c(which(!drop), jp$ix))
     } else {
       list(g = obj$gr(beta),
-           K = statmod_penalized_at(spec, cf, design, hyper, expected, approx),
+           K = statmod_penalized_at(spec, cf, design, hyper, expected, emethod),
            keep = which(!drop))
     }
   }, error = function(e) NULL)
@@ -1592,7 +1613,7 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
       bp <- beta
       bp[z] <- sqrt(.Machine$double.eps) * .Machine$double.eps
       kink <- flat(obj$split(bp))[z]
-      H <- statmod_information_at(spec, cf, design, expected, approx)
+      H <- statmod_information_at(spec, cf, design, expected, emethod)
       cj <- as.numeric(Matrix::diag(H))[z]
       dec <- pmax(0, abs(pull) - abs(kink))^2 / (2 * cj)
       dec <- dec[is.finite(dec)]
@@ -1608,8 +1629,8 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
 #' @rdname alternation_readings
 #' @keywords internal
 alternation_settled <- function(spec, design, obj, beta, hyper, expected,
-                                approx, aliased = integer(0)) {
-  r <- alternation_readings(spec, design, obj, beta, hyper, expected, approx,
+                                emethod, aliased = integer(0)) {
+  r <- alternation_readings(spec, design, obj, beta, hyper, expected, emethod,
                             aliased)
   lim <- mode_error_limit()
   isTRUE(r[["mode"]] <= lim) && (is.na(r[["kkt"]]) || r[["kkt"]] <= lim)
@@ -1645,14 +1666,14 @@ alternation_settled <- function(spec, design, obj, beta, hyper, expected,
 #'
 #' @param spec,design The specification and its design.
 #' @param coef The coefficients, split by parameter.
-#' @param expected,approx Which information.
+#' @param expected,emethod Which information.
 #'
 #' @return The specification in which the curvature is written into the terms,
 #'   or `NULL` where no penalty was written, so that the caller rebuilds its
 #'   blocks only when a penalty changed.
 #'
 #' @keywords internal
-statmod_curv <- function(spec, design, coef, expected, approx) {
+statmod_curv <- function(spec, design, coef, expected, emethod) {
   units <- statmod_penalized(spec, design)
   todo <- Filter(function(u) {
     pen <- u$penalty
@@ -1674,9 +1695,9 @@ statmod_curv <- function(spec, design, coef, expected, approx) {
   for (u in todo) {
     pen <- u$penalty
     p <- u$param
-    wq <- coord_working(spec, ep, coef, design, p, expected, approx)
+    wq <- coord_working(spec, ep, coef, design, p, expected, emethod)
     if (is.null(wq) && !expected) {
-      wq <- coord_working(spec, ep, coef, design, p, TRUE, approx)
+      wq <- coord_working(spec, ep, coef, design, p, TRUE, emethod)
     }
     if (is.null(wq)) next
     X <- coord_block(dat[[p]]$X, u$cols)
@@ -1794,16 +1815,16 @@ method_budget <- function(method) {
 #' the expected information is a different matrix, so a Newton step on it
 #' would be Fisher scoring under another name. Where a family writes neither
 #' out, the expected information is also far more expensive to form than the
-#' observed one. `approx` is `"opg"` for such a method, the default of
-#' [iwls()] itself; it is read only where `expected` is `TRUE`,
-#' so for an optimizer it records a default and not a choice.
+#' observed one. `emethod` is `NULL` for such a method, the default of
+#' [iwls()] itself; it is read only where `expected` is `TRUE`, so for an
+#' optimizer it records a default and not a choice.
 #'
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #' @param distrib The distribution, read only to settle an [iwls()] left at
-#'   `hessian = "auto"` through [iwls_resolve()]; such a method with no
+#'   [auto_info()] through [iwls_resolve()]; such a method with no
 #'   distribution is an error rather than a guess.
 #'
-#' @return A list of four: `expected` (a logical), `approx` (a string),
+#' @return A list of four: `expected` (a logical), `emethod` (an object),
 #'   `maxit` and `tol`.
 #'
 #' @seealso [method_budget()] for the last two,
@@ -1812,17 +1833,83 @@ method_budget <- function(method) {
 #' @keywords internal
 inner_settings <- function(method, distrib = NULL) {
   b <- method_budget(method)
-  iw <- S7::S7_inherits(method, Iwls)
-  if (iw && identical(method@hessian, "auto")) {
+  info <- inner_info(method)
+  if (info_auto(info)) {
     if (is.null(distrib)) {
-      stop("iwls(hessian = \"auto\") is settled by the family: pass 'distrib', ",
-           "or settle it with iwls_resolve() first.", call. = FALSE)
+      stop("auto_info() is settled by the family: pass 'distrib', ",
+           "or settle the method with inner_bind() first.", call. = FALSE)
     }
-    method <- iwls_resolve(method, distrib)
+    method <- inner_bind(method, distrib, info)
+    info <- inner_info(method)
   }
-  list(expected = iw && identical(method@hessian, "expected"),
-       approx = if (iw) method@approx else "opg",
+  list(expected = info_expected(info), emethod = info_emethod(info),
        maxit = b$maxit, tol = b$tol)
+}
+
+
+#' Settle the Inner Information and Bind It to the Method
+#'
+#' @description
+#' Settles `information` against `distrib` and stores the result in the inner
+#' method, so that every function that receives the method reads the same
+#' matrix. For [iwls()] the result is held in the properties `hessian`,
+#' `backup`, `switching` and `repair_floor` (see [iwls_resolve()]). For an
+#' \pkg{optimizers7} optimizer it is held in the attribute
+#' `"inner_information"`.
+#'
+#' @details
+#' A named [distributions7::observed_info()] or [distributions7::expected_info()]
+#' is stored as it is. An [auto_info()] is settled by the rule of
+#' [iwls_resolve()]: the expected information where the family writes it
+#' exactly and at an acceptable cost, and the observed information otherwise.
+#' An optimizer has no fallback and no switch, since both belong to the loop of
+#' [iwls()], so the settled object is the whole of the choice there.
+#'
+#' @param method [iwls()] or an \pkg{optimizers7} optimizer.
+#' @param distrib The distribution to which the model is fitted.
+#' @param information An object that inherits from
+#'   [distributions7::Information].
+#'
+#' @return `method`, with the settled information bound to it.
+#'
+#' @seealso [inner_info()], [inner_settings()], [iwls_resolve()]
+#'
+#' @keywords internal
+inner_bind <- function(method, distrib, information) {
+  if (S7::S7_inherits(method, Iwls)) {
+    return(iwls_resolve(method, distrib, information))
+  }
+  if (info_auto(information)) {
+    exact <- distributions7::expected_hessian_exact(distrib) &&
+      !distributions7::expected_hessian_costly(distrib)
+    information <- if (exact) {
+      distributions7::expected_info(method = information@method)
+    } else distributions7::observed_info()
+  }
+  attr(method, "inner_information") <- information
+  method
+}
+
+
+#' The Information Bound to an Inner Method
+#'
+#' @description
+#' Returns the information object that [inner_bind()] stored in `method`: the
+#' property `hessian` of an [iwls()] object, and the attribute
+#' `"inner_information"` of an \pkg{optimizers7} optimizer. An optimizer that
+#' was never bound has the observed information.
+#'
+#' @param method [iwls()] or an \pkg{optimizers7} optimizer.
+#'
+#' @return An object that inherits from [distributions7::Information].
+#'
+#' @seealso [inner_bind()]
+#'
+#' @keywords internal
+inner_info <- function(method) {
+  if (S7::S7_inherits(method, Iwls)) return(method@hessian)
+  info <- attr(method, "inner_information", exact = TRUE)
+  if (is.null(info)) distributions7::observed_info() else info
 }
 
 
@@ -1965,10 +2052,10 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     # penalized information that is not positive definite, or an observed
     # step that finds no acceptable point
     backup_at <- NULL
-    if (isTRUE(method@fallback)) {
+    if (!is.null(method@backup)) {
       m_exp <- method
-      m_exp@hessian <- "expected"
-      m_exp@fallback <- FALSE
+      m_exp@hessian <- method@backup
+      m_exp@backup <- NULL
       backup_at <- function(b) {
         v <- beta
         v[idx] <- b
@@ -1977,14 +2064,14 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
       }
     }
     # AND THE OBSERVED INFORMATION TAKES OVER from the expected one after
-    # iwls_switch_after() scoring steps, on a method iwls_resolve() settled on
+    # switch_after scoring steps, on a method iwls_resolve() settled on
     # the expected information from "auto": see iwls_fit()
     switch_at <- NULL
     sw <- method@switch_after
-    if (identical(method@hessian, "expected") && length(sw) && is.finite(sw)) {
+    if (isTRUE(method@switching) && length(sw) && is.finite(sw)) {
       m_obs <- method
-      m_obs@hessian <- "observed"
-      m_obs@switch_after <- Inf
+      m_obs@hessian <- observed_info()
+      m_obs@switching <- FALSE
       switch_at <- function(b) {
         v <- beta
         v[idx] <- b
@@ -2094,13 +2181,13 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #'
 #' @keywords internal
 subset_pieces <- function(spec, design, coef, hyper, method, idx) {
-  if (identical(method@hessian, "auto")) {
+  if (info_auto(method@hessian)) {
     method <- iwls_resolve(method, spec@distrib)
   }
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   H <- statmod_information_at(spec, coef, design,
-                              identical(method@hessian, "expected"),
-                              method@approx, index = idx)
+                              info_expected(method@hessian),
+                              info_emethod(method@hessian), index = idx)
   list(R = NULL, C = NULL, A = H + S[idx, idx, drop = FALSE])
 }
 
@@ -2663,7 +2750,11 @@ intercept_start_from_data <- function(spec, eta) {
 #' @param design The design.
 #' @param hyper The hyperparameters.
 #' @param expected Whether the expected information is used.
-#' @param approx How the expected information is approximated.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return A dense symmetric matrix over the coefficients of every equation.
 #'
@@ -2671,8 +2762,8 @@ intercept_start_from_data <- function(spec, eta) {
 #'
 #' @keywords internal
 statmod_penalized_at <- function(spec, coef, design, hyper, expected = TRUE,
-                                 approx = "opg") {
-  H <- statmod_information_at(spec, coef, design, expected, approx)
+                                 emethod = NULL) {
+  H <- statmod_information_at(spec, coef, design, expected, emethod)
   S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design, "hessian"))
   as_dense(H + S)
 }
@@ -2710,7 +2801,11 @@ statmod_penalized_at <- function(spec, coef, design, hyper, expected = TRUE,
 #' @param design The design.
 #' @param hyper The hyperparameters.
 #' @param expected Whether the curvature is the expected information.
-#' @param approx The approximation for the expected information.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param aliased Stacked positions of the coefficients that the fit did not
 #'   estimate; they are not counted.
 #'
@@ -2720,7 +2815,7 @@ statmod_penalized_at <- function(spec, coef, design, hyper, expected = TRUE,
 #'
 #' @keywords internal
 statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
-                        approx = "opg", aliased = integer(0)) {
+                        emethod = NULL, aliased = integer(0)) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -2760,7 +2855,7 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   # best by the criterion the fit printed. The trace is Stein's count -- a
   # coefficient in MCP's concave zone counts 1/(1 - 1/gamma) -- and for a
   # lasso alone it is the number of non-zero coefficients, as before.
-  kd <- kinked_edf_diag(spec, coef, design, hyper, expected, approx, aliased)
+  kd <- kinked_edf_diag(spec, coef, design, hyper, expected, emethod, aliased)
   if (!is.null(kd)) {
     for (a in seq_along(params)) {
       p <- params[a]
@@ -2788,7 +2883,7 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
     } else {
       zfailed <- isTRUE(js$failed)
       smoother <- tryCatch({
-        H <- statmod_information_at(spec, coef, design, expected, approx)
+        H <- statmod_information_at(spec, coef, design, expected, emethod)
         S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
         S <- zap_nonfinite(S)
         # a coefficient a term holds (a held break-point's slot, a column of
@@ -2882,7 +2977,7 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
         sum(smoother[offs[a] + cols])
       } else {
         if (is.null(H)) {
-          H <- statmod_information_at(spec, coef, design, expected, approx)
+          H <- statmod_information_at(spec, coef, design, expected, emethod)
         }
         idx <- offs[a] + cols
         th <- if (length(ent) == 1L) {
@@ -2944,7 +3039,7 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
 #'
 #' @param spec,coef,design,hyper The specification, the coefficients, the
 #'   design and the hyperparameters.
-#' @param expected,approx Which information.
+#' @param expected,emethod Which information.
 #' @param aliased Stacked positions that the fit did not estimate.
 #'
 #' @return A numeric vector over the stacked coefficients, or `NULL`.
@@ -2952,7 +3047,7 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
 #' @seealso [statmod_pe()], [statmod_edf()]
 #'
 #' @keywords internal
-kinked_edf_diag <- function(spec, coef, design, hyper, expected, approx,
+kinked_edf_diag <- function(spec, coef, design, hyper, expected, emethod,
                             aliased = integer(0)) {
   if (!is.null(statmod_structural_state(design))) return(NULL)
   blocks <- statmod_blocks(spec, design)
@@ -2972,7 +3067,7 @@ kinked_edf_diag <- function(spec, coef, design, hyper, expected, approx,
     d[ai] <- 1
     return(d)
   }
-  H <- as_dense(statmod_information_at(spec, coef, design, expected, approx,
+  H <- as_dense(statmod_information_at(spec, coef, design, expected, emethod,
                                        index = ai))
   P <- tryCatch(chol2inv(chol(H + S_aa)), error = function(e) NULL)
   if (is.null(P)) return(NULL)

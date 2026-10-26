@@ -10,11 +10,11 @@ inner_settings(method, distrib = NULL)
 \item{method}{\code{\link[=iwls]{iwls()}} or an \pkg{optimizers7} optimizer.}
 
 \item{distrib}{The distribution, read only to settle an \code{\link[=iwls]{iwls()}} left at
-\code{hessian = "auto"} through \code{\link[=iwls_resolve]{iwls_resolve()}}; such a method with no
+\code{\link[=auto_info]{auto_info()}} through \code{\link[=iwls_resolve]{iwls_resolve()}}; such a method with no
 distribution is an error rather than a guess.}
 }
 \value{
-A list of four: \code{expected} (a logical), \code{approx} (a string),
+A list of four: \code{expected} (a logical), \code{emethod} (an object),
 \code{maxit} and \code{tol}.
 }
 \description{
@@ -32,9 +32,9 @@ as that function's second derivative, which is the observed information;
 the expected information is a different matrix, so a Newton step on it
 would be Fisher scoring under another name. Where a family writes neither
 out, the expected information is also far more expensive to form than the
-observed one. \code{approx} is \code{"opg"} for such a method, the default of
-\code{\link[=iwls]{iwls()}} itself; it is read only where \code{expected} is \code{TRUE},
-so for an optimizer it records a default and not a choice.
+observed one. \code{emethod} is \code{NULL} for such a method, the default of
+\code{\link[=iwls]{iwls()}} itself; it is read only where \code{expected} is \code{TRUE}, so for an
+optimizer it records a default and not a choice.
 }
 \seealso{
 \code{\link[=method_budget]{method_budget()}} for the last two,

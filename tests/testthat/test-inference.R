@@ -43,7 +43,7 @@ test_that("with no penalty the two conventions are the same matrix", {
                   par = list(mu = c(1, 2), sigma = log(0.4)))$data
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim,
                  outer_criterion = reml(marginal = "none"))
-  expect_equal(vcov(fit, "bayesian"), vcov(fit, "frequentist"),
+  expect_equal(vcov(fit, vcov_type = bayesian_vcov()), vcov(fit, vcov_type = frequentist_vcov()),
                tolerance = 1e-10)
 })
 
@@ -52,15 +52,15 @@ test_that("a ridge makes the bayesian variance the larger of the two", {
                   par = list(mu = c(1, 2, -1), sigma = log(0.5)))$data
   fit <- statmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), sim,
                  outer_criterion = reml(marginal = "none"))
-  vb <- diag(vcov(fit, "bayesian"))
-  vf <- diag(vcov(fit, "frequentist"))
+  vb <- diag(vcov(fit, vcov_type = bayesian_vcov()))
+  vf <- diag(vcov(fit, vcov_type = frequentist_vcov()))
   expect_true(all(vb >= vf - 1e-12))
   expect_true(any(vb > vf * 1.000001))
   # V_f = V_b H V_b is the sandwich the definition states, computed here from
   # the pieces rather than read back from the function under test
-  H <- -hessian(fit, expected = TRUE)
-  Vb <- vcov(fit, "bayesian")
-  expect_equal(Vb %*% H %*% Vb, vcov(fit, "frequentist"), tolerance = 1e-8)
+  H <- -hessian(fit)
+  Vb <- vcov(fit, vcov_type = bayesian_vcov())
+  expect_equal(Vb %*% H %*% Vb, vcov(fit, vcov_type = frequentist_vcov()), tolerance = 1e-8)
 })
 
 test_that("vcov agrees with a numerical Hessian of the objective", {
@@ -76,7 +76,7 @@ test_that("vcov agrees with a numerical Hessian of the objective", {
   obj <- statmod_objective(spec, fit@hyper, design, expected = FALSE)
   b <- unlist(fit@coefficients[spec@distrib@params], use.names = FALSE)
   Hn <- numDeriv::hessian(obj$fn, b)
-  expect_equal(unname(vcov(fit, expected = FALSE)), solve(Hn),
+  expect_equal(unname(vcov(fit)), solve(Hn),
                tolerance = 1e-5)
 })
 
@@ -303,7 +303,7 @@ test_that("a fit whose information is singular says so rather than guessing", {
   expect_true(is.na(coef(f)$mu[["xcopy"]]))
 
   fc <- statmod(y ~ x + xcopy, distributions7::gaussian1_distrib(), sim,
-                inner_optimizer = iwls(decomposition = "chol"))
+                inner_optimizer = iwls(solver = solve_chol()))
   expect_identical(fc@aliased, "mu:xcopy")
   expect_equal(sqrt(diag(vcov(fc)))[c("mu:(Intercept)", "mu:x")],
                sqrt(diag(V))[c("mu:(Intercept)", "mu:x")], tolerance = 1e-5)
@@ -649,7 +649,7 @@ test_that("the zeros of a kinked penalty are checked against their kink", {
   cf <- fit@coefficients
   cf$mu[] <- c(g2@coefficients$mu[1], 0, g2@coefficients$mu[-1])
   cf$sigma[] <- g2@coefficients$sigma
-  obj <- statmod_objective(spec, fit@hyper, design, FALSE, "bartlett")
+  obj <- statmod_objective(spec, fit@hyper, design, FALSE, NULL)
   bad <- zero_readings(spec, design, obj, cf, fit@hyper, lab)
   expect_gt(bad[["ratio"]], 5)
 
@@ -1088,8 +1088,8 @@ smooth_fit <- local({
 test_that("the unconditional variance adds a positive semi-definite term", {
   fit <- smooth_fit$fit
   Vb <- vcov(fit, readable = FALSE)
-  Vu <- vcov(fit, type = "unconditional", readable = FALSE)
-  Vf <- vcov(fit, type = "frequentist", readable = FALSE)
+  Vu <- vcov(fit, vcov_type = unconditional_vcov(), readable = FALSE)
+  Vf <- vcov(fit, vcov_type = frequentist_vcov(), readable = FALSE)
 
   # J V_theta J' is a congruence of a variance and cannot be indefinite; the
   # eigenvalue is asked against the matrix's own scale rather than against 0,
@@ -1098,8 +1098,13 @@ test_that("the unconditional variance adds a positive semi-definite term", {
   expect_gt(min(ev), -1e-8 * max(ev))
 
   # so the three orderings hold on every coordinate: the frequentist one is
-  # the narrowest, the unconditional one the widest
-  expect_true(all(diag(Vf) <= diag(Vb) * (1 + 1e-10)))
+  # the narrowest, the unconditional one the widest. The coordinates that the
+  # marginal criterion estimates (the scale's intercept here) take its
+  # curvature in the Bayesian matrix and the sandwich of the observed
+  # information in the frequentist one, so the first ordering is read on the
+  # penalized block of the mean
+  mu <- grepl("^mu:", rownames(Vf))
+  expect_true(all(diag(Vf)[mu] <= diag(Vb)[mu] * (1 + 1e-10)))
   expect_true(all(diag(Vb) <= diag(Vu) * (1 + 1e-10)))
   expect_gt(max(sqrt(diag(Vu) / diag(Vb))), 1.01)
 })
@@ -1112,10 +1117,12 @@ test_that("the correction is what the edf correction contracts", {
   # through solve() -- so their agreeing says the mapping is right.
   fit <- smooth_fit$fit
   design <- statmod_design(fit@spec)
-  C <- vcov(fit, type = "unconditional", readable = FALSE) -
-    vcov(fit, readable = FALSE)
+  C <- vcov(fit, vcov_type = unconditional_vcov(information = expected_info()),
+            readable = FALSE) -
+    vcov(fit, vcov_type = bayesian_vcov(information = expected_info()),
+         readable = FALSE)
   H <- statmod_information_at(fit@spec, fit@coefficients, design,
-                              fit_expected(fit), "opg")
+                              TRUE, NULL)
   want <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
                                  design, fit@methods$outer)$total
   expect_gt(want, 0)
@@ -1129,8 +1136,8 @@ test_that("with nothing estimated the third matrix IS the bayesian one", {
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2), sigma = log(0.4)))$data
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
-  expect_identical(vcov(fit, type = "unconditional"), vcov(fit))
-  expect_silent(vcov(fit, type = "unconditional"))
+  expect_identical(vcov(fit, vcov_type = unconditional_vcov()), vcov(fit))
+  expect_silent(vcov(fit, vcov_type = unconditional_vcov()))
 
   # and a kinked penalty's hyperparameter is chosen over a grid, which is
   # the other way there is nothing to propagate
@@ -1139,7 +1146,7 @@ test_that("with nothing estimated the third matrix IS the bayesian one", {
                      stats::rnorm(nrow(dd), sd = 0.5))
   dl$X <- X
   lf <- statmod(y ~ lasso(X), distributions7::gaussian1_distrib(), dl)
-  expect_identical(vcov(lf, type = "unconditional"), vcov(lf))
+  expect_identical(vcov(lf, vcov_type = unconditional_vcov()), vcov(lf))
 })
 
 test_that("a shared hyperparameter carries the unconditional matrix", {
@@ -1154,7 +1161,7 @@ test_that("a shared hyperparameter carries the unconditional matrix", {
   fit <- statmod(y ~ s(x, bspline_smooth(k = 8), id = "a") + s(z, bspline_smooth(k = 8), id = "a"),
                  distributions7::gaussian1_distrib(), d,
                  outer_criterion = reml())
-  expect_no_warning(V <- vcov(fit, type = "unconditional",
+  expect_no_warning(V <- vcov(fit, vcov_type = unconditional_vcov(),
                               readable = FALSE))
   Vb <- vcov(fit, readable = FALSE)
   expect_identical(dim(V), dim(Vb))
@@ -1166,13 +1173,13 @@ test_that("a shared hyperparameter carries the unconditional matrix", {
 
 test_that("confint and summary carry the third convention", {
   fit <- smooth_fit$fit
-  a <- confint(fit, type = "unconditional", readable = FALSE)
+  a <- confint(fit, vcov_type = unconditional_vcov(), readable = FALSE)
   b <- confint(fit, readable = FALSE)
   expect_true(all(a$upper - a$lower >= b$upper - b$lower - 1e-12))
   expect_gt(max((a$upper - a$lower) / (b$upper - b$lower)), 1.01)
 
-  s <- summary(fit, type = "unconditional")
-  expect_identical(s@type, "unconditional")
+  s <- summary(fit, vcov_type = unconditional_vcov())
+  expect_identical(s@vcov_type@name, "unconditional")
   expect_match(paste(utils::capture.output(print(s)), collapse = "\n"),
                "unconditional variance", fixed = TRUE)
 })
@@ -1201,7 +1208,7 @@ test_that("the widening is the one mgcv reports as unconditional", {
   k <- ncol(X)
   band <- function(V) sqrt(pmax(rowSums((X %*% V[1:k, 1:k]) * X), 0))
   ob <- band(vcov(fit, readable = FALSE))
-  ou <- band(vcov(fit, type = "unconditional", readable = FALSE))
+  ou <- band(vcov(fit, vcov_type = unconditional_vcov(), readable = FALSE))
 
   # ours is the SMALLER of the two corrections and that is the documented
   # difference rather than a discrepancy: mgcv adds a second term for the
@@ -1223,7 +1230,7 @@ test_that("a filter's own penalty moves the mode, so the third matrix carries it
   Vb <- vcov(fit, readable = FALSE)
   seen <- NULL
   Vu <- withCallingHandlers(
-    vcov(fit, type = "unconditional", readable = FALSE),
+    vcov(fit, vcov_type = unconditional_vcov(), readable = FALSE),
     statmod_conditional_variance = function(c) {
       seen <<- conditionMessage(c); invokeRestart("muffleWarning")
     })
@@ -1292,7 +1299,7 @@ test_that("the mode's movement is the one two refits of it give", {
     r <- statmod_alternate(spec, design, blocks,
                            eta_to_hyper(eta, idx, fit@hyper),
                            fit@methods$smooth, beta0, cfg$expected,
-                           cfg$approx, cfg$maxit, cfg$tol, verbosity(0),
+                           cfg$emethod, cfg$maxit, cfg$tol, verbosity(0),
                            hold_refresh = TRUE)
     key <- names(sst$zeta)[1L]
     z <- sst$zeta[[key]]
@@ -1330,10 +1337,13 @@ test_that("the frequentist variance survives a sparse design", {
   d$y <- 1 + 2 * d$x + rep(stats::rnorm(12, 0, 0.6), each = 12) +
     stats::rnorm(nrow(d), 0, 0.4)
   f <- statmod(y ~ x + random(~ 1 | g), gaussian1_distrib(), d)
-  V <- vcov(f, type = "frequentist", readable = FALSE)
+  V <- vcov(f, vcov_type = frequentist_vcov(), readable = FALSE)
   expect_true(is.matrix(V))
   expect_false(isS4(V))
   expect_equal(dim(V), dim(vcov(f, readable = FALSE)))
-  # and the ordering the three variances stand in is unchanged by it
-  expect_true(all(diag(V) <= diag(vcov(f, readable = FALSE)) * (1 + 1e-10)))
+  # and the ordering the three variances stand in is unchanged by it, read on
+  # the coefficients of the mean (the scale's intercept is estimated on the
+  # marginal criterion, whose curvature the Bayesian matrix takes)
+  mu <- grepl("^mu:", rownames(V))
+  expect_true(all(diag(V)[mu] <= diag(vcov(f, readable = FALSE))[mu] * (1 + 1e-10)))
 })

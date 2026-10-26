@@ -4,7 +4,7 @@
 \alias{augmented_solve}
 \title{Solve a Scoring Step From the Square-Root Design}
 \usage{
-augmented_solve(R, C, u, how, threads = 1L)
+augmented_solve(R, C, u, how, threads = 1L, tol = NULL)
 }
 \arguments{
 \item{R}{The square-root design, as \code{\link[=sqrt_design]{sqrt_design()}} returns it,
@@ -21,6 +21,12 @@ model.}
 
 \item{threads}{How many threads the triangular factor may use, a plain
 integer. With \code{1L} the threaded route is not used.}
+
+\item{tol}{\code{NULL} for the defaults, or the tolerance of the decomposition:
+with \code{how = "qr"}, the tolerance of the pivoted \code{qr()}, which is also the
+threshold of the equilibrated diagonal for the threaded route (default
+\code{1e-7}); with \code{how = "svd"}, the relative cut of the singular values
+(default \eqn{\max(\dim A)\,\epsilon}).}
 }
 \value{
 A list with the elements \code{delta}, \code{rank} and \code{dropped}:
@@ -81,10 +87,10 @@ difference between the penalty rows of its own block and an unpenalized
 block. Scaling each column to unit norm removes differences in column size
 from any source and leaves an exact collinearity exactly singular.
 
-The route is taken when the smallest equilibrated entry exceeds \code{1e-7}
-times the largest, the tolerance that \code{dqrdc2} uses, so a matrix that the
-pivoted route would call deficient is solved there and its rank is
-returned.
+The route is taken when the smallest equilibrated entry exceeds \code{tol}
+times the largest (\code{1e-7} by default, the tolerance that \code{dqrdc2} uses), so
+that a matrix that the pivoted route would call deficient is solved there
+and its rank is returned.
 }
 
 \seealso{

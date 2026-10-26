@@ -4,7 +4,7 @@
 \alias{outer_context}
 \title{One Evaluation Point, Shared}
 \usage{
-outer_context(spec, design, coef, hyper, approx = "opg")
+outer_context(spec, design, coef, hyper, emethod = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -15,7 +15,11 @@ outer_context(spec, design, coef, hyper, approx = "opg")
 
 \item{hyper}{The hyperparameters.}
 
-\item{approx}{The approximation for the expected information.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 }
 \value{
 An environment carrying the point and, as they are requested, the

@@ -12,7 +12,7 @@ statmod_pe_derivs(
   method,
   idx,
   order = 1L,
-  approx = "opg"
+  emethod = NULL
 )
 }
 \arguments{
@@ -30,9 +30,11 @@ statmod_pe_derivs(
 
 \item{order}{\code{1} for the gradient alone, \code{2} for both.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form. The argument is read only when \code{method@hessian} is
-\code{"expected"}.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 }
 \value{
 A list with \code{grad} and, at order 2, \code{hess}; or

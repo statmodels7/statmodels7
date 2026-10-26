@@ -1,21 +1,21 @@
-#' @include augmented.R
+#' @include augmented.R solver.R
 NULL
 
 #' The Iterated Weighted Least Squares Method
 #'
 #' @description
 #' `Iwls` is the S7 class of the scoring step that [statmod()] uses for the
-#' jointly fitted smooth block. An object of this class carries the whole
-#' configuration of that step: which curvature to invert, how to solve the
-#' system, how long to run and when to stop. Build one with [iwls()], which
-#' validates every argument; this raw constructor does not.
+#' jointly fitted smooth block. An object of this class carries the solver,
+#' the budget, the stopping rule and the constants of the loop. Build one with
+#' [iwls()], which validates every argument; this raw constructor does not.
 #'
-#' @param hessian `"expected"` for Fisher scoring, `"observed"` for Newton,
-#'   or `"auto"`, which [iwls_resolve()] turns into one of the two once the
-#'   distribution is known. The value is a single string.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form: `"opg"`, `"bartlett"`, `"integrate"` or `"mc"`.
-#' @param decomposition How the step is solved: `"qr"`, `"svd"` or `"chol"`.
+#' The matrix that the step inverts is not an argument of [iwls()]: it is the
+#' argument `inner_information` of [statmod()]. [statmod()] stores the matrix
+#' that it settled in the properties `hessian`, `backup`, `switching` and
+#' `repair_floor`, which [iwls()] initializes to an unsettled state.
+#'
+#' @param solver How the step is solved, an object that inherits from
+#'   [IwlsSolver]: [solve_qr()], [solve_svd()] or [solve_chol()].
 #' @param maxit The iteration budget, a single positive whole number.
 #' @param tol The stopping tolerance on the score per observation, a single
 #'   positive number.
@@ -25,20 +25,27 @@ NULL
 #'   a step is abandoned, a single non-negative whole number. The line search
 #'   tries the full step and then at most `step_halving` halved steps, so `0`
 #'   tries only the full step.
-#' @param fallback A single logical: whether the expected information takes
-#'   the step where the observed step finds no acceptable point. An observed
-#'   penalized information that is not positive definite is first repaired by
-#'   flooring its eigenvalues, and the step on the repaired matrix is tried.
-#'   [iwls_resolve()] sets this argument to `TRUE` for `"auto"` on a family
-#'   that it does not settle on the expected information.
+#' @param decrement_limit The value under which the built-in rule reads the
+#'   Newton decrement as small, a single positive number.
 #' @param switch_after A single number: the iteration after which a run on
-#'   the expected information continues on the observed one, unless it
-#'   switched earlier because the score contracted slowly (see
-#'   [iwls_slow()]). The expected information then takes the step only where
-#'   the observed step finds no acceptable point. `Inf` never switches.
-#'   [iwls_resolve()] sets it, for `"auto"` on a family whose expected
-#'   information is exact and not costly to evaluate, to
-#'   [iwls_switch_after()].
+#'   the expected information continues on the observed one when the choice
+#'   was settled from [auto_info()]. `Inf` never switches.
+#' @param switch_rate A single number, or `NA`: the ratio of consecutive scores
+#'   above which a run on the expected information counts as contracting
+#'   slowly. `NA` never counts a run as slow.
+#' @param hessian The information that the step inverts, once settled: an
+#'   object that inherits from [distributions7::Information], set by
+#'   [statmod()] from its argument `inner_information`. An [auto_info()] object
+#'   stands for an unsettled choice, which `iwls_resolve()` settles against the
+#'   family.
+#' @param backup `NULL`, or the [distributions7::expected_info()] object that
+#'   takes the step where the observed step finds no acceptable point. It is
+#'   set only by settling an [auto_info()] on the observed information.
+#' @param switching Whether the run continues on the observed information after
+#'   `switch_after` iterations or a slow contraction. It is set only by
+#'   settling an [auto_info()] on the expected information.
+#' @param repair_floor The `repair_floor` of the [auto_info()] that was
+#'   settled, or `NA` when the choice was named.
 #'
 #' @return An object of class `Iwls` with one property per argument above, and
 #'   each property holds the value that was passed.
@@ -47,7 +54,7 @@ NULL
 #'
 #' @examples
 #' S7::S7_inherits(iwls(), Iwls)
-#' iwls()@decomposition
+#' iwls()@solver
 #'
 #' @name Iwls-class
 #' @aliases Iwls
@@ -55,15 +62,18 @@ NULL
 #' @export
 Iwls <- S7::new_class("Iwls",
   properties = list(
-    hessian = S7::class_character,
-    approx = S7::class_character,
-    decomposition = S7::class_character,
+    solver = IwlsSolver,
     maxit = S7::class_numeric,
     tol = S7::class_numeric,
     criterion = S7::class_any,
     step_halving = S7::class_numeric,
-    fallback = S7::class_logical,
-    switch_after = S7::class_numeric
+    decrement_limit = S7::class_numeric,
+    switch_after = S7::class_numeric,
+    switch_rate = S7::class_numeric,
+    hessian = distributions7::Information,
+    backup = S7::class_any,
+    switching = S7::class_logical,
+    repair_floor = S7::class_numeric
   )
 )
 
@@ -74,11 +84,14 @@ Iwls <- S7::new_class("Iwls",
 #' Configures the scoring step with which `statmod()` fits the smooth block,
 #' and returns it as an object to pass as `inner_optimizer`. This is the default,
 #' so `statmod(...)` and `statmod(..., inner_optimizer = iwls())` fit the
-#' same model; call it by name to change the curvature, the decomposition,
-#' the budget or the stopping rule.
+#' same model; call it by name to change the solver, the budget, the stopping
+#' rule or the constants of the loop.
 #'
-#' Every argument has a default, and the object carries no data: one `iwls()`
-#' can be passed to any number of fits.
+#' The matrix that the step inverts is chosen by the argument
+#' `inner_information` of [statmod()] (see [information_objects]), and not by
+#' `iwls()`: the step is a Newton method on whatever curvature the objective
+#' offers. Every argument of `iwls()` has a default, and the object carries no
+#' data, so one `iwls()` can be passed to any number of fits.
 #'
 #' @details
 #' # The name
@@ -88,37 +101,38 @@ Iwls <- S7::new_class("Iwls",
 #'
 #' # The curvature
 #'
-#' `hessian = "expected"` inverts the expected information, which is Fisher
-#' scoring, and `"observed"` inverts the observed Hessian, which is Newton.
+#' The step inverts the matrix that `inner_information` of [statmod()]
+#' selects. With [distributions7::expected_info()] it inverts the expected
+#' information, which is Fisher scoring, and with
+#' [distributions7::observed_info()] the observed Hessian, which is Newton.
 #' The expected information is positive definite wherever the family is
 #' regular, so Fisher scoring takes usable steps from a poor start where
 #' Newton's matrix may be indefinite; Newton converges faster near the
-#' optimum, and the exact outer gradient requires the observed information.
+#' optimum. An explicit choice is the only matrix that the step uses: the
+#' observed information is never replaced by the expected one.
 #'
-#' `"auto"`, the default, is settled against the family when the fit starts,
-#' by [iwls_resolve()]. The expected information is used where the family
+#' The default `inner_information = auto_info()` is settled against the family
+#' when the fit starts. The expected information is used where the family
 #' writes it exactly and at an acceptable cost. Otherwise the observed
-#' information is used. An observed penalized information that is not
-#' positive definite is first repaired by flooring its eigenvalues, and the
-#' expected information takes the step only where the repaired step finds no
+#' information is used, and the expected information takes the step where the
+#' observed step, after the repair of an indefinite matrix, finds no
 #' acceptable point. A trial point whose objective raises an error is read as
-#' rejected. The fit records the settled method, so `fit@methods$smooth`
-#' shows which curvature ran.
+#' rejected. The fit records the settled choice, so `fit@methods$smooth` shows
+#' which curvature ran.
 #'
-#' On a family that [iwls_resolve()] settles on the expected information from
-#' `"auto"`, a run continues on the observed information as soon as Fisher
-#' scoring contracts the score slowly, which means that each of two
-#' consecutive ratios of the score is above [iwls_switch_rate()], and at the
-#' latest after [iwls_switch_after()] scoring steps. The expected information
-#' then takes the step only where the observed step finds no acceptable
-#' point. Fisher scoring converges only linearly near the mode wherever the
-#' two informations differ there, which they do whenever the dispersion has an
-#' equation of its own, whereas Newton's step converges quadratically.
+#' On a family that [auto_info()] settles on the expected information, a run
+#' continues on the observed information as soon as Fisher scoring contracts
+#' the score slowly, which means that each of two consecutive ratios of the
+#' score is above `switch_rate`, and at the latest after `switch_after`
+#' scoring steps. Fisher scoring converges only linearly near the mode
+#' wherever the two informations differ there, which they do whenever the
+#' dispersion has an equation of its own, whereas Newton's step converges
+#' quadratically.
 #'
-#' Where the rule is met, the run takes one more full step. The step uses the
-#' observed information if the method was settled on the expected information
-#' from `"auto"` and has not yet switched, and otherwise the information that
-#' the run is using. The marginal criterion carries
+#' Where the stopping rule is met, the run takes one more full step. The step
+#' uses the observed information if the choice was settled on the expected
+#' information from [auto_info()] and has not yet switched, and otherwise the
+#' information that the run is using. The marginal criterion carries
 #' \eqn{\log\lvert K(\beta)\rvert}, which is not stationary in \eqn{\beta},
 #' so a mode left short by \eqn{\delta} enters it at first order; a
 #' warm-started fit whose score is already under the rule would stop
@@ -129,49 +143,46 @@ Iwls <- S7::new_class("Iwls",
 #' reject by the last bits, and the criterion would jump between nearby
 #' hyperparameters.
 #'
-#' `approx` is passed to \pkg{distributions7} and is read only where the
-#' family has no closed expected information; elsewhere the family's own
-#' method supplies the information and the argument is not used. The
-#' argument is accepted for every family because an `iwls()` object is built
-#' before a distribution is supplied and can be passed to any number of fits, so
-#' whether the family has a closed expected information cannot be checked at
-#' construction.
-#' [distributions7::expected_hessian_exact()] is the predicate that records
-#' which case a family is in.
+#' The `method` carried by [distributions7::expected_info()] and [auto_info()]
+#' is passed to \pkg{distributions7}. With `method = NULL`, the default, the
+#' closed form of the family is used where the family has one
+#' ([distributions7::expected_hessian_exact()] records which case a family is
+#' in), and [distributions7::expect_opg()], the outer product of the observed
+#' scores, which costs one gradient, otherwise. An object is used for every
+#' family, also for one that has the closed form. [distributions7::expect_integrate()]
+#' and [distributions7::expect_mc()] evaluate the expectation itself (a sum
+#' over the support or a quadrature, or simulated draws) and cost much more
+#' inside a loop that rebuilds the curvature at every iteration.
+#' [distributions7::expected_derivative_methods] compares the three. The price
+#' of the cheap matrix is paid in variance and not in the answer: the score is
+#' exact, so a scoring step driven by any positive definite matrix reaches the
+#' same stationary point, and the outer product is positive semidefinite by
+#' construction, whereas the observed Hessian need not be. The information
+#' behind a standard error is chosen separately; see [vcov_method].
 #'
-#' Its default is `"opg"`, the outer product of the observed scores, which
-#' costs one gradient. The alternative readings evaluate the expectation
-#' itself (a sum over the support for a discrete family, a quadrature for a
-#' continuous one) and cost much more inside a loop that rebuilds the
-#' curvature at every iteration. The price of the cheap matrix is paid in
-#' variance and not in the answer: the score is exact, so a scoring step
-#' driven by any positive definite matrix reaches the same stationary point,
-#' and the outer product is positive semidefinite by construction, whereas
-#' the observed Hessian need not be. The information behind a standard error
-#' is chosen separately; see [vcov.StatmodFit()].
+#' # The solver
 #'
-#' # The decomposition
-#'
-#' The step solves \eqn{(X'WX + S)\delta = X'g - S\beta}, and this argument
-#' selects the method.
+#' The step solves \eqn{(X'WX + S)\delta = X'g - S\beta}, and the argument
+#' `solver` selects the method.
 #'
 #' \describe{
-#'   \item{`"qr"`}{a QR of the augmented design
+#'   \item{[solve_qr()]}{a QR of the augmented design
 #'     \eqn{[\sqrt{W}X;\ \mathrm{chol}(S)]}, and the default. Forming
 #'     \eqn{X'X} squares the condition number, and the design of a
 #'     break-point term is bounded only to \eqn{\epsilon^{-1/2}} by
 #'     construction, so that squaring it exhausts double precision.}
-#'   \item{`"svd"`}{a singular value decomposition of the same augmented
+#'   \item{[solve_svd()]}{a singular value decomposition of the same augmented
 #'     design. It reports a numerical rank where a deficient block would make
 #'     a Cholesky fail.}
-#'   \item{`"chol"`}{a Cholesky factor of the penalized information
+#'   \item{[solve_chol()]}{a Cholesky factor of the penalized information
 #'     \eqn{X'WX + S}, assembled without the augmentation. The information is
 #'     formed explicitly, so the condition number is squared.}
 #' }
 #'
-#' The `"qr"` and `"svd"` methods need a square root of the per-observation
+#' [solve_qr()] and [solve_svd()] need a square root of the per-observation
 #' curvature and of the penalty. Where either does not exist, the step uses
-#' the assembled information, as `"chol"` does.
+#' the assembled information, as [solve_chol()] does. [iwls_solvers] compares
+#' the three and gives the tolerances that each one takes.
 #'
 #' # The stopping rule
 #'
@@ -181,7 +192,7 @@ Iwls <- S7::new_class("Iwls",
 #' With `criterion = NULL`, the default, the built-in rule applies. The rule
 #' is met when the score per observation \eqn{\max_j \lvert g_j \rvert / n},
 #' taken over the free coordinates, is below `tol` and the Newton decrement
-#' \eqn{g^\top (H+S)^{-1} g / 2} is at most \eqn{10^{-6}}. The decrement is
+#' \eqn{g^\top (H+S)^{-1} g / 2} is at most `decrement_limit`. The decrement is
 #' in log-likelihood units and does not depend on the scale of the response.
 #' When the loop ends without meeting the rule, the dimensionless reading of
 #' [iwls_score()] can relabel the stopped run as converged. Any
@@ -213,23 +224,49 @@ Iwls <- S7::new_class("Iwls",
 #' to the derivative-free methods, and a rule that requires one would remain
 #' in the loop without ever being met.
 #'
+#' # The constants of the loop
+#'
+#' Three constants of the loop are arguments. `decrement_limit` is the value
+#' under which the built-in rule reads the Newton decrement as small
+#' (default `1e-6`, three orders under the reading that the outer search uses
+#' to decide whether a criterion is usable). `switch_after` is the iteration
+#' after which a run settled on the expected information continues on the
+#' observed one (default `10`; `Inf` never switches). `switch_rate` is the
+#' ratio of consecutive scores above which two consecutive steps count as a
+#' slow contraction (default `0.5`; `NA` never counts one). The last two are
+#' read only when `inner_information` is settled from [auto_info()] on the
+#' expected information.
+#'
+#' @param solver The factorization with which each step is solved, an object
+#'   that inherits from [IwlsSolver]: [solve_qr()] (the default), [solve_svd()]
+#'   or [solve_chol()]. [iwls_solvers] compares the three and gives their
+#'   tolerances.
+#' @param decrement_limit The value under which the Newton decrement is read as
+#'   small by the built-in stopping rule, a single positive number. The
+#'   default is `1e-6`.
+#' @param switch_after The iteration after which a run settled on the expected
+#'   information from [auto_info()] continues on the observed information, a
+#'   single positive number; `Inf` never switches. The default is `10`.
+#' @param switch_rate The ratio of consecutive scores above which two
+#'   consecutive steps count as a slow contraction of Fisher scoring, a single
+#'   number or `NA`, which never counts a run as slow. The default is `0.5`.
 #' @inheritParams Iwls-class
 #'
 #' @return An [Iwls()] object holding the settings given and no data. Its
-#'   `fallback` is `FALSE` and its `switch_after` is `Inf` until
-#'   [iwls_resolve()] settles an `"auto"`.
+#'   `hessian` is an unsettled [auto_info()] until [statmod()] settles the
+#'   argument `inner_information`.
 #'
-#' @seealso [statmod()] for where it is passed, [iwls_score()] for the
-#'   built-in rule's final verdict, [optimizers7::crit_grad()] for the
-#'   criteria that can replace it.
+#' @seealso [statmod()] for the argument `inner_information` and for where the
+#'   object is passed, [information_objects] and [iwls_solvers] for the matrix
+#'   and the solver, [iwls_score()] for the built-in rule's final verdict,
+#'   [optimizers7::crit_grad()] for the criteria that can replace it.
 #'
 #' @examples
 #' iwls()
 #'
-#' # This call uses Newton instead of Fisher scoring and solves through an
-#' # SVD, which reports a numerical rank where a deficient block would make a
-#' # Cholesky fail.
-#' iwls(hessian = "observed", decomposition = "svd")
+#' # This call solves through an SVD, which reports a numerical rank where a
+#' # deficient block would make a Cholesky fail.
+#' iwls(solver = solve_svd())
 #'
 #' # This call uses an optimizers7 stopping rule in place of tol. The
 #' # gradient in the state that the rule receives is the score per
@@ -237,23 +274,25 @@ Iwls <- S7::new_class("Iwls",
 #' iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
 #'                                        optimizers7::crit_rel_obj(1e-12)))
 #'
+#' # The matrix is chosen in statmod(): this is Newton, on the observed
+#' # information.
+#' set.seed(1)
+#' dd <- data.frame(x = runif(120, -2, 2))
+#' dd$y <- sin(1.4 * dd$x) + rnorm(120, sd = 0.3)
+#' G <- distributions7::gaussian1_distrib()
+#' fit <- statmod(y ~ s(x, bspline_smooth(k = 8)), G, dd,
+#'                inner_optimizer = iwls(solver = solve_svd()),
+#'                inner_information = distributions7::observed_info())
+#' fit@methods$smooth
+#'
 #' # Both at once is an error: tol would not be read.
 #' try(iwls(tol = 1e-8, criterion = optimizers7::crit_grad(1e-8)))
 #'
 #' @export
-iwls <- function(hessian = c("auto", "expected", "observed"),
-                 approx = c("opg", "bartlett", "integrate", "mc"),
-                 decomposition = c("qr", "svd", "chol"),
-                 maxit = 1000L, tol = 1e-6, criterion = NULL,
-                 step_halving = 30L) {
-  hessian <- match.arg(hessian)
-  approx <- match.arg(approx)
-  if (identical(decomposition, "chol_crossprod")) {
-    stop(paste0("decomposition = \"chol_crossprod\" is no longer available: ",
-                "it ran the same route as \"chol\", which gives the same ",
-                "fit."), call. = FALSE)
-  }
-  decomposition <- match.arg(decomposition)
+iwls <- function(solver = solve_qr(), maxit = 1000L, tol = 1e-6,
+                 criterion = NULL, step_halving = 30L,
+                 decrement_limit = 1e-6, switch_after = 10, switch_rate = 0.5) {
+  check_solver(solver)
   if (!is.numeric(maxit) || length(maxit) != 1L || !is.finite(maxit) ||
       maxit < 1 || maxit != round(maxit)) {
     stop("'maxit' must be a single positive integer.", call. = FALSE)
@@ -266,6 +305,16 @@ iwls <- function(hessian = c("auto", "expected", "observed"),
       step_halving != round(step_halving)) {
     stop("'step_halving' must be a single non-negative integer.",
          call. = FALSE)
+  }
+  check_positive_number(decrement_limit, "decrement_limit")
+  if (!is.numeric(switch_after) || length(switch_after) != 1L ||
+      is.na(switch_after) || switch_after <= 0) {
+    stop("'switch_after' must be a single positive number or Inf.",
+         call. = FALSE)
+  }
+  if (length(switch_rate) != 1L ||
+      !(is.na(switch_rate) || (is.numeric(switch_rate) && is.finite(switch_rate)))) {
+    stop("'switch_rate' must be a single number or NA.", call. = FALSE)
   }
   if (!is.null(criterion)) {
     if (!S7::S7_inherits(criterion, optimizers7::criterion)) {
@@ -288,10 +337,14 @@ iwls <- function(hessian = c("auto", "expected", "observed"),
                   "replaces."), call. = FALSE)
     }
   }
-  Iwls(hessian = hessian, approx = approx, decomposition = decomposition,
+  Iwls(solver = solver,
        maxit = as.numeric(maxit), tol = tol, criterion = criterion,
-       step_halving = as.numeric(step_halving), fallback = FALSE,
-       switch_after = Inf)
+       step_halving = as.numeric(step_halving),
+       decrement_limit = as.numeric(decrement_limit),
+       switch_after = as.numeric(switch_after),
+       switch_rate = as.numeric(switch_rate),
+       hessian = auto_info(), backup = NULL, switching = FALSE,
+       repair_floor = NA_real_)
 }
 
 #' @export
@@ -299,13 +352,16 @@ iwls <- function(hessian = c("auto", "expected", "observed"),
 #' @param ... Unused.
 #' @rdname iwls
 print.Iwls <- function(x, ...) {
-  cat(sprintf("iwls: %s information%s, %s\n", x@hessian,
-              if (isTRUE(x@fallback)) " (the expected where it cannot step)"
-              else if (length(x@switch_after) && is.finite(x@switch_after))
-                sprintf(" (the observed after %d iterations)",
-                        as.integer(x@switch_after))
-              else "",
-              x@decomposition))
+  settled <- !info_auto(x@hessian)
+  cat(sprintf("iwls: %s%s\n", solver_how(x@solver),
+              if (!settled) ""
+              else sprintf(", %s information%s", info_label(x@hessian),
+                           if (!is.null(x@backup))
+                             " (the expected where it cannot step)"
+                           else if (isTRUE(x@switching))
+                             sprintf(" (the observed after %s iterations)",
+                                     format(x@switch_after))
+                           else "")))
   cat(sprintf("  maxit %d, %s\n", as.integer(x@maxit),
               if (is.null(x@criterion)) sprintf("tol %g", x@tol)
               else x@criterion@label))
@@ -317,81 +373,66 @@ S7::method(print, Iwls) <- print.Iwls
 #' Settle the Curvature of an `iwls()` Against a Family
 #'
 #' @description
-#' Turns an [iwls()] left at `hessian = "auto"` into the method that a fit
-#' runs. The method uses the expected information where the family writes it
-#' exactly and at an acceptable cost; otherwise it uses the observed
-#' information, and the expected one takes the step where the observed step
-#' finds no acceptable point. A method whose curvature was named is returned
-#' as it is.
+#' Turns the information of an [iwls()] into the matrix that a fit runs. With
+#' `information` given, that object replaces the one that the method holds;
+#' without it, a method that holds an unsettled [auto_info()] is settled and a
+#' method whose curvature was named is returned as it is.
 #'
 #' @details
-#' [distributions7::expected_hessian_exact()] is the first question. Where it
-#' returns `FALSE` the expected information is an approximation, the outer
-#' product of the scores by default, and the method is settled on the observed
-#' information. An observed penalized information that is not positive
-#' definite is first repaired by [pd_repair()] and its step tried; the
-#' expected information takes the step only where that step finds no
-#' acceptable point.
+#' A named [distributions7::observed_info()] or [distributions7::expected_info()]
+#' is the matrix of the step and nothing else: the method carries no
+#' fallback and no switch.
+#'
+#' An [auto_info()] is settled by two questions.
+#' [distributions7::expected_hessian_exact()] is the first. Where it returns
+#' `FALSE` the expected information is an approximation, the outer product of
+#' the scores by default, and the method is settled on the observed
+#' information, with the expected information as the `backup` that takes the
+#' step where the observed step finds no acceptable point. An observed
+#' penalized information that is not positive definite is first floored by
+#' [pd_repair()] and its step tried.
 #'
 #' [distributions7::expected_hessian_costly()] is the second question. A
 #' family whose expected information is exact but costly is settled on the
 #' observed information as well, because the expected information of such a
 #' family requires a quadrature or a sum over the support at each
-#' observation. The expected information is still used where the observed one
-#' cannot take the step, and in full where a method or a criterion names it.
+#' observation. The expected information is the `backup` there too.
 #'
-#' Only a family settled on the expected information receives a
-#' `switch_after` other than `Inf`; see [iwls_switch_after()].
+#' Only a family settled on the expected information has `switching` set.
 #'
 #' @param method An [Iwls()] object.
 #' @param distrib The distribution to which the model is fitted.
+#' @param information `NULL`, or an object that inherits from
+#'   [distributions7::Information] that replaces the one of `method`.
 #'
-#' @return An [Iwls()] object whose `hessian` is `"expected"` or
-#'   `"observed"` and whose `fallback` is `TRUE` exactly where `"auto"` was
-#'   settled on the observed information.
+#' @return An [Iwls()] object whose `hessian` is an
+#'   [distributions7::expected_info()] or an [distributions7::observed_info()]
+#'   object, unless a named choice is returned as it is.
 #'
-#' @seealso [iwls()], [fit_smooth()], which reads `fallback`.
+#' @seealso [iwls()], [fit_smooth()], which reads `backup`.
 #'
 #' @keywords internal
-iwls_resolve <- function(method, distrib) {
-  if (!identical(method@hessian, "auto")) {
-    if (!length(method@fallback)) method@fallback <- FALSE
-    if (!length(method@switch_after)) method@switch_after <- Inf
+iwls_resolve <- function(method, distrib, information = NULL) {
+  if (is.null(information)) {
+    if (!info_auto(method@hessian)) return(method)
+    information <- method@hessian
+  }
+  method@backup <- NULL
+  method@switching <- FALSE
+  method@repair_floor <- NA_real_
+  if (!info_auto(information)) {
+    method@hessian <- information
     return(method)
   }
   exact <- distributions7::expected_hessian_exact(distrib) &&
     !distributions7::expected_hessian_costly(distrib)
-  method@hessian <- if (exact) "expected" else "observed"
-  method@fallback <- !exact
-  method@switch_after <- if (exact) iwls_switch_after() else Inf
+  expd <- distributions7::expected_info(method = information@method)
+  method@hessian <- if (exact) expd else distributions7::observed_info()
+  method@backup <- if (exact) NULL else expd
+  method@switching <- exact
+  method@repair_floor <- information@repair_floor
   method
 }
-
-
-#' When a Run on the Expected Information Continues on the Observed One
-#'
-#' @description
-#' Returns the iteration after which an [iwls()] left at `hessian = "auto"`,
-#' and settled on the expected information, continues on the observed
-#' information.
-#'
-#' @details
-#' Fisher scoring is robust far from the mode, because the expected
-#' information is positive definite wherever the family is defined, and it
-#' converges only linearly near the mode wherever the expected and the
-#' observed information differ there, which they do for every model whose
-#' dispersion has an equation of its own. Newton's step converges
-#' quadratically near the mode. A run that has not converged after this many
-#' scoring steps is near enough for Newton's step to pay. After the switch the
-#' expected information takes the step only where the observed step, after the
-#' repair of an indefinite information, finds no acceptable point.
-#'
-#' @return A single number.
-#'
-#' @seealso [iwls_resolve()], [iwls_fit()].
-#'
-#' @keywords internal
-iwls_switch_after <- function() 10
 
 
 #' Whether Fisher Scoring Is Contracting Slowly
@@ -406,7 +447,8 @@ iwls_switch_after <- function() 10
 #'
 #' @return A single logical.
 #'
-#' @seealso [iwls_fit()], [iwls_switch_rate()].
+#' @seealso [iwls_fit()], [iwls()], whose argument `switch_rate` supplies
+#'   `rate`.
 #'
 #' @keywords internal
 iwls_slow <- function(scores, rate) {
@@ -417,18 +459,25 @@ iwls_slow <- function(scores, rate) {
 }
 
 
-#' The Contraction Rate Above Which a Run Switches to the Observed Information
+#' The Relative Level Under Which a Penalized Information Is Indefinite
 #'
 #' @description
-#' Returns the ratio of consecutive scores above which [iwls_fit()] continues
-#' on the observed information before [iwls_switch_after()] steps.
+#' Returns the relative floor with which [iwls_fit()] tests whether the
+#' penalized information of the step is positive definite: the `repair_floor`
+#' of the [auto_info()] that was settled, and the `floor` of the solver when the
+#' curvature was named.
 #'
-#' @return A single number.
+#' @param method An [Iwls()] object.
 #'
-#' @seealso [iwls_slow()].
+#' @return A single positive number.
+#'
+#' @seealso [pieces_definite()], [auto_info()]
 #'
 #' @keywords internal
-iwls_switch_rate <- function() 0.5
+iwls_definite_tol <- function(method) {
+  rf <- method@repair_floor
+  if (length(rf) && is.finite(rf)) rf else solver_floor(method@solver)
+}
 
 
 #' Whether an Inner Fit Takes One Step Past Its Stopping Rule
@@ -514,6 +563,13 @@ iwls_polish <- function() TRUE
 #'   integer vector. They are dropped from the system exactly as a
 #'   coordinate whose curvature is not finite is, so the step is that of the
 #'   problem reduced to the rest. The default is empty.
+#' @param tol The tolerance of the factorization, as the solver carries it:
+#'   the pivoted QR tolerance for `how = "qr"`, the relative cut of the
+#'   singular values for `how = "svd"` (`NULL` for the default cut), and
+#'   unused for `"chol"`. The default is `NULL`.
+#' @param floor The relative floor of the eigenvalues of an assembled matrix
+#'   that is not positive definite, as [pd_repair()] takes it. The default is
+#'   `1e-8`.
 #'
 #' @return A list of five:
 #'   \describe{
@@ -529,11 +585,12 @@ iwls_polish <- function() TRUE
 #'       aliased, an integer vector, empty on every other route.}
 #'   }
 #'
-#' @seealso [iwls_pieces()] for the input, [iwls()] for the `decomposition`
+#' @seealso [iwls_pieces()] for the input, [iwls()] for the `solver`
 #'   argument that this function serves.
 #'
 #' @keywords internal
-iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0)) {
+iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0),
+                       tol = NULL, floor = 1e-8) {
   p <- length(u)
   # A COORDINATE THE CALLER HOLDS is dropped from the solve exactly as a
   # coordinate whose curvature is gone: the step is that of the REDUCED
@@ -584,7 +641,7 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0)) {
                                        length(keep)),
                              u[keep], how,
                              threads = if (is.null(pieces$threads)) 1L
-                                       else pieces$threads)
+                                       else pieces$threads, tol = tol)
       d <- numeric(p)
       d[keep] <- out$delta
       # the solve ran on the kept columns, so its coordinates are read back
@@ -594,7 +651,7 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0)) {
     }
     out <- augmented_solve(pieces$R, damp_rows(pieces$C, p), u, how,
                            threads = if (is.null(pieces$threads)) 1L
-                                     else pieces$threads)
+                                     else pieces$threads, tol = tol)
     out$route <- how
     out$held <- held
     return(out)
@@ -624,7 +681,7 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0)) {
         return(list(delta = numeric(p), rank = 0L, route = route, held = held,
                     dropped = integer(0)))
       }
-      A <- pd_repair(A0[keep, keep, drop = FALSE])
+      A <- pd_repair(A0[keep, keep, drop = FALSE], rel = floor)
       if (is.null(A)) {
         return(list(delta = numeric(p), rank = 0L, route = route, held = held,
                     dropped = integer(0)))
@@ -637,7 +694,7 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0)) {
                   dropped = integer(0)))
     }
   }
-  A <- pd_repair(A0)
+  A <- pd_repair(A0, rel = floor)
   # nothing can be solved at a point whose curvature is not finite ANYWHERE;
   # the caller reads a zero step as "this iterate is unusable" and keeps the
   # last good one
@@ -674,8 +731,9 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0)) {
 #' @param coef A named list of coefficient vectors, one per distribution
 #'   parameter.
 #' @param hyper The hyperparameters, per penalized term.
-#' @param method An [Iwls()] object, read for `decomposition`, `hessian` and
-#'   `approx`.
+#' @param method An [Iwls()] object, read for `solver` and `hessian`, whose
+#'   `method` (see [distributions7::expected_info()]) gives the method of the
+#'   expected information.
 #'
 #' @return A list with `R`, `C` and `A` and, on the square-root route,
 #'   `threads`, the thread count. The matrices that the route does not need are
@@ -695,15 +753,16 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0)) {
 #'
 #' @keywords internal
 iwls_pieces <- function(spec, design, coef, hyper, method) {
-  if (identical(method@hessian, "auto")) method <- iwls_resolve(method, spec@distrib)
-  expected <- identical(method@hessian, "expected")
+  if (info_auto(method@hessian)) method <- iwls_resolve(method, spec@distrib)
+  expected <- info_expected(method@hessian)
+  emethod <- info_emethod(method@hessian)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   assembled <- function(H = NULL) {
     list(R = NULL, C = NULL,
          A = statmod_information_at(spec, coef, design, expected,
-                                    method@approx, H = H) + S)
+                                    emethod, H = H) + S)
   }
-  if (!(method@decomposition %in% c("qr", "svd"))) return(assembled())
+  if (!(solver_how(method@solver) %in% c("qr", "svd"))) return(assembled())
   ev <- statmod_eta(spec, design, coef)
   # THE SQUARE-ROOT ROUTE IS ABANDONED AT EVERY POINT FOR SOME FAMILIES, and
   # the fallback below used to ask the family for the same components again.
@@ -717,8 +776,8 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
   # mixture over regimes reads a different set per component, so it is left
   # to ask for its own.
   H <- if (length(ev$regimes)) NULL else
-    statmod_family_hessian(spec, ev$theta, expected, method@approx)
-  L <- chol_blocks(info_blocks(spec, ev$theta, expected, method@approx, H = H))
+    statmod_family_hessian(spec, ev$theta, expected, emethod)
+  L <- chol_blocks(info_blocks(spec, ev$theta, expected, emethod, H = H))
   R <- sqrt_design(statmod_design_at(spec, coef, design), L)
   C <- penalty_sqrt(S)
   if (is.null(R) || is.null(C)) return(assembled(H))
@@ -768,7 +827,7 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #' @param obj The objective, as [statmod_objective()] returns it.
 #' @param start The starting coefficients, stacked into one numeric vector.
 #' @param method An [Iwls()] object, carrying the curvature, the
-#'   decomposition, the budget and the stopping rule.
+#'   solver, the budget and the stopping rule.
 #' @param n The number of observations, the divisor of the scaled stopping
 #'   rule.
 #' @param pieces_at A function of the stacked coefficients returning what
@@ -816,7 +875,7 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   convergence, or earlier when [iwls_slow()] reports a slow contraction of
 #'   the score, it takes the place of `pieces_at`, and `pieces_at` that of
 #'   `backup_at`. [fit_smooth()] passes one for a method that [iwls_resolve()]
-#'   settled on the expected information from `"auto"`.
+#'   settled on the expected information from [auto_info()].
 #' @param switch_after The iteration after which `switch_at` replaces
 #'   `pieces_at`.
 #'
@@ -854,6 +913,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
                      newton_at = NULL, switch_at = NULL,
                      switch_after = Inf) {
   beta <- start
+  tol_def <- iwls_definite_tol(method)
   # the iteration at which the run moved to the observed information, 0 if
   # it never did
   switched <- 0L
@@ -923,7 +983,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     # score slowly over two consecutive steps is in the linear regime where
     # Newton's step pays, whatever the count; the count is the ceiling.
     if (!switched && !is.null(switch_at) &&
-        (it > switch_after || iwls_slow(scores, iwls_switch_rate()))) {
+        (it > switch_after || iwls_slow(scores, method@switch_rate))) {
       backup_at <- pieces_at
       pieces_at <- switch_at
       switched <- it
@@ -942,15 +1002,15 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     # 1000, the rule was met with the Newton decrement at 1.5e-02, and an
     # outer criterion read there differed between two searches by 0.017.
     # The built-in rule therefore also asks the decrement g'(H+S)^-1 g / 2,
-    # which is scale-free, to be under iwls_decrement_limit(). A caller's
+    # which is scale-free, to be under the method's decrement_limit. A caller's
     # criterion is left as the caller wrote it.
     pc_met <- NULL
     if (met && is.null(method@criterion)) {
       pc_met <- pieces_at(beta)
-      pcd <- if (!is.null(backup_at) && !pieces_definite(pc_met))
+      pcd <- if (!is.null(backup_at) && !pieces_definite(pc_met, tol_def))
         backup_at(beta) else pc_met
       dec <- iwls_decrement(pcd, g, method, damp, frozen)
-      if (is.finite(dec) && dec > iwls_decrement_limit()) met <- FALSE
+      if (is.finite(dec) && dec > method@decrement_limit) met <- FALSE
     }
     if (met) {
       converged <- TRUE
@@ -967,7 +1027,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       if (iwls_polish()) {
         pp <- if (!is.null(switch_at) && !switched) switch_at(beta) else
           if (is.null(pc_met)) pieces_at(beta) else pc_met
-        if (!pieces_definite(pp)) pp <- NULL
+        if (!pieces_definite(pp, tol_def)) pp <- NULL
         # The step is taken WHOLE and kept unless it makes the objective
         # clearly worse. At a point the rule accepted, the decrease a step
         # buys is at the objective's rounding, so a sufficient-decrease test
@@ -976,8 +1036,10 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
         # central difference of aic() moved from 0.43769 to 0.43727 and
         # 0.43683 as the step halved, against 0.43769 at every step without it.
         if (!is.null(pp)) {
-          sol <- tryCatch(iwls_solve(pp, -g, method@decomposition, damp,
-                                     frozen), error = function(e) NULL)
+          sol <- tryCatch(iwls_solve(pp, -g, solver_how(method@solver), damp,
+                                     frozen, tol = solver_tol(method@solver),
+                                     floor = solver_floor(method@solver)),
+                          error = function(e) NULL)
           if (!is.null(sol) && all(is.finite(sol$delta))) {
             cand <- beta + sol$delta
             vnew <- tryCatch(obj$fn(cand), error = function(e) Inf)
@@ -1011,7 +1073,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     # are the same to 10 digits at 1/4 to 1/6 of the time where the observed
     # information is indefinite (skew t 92.5 -> 15.4 s, pseudohuber2 254.4 ->
     # 57.2 s), and the repaired step's search did not fail once.
-    if (!is.null(backup_at) && !pieces_definite(pc)) {
+    if (!is.null(backup_at) && !pieces_definite(pc, tol_def)) {
       fallback[["indefinite"]] <- fallback[["indefinite"]] + 1L
     }
     st <- iwls_line_search(obj, beta, value, g, pc, method, damp, frozen,
@@ -1353,7 +1415,9 @@ iwls_tied <- function(obj, beta, method, n, pieces_at, Ak, frozen,
 #' @keywords internal
 iwls_line_search <- function(obj, beta, value, g, pc, method, damp, frozen,
                              guard = FALSE) {
-  sol <- iwls_solve(pc, -g, method@decomposition, damp, frozen)
+  sol <- iwls_solve(pc, -g, solver_how(method@solver), damp, frozen,
+                    tol = solver_tol(method@solver),
+                    floor = solver_floor(method@solver))
   delta <- sol$delta
   delta[!is.finite(delta)] <- 0
   # sufficient decrease, not mere non-increase: see armijo_ok()
@@ -1393,7 +1457,8 @@ iwls_line_search <- function(obj, beta, value, g, pc, method, damp, frozen,
 #' check whether the observed pieces can take the step.
 #'
 #' @param pc The pieces, as [iwls_pieces()] returns them.
-#' @param rel The relative floor, [pd_repair()]'s own.
+#' @param rel The relative floor, [pd_repair()]'s own by default; [iwls_fit()]
+#'   passes [iwls_definite_tol()].
 #'
 #' @return A single logical. The result is `TRUE` for a matrix with a
 #'   non-finite entry; holding the boundary is left to [iwls_solve()].
@@ -1577,15 +1642,14 @@ iwls_escalate <- function(damp, pieces) {
 #' `iwls_decrement()` is \eqn{\tfrac{1}{2} g^\top (H+S)^{-1} g} over the free
 #' coordinates, read from the step that [iwls_solve()] takes: the decrease in
 #' the penalized log-likelihood that a full scoring step predicts.
-#' `iwls_decrement_limit()` is the value under which [iwls_fit()]'s built-in
-#' rule reads the mode as located.
 #'
 #' @details
 #' It is in log-likelihood units, so it does not depend on the scale of the
-#' response, where the score per observation does. The limit is
-#' \eqn{10^{-6}}, three orders under [mode_error_limit()], which is the
-#' reading used by the outer search to determine whether a criterion is
-#' usable.
+#' response, where the score per observation does. [iwls_fit()]'s built-in
+#' rule reads the mode as located when it is at most the `decrement_limit` of
+#' [iwls()], whose default \eqn{10^{-6}} is three orders under
+#' [mode_error_limit()], the reading used by the outer search to determine
+#' whether a criterion is usable.
 #'
 #' @param pc Scoring pieces at the current coefficients.
 #' @param g The gradient of the objective there.
@@ -1593,12 +1657,13 @@ iwls_escalate <- function(damp, pieces) {
 #' @param damp The current Levenberg damping.
 #' @param frozen Positions held out of the step.
 #'
-#' @return `iwls_decrement()` returns a number, `NA` where the solve fails.
-#'   `iwls_decrement_limit()` returns a number.
+#' @return A number, `NA` where the solve fails.
 #'
 #' @keywords internal
 iwls_decrement <- function(pc, g, method, damp, frozen) {
-  sol <- tryCatch(iwls_solve(pc, -g, method@decomposition, damp, frozen),
+  sol <- tryCatch(iwls_solve(pc, -g, solver_how(method@solver), damp, frozen,
+                             tol = solver_tol(method@solver),
+                             floor = solver_floor(method@solver)),
                   error = function(e) NULL)
   if (is.null(sol)) return(NA_real_)
   delta <- sol$delta
@@ -1609,9 +1674,6 @@ iwls_decrement <- function(pc, g, method, damp, frozen) {
 }
 
 
-#' @rdname iwls_decrement
-#' @keywords internal
-iwls_decrement_limit <- function() 1e-6
 
 
 #' Has the Step's Stopping Rule Been Met?

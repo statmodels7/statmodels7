@@ -182,7 +182,7 @@ statmod_breakpoint_test <- function(fit, param = NULL, term = NULL, k = 10L,
     beta[at_chg] <- 0
     if (!sharp) beta[at_pos] <- qs[[1L]]
     res <- statmod_alternate(s0, d0, b0, hyper, method, beta, cfg$expected,
-                             cfg$approx, cfg$maxit, cfg$tol, verbosity(0))
+                             cfg$emethod, cfg$maxit, cfg$tol, verbosity(0))
     list(par = res$par, value = res$value, spec = s0, design = d0,
          converged = isTRUE(res$converged))
   }
@@ -192,7 +192,7 @@ statmod_breakpoint_test <- function(fit, param = NULL, term = NULL, k = 10L,
     vapply(qs, function(q) {
       sq <- spec_at(q, sp)
       dq <- statmod_design(sq)
-      obj <- statmod_objective(sq, hyper, dq, cfg$expected, cfg$approx)
+      obj <- statmod_objective(sq, hyper, dq, cfg$expected, cfg$emethod)
       v <- par0
       if (!sharp) v[at_pos] <- q
       g <- -obj$gr(v)

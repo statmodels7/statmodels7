@@ -4,50 +4,40 @@
 \alias{vcov.StatmodFit}
 \title{The Variance Matrix of a Fit}
 \usage{
-\method{vcov}{StatmodFit}(
-  object,
-  type = c("bayesian", "frequentist", "unconditional"),
-  expected = NULL,
-  approx = c("opg", "bartlett", "integrate", "mc"),
-  readable = TRUE,
-  parameter = NULL,
-  ...
-)
+\method{vcov}{StatmodFit}(object, vcov_type = bayesian_vcov(), readable = TRUE, param = NULL, ...)
 }
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{type}{\code{"bayesian"}, \code{"frequentist"} or \code{"unconditional"}. The first
-two are conditional on the hyperparameters; the third carries their own
-uncertainty as well.}
-
-\item{expected}{Whether the expected information is used. Defaults to
-\code{\link[=fit_expected]{fit_expected()}}, which selects the expected information where the fit
-inverted it and the family writes it out, and the observed Hessian
-otherwise. A model that
-carries a structural term always uses the observed information.}
-
-\item{approx}{How the expected information is approximated for a family
-with no closed form: \code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"}
-or \code{"mc"}. Read only when \code{expected} is \code{TRUE} and the family has no
-closed form.}
+\item{vcov_type}{A \link{vcov_method} object, which selects the convention of the
+matrix and, inside the object, the information \eqn{H}. \code{\link[=bayesian_vcov]{bayesian_vcov()}}
+(the default) returns \eqn{V_b = (H+S)^{-1}}, the posterior variance
+conditional on the hyperparameters. \code{\link[=frequentist_vcov]{frequentist_vcov()}} returns the
+sandwich \eqn{V_f = (H+S)^{-1}H(H+S)^{-1}}, conditional on the
+hyperparameters as well. \code{\link[=unconditional_vcov]{unconditional_vcov()}} returns
+\eqn{V' = V_b + J V_\theta J'}, which adds the uncertainty of the
+hyperparameters. Each takes \code{information}, which is \code{NULL} by default (the
+observed information, or the expected information for a family with a kink
+in a parameter, resolved for each fit) and may be \code{\link[distributions7:observed_info]{distributions7::observed_info()}} or
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}. The conventions are compared at
+\link{vcov_method}.}
 
 \item{readable}{Whether the matrix is over the quantities that the model
 reports (\code{TRUE}, the default) or over the coordinates on which it was
 estimated (\code{FALSE}). A structural term declares its quantities, for
 example a persistence, and their variance is obtained by the delta method.}
 
-\item{parameter}{The distribution parameters whose rows and columns are
-kept. \code{NULL} keeps all of them.}
+\item{param}{The distribution parameters whose rows and columns are
+kept, a character vector of parameter names. \code{NULL} keeps all of them.}
 
-\item{...}{Unused.}
+\item{...}{Unused. Any argument signals an error.}
 }
 \value{
 A square matrix with dimnames \code{parameter:name}. By default it is over
 the quantities that the model reports, which include the own parameters of
 a structural term. With \code{readable = FALSE} it is over the coefficients of
 every equation, the free parameters of a structural term following those
-of its own equation. \code{parameter} restricts it to the rows and columns of
+of its own equation. \code{param} restricts it to the rows and columns of
 the named equations. A coordinate that is held or not identified has \code{NA}
 in its row and column.
 }
@@ -69,10 +59,10 @@ both are \eqn{H^{-1}}, for a coefficient that the outer criterion does not
 estimate. Under \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} with the default \code{marginal = NULL}, in a
 model without a structural term, the unpenalized coefficients of every
 distribution parameter other than the first (for example the log standard
-deviation of a Gaussian) are estimated on the criterion, and \code{"bayesian"} and
-\code{"unconditional"} take the curvature of that criterion for them. These two
-types then differ from \code{"frequentist"} for those coefficients even without a
-penalty.
+deviation of a Gaussian) are estimated on the criterion, and \code{\link[=bayesian_vcov]{bayesian_vcov()}}
+and \code{\link[=unconditional_vcov]{unconditional_vcov()}} take the curvature of that criterion for them.
+These two conventions then differ from \code{\link[=frequentist_vcov]{frequentist_vcov()}} for those
+coefficients even without a penalty.
 
 For a prior that is not Gaussian, \eqn{V_b} is computed in the same way for
 every penalty that is twice differentiable at the mode. \eqn{H + S} is then
@@ -103,11 +93,12 @@ positive semi-definite, so \eqn{V'} is never narrower than \eqn{V_b}. It
 matters where a smoothing parameter is poorly determined, and it affects the
 penalized coordinates much more than the unpenalized ones. It requires the
 curvature of the outer criterion, which the two conditional matrices do not
-read, so \code{"unconditional"} is more expensive than the other two types.
+read, so \code{\link[=unconditional_vcov]{unconditional_vcov()}} is more expensive than the other two
+conventions.
 
 Where no hyperparameter was estimated by a differentiable criterion there
-is nothing to propagate, the correction is exactly zero and \code{"unconditional"}
-returns \eqn{V_b} itself. Where a hyperparameter was estimated and the
+is nothing to propagate, the correction is exactly zero and
+\code{\link[=unconditional_vcov]{unconditional_vcov()}} returns \eqn{V_b} itself. Where a hyperparameter was estimated and the
 curvature of the criterion cannot be read at the fitted point, the
 conditional matrix is returned with a warning, so that the narrower matrix
 is not mistaken for the wider one. Where the curvature can be read for only
@@ -126,21 +117,46 @@ is therefore not the posterior variance under the corresponding prior,
 because a curvature read at the mode does not include the mass that the prior
 puts near zero.
 
-The argument \code{expected} selects the matrix used as \eqn{H}. Its
-default is the expected information where the fit inverted it and the
-family writes it out in closed form, and the observed Hessian otherwise
-(\code{\link[=fit_expected]{fit_expected()}}). The two agree asymptotically and not in a sample: one
-is the information averaged over the model, and the other is the curvature
-of the likelihood at the data in hand. A model that carries a structural
-term is always inverted on the observed information, because a filter and a
-mixture over states do not have an expected information.
+The coefficients that the marginal criterion of \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} estimates
+take the curvature of that criterion in the Bayesian and the unconditional
+matrices, and the criterion reads the information of its own \code{information}
+argument. The \code{information} of \code{vcov_type} selects the matrix used as
+\eqn{H} everywhere else, in the sandwich of the frequentist matrix and in
+the penalized block of the other two.
 
-Where the family has no closed form, \code{expected = TRUE} reaches an
-approximation, and \code{approx} selects it. \code{"opg"}, the default, is the outer
-product of the observed scores and costs one gradient; \code{"bartlett"}
-evaluates the expectation itself, a sum over the support for a discrete
-family and a quadrature for a continuous one, and is orders of magnitude
-more expensive. The expensive route is available and is not the default.
+The \code{information} of \code{vcov_type} selects the matrix used as \eqn{H}. Its
+default is \code{NULL}, which is resolved for each fit by the family of the fit
+with the rule of \code{\link[distributions7:vcov.distrib_fit]{distributions7::vcov.distrib_fit()}}: the matrix is
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the curvature of the likelihood at the
+data in hand, when the log-likelihood is twice differentiable in every
+parameter of the family (every \code{\link[distributions7:params_order]{distributions7::params_order()}} is at least
+2), and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} with \code{method = NULL}, for the
+whole matrix, otherwise. The choice does not depend on the information with
+which the fit was computed (\code{inner_information} of \code{\link[=statmod]{statmod()}}). An object
+in \code{information} overrides the rule. \code{\link[distributions7:expected_info]{distributions7::expected_info()}}
+selects the Fisher information, the information averaged over the model. The
+two agree asymptotically and not in a sample. A model that carries a
+structural term is always inverted on the observed information, because a
+filter and a mixture over states do not have an expected information.
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix when it is not the observed one.
+
+The observed information is singular where the second derivative of the
+log-likelihood in a coefficient is zero at the estimates, as for the
+location of a Laplace response. The family has a kink in that parameter, so
+the default \code{NULL} reads the expected information, which is finite there,
+and the variance is available. With \code{information = observed_info()} the rows
+and columns of the coordinates that it does not identify are missing, as
+described above for a flat direction.
+
+The \code{method} of \code{\link[distributions7:expected_info]{distributions7::expected_info()}} selects how the expected
+information is obtained. With \code{method = NULL} the closed form of the family
+is used where the family has one, and \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the
+outer product of the observed scores, which costs one gradient, otherwise.
+\code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} evaluates the expectation itself, a sum
+over the support for a discrete family and a quadrature for a continuous
+one, and is orders of magnitude more expensive;
+\code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} simulates it.
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods} compares the three methods.
 }
 \examples{
 set.seed(1)
@@ -154,8 +170,12 @@ sqrt(diag(vcov(fit)))
 ds <- data.frame(x = runif(200))
 ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
 fs <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
-vapply(c("frequentist", "bayesian", "unconditional"),
-       function(ty) sqrt(diag(vcov(fs, type = ty)))[["mu:s(x).z2"]], 0)
+vapply(list(frequentist_vcov(), bayesian_vcov(), unconditional_vcov()),
+       function(ty) sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]], 0)
+
+# the information is chosen inside the convention
+sqrt(diag(vcov(fit, vcov_type = bayesian_vcov(
+  information = distributions7::expected_info()))))
 }
 \references{
 Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
@@ -163,6 +183,7 @@ selection for general smooth models. \emph{Journal of the American
 Statistical Association}, 111(516), 1548--1563.
 }
 \seealso{
+\link{vcov_method} for the three conventions side by side,
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
 \code{\link[=hyper_correction]{hyper_correction()}}, which builds the third matrix's correction
 }

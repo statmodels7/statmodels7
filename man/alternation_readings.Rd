@@ -12,7 +12,7 @@ alternation_readings(
   beta,
   hyper,
   expected,
-  approx,
+  emethod,
   aliased = integer(0)
 )
 
@@ -23,7 +23,7 @@ alternation_settled(
   beta,
   hyper,
   expected,
-  approx,
+  emethod,
   aliased = integer(0)
 )
 }
@@ -31,7 +31,7 @@ alternation_settled(
 \item{spec, design, obj, beta, hyper}{The fit's specification, design,
 objective, stacked coefficients and hyperparameters.}
 
-\item{expected, approx}{Which information the fit uses.}
+\item{expected, emethod}{Which information the fit uses.}
 
 \item{aliased}{The positions that the scoring step's pivot left out.}
 }

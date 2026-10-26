@@ -12,7 +12,7 @@ statmod_boot_restart(
   inner_optimizer,
   res,
   expected,
-  approx,
+  emethod,
   maxit,
   tol,
   vb,
@@ -38,7 +38,7 @@ it. It is returned unchanged when no proposal improves the objective, and
 also when the design carries no state, or when the response is a matrix,
 is not numeric or has missing values.}
 
-\item{expected, approx, maxit, tol}{Passed to \code{\link[=statmod_alternate]{statmod_alternate()}} for each
+\item{expected, emethod, maxit, tol}{Passed to \code{\link[=statmod_alternate]{statmod_alternate()}} for each
 refit, with the meanings that they have there.}
 
 \item{vb}{The resolved verbosity, as \code{\link[=verbosity]{verbosity()}} returns it.}

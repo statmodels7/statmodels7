@@ -5,7 +5,7 @@
 \title{The Correction for the Estimated Hyperparameters, With Estimated
 Coefficients}
 \usage{
-marginal_edf_correction(mc, coef, hyper, method, idx, expected, approx, zero)
+marginal_edf_correction(mc, coef, hyper, method, idx, expected, emethod, zero)
 }
 \arguments{
 \item{mc}{The list that \code{\link[=fit_marginal_context]{fit_marginal_context()}} returns.}
@@ -16,7 +16,7 @@ marginal_edf_correction(mc, coef, hyper, method, idx, expected, approx, zero)
 
 \item{idx}{The hyperparameters' index.}
 
-\item{expected, approx}{Passed to \code{\link[=statmod_information_at]{statmod_information_at()}}.}
+\item{expected, emethod}{Passed to \code{\link[=statmod_information_at]{statmod_information_at()}}.}
 
 \item{zero}{The answer where the correction cannot be computed.}
 }

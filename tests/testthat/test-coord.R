@@ -160,7 +160,7 @@ test_that("a penalty with no table keeps the proximal route", {
   b <- setup_block(y ~ lasso(x), "lasso(x)", c(lambda = 8))
   # the block's own penalty does have one, so the fast route applies
   expect_false(is.null(coord_fit(b$obj, b$beta, b$block, b$hyper, b$spec,
-                                 b$design, TRUE, "bartlett")))
+                                 b$design, TRUE, NULL)))
 })
 
 test_that("the lasso agrees with glmnet on the objective they share", {
@@ -314,7 +314,7 @@ test_that("screening along a path does not change where the path lands", {
       bk <- if (screen && !is.null(last)) blocks_at_kink(blocks, last) else
         blocks
       r <- statmod_alternate(spec, design, bk, h, iwls(), warm, TRUE,
-                             "bartlett", 100L, 1e-8, verbosity(0))
+                             NULL, 100L, 1e-8, verbosity(0))
       warm <- r$par
       last <- h
       out[[length(out) + 1L]] <- r$obj$split(r$par)$mu

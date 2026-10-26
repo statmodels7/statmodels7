@@ -97,8 +97,11 @@ NULL
 #'   weights, `FALSE` for the observed one. Where the observed curvature of
 #'   the equation is not positive at some observation, the expected
 #'   information is used in its place.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param maxit The budget in weighted least squares iterations, each of
 #'   which rebuilds the weights and runs the compiled sweeps to convergence.
 #' @param tol The stopping tolerance on the largest absolute change in the
@@ -133,7 +136,7 @@ NULL
 #'   [penalties7::penalty_prox_spec()]
 #'
 #' @keywords internal
-coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
+coord_fit <- function(obj, beta, block, hyper, spec, design, expected, emethod,
                       maxit = 100L, tol = 1e-8, prev_kink = NULL) {
   p <- block$param
   d <- design[[p]]
@@ -229,11 +232,11 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     dd <- if (moves) statmod_design_at(spec, coef, design)[[p]] else d
     if (moves) X <- coord_block(dd$X, cols)
     ep <- statmod_eta(spec, design, coef)
-    wq <- coord_working(spec, ep, coef, design, p, expected, approx)
+    wq <- coord_working(spec, ep, coef, design, p, expected, emethod)
     # Where the OBSERVED curvature of this equation is not positive at some
     # observation there are no working weights to read, and abandoning the
     # descent sends the block to the proximal route. The expected information
-    # stands in instead, as iwls(hessian = "auto") does for the smooth block:
+    # stands in instead, as inner_information = auto_info() does for the smooth block:
     # the mode is the same, only the weights of the step change. Measured on
     # a negbin2 lasso over mu and theta at n = 1500, 164 of 198 theta-block
     # fits fell back and the fit took 486.9 s; it takes 20.5 s, and where the
@@ -241,7 +244,7 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     # shapes. Always reading the expected one instead costs 1.6x to 1.8x on a
     # gaussian or gamma with a modelled dispersion, so it stays a fallback.
     if (is.null(wq) && !expected)
-      wq <- coord_working(spec, ep, coef, design, p, TRUE, approx)
+      wq <- coord_working(spec, ep, coef, design, p, TRUE, emethod)
     if (is.null(wq)) return(NULL)
     # the weighted column means the kernel centers with; none where the block
     # is solved as it stands
@@ -754,8 +757,11 @@ coord_covariance <- function(n, m) {
 #' @param p Which distribution parameter's equation, a string.
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   observed one.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return A list with `w` and `z`, each a numeric vector of length
 #'   `spec@n_obs`. A row of weight zero has `w` zero and `z` equal to its
@@ -765,7 +771,7 @@ coord_covariance <- function(n, m) {
 #'   values far from the optimum.
 #'
 #' @keywords internal
-coord_working <- function(spec, ep, coef, design, p, expected, approx) {
+coord_working <- function(spec, ep, coef, design, p, expected, emethod) {
   n <- spec@n_obs
   params <- spec@distrib@params
   a <- match(p, params)
@@ -795,7 +801,7 @@ coord_working <- function(spec, ep, coef, design, p, expected, approx) {
   }
   # the one diagonal entry, read where info_blocks() would have filed it in
   # an n x K x K array this function then took one slice of
-  H <- statmod_family_hessian(spec, ep$theta, expected, approx)
+  H <- statmod_family_hessian(spec, ep$theta, expected, emethod)
   h <- -spec@weights * rep_len(H[[hess_key(params, a, a)]], n)
   # a row of weight zero has no curvature and no score, and it enters the
   # descent with weight zero at its own predictor

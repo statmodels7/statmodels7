@@ -36,8 +36,8 @@ gg$y <- 1 + gg$x + (rexp(30) * sample(c(-1, 1), 30, TRUE))[gg$g] +
 lp <- distributions7::fixed(distributions7::laplace_distrib(), mu = 0)
 fit <- statmod(y ~ x + random(~ 1 | g, distrib = lp),
                distributions7::gaussian1_distrib(), gg)
-predict(fit, "response", data.frame(x = 0, g = "new"), random = "zero",
-        interval = "prediction")
+predict(fit, what = "response", newdata = data.frame(x = 0, g = "new"),
+        random = "zero", interval = prediction_interval())
 
 }
 \keyword{internal}

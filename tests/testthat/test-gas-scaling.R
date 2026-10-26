@@ -212,7 +212,7 @@ sc_outer <- function(p) {
     sst$zeta <- z0
     hy <- eta_to_hyper(eta, p$idx, p$hyper)
     r <- statmod_alternate(p$spec, p$design, p$blocks, hy, inner, beta0,
-                           cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                           cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                            verbosity(0), hold_refresh = TRUE)
     list(cf = r$obj$split(r$par), hy = hy)
   }
@@ -354,7 +354,7 @@ sc_sub_derivs <- function(form, distrib, data, jitter = 0.07) {
   sst <- statmod_structural_state(des)
   key <- names(sst$zeta)[[1L]]
   hyper <- statmod_hyper_start(spec, des)
-  obj <- statmod_objective(spec, hyper, des, FALSE, "bartlett")
+  obj <- statmod_objective(spec, hyper, des, FALSE, NULL)
   beta <- statmod_start(spec, des, obj, NULL)
   nmz <- names(sst$zeta[[key]])
   free <- setdiff(nmz, sst$held[[key]])

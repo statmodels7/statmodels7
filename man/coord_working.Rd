@@ -4,7 +4,7 @@
 \alias{coord_working}
 \title{The Working Response and Weights of One Equation}
 \usage{
-coord_working(spec, ep, coef, design, p, expected, approx)
+coord_working(spec, ep, coef, design, p, expected, emethod)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -21,8 +21,11 @@ coord_working(spec, ep, coef, design, p, expected, approx)
 \item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
 observed one.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 }
 \value{
 A list with \code{w} and \code{z}, each a numeric vector of length

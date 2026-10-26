@@ -20,6 +20,7 @@ Returns \code{TRUE} where the last two ratios of consecutive scores both exceed
 \code{rate}.
 }
 \seealso{
-\code{\link[=iwls_fit]{iwls_fit()}}, \code{\link[=iwls_switch_rate]{iwls_switch_rate()}}.
+\code{\link[=iwls_fit]{iwls_fit()}}, \code{\link[=iwls]{iwls()}}, whose argument \code{switch_rate} supplies
+\code{rate}.
 }
 \keyword{internal}

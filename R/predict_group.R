@@ -4,7 +4,7 @@ NULL
 #' The Interval and Standard Deviation of a New Group's Parameter
 #'
 #' @description
-#' Returns, for `interval = "group"`, the ends of the interval and the
+#' Returns, for [group_interval()], the ends of the interval and the
 #' standard deviation of a new group's parameter
 #' \eqn{\theta^* = h^{-1}(\eta^*)}, on the predictor's scale and on the
 #' parameter's. Here \eqn{\eta^* = \eta_0 + e + z^\top b}, where \eqn{e} is
@@ -63,7 +63,7 @@ NULL
 #'   `upper` replaced for every parameter that a new group's effects reach.
 #'
 #' @keywords internal
-group_interval <- function(object, spec, design, aside, ep, su, level, ...) {
+group_interval_ends <- function(object, spec, design, aside, ep, su, level, ...) {
   params <- spec@distrib@params
   links <- spec@distrib@link_params
   n <- spec@n_obs
@@ -189,7 +189,7 @@ group_sd_gaussian <- function(g, m, s) {
 #'   does not exist.
 #'
 #' @return The standard deviation of \eqn{h^{-1}(\eta^*)}, or `NA` where it
-#'   is not known to exist. See [group_interval()].
+#'   is not known to exist. See [group_interval_ends()].
 #'
 #' @keywords internal
 group_sd_mixture <- function(g, M, S, W, s) {

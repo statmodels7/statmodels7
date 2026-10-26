@@ -75,7 +75,7 @@ test_that("Pearson residuals are NA, with a warning, where the variance fails", 
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), d)
   local_mocked_bindings(std_dev = function(x, theta, ...) stop("no variance"),
                         .package = "distributions7")
-  expect_warning(r <- residuals(fit, type = "pearson"),
+  expect_warning(r <- residuals(fit, residual_type = "pearson"),
                  "could not be computed")
   expect_true(all(is.na(r)))
 })

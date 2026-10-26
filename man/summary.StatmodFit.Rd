@@ -7,11 +7,9 @@
 \method{summary}{StatmodFit}(
   object,
   level = 0.95,
-  type = c("bayesian", "frequentist", "unconditional"),
-  expected = NULL,
-  approx = c("opg", "bartlett", "integrate", "mc"),
+  vcov_type = bayesian_vcov(),
   correct = FALSE,
-  test = c("wald", "lr", "score", "gradient"),
+  test = wald_test(),
   max_coef = NULL,
   ...
 )
@@ -21,20 +19,15 @@
 
 \item{level}{The confidence level.}
 
-\item{type}{Which variance matrix: passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. The
-\code{"unconditional"} one carries the uncertainty of the hyperparameters into
-every standard error under it, where \code{correct} carries the same
-uncertainty into the degrees of freedom; the two are the same quantity
-read on two surfaces, and both can be used in one call.}
-
-\item{expected}{The information from which the standard errors are computed,
-passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the default, takes the expected
-one where the fit inverted it and the family writes it out, and the
-observed Hessian otherwise; \code{TRUE} or \code{FALSE} selects one.}
-
-\item{approx}{How the expected information is approximated for a family
-with no closed form, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{"opg"} (the
-default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
+\item{vcov_type}{A \link{vcov_method} object, the variance matrix, passed to
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
+\code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}. The information from which
+the standard errors are computed is an argument of each of them
+(\code{\link[distributions7:observed_info]{distributions7::observed_info()}} by default). The last carries the
+uncertainty of the hyperparameters into every standard error under it,
+where \code{correct} carries the same uncertainty into the degrees of freedom;
+the two are the same quantity read on two surfaces, and both can be used
+in one call. The conventions are compared at \link{vcov_method}.}
 
 \item{correct}{Whether the degrees of freedom include the cost of
 estimating the hyperparameters. The ordinary count treats them as known
@@ -43,9 +36,12 @@ it is too generous. See \code{\link[=statmod_edf_correction]{statmod_edf_correct
 \code{FALSE}, which leaves the count unchanged; the correction is zero where no
 hyperparameter was estimated by a marginal criterion.}
 
-\item{test}{Which statistic the coefficient tables report: \code{"wald"}, the
-default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, each of which costs one
-restricted refit per row. See \code{\link[=statmod_stat_at]{statmod_stat_at()}}.}
+\item{test}{A \link{test_statistic} object, the statistic that the coefficient
+tables report. \code{\link[=wald_test]{wald_test()}} (the default) reads the variance matrix and
+refits nothing. \code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} and \code{\link[=gradient_test]{gradient_test()}} cost one
+restricted refit per row and are reported as a signed root. The four are
+compared at \link{test_statistic}; see also \code{\link[=statmod_stat_at]{statmod_stat_at()}}. A character
+string is rejected with an error.}
 
 \item{max_coef}{How many coefficient rows each block of the printed
 summary shows, \code{Inf} or \code{NA} for all of them. \code{NULL}, the default,
@@ -213,8 +209,8 @@ summary(statmod(y ~ x | sigma ~ x,
                 distributions7::gaussian1_distrib(), dd))
 }
 \seealso{
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}},
-\code{\link[=statmod_test]{statmod_test()}}, which computes the same four statistics for one
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \link{test_statistic},
+\link{vcov_method}, \code{\link[=statmod_test]{statmod_test()}}, which computes the same four statistics for one
 coefficient against a value that need not be zero, and
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}
 }

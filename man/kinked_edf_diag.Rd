@@ -10,7 +10,7 @@ kinked_edf_diag(
   design,
   hyper,
   expected,
-  approx,
+  emethod,
   aliased = integer(0)
 )
 }
@@ -18,7 +18,7 @@ kinked_edf_diag(
 \item{spec, coef, design, hyper}{The specification, the coefficients, the
 design and the hyperparameters.}
 
-\item{expected, approx}{Which information.}
+\item{expected, emethod}{Which information.}
 
 \item{aliased}{Stacked positions that the fit did not estimate.}
 }

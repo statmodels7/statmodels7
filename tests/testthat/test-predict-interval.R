@@ -1,4 +1,4 @@
-# predict(interval = "group") and predict(interval = "prediction").
+# predict(interval = group_interval()) and predict(interval = prediction_interval()).
 
 ri_data <- function(m = 15, ni = 8, seed = 2, sd_b = 0.7, pois = FALSE) {
   set.seed(seed)
@@ -15,7 +15,7 @@ test_that("a new group's predictor adds its effect's variance", {
   f <- statmod(y ~ x + random(~ 1 | g), distributions7::gaussian1_distrib(), d)
   nd <- data.frame(x = c(0.2, 0.8), g = factor("new"))
   c0 <- predict(f, "link:mu", nd, random = "zero", se = TRUE)
-  g1 <- predict(f, "link:mu", nd, random = "zero", interval = "group")
+  g1 <- predict(f, "link:mu", nd, random = "zero", interval = group_interval())
   key <- grep("random", names(f@spec@terms$mu), value = TRUE)
   sb <- f@hyper$mu[[key]][["sigma"]]
   expect_equal(g1$fit, c0$fit)
@@ -24,7 +24,7 @@ test_that("a new group's predictor adds its effect's variance", {
   expect_equal(g1$upper - g1$lower, 2 * z * g1$se, tolerance = 1e-10)
   # on the parameter scale the interval is the predictor's carried through
   # the link, here the identity
-  gp <- predict(f, "mu", nd, random = "zero", interval = "group")
+  gp <- predict(f, "mu", nd, random = "zero", interval = group_interval())
   expect_equal(gp$lower, g1$lower, tolerance = 1e-10)
 })
 
@@ -40,13 +40,13 @@ test_that("a random effect on sigma widens sigma's interval for a new group", {
                distributions7::gaussian1_distrib(), d)
   nd <- data.frame(x = 0.5, g = factor("new"))
   c0 <- predict(f, "link:sigma", nd, random = "zero", se = TRUE)
-  g1 <- predict(f, "link:sigma", nd, random = "zero", interval = "group")
+  g1 <- predict(f, "link:sigma", nd, random = "zero", interval = group_interval())
   key <- grep("random", names(f@spec@terms$sigma), value = TRUE)
   sb <- f@hyper$sigma[[key]][["sigma"]]
   expect_equal(g1$se, sqrt(c0$se^2 + sb^2), tolerance = 1e-10)
   # mu carries no effect, so its interval is the confidence one
   cm <- predict(f, "mu", nd, random = "zero", se = TRUE)
-  gm <- predict(f, "mu", nd, random = "zero", interval = "group")
+  gm <- predict(f, "mu", nd, random = "zero", interval = group_interval())
   expect_equal(gm, cm)
 })
 
@@ -55,7 +55,7 @@ test_that("the prediction interval is the quantiles of the averaged family", {
   d <- ri_data()
   f <- statmod(y ~ x + random(~ 1 | g), distributions7::gaussian1_distrib(), d)
   nd <- data.frame(x = 0.5, g = factor("new"))
-  pr <- predict(f, "response", nd, random = "zero", interval = "prediction")
+  pr <- predict(f, "response", nd, random = "zero", interval = prediction_interval())
   # a reference by simulation, sharing only the covariance of the estimates:
   # the predictors drawn jointly Gaussian, the new effect from its prior, and
   # y from the family
@@ -78,11 +78,11 @@ test_that("a discrete family's prediction interval lies on its support", {
   d <- ri_data(pois = TRUE)
   f <- statmod(y ~ x + random(~ 1 | g), distributions7::poisson_distrib(), d)
   nd <- data.frame(x = c(0.1, 0.9), g = factor("new"))
-  pr <- predict(f, "response", nd, random = "zero", interval = "prediction")
+  pr <- predict(f, "response", nd, random = "zero", interval = prediction_interval())
   expect_equal(pr$lower, round(pr$lower))
   expect_equal(pr$upper, round(pr$upper))
   expect_equal(pr$fit, round(pr$fit))
-  cm <- predict(f, "link:mu", nd, random = "zero", interval = "group")
+  cm <- predict(f, "link:mu", nd, random = "zero", interval = group_interval())
   set.seed(3)
   S <- 2e5
   for (i in 1:2) {
@@ -104,7 +104,7 @@ test_that("a family with no location parameter is predicted through its cdf", {
   d <- data.frame(g = g, x = x, y = stats::rgamma(m * 8, 3, 3 / mu))
   f <- statmod(y ~ x + random(~ 1 | g), distributions7::gamma1_distrib(), d)
   pr <- predict(f, "response", data.frame(x = 0.5, g = factor("new")),
-                random = "zero", interval = "prediction")
+                random = "zero", interval = prediction_interval())
   expect_true(all(is.finite(unlist(pr))))
   expect_true(pr$lower > 0 && pr$lower < pr$fit && pr$fit < pr$upper)
 })
@@ -122,7 +122,7 @@ test_that("effects a label ties across equations enter the prediction jointly", 
   f <- statmod(y ~ x + random(~ 1 | u | g) | sigma ~ random(~ 1 | u | g),
                distributions7::gaussian1_distrib(), d)
   nd <- data.frame(x = 0.5, g = factor("new"))
-  pr <- predict(f, "response", nd, random = "zero", interval = "prediction")
+  pr <- predict(f, "response", nd, random = "zero", interval = prediction_interval())
   expect_true(all(is.finite(unlist(pr))))
   sp <- f@spec
   rm <- random_modes(sp, "zero")
@@ -142,10 +142,10 @@ test_that("each interval is asked for with what it applies to", {
   f <- statmod(y ~ x + random(~ 1 | g), distributions7::gaussian1_distrib(), d)
   nd <- data.frame(x = 0.5, g = factor("new"))
   expect_error(predict(f, "response", nd, random = "zero"), "prediction")
-  expect_error(predict(f, "mu", nd, random = "zero", interval = "prediction"),
+  expect_error(predict(f, "mu", nd, random = "zero", interval = prediction_interval()),
                "what = \"response\"")
-  expect_error(predict(f, "mu", d, interval = "group"), "set aside")
+  expect_error(predict(f, "mu", d, interval = group_interval()), "set aside")
   # conditional effects enter with their own estimates: a group the fit saw
-  pr <- predict(f, "response", d[1:3, ], interval = "prediction")
+  pr <- predict(f, "response", d[1:3, ], interval = prediction_interval())
   expect_true(all(pr$lower < pr$fit & pr$fit < pr$upper))
 })

@@ -1,4 +1,4 @@
-#' @include report.R
+#' @include report.R predict_objects.R
 #' @importFrom stats predict fitted
 NULL
 
@@ -60,7 +60,7 @@ predict_moments <- function() {
 #'   \item{`"link"`}{every linear predictor at once, before the inverse
 #'     link.}
 #'   \item{`"response"`}{the response itself, with `interval =
-#'     "prediction"`, which it requires: its median and the ends of an
+#'     prediction_interval()`, which it requires: its median and the ends of an
 #'     interval in which a new observation falls. See the section on
 #'     intervals.}
 #' }
@@ -85,7 +85,7 @@ predict_moments <- function() {
 #' evaluated again at the new rows.
 #'
 #' The new frame needs the variables of the equations that are read. Where
-#' `what` names one parameter and `interval` is `"confidence"`, the other
+#' `what` names one parameter and `interval` is [confidence_interval()], the other
 #' equations are not read, and the variables that only they use may be absent
 #' from `newdata`. The response is not needed, except that a binomial fitted
 #' with `cbind()` reads the number of trials from it for a moment or a
@@ -167,110 +167,26 @@ predict_moments <- function() {
 #' at the nodes. The standard error of a marginal parameter is the delta method of
 #' that average, whose gradient sums the design at each node, and its
 #' interval is the delta method's on the link scale carried through the
-#' link. `interval = "group"` and `"prediction"` are not available for such
+#' link. [group_interval()] and [prediction_interval()] are not available for such
 #' an effect, and a standard error is not available where an average is taken
 #' over effects of both kinds.
 #'
-#' # Three intervals
+#' # Intervals and predictive distributions
 #'
-#' The value of `interval` selects the uncertainty that the interval describes.
-#' \describe{
-#'   \item{`"confidence"`}{the default, with `se = TRUE`: only the uncertainty
-#'     of the estimates. For a term set aside by `random` it is the
-#'     interval of the typical group's value, and the value of a new group
-#'     falls outside that interval far more often than the level implies.}
-#'   \item{`"group"`}{the interval of a new group's parameter, with `random =
-#'     "zero"` or `"marginal"`. A new group's parameter is
-#'     \eqn{\theta^* = h^{-1}(\eta^*)}, with \eqn{\eta^*} the typical
-#'     group's predictor plus its estimation error plus \eqn{z^\top b}, the
-#'     effects of a new group drawn from the prior, in the parameter's own
-#'     equation, so a random effect on `sigma` widens the interval for
-#'     `sigma`. Under Gaussian priors the variance of \eqn{\eta^*} is
-#'     \eqn{se^2 + z^\top \Sigma_b z}, the standard error that glmmTMB
-#'     reports at a new level on the link scale. The interval's ends are
-#'     quantiles of
-#'     \eqn{\eta^*} carried through the inverse link, which is monotone, so
-#'     they are the quantiles of \eqn{\theta^*} under any link; under a prior
-#'     that is not Gaussian they are the quantiles of the mixture of
-#'     [predictive_mixture()]. Where the interval of \eqn{\eta^*} leaves
-#'     the domain of the link (a square root link and a negative predictor),
-#'     the ends are `NA` at that row, with a warning. The standard error is
-#'     the standard deviation of \eqn{\theta^*}, not the delta method, and is
-#'     `NA` where it is not
-#'     known to exist (see [group_interval()]). The fit is the typical
-#'     group's value under `random = "zero"` and the population average
-#'     under `"marginal"`. Implies `se = TRUE`.}
-#'   \item{`"prediction"`}{an interval for a new observation of the response,
-#'     with `what = "response"`. The family is averaged over the predictors of
-#'     every parameter, which are taken to be jointly Gaussian (correlated
-#'     across equations where a label ties them). The interval's ends are
-#'     quantiles of that average, and the fit is its median, which every
-#'     family has, so the family does not need a location parameter. `se` is
-#'     the standard deviation of the average, and is `NA` where the family's
-#'     variance does not exist. For a discrete family the ends are values of
-#'     the support, so the coverage is at least the level rather than equal
-#'     to it. Effects read `"conditional"` enter with their own estimates, so
-#'     this is also the interval of a new observation of a group that is
-#'     present in the fitting data. The quantities over which the average is
-#'     taken are set by `predictive`, described below.}
-#' }
+#' The object given to `interval` selects the uncertainty that the interval
+#' describes: [confidence_interval()] the estimates alone, [group_interval()]
+#' the estimates and the effects of a new group, and [prediction_interval()] a
+#' new observation of the response. The topic [predict_intervals] compares
+#' the three and gives the formulas. A prediction interval holds a predictive
+#' object that sets how the estimation uncertainty enters: [pred_averaged()]
+#' (the default), [pred_plugin()] or [pred_bootstrap()]. The topic
+#' [predictive_distributions] compares them and states what each costs.
 #'
-#' `interval = "group"` and `interval = "prediction"` are rejected for a
+#' [group_interval()] and [prediction_interval()] are rejected for a
 #' multivariate family and for a model with a structural term. The structural
 #' term also rejects `random = "zero"` and `random = "marginal"`: its level is
 #' a recursion read at the predictor, so setting a random effect aside would
 #' move the recursion as well.
-#'
-#' # The predictive distribution
-#'
-#' A new observation varies for three reasons: the family itself, the effects
-#' of a new group where `random` sets them aside, and the error in the
-#' estimates. The first two are random in the model and always enter. The
-#' third enters according to `predictive`, for every parameter alike, whether
-#' the family has one parameter (a Poisson) or several, and whether or not a
-#' parameter has covariates.
-#' \describe{
-#'   \item{`"averaged"`}{the default. The family is averaged over the
-#'     predictors at the fit's estimates with the covariance of the estimates
-#'     from [vcov.StatmodFit()] plus the covariance that the effects add.
-#'     This is the normal approximation to the parametric bootstrap
-#'     predictive distribution of Harris (1989): the estimates are averaged
-#'     over their approximate sampling distribution, centered at the fit. For
-#'     a Gaussian with a constant \eqn{\sigma = e^{\gamma_0}},
-#'     \eqn{\hat\gamma_0} of variance \eqn{v}, the variance of a new observation is
-#'     \eqn{\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}}, where
-#'     the last term is the average of \eqn{\hat\sigma^{*2}} over that
-#'     distribution.}
-#'   \item{`"plugin"`}{the family at the estimates, averaged only over the
-#'     effects: the estimative interval, which ignores the error in the
-#'     estimates and so covers less than the level in a small sample.}
-#'   \item{`"bootstrap"`}{the parametric bootstrap predictive distribution
-#'     itself: `n_boot` responses are simulated from the fit with the random
-#'     effects drawn afresh, each response is refitted, and the family at each
-#'     refit is averaged over the effects. `boot_refit = "coefficients"`
-#'     refits at the fit's hyperparameters; `"full"` chooses them again on
-#'     every replica, so their uncertainty enters too, at the cost of a whole
-#'     fit each. It is
-#'     rejected for a model with a block that moves with its coefficients
-#'     ([modelterms7::seg()], [modelterms7::jump()], [modelterms7::jseg()],
-#'     [modelterms7::nl()]), for a response that is not one number per
-#'     observation, and, with `boot_refit = "full"`, for a cross-validated
-#'     criterion. See [predictive_bootstrap()].}
-#' }
-#' The interval for a new group (`interval = "group"`) is conditional on the
-#' covariance that the fit estimated, and so is the interval for a new
-#' observation, so the uncertainty of the hyperparameters is not propagated.
-#' The exception is `predictive = "bootstrap"` with `boot_refit = "full"`,
-#' where the hyperparameters are chosen again on every replica.
-#'
-#' Under a prior that is not Gaussian, both `interval = "group"` and
-#' `interval = "prediction"` read the quantiles of the prior: a Student t
-#' prior as a scale mixture of Gaussians; a single univariate prior of
-#' another family, where it is the only prior that is not Gaussian, on
-#' quantile nodes, which do not depend on the seed; and any other combination
-#' of priors by Monte Carlo, which does (see [predictive_mixture()]). A term
-#' that shares a label with an effect read with its own estimate, or with one
-#' written inside a subformula, is rejected.
 #'
 #' A forecast's standard error, with `se = TRUE`, is only the uncertainty of
 #' the estimated parameters, carried by the delta method through the
@@ -281,12 +197,12 @@ predict_moments <- function() {
 #' @param object A [StatmodFit()].
 #' @param what What to predict: a parameter's name, optionally prefixed
 #'   `"link:"`; a moment's name; `"parameter"` (the default) or `"link"`; or
-#'   `"response"`, which requires `interval = "prediction"` and is the only
-#'   value that this interval accepts. An unrecognized name signals an error
+#'   `"response"`, which requires `interval = prediction_interval()` and is the
+#'   only value that this interval accepts. An unrecognized name signals an error
 #'   listing what is available.
 #' @param newdata A data frame, or `NULL` for the fitting data. It needs the
 #'   variables of the equations that are read: where `what` names one
-#'   parameter and `interval` is `"confidence"`, the variables that only the
+#'   parameter and `interval` is [confidence_interval()], the variables that only the
 #'   other equations use may be absent. It does not need the response, except
 #'   that a moment or a prediction interval of a binomial fitted with
 #'   `cbind()` reads the number of trials from it. For a model with a
@@ -295,13 +211,13 @@ predict_moments <- function() {
 #'   with no rows signals an error.
 #' @param se `TRUE` to report the standard error and an interval as well.
 #'   The default is `FALSE`. A moment has no standard error, and `se = TRUE`
-#'   with a moment signals an error. `interval = "group"` sets it to `TRUE`, and
-#'   `interval = "prediction"` does not read it, because its result carries
+#'   with a moment signals an error. [group_interval()] sets it to `TRUE`, and
+#'   [prediction_interval()] does not read it, because its result carries
 #'   its own `se` column.
 #' @param level The interval's level, `0.95` by default, a single number
 #'   strictly between 0 and 1. It is read wherever an interval is returned:
-#'   with `se = TRUE`, with `interval = "group"` and with
-#'   `interval = "prediction"`, which gives its interval without `se`.
+#'   with `se = TRUE`, with [group_interval()] and with
+#'   [prediction_interval()], which gives its interval without `se`.
 #' @param random How a [modelterms7::random()] term is read:
 #'   `"conditional"` (the default) with each group's own estimated effect, so
 #'   a level that is absent from the fitting data signals an error; `"zero"`
@@ -311,25 +227,25 @@ predict_moments <- function() {
 #'   term; a character vector named by the terms' keys sets the mode term by
 #'   term, and the terms that it does not name stay conditional. See the section
 #'   on new groups.
-#' @param interval `"confidence"` (the default), `"group"` or
-#'   `"prediction"`. See the section on intervals.
-#' @param predictive With `interval = "prediction"`, the quantities over
-#'   which the family is averaged: `"averaged"` (the default), `"plugin"` or
-#'   `"bootstrap"`.
-#'   See the section on the predictive distribution.
-#' @param n_boot The number of bootstrap replicas, `200` by default. It is
-#'   read only where `predictive = "bootstrap"`.
-#' @param boot_refit `"coefficients"` (the default), refitting each replica
-#'   at the fit's hyperparameters, or `"full"`, choosing them again. It is
-#'   read only where `predictive = "bootstrap"`.
-#' @param ... Only `type`, the variance type of [vcov.StatmodFit()]: the
-#'   Bayesian variance, the frequentist one or the unconditional one, which
-#'   also accounts for the estimated smoothing parameters. It is read where
-#'   `se` is `TRUE`, with `interval = "group"`, and with
-#'   `interval = "prediction"` and `predictive = "averaged"`, and it signals an
-#'   error elsewhere. Any other argument signals an error that names it. The
-#'   unconditional variance differs most from the others in a band around a
-#'   penalized term, since a smoothing parameter moves the fitted values.
+#' @param interval An interval object that selects the uncertainty that the
+#'   interval describes. [confidence_interval()] (the default) gives the
+#'   interval of the parameter, the predictor or the moment from the
+#'   uncertainty of the estimates; [group_interval()] gives the interval of the
+#'   parameter of a new group; [prediction_interval()] gives the interval of a
+#'   new observation of the response, and takes the predictive distribution as
+#'   its argument (`predictive = pred_averaged()`, [pred_plugin()] or
+#'   [pred_bootstrap()]). A character string is rejected with an error. See
+#'   [predict_intervals] and [predictive_distributions].
+#' @param vcov_type A [vcov_method] object that selects the variance convention
+#'   of [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
+#'   [frequentist_vcov()] or [unconditional_vcov()], which also accounts for
+#'   the estimated smoothing parameters. It is read where `se` is `TRUE`, with
+#'   [group_interval()], and with [prediction_interval()] holding
+#'   [pred_averaged()], and a value other than the default signals an error
+#'   elsewhere. The unconditional variance differs most from the others in a
+#'   band around a penalized term, since a smoothing parameter moves the fitted
+#'   values. The conventions are compared at [vcov_method].
+#' @param ... Not used. Any argument signals an error that names it.
 #' @return With `se = FALSE`, a numeric vector with one value per row of
 #'   `newdata` (of the fitting data where `newdata` is `NULL`) when `what`
 #'   names one quantity, and a named list of such vectors for `"parameter"`
@@ -340,7 +256,7 @@ predict_moments <- function() {
 #'   named list of such data frames, one per parameter. `se` is `NA` for an
 #'   observation whose predictor reads a coefficient that has no variance.
 #'
-#'   With `interval = "prediction"`, a data frame with columns `fit` (the
+#'   With [prediction_interval()], a data frame with columns `fit` (the
 #'   predictive median), `se` (the predictive standard deviation, `NA` where
 #'   it does not exist), `lower` and `upper`, all `NA` for a row whose
 #'   predictor reads a coefficient that has no variance.
@@ -385,10 +301,12 @@ predict_moments <- function() {
 #'
 #' # The calls return the interval of a new group's mean and of a new count
 #' # from it.
-#' predict(fg, "mu", new, random = "zero", interval = "group")
-#' predict(fg, "response", new, random = "zero", interval = "prediction",
-#'         predictive = "plugin")
-#' predict(fg, "response", new, random = "zero", interval = "prediction")
+#' predict(fg, what = "mu", newdata = new, random = "zero",
+#'         interval = group_interval())
+#' predict(fg, what = "response", newdata = new, random = "zero",
+#'         interval = prediction_interval(predictive = pred_plugin()))
+#' predict(fg, what = "response", newdata = new, random = "zero",
+#'         interval = prediction_interval())
 #'
 #' # A name that the family does not have is rejected, and the message lists
 #' # what is available.
@@ -399,12 +317,8 @@ predict_moments <- function() {
 predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
                                se = FALSE, level = 0.95,
                                random = "conditional",
-                               interval = c("confidence", "group",
-                                            "prediction"),
-                               predictive = c("averaged", "plugin",
-                                              "bootstrap"),
-                               n_boot = 200L,
-                               boot_refit = c("coefficients", "full"), ...) {
+                               interval = confidence_interval(),
+                               vcov_type = bayesian_vcov(), ...) {
   if (is.data.frame(what)) {
     stop(paste0("The second argument of statmod's predict() is 'what', not\n",
                 "  'newdata': a fit has several parameters and several\n",
@@ -423,82 +337,65 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     stop(unknown_what(if (startsWith(what, "link:")) substring(what, 6L) else
       what, ps), call. = FALSE)
   }
-  interval <- match.arg(interval)
-  predictive <- match.arg(predictive)
-  boot_refit <- match.arg(boot_refit)
+  ispec <- predict_interval_spec(interval)
+  interval <- ispec$interval
+  predictive <- ispec$predictive
+  n_boot <- ispec$n_boot
+  boot_refit <- ispec$boot_refit
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) ||
       level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
          call. = FALSE)
   }
-  # the dots carry the variance type to vcov(), and nothing else: an
-  # argument accepted here and read by nobody would change nothing
-  dots <- list(...)
-  dn <- names(dots)
-  if (length(dots) && (is.null(dn) || any(!nzchar(dn)) ||
-                       any(dn != "type"))) {
-    bad <- if (is.null(dn)) rep("", length(dots)) else dn
-    bad <- bad[bad != "type"]
-    stop(sprintf(paste0("predict() takes no argument %s. The only further ",
-                        "argument is 'type',\n  the variance type of the ",
-                        "standard error."),
-                 paste0("'", ifelse(nzchar(bad), bad, "<unnamed>"), "'",
-                        collapse = ", ")), call. = FALSE)
-  }
-  if (length(dots) &&
+  # an argument accepted here and read by nobody would change nothing
+  check_dots("predict", ...)
+  vcov_given <- !missing(vcov_type)
+  vcov_type <- as_vcov_method(vcov_type)
+  if (vcov_given &&
       ((!isTRUE(se) && identical(interval, "confidence")) ||
        (identical(interval, "prediction") &&
         !identical(predictive, "averaged")))) {
-    stop(paste0("'type' is the variance type of the standard error, and is ",
-                "read only with\n  se = TRUE, with interval = \"group\", or ",
-                "with interval = \"prediction\" and\n  predictive = ",
-                "\"averaged\"."), call. = FALSE)
-  }
-  if (!identical(predictive, "averaged") && !identical(interval, "prediction")) {
-    stop(paste0("'predictive' is read only with interval = \"prediction\", ",
-                "where it names the\n  quantities over which the interval is averaged."),
+    stop(paste0("'vcov_type' selects the variance of the standard error, and is ",
+                "read only with\n  se = TRUE, with group_interval(), or ",
+                "with prediction_interval(predictive = pred_averaged())."),
          call. = FALSE)
-  }
-  if (identical(predictive, "bootstrap") &&
-      (!is.numeric(n_boot) || length(n_boot) != 1L || !is.finite(n_boot) ||
-       n_boot < 1 || n_boot != round(n_boot))) {
-    stop("'n_boot' must be a single positive whole number.", call. = FALSE)
   }
   rm <- random_modes(object@spec, random)
   aside <- rm[rm$mode != "conditional", , drop = FALSE]
   nest <- attr(rm, "nested")
   nest <- nest[nest$mode != "conditional", , drop = FALSE]
   if (nrow(nest) && !identical(interval, "confidence")) {
-    stop(sprintf(paste0("interval = \"%s\" is not available for a random ",
+    stop(sprintf(paste0("%s is not available for a random ",
                         "effect written inside a\n  term's subformula (%s). ",
                         "random = \"zero\" and \"marginal\" are, with the ",
-                        "default\n  interval."), interval, nest$key[1L]),
+                        "default\n  confidence_interval()."),
+                 interval_call(interval), nest$key[1L]),
          call. = FALSE)
   }
   if (identical(what, "response") && !identical(interval, "prediction")) {
-    stop(paste0("The response is predicted with interval = \"prediction\": ",
+    stop(paste0("The response is predicted with interval = prediction_interval(): ",
                 "it has a\n  distribution, not a single value ",
                 "to report."), call. = FALSE)
   }
   if (identical(interval, "prediction") && !identical(what, "response")) {
-    stop(paste0("interval = \"prediction\" is an interval for a new ",
+    stop(paste0("prediction_interval() is an interval for a new ",
                 "observation of the\n  response: use what = ",
                 "\"response\". A parameter's interval for a new group\n",
-                "  is interval = \"group\"."), call. = FALSE)
+                "  is group_interval()."), call. = FALSE)
   }
   if (identical(interval, "group") && !nrow(aside)) {
-    stop(paste0("interval = \"group\" is the interval of a new group, which ",
+    stop(paste0("group_interval() is the interval of a new group, which ",
                 "needs a random\n  effect set aside: random = \"zero\" or ",
                 "\"marginal\"."), call. = FALSE)
   }
   if (!identical(interval, "confidence")) {
     if (S7::S7_inherits(object@spec@distrib,
                         distributions7::multivariate_distrib)) {
-      stop("interval = \"", interval, "\" is not available for a ",
+      stop(interval_call(interval), " is not available for a ",
            "multivariate family.", call. = FALSE)
     }
     if (length(statmod_structural(object@spec))) {
-      stop("interval = \"", interval, "\" is not available beside a ",
+      stop(interval_call(interval), " is not available beside a ",
            "structural term.", call. = FALSE)
     }
   }
@@ -602,22 +499,25 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     comps <- switch(predictive,
       averaged = predictive_mixture(
         object, spec, design, aside, ep$eta,
-        predictive_cov(object, spec, design, list(), ...)$fixed),
+        predictive_cov(object, spec, design, list(), vcov_type = vcov_type,
+                       ...)$fixed),
       plugin = predictive_mixture(object, spec, design, aside, ep$eta, NULL),
       bootstrap = predictive_bootstrap(object, spec, design, aside,
                                        as.integer(n_boot), boot_refit))
     return(predictive_response(spec, comps, level))
   }
   if (isTRUE(se)) {
-    su <- predict_se(object, spec, design, ep, level, ...)
+    su <- predict_se(object, spec, design, ep, level, vcov_type = vcov_type,
+                     ...)
     # A NEW GROUP'S PARAMETER varies around the typical group's by what its
     # effects add, z' Sigma_b z in its own equation, on top of the estimates'
     # own uncertainty
     # A NEW GROUP'S PARAMETER varies around the typical group's by what its
     # effects add, on top of the estimates' own uncertainty: its interval and
-    # standard deviation are those of h^-1(eta*), see group_interval()
+    # standard deviation are those of h^-1(eta*), see group_interval_ends()
     if (identical(interval, "group")) {
-      su <- group_interval(object, spec, design, aside, ep, su, level, ...)
+      su <- group_interval_ends(object, spec, design, aside, ep, su, level,
+                                vcov_type = vcov_type, ...)
     }
     # a marginal parameter is averaged over the effects: the fit and the ends
     # of the interval are the fixed part's carried through that average,
@@ -657,7 +557,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
         fitv <- random_marginal(spec, design, ep, mt, nodes, p,
                                 eta_node = eta_node)
         ms <- nested_marginal_se(object, pr, coef_node, eta_node, nodes$w, p,
-                                 fitv, level, ...)
+                                 fitv, level, vcov_type = vcov_type, ...)
         su[[p]][c("fit", "se", "lower", "upper")] <- ms
       }
     }
@@ -715,6 +615,16 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
 }
 S7::method(predict, StatmodFit) <- predict.StatmodFit
 
+#' The Call That Names an Interval Kind
+#'
+#' @param kind `"confidence"`, `"group"` or `"prediction"`.
+#' @return The constructor call as a string.
+#' @keywords internal
+interval_call <- function(kind) {
+  switch(kind, confidence = "confidence_interval()", group = "group_interval()",
+         prediction = "prediction_interval()")
+}
+
 #' The Equations That a Prediction Does Not Read
 #'
 #' @description
@@ -729,7 +639,7 @@ S7::method(predict, StatmodFit) <- predict.StatmodFit
 #' `accel ~ s(times) | sigma ~ z`, `predict(fit, what = "mu", newdata)` does
 #' not need `z`. Every equation is built where `what` is not the name of a
 #' parameter (`"parameter"`, `"link"`, `"link:<parameter>"` or a moment),
-#' where `interval` is not `"confidence"`, or where the model carries a
+#' where `interval` is not [confidence_interval()], or where the model carries a
 #' structural term, whose recursion reads the predictors of every equation.
 #'
 #' @param object A [StatmodFit()].

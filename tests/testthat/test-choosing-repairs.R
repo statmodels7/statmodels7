@@ -104,13 +104,13 @@ test_that("a Newton search that did not settle is run again by lbfgs", {
   # Fisher scoring named explicitly
   f <- statmod(form, distrib = distributions7::student_t1_distrib(),
                data = gagurine,
-               inner_optimizer = iwls(maxit = 100, hessian = "expected"))
+               inner_optimizer = iwls(maxit = 100), inner_information = expected_info())
   expect_true(inherits(f@methods$search, "optimizers7::Lbfgs"))
-  expect_gt(as.numeric(logLik(f, type = "marginal")), -817)
+  expect_gt(as.numeric(logLik(f, loglik_type = "marginal")), -817)
   expect_identical(statmod_certificate(f)$state, "boundary")
   # since 0.182.0 the default budget of 1000 lets Newton settle there itself
   g <- statmod(form, distrib = distributions7::student_t1_distrib(),
                data = gagurine)
-  expect_gt(as.numeric(logLik(g, type = "marginal")), -817)
+  expect_gt(as.numeric(logLik(g, loglik_type = "marginal")), -817)
   expect_identical(statmod_certificate(g)$state, "boundary")
 })

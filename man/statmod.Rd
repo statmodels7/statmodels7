@@ -11,6 +11,7 @@ statmod(
   weights = NULL,
   offsets = NULL,
   inner_optimizer = iwls(),
+  inner_information = auto_info(),
   outer_criterion = reml(),
   sparse_criterion = bic(),
   outer_optimizer = NULL,
@@ -42,11 +43,38 @@ constant rescaling of the weights, and the ML estimate does not.}
 parameter, each of length 1 or \eqn{n}. An offset written in the formula
 is added to the entry for the same parameter.}
 
-\item{inner_optimizer}{How the smooth block is fitted: \code{\link[=iwls]{iwls()}} or
-an \pkg{optimizers7} optimizer. Beside a structural term of the filter
-shape, the coefficients and the term's parameters are fitted in one
-system, for which \code{\link[=iwls]{iwls()}} stands for the system's own default optimizer
-and an \pkg{optimizers7} optimizer is used as given.}
+\item{inner_optimizer}{How the smooth block is fitted: \code{\link[=iwls]{iwls()}} (the
+default) or an \pkg{optimizers7} optimizer. Beside a structural term of
+the filter shape, the coefficients and the term's parameters are fitted in
+one system, for which \code{\link[=iwls]{iwls()}} stands for the system's own default
+optimizer and an \pkg{optimizers7} optimizer is used as given.}
+
+\item{inner_information}{The matrix of second derivatives that the inner fit
+uses, an object that inherits from \link[distributions7:Information]{distributions7::Information}:
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the observed Hessian),
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} (the Fisher information, whose \code{method}
+is \code{NULL} for the closed form of the family or \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}},
+or one of \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}
+and \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}; see
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}) or \code{\link[=auto_info]{auto_info()}} (the
+default), which is settled against the family. With \code{\link[=iwls]{iwls()}} the matrix
+is inverted at each step (Newton for the observed information, Fisher
+scoring for the expected one); with an \pkg{optimizers7} optimizer it is
+the Hessian that the optimizer receives, so that
+\code{inner_optimizer = optimizers7::newton()} with
+\code{inner_information = distributions7::expected_info()} takes the expected
+information. A named matrix is the only one that the inner fit uses.
+\code{\link[=auto_info]{auto_info()}} chooses the expected information where the family writes it
+exactly and at an acceptable cost, and the observed information
+otherwise; with \code{\link[=iwls]{iwls()}} it also lets the run change matrix and lets the
+expected information take a step that the observed one cannot (see
+\link{information_objects}). The fitted model records the settled object, and
+every later refit of the model (the folds of a cross-validation, the
+restricted fits of a test, the resampled fits of a bootstrap) reads the
+same one. A model with a structural term is fitted on the observed
+information whatever the object says. The outer criterion has its own
+\code{information} (see \code{\link[=reml]{reml()}}) and the standard errors have theirs (see
+\link{vcov_method}); the three choices are independent.}
 
 \item{outer_criterion}{How the smooth hyperparameters are estimated:
 \code{\link[=reml]{reml()}} (the default), \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}}, or \code{NULL} to hold
@@ -115,9 +143,8 @@ route can change where the work is large (the BLAS crossproduct against
 the compiled one, and the pivoted \code{qr()} against the compiled
 triangular factor), and the results then agree to rounding.}
 
-\item{...}{Not used. A named argument signals an error. \code{hyper} was
-removed from \code{statmod()}: a hyperparameter is held in the term that
-carries the penalty.}
+\item{...}{Not used. A named argument signals an error. A hyperparameter
+is held in the term that carries the penalty.}
 }
 \value{
 A \code{\link[=StatmodFit]{StatmodFit()}} object.

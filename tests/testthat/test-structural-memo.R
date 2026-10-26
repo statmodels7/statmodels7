@@ -61,7 +61,7 @@ test_that("a panel fit through the memo matches its own criterion identities", {
   fit <- statmod(y ~ x + gas(p = 1, q = 1, omega ~ random(~1 | id),
                              by = id, time = t),
                  distributions7::gaussian1_distrib(), d,
-                 outer_criterion = reml(hessian = "observed"))
+                 outer_criterion = reml(information = observed_info()))
   expect_true(is.finite(fit@criterion))
   # vcov reads the full information at the fitted point, which the memo
   # serves: it must be symmetric and finite

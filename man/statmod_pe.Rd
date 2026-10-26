@@ -4,7 +4,7 @@
 \alias{statmod_pe}
 \title{A Prediction-Error Criterion at Given Coefficients and Hyperparameters}
 \usage{
-statmod_pe(spec, design, coef, hyper, method, approx = "opg", active = NULL)
+statmod_pe(spec, design, coef, hyper, method, emethod = NULL, active = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -19,9 +19,11 @@ parameter.}
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}} of kind \code{"aic"} or \code{"bic"}, read for
 \code{hessian} and for \eqn{\kappa}.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form. The argument is read only when \code{method@hessian} is
-\code{"expected"}.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 
 \item{active}{Which coefficients are away from a kink, as
 \code{\link[=statmod_active]{statmod_active()}} reports them, or \code{NULL} if no penalty has one.}

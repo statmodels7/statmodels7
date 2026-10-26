@@ -8,9 +8,9 @@
   object,
   parm = NULL,
   level = 0.95,
-  type = c("bayesian", "frequentist", "unconditional"),
+  vcov_type = bayesian_vcov(),
   readable = TRUE,
-  test = c("wald", "lr", "score", "gradient"),
+  test = wald_test(),
   ...
 )
 }
@@ -23,19 +23,24 @@ them. With \code{readable = TRUE}, the name of a quantity is accepted as well.}
 
 \item{level}{The confidence level.}
 
-\item{type}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{"bayesian"}, \code{"frequentist"}
-or \code{"unconditional"}.}
+\item{vcov_type}{A \link{vcov_method} object, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}:
+\code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default), \code{\link[=frequentist_vcov]{frequentist_vcov()}} or
+\code{\link[=unconditional_vcov]{unconditional_vcov()}}. The conventions are compared at \link{vcov_method}.}
 
 \item{readable}{Whether to report the quantities in which the model is written
 (a term's own parameters under the names of the literature) and not the
 raw coordinates. The value is passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} and must be
-\code{FALSE} for the three restricted tests.}
+\code{FALSE} for a restricted test (\code{\link[=test_restricted]{test_restricted()}}).}
 
-\item{test}{The test whose acceptance region is the interval: \code{"wald"}, the
-default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, which \code{\link[=statmod_invert]{statmod_invert()}}
-inverts.}
+\item{test}{A \link{test_statistic} object, the test whose acceptance region is
+the interval. \code{\link[=wald_test]{wald_test()}} (the default) gives the interval that is
+symmetric about the estimate, from the variance matrix and with no refit.
+\code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} and \code{\link[=gradient_test]{gradient_test()}} are inverted by
+\code{\link[=statmod_invert]{statmod_invert()}} and cost a few dozen restricted refits per interval.
+The four are compared at \link{test_statistic}.}
 
-\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
+\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which signals an error for any
+argument that it does not take.}
 }
 \value{
 A data frame with the parameter, the term, the coefficient, the
@@ -61,10 +66,12 @@ quantity and mapped back, so that interval is not symmetric.
 The variance comes from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so the same three
 conventions apply, and a coefficient that a kinked penalty has set to zero
 has \code{NA} in place of an interval. For an interval around a penalized term,
-\code{type = "unconditional"} does not treat the smoothing parameter as known.
+\code{vcov_type = unconditional_vcov()} does not treat the smoothing parameter as
+known.
 }
 \section{Inverting a test instead}{
-The argument \code{test} selects the statistic whose acceptance region is the
+The argument \code{test} takes a \link{test_statistic} object (see there for the four
+statistics) and selects the statistic whose acceptance region is the
 interval. The Wald interval is the set of \eqn{b} that the Wald statistic
 does not reject, and it is symmetric by construction: that statistic is a
 parabola in \eqn{b}, since the curvature is read once at \eqn{\hat\beta}. The
@@ -89,10 +96,11 @@ of the fit and do not depend on \code{test}.
 A coefficient under a penalty that is twice differentiable (a smooth's own
 coordinates, a ridge, a random effect) is inverted like any other, and the
 interval is the credible one that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} gives for it under
-\code{type = "bayesian"}, conditional on the hyperparameters that the fit
+\code{vcov_type = bayesian_vcov()}, conditional on the hyperparameters that the fit
 reached. See \code{\link[=statmod_stat_at]{statmod_stat_at()}}.
 
-The three restricted tests (\code{"lr"}, \code{"score"} and \code{"gradient"}) need
+The three restricted tests (\code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} and
+\code{\link[=gradient_test]{gradient_test()}}, the ones for which \code{\link[=test_restricted]{test_restricted()}} is \code{TRUE}) need
 \code{readable = FALSE}, since a test is about one coefficient and a readable
 quantity is a function of several at once.
 }
@@ -104,12 +112,13 @@ dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 confint(fit)
 confint(fit, "sigma")
-confint(fit, "mu:x", test = "lr", readable = FALSE)
+confint(fit, parm = "mu:x", test = lr_test(), readable = FALSE)
 }
 \seealso{
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
-\code{\link[=statmod_test]{statmod_test()}}, which tests one coefficient against a value of its
-own, and \code{\link[=statmod_invert]{statmod_invert()}} and \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the two internal
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, \link{test_statistic},
+\link{vcov_method}, \code{\link[=statmod_test]{statmod_test()}}, which tests one coefficient against a
+value of its own, and \code{\link[=statmod_invert]{statmod_invert()}} and \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the two
+internal
 functions from which an inverted interval is built
 }
 \keyword{internal}
