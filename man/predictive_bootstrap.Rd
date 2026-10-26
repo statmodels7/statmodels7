@@ -14,7 +14,7 @@ in which the columns of the effects set aside are zero.}
 
 \item{aside}{The rows of \code{\link[=random_modes]{random_modes()}} that are not \code{"conditional"}.}
 
-\item{n_boot}{The number of replicas.}
+\item{n_boot}{The number of replicas, from \code{\link[=pred_bootstrap]{pred_bootstrap()}}.}
 
 \item{refit}{\code{"coefficients"} or \code{"full"}.}
 }
@@ -25,7 +25,7 @@ prior has no variance. The weights of the components add up to one.
 }
 \description{
 Returns the components of the predictive mixture that
-\code{\link[=predictive_response]{predictive_response()}} reads for \code{predictive = "bootstrap"}. There is one
+\code{\link[=predictive_response]{predictive_response()}} reads for \code{\link[=pred_bootstrap]{pred_bootstrap()}}. There is one
 component per replica, which is the fit refitted on a response simulated
 from the fitted model and read at the rows predicted with no estimation
 uncertainty of its own.
@@ -65,7 +65,7 @@ Each replica gives the component \eqn{(\hat\eta^*_b, C^*_b)}: its
 predictors at the rows predicted and the covariance that the effects set
 aside add, at its own hyperparameters. The interval is the mixture's, which
 is the parametric bootstrap predictive distribution of Harris (1989); the
-default \code{predictive = "averaged"} is its normal approximation, in which the
+default \code{\link[=pred_averaged]{pred_averaged()}} is its normal approximation, in which the
 sampling distribution of the estimates is replaced by \eqn{\mathrm{N}(\hat
 \beta, \widehat{V})}. A replica whose refit fails is left out, and the
 warning reports how many were.
@@ -75,8 +75,9 @@ set.seed(2)
 dd <- data.frame(x = runif(30))
 dd$y <- 1 + dd$x + rnorm(30, sd = 0.5)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-predict(fit, "response", data.frame(x = 0.5), interval = "prediction",
-        predictive = "bootstrap", n_boot = 20)
+predict(fit, what = "response", newdata = data.frame(x = 0.5),
+        interval = prediction_interval(
+          predictive = pred_bootstrap(n = 20)))
 
 }
 \references{

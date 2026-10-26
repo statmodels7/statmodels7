@@ -11,10 +11,7 @@
   se = FALSE,
   level = 0.95,
   random = "conditional",
-  interval = c("confidence", "group", "prediction"),
-  predictive = c("averaged", "plugin", "bootstrap"),
-  n_boot = 200L,
-  boot_refit = c("coefficients", "full"),
+  interval = confidence_interval(),
   ...
 )
 }
@@ -23,13 +20,13 @@
 
 \item{what}{What to predict: a parameter's name, optionally prefixed
 \code{"link:"}; a moment's name; \code{"parameter"} (the default) or \code{"link"}; or
-\code{"response"}, which requires \code{interval = "prediction"} and is the only
-value that this interval accepts. An unrecognized name signals an error
+\code{"response"}, which requires \code{interval = prediction_interval()} and is the
+only value that this interval accepts. An unrecognized name signals an error
 listing what is available.}
 
 \item{newdata}{A data frame, or \code{NULL} for the fitting data. It needs the
 variables of the equations that are read: where \code{what} names one
-parameter and \code{interval} is \code{"confidence"}, the variables that only the
+parameter and \code{interval} is \code{\link[=confidence_interval]{confidence_interval()}}, the variables that only the
 other equations use may be absent. It does not need the response, except
 that a moment or a prediction interval of a binomial fitted with
 \code{cbind()} reads the number of trials from it. For a model with a
@@ -39,14 +36,14 @@ with no rows signals an error.}
 
 \item{se}{\code{TRUE} to report the standard error and an interval as well.
 The default is \code{FALSE}. A moment has no standard error, and \code{se = TRUE}
-with a moment signals an error. \code{interval = "group"} sets it to \code{TRUE}, and
-\code{interval = "prediction"} does not read it, because its result carries
+with a moment signals an error. \code{\link[=group_interval]{group_interval()}} sets it to \code{TRUE}, and
+\code{\link[=prediction_interval]{prediction_interval()}} does not read it, because its result carries
 its own \code{se} column.}
 
 \item{level}{The interval's level, \code{0.95} by default, a single number
 strictly between 0 and 1. It is read wherever an interval is returned:
-with \code{se = TRUE}, with \code{interval = "group"} and with
-\code{interval = "prediction"}, which gives its interval without \code{se}.}
+with \code{se = TRUE}, with \code{\link[=group_interval]{group_interval()}} and with
+\code{\link[=prediction_interval]{prediction_interval()}}, which gives its interval without \code{se}.}
 
 \item{random}{How a \code{\link[modelterms7:random]{modelterms7::random()}} term is read:
 \code{"conditional"} (the default) with each group's own estimated effect, so
@@ -58,26 +55,21 @@ term; a character vector named by the terms' keys sets the mode term by
 term, and the terms that it does not name stay conditional. See the section
 on new groups.}
 
-\item{interval}{\code{"confidence"} (the default), \code{"group"} or
-\code{"prediction"}. See the section on intervals.}
-
-\item{predictive}{With \code{interval = "prediction"}, the quantities over
-which the family is averaged: \code{"averaged"} (the default), \code{"plugin"} or
-\code{"bootstrap"}.
-See the section on the predictive distribution.}
-
-\item{n_boot}{The number of bootstrap replicas, \code{200} by default. It is
-read only where \code{predictive = "bootstrap"}.}
-
-\item{boot_refit}{\code{"coefficients"} (the default), refitting each replica
-at the fit's hyperparameters, or \code{"full"}, choosing them again. It is
-read only where \code{predictive = "bootstrap"}.}
+\item{interval}{An interval object that selects the uncertainty that the
+interval describes. \code{\link[=confidence_interval]{confidence_interval()}} (the default) gives the
+interval of the parameter, the predictor or the moment from the
+uncertainty of the estimates; \code{\link[=group_interval]{group_interval()}} gives the interval of the
+parameter of a new group; \code{\link[=prediction_interval]{prediction_interval()}} gives the interval of a
+new observation of the response, and takes the predictive distribution as
+its argument (\code{predictive = pred_averaged()}, \code{\link[=pred_plugin]{pred_plugin()}} or
+\code{\link[=pred_bootstrap]{pred_bootstrap()}}). A character string is rejected with an error. See
+\link{predict_intervals} and \link{predictive_distributions}.}
 
 \item{...}{Only \code{type}, the variance type of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: the
 Bayesian variance, the frequentist one or the unconditional one, which
 also accounts for the estimated smoothing parameters. It is read where
-\code{se} is \code{TRUE}, with \code{interval = "group"}, and with
-\code{interval = "prediction"} and \code{predictive = "averaged"}, and it signals an
+\code{se} is \code{TRUE}, with \code{\link[=group_interval]{group_interval()}}, and with
+\code{\link[=prediction_interval]{prediction_interval()}} holding \code{\link[=pred_averaged]{pred_averaged()}}, and it signals an
 error elsewhere. Any other argument signals an error that names it. The
 unconditional variance differs most from the others in a band around a
 penalized term, since a smoothing parameter moves the fitted values.}
@@ -93,7 +85,7 @@ With \code{se = TRUE}, a data frame with columns \code{fit}, \code{se}, \code{lo
 named list of such data frames, one per parameter. \code{se} is \code{NA} for an
 observation whose predictor reads a coefficient that has no variance.
 
-With \code{interval = "prediction"}, a data frame with columns \code{fit} (the
+With \code{\link[=prediction_interval]{prediction_interval()}}, a data frame with columns \code{fit} (the
 predictive median), \code{se} (the predictive standard deviation, \code{NA} where
 it does not exist), \code{lower} and \code{upper}, all \code{NA} for a row whose
 predictor reads a coefficient that has no variance.
@@ -122,7 +114,7 @@ with which the response is written.}
 the default.}
 \item{\code{"link"}}{every linear predictor at once, before the inverse
 link.}
-\item{\code{"response"}}{the response itself, with \code{interval = "prediction"}, which it requires: its median and the ends of an
+\item{\code{"response"}}{the response itself, with \code{interval = prediction_interval()}, which it requires: its median and the ends of an
 interval in which a new observation falls. See the section on
 intervals.}
 }
@@ -147,7 +139,7 @@ terms are evaluated and does not change how they are built. Offsets are
 evaluated again at the new rows.
 
 The new frame needs the variables of the equations that are read. Where
-\code{what} names one parameter and \code{interval} is \code{"confidence"}, the other
+\code{what} names one parameter and \code{interval} is \code{\link[=confidence_interval]{confidence_interval()}}, the other
 equations are not read, and the variables that only they use may be absent
 from \code{newdata}. The response is not needed, except that a binomial fitted
 with \code{cbind()} reads the number of trials from it for a moment or a
@@ -229,109 +221,26 @@ signals an error. A predictor (\code{"link"}) is the average of the predictors
 at the nodes. The standard error of a marginal parameter is the delta method of
 that average, whose gradient sums the design at each node, and its
 interval is the delta method's on the link scale carried through the
-link. \code{interval = "group"} and \code{"prediction"} are not available for such
+link. \code{\link[=group_interval]{group_interval()}} and \code{\link[=prediction_interval]{prediction_interval()}} are not available for such
 an effect, and a standard error is not available where an average is taken
 over effects of both kinds.
 }
 
-\section{Three intervals}{
-The value of \code{interval} selects the uncertainty that the interval describes.
-\describe{
-\item{\code{"confidence"}}{the default, with \code{se = TRUE}: only the uncertainty
-of the estimates. For a term set aside by \code{random} it is the
-interval of the typical group's value, and the value of a new group
-falls outside that interval far more often than the level implies.}
-\item{\code{"group"}}{the interval of a new group's parameter, with \code{random = "zero"} or \code{"marginal"}. A new group's parameter is
-\eqn{\theta^* = h^{-1}(\eta^*)}, with \eqn{\eta^*} the typical
-group's predictor plus its estimation error plus \eqn{z^\top b}, the
-effects of a new group drawn from the prior, in the parameter's own
-equation, so a random effect on \code{sigma} widens the interval for
-\code{sigma}. Under Gaussian priors the variance of \eqn{\eta^*} is
-\eqn{se^2 + z^\top \Sigma_b z}, the standard error that glmmTMB
-reports at a new level on the link scale. The interval's ends are
-quantiles of
-\eqn{\eta^*} carried through the inverse link, which is monotone, so
-they are the quantiles of \eqn{\theta^*} under any link; under a prior
-that is not Gaussian they are the quantiles of the mixture of
-\code{\link[=predictive_mixture]{predictive_mixture()}}. Where the interval of \eqn{\eta^*} leaves
-the domain of the link (a square root link and a negative predictor),
-the ends are \code{NA} at that row, with a warning. The standard error is
-the standard deviation of \eqn{\theta^*}, not the delta method, and is
-\code{NA} where it is not
-known to exist (see \code{\link[=group_interval]{group_interval()}}). The fit is the typical
-group's value under \code{random = "zero"} and the population average
-under \code{"marginal"}. Implies \code{se = TRUE}.}
-\item{\code{"prediction"}}{an interval for a new observation of the response,
-with \code{what = "response"}. The family is averaged over the predictors of
-every parameter, which are taken to be jointly Gaussian (correlated
-across equations where a label ties them). The interval's ends are
-quantiles of that average, and the fit is its median, which every
-family has, so the family does not need a location parameter. \code{se} is
-the standard deviation of the average, and is \code{NA} where the family's
-variance does not exist. For a discrete family the ends are values of
-the support, so the coverage is at least the level rather than equal
-to it. Effects read \code{"conditional"} enter with their own estimates, so
-this is also the interval of a new observation of a group that is
-present in the fitting data. The quantities over which the average is
-taken are set by \code{predictive}, described below.}
-}
+\section{Intervals and predictive distributions}{
+The object given to \code{interval} selects the uncertainty that the interval
+describes: \code{\link[=confidence_interval]{confidence_interval()}} the estimates alone, \code{\link[=group_interval]{group_interval()}}
+the estimates and the effects of a new group, and \code{\link[=prediction_interval]{prediction_interval()}} a
+new observation of the response. The topic \link{predict_intervals} compares
+the three and gives the formulas. A prediction interval holds a predictive
+object that sets how the estimation uncertainty enters: \code{\link[=pred_averaged]{pred_averaged()}}
+(the default), \code{\link[=pred_plugin]{pred_plugin()}} or \code{\link[=pred_bootstrap]{pred_bootstrap()}}. The topic
+\link{predictive_distributions} compares them and states what each costs.
 
-\code{interval = "group"} and \code{interval = "prediction"} are rejected for a
+\code{\link[=group_interval]{group_interval()}} and \code{\link[=prediction_interval]{prediction_interval()}} are rejected for a
 multivariate family and for a model with a structural term. The structural
 term also rejects \code{random = "zero"} and \code{random = "marginal"}: its level is
 a recursion read at the predictor, so setting a random effect aside would
 move the recursion as well.
-}
-
-\section{The predictive distribution}{
-A new observation varies for three reasons: the family itself, the effects
-of a new group where \code{random} sets them aside, and the error in the
-estimates. The first two are random in the model and always enter. The
-third enters according to \code{predictive}, for every parameter alike, whether
-the family has one parameter (a Poisson) or several, and whether or not a
-parameter has covariates.
-\describe{
-\item{\code{"averaged"}}{the default. The family is averaged over the
-predictors at the fit's estimates with the covariance of the estimates
-from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} plus the covariance that the effects add.
-This is the normal approximation to the parametric bootstrap
-predictive distribution of Harris (1989): the estimates are averaged
-over their approximate sampling distribution, centered at the fit. For
-a Gaussian with a constant \eqn{\sigma = e^{\gamma_0}},
-\eqn{\hat\gamma_0} of variance \eqn{v}, the variance of a new observation is
-\eqn{\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}}, where
-the last term is the average of \eqn{\hat\sigma^{*2}} over that
-distribution.}
-\item{\code{"plugin"}}{the family at the estimates, averaged only over the
-effects: the estimative interval, which ignores the error in the
-estimates and so covers less than the level in a small sample.}
-\item{\code{"bootstrap"}}{the parametric bootstrap predictive distribution
-itself: \code{n_boot} responses are simulated from the fit with the random
-effects drawn afresh, each response is refitted, and the family at each
-refit is averaged over the effects. \code{boot_refit = "coefficients"}
-refits at the fit's hyperparameters; \code{"full"} chooses them again on
-every replica, so their uncertainty enters too, at the cost of a whole
-fit each. It is
-rejected for a model with a block that moves with its coefficients
-(\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:jseg]{modelterms7::jseg()}},
-\code{\link[modelterms7:nl]{modelterms7::nl()}}), for a response that is not one number per
-observation, and, with \code{boot_refit = "full"}, for a cross-validated
-criterion. See \code{\link[=predictive_bootstrap]{predictive_bootstrap()}}.}
-}
-The interval for a new group (\code{interval = "group"}) is conditional on the
-covariance that the fit estimated, and so is the interval for a new
-observation, so the uncertainty of the hyperparameters is not propagated.
-The exception is \code{predictive = "bootstrap"} with \code{boot_refit = "full"},
-where the hyperparameters are chosen again on every replica.
-
-Under a prior that is not Gaussian, both \code{interval = "group"} and
-\code{interval = "prediction"} read the quantiles of the prior: a Student t
-prior as a scale mixture of Gaussians; a single univariate prior of
-another family, where it is the only prior that is not Gaussian, on
-quantile nodes, which do not depend on the seed; and any other combination
-of priors by Monte Carlo, which does (see \code{\link[=predictive_mixture]{predictive_mixture()}}). A term
-that shares a label with an effect read with its own estimate, or with one
-written inside a subformula, is rejected.
 
 A forecast's standard error, with \code{se = TRUE}, is only the uncertainty of
 the estimated parameters, carried by the delta method through the
@@ -378,10 +287,12 @@ predict(fg, "mu", new, random = "marginal")
 
 # The calls return the interval of a new group's mean and of a new count
 # from it.
-predict(fg, "mu", new, random = "zero", interval = "group")
-predict(fg, "response", new, random = "zero", interval = "prediction",
-        predictive = "plugin")
-predict(fg, "response", new, random = "zero", interval = "prediction")
+predict(fg, what = "mu", newdata = new, random = "zero",
+        interval = group_interval())
+predict(fg, what = "response", newdata = new, random = "zero",
+        interval = prediction_interval(predictive = pred_plugin()))
+predict(fg, what = "response", newdata = new, random = "zero",
+        interval = prediction_interval())
 
 # A name that the family does not have is rejected, and the message lists
 # what is available.

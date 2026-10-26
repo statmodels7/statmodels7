@@ -5,7 +5,7 @@ NULL
 #'
 #' @description
 #' Returns the components of the predictive mixture that
-#' [predictive_response()] reads for `predictive = "bootstrap"`. There is one
+#' [predictive_response()] reads for [pred_bootstrap()]. There is one
 #' component per replica, which is the fit refitted on a response simulated
 #' from the fitted model and read at the rows predicted with no estimation
 #' uncertainty of its own.
@@ -45,7 +45,7 @@ NULL
 #' predictors at the rows predicted and the covariance that the effects set
 #' aside add, at its own hyperparameters. The interval is the mixture's, which
 #' is the parametric bootstrap predictive distribution of Harris (1989); the
-#' default `predictive = "averaged"` is its normal approximation, in which the
+#' default [pred_averaged()] is its normal approximation, in which the
 #' sampling distribution of the estimates is replaced by \eqn{\mathrm{N}(\hat
 #' \beta, \widehat{V})}. A replica whose refit fails is left out, and the
 #' warning reports how many were.
@@ -54,7 +54,7 @@ NULL
 #' @param spec,design The specification and design at the rows predicted,
 #'   in which the columns of the effects set aside are zero.
 #' @param aside The rows of [random_modes()] that are not `"conditional"`.
-#' @param n_boot The number of replicas.
+#' @param n_boot The number of replicas, from [pred_bootstrap()].
 #' @param refit `"coefficients"` or `"full"`.
 #'
 #' @return A list of components, each a list with `eta`, `C` and `weight`.
@@ -72,36 +72,37 @@ NULL
 #' dd <- data.frame(x = runif(30))
 #' dd$y <- 1 + dd$x + rnorm(30, sd = 0.5)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' predict(fit, "response", data.frame(x = 0.5), interval = "prediction",
-#'         predictive = "bootstrap", n_boot = 20)
+#' predict(fit, what = "response", newdata = data.frame(x = 0.5),
+#'         interval = prediction_interval(
+#'           predictive = pred_bootstrap(n = 20)))
 #'
 #' @keywords internal
 predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
   spec0 <- object@spec
   design0 <- statmod_design(spec0)
   if (length(attr(design0, "refresh"))) {
-    stop(paste0("predictive = \"bootstrap\" is not available for a term ",
+    stop(paste0("pred_bootstrap() is not available for a term ",
                 "whose block moves with\n  its coefficients (seg(), jump(), ",
                 "jseg(), nl()): a replica would refit\n  its break-points ",
                 "or its nonlinear parameters from where the fit left them,\n",
-                "  which is a different estimator. predictive = \"averaged\" ",
+                "  which is a different estimator. pred_averaged() ",
                 "is available."), call. = FALSE)
   }
   y0 <- spec0@response
   if (!is.numeric(y0) || !is.null(dim(y0)) ||
       length(y0) != spec0@n_obs) {
-    stop(paste0("predictive = \"bootstrap\" simulates the response, and ",
+    stop(paste0("pred_bootstrap() simulates the response, and ",
                 "this response is not\n  one number per observation. ",
-                "predictive = \"averaged\" is available."), call. = FALSE)
+                "pred_averaged() is available."), call. = FALSE)
   }
   sm <- object@methods
   is_cv <- function(m) !is.null(m) && identical(m@kind, "cv")
   if (identical(refit, "full") &&
       (is_cv(sm$outer) || is_cv(sm$sparse_criterion))) {
-    stop(paste0("With boot_refit = \"full\" the hyperparameters are chosen ",
+    stop(paste0("With refit = \"full\" the hyperparameters are chosen ",
                 "again on every replica, and\n  a cross-validated criterion ",
                 "needs the data's folds, which a fit does not\n  keep. ",
-                "boot_refit = \"coefficients\" holds them at the fit's ",
+                "refit = \"coefficients\" holds them at the fit's ",
                 "values."), call. = FALSE)
   }
   draw <- bootstrap_simulator(object, spec0, design0, aside)

@@ -84,6 +84,7 @@ Collate:
     'boot_restart.R'
     'breakpoint_test.R'
     'conflicts.R'
+    'predict_objects.R'
     'report.R'
     'predict.R'
     'inference.R'
