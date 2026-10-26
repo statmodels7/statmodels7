@@ -10,7 +10,7 @@ test_that("the criterion is the Laplace formula, assembled independently", {
   # the observed information is asked for so that numDeriv's Hessian of the
   # penalized objective is the same matrix the criterion uses
   fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds,
-                 outer_criterion = reml(hessian = "observed", marginal = "none"))
+                 outer_criterion = reml(information = observed_info(), marginal = "none"))
   spec <- fit@spec
   design <- statmod_design(spec)
   obj <- statmod_objective(spec, fit@hyper, design, expected = FALSE)
@@ -23,7 +23,7 @@ test_that("the criterion is the Laplace formula, assembled independently", {
     determinant(M, logarithm = TRUE)$modulus[[1L]] / 2
 
   m <- statmod_marginal(spec, design, fit@coefficients, fit@hyper,
-                        reml(hessian = "observed", marginal = "none"))
+                        reml(information = observed_info(), marginal = "none"))
   expect_equal(m$value, as.numeric(by_hand), tolerance = 1e-5)
   expect_equal(m$value, fit@criterion, tolerance = 1e-8)
   expect_identical(m$q, length(b))
@@ -60,7 +60,7 @@ test_that("REML is Wood's criterion, reached by the other route", {
   # one the reference below builds, rather than the default, which is the
   # observed one since it buys the exact outer gradient
   m <- statmod_marginal(spec, design, fit@coefficients, fit@hyper,
-                        reml("expected"))
+                        reml(information = expected_info()))
   H <- statmod_information_at(spec, fit@coefficients, design, TRUE)
   S <- statmod_penalty_at(spec, fit@coefficients, fit@hyper, design, "hessian")
   logdet <- determinant(H + S, logarithm = TRUE)$modulus[[1L]]
@@ -271,7 +271,7 @@ test_that("an unavailable point is a barrier the search steps back from", {
   beta <- statmodels7:::statmod_start(spec, design, obj, NULL)
 
   res <- statmodels7:::outer_fit(spec, design, blocks, hyper, iwls(),
-                                 reml(), NULL, beta, "bartlett", 100L, 1e-6,
+                                 reml(), NULL, beta, distributions7::expect_bartlett(), 100L, 1e-6,
                                  statmodels7:::verbosity(0))
   expect_true(is.finite(res$criterion))
   # the search reports which optimizer ran, defaults included
@@ -378,9 +378,9 @@ test_that("a hyperparameter estimated by REML carries a standard error", {
     hy <- eta_to_hyper(e, idx, fit@hyper)
     r <- statmod_alternate(sp, de, blk, hy, iwls(),
                            unlist(fit@coefficients, use.names = FALSE),
-                           TRUE, "bartlett", 200L, 1e-6, verbosity(0))
+                           TRUE, distributions7::expect_bartlett(), 200L, 1e-6, verbosity(0))
     statmod_marginal(sp, de, r$obj$split(r$par), hy, fit@methods$outer,
-                     "bartlett", basis)$value
+                     distributions7::expect_bartlett(), basis)$value
   }
   h <- 0.05
   H <- (crit(eta0 - h) - 2 * crit(eta0) + crit(eta0 + h)) / h^2

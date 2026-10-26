@@ -33,7 +33,7 @@
 #'   [statmod_marginal_hess()]
 #'
 #' @keywords internal
-outer_context <- function(spec, design, coef, hyper, approx = "opg") {
+outer_context <- function(spec, design, coef, hyper, approx = distributions7::expect_opg()) {
   e <- new.env(parent = emptyenv())
   e$spec <- spec
   e$design <- design
@@ -89,7 +89,7 @@ ctx_usable <- function(ctx, coef, hyper) {
 #'
 #' @keywords internal
 ctx_information <- function(ctx, spec, design, coef, hyper, expected,
-                            approx = "opg") {
+                            approx = distributions7::expect_opg()) {
   if (!ctx_usable(ctx, coef, hyper)) {
     return(statmod_information_at(spec, coef, design, expected, approx))
   }
@@ -169,7 +169,8 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
 #' @param expected Whether \eqn{H} is the expected information, as the
-#'   criterion carries under `reml(hessian = "expected")`, or the observed one.
+#'   criterion carries under `reml(information = expected_info())`, or the observed
+#'   one.
 #'   The two give different matrices and keep separate cache entries.
 #' @param laplace Whether the matrix is the criterion's, which leaves out the
 #'   kinked coordinates, or the mode's.
@@ -390,7 +391,7 @@ criterion_resolution <- function(st, spec, design, method, criterion_at) {
   }
   if (!all(is.finite(st$score))) return(NA_real_)
   st$score <- free_of_kinks(st$score, spec, design, st$cf)
-  expected <- identical(method@hessian, "expected")
+  expected <- info_expected(method@hessian)
   pen <- ctx_penalized(st$ctx, spec, design, st$cf, st$hy, expected)
   if (is.null(pen)) return(NA_real_)
   db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% st$score),
@@ -620,7 +621,7 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
 #' @keywords internal
 ctx_kmove <- function(ctx, spec, design, coef, hyper, method) {
   params <- spec@distrib@params
-  if (!identical(method@hessian, "expected")) {
+  if (!info_expected(method@hessian)) {
     d3 <- ctx_deriv(ctx, spec, design, coef, hyper, 3L)
     keys <- names(d3)
     return(list(deriv = d3,
@@ -687,11 +688,12 @@ ctx_kmove2 <- function(ctx, spec, design, coef, hyper) {
 #' @param ctx A context, or `NULL`.
 #'
 #' @return A single string: the approximation that the context carries, or
-#'   `"opg"` where `ctx` is `NULL` or carries none.
+#'   [distributions7::expect_opg()] where `ctx` is `NULL` or carries none.
 #'
 #' @keywords internal
 ctx_approx <- function(ctx) {
-  if (is.null(ctx) || is.null(ctx$approx)) "opg" else ctx$approx
+  if (is.null(ctx) || is.null(ctx$approx)) distributions7::expect_opg()
+  else ctx$approx
 }
 
 

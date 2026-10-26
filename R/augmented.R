@@ -102,7 +102,8 @@ chol_blocks <- function(Om) {
 #'   negated observed Hessian.
 #' @param approx How the expected information is approximated for a family
 #'   that has no closed form, passed through to \pkg{distributions7}:
-#'   `"opg"` (the default), `"bartlett"`, `"integrate"` or `"mc"`. It is
+#'   as an object that inherits from [distributions7::ExpectApprox], with
+#'   [distributions7::expect_opg()] as the default. It is
 #'   ignored when `expected` is `FALSE` or when the family computes its expected
 #'   information exactly.
 #' @param H The family's link-scale second derivatives, as
@@ -116,7 +117,7 @@ chol_blocks <- function(Om) {
 #'   [statmod_information_at()] for the assembled \eqn{Z'\Omega Z}.
 #'
 #' @keywords internal
-info_blocks <- function(spec, theta, expected = TRUE, approx = "opg",
+info_blocks <- function(spec, theta, expected = TRUE, approx = distributions7::expect_opg(),
                         H = NULL) {
   params <- spec@distrib@params
   K <- length(params)

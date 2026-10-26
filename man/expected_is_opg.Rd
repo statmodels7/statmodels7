@@ -9,7 +9,8 @@ expected_is_opg(distrib, approx)
 \arguments{
 \item{distrib}{A distributions7 family.}
 
-\item{approx}{The approximation, a string.}
+\item{approx}{The approximation, an object that inherits from
+\link[distributions7:ExpectApprox]{distributions7::ExpectApprox}.}
 }
 \value{
 A single logical.
@@ -25,7 +26,8 @@ family written later is covered. The probe draws two distinct responses at
 one parameter value and compares the two answers. A family that
 \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} reports as writing its
 information out is not probed, and the probe is not run for any \code{approx}
-other than \code{"opg"}, the only strategy that reads the response. For a
+other than \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the only strategy that reads the
+response. For a
 truncated family, the predicate returns \code{FALSE} although the expected
 information is a quadrature that does not depend on the response, so this
 function also returns \code{FALSE}, and the answer is determined by the probe and

@@ -31,12 +31,12 @@ fitted_pieces <- function(fit) {
       sst$held[[k]] <- fit@structural[[k]]$held
     }
   }
-  obj <- statmod_objective(sp, fit@hyper, des, FALSE, "bartlett")
+  obj <- statmod_objective(sp, fit@hyper, des, FALSE, distributions7::expect_bartlett())
   list(spec = sp, des = des, obj = obj, b = obj$stack(fit@coefficients))
 }
 
 read_at <- function(p, fit, b = p$b) {
-  alternation_readings(p$spec, p$des, p$obj, b, fit@hyper, FALSE, "bartlett")
+  alternation_readings(p$spec, p$des, p$obj, b, fit@hyper, FALSE, distributions7::expect_bartlett())
 }
 
 test_that("a lasso beside a filter reports convergence at its KKT point", {
@@ -68,7 +68,7 @@ test_that("the readings refuse a point that is not the answer", {
   b2[j] <- 0
   expect_gt(read_at(p, fit, b2)[["kkt"]], 100 * mode_error_limit())
   expect_false(alternation_settled(p$spec, p$des, p$obj, b2, fit@hyper,
-                                   FALSE, "bartlett"))
+                                   FALSE, distributions7::expect_bartlett()))
 })
 
 test_that("a mixture over latent states is read on the joint vector", {
@@ -115,7 +115,7 @@ test_that("either reading above the limit is enough to refuse", {
   settled <- function(mode, kkt) {
     testthat::local_mocked_bindings(
       alternation_readings = function(...) c(mode = mode, kkt = kkt))
-    alternation_settled(NULL, NULL, NULL, NULL, NULL, FALSE, "bartlett")
+    alternation_settled(NULL, NULL, NULL, NULL, NULL, FALSE, distributions7::expect_bartlett())
   }
   expect_true(settled(0, NA))
   expect_true(settled(lim / 2, lim / 2))

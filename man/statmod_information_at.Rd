@@ -9,7 +9,7 @@ statmod_information_at(
   coef,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = "opg",
+  approx = distributions7::expect_opg(),
   H = NULL,
   index = NULL
 )
@@ -25,8 +25,9 @@ statmod_information_at(
 negated observed Hessian.}
 
 \item{approx}{How the expected information is approximated for a family
-with no closed form: \code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"}
-or \code{"mc"}.}
+with no closed form, an object that inherits from
+\link[distributions7:ExpectApprox]{distributions7::ExpectApprox} (\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} by
+default).}
 
 \item{H}{The second-derivative components at this point, as
 \code{\link[=statmod_family_hessian]{statmod_family_hessian()}} returns them, or \code{NULL} to compute them here.

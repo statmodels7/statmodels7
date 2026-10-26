@@ -160,7 +160,7 @@ test_that("a term of the likelihood shape is refused and says what it costs", {
   des <- statmod_design(fit@spec)
   idx <- outer_hyper_index(fit@spec, statmod_blocks(fit@spec, des))
   expect_false(outer_gradient_ok(fit@spec, des, idx, reml(), 1L))
-  expect_false(outer_gradient_ok(fit@spec, des, idx, reml("expected"), 1L))
+  expect_false(outer_gradient_ok(fit@spec, des, idx, reml(information = expected_info()), 1L))
   expect_identical(class(fit@methods$search)[[1L]], "optimizers7::Brent")
   ce <- statmod_certificate(fit)
   expect_identical(ce$curvature, "differenced criterion")

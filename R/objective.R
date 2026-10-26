@@ -493,7 +493,7 @@ statmod_structural_score <- function(spec, coef,
 #'
 #' @keywords internal
 statmod_family_hessian <- function(spec, theta, expected = TRUE,
-                                   approx = "opg") {
+                                   approx = distributions7::expect_opg()) {
   if (expected) {
     distributions7::distrib_expected_hessian(spec@distrib, spec@response,
                                              theta, scale = "link",
@@ -543,8 +543,9 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   negated observed Hessian.
 #' @param approx How the expected information is approximated for a family
-#'   with no closed form: `"opg"` (the default), `"bartlett"`, `"integrate"`
-#'   or `"mc"`.
+#'   with no closed form, an object that inherits from
+#'   [distributions7::ExpectApprox] ([distributions7::expect_opg()] by
+#'   default).
 #'
 #' @return A symmetric `p x p` matrix over the stacked coefficients, where `p`
 #'   is their total count across the equations. The matrix is a \pkg{Matrix}
@@ -564,7 +565,7 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #'
 #' @keywords internal
 statmod_information_at <- function(spec, coef, design = statmod_design(spec),
-                                   expected = TRUE, approx = "opg",
+                                   expected = TRUE, approx = distributions7::expect_opg(),
                                    H = NULL, index = NULL) {
   params <- spec@distrib@params
   ev <- statmod_eta(spec, design, coef)
@@ -1613,7 +1614,7 @@ working_response_variance <- function(spec) {
 #'
 #' @keywords internal
 statmod_objective <- function(spec, hyper, design = statmod_design(spec),
-                              expected = TRUE, approx = "opg") {
+                              expected = TRUE, approx = distributions7::expect_opg()) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar

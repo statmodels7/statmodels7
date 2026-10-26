@@ -4,7 +4,12 @@
 \alias{statmod_family_hessian}
 \title{The Family's Second-Derivative Components at a Point}
 \usage{
-statmod_family_hessian(spec, theta, expected = TRUE, approx = "opg")
+statmod_family_hessian(
+  spec,
+  theta,
+  expected = TRUE,
+  approx = distributions7::expect_opg()
+)
 }
 \arguments{
 \item{spec}{The specification, read for the distribution, the response and

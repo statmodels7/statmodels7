@@ -15,10 +15,11 @@ outer_resolve(method, distrib)
 \code{method}, in which \code{hessian} is settled.
 }
 \description{
-Replaces \code{hessian = "auto"} by the information that the criterion uses for
-\code{distrib}: \code{"expected"} for a Student t, a skew t or a Cauchy response,
-wrapped or not, and \code{"observed"} for every other family. Any other value
-is returned unchanged.
+Replaces \code{\link[=auto_info]{auto_info()}} by the information that the criterion uses for
+\code{distrib}: \code{\link[=expected_info]{expected_info()}} for a Student t, a skew t or a Cauchy response,
+wrapped or not, and \code{\link[=observed_info]{observed_info()}} for every other family. The
+approximation that the \code{\link[=auto_info]{auto_info()}} object carries passes to the
+\code{\link[=expected_info]{expected_info()}} object. Any other information is returned unchanged.
 }
 \details{
 The log-density of these families is not concave in the location, so

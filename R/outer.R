@@ -31,15 +31,17 @@ NULL
 #' One class serves every criterion, so a property that a given criterion does
 #' not read is present and unused. The class validates the values of its
 #' properties. The constructors [reml()], [ml()], [aic()], [bic()] and [cv()]
-#' also match `hessian` and `rule` against their choices and check `k` and
-#' `marginal`.
+#' also check `information`, match `rule` against its choices and check `k`
+#' and `marginal`.
 #'
 #' @param kind `"reml"`, `"ml"`, `"aic"`, `"bic"` or `"cv"`. Determines which
 #'   criterion is evaluated and, through [outer_minimize()], whether it is
 #'   made small or large.
-#' @param hessian `"auto"`, `"expected"` or `"observed"`. Which information
-#'   enters the Laplace determinant. [statmod()] settles `"auto"` against the
-#'   family through [outer_resolve()].
+#' @param hessian An object that inherits from [Information]: [observed_info()],
+#'   [expected_info()] or [auto_info()]. Which information enters the Laplace
+#'   determinant. [statmod()] settles [auto_info()] against the family through
+#'   [outer_resolve()]. The constructors set it from their argument
+#'   `information`.
 #' @param k The price of one effective degree of freedom, for a
 #'   prediction-error criterion. It is `NA_real_` for [bic()], which resolves
 #'   it to \eqn{\log n} at fit time, and for the criteria that do not charge
@@ -62,7 +64,7 @@ NULL
 #'
 #' @examples
 #' reml()
-#' ml(hessian = "observed")
+#' ml(information = observed_info())
 #' aic()
 #' cv(nfolds = 5)
 #'
@@ -73,7 +75,7 @@ NULL
 OuterMethod <- S7::new_class("OuterMethod",
   properties = list(
     kind = S7::class_character,
-    hessian = S7::class_character,
+    hessian = Information,
     k = S7::class_numeric,
     nfolds = S7::class_numeric,
     rule = S7::class_character,
@@ -86,11 +88,6 @@ OuterMethod <- S7::new_class("OuterMethod",
         !self@kind %in% c("reml", "ml", "aic", "bic", "cv")) {
       return(paste0("Property 'kind' must be \"reml\", \"ml\", \"aic\", ",
                     "\"bic\" or \"cv\"."))
-    }
-    if (!identical(length(self@hessian), 1L) ||
-        !self@hessian %in% c("auto", "expected", "observed")) {
-      return(paste0("Property 'hessian' must be \"auto\", \"expected\" or ",
-                    "\"observed\"."))
     }
     if (!identical(length(self@rule), 1L) ||
         !self@rule %in% c("min", "1se")) {
@@ -267,26 +264,29 @@ outer_path_defaults <- function() {
 #' structured, additive or separable penalty. A penalty that provides neither
 #' is rejected by name, and the criterion does not assume a subspace for it.
 #'
-#' @param hessian Which information enters the determinant: `"observed"`
-#'   (the default), the curvature of the log-likelihood at the data, which
-#'   makes the criterion the Laplace approximation, `"expected"`, the Fisher
-#'   information, a function of the parameters alone, or `"auto"`, which
-#'   [statmod()] settles against the family through [outer_resolve()]: the
-#'   expected information for a Student t, a skew t or a Cauchy response,
-#'   whose observed information is not positive definite at an outlier, and
-#'   the observed information otherwise. The default is `"observed"`; the
-#'   expected information is used where the caller names it, as for a Student t
-#'   whose degrees of freedom are modeled. The fitted model records the
-#'   information used. The argument is matched with [match.arg()]. On the
-#'   expected route the outer gradient is exact wherever the family writes its
-#'   expected information out, as every shipped family does, and the outer
-#'   Hessian is exact wherever the family also supplies the derivative of that
-#'   information that the Hessian reads (every shipped family except
-#'   [distributions7::enet_distrib()]). A family that does not write its
-#'   expected information out reads the outer product of its scores at the data
-#'   under the default `iwls(approx = "opg")`, which is not an expectation, and
-#'   [statmod()] rejects `"expected"` there: see
-#'   [assert_criterion_information()].
+#' @param information The information that enters the determinant, an object
+#'   that inherits from [Information]. [observed_info()] (the default) is the
+#'   curvature of the log-likelihood at the data, which makes the criterion the
+#'   Laplace approximation. [expected_info()] is the Fisher information, a
+#'   function of the parameters alone, and carries an `approx` for a family
+#'   that does not write it out. [auto_info()] is settled against the family by
+#'   [statmod()] through [outer_resolve()]: the expected information for a
+#'   Student t, a skew t or a Cauchy response, whose observed information is
+#'   not positive definite at an outlier, and the observed information
+#'   otherwise. The expected information is used where the caller names it, as
+#'   for a Student t whose degrees of freedom are modeled. The fitted model
+#'   records the information used. On the expected route the outer gradient is
+#'   exact wherever the family writes its expected information out, as every
+#'   shipped family does, and the outer Hessian is exact wherever the family
+#'   also supplies the derivative of that information that the Hessian reads
+#'   (every shipped family except [distributions7::enet_distrib()]). A family
+#'   that does not write its expected information out reads the outer product
+#'   of its scores at the data under the default
+#'   [distributions7::expect_opg()], which is not an expectation, and
+#'   [statmod()] rejects `expected_info()` there unless its `approx` takes an
+#'   expectation, as [distributions7::expect_bartlett()] does: see
+#'   [assert_criterion_information()]. [information_objects] compares the three
+#'   objects. A character string signals an error that names the object to use.
 #'
 #' @param marginal Which distribution parameters have their unpenalized
 #'   coefficients estimated by maximizing this criterion, instead of being
@@ -308,8 +308,8 @@ outer_path_defaults <- function() {
 #'   all, and a `reml()` or `ml()` passed by name is rejected.
 #'
 #' @return An [OuterMethod()] object of kind `"reml"` or `"ml"`, whose
-#'   `hessian` and `marginal` are as supplied and whose path settings are
-#'   unused.
+#'   `hessian` holds the object given as `information` and whose `marginal` is
+#'   as supplied; its path settings are unused.
 #'
 #' @references
 #' Wood, S. N. (2011). Fast stable restricted maximum likelihood and marginal
@@ -317,8 +317,8 @@ outer_path_defaults <- function() {
 #' *Journal of the Royal Statistical Society, Series B*, 73(1), 3--36.
 #'
 #' @seealso [aic()], [bic()] and [cv()] for the prediction-error criteria,
-#'   [statmod()] for where these are passed, [hyper()] for reading back what
-#'   they chose.
+#'   [information_objects] for the argument `information`, [statmod()] for
+#'   where these are passed, [hyper()] for reading back what they chose.
 #'
 #' @examples
 #' set.seed(1)
@@ -344,8 +344,9 @@ outer_path_defaults <- function() {
 #' logLik(fit, type = "marginal")
 #'
 #' @export
-reml <- function(hessian = c("observed", "auto", "expected"), marginal = NULL) {
-  do.call(OuterMethod, c(list(kind = "reml", hessian = match.arg(hessian),
+reml <- function(information = observed_info(), marginal = NULL) {
+  check_information(information, arg = "information", fn = "reml")
+  do.call(OuterMethod, c(list(kind = "reml", hessian = information,
                              k = NA_real_,
                              marginal = check_marginal_arg(marginal)),
                          outer_path_defaults()))
@@ -353,8 +354,9 @@ reml <- function(hessian = c("observed", "auto", "expected"), marginal = NULL) {
 
 #' @rdname reml
 #' @export
-ml <- function(hessian = c("observed", "auto", "expected"), marginal = NULL) {
-  do.call(OuterMethod, c(list(kind = "ml", hessian = match.arg(hessian),
+ml <- function(information = observed_info(), marginal = NULL) {
+  check_information(information, arg = "information", fn = "ml")
+  do.call(OuterMethod, c(list(kind = "ml", hessian = information,
                              k = NA_real_,
                              marginal = check_marginal_arg(marginal)),
                          outer_path_defaults()))
@@ -364,10 +366,11 @@ ml <- function(hessian = c("observed", "auto", "expected"), marginal = NULL) {
 #' Settle a Marginal Criterion's Information Against the Family
 #'
 #' @description
-#' Replaces `hessian = "auto"` by the information that the criterion uses for
-#' `distrib`: `"expected"` for a Student t, a skew t or a Cauchy response,
-#' wrapped or not, and `"observed"` for every other family. Any other value
-#' is returned unchanged.
+#' Replaces [auto_info()] by the information that the criterion uses for
+#' `distrib`: [expected_info()] for a Student t, a skew t or a Cauchy response,
+#' wrapped or not, and [observed_info()] for every other family. The
+#' approximation that the [auto_info()] object carries passes to the
+#' [expected_info()] object. Any other information is returned unchanged.
 #'
 #' @details
 #' The log-density of these families is not concave in the location, so
@@ -383,8 +386,9 @@ ml <- function(hessian = c("observed", "auto", "expected"), marginal = NULL) {
 #'
 #' @keywords internal
 outer_resolve <- function(method, distrib) {
-  if (!identical(method@hessian, "auto")) return(method)
-  method@hessian <- if (observed_indefinite(distrib)) "expected" else "observed"
+  if (!info_auto(method@hessian)) return(method)
+  method@hessian <- if (observed_indefinite(distrib))
+    expected_info(approx = info_approx(method@hessian)) else observed_info()
   method
 }
 
@@ -459,7 +463,8 @@ print.OuterMethod <- function(x, ...) {
                 if (length(x@folds)) "given" else format(x@nfolds), x@rule))
     return(invisible(x))
   }
-  cat(sprintf("<%s>  %s information\n", toupper(x@kind), x@hessian))
+  cat(sprintf("<%s>  %s information\n", toupper(x@kind),
+              info_label(x@hessian)))
   invisible(x)
 }
 S7::method(print, OuterMethod) <- print.OuterMethod
@@ -1106,8 +1111,8 @@ structural_range_cols <- function(spec, design, key, free) {
 #'
 #' @keywords internal
 statmod_marginal <- function(spec, design, coef, hyper, method,
-                             approx = "opg", basis = NULL, ctx = NULL) {
-  expected <- identical(method@hessian, "expected")
+                             approx = distributions7::expect_opg(), basis = NULL, ctx = NULL) {
+  expected <- info_expected(method@hessian)
   ll <- statmod_loglik_at(spec, coef, design)
   rho <- statmod_penalty_at(spec, coef, hyper, design, "value")
   if (structural_penalized(spec, design)) {
@@ -1241,7 +1246,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
                 " because its penalty\n  has a kink."),
          call. = FALSE)
   }
-  expected <- identical(method@hessian, "expected")
+  expected <- info_expected(method@hessian)
   basis <- integrated_basis(spec, design, method@kind, gamma = ng > 0L)
   labels <- c(paste(idx$parameter, idx$term, idx$name, sep = "/"),
               paste(gam$param, gam$name, sep = "/"))
@@ -2408,7 +2413,7 @@ outer_newton_ok <- function(spec, design, exact2, method = NULL) {
   # 0.41 against 0.25 on a Poisson one, 1.11 against 0.99 on a gamma, 0.80
   # against 0.69 on a negative binomial, 1.26 against 1.25 on a beta, 4.50
   # against 3.44 on three smooths beside a random effect.
-  if (!is.null(method) && identical(method@hessian, "expected")) return(FALSE)
+  if (!is.null(method) && info_expected(method@hessian)) return(FALSE)
   # A MODEL CARRYING A STRUCTURAL TERM keeps lbfgs(), and that is a
   # measurement rather than a limitation. Its Hessian exists now --
   # statmod_structural_hess() assembles it on the joint vector -- and each

@@ -212,7 +212,7 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 #' @keywords internal
 sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
                        verbose = FALSE, spec = NULL, design = NULL,
-                       expected = TRUE, approx = "opg") {
+                       expected = TRUE, approx = distributions7::expect_opg()) {
   # A PENALTY OVER A STRUCTURAL TERM'S OWN PARAMETERS COVERS NO COLUMN AND NO
   # ENTRY OF `beta`, so neither route below can address it: the coordinate
   # descent reads `cols` as columns of a design, which those positions are

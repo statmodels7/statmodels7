@@ -9,7 +9,7 @@
   level = 0.95,
   type = c("bayesian", "frequentist", "unconditional"),
   expected = NULL,
-  approx = c("opg", "bartlett", "integrate", "mc"),
+  approx = distributions7::expect_opg(),
   correct = FALSE,
   test = c("wald", "lr", "score", "gradient"),
   max_coef = NULL,
@@ -32,9 +32,10 @@ passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the de
 one where the fit inverted it and the family writes it out, and the
 observed Hessian otherwise; \code{TRUE} or \code{FALSE} selects one.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{"opg"} (the
-default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
+\item{approx}{The approximation of the expected information for a family
+with no closed form, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: an object that
+inherits from \link[distributions7:ExpectApprox]{distributions7::ExpectApprox}, with
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} as the default.}
 
 \item{correct}{Whether the degrees of freedom include the cost of
 estimating the hyperparameters. The ordinary count treats them as known

@@ -4,15 +4,12 @@
 \alias{assert_criterion_information}
 \title{Expected-Information Criteria and the Scores' Outer Product}
 \usage{
-assert_criterion_information(distrib, method, approx)
+assert_criterion_information(distrib, method)
 }
 \arguments{
 \item{distrib}{A distributions7 family.}
 
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}, or \code{NULL}.}
-
-\item{approx}{The approximation with which the fit reads the expected
-information, taken from \code{\link[=inner_settings]{inner_settings()}}.}
 }
 \value{
 \code{NULL}, invisibly. The function is called for the error.
@@ -31,7 +28,8 @@ at \eqn{y_i}, with the Fisher information
 writes that information out, \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}
 returns \code{TRUE} and the check is skipped. Where a family does not write it
 out, for example a family written outside the toolkit, the information
-falls back on the strategy named by \code{approx}, and the default, \code{"opg"},
+falls back on the strategy named by the \code{approx} of the criterion's
+\code{\link[=expected_info]{expected_info()}}, and the default, \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}},
 returns \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an
 unbiased estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not
 the information itself: it depends on the response, as the observed curvature
@@ -44,17 +42,17 @@ A criterion on the observed information has an exact outer gradient and
 Hessian and is searched with Newton's method; the outer-product route has
 neither and is searched without derivatives.
 
-The expectation can be requested with another \code{approx} in \code{\link[=iwls]{iwls()}}, and
-this check does not reject it: \code{"bartlett"} sums or integrates over the
-support and gives a genuine expected information, at a much higher cost per
-evaluation.
+The expectation can be requested with another \code{approx} in the criterion's
+\code{\link[=expected_info]{expected_info()}}, and this check does not reject it:
+\code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}} sums or integrates over the support and
+gives a genuine expected information, at a much higher cost per evaluation.
 }
 \examples{
 statmodels7:::assert_criterion_information(
-  distributions7::gaussian1_distrib(), reml("expected"), "opg")
+  distributions7::gaussian1_distrib(), reml(information = expected_info()))
 # the Poisson-inverse Gaussian computes its expected information exactly
 statmodels7:::assert_criterion_information(
-  distributions7::pig1_distrib(), reml("expected"), "opg")
+  distributions7::pig1_distrib(), reml(information = expected_info()))
 
 }
 \seealso{

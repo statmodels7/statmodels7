@@ -20,7 +20,8 @@ ctx_penalized(
 \item{spec, design, coef, hyper}{The fallback arguments.}
 
 \item{expected}{Whether \eqn{H} is the expected information, as the
-criterion carries under \code{reml(hessian = "expected")}, or the observed one.
+criterion carries under \code{reml(information = expected_info())}, or the observed
+one.
 The two give different matrices and keep separate cache entries.}
 
 \item{laplace}{Whether the matrix is the criterion's, which leaves out the

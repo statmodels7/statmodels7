@@ -19,7 +19,7 @@ test_that("iwls() validates its budget and step_halving counts halvings", {
   expect_error(iwls(maxit = Inf), "maxit")
   expect_error(iwls(maxit = 2.5), "maxit")
   expect_error(iwls(tol = NA_real_), "tol")
-  expect_error(iwls(decomposition = "chol_crossprod"), "same route as \"chol\"")
+  expect_error(iwls(solver = "chol_crossprod"), "must be a solver object")
   # step_halving = 0 still tries the full step
   set.seed(5)
   dp <- data.frame(x = stats::runif(200))
@@ -36,7 +36,7 @@ test_that("the final verdict of iwls_fit() reads the free coordinates", {
   obj <- list(fn = function(b) 0.5 * sum((b - c(1, 5))^2),
               gr = function(b) b - c(1, 5))
   pieces <- function(b) list(R = NULL, C = NULL, A = diag(2))
-  r <- iwls_fit(obj, c(0, 0), iwls(decomposition = "chol", maxit = 1), n = 1,
+  r <- iwls_fit(obj, c(0, 0), iwls(solver = solve_chol(), maxit = 1), n = 1,
                 pieces_at = pieces, frozen = 2L)
   expect_equal(r$par, c(1, 0))
   expect_true(r$converged)
@@ -75,7 +75,7 @@ test_that("a kinked zero whose reading cannot be computed is not settled", {
   fit <- statmod(y ~ lasso(X, lambda = 20), g1, dd)
   sp <- fit@spec
   des <- statmod_design(sp)
-  obj <- statmod_objective(sp, fit@hyper, des, FALSE, "bartlett")
+  obj <- statmod_objective(sp, fit@hyper, des, FALSE, distributions7::expect_bartlett())
   b <- obj$stack(fit@coefficients)
   expect_true(any(b == 0))
   pen <- statmod_penalty_at
@@ -88,10 +88,10 @@ test_that("a kinked zero whose reading cannot be computed is not settled", {
       }
       pen(spec, coef, hyper, design, what, ...)
     })
-  r <- alternation_readings(sp, des, obj, b, fit@hyper, FALSE, "bartlett")
+  r <- alternation_readings(sp, des, obj, b, fit@hyper, FALSE, distributions7::expect_bartlett())
   expect_identical(r[["kkt"]], Inf)
   expect_false(alternation_settled(sp, des, obj, b, fit@hyper, FALSE,
-                                   "bartlett"))
+                                   distributions7::expect_bartlett()))
 })
 
 test_that("rows of weight zero keep the lasso on coordinate descent", {

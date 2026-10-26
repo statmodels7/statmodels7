@@ -29,7 +29,7 @@ gen_twin_gap <- function(form, dd) {
   spec <- statmod_spec(form, poisson_distrib(), dd)
   design <- statmod_design(spec)
   hyper <- statmod_hyper_start(spec, design)
-  obj <- statmod_objective(spec, hyper, design, FALSE, "bartlett")
+  obj <- statmod_objective(spec, hyper, design, FALSE, distributions7::expect_bartlett())
   beta <- statmod_start(spec, design, obj, NULL)
   sst <- statmod_structural_state(design)
   key <- names(sst$zeta)[[1L]]

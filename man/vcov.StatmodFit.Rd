@@ -8,7 +8,7 @@
   object,
   type = c("bayesian", "frequentist", "unconditional"),
   expected = NULL,
-  approx = c("opg", "bartlett", "integrate", "mc"),
+  approx = distributions7::expect_opg(),
   readable = TRUE,
   parameter = NULL,
   ...
@@ -27,10 +27,14 @@ inverted it and the family writes it out, and the observed Hessian
 otherwise. A model that
 carries a structural term always uses the observed information.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form: \code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"}
-or \code{"mc"}. Read only when \code{expected} is \code{TRUE} and the family has no
-closed form.}
+\item{approx}{The approximation of the expected information for a family
+with no closed form, an object that inherits from
+\link[distributions7:ExpectApprox]{distributions7::ExpectApprox}: \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} (the
+default), \code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}},
+\code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} or \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}; see
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}. Read only when \code{expected} is
+\code{TRUE} and the family has no closed form. A character string signals an
+error that names the object to use.}
 
 \item{readable}{Whether the matrix is over the quantities that the model
 reports (\code{TRUE}, the default) or over the coordinates on which it was
@@ -136,11 +140,13 @@ term is always inverted on the observed information, because a filter and a
 mixture over states do not have an expected information.
 
 Where the family has no closed form, \code{expected = TRUE} reaches an
-approximation, and \code{approx} selects it. \code{"opg"}, the default, is the outer
-product of the observed scores and costs one gradient; \code{"bartlett"}
-evaluates the expectation itself, a sum over the support for a discrete
-family and a quadrature for a continuous one, and is orders of magnitude
-more expensive. The expensive route is available and is not the default.
+approximation, and \code{approx} selects it. \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the
+default, is the outer product of the observed scores and costs one gradient;
+\code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}} evaluates the expectation itself, a sum
+over the support for a discrete family and a quadrature for a continuous
+one, and is orders of magnitude more expensive. The expensive route is
+available and is not the default. \link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}
+compares the four approximations.
 }
 \examples{
 set.seed(1)

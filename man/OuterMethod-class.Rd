@@ -7,7 +7,7 @@
 \usage{
 OuterMethod(
   kind = character(0),
-  hessian = character(0),
+  hessian = Information(),
   k = integer(0),
   nfolds = integer(0),
   rule = character(0),
@@ -20,9 +20,11 @@ OuterMethod(
 criterion is evaluated and, through \code{\link[=outer_minimize]{outer_minimize()}}, whether it is
 made small or large.}
 
-\item{hessian}{\code{"auto"}, \code{"expected"} or \code{"observed"}. Which information
-enters the Laplace determinant. \code{\link[=statmod]{statmod()}} settles \code{"auto"} against the
-family through \code{\link[=outer_resolve]{outer_resolve()}}.}
+\item{hessian}{An object that inherits from \link{Information}: \code{\link[=observed_info]{observed_info()}},
+\code{\link[=expected_info]{expected_info()}} or \code{\link[=auto_info]{auto_info()}}. Which information enters the Laplace
+determinant. \code{\link[=statmod]{statmod()}} settles \code{\link[=auto_info]{auto_info()}} against the family through
+\code{\link[=outer_resolve]{outer_resolve()}}. The constructors set it from their argument
+\code{information}.}
 
 \item{k}{The price of one effective degree of freedom, for a
 prediction-error criterion. It is \code{NA_real_} for \code{\link[=bic]{bic()}}, which resolves
@@ -54,12 +56,12 @@ determinant, and the settings that a path or a cross-validation needs.
 One class serves every criterion, so a property that a given criterion does
 not read is present and unused. The class validates the values of its
 properties. The constructors \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}}
-also match \code{hessian} and \code{rule} against their choices and check \code{k} and
-\code{marginal}.
+also check \code{information}, match \code{rule} against its choices and check \code{k}
+and \code{marginal}.
 }
 \examples{
 reml()
-ml(hessian = "observed")
+ml(information = observed_info())
 aic()
 cv(nfolds = 5)
 

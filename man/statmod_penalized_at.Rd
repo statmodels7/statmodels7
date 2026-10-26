@@ -10,7 +10,7 @@ statmod_penalized_at(
   design,
   hyper,
   expected = TRUE,
-  approx = "opg"
+  approx = distributions7::expect_opg()
 )
 }
 \arguments{

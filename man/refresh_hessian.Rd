@@ -4,7 +4,13 @@
 \alias{refresh_hessian}
 \title{The Log-Density's Curvature Used by the Refresh Corrections}
 \usage{
-refresh_hessian(spec, design, coef, expected = FALSE, approx = "opg")
+refresh_hessian(
+  spec,
+  design,
+  coef,
+  expected = FALSE,
+  approx = distributions7::expect_opg()
+)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}

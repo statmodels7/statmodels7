@@ -76,7 +76,7 @@ test_that("the structural table reports standard errors beside a mixed covarianc
 })
 
 test_that("a context without an approximation reads the default one", {
-  expect_identical(ctx_approx(NULL), "opg")
+  expect_identical(ctx_approx(NULL), distributions7::expect_opg())
 })
 
 test_that("statmod_breakpoint_test() rejects k and n_boot that are not whole", {
@@ -231,7 +231,7 @@ kink_fit <- function(hessian) {
   d$y <- sin(4 * d$x) + pmax(d$z - 0.5, 0) * 2 + 0.4 * stats::rt(250, 5)
   g <- distributions7::student_t1_distrib()
   fit <- statmod(y ~ s(x, bspline_smooth(k = 8)) + seg(z, psi = 0.5) |
-                   sigma ~ w, g, d, outer_criterion = reml(hessian = hessian))
+                   sigma ~ w, g, d, outer_criterion = reml(information = info_of(hessian)))
   sp <- fit@spec
   ds <- statmod_design(sp)
   bl <- statmod_blocks(sp, ds)
@@ -259,7 +259,7 @@ kink_fit <- function(hessian) {
   }
   value <- function(v) {
     r <- mode(v)
-    statmod_marginal(r$sp, mc$design, r$cf, r$hy, m, "opg", basis)$value
+    statmod_marginal(r$sp, mc$design, r$cf, r$hy, m, distributions7::expect_opg(), basis)$value
   }
   grad <- function(v) {
     r <- mode(v)
@@ -327,7 +327,7 @@ test_that("a break-point developed over a covariate slides along the hyperplane 
   r <- statmod_alternate(sp, ds, bl, fit@hyper, fit@methods$smooth, start,
                          cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
                          verbosity(0))
-  obj <- statmod_objective(sp, fit@hyper, ds, FALSE, "opg")
+  obj <- statmod_objective(sp, fit@hyper, ds, FALSE, distributions7::expect_opg())
   f <- function(t) {
     b <- r$par
     b[k] <- b[k] + t * dirn

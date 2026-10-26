@@ -262,7 +262,7 @@ test_that("the inner reading leaves out the direction a kink holds", {
   f <- statmod(y ~ seg(x), g1, d)
   ns <- asNamespace("statmodels7")
   de <- statmod_design(f@spec)
-  obj <- ns$statmod_objective(f@spec, f@hyper, de, FALSE, "bartlett")
+  obj <- ns$statmod_objective(f@spec, f@hyper, de, FALSE, distributions7::expect_bartlett())
   b <- obj$stack(f@coefficients)
   kc <- ns$kink_constraints(f@spec, de, f@coefficients,
                             obj$split(seq_along(b)), length(b))

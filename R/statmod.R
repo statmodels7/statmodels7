@@ -434,7 +434,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                        linpar = linpar_control)
   spec@threads <- n_thr
   spec@workers <- numericals7::worker_count(threads)
-  # a marginal criterion left at hessian = "auto" is settled against the
+  # a marginal criterion left at auto_info() is settled against the
   # family here, as an iwls() left at "auto" is below
   if (S7::S7_inherits(outer_criterion, OuterMethod)) {
     outer_criterion <- outer_resolve(outer_criterion, spec@distrib)
@@ -463,7 +463,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     vb_say("inner    %s", vb_name(inner_optimizer, "iwls"), indent = 5L)
     vb_say("outer    %s", if (is.null(outer_criterion)) "held" else
       paste0(toupper(outer_criterion@kind), " (",
-             outer_criterion@hessian, " information)"), indent = 5L)
+             info_label(outer_criterion@hessian), " information)"), indent = 5L)
     if (!is.null(start)) {
       vb_say("start    %s",
              if (S7::S7_inherits(start, start_strategy_class())) start@label
@@ -567,12 +567,12 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   assert_criterion_order(spec@distrib, outer_criterion)
   assert_criterion_order(spec@distrib, sparse_criterion)
   # and a criterion on the expected information needs an expectation: where
-  # the family does not write it out, the default approx = "opg" would put the
+  # the family does not write it out, the default expect_opg() would put the
   # outer product of the scores AT THE DATA in the determinant, which is
   # neither the Laplace curvature nor the Fisher information and has no exact
   # outer derivatives. Refused here with the remedy. See R/order.R.
-  assert_criterion_information(spec@distrib, outer_criterion, approx)
-  assert_criterion_information(spec@distrib, sparse_criterion, approx)
+  assert_criterion_information(spec@distrib, outer_criterion)
+  assert_criterion_information(spec@distrib, sparse_criterion)
   # and a prediction-error criterion cannot select a penalty over a structural
   # term's own parameters, reading its degrees of freedom over the coefficients
   # alone, where that penalty covers nothing. Refused here, by name, before a
@@ -1019,14 +1019,17 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   tau_reader <- Filter(function(m) !is.null(m) && m@kind %in% c("aic", "bic"),
                        list(sparse_criterion, outer_criterion))
   edf_expected <- if (length(tau_reader)) {
-    identical(tau_reader[[1L]]@hessian, "expected")
+    info_expected(tau_reader[[1L]]@hessian)
   } else expected
+  edf_approx <- if (length(tau_reader)) {
+    select_approx(tau_reader[[1L]], NULL, approx)
+  } else approx
   StatmodFit(
     spec = spec, coefficients = coef,
     structural = statmod_structural_par(spec, design), hyper = hyper,
     loglik = statmod_loglik_at(spec, coef, design),
     objective = res$value,
-    edf = statmod_edf(spec, coef, design, hyper, edf_expected, approx,
+    edf = statmod_edf(spec, coef, design, hyper, edf_expected, edf_approx,
                       alias),
     fitted = fitted, converged = res$converged,
     aliased = aliased_labels(spec, design, alias),
@@ -1794,16 +1797,16 @@ method_budget <- function(method) {
 #' the expected information is a different matrix, so a Newton step on it
 #' would be Fisher scoring under another name. Where a family writes neither
 #' out, the expected information is also far more expensive to form than the
-#' observed one. `approx` is `"opg"` for such a method, the default of
-#' [iwls()] itself; it is read only where `expected` is `TRUE`,
+#' observed one. `approx` is [distributions7::expect_opg()] for such a method,
+#' the default of [iwls()] itself; it is read only where `expected` is `TRUE`,
 #' so for an optimizer it records a default and not a choice.
 #'
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #' @param distrib The distribution, read only to settle an [iwls()] left at
-#'   `hessian = "auto"` through [iwls_resolve()]; such a method with no
+#'   [auto_info()] through [iwls_resolve()]; such a method with no
 #'   distribution is an error rather than a guess.
 #'
-#' @return A list of four: `expected` (a logical), `approx` (a string),
+#' @return A list of four: `expected` (a logical), `approx` (an object),
 #'   `maxit` and `tol`.
 #'
 #' @seealso [method_budget()] for the last two,
@@ -1813,15 +1816,15 @@ method_budget <- function(method) {
 inner_settings <- function(method, distrib = NULL) {
   b <- method_budget(method)
   iw <- S7::S7_inherits(method, Iwls)
-  if (iw && identical(method@hessian, "auto")) {
+  if (iw && info_auto(method@hessian)) {
     if (is.null(distrib)) {
-      stop("iwls(hessian = \"auto\") is settled by the family: pass 'distrib', ",
+      stop("iwls(information = auto_info()) is settled by the family: pass 'distrib', ",
            "or settle it with iwls_resolve() first.", call. = FALSE)
     }
     method <- iwls_resolve(method, distrib)
   }
-  list(expected = iw && identical(method@hessian, "expected"),
-       approx = if (iw) method@approx else "opg",
+  list(expected = iw && info_expected(method@hessian),
+       approx = if (iw) method@approx else distributions7::expect_opg(),
        maxit = b$maxit, tol = b$tol)
 }
 
@@ -1967,7 +1970,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     backup_at <- NULL
     if (isTRUE(method@fallback)) {
       m_exp <- method
-      m_exp@hessian <- "expected"
+      m_exp@hessian <- expected_info(approx = method@approx)
       m_exp@fallback <- FALSE
       backup_at <- function(b) {
         v <- beta
@@ -1981,9 +1984,9 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     # the expected information from "auto": see iwls_fit()
     switch_at <- NULL
     sw <- method@switch_after
-    if (identical(method@hessian, "expected") && length(sw) && is.finite(sw)) {
+    if (info_expected(method@hessian) && length(sw) && is.finite(sw)) {
       m_obs <- method
-      m_obs@hessian <- "observed"
+      m_obs@hessian <- observed_info()
       m_obs@switch_after <- Inf
       switch_at <- function(b) {
         v <- beta
@@ -2094,12 +2097,12 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #'
 #' @keywords internal
 subset_pieces <- function(spec, design, coef, hyper, method, idx) {
-  if (identical(method@hessian, "auto")) {
+  if (info_auto(method@hessian)) {
     method <- iwls_resolve(method, spec@distrib)
   }
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   H <- statmod_information_at(spec, coef, design,
-                              identical(method@hessian, "expected"),
+                              info_expected(method@hessian),
                               method@approx, index = idx)
   list(R = NULL, C = NULL, A = H + S[idx, idx, drop = FALSE])
 }
@@ -2671,7 +2674,7 @@ intercept_start_from_data <- function(spec, eta) {
 #'
 #' @keywords internal
 statmod_penalized_at <- function(spec, coef, design, hyper, expected = TRUE,
-                                 approx = "opg") {
+                                 approx = distributions7::expect_opg()) {
   H <- statmod_information_at(spec, coef, design, expected, approx)
   S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design, "hessian"))
   as_dense(H + S)
@@ -2720,7 +2723,7 @@ statmod_penalized_at <- function(spec, coef, design, hyper, expected = TRUE,
 #'
 #' @keywords internal
 statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
-                        approx = "opg", aliased = integer(0)) {
+                        approx = distributions7::expect_opg(), aliased = integer(0)) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar

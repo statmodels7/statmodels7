@@ -354,7 +354,7 @@ sc_sub_derivs <- function(form, distrib, data, jitter = 0.07) {
   sst <- statmod_structural_state(des)
   key <- names(sst$zeta)[[1L]]
   hyper <- statmod_hyper_start(spec, des)
-  obj <- statmod_objective(spec, hyper, des, FALSE, "bartlett")
+  obj <- statmod_objective(spec, hyper, des, FALSE, distributions7::expect_bartlett())
   beta <- statmod_start(spec, des, obj, NULL)
   nmz <- names(sst$zeta[[key]])
   free <- setdiff(nmz, sst$held[[key]])

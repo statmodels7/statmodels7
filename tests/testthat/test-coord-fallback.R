@@ -37,7 +37,7 @@ test_that("the theta block of a negbin2 stays on the coordinate descent", {
     }
   )
   fo <- statmod(ff, distributions7::negbin2_distrib(), df,
-                inner_optimizer = iwls(hessian = "observed"))
+                inner_optimizer = iwls(information = observed_info()))
   # the premise: the observed curvature really is not positive somewhere,
   # so the fallback is exercised and the test cannot pass vacuously
   expect_gt(seen$observed_null, 0L)
@@ -47,7 +47,7 @@ test_that("the theta block of a negbin2 stays on the coordinate descent", {
   # the mode does not depend on the curvature the steps are weighted by; the
   # two runs stop at the inner rule's own resolution, about 2e-6 relative
   fe <- statmod(ff, distributions7::negbin2_distrib(), df,
-                inner_optimizer = iwls(hessian = "expected"))
+                inner_optimizer = iwls(information = expected_info()))
   expect_equal(fo@coefficients, fe@coefficients, tolerance = 1e-5)
   expect_identical(unlist(fo@coefficients) != 0, unlist(fe@coefficients) != 0)
 })

@@ -40,6 +40,25 @@ reference:
   - rstatmod
   - print.StatmodSim
 
+- title: The information matrix and the solver
+  desc: >
+    The matrix that a scoring step inverts or that enters a Laplace
+    determinant is passed as an object: the observed Hessian, the expected
+    (Fisher) information with the approximation of its expectation, or a
+    choice settled against the family. The factorization that solves each
+    step is passed as an object too.
+  contents:
+  - information_objects
+  - observed_info
+  - expected_info
+  - auto_info
+  - Information
+  - iwls_solvers
+  - solve_qr
+  - solve_svd
+  - solve_chol
+  - IwlsSolver
+
 - title: Where a fit begins
   desc: >
     A starting value given as a strategy and not as a vector of numbers, and

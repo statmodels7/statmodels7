@@ -6,9 +6,9 @@
 \title{The Iterated Weighted Least Squares Method}
 \usage{
 Iwls(
-  hessian = character(0),
-  approx = character(0),
-  decomposition = character(0),
+  hessian = Information(),
+  approx = distributions7::ExpectApprox(),
+  solver = IwlsSolver(),
   maxit = integer(0),
   tol = integer(0),
   criterion = NULL,
@@ -18,14 +18,20 @@ Iwls(
 )
 }
 \arguments{
-\item{hessian}{\code{"expected"} for Fisher scoring, \code{"observed"} for Newton,
-or \code{"auto"}, which \code{\link[=iwls_resolve]{iwls_resolve()}} turns into one of the two once the
-distribution is known. The value is a single string.}
+\item{hessian}{The information that the step inverts, an object that
+inherits from \link{Information}: \code{\link[=expected_info]{expected_info()}} for Fisher scoring,
+\code{\link[=observed_info]{observed_info()}} for Newton, or \code{\link[=auto_info]{auto_info()}}, which \code{\link[=iwls_resolve]{iwls_resolve()}}
+turns into one of the two once the distribution is known. \code{\link[=iwls]{iwls()}} sets
+the property from its argument \code{information}.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form: \code{"opg"}, \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
+\item{approx}{The approximation of the expected information for a family
+with no closed form, an object that inherits from
+\link[distributions7:ExpectApprox]{distributions7::ExpectApprox}. \code{\link[=iwls]{iwls()}} takes it from \code{information}
+(\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} for \code{\link[=observed_info]{observed_info()}}), and the expected
+information that stands in as a fallback reads it.}
 
-\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"} or \code{"chol"}.}
+\item{solver}{How the step is solved, an object that inherits from
+\link{IwlsSolver}: \code{\link[=solve_qr]{solve_qr()}}, \code{\link[=solve_svd]{solve_svd()}} or \code{\link[=solve_chol]{solve_chol()}}.}
 
 \item{maxit}{The iteration budget, a single positive whole number.}
 
@@ -44,7 +50,7 @@ tries only the full step.}
 the step where the observed step finds no acceptable point. An observed
 penalized information that is not positive definite is first repaired by
 flooring its eigenvalues, and the step on the repaired matrix is tried.
-\code{\link[=iwls_resolve]{iwls_resolve()}} sets this argument to \code{TRUE} for \code{"auto"} on a family
+\code{\link[=iwls_resolve]{iwls_resolve()}} sets this argument to \code{TRUE} for \code{\link[=auto_info]{auto_info()}} on a family
 that it does not settle on the expected information.}
 
 \item{switch_after}{A single number: the iteration after which a run on
@@ -52,7 +58,7 @@ the expected information continues on the observed one, unless it
 switched earlier because the score contracted slowly (see
 \code{\link[=iwls_slow]{iwls_slow()}}). The expected information then takes the step only where
 the observed step finds no acceptable point. \code{Inf} never switches.
-\code{\link[=iwls_resolve]{iwls_resolve()}} sets it, for \code{"auto"} on a family whose expected
+\code{\link[=iwls_resolve]{iwls_resolve()}} sets it, for \code{\link[=auto_info]{auto_info()}} on a family whose expected
 information is exact and not costly to evaluate, to
 \code{\link[=iwls_switch_after]{iwls_switch_after()}}.}
 }
@@ -69,7 +75,7 @@ validates every argument; this raw constructor does not.
 }
 \examples{
 S7::S7_inherits(iwls(), Iwls)
-iwls()@decomposition
+iwls()@solver
 
 }
 \seealso{

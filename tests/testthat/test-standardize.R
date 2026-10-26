@@ -87,7 +87,7 @@ test_that("a sparse block survives a standardized penalty in the same equation",
   fit <- statmod(fml2, distributions7::gaussian1_distrib(), dr)
   expect_true(fit@converged)
   expect_s4_class(statmod_information_at(spec, fit@coefficients, design,
-                                         FALSE, "bartlett"), "dgCMatrix")
+                                         FALSE, distributions7::expect_bartlett()), "dgCMatrix")
   expect_true(all(is.finite(diag(vcov(fit)))))
 })
 

@@ -65,15 +65,15 @@ test_that("the expected route's Hessian is the derivative of its gradient", {
   # what the earlier bound of 2e-5 was set against.
   h <- eh_harness(yg ~ s(x, bspline_smooth(k = 8)) |
                     phi ~ s(z, bspline_smooth(k = 6)),
-                  d_eh, distributions7::gamma1_distrib(), reml("expected"))
-  expect_true(outer_gradient_ok(h$spec, h$design, h$idx, reml("expected"), 2L))
+                  d_eh, distributions7::gamma1_distrib(), reml(information = expected_info()))
+  expect_true(outer_gradient_ok(h$spec, h$design, h$idx, reml(information = expected_info()), 2L))
   eta <- h$eta0 + c(0.3, -0.4)
   Ha <- h$he(eta)
   Hf <- eh_fd(h, eta, 1e-3)
   expect_lt(max(abs(Ha - Hf)) / max(abs(Hf)), 1e-6)
   # and it is not the observed route's Hessian under another name: the two
   # criteria differ at this sample size by far more than the gap above
-  Ho <- h$he(eta, reml("observed"))
+  Ho <- h$he(eta, reml(information = observed_info()))
   expect_gt(max(abs(Ha - Ho)) / max(abs(Hf)), 1e-3)
 })
 
@@ -83,8 +83,8 @@ test_that("it holds under ml and on a sum over the support", {
   # with the parameters; ml() projects the determinant onto the range space
   # while the mode moves in the full one
   h <- eh_harness(yn ~ s(x, bspline_smooth(k = 8)), d_eh,
-                  distributions7::negbin2_distrib(), ml("expected"))
-  expect_true(outer_gradient_ok(h$spec, h$design, h$idx, ml("expected"), 2L))
+                  distributions7::negbin2_distrib(), ml(information = expected_info()))
+  expect_true(outer_gradient_ok(h$spec, h$design, h$idx, ml(information = expected_info()), 2L))
   eta <- h$eta0 + 0.4
   Ha <- h$he(eta)
   Hf <- eh_fd(h, eta, 1e-3)
@@ -102,8 +102,8 @@ test_that("with the dispersion modelled it converges O(h^2) onto the assembly", 
   # the ratio asserted here; a missing term would not either.
   h <- eh_harness(yn ~ s(x, bspline_smooth(k = 8)) |
                     theta ~ s(z, bspline_smooth(k = 6)),
-                  d_eh, distributions7::negbin2_distrib(), reml("expected"))
-  expect_true(outer_gradient_ok(h$spec, h$design, h$idx, reml("expected"), 2L))
+                  d_eh, distributions7::negbin2_distrib(), reml(information = expected_info()))
+  expect_true(outer_gradient_ok(h$spec, h$design, h$idx, reml(information = expected_info()), 2L))
   eta <- h$eta0 + c(0.3, -0.4)
   Ha <- h$he(eta)
   gap <- vapply(c(3e-3, 1e-3), function(s) {
@@ -127,12 +127,12 @@ test_that("a family that does not write the second derivative is differenced", {
     distrib_d2expected_hessian = function(...) stop("no analytic second derivative"),
     .package = "distributions7")
   h <- eh_harness(yr ~ s(x, bspline_smooth(k = 8)), d_eh,
-                  distributions7::gaussian2_distrib(), reml("expected"))
-  expect_false(outer_gradient_ok(h$spec, h$design, h$idx, reml("expected"), 2L))
+                  distributions7::gaussian2_distrib(), reml(information = expected_info()))
+  expect_false(outer_gradient_ok(h$spec, h$design, h$idx, reml(information = expected_info()), 2L))
   a <- h$at(h$eta0 + 0.3)
-  got <- statmod_marginal_hess(h$spec, h$design, a$cf, a$hy, reml("expected"),
+  got <- statmod_marginal_hess(h$spec, h$design, a$cf, a$hy, reml(information = expected_info()),
                                h$idx, h$basis)
-  want <- statmod_hess_stencil(h$spec, h$design, a$cf, a$hy, reml("expected"),
+  want <- statmod_hess_stencil(h$spec, h$design, a$cf, a$hy, reml(information = expected_info()),
                                h$idx, h$basis)
   expect_identical(got, want)
 })
@@ -143,12 +143,12 @@ test_that("the search on the expected route keeps lbfgs", {
   # is slower or level in wall time on the six models measured
   fit <- statmod(yg ~ s(x, bspline_smooth(k = 8)),
                  distributions7::gamma1_distrib(), d_eh,
-                 outer_criterion = reml("expected"))
+                 outer_criterion = reml(information = expected_info()))
   expect_match(class(fit@methods$search)[1L], "Lbfgs", fixed = TRUE)
   spec <- fit@spec
   design <- statmod_design(spec)
-  expect_false(outer_newton_ok(spec, design, TRUE, reml("expected")))
-  expect_true(outer_newton_ok(spec, design, TRUE, reml("observed")))
+  expect_false(outer_newton_ok(spec, design, TRUE, reml(information = expected_info())))
+  expect_true(outer_newton_ok(spec, design, TRUE, reml(information = observed_info())))
   cert <- statmod_certificate(fit)
   expect_identical(cert$curvature, "analytic")
 })
@@ -172,8 +172,8 @@ test_that("the families of the elementary kernels converge O(h^2) onto the assem
          distributions7::beta2_distrib(),
          data.frame(x = x, z = z, y = rbeta(n, exp(1 + 0.5 * f), 4))))
   for (cs in cases) {
-    h <- eh_harness(cs[[1]], cs[[3]], cs[[2]], reml("expected"))
-    expect_true(outer_gradient_ok(h$spec, h$design, h$idx, reml("expected"), 2L))
+    h <- eh_harness(cs[[1]], cs[[3]], cs[[2]], reml(information = expected_info()))
+    expect_true(outer_gradient_ok(h$spec, h$design, h$idx, reml(information = expected_info()), 2L))
     eta <- h$eta0 + seq(0.3, -0.4, length.out = length(h$eta0))
     Ha <- h$he(eta)
     gap <- vapply(c(3e-3, 1e-3), function(s) {

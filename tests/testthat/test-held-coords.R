@@ -155,8 +155,8 @@ test_that("a design of deficient rank is aliased, not refused", {
   se <- function(f) sqrt(diag(vcov(f)))[c("mu:(Intercept)", "mu:x1", "mu:x2")]
   ref <- se(f)
   for (m in list(optimizers7::newton(), optimizers7::bfgs(),
-                 optimizers7::lbfgs(), iwls(decomposition = "chol"),
-                 iwls(decomposition = "svd"))) {
+                 optimizers7::lbfgs(), iwls(solver = solve_chol()),
+                 iwls(solver = solve_svd()))) {
     g <- statmod(y ~ x1 + x2 + x3, distributions7::gaussian1_distrib(), dd,
                  inner_optimizer = m)
     expect_identical(g@aliased, "mu:x3", info = class(m)[1])

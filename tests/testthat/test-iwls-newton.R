@@ -11,7 +11,7 @@ test_that("a scoring curvature far too small is replaced by the full one", {
   # the scoring pieces carry a thousandth of the curvature, so their step is
   # a thousand times too long and the line search shrinks it to about that
   small <- function(b) list(R = NULL, C = NULL, A = Q / 1000)
-  meth <- iwls(hessian = "observed", maxit = 20)
+  meth <- iwls(information = observed_info(), maxit = 20)
   r0 <- iwls_fit(toy, c(0, 0), meth, 1, small)
   r1 <- iwls_fit(toy, c(0, 0), meth, 1, small, newton_at = function(b) Q)
   expect_true(r1$converged)
@@ -53,7 +53,7 @@ test_that("the full Hessian of a smoothed break-point is the objective's", {
     distributions7::gaussian1_distrib(), d, outer_criterion = NULL))
   spec <- fit@spec
   design <- statmod_design(spec)
-  obj <- statmod_objective(spec, fit@hyper, design, FALSE, "opg")
+  obj <- statmod_objective(spec, fit@hyper, design, FALSE, distributions7::expect_opg())
   par <- obj$stack(fit@coefficients)
   par[3] <- par[3] + 0.002
   npar <- obj$npar

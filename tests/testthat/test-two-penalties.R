@@ -69,7 +69,7 @@ test_that("the two are estimated apart and counted together", {
   # of two hyperparameters rather than how far a flat direction is walked
   fit <- statmod(fml, distributions7::gaussian1_distrib(), dd,
                  inner_optimizer = iwls(maxit = 500L),
-                 outer_criterion = reml("expected"))
+                 outer_criterion = reml(information = expected_info()))
   # The convergence flag is NOT asserted here, and the reason is measured
   # rather than assumed. On macOS the inner alternation does not settle for
   # this term at a budget of 500 -- five times the default, so it is not the
@@ -104,7 +104,7 @@ test_that("the two are estimated apart and counted together", {
   des <- statmod_design(fit@spec)
   tm <- fit@spec@terms$mu[[tn]]
   cols <- des$mu$blocks[[tn]]
-  H <- statmod_information_at(fit@spec, fit@coefficients, des, TRUE, "bartlett")
+  H <- statmod_information_at(fit@spec, fit@coefficients, des, TRUE, distributions7::expect_bartlett())
   ref <- modelterms7::edf(
     tm, coef = fit@coefficients$mu[cols], hessian = H[cols, cols, drop = FALSE],
     theta = list(lo = as.list(h[[paste0(tn, "::lo")]]),

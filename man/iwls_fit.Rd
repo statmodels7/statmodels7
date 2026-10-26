@@ -27,7 +27,7 @@ iwls_fit(
 \item{start}{The starting coefficients, stacked into one numeric vector.}
 
 \item{method}{An \code{\link[=Iwls]{Iwls()}} object, carrying the curvature, the
-decomposition, the budget and the stopping rule.}
+solver, the budget and the stopping rule.}
 
 \item{n}{The number of observations, the divisor of the scaled stopping
 rule.}
@@ -85,7 +85,7 @@ pieces on the observed information. After \code{switch_after} iterations without
 convergence, or earlier when \code{\link[=iwls_slow]{iwls_slow()}} reports a slow contraction of
 the score, it takes the place of \code{pieces_at}, and \code{pieces_at} that of
 \code{backup_at}. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method that \code{\link[=iwls_resolve]{iwls_resolve()}}
-settled on the expected information from \code{"auto"}.}
+settled on the expected information from \code{\link[=auto_info]{auto_info()}}.}
 
 \item{switch_after}{The iteration after which \code{switch_at} replaces
 \code{pieces_at}.}

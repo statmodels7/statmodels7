@@ -130,7 +130,7 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
   }
   # an "auto" that statmod() has not settled reads as "observed", as it does
   # at every other site
-  if (identical(method@hessian, "expected")) {
+  if (info_expected(method@hessian)) {
     # The expected route asks for the same object in the same place -- the
     # movement of K with the coefficients -- but that object is
     # dE[l'']/deta rather than l''', because differentiating an expectation
@@ -645,7 +645,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # the information, the penalty, K = H + S and its inverse come from the
   # context when there is one, so a criterion, a gradient and a Hessian read
   # at the same point assemble them once between them
-  expected <- identical(method@hessian, "expected")
+  expected <- info_expected(method@hessian)
   pen <- ctx_penalized(ctx, spec, design, coef, hyper, expected,
                        laplace = TRUE)
   if (is.null(pen)) return(NULL)
@@ -1217,7 +1217,7 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #'
 #' @keywords internal
 u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
-                      expected = FALSE, approx = "opg", units = NULL,
+                      expected = FALSE, approx = distributions7::expect_opg(), units = NULL,
                       Hl = NULL) {
   out <- numeric(total)
   if (is.null(units)) {

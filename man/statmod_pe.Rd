@@ -4,7 +4,15 @@
 \alias{statmod_pe}
 \title{A Prediction-Error Criterion at Given Coefficients and Hyperparameters}
 \usage{
-statmod_pe(spec, design, coef, hyper, method, approx = "opg", active = NULL)
+statmod_pe(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  approx = distributions7::expect_opg(),
+  active = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}

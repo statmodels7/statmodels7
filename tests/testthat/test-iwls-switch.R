@@ -1,13 +1,13 @@
-# iwls(hessian = "auto") settled on the expected information continues on the
+# iwls(information = auto_info()) settled on the expected information continues on the
 # observed one after iwls_switch_after() scoring steps.
 
 test_that("an auto iwls() on an exact family switches, a named one does not", {
   g <- iwls_resolve(iwls(), distributions7::gaussian1_distrib())
-  expect_identical(g@hessian, "expected")
+  expect_identical(info_label(g@hessian), "expected")
   expect_identical(g@switch_after, iwls_switch_after())
   p <- iwls_resolve(iwls(), distributions7::pig1_distrib())
   expect_identical(p@switch_after, Inf)
-  e <- iwls_resolve(iwls(hessian = "expected"), distributions7::gaussian1_distrib())
+  e <- iwls_resolve(iwls(information = expected_info()), distributions7::gaussian1_distrib())
   expect_identical(e@switch_after, Inf)
   expect_identical(iwls()@switch_after, Inf)
 })
@@ -21,7 +21,7 @@ test_that("a scoring run that converges slowly moves to the observed pieces", {
               gr = function(b) as.numeric(Q %*% (b - m)))
   expd <- function(b) list(R = NULL, C = NULL, A = diag(diag(Q)))
   obsd <- function(b) list(R = NULL, C = NULL, A = Q)
-  meth <- iwls(hessian = "expected", tol = 1e-10)
+  meth <- iwls(information = expected_info(), tol = 1e-10)
   slow <- iwls_fit(obj, c(0, 0), meth, 1, expd)
   # the count alone: the rate rule off, the switch comes after three steps
   local({
@@ -69,7 +69,7 @@ test_that("a gaussian with smooths in the mean and in sigma is fitted", {
     sigma ~ s(Time, bspline_smooth(k = 8))
   fit <- statmod(f, distrib = gaussian1_distrib(), data = cw)
   ref <- statmod(f, distrib = gaussian1_distrib(), data = cw,
-                 inner_optimizer = iwls(hessian = "observed"))
+                 inner_optimizer = iwls(information = observed_info()))
   expect_identical(statmod_certificate(fit)$state, "converged")
   expect_equal(as.numeric(logLik(fit, type = "marginal")),
                as.numeric(logLik(ref, type = "marginal")), tolerance = 1e-7)
@@ -84,7 +84,7 @@ test_that("a gaussian with smooths in the mean and in sigma is fitted", {
                  "unavailable at the starting hyperparameters")
   })
   # the rate rule alone is enough at that budget (an infinite count would
-  # turn the switch off altogether, as a named iwls(hessian = "expected") does)
+  # turn the switch off altogether, as a named iwls(information = expected_info()) does)
   local_mocked_bindings(iwls_switch_after = function() 1e6)
   byrate <- statmod(f, distrib = gaussian1_distrib(), data = cw,
                     inner_optimizer = iwls(maxit = 100))
