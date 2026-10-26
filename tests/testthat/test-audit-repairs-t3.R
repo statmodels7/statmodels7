@@ -84,11 +84,11 @@ test_that("predict() rejects arguments that no route reads", {
   nd <- data.frame(x = c(0, 1))
   expect_error(predict(fit, what = "mu", newdata = nd, bogus = 3),
                "takes no argument 'bogus'")
-  expect_error(predict(fit, what = "mu", newdata = nd, type = "unconditional"),
+  expect_error(predict(fit, what = "mu", newdata = nd, vcov_type = unconditional_vcov()),
                "read only with")
   expect_error(predict(fit, what = "mu", se = TRUE, readable = FALSE),
                "takes no argument 'readable'")
-  a <- predict(fit, what = "mu", newdata = nd, se = TRUE, type = "frequentist")
+  a <- predict(fit, what = "mu", newdata = nd, se = TRUE, vcov_type = frequentist_vcov())
   expect_true(all(is.finite(a$se)))
 })
 
@@ -202,7 +202,7 @@ test_that("a restricted test reaches the rows of a break-point term", {
   pick <- function(s) Filter(function(b) identical(b$term, "seg(x)"),
                             s@tables$mu)[[1L]]$table
   tw <- pick(summary(f))
-  tl <- pick(summary(f, test = "lr"))
+  tl <- pick(summary(f, test = lr_test()))
   r <- match("gamma1", tw$name)
   expect_false(isTRUE(all.equal(tw$statistic[r], tl$statistic[r])))
   expect_true(is.na(tl$statistic[match("psi1", tl$name)]))
@@ -237,12 +237,12 @@ test_that("the marginal log-likelihood counts what it estimates", {
   d <- t3_smooth_data()
   fm <- statmod(y ~ s(x, bspline_smooth(k = 10)), g1, d, outer_criterion = ml())
   # intercept, the smooth's straight line, sigma's intercept and lambda
-  expect_identical(attr(logLik(fm, type = "marginal"), "df"), 4)
+  expect_identical(attr(logLik(fm, loglik_type = "marginal"), "df"), 4)
   fh <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = 3)) +
                   s(z, bspline_smooth(k = 6)), g1, d, outer_criterion = ml())
   # mu's intercept, the two straight lines, sigma's intercept and the one
   # lambda that is estimated
-  expect_identical(attr(logLik(fh, type = "marginal"), "df"), 5)
+  expect_identical(attr(logLik(fh, loglik_type = "marginal"), "df"), 5)
   # a random intercept counts as lme4 counts it: two fixed effects, the
   # residual scale and one variance (lme4::lmer(y ~ x + (1 | g), REML =
   # FALSE) gives df 4 and the same log-likelihood, -190.6884, on these data)
@@ -250,8 +250,8 @@ test_that("the marginal log-likelihood counts what it estimates", {
   dr <- data.frame(g = factor(rep(1:20, each = 6)), x = rnorm(120))
   dr$y <- 1 + dr$x + rnorm(20)[dr$g] + rnorm(120)
   fr <- statmod(y ~ x + random(~1 | g), g1, dr, outer_criterion = ml())
-  expect_identical(attr(logLik(fr, type = "marginal"), "df"), 4)
-  expect_equal(as.numeric(logLik(fr, type = "marginal")), -190.6884,
+  expect_identical(attr(logLik(fr, loglik_type = "marginal"), "df"), 4)
+  expect_equal(as.numeric(logLik(fr, loglik_type = "marginal")), -190.6884,
                tolerance = 1e-6)
 })
 

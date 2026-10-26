@@ -6,7 +6,7 @@
 \title{A Test of One Coefficient Against One Value}
 \usage{
 StatmodTest(
-  test = character(0),
+  test = test_statistic(),
   statistic = integer(0),
   df = integer(0),
   p.value = integer(0),
@@ -19,7 +19,9 @@ StatmodTest(
 )
 }
 \arguments{
-\item{test}{Which of the four statistics was computed.}
+\item{test}{The \link{test_statistic} object that was computed: \code{\link[=wald_test]{wald_test()}},
+\code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} or \code{\link[=gradient_test]{gradient_test()}}. Its \code{label} is the name
+under which \code{print()} shows the statistic.}
 
 \item{statistic}{Its value, compared with a \eqn{\chi^2_1}.}
 

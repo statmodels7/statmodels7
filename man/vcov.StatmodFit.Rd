@@ -6,7 +6,7 @@
 \usage{
 \method{vcov}{StatmodFit}(
   object,
-  type = c("bayesian", "frequentist", "unconditional"),
+  vcov_type = bayesian_vcov(),
   expected = NULL,
   approx = distributions7::expect_opg(),
   readable = TRUE,
@@ -17,9 +17,15 @@
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{type}{\code{"bayesian"}, \code{"frequentist"} or \code{"unconditional"}. The first
-two are conditional on the hyperparameters; the third carries their own
-uncertainty as well.}
+\item{vcov_type}{A \link{vcov_method} object, which selects the convention of the
+matrix. \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default) returns \eqn{V_b = (H+S)^{-1}},
+the posterior variance conditional on the hyperparameters.
+\code{\link[=frequentist_vcov]{frequentist_vcov()}} returns the sandwich
+\eqn{V_f = (H+S)^{-1}H(H+S)^{-1}}, conditional on the hyperparameters as
+well. \code{\link[=unconditional_vcov]{unconditional_vcov()}} returns \eqn{V' = V_b + J V_\theta J'}, which
+adds the uncertainty of the hyperparameters. The three are compared at
+\link{vcov_method}. A character string is rejected with an error that names the
+constructor.}
 
 \item{expected}{Whether the expected information is used. Defaults to
 \code{\link[=fit_expected]{fit_expected()}}, which selects the expected information where the fit
@@ -73,10 +79,10 @@ both are \eqn{H^{-1}}, for a coefficient that the outer criterion does not
 estimate. Under \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} with the default \code{marginal = NULL}, in a
 model without a structural term, the unpenalized coefficients of every
 distribution parameter other than the first (for example the log standard
-deviation of a Gaussian) are estimated on the criterion, and \code{"bayesian"} and
-\code{"unconditional"} take the curvature of that criterion for them. These two
-types then differ from \code{"frequentist"} for those coefficients even without a
-penalty.
+deviation of a Gaussian) are estimated on the criterion, and \code{\link[=bayesian_vcov]{bayesian_vcov()}}
+and \code{\link[=unconditional_vcov]{unconditional_vcov()}} take the curvature of that criterion for them.
+These two conventions then differ from \code{\link[=frequentist_vcov]{frequentist_vcov()}} for those
+coefficients even without a penalty.
 
 For a prior that is not Gaussian, \eqn{V_b} is computed in the same way for
 every penalty that is twice differentiable at the mode. \eqn{H + S} is then
@@ -107,11 +113,12 @@ positive semi-definite, so \eqn{V'} is never narrower than \eqn{V_b}. It
 matters where a smoothing parameter is poorly determined, and it affects the
 penalized coordinates much more than the unpenalized ones. It requires the
 curvature of the outer criterion, which the two conditional matrices do not
-read, so \code{"unconditional"} is more expensive than the other two types.
+read, so \code{\link[=unconditional_vcov]{unconditional_vcov()}} is more expensive than the other two
+conventions.
 
 Where no hyperparameter was estimated by a differentiable criterion there
-is nothing to propagate, the correction is exactly zero and \code{"unconditional"}
-returns \eqn{V_b} itself. Where a hyperparameter was estimated and the
+is nothing to propagate, the correction is exactly zero and
+\code{\link[=unconditional_vcov]{unconditional_vcov()}} returns \eqn{V_b} itself. Where a hyperparameter was estimated and the
 curvature of the criterion cannot be read at the fitted point, the
 conditional matrix is returned with a warning, so that the narrower matrix
 is not mistaken for the wider one. Where the curvature can be read for only
@@ -160,8 +167,8 @@ sqrt(diag(vcov(fit)))
 ds <- data.frame(x = runif(200))
 ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
 fs <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
-vapply(c("frequentist", "bayesian", "unconditional"),
-       function(ty) sqrt(diag(vcov(fs, type = ty)))[["mu:s(x).z2"]], 0)
+vapply(list(frequentist_vcov(), bayesian_vcov(), unconditional_vcov()),
+       function(ty) sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]], 0)
 }
 \references{
 Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
@@ -169,6 +176,7 @@ selection for general smooth models. \emph{Journal of the American
 Statistical Association}, 111(516), 1548--1563.
 }
 \seealso{
+\link{vcov_method} for the three conventions side by side,
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
 \code{\link[=hyper_correction]{hyper_correction()}}, which builds the third matrix's correction
 }

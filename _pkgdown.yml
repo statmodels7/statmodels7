@@ -100,6 +100,35 @@ reference:
   - statmod_test
   - statmod_breakpoint_test
 
+- title: Test statistics
+  desc: >
+    The four statistics with which a coefficient is tested, as objects passed
+    to the argument `test` of `statmod_test()`, `summary()` and `confint()`:
+    Wald's, the likelihood ratio, Rao's score and Terrell's gradient. The
+    overview states the formula of each, what it needs and what it costs, and
+    `test_restricted()` tells whether a statistic refits the model under the
+    restriction.
+  contents:
+  - test_statistic
+  - wald_test
+  - lr_test
+  - score_test
+  - gradient_test
+  - test_restricted
+
+- title: Variance conventions
+  desc: >
+    The three conventions for the variance matrix of the coefficients, as
+    objects passed to the argument `type` of `vcov()`, `confint()`,
+    `summary()`, `statmod_test()` and `predict()`: the Bayesian variance, the
+    frequentist sandwich, and the unconditional variance that adds the
+    uncertainty of the hyperparameters.
+  contents:
+  - vcov_method
+  - bayesian_vcov
+  - frequentist_vcov
+  - unconditional_vcov
+
 - title: Installing and updating
   desc: >
     The toolkit is not on CRAN, so the install path is GitHub and the

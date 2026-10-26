@@ -4,16 +4,17 @@
 \alias{restricted_stat_rows}
 \title{A Table's Statistics From a Restricted Fit}
 \usage{
-restricted_stat_rows(fit, ci, test, type, spec, design)
+restricted_stat_rows(fit, ci, test, vcov_type, spec, design)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{ci}{The flat interval table, with the Wald statistic already in it.}
 
-\item{test}{Which statistic: \code{"lr"}, \code{"score"} or \code{"gradient"}.}
+\item{test}{A restricted \link{test_statistic}: \code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} or
+\code{\link[=gradient_test]{gradient_test()}}.}
 
-\item{type}{Which variance the Wald bracket reads, passed on.}
+\item{vcov_type}{The \link{vcov_method} that the Wald bracket reads, passed on.}
 
 \item{spec, design}{The specification and its design.}
 }

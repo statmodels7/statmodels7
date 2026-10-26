@@ -24,7 +24,7 @@ test_that("nested random effects reach the maximum of the REML criterion", {
   # lme(score ~ Machine, random = ~ 1 | Worker/Machine): 4.781050 and
   # 3.729532, restricted log-likelihood -107.8438
   expect_equal(hyper(fit)$estimate, c(4.781050, 3.729532), tolerance = 1e-4)
-  expect_equal(as.numeric(logLik(fit, type = "marginal")), -107.8438,
+  expect_equal(as.numeric(logLik(fit, loglik_type = "marginal")), -107.8438,
                tolerance = 1e-6)
   expect_identical(statmod_certificate(fit)$state, "converged")
 })
@@ -44,12 +44,12 @@ test_that("a search started at the edge stays there without the probe", {
   fit <- statmod(score ~ Machine + random(~ 1 | Worker) +
                    random(~ 1 | Worker:Machine), distrib = G, data = m)
   expect_equal(hyper(fit)$estimate, c(4.781050, 3.729532), tolerance = 1e-4)
-  expect_equal(as.numeric(logLik(fit, type = "marginal")), -107.8438,
+  expect_equal(as.numeric(logLik(fit, loglik_type = "marginal")), -107.8438,
                tolerance = 1e-6)
   testthat::local_mocked_bindings(edge_probe_hyper = function(...) NULL)
   fit0 <- statmod(score ~ Machine + random(~ 1 | Worker) +
                     random(~ 1 | Worker:Machine), distrib = G, data = m)
-  expect_lt(as.numeric(logLik(fit0, type = "marginal")), -108)
+  expect_lt(as.numeric(logLik(fit0, loglik_type = "marginal")), -108)
   expect_lt(hyper(fit0)$estimate[1], 0.01)
 })
 

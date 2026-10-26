@@ -45,7 +45,7 @@ test_that("the edf correction and the unconditional variance of an ml() fit read
     h
   })
   summary(m$fit, correct = TRUE)
-  suppressWarnings(vcov(m$fit, type = "unconditional"))
+  suppressWarnings(vcov(m$fit, vcov_type = unconditional_vcov()))
   expect_gte(length(seen), 2L)
   for (h in seen) expect_equal(as.numeric(h), m$ref, tolerance = 1e-5)
 })
@@ -135,7 +135,7 @@ test_that("a test whose mode error is missing says that it could not be read", {
   d <- data.frame(x = stats::runif(80))
   d$y <- 1 + d$x + stats::rnorm(80)
   tt <- statmod_test(statmod(y ~ x, g1, d), param = "mu", coefname = "x",
-                     test = "lr")
+                     test = lr_test())
   tt@mode_error <- NA_real_
   out <- paste(utils::capture.output(print(tt)), collapse = "\n")
   expect_match(out, "could not be read")

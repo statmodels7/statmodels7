@@ -322,14 +322,17 @@ predict_moments <- function() {
 #' @param boot_refit `"coefficients"` (the default), refitting each replica
 #'   at the fit's hyperparameters, or `"full"`, choosing them again. It is
 #'   read only where `predictive = "bootstrap"`.
-#' @param ... Only `type`, the variance type of [vcov.StatmodFit()]: the
-#'   Bayesian variance, the frequentist one or the unconditional one, which
-#'   also accounts for the estimated smoothing parameters. It is read where
+#' @param vcov_type A [vcov_method] object that selects the variance convention
+#'   of [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
+#'   [frequentist_vcov()] or [unconditional_vcov()], which also accounts for
+#'   the estimated smoothing parameters. It is read where
 #'   `se` is `TRUE`, with `interval = "group"`, and with
-#'   `interval = "prediction"` and `predictive = "averaged"`, and it signals an
-#'   error elsewhere. Any other argument signals an error that names it. The
-#'   unconditional variance differs most from the others in a band around a
-#'   penalized term, since a smoothing parameter moves the fitted values.
+#'   `interval = "prediction"` and `predictive = "averaged"`, and a value other
+#'   than the default signals an error elsewhere. The unconditional variance
+#'   differs most from the others in a band around a penalized term, since a
+#'   smoothing parameter moves the fitted values. The conventions are compared
+#'   at [vcov_method].
+#' @param ... Not used. Any argument signals an error that names it.
 #' @return With `se = FALSE`, a numeric vector with one value per row of
 #'   `newdata` (of the fitting data where `newdata` is `NULL`) when `what`
 #'   names one quantity, and a named list of such vectors for `"parameter"`
@@ -404,7 +407,8 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
                                predictive = c("averaged", "plugin",
                                               "bootstrap"),
                                n_boot = 200L,
-                               boot_refit = c("coefficients", "full"), ...) {
+                               boot_refit = c("coefficients", "full"),
+                               vcov_type = bayesian_vcov(), ...) {
   if (is.data.frame(what)) {
     stop(paste0("The second argument of statmod's predict() is 'what', not\n",
                 "  'newdata': a fit has several parameters and several\n",
@@ -431,25 +435,23 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     stop("'level' must be a single number strictly between 0 and 1.",
          call. = FALSE)
   }
-  # the dots carry the variance type to vcov(), and nothing else: an
-  # argument accepted here and read by nobody would change nothing
-  dots <- list(...)
-  dn <- names(dots)
-  if (length(dots) && (is.null(dn) || any(!nzchar(dn)) ||
-                       any(dn != "type"))) {
-    bad <- if (is.null(dn)) rep("", length(dots)) else dn
-    bad <- bad[bad != "type"]
-    stop(sprintf(paste0("predict() takes no argument %s. The only further ",
-                        "argument is 'type',\n  the variance type of the ",
-                        "standard error."),
+  # an argument accepted here and read by nobody would change nothing
+  if (...length()) {
+    dn <- ...names()
+    reject_old_type(dn, "vcov_type",
+                    "predict(fit, se = TRUE, vcov_type = frequentist_vcov())")
+    bad <- if (is.null(dn)) rep("", ...length()) else dn
+    stop(sprintf("predict() takes no argument %s.",
                  paste0("'", ifelse(nzchar(bad), bad, "<unnamed>"), "'",
                         collapse = ", ")), call. = FALSE)
   }
-  if (length(dots) &&
+  vcov_given <- !missing(vcov_type)
+  vcov_type <- as_vcov_method(vcov_type)
+  if (vcov_given &&
       ((!isTRUE(se) && identical(interval, "confidence")) ||
        (identical(interval, "prediction") &&
         !identical(predictive, "averaged")))) {
-    stop(paste0("'type' is the variance type of the standard error, and is ",
+    stop(paste0("'vcov_type' selects the variance of the standard error, and is ",
                 "read only with\n  se = TRUE, with interval = \"group\", or ",
                 "with interval = \"prediction\" and\n  predictive = ",
                 "\"averaged\"."), call. = FALSE)
@@ -602,14 +604,16 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     comps <- switch(predictive,
       averaged = predictive_mixture(
         object, spec, design, aside, ep$eta,
-        predictive_cov(object, spec, design, list(), ...)$fixed),
+        predictive_cov(object, spec, design, list(), vcov_type = vcov_type,
+                       ...)$fixed),
       plugin = predictive_mixture(object, spec, design, aside, ep$eta, NULL),
       bootstrap = predictive_bootstrap(object, spec, design, aside,
                                        as.integer(n_boot), boot_refit))
     return(predictive_response(spec, comps, level))
   }
   if (isTRUE(se)) {
-    su <- predict_se(object, spec, design, ep, level, ...)
+    su <- predict_se(object, spec, design, ep, level, vcov_type = vcov_type,
+                     ...)
     # A NEW GROUP'S PARAMETER varies around the typical group's by what its
     # effects add, z' Sigma_b z in its own equation, on top of the estimates'
     # own uncertainty
@@ -617,7 +621,8 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     # effects add, on top of the estimates' own uncertainty: its interval and
     # standard deviation are those of h^-1(eta*), see group_interval()
     if (identical(interval, "group")) {
-      su <- group_interval(object, spec, design, aside, ep, su, level, ...)
+      su <- group_interval(object, spec, design, aside, ep, su, level,
+                           vcov_type = vcov_type, ...)
     }
     # a marginal parameter is averaged over the effects: the fit and the ends
     # of the interval are the fixed part's carried through that average,
@@ -657,7 +662,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
         fitv <- random_marginal(spec, design, ep, mt, nodes, p,
                                 eta_node = eta_node)
         ms <- nested_marginal_se(object, pr, coef_node, eta_node, nodes$w, p,
-                                 fitv, level, ...)
+                                 fitv, level, vcov_type = vcov_type, ...)
         su[[p]][c("fit", "se", "lower", "upper")] <- ms
       }
     }

@@ -71,8 +71,8 @@ test_that("a gaussian with smooths in the mean and in sigma is fitted", {
   ref <- statmod(f, distrib = gaussian1_distrib(), data = cw,
                  inner_optimizer = iwls(information = observed_info()))
   expect_identical(statmod_certificate(fit)$state, "converged")
-  expect_equal(as.numeric(logLik(fit, type = "marginal")),
-               as.numeric(logLik(ref, type = "marginal")), tolerance = 1e-7)
+  expect_equal(as.numeric(logLik(fit, loglik_type = "marginal")),
+               as.numeric(logLik(ref, loglik_type = "marginal")), tolerance = 1e-7)
   expect_equal(hyper(fit)$estimate, hyper(ref)$estimate, tolerance = 1e-4)
   # without either switch the first inner fit exhausts a budget of 100
   # scoring steps and the criterion is unavailable at its start
@@ -88,8 +88,8 @@ test_that("a gaussian with smooths in the mean and in sigma is fitted", {
   local_mocked_bindings(iwls_switch_after = function() 1e6)
   byrate <- statmod(f, distrib = gaussian1_distrib(), data = cw,
                     inner_optimizer = iwls(maxit = 100))
-  expect_equal(as.numeric(logLik(byrate, type = "marginal")),
-               as.numeric(logLik(ref, type = "marginal")), tolerance = 1e-7)
+  expect_equal(as.numeric(logLik(byrate, loglik_type = "marginal")),
+               as.numeric(logLik(ref, loglik_type = "marginal")), tolerance = 1e-7)
 })
 
 test_that("a run that converges within the switch is unchanged", {

@@ -15,6 +15,12 @@
 ## package is not a dependency of this toolkit even in Suggests, so the
 ## reference is implemented here instead.
 
+## the test object that a loop over the four names stands for
+tst <- function(name) {
+  switch(name, wald = wald_test(), lr = lr_test(), score = score_test(),
+         gradient = gradient_test())
+}
+
 pois_data <- function(n = 300, seed = 4) {
   set.seed(seed)
   d <- data.frame(x = stats::runif(n, -1, 1), z = stats::runif(n, -1, 1))
@@ -99,7 +105,7 @@ test_that("the four statistics agree with the references that have one", {
   g <- stats::glm(y ~ x + z, family = stats::poisson(), data = d)
 
   ## Wald against glm's own z^2
-  w <- statmod_stat_at(fit, "mu", "x", 0, "wald")
+  w <- statmod_stat_at(fit, "mu", "x", 0, wald_test())
   expect_equal(w$statistic,
                (summary(g)$coefficients["x", "z value"])^2,
                tolerance = 1e-4)
@@ -107,7 +113,7 @@ test_that("the four statistics agree with the references that have one", {
   ## the likelihood ratio against the deviance difference, which is the same
   ## quantity assembled from two unpenalized fits
   g0 <- stats::glm(y ~ z, family = stats::poisson(), data = d)
-  lr <- statmod_stat_at(fit, "mu", "x", 0, "lr")
+  lr <- statmod_stat_at(fit, "mu", "x", 0, lr_test())
   expect_equal(lr$statistic,
                as.numeric(stats::deviance(g0) - stats::deviance(g)),
                tolerance = 1e-6)
@@ -120,13 +126,13 @@ test_that("the four statistics agree with the references that have one", {
     r <- statmod_restrict(fit, "mu", "x", b)
     V <- solve(r$information())
     full <- as.numeric(t(r$score) %*% V %*% r$score)
-    s <- statmod_stat_at(fit, "mu", "x", b, "score")
+    s <- statmod_stat_at(fit, "mu", "x", b, score_test())
     expect_equal(s$statistic, full, tolerance = 1e-6)
   }
 
   ## every p-value is the chi-squared one on one degree of freedom
   for (t in c("wald", "lr", "score", "gradient")) {
-    s <- statmod_stat_at(fit, "mu", "x", 0, t)
+    s <- statmod_stat_at(fit, "mu", "x", 0, tst(t))
     expect_identical(s$df, 1L)
     expect_equal(s$p.value,
                  stats::pchisq(s$statistic, 1L, lower.tail = FALSE))
@@ -140,7 +146,7 @@ test_that("at the estimate itself all four statistics vanish", {
   nms <- statmod_design(fit@spec)$mu$coef_names
   bx <- fit@coefficients$mu[[match("x", nms)]]
   for (t in c("wald", "lr", "score", "gradient")) {
-    expect_lt(abs(statmod_stat_at(fit, "mu", "x", bx, t)$statistic), 1e-6)
+    expect_lt(abs(statmod_stat_at(fit, "mu", "x", bx, tst(t))$statistic), 1e-6)
   }
 })
 
@@ -152,7 +158,7 @@ test_that("inverting the Wald statistic returns the closed-form interval", {
   bx <- fit@coefficients$mu[[match("x", nms)]]
   se <- sqrt(stats::vcov(fit, readable = FALSE)[2L, 2L])
   zq <- stats::qnorm(0.975)
-  ci <- statmod_invert(fit, "mu", "x", 0.95, "wald")
+  ci <- statmod_invert(fit, "mu", "x", 0.95, wald_test())
   ## the Wald statistic is a parabola in b, so the search must land on the
   ## two points the closed form gives and the interval must be symmetric
   expect_equal(as.numeric(ci), c(bx - zq * se, bx + zq * se),
@@ -180,14 +186,14 @@ test_that("the likelihood-ratio interval is the profile one", {
   ref <- c(stats::uniroot(gap, c(bx - 6 * se, bx), tol = 1e-10)$root,
            stats::uniroot(gap, c(bx, bx + 6 * se), tol = 1e-10)$root)
 
-  ci <- statmod_invert(fit, "mu", "x", 0.95, "lr")
+  ci <- statmod_invert(fit, "mu", "x", 0.95, lr_test())
   expect_equal(as.numeric(ci), ref, tolerance = 1e-5)
 
   ## and it is NOT the Wald interval: the whole reason to invert a
   ## likelihood is that the two differ where the likelihood is not a
   ## parabola, so a check that could be satisfied by returning the Wald
   ## ends would say nothing
-  w <- statmod_invert(fit, "mu", "x", 0.95, "wald")
+  w <- statmod_invert(fit, "mu", "x", 0.95, wald_test())
   expect_gt(max(abs(as.numeric(ci) - as.numeric(w))), 1e-5)
 })
 
@@ -201,7 +207,7 @@ test_that("the three restricted intervals are not symmetric and Wald's is", {
   fit <- statmod(y ~ x, distributions7::poisson_distrib(), d)
   b <- fit@coefficients$mu[[2L]]
   asym <- function(t) {
-    ci <- statmod_invert(fit, "mu", "x", 0.95, t)
+    ci <- statmod_invert(fit, "mu", "x", 0.95, tst(t))
     (ci[["upper"]] - b) - (b - ci[["lower"]])
   }
   expect_lt(abs(asym("wald")), 1e-9)
@@ -219,7 +225,7 @@ test_that("what cannot be held is refused, and what can is not", {
 
   ## A penalty that is twice differentiable does NOT put a coordinate out of
   ## reach: the hold is enforced in the solve, and what the statistic then
-  ## means is the credible reading vcov(type = "bayesian") already gives that
+  ## means is the credible reading vcov(vcov_type = bayesian_vcov()) already gives that
   ## row. The smooth's linear column is the case that motivated it -- s() is
   ## penalized by diag(0, 1, ..., 1), so `lin` is not shrunk at all.
   fs <- smooth_fit()
@@ -301,10 +307,10 @@ test_that("a penalized coordinate is tested on the penalized objective", {
     b0 <- fs@coefficients$mu[[match(nm, nms)]]
     v <- b0 + c(-0.5, -0.1, 0.1, 0.5) * max(abs(b0), 0.2)
     st <- vapply(v, function(b)
-      statmod_stat_at(fs, "mu", nm, b, "lr")$statistic, numeric(1))
+      statmod_stat_at(fs, "mu", nm, b, lr_test())$statistic, numeric(1))
     expect_true(all(st >= 0))
     ## and exactly zero at the estimate
-    expect_lt(abs(statmod_stat_at(fs, "mu", nm, b0, "lr")$statistic), 1e-6)
+    expect_lt(abs(statmod_stat_at(fs, "mu", nm, b0, lr_test())$statistic), 1e-6)
   }
 
   ## THE CHECK that the reading is the one claimed: the interval by inversion
@@ -317,7 +323,7 @@ test_that("a penalized coordinate is tested on the penalized objective", {
     key <- paste0("mu:", nm)
     b0 <- fs@coefficients$mu[[match(nm, nms)]]
     se <- sqrt(V[key, key])
-    ci <- confint(fs, key, test = "lr", readable = FALSE)
+    ci <- confint(fs, key, test = lr_test(), readable = FALSE)
     expect_equal(c(ci$lower[[1L]], ci$upper[[1L]]),
                  c(b0 - zq * se, b0 + zq * se), tolerance = 0.02,
                  ignore_attr = TRUE)
@@ -337,7 +343,7 @@ test_that("a penalized coordinate is tested on the penalized objective", {
   nml <- statmod_design(fl@spec)$mu$coef_names
   b1 <- fl@coefficients$mu[[match("s(z).z1", nml)]]
   s1 <- sqrt(stats::vcov(fl, readable = FALSE)["mu:s(z).z1", "mu:s(z).z1"])
-  c1 <- confint(fl, "mu:s(z).z1", test = "lr", readable = FALSE)
+  c1 <- confint(fl, "mu:s(z).z1", test = lr_test(), readable = FALSE)
   expect_equal(c(c1$lower[[1L]], c1$upper[[1L]]),
                c(b1 - zq * s1, b1 + zq * s1), tolerance = 1e-5,
                ignore_attr = TRUE)
@@ -363,8 +369,8 @@ test_that("confint(test =) inverts the test it names", {
   d <- pois_data()
   fit <- pois_fit(d)
   for (m in c("lr", "score", "gradient")) {
-    a <- confint(fit, "mu:x", test = m, readable = FALSE)
-    b <- statmod_invert(fit, "mu", "x", 0.95, m)
+    a <- confint(fit, "mu:x", test = tst(m), readable = FALSE)
+    b <- statmod_invert(fit, "mu", "x", 0.95, tst(m))
     expect_equal(c(a$lower[[1L]], a$upper[[1L]]), as.numeric(b),
                  ignore_attr = TRUE)
     ## the estimate and the standard error are the fit's own whatever the
@@ -373,26 +379,26 @@ test_that("confint(test =) inverts the test it names", {
                  confint(fit, "mu:x", readable = FALSE)$se[[1L]])
   }
   ## the default is unchanged
-  expect_equal(confint(fit, "mu:x", test = "wald", readable = FALSE),
+  expect_equal(confint(fit, "mu:x", test = wald_test(), readable = FALSE),
                confint(fit, "mu:x", readable = FALSE))
 
   ## a test is about ONE coefficient, so the readable quantities -- which are
   ## functions of several at once -- cannot be asked for
-  expect_error(confint(fit, "mu:x", test = "lr"), "readable = FALSE")
+  expect_error(confint(fit, "mu:x", test = lr_test()), "readable = FALSE")
 
   ## a row under a KINKED penalty keeps NA rather than falling back on the
   ## Wald limits, and a request for nothing but such rows is refused
   fl <- lasso_fit()
   nl <- statmod_design(fl@spec)$mu$coef_names
-  tb <- confint(fl, test = "lr", readable = FALSE)
+  tb <- confint(fl, test = lr_test(), readable = FALSE)
   kink <- rownames(tb) != "mu:(Intercept)"
   expect_true(all(is.na(tb$lower[kink])))
   expect_true(is.finite(tb$lower[!kink]))
-  expect_error(confint(fl, paste0("mu:", nl[[2L]]), test = "lr",
+  expect_error(confint(fl, paste0("mu:", nl[[2L]]), test = lr_test(),
                        readable = FALSE), "nothing to invert")
 
   ## while a smooth's own coordinates are inverted like any other
-  cs <- confint(smooth_fit(), "mu:s(z).lin", test = "lr",
+  cs <- confint(smooth_fit(), "mu:s(z).lin", test = lr_test(),
                 readable = FALSE)
   expect_true(all(is.finite(c(cs$lower[[1L]], cs$upper[[1L]]))))
 })
@@ -406,9 +412,9 @@ test_that("summary(test =) reports the signed root of the test it names", {
   expect_equal(sw$statistic, sw$estimate / sw$se)
 
   for (t in c("lr", "score", "gradient")) {
-    tb <- summary(fit, test = t)@tables$mu[[1L]]$table
+    tb <- summary(fit, test = tst(t))@tables$mu[[1L]]$table
     for (i in seq_len(nrow(tb))) {
-      s <- statmod_stat_at(fit, "mu", tb$name[[i]], 0, t)
+      s <- statmod_stat_at(fit, "mu", tb$name[[i]], 0, tst(t))
       ## the signed root of the chi-squared value, with the sign of the
       ## estimate, and the p-value of the value itself
       expect_equal(tb$statistic[[i]],
@@ -421,9 +427,9 @@ test_that("summary(test =) reports the signed root of the test it names", {
   }
 
   ## the summary says which test produced the column
-  expect_identical(summary(fit)@test, "wald")
-  expect_identical(summary(fit, test = "score")@test, "score")
-  out <- utils::capture.output(print(summary(fit, test = "lr")))
+  expect_identical(summary(fit)@test@name, "wald")
+  expect_identical(summary(fit, test = score_test())@test@name, "score")
+  out <- utils::capture.output(print(summary(fit, test = lr_test())))
   expect_true(any(grepl("lr test, signed root", out, fixed = TRUE)))
   expect_false(any(grepl("lr test", utils::capture.output(
     print(summary(fit))), fixed = TRUE)))
@@ -431,7 +437,7 @@ test_that("summary(test =) reports the signed root of the test it names", {
 
 
 test_that("a smooth's linear column is tested and a kinked row is not", {
-  s <- summary(smooth_fit(), test = "lr")
+  s <- summary(smooth_fit(), test = lr_test())
   ## the parametric block, and the smooth's own coefficient rows with it --
   ## the linear column is what this test exists for, being unshrunk
   par_tb <- s@tables$mu[[1L]]$table
@@ -447,7 +453,7 @@ test_that("a smooth's linear column is tested and a kinked row is not", {
   expect_false(any(grepl("no statistic", s@notes)))
 
   ## a KINKED block is where the column has holes, and the note says so
-  sl <- summary(lasso_fit(), test = "lr")
+  sl <- summary(lasso_fit(), test = lr_test())
   tb <- do.call(rbind, lapply(sl@tables$mu, function(b) b$table))
   cfl <- tb$role == "coefficient"
   expect_true(all(is.na(tb$statistic[cfl & tb$name != "(Intercept)"])))
@@ -465,7 +471,7 @@ test_that("the old name of confint's argument is refused rather than ignored", {
   expect_error(confint(fit, "mu:x", method = "lr", readable = FALSE),
                "'method' is now 'test'", fixed = TRUE)
   ## the same request under the name summary() already used
-  a <- confint(fit, "mu:x", test = "lr", readable = FALSE)
+  a <- confint(fit, "mu:x", test = lr_test(), readable = FALSE)
   expect_true(all(is.finite(c(a$lower[[1L]], a$upper[[1L]]))))
 })
 
@@ -476,13 +482,14 @@ test_that("statmod_test() carries the null a summary cannot be asked about", {
   bx <- fit@coefficients$mu[[2L]]
 
   for (t in c("wald", "lr", "score", "gradient")) {
-    tt <- statmod_test(fit, "mu", "x", 0.5, t)
+    tt <- statmod_test(fit, "mu", "x", 0.5, tst(t))
     expect_true(S7::S7_inherits(tt, StatmodTest))
-    s <- statmod_stat_at(fit, "mu", "x", 0.5, t)
+    s <- statmod_stat_at(fit, "mu", "x", 0.5, tst(t))
     expect_equal(tt@statistic, s$statistic)
     expect_equal(tt@p.value, s$p.value)
     expect_identical(tt@df, 1L)
-    expect_identical(tt@test, t)
+    expect_identical(tt@test@name, t)
+    expect_identical(tt@test@label, tst(t)@label)
     ## what the object says about itself: the estimate, the null it was put
     ## against, and which coefficient of which equation
     expect_equal(tt@estimate, bx)
@@ -493,20 +500,20 @@ test_that("statmod_test() carries the null a summary cannot be asked about", {
 
   ## tested against its own estimate every statistic vanishes
   for (t in c("lr", "score", "gradient")) {
-    tt <- statmod_test(fit, "mu", "x", bx, t)
+    tt <- statmod_test(fit, "mu", "x", bx, tst(t))
     expect_lt(abs(tt@statistic), 1e-6)
     expect_gt(tt@p.value, 0.99)
   }
 
   ## and against zero it is what the summary reports for the same row, which
   ## is where the two surfaces have to agree
-  z <- statmod_test(fit, "mu", "x", 0, "lr")
-  st <- summary(fit, test = "lr")@tables$mu[[1L]]$table
+  z <- statmod_test(fit, "mu", "x", 0, lr_test())
+  st <- summary(fit, test = lr_test())@tables$mu[[1L]]$table
   j <- match("x", st$name)
   expect_equal(st$statistic[[j]]^2, z@statistic)
   expect_equal(st$p_value[[j]], z@p.value)
 
-  out <- utils::capture.output(print(statmod_test(fit, "mu", "x", 1, "lr")))
+  out <- utils::capture.output(print(statmod_test(fit, "mu", "x", 1, lr_test())))
   expect_true(any(grepl("Likelihood-ratio test", out, fixed = TRUE)))
   expect_true(any(grepl("mu:x", out, fixed = TRUE)))
   expect_true(any(grepl("is not equal to 1", out, fixed = TRUE)))
@@ -538,21 +545,21 @@ test_that("what a test says about the refit is the mode error, not the flag", {
 
   ## the mode error is read only when it is asked for, so the loops that call
   ## the helper in quantity -- the summary and the interval -- pay no Hessian
-  expect_true(is.na(statmod_stat_at(fit, "mu", "x", 0.5, "lr")$mode_error))
-  asked <- statmod_stat_at(fit, "mu", "x", 0.5, "lr", mode_error = TRUE)
+  expect_true(is.na(statmod_stat_at(fit, "mu", "x", 0.5, lr_test())$mode_error))
+  asked <- statmod_stat_at(fit, "mu", "x", 0.5, lr_test(), mode_error = TRUE)
   expect_true(is.finite(asked$mode_error))
   expect_equal(asked$statistic,
-               statmod_stat_at(fit, "mu", "x", 0.5, "lr")$statistic)
+               statmod_stat_at(fit, "mu", "x", 0.5, lr_test())$statistic)
   ## and statmod_test(), which a reader reads one row of, does ask
-  expect_true(is.finite(statmod_test(fit, "mu", "x", 0.5, "lr")@mode_error))
-  expect_true(is.na(statmod_test(fit, "mu", "x", 0.5, "wald")@mode_error))
+  expect_true(is.finite(statmod_test(fit, "mu", "x", 0.5, lr_test())@mode_error))
+  expect_true(is.na(statmod_test(fit, "mu", "x", 0.5, wald_test())@mode_error))
 
   ## the print rule, pinned on objects built by hand so that neither branch
   ## depends on which points an optimizer happens to flag
   warned <- function(...) {
     any(grepl("stopped above its own mode",
               utils::capture.output(print(StatmodTest(
-                test = "lr", statistic = 1, df = 1L, p.value = 0.3,
+                test = lr_test(), statistic = 1, df = 1L, p.value = 0.3,
                 estimate = 1, null_value = 0, parameter = "mu",
                 coefficient = "x", ...))), fixed = TRUE))
   }
@@ -565,7 +572,7 @@ test_that("what a test says about the refit is the mode error, not the flag", {
   ## and a mode error that could not be read is reported as such
   expect_false(warned(mode_error = NA_real_, converged = TRUE))
   expect_true(any(grepl("could not be read", utils::capture.output(print(
-    StatmodTest(test = "lr", statistic = 1, df = 1L, p.value = 0.3,
+    StatmodTest(test = lr_test(), statistic = 1, df = 1L, p.value = 0.3,
                 estimate = 1, null_value = 0, parameter = "mu",
                 coefficient = "x", mode_error = NA_real_,
                 converged = TRUE))), fixed = TRUE)))
@@ -584,7 +591,7 @@ test_that("a held value of another length is refused where it is passed", {
                fixed = TRUE)
   expect_error(statmod_restrict(fit, "mu", "x", NA_real_), "'value'",
                fixed = TRUE)
-  expect_error(statmod_test(fit, "mu", "x", numeric(0), "lr"), "'value'",
+  expect_error(statmod_test(fit, "mu", "x", numeric(0), lr_test()), "'value'",
                fixed = TRUE)
 })
 
@@ -601,13 +608,13 @@ test_that("the likelihood ratio reads a dispersion at its joint mode on both sid
   m0 <- stats::lm(y ~ x, d)
   ref <- as.numeric(2 * (stats::logLik(m1, REML = FALSE) -
                            stats::logLik(m0, REML = FALSE)))
-  expect_equal(statmod_test(fit, "mu", "z", 0, "lr")@statistic, ref,
+  expect_equal(statmod_test(fit, "mu", "z", 0, lr_test())@statistic, ref,
                tolerance = 1e-6)
   zhat <- coef(fit)$mu[["z"]]
-  expect_lt(abs(statmod_test(fit, "mu", "z", zhat, "lr")@statistic), 1e-8)
+  expect_lt(abs(statmod_test(fit, "mu", "z", zhat, lr_test())@statistic), 1e-8)
   # at the ends of the inverted interval the ML profile, computed with lm()
   # at the held value as an offset, is the chi-squared quantile
-  ci <- confint(fit, test = "lr", readable = FALSE)
+  ci <- confint(fit, test = lr_test(), readable = FALSE)
   ci <- ci[ci$coefficient == "z", ]
   prof <- function(b) {
     as.numeric(stats::logLik(stats::lm(y ~ x + offset(b * z), d),
