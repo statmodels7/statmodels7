@@ -26,7 +26,7 @@ statmod_stat_at(
 \item{test}{A \link{test_statistic} object: \code{\link[=wald_test]{wald_test()}}, \code{\link[=lr_test]{lr_test()}},
 \code{\link[=score_test]{score_test()}} or \code{\link[=gradient_test]{gradient_test()}}.}
 
-\item{vcov_type}{A \link{vcov_type} object, the variance that the Wald statistic
+\item{vcov_type}{A \link{vcov_method} object, the variance that the Wald statistic
 reads, as \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} takes it.}
 
 \item{mode_error}{Whether to read how far above its mode the restricted

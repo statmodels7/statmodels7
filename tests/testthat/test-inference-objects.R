@@ -38,10 +38,10 @@ test_that("the three variance constructors build objects of the right classes", 
   types <- list(bayesian = bayesian_vcov(), frequentist = frequentist_vcov(),
                 unconditional = unconditional_vcov())
   for (nm in names(types)) {
-    expect_true(S7::S7_inherits(types[[nm]], vcov_type))
+    expect_true(S7::S7_inherits(types[[nm]], vcov_method))
     expect_identical(types[[nm]]@name, nm)
   }
-  expect_error(vcov_type(name = "x"), "abstract")
+  expect_error(vcov_method(name = "x"), "abstract")
 })
 
 test_that("the objects print one line", {
@@ -67,14 +67,14 @@ test_that("a string for test is rejected with the constructor to use", {
 test_that("a string for vcov_type is rejected with the constructor to use", {
   fit <- small_fit()
   expect_error(vcov(fit, vcov_type = "frequentist"),
-               "'vcov_type' must be a vcov_type object.*\"frequentist\" is no longer accepted.*frequentist_vcov\\(\\)")
+               "'vcov_type' must be a vcov_method object.*\"frequentist\" is no longer accepted.*frequentist_vcov\\(\\)")
   expect_error(confint(fit, vcov_type = "bayesian"), "bayesian_vcov\\(\\)")
   expect_error(summary(fit, vcov_type = "unconditional"), "unconditional_vcov\\(\\)")
   expect_error(statmod_test(fit, param = "mu", coefname = "x",
                             vcov_type = "bayesian"), "bayesian_vcov\\(\\)")
   expect_error(predict(fit, what = "mu", se = TRUE, vcov_type = "frequentist"),
                "frequentist_vcov\\(\\)")
-  expect_error(vcov(fit, vcov_type = lr_test()), "must be a vcov_type")
+  expect_error(vcov(fit, vcov_type = lr_test()), "must be a vcov_method")
   expect_error(vcov(fit, vcov_type = 2), "bayesian_vcov\\(\\), frequentist_vcov\\(\\)")
 })
 

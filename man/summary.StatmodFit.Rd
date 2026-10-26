@@ -21,13 +21,13 @@
 
 \item{level}{The confidence level.}
 
-\item{vcov_type}{A \link{vcov_type} object, the variance matrix, passed to
+\item{vcov_type}{A \link{vcov_method} object, the variance matrix, passed to
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}. The last carries the
 uncertainty of the hyperparameters into every standard error under it,
 where \code{correct} carries the same uncertainty into the degrees of freedom;
 the two are the same quantity read on two surfaces, and both can be used
-in one call. The conventions are compared at \link{vcov_type}.}
+in one call. The conventions are compared at \link{vcov_method}.}
 
 \item{expected}{The information from which the standard errors are computed,
 passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the default, takes the expected
@@ -219,7 +219,7 @@ summary(statmod(y ~ x | sigma ~ x,
 }
 \seealso{
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \link{test_statistic},
-\link{vcov_type}, \code{\link[=statmod_test]{statmod_test()}}, which computes the same four statistics for one
+\link{vcov_method}, \code{\link[=statmod_test]{statmod_test()}}, which computes the same four statistics for one
 coefficient against a value that need not be zero, and
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}
 }

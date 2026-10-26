@@ -16,7 +16,7 @@ marginal_vcov(object, design, A, keep, convention)
 \item{keep}{The kept coordinates, a logical vector over the stacked
 coefficients.}
 
-\item{convention}{The \code{name} of a \link{vcov_type} object, \code{"bayesian"} or
+\item{convention}{The \code{name} of a \link{vcov_method} object, \code{"bayesian"} or
 \code{"unconditional"}.}
 }
 \value{

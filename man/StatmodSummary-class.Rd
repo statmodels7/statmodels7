@@ -22,7 +22,7 @@ StatmodSummary(
   converged = logical(0),
   elapsed = integer(0),
   level = integer(0),
-  vcov_type = vcov_type(),
+  vcov_type = vcov_method(),
   test = wald_test(),
   max_coef = NULL,
   notes = character(0),

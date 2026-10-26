@@ -14,7 +14,7 @@ restricted_stat_rows(fit, ci, test, vcov_type, spec, design)
 \item{test}{A restricted \link{test_statistic}: \code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} or
 \code{\link[=gradient_test]{gradient_test()}}.}
 
-\item{vcov_type}{The \link{vcov_type} that the Wald bracket reads, passed on.}
+\item{vcov_type}{The \link{vcov_method} that the Wald bracket reads, passed on.}
 
 \item{spec, design}{The specification and its design.}
 }

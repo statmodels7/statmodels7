@@ -24,7 +24,7 @@ interval symmetric about the estimate is what is wanted. The likelihood
 ratio, the score and the gradient statistics follow the shape of the
 likelihood, and the Wald statistic does not; see \link{test_statistic} for the
 comparison. The variance on which it depends is selected by the argument
-\code{vcov_type} of the consuming function (see \link{vcov_type}).
+\code{vcov_type} of the consuming function (see \link{vcov_method}).
 
 The constructor has no arguments.
 }

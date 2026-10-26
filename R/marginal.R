@@ -480,7 +480,7 @@ stack_coords <- function(spec, design, pos) {
 #' @param A The penalized information over the kept coordinates.
 #' @param keep The kept coordinates, a logical vector over the stacked
 #'   coefficients.
-#' @param convention The `name` of a [vcov_type] object, `"bayesian"` or
+#' @param convention The `name` of a [vcov_method] object, `"bayesian"` or
 #'   `"unconditional"`.
 #'
 #' @return The variance over the kept coordinates, or `NULL` where the fit

@@ -83,7 +83,7 @@ curvature is read at \eqn{\hat\beta} and not under the null. The interval
 that inverts the Wald statistic is symmetric about the estimate. The
 intervals that invert the other three follow the shape of the likelihood
 and are asymmetric where it is. The variance that the Wald statistic reads
-is set by the argument \code{vcov_type}, described at \link{vcov_type}.
+is set by the argument \code{vcov_type}, described at \link{vcov_method}.
 }
 \examples{
 set.seed(1)
@@ -108,6 +108,6 @@ try(test_statistic(name = "mine", label = "Mine"))
 \code{\link[=wald_test]{wald_test()}}, \code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} and \code{\link[=gradient_test]{gradient_test()}}
 for the four statistics, \code{\link[=test_restricted]{test_restricted()}} for the distinction between
 them, \code{\link[=statmod_test]{statmod_test()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} and
-\code{\link[=confint.StatmodFit]{confint.StatmodFit()}} for the functions that take one, and \link{vcov_type}
+\code{\link[=confint.StatmodFit]{confint.StatmodFit()}} for the functions that take one, and \link{vcov_method}
 for the variance that the Wald statistic reads.
 }

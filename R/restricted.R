@@ -321,7 +321,7 @@ kinked_coords <- function(spec, design) {
 #'   `0`.
 #' @param test A [test_statistic] object: [wald_test()], [lr_test()],
 #'   [score_test()] or [gradient_test()].
-#' @param vcov_type A [vcov_type] object, the variance that the Wald statistic
+#' @param vcov_type A [vcov_method] object, the variance that the Wald statistic
 #'   reads, as [vcov.StatmodFit()] takes it.
 #' @param mode_error Whether to read how far above its mode the restricted
 #'   fit stopped ([restricted_mode_error()]). The default is `FALSE`, because
@@ -345,7 +345,7 @@ statmod_stat_at <- function(fit, param, coefname, value = 0,
                          test = wald_test(), vcov_type = bayesian_vcov(),
                          mode_error = FALSE, objective0 = NULL) {
   test <- as_test_statistic(test)
-  vcov_type <- as_vcov_type(vcov_type)
+  vcov_type <- as_vcov_method(vcov_type)
   tname <- test@name
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -628,14 +628,14 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #'   unrestricted fit only; the other three cost one restricted refit. The
 #'   four are compared at [test_statistic]. A character string is rejected with
 #'   an error that names the constructor.
-#' @param vcov_type A [vcov_type] object, the variance that the Wald statistic
+#' @param vcov_type A [vcov_method] object, the variance that the Wald statistic
 #'   reads, passed to [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
 #'   [frequentist_vcov()] or [unconditional_vcov()]. The conventions are
-#'   compared at [vcov_type].
+#'   compared at [vcov_method].
 #'
 #' @return A [StatmodTest()].
 #'
-#' @seealso [test_statistic] for the four statistics, [vcov_type] for the
+#' @seealso [test_statistic] for the four statistics, [vcov_method] for the
 #'   variance conventions, [summary.StatmodFit()] for the rows that can be
 #'   held, against zero, [confint.StatmodFit()] for the interval that a test
 #'   inverts.
@@ -653,7 +653,7 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
                          vcov_type = bayesian_vcov()) {
   test <- as_test_statistic(test)
-  vcov_type <- as_vcov_type(vcov_type)
+  vcov_type <- as_vcov_method(vcov_type)
   # the mode error is asked for HERE and nowhere else: this is the one
   # surface a reader reads one row of, so one extra Hessian is affordable,
   # where the two loops that call the same helper in quantity are not
@@ -699,7 +699,7 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
 #' @param level The confidence level, a single number in (0, 1).
 #' @param test The [test_statistic] to invert: [lr_test()] (the default),
 #'   [score_test()], [gradient_test()] or [wald_test()].
-#' @param vcov_type The [vcov_type] that sets the starting bracket, and that the
+#' @param vcov_type The [vcov_method] that sets the starting bracket, and that the
 #'   Wald statistic reads.
 #' @param maxit How many widenings to try on each side before the search
 #'   stops.
@@ -716,7 +716,7 @@ statmod_invert <- function(fit, param, coefname, level = 0.95,
                            test = lr_test(), vcov_type = bayesian_vcov(),
                            maxit = 40L) {
   test <- as_test_statistic(test)
-  vcov_type <- as_vcov_type(vcov_type)
+  vcov_type <- as_vcov_method(vcov_type)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
          call. = FALSE)

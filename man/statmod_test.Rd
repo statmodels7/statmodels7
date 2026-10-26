@@ -28,10 +28,10 @@ unrestricted fit only; the other three cost one restricted refit. The
 four are compared at \link{test_statistic}. A character string is rejected with
 an error that names the constructor.}
 
-\item{vcov_type}{A \link{vcov_type} object, the variance that the Wald statistic
+\item{vcov_type}{A \link{vcov_method} object, the variance that the Wald statistic
 reads, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}. The conventions are
-compared at \link{vcov_type}.}
+compared at \link{vcov_method}.}
 }
 \value{
 A \code{\link[=StatmodTest]{StatmodTest()}}.
@@ -71,7 +71,7 @@ statmod_test(fit, param = "mu", coefname = "x", value = 0, test = lr_test())
 
 }
 \seealso{
-\link{test_statistic} for the four statistics, \link{vcov_type} for the
+\link{test_statistic} for the four statistics, \link{vcov_method} for the
 variance conventions, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the rows that can be
 held, against zero, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} for the interval that a test
 inverts.

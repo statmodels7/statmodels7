@@ -74,7 +74,7 @@ read only where \code{predictive = "bootstrap"}.}
 at the fit's hyperparameters, or \code{"full"}, choosing them again. It is
 read only where \code{predictive = "bootstrap"}.}
 
-\item{vcov_type}{A \link{vcov_type} object that selects the variance convention
+\item{vcov_type}{A \link{vcov_method} object that selects the variance convention
 of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}, which also accounts for
 the estimated smoothing parameters. It is read where
@@ -83,7 +83,7 @@ the estimated smoothing parameters. It is read where
 than the default signals an error elsewhere. The unconditional variance
 differs most from the others in a band around a penalized term, since a
 smoothing parameter moves the fitted values. The conventions are compared
-at \link{vcov_type}.}
+at \link{vcov_method}.}
 
 \item{...}{Not used. Any argument signals an error that names it.}
 }

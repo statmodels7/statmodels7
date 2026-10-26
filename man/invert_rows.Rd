@@ -15,7 +15,7 @@ invert_rows(fit, out, level, test, vcov_type)
 
 \item{test}{The \link{test_statistic} to invert.}
 
-\item{vcov_type}{The \link{vcov_type} that sets the starting bracket.}
+\item{vcov_type}{The \link{vcov_method} that sets the starting bracket.}
 }
 \value{
 \code{out}, in which the \code{lower} and \code{upper} columns are replaced.

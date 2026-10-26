@@ -7,7 +7,7 @@
 bayesian_vcov()
 }
 \value{
-A \code{BayesianVcov} object, inheriting from \link{vcov_type}, with the
+A \code{BayesianVcov} object, inheriting from \link{vcov_method}, with the
 property \code{name} equal to \code{"bayesian"}.
 }
 \description{
@@ -22,7 +22,7 @@ hyperparameters, and it is the default of every function that takes a
 Choose it for an interval around a penalized term: it carries the
 smoothing bias as variance, and such intervals cover at about their nominal
 rate. It does not include the uncertainty of the hyperparameters, for which
-\code{\link[=unconditional_vcov]{unconditional_vcov()}} is the convention. See \link{vcov_type} for the three side
+\code{\link[=unconditional_vcov]{unconditional_vcov()}} is the convention. See \link{vcov_method} for the three side
 by side and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the matrices in full.
 
 The constructor has no arguments.
@@ -38,7 +38,7 @@ confint(fit, vcov_type = bayesian_vcov())
 }
 \seealso{
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} and \code{\link[=unconditional_vcov]{unconditional_vcov()}} for the siblings,
-\link{vcov_type} for the comparison, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}},
+\link{vcov_method} for the comparison, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}},
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} and \code{\link[=statmod_test]{statmod_test()}} for
 the functions that take it.
 }

@@ -7,7 +7,7 @@
 frequentist_vcov()
 }
 \value{
-A \code{FrequentistVcov} object, inheriting from \link{vcov_type}, with the
+A \code{FrequentistVcov} object, inheriting from \link{vcov_method}, with the
 property \code{name} equal to \code{"frequentist"}.
 }
 \description{
@@ -20,7 +20,7 @@ conditional on the hyperparameters.
 \details{
 The matrix is smaller than the Bayesian one wherever there is a penalty,
 because it omits the smoothing bias, and an interval built from it covers
-less. With no penalty it equals \eqn{H^{-1}}. See \link{vcov_type} for the three
+less. With no penalty it equals \eqn{H^{-1}}. See \link{vcov_method} for the three
 conventions side by side and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the matrices in full.
 
 The constructor has no arguments.
@@ -36,7 +36,7 @@ summary(fit, vcov_type = frequentist_vcov())
 }
 \seealso{
 \code{\link[=bayesian_vcov]{bayesian_vcov()}} and \code{\link[=unconditional_vcov]{unconditional_vcov()}} for the siblings,
-\link{vcov_type} for the comparison, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}},
+\link{vcov_method} for the comparison, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}},
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} and \code{\link[=statmod_test]{statmod_test()}} for
 the functions that take it.
 }

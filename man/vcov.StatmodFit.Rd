@@ -17,14 +17,14 @@
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{vcov_type}{A \link{vcov_type} object, which selects the convention of the
+\item{vcov_type}{A \link{vcov_method} object, which selects the convention of the
 matrix. \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default) returns \eqn{V_b = (H+S)^{-1}},
 the posterior variance conditional on the hyperparameters.
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} returns the sandwich
 \eqn{V_f = (H+S)^{-1}H(H+S)^{-1}}, conditional on the hyperparameters as
 well. \code{\link[=unconditional_vcov]{unconditional_vcov()}} returns \eqn{V' = V_b + J V_\theta J'}, which
 adds the uncertainty of the hyperparameters. The three are compared at
-\link{vcov_type}. A character string is rejected with an error that names the
+\link{vcov_method}. A character string is rejected with an error that names the
 constructor.}
 
 \item{expected}{Whether the expected information is used. Defaults to
@@ -170,7 +170,7 @@ selection for general smooth models. \emph{Journal of the American
 Statistical Association}, 111(516), 1548--1563.
 }
 \seealso{
-\link{vcov_type} for the three conventions side by side,
+\link{vcov_method} for the three conventions side by side,
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
 \code{\link[=hyper_correction]{hyper_correction()}}, which builds the third matrix's correction
 }

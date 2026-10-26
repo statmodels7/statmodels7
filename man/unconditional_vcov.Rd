@@ -7,7 +7,7 @@
 unconditional_vcov()
 }
 \value{
-An \code{UnconditionalVcov} object, inheriting from \link{vcov_type}, with
+An \code{UnconditionalVcov} object, inheriting from \link{vcov_method}, with
 the property \code{name} equal to \code{"unconditional"}.
 }
 \description{
@@ -26,7 +26,7 @@ criterion, so it costs more than the other two conventions. Where no
 hyperparameter was estimated by a differentiable criterion the correction
 is zero and the matrix equals the Bayesian one, and where the curvature
 cannot be read the conditional matrix is returned with a warning. It is the
-matrix that mgcv returns for \code{unconditional = TRUE}. See \link{vcov_type} for the
+matrix that mgcv returns for \code{unconditional = TRUE}. See \link{vcov_method} for the
 three conventions side by side and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the matrices in
 full.
 
@@ -43,7 +43,7 @@ sqrt(diag(vcov(fs, vcov_type = unconditional_vcov())))[["mu:s(x).z2"]]
 }
 \seealso{
 \code{\link[=bayesian_vcov]{bayesian_vcov()}} and \code{\link[=frequentist_vcov]{frequentist_vcov()}} for the siblings,
-\link{vcov_type} for the comparison, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}},
+\link{vcov_method} for the comparison, and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}},
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} and \code{\link[=statmod_test]{statmod_test()}} for
 the functions that take it.
 }

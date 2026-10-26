@@ -73,7 +73,7 @@ NULL
 #' that inverts the Wald statistic is symmetric about the estimate. The
 #' intervals that invert the other three follow the shape of the likelihood
 #' and are asymmetric where it is. The variance that the Wald statistic reads
-#' is set by the argument `vcov_type`, described at [vcov_type].
+#' is set by the argument `vcov_type`, described at [vcov_method].
 #'
 #' @param name A single string, the short name of the statistic (`"wald"`,
 #'   `"lr"`, `"score"` or `"gradient"`), which also gives the name of the
@@ -88,7 +88,7 @@ NULL
 #' @seealso [wald_test()], [lr_test()], [score_test()] and [gradient_test()]
 #'   for the four statistics, [test_restricted()] for the distinction between
 #'   them, [statmod_test()], [summary.StatmodFit()] and
-#'   [confint.StatmodFit()] for the functions that take one, and [vcov_type]
+#'   [confint.StatmodFit()] for the functions that take one, and [vcov_method]
 #'   for the variance that the Wald statistic reads.
 #'
 #' @examples
@@ -178,7 +178,7 @@ GradientTest <- S7::new_class("GradientTest", parent = RestrictedTest)
 #' ratio, the score and the gradient statistics follow the shape of the
 #' likelihood, and the Wald statistic does not; see [test_statistic] for the
 #' comparison. The variance on which it depends is selected by the argument
-#' `vcov_type` of the consuming function (see [vcov_type]).
+#' `vcov_type` of the consuming function (see [vcov_method]).
 #'
 #' The constructor has no arguments.
 #'
@@ -409,7 +409,7 @@ as_test_statistic <- function(test, arg = "test") {
 
 
 #' @title Variance Conventions of a Fit
-#' @name vcov_type
+#' @name vcov_method
 #'
 #' @description
 #' Three conventions set the variance matrix of the coefficients of a fit:
@@ -420,7 +420,7 @@ as_test_statistic <- function(test, arg = "test") {
 #' [statmod_test()] and [predict.StatmodFit()]. The default is
 #' [bayesian_vcov()].
 #'
-#' `vcov_type` is the abstract parent of the three classes. It cannot be
+#' `vcov_method` is the abstract parent of the three classes. It cannot be
 #' instantiated, and serves to test membership with `S7::S7_inherits()`.
 #'
 #' @details
@@ -492,10 +492,10 @@ as_test_statistic <- function(test, arg = "test") {
 #' }, numeric(1))
 #'
 #' # the class itself is abstract
-#' try(vcov_type(name = "mine"))
+#' try(vcov_method(name = "mine"))
 #' @export
-vcov_type <- S7::new_class(
-  "vcov_type",
+vcov_method <- S7::new_class(
+  "vcov_method",
   properties = list(name = S7::class_character),
   abstract = TRUE
 )
@@ -504,31 +504,31 @@ vcov_type <- S7::new_class(
 #'
 #' @description
 #' These are the classes that [bayesian_vcov()], [frequentist_vcov()] and
-#' [unconditional_vcov()] instantiate. Each inherits from [vcov_type] and
+#' [unconditional_vcov()] instantiate. Each inherits from [vcov_method] and
 #' carries its `name`. Use the constructors, which set the property.
 #'
 #' @param name A single string, the short name of the convention.
 #'
-#' @return An S7 object inheriting from [vcov_type], with the property `name`.
+#' @return An S7 object inheriting from [vcov_method], with the property `name`.
 #'
-#' @seealso [vcov_type] for the comparison of the three conventions.
+#' @seealso [vcov_method] for the comparison of the three conventions.
 #'
 #' @examples
-#' S7::S7_inherits(bayesian_vcov(), vcov_type)
+#' S7::S7_inherits(bayesian_vcov(), vcov_method)
 #' class(bayesian_vcov())
 #'
 #' @name BayesianVcov
 #' @aliases BayesianVcov FrequentistVcov UnconditionalVcov
 #' @keywords internal
-BayesianVcov <- S7::new_class("BayesianVcov", parent = vcov_type)
+BayesianVcov <- S7::new_class("BayesianVcov", parent = vcov_method)
 
 #' @rdname BayesianVcov
 #' @keywords internal
-FrequentistVcov <- S7::new_class("FrequentistVcov", parent = vcov_type)
+FrequentistVcov <- S7::new_class("FrequentistVcov", parent = vcov_method)
 
 #' @rdname BayesianVcov
 #' @keywords internal
-UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_type)
+UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method)
 
 
 #' @title Bayesian Variance of a Fit
@@ -545,16 +545,16 @@ UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_type)
 #' Choose it for an interval around a penalized term: it carries the
 #' smoothing bias as variance, and such intervals cover at about their nominal
 #' rate. It does not include the uncertainty of the hyperparameters, for which
-#' [unconditional_vcov()] is the convention. See [vcov_type] for the three side
+#' [unconditional_vcov()] is the convention. See [vcov_method] for the three side
 #' by side and [vcov.StatmodFit()] for the matrices in full.
 #'
 #' The constructor has no arguments.
 #'
-#' @return A `BayesianVcov` object, inheriting from [vcov_type], with the
+#' @return A `BayesianVcov` object, inheriting from [vcov_method], with the
 #'   property `name` equal to `"bayesian"`.
 #'
 #' @seealso [frequentist_vcov()] and [unconditional_vcov()] for the siblings,
-#'   [vcov_type] for the comparison, and [vcov.StatmodFit()],
+#'   [vcov_method] for the comparison, and [vcov.StatmodFit()],
 #'   [confint.StatmodFit()], [summary.StatmodFit()] and [statmod_test()] for
 #'   the functions that take it.
 #'
@@ -581,16 +581,16 @@ bayesian_vcov <- function() BayesianVcov(name = "bayesian")
 #' @details
 #' The matrix is smaller than the Bayesian one wherever there is a penalty,
 #' because it omits the smoothing bias, and an interval built from it covers
-#' less. With no penalty it equals \eqn{H^{-1}}. See [vcov_type] for the three
+#' less. With no penalty it equals \eqn{H^{-1}}. See [vcov_method] for the three
 #' conventions side by side and [vcov.StatmodFit()] for the matrices in full.
 #'
 #' The constructor has no arguments.
 #'
-#' @return A `FrequentistVcov` object, inheriting from [vcov_type], with the
+#' @return A `FrequentistVcov` object, inheriting from [vcov_method], with the
 #'   property `name` equal to `"frequentist"`.
 #'
 #' @seealso [bayesian_vcov()] and [unconditional_vcov()] for the siblings,
-#'   [vcov_type] for the comparison, and [vcov.StatmodFit()],
+#'   [vcov_method] for the comparison, and [vcov.StatmodFit()],
 #'   [confint.StatmodFit()], [summary.StatmodFit()] and [statmod_test()] for
 #'   the functions that take it.
 #'
@@ -623,17 +623,17 @@ frequentist_vcov <- function() FrequentistVcov(name = "frequentist")
 #' hyperparameter was estimated by a differentiable criterion the correction
 #' is zero and the matrix equals the Bayesian one, and where the curvature
 #' cannot be read the conditional matrix is returned with a warning. It is the
-#' matrix that mgcv returns for `unconditional = TRUE`. See [vcov_type] for the
+#' matrix that mgcv returns for `unconditional = TRUE`. See [vcov_method] for the
 #' three conventions side by side and [vcov.StatmodFit()] for the matrices in
 #' full.
 #'
 #' The constructor has no arguments.
 #'
-#' @return An `UnconditionalVcov` object, inheriting from [vcov_type], with
+#' @return An `UnconditionalVcov` object, inheriting from [vcov_method], with
 #'   the property `name` equal to `"unconditional"`.
 #'
 #' @seealso [bayesian_vcov()] and [frequentist_vcov()] for the siblings,
-#'   [vcov_type] for the comparison, and [vcov.StatmodFit()],
+#'   [vcov_method] for the comparison, and [vcov.StatmodFit()],
 #'   [confint.StatmodFit()], [summary.StatmodFit()] and [statmod_test()] for
 #'   the functions that take it.
 #'
@@ -650,16 +650,16 @@ unconditional_vcov <- function() UnconditionalVcov(name = "unconditional")
 
 
 #' @title Print a Variance Convention
-#' @name print.vcov_type
+#' @name print.vcov_method
 #' @description
 #' Prints one line, the name of the convention.
-#' @param x A [vcov_type] object.
+#' @param x A [vcov_method] object.
 #' @param ... Unused.
 #' @return `x`, invisibly.
 #' @examples
 #' print(unconditional_vcov())
 #' @keywords internal
-S7::method(print, vcov_type) <- function(x, ...) {
+S7::method(print, vcov_method) <- function(x, ...) {
   cat("<vcov> ", x@name, "\n", sep = "")
   invisible(x)
 }
@@ -668,7 +668,7 @@ S7::method(print, vcov_type) <- function(x, ...) {
 #' Check the Argument That Selects a Variance Convention
 #'
 #' @description
-#' Returns `x` if it is a [vcov_type] object. A character string signals an
+#' Returns `x` if it is a [vcov_method] object. A character string signals an
 #' error that names the constructor to use, and any other value signals an
 #' error that lists the three constructors.
 #'
@@ -678,18 +678,18 @@ S7::method(print, vcov_type) <- function(x, ...) {
 #' @return `x`.
 #'
 #' @keywords internal
-as_vcov_type <- function(x, arg = "vcov_type") {
-  if (S7::S7_inherits(x, vcov_type)) return(x)
+as_vcov_method <- function(x, arg = "vcov_type") {
+  if (S7::S7_inherits(x, vcov_method)) return(x)
   ctor <- c(bayesian = "bayesian_vcov()", frequentist = "frequentist_vcov()",
             unconditional = "unconditional_vcov()")
   if (is.character(x) && length(x) >= 1L && !is.na(x[[1L]]) &&
       x[[1L]] %in% names(ctor)) {
-    stop(sprintf(paste0("'%s' must be a vcov_type object such as ",
+    stop(sprintf(paste0("'%s' must be a vcov_method object such as ",
                         "bayesian_vcov(); the string \"%s\" is no longer ",
                         "accepted. Use %s."),
                  arg, x[[1L]], ctor[[x[[1L]]]]), call. = FALSE)
   }
-  stop(sprintf(paste0("'%s' must be a vcov_type object: bayesian_vcov(), ",
+  stop(sprintf(paste0("'%s' must be a vcov_method object: bayesian_vcov(), ",
                       "frequentist_vcov() or unconditional_vcov()."), arg),
        call. = FALSE)
 }

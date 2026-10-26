@@ -23,9 +23,9 @@ them. With \code{readable = TRUE}, the name of a quantity is accepted as well.}
 
 \item{level}{The confidence level.}
 
-\item{vcov_type}{A \link{vcov_type} object, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}:
+\item{vcov_type}{A \link{vcov_method} object, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}:
 \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default), \code{\link[=frequentist_vcov]{frequentist_vcov()}} or
-\code{\link[=unconditional_vcov]{unconditional_vcov()}}. The conventions are compared at \link{vcov_type}.}
+\code{\link[=unconditional_vcov]{unconditional_vcov()}}. The conventions are compared at \link{vcov_method}.}
 
 \item{readable}{Whether to report the quantities in which the model is written
 (a term's own parameters under the names of the literature) and not the
@@ -116,7 +116,7 @@ confint(fit, parm = "mu:x", test = lr_test(), readable = FALSE)
 }
 \seealso{
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, \link{test_statistic},
-\link{vcov_type}, \code{\link[=statmod_test]{statmod_test()}}, which tests one coefficient against a
+\link{vcov_method}, \code{\link[=statmod_test]{statmod_test()}}, which tests one coefficient against a
 value of its own, and \code{\link[=statmod_invert]{statmod_invert()}} and \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the two
 internal
 functions from which an inverted interval is built

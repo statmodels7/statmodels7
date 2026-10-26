@@ -322,7 +322,7 @@ predict_moments <- function() {
 #' @param boot_refit `"coefficients"` (the default), refitting each replica
 #'   at the fit's hyperparameters, or `"full"`, choosing them again. It is
 #'   read only where `predictive = "bootstrap"`.
-#' @param vcov_type A [vcov_type] object that selects the variance convention
+#' @param vcov_type A [vcov_method] object that selects the variance convention
 #'   of [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
 #'   [frequentist_vcov()] or [unconditional_vcov()], which also accounts for
 #'   the estimated smoothing parameters. It is read where
@@ -331,7 +331,7 @@ predict_moments <- function() {
 #'   than the default signals an error elsewhere. The unconditional variance
 #'   differs most from the others in a band around a penalized term, since a
 #'   smoothing parameter moves the fitted values. The conventions are compared
-#'   at [vcov_type].
+#'   at [vcov_method].
 #' @param ... Not used. Any argument signals an error that names it.
 #' @return With `se = FALSE`, a numeric vector with one value per row of
 #'   `newdata` (of the fitting data where `newdata` is `NULL`) when `what`
@@ -446,7 +446,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
                         collapse = ", ")), call. = FALSE)
   }
   vcov_given <- !missing(vcov_type)
-  vcov_type <- as_vcov_type(vcov_type)
+  vcov_type <- as_vcov_method(vcov_type)
   if (vcov_given &&
       ((!isTRUE(se) && identical(interval, "confidence")) ||
        (identical(interval, "prediction") &&

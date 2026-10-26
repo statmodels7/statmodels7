@@ -249,14 +249,14 @@ fit_expected <- function(object) {
 #' more expensive. The expensive route is available and is not the default.
 #'
 #' @param object A [StatmodFit()].
-#' @param vcov_type A [vcov_type] object, which selects the convention of the
+#' @param vcov_type A [vcov_method] object, which selects the convention of the
 #'   matrix. [bayesian_vcov()] (the default) returns \eqn{V_b = (H+S)^{-1}},
 #'   the posterior variance conditional on the hyperparameters.
 #'   [frequentist_vcov()] returns the sandwich
 #'   \eqn{V_f = (H+S)^{-1}H(H+S)^{-1}}, conditional on the hyperparameters as
 #'   well. [unconditional_vcov()] returns \eqn{V' = V_b + J V_\theta J'}, which
 #'   adds the uncertainty of the hyperparameters. The three are compared at
-#'   [vcov_type]. A character string is rejected with an error that names the
+#'   [vcov_method]. A character string is rejected with an error that names the
 #'   constructor.
 #' @param expected Whether the expected information is used. Defaults to
 #'   [fit_expected()], which selects the expected information where the fit
@@ -285,7 +285,7 @@ fit_expected <- function(object) {
 #' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
 #' selection for general smooth models. *Journal of the American
 #' Statistical Association*, 111(516), 1548--1563.
-#' @seealso [vcov_type] for the three conventions side by side,
+#' @seealso [vcov_method] for the three conventions side by side,
 #'   [confint.StatmodFit()], [summary.StatmodFit()],
 #'   [hyper_correction()], which builds the third matrix's correction
 #' @examples
@@ -311,7 +311,7 @@ vcov.StatmodFit <- function(object,
                             parameter = NULL, ...) {
   reject_old_type(...names(), "vcov_type",
                   "vcov(fit, vcov_type = frequentist_vcov())")
-  convention <- as_vcov_type(vcov_type)@name
+  convention <- as_vcov_method(vcov_type)@name
   approx <- match.arg(approx)
   if (is.null(expected)) expected <- fit_expected(object)
   spec <- object@spec
@@ -1806,9 +1806,9 @@ warn_aliased <- function(alias) {
 #'   name, a vector of `parameter:coefficient` labels, or `NULL` for all of
 #'   them. With `readable = TRUE`, the name of a quantity is accepted as well.
 #' @param level The confidence level.
-#' @param vcov_type A [vcov_type] object, passed to [vcov.StatmodFit()]:
+#' @param vcov_type A [vcov_method] object, passed to [vcov.StatmodFit()]:
 #'   [bayesian_vcov()] (the default), [frequentist_vcov()] or
-#'   [unconditional_vcov()]. The conventions are compared at [vcov_type].
+#'   [unconditional_vcov()]. The conventions are compared at [vcov_method].
 #' @param readable Whether to report the quantities in which the model is written
 #'   (a term's own parameters under the names of the literature) and not the
 #'   raw coordinates. The value is passed to [vcov.StatmodFit()] and must be
@@ -1824,7 +1824,7 @@ warn_aliased <- function(alias) {
 #' @return A data frame with the parameter, the term, the coefficient, the
 #'   estimate, its standard error and the two limits.
 #' @seealso [vcov.StatmodFit()], [summary.StatmodFit()], [test_statistic],
-#'   [vcov_type], [statmod_test()], which tests one coefficient against a
+#'   [vcov_method], [statmod_test()], which tests one coefficient against a
 #'   value of its own, and [statmod_invert()] and [statmod_stat_at()], the two
 #'   internal
 #'   functions from which an inverted interval is built
@@ -1853,7 +1853,7 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
   }
   reject_old_type(...names(), "vcov_type",
                   "confint(fit, vcov_type = frequentist_vcov())")
-  vcov_type <- as_vcov_type(vcov_type)
+  vcov_type <- as_vcov_method(vcov_type)
   test <- as_test_statistic(test)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
@@ -1976,7 +1976,7 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' @param out The table that [confint.StatmodFit()] has built, already subset.
 #' @param level The confidence level.
 #' @param test The [test_statistic] to invert.
-#' @param vcov_type The [vcov_type] that sets the starting bracket.
+#' @param vcov_type The [vcov_method] that sets the starting bracket.
 #'
 #' @return `out`, in which the `lower` and `upper` columns are replaced.
 #'
@@ -2248,7 +2248,7 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     level = S7::class_numeric,
     # the variance convention of the standard errors, as the object that was
     # passed; print() reads its name
-    vcov_type = vcov_type,
+    vcov_type = vcov_method,
     # which test the statistic column reports. The default is Wald's, which
     # is the only one read off the unrestricted fit; the other three cost a
     # refit per row and are reported as a signed root, so the column keeps
@@ -2422,13 +2422,13 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'   restricted refit per row and are reported as a signed root. The four are
 #'   compared at [test_statistic]; see also [statmod_stat_at()]. A character
 #'   string is rejected with an error that names the constructor.
-#' @param vcov_type A [vcov_type] object, the variance matrix, passed to
+#' @param vcov_type A [vcov_method] object, the variance matrix, passed to
 #'   [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
 #'   [frequentist_vcov()] or [unconditional_vcov()]. The last carries the
 #'   uncertainty of the hyperparameters into every standard error under it,
 #'   where `correct` carries the same uncertainty into the degrees of freedom;
 #'   the two are the same quantity read on two surfaces, and both can be used
-#'   in one call. The conventions are compared at [vcov_type].
+#'   in one call. The conventions are compared at [vcov_method].
 #' @param expected The information from which the standard errors are computed,
 #'   passed to [vcov.StatmodFit()]. `NULL`, the default, takes the expected
 #'   one where the fit inverted it and the family writes it out, and the
@@ -2453,7 +2453,7 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' @param ... Passed to [vcov.StatmodFit()].
 #' @return A [StatmodSummary()].
 #' @seealso [vcov.StatmodFit()], [confint.StatmodFit()], [test_statistic],
-#'   [vcov_type], [statmod_test()], which computes the same four statistics for one
+#'   [vcov_method], [statmod_test()], which computes the same four statistics for one
 #'   coefficient against a value that need not be zero, and
 #'   [statmod_stat_at()]
 #' @examples
@@ -2473,7 +2473,7 @@ summary.StatmodFit <- function(object, level = 0.95,
                                ...) {
   reject_old_type(...names(), "vcov_type",
                   "summary(fit, vcov_type = frequentist_vcov())")
-  vcov_type <- as_vcov_type(vcov_type)
+  vcov_type <- as_vcov_method(vcov_type)
   approx <- match.arg(approx)
   test <- as_test_statistic(test)
   # A TERM WHOSE BLOCK IS A WORKING LINEARIZATION says so ONCE, as a note,
@@ -2905,7 +2905,7 @@ S7::method(summary, StatmodFit) <- summary.StatmodFit
 #' @param ci The flat interval table, with the Wald statistic already in it.
 #' @param test A restricted [test_statistic]: [lr_test()], [score_test()] or
 #'   [gradient_test()].
-#' @param vcov_type The [vcov_type] that the Wald bracket reads, passed on.
+#' @param vcov_type The [vcov_method] that the Wald bracket reads, passed on.
 #' @param spec,design The specification and its design.
 #'
 #' @return A list with `statistic`, `p_value` and `note`, the last a
