@@ -83,7 +83,7 @@ curvature is read at \eqn{\hat\beta} and not under the null. The interval
 that inverts the Wald statistic is symmetric about the estimate. The
 intervals that invert the other three follow the shape of the likelihood
 and are asymmetric where it is. The variance that the Wald statistic reads
-is set by the argument \code{type}, described at \link{vcov_type}.
+is set by the argument \code{vcov_type}, described at \link{vcov_type}.
 }
 \examples{
 set.seed(1)

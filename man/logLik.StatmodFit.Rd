@@ -4,12 +4,12 @@
 \alias{logLik.StatmodFit}
 \title{The Log-Likelihood of a Fit}
 \usage{
-\method{logLik}{StatmodFit}(object, type = c("conditional", "marginal"), ...)
+\method{logLik}{StatmodFit}(object, loglik_type = c("conditional", "marginal"), ...)
 }
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{type}{\code{"conditional"} (the default) or \code{"marginal"}.}
+\item{loglik_type}{\code{"conditional"} (the default) or \code{"marginal"}.}
 
 \item{...}{Unused.}
 }
@@ -44,7 +44,7 @@ two conventions (Vaida and Blanchard, 2005).
 }
 
 \section{When the marginal one is available}{
-\code{type = "marginal"} returns the value of the outer criterion at the fit.
+\code{loglik_type = "marginal"} returns the value of the outer criterion at the fit.
 Its degrees of freedom count the parameters that the marginal model
 estimates: the coefficients that are not covered by any penalty, the
 dimension of the null space of each penalty without a kink (the straight

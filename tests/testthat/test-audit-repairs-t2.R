@@ -45,7 +45,7 @@ test_that("the edf correction and the unconditional variance of an ml() fit read
     h
   })
   summary(m$fit, correct = TRUE)
-  suppressWarnings(vcov(m$fit, type = unconditional_vcov()))
+  suppressWarnings(vcov(m$fit, vcov_type = unconditional_vcov()))
   expect_gte(length(seen), 2L)
   for (h in seen) expect_equal(as.numeric(h), m$ref, tolerance = 1e-5)
 })

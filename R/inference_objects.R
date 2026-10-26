@@ -73,7 +73,7 @@ NULL
 #' that inverts the Wald statistic is symmetric about the estimate. The
 #' intervals that invert the other three follow the shape of the likelihood
 #' and are asymmetric where it is. The variance that the Wald statistic reads
-#' is set by the argument `type`, described at [vcov_type].
+#' is set by the argument `vcov_type`, described at [vcov_type].
 #'
 #' @param name A single string, the short name of the statistic (`"wald"`,
 #'   `"lr"`, `"score"` or `"gradient"`), which also gives the name of the
@@ -178,7 +178,7 @@ GradientTest <- S7::new_class("GradientTest", parent = RestrictedTest)
 #' ratio, the score and the gradient statistics follow the shape of the
 #' likelihood, and the Wald statistic does not; see [test_statistic] for the
 #' comparison. The variance on which it depends is selected by the argument
-#' `type` of the consuming function (see [vcov_type]).
+#' `vcov_type` of the consuming function (see [vcov_type]).
 #'
 #' The constructor has no arguments.
 #'
@@ -415,7 +415,7 @@ as_test_statistic <- function(test, arg = "test") {
 #' Three conventions set the variance matrix of the coefficients of a fit:
 #' the Bayesian one, the frequentist one and the unconditional one. Each is
 #' an object built by [bayesian_vcov()], [frequentist_vcov()] or
-#' [unconditional_vcov()], and the object is passed as the argument `type` of
+#' [unconditional_vcov()], and the object is passed as the argument `vcov_type` of
 #' [vcov.StatmodFit()], [confint.StatmodFit()], [summary.StatmodFit()],
 #' [statmod_test()] and [predict.StatmodFit()]. The default is
 #' [bayesian_vcov()].
@@ -488,7 +488,7 @@ as_test_statistic <- function(test, arg = "test") {
 #' # the standard error of one penalized coordinate under each convention
 #' types <- list(frequentist_vcov(), bayesian_vcov(), unconditional_vcov())
 #' vapply(types, function(ty) {
-#'   sqrt(diag(vcov(fs, type = ty)))[["mu:s(x).z2"]]
+#'   sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]]
 #' }, numeric(1))
 #'
 #' # the class itself is abstract
@@ -539,7 +539,7 @@ UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_type)
 #' the second derivative \eqn{S} of the penalty. It is the posterior variance
 #' under the prior whose negative logarithm is the penalty, conditional on the
 #' hyperparameters, and it is the default of every function that takes a
-#' `type`.
+#' `vcov_type`.
 #'
 #' @details
 #' Choose it for an interval around a penalized term: it carries the
@@ -564,8 +564,8 @@ UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_type)
 #' dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' bayesian_vcov()
-#' vcov(fit, type = bayesian_vcov())
-#' confint(fit, type = bayesian_vcov())
+#' vcov(fit, vcov_type = bayesian_vcov())
+#' confint(fit, vcov_type = bayesian_vcov())
 #' @export
 bayesian_vcov <- function() BayesianVcov(name = "bayesian")
 
@@ -600,8 +600,8 @@ bayesian_vcov <- function() BayesianVcov(name = "bayesian")
 #' dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' frequentist_vcov()
-#' vcov(fit, type = frequentist_vcov())
-#' summary(fit, type = frequentist_vcov())
+#' vcov(fit, vcov_type = frequentist_vcov())
+#' summary(fit, vcov_type = frequentist_vcov())
 #' @export
 frequentist_vcov <- function() FrequentistVcov(name = "frequentist")
 
@@ -644,7 +644,7 @@ frequentist_vcov <- function() FrequentistVcov(name = "frequentist")
 #' fs <- statmod(y ~ s(x, bspline_smooth(k = 10)),
 #'               distributions7::gaussian1_distrib(), ds)
 #' unconditional_vcov()
-#' sqrt(diag(vcov(fs, type = unconditional_vcov())))[["mu:s(x).z2"]]
+#' sqrt(diag(vcov(fs, vcov_type = unconditional_vcov())))[["mu:s(x).z2"]]
 #' @export
 unconditional_vcov <- function() UnconditionalVcov(name = "unconditional")
 
@@ -668,28 +668,52 @@ S7::method(print, vcov_type) <- function(x, ...) {
 #' Check the Argument That Selects a Variance Convention
 #'
 #' @description
-#' Returns `type` if it is a [vcov_type] object. A character string signals an
+#' Returns `x` if it is a [vcov_type] object. A character string signals an
 #' error that names the constructor to use, and any other value signals an
 #' error that lists the three constructors.
 #'
-#' @param type The value of a `type` argument.
+#' @param x The value of a `vcov_type` argument.
 #' @param arg The argument's name, for the message.
 #'
-#' @return `type`.
+#' @return `x`.
 #'
 #' @keywords internal
-as_vcov_type <- function(type, arg = "type") {
-  if (S7::S7_inherits(type, vcov_type)) return(type)
+as_vcov_type <- function(x, arg = "vcov_type") {
+  if (S7::S7_inherits(x, vcov_type)) return(x)
   ctor <- c(bayesian = "bayesian_vcov()", frequentist = "frequentist_vcov()",
             unconditional = "unconditional_vcov()")
-  if (is.character(type) && length(type) >= 1L && !is.na(type[[1L]]) &&
-      type[[1L]] %in% names(ctor)) {
+  if (is.character(x) && length(x) >= 1L && !is.na(x[[1L]]) &&
+      x[[1L]] %in% names(ctor)) {
     stop(sprintf(paste0("'%s' must be a vcov_type object such as ",
                         "bayesian_vcov(); the string \"%s\" is no longer ",
                         "accepted. Use %s."),
-                 arg, type[[1L]], ctor[[type[[1L]]]]), call. = FALSE)
+                 arg, x[[1L]], ctor[[x[[1L]]]]), call. = FALSE)
   }
   stop(sprintf(paste0("'%s' must be a vcov_type object: bayesian_vcov(), ",
                       "frequentist_vcov() or unconditional_vcov()."), arg),
        call. = FALSE)
+}
+
+
+#' Reject an Argument That Was Renamed From `type`
+#'
+#' @description
+#' Signals an error when the dots of a method carry an argument named `type`,
+#' which is the name that the variance convention, the residual type and the
+#' log-likelihood type had before they were renamed. The generics of base R
+#' pass such an argument to the method through `...`, where it would
+#' otherwise be ignored.
+#'
+#' @param dots_names The names of the dots, as `...names()` returns them.
+#' @param new The new argument name, a single string.
+#' @param example A call that shows the new spelling, a single string.
+#'
+#' @return `NULL`, invisibly, when no argument is named `type`.
+#'
+#' @keywords internal
+reject_old_type <- function(dots_names, new, example) {
+  if ("type" %in% dots_names) {
+    stop(sprintf("'type' is now '%s': %s.", new, example), call. = FALSE)
+  }
+  invisible(NULL)
 }

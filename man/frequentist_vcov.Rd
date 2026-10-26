@@ -31,8 +31,8 @@ dd <- data.frame(x = runif(80))
 dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 frequentist_vcov()
-vcov(fit, type = frequentist_vcov())
-summary(fit, type = frequentist_vcov())
+vcov(fit, vcov_type = frequentist_vcov())
+summary(fit, vcov_type = frequentist_vcov())
 }
 \seealso{
 \code{\link[=bayesian_vcov]{bayesian_vcov()}} and \code{\link[=unconditional_vcov]{unconditional_vcov()}} for the siblings,

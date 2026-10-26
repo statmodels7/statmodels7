@@ -4,18 +4,18 @@
 \alias{as_vcov_type}
 \title{Check the Argument That Selects a Variance Convention}
 \usage{
-as_vcov_type(type, arg = "type")
+as_vcov_type(x, arg = "vcov_type")
 }
 \arguments{
-\item{type}{The value of a \code{type} argument.}
+\item{x}{The value of a \code{vcov_type} argument.}
 
 \item{arg}{The argument's name, for the message.}
 }
 \value{
-\code{type}.
+\code{x}.
 }
 \description{
-Returns \code{type} if it is a \link{vcov_type} object. A character string signals an
+Returns \code{x} if it is a \link{vcov_type} object. A character string signals an
 error that names the constructor to use, and any other value signals an
 error that lists the three constructors.
 }

@@ -10,7 +10,7 @@ statmod_test(
   coefname,
   value = 0,
   test = wald_test(),
-  type = bayesian_vcov()
+  vcov_type = bayesian_vcov()
 )
 }
 \arguments{
@@ -28,7 +28,7 @@ unrestricted fit only; the other three cost one restricted refit. The
 four are compared at \link{test_statistic}. A character string is rejected with
 an error that names the constructor.}
 
-\item{type}{A \link{vcov_type} object, the variance that the Wald statistic
+\item{vcov_type}{A \link{vcov_type} object, the variance that the Wald statistic
 reads, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}. The conventions are
 compared at \link{vcov_type}.}

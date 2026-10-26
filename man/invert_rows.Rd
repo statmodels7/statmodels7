@@ -4,7 +4,7 @@
 \alias{invert_rows}
 \title{Replace a Table's Limits by an Inverted Test}
 \usage{
-invert_rows(fit, out, level, test, type)
+invert_rows(fit, out, level, test, vcov_type)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -15,7 +15,7 @@ invert_rows(fit, out, level, test, type)
 
 \item{test}{The \link{test_statistic} to invert.}
 
-\item{type}{The \link{vcov_type} that sets the starting bracket.}
+\item{vcov_type}{The \link{vcov_type} that sets the starting bracket.}
 }
 \value{
 \code{out}, in which the \code{lower} and \code{upper} columns are replaced.

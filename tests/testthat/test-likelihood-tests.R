@@ -225,7 +225,7 @@ test_that("what cannot be held is refused, and what can is not", {
 
   ## A penalty that is twice differentiable does NOT put a coordinate out of
   ## reach: the hold is enforced in the solve, and what the statistic then
-  ## means is the credible reading vcov(type = bayesian_vcov()) already gives that
+  ## means is the credible reading vcov(vcov_type = bayesian_vcov()) already gives that
   ## row. The smooth's linear column is the case that motivated it -- s() is
   ## penalized by diag(0, 1, ..., 1), so `lin` is not shrunk at all.
   fs <- smooth_fit()

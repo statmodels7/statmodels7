@@ -4,7 +4,7 @@
 \alias{marginal_vcov}
 \title{The Variance Where the Criterion Estimates Coefficients}
 \usage{
-marginal_vcov(object, design, A, keep, type)
+marginal_vcov(object, design, A, keep, convention)
 }
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -16,7 +16,7 @@ marginal_vcov(object, design, A, keep, type)
 \item{keep}{The kept coordinates, a logical vector over the stacked
 coefficients.}
 
-\item{type}{The \code{name} of a \link{vcov_type} object, \code{"bayesian"} or
+\item{convention}{The \code{name} of a \link{vcov_type} object, \code{"bayesian"} or
 \code{"unconditional"}.}
 }
 \value{

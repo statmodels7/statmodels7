@@ -622,7 +622,7 @@ test_that("logLik reports which likelihood it is", {
   expect_equal(attr(lc, "df"), sum(fit@edf$edf))
   # a model whose hyperparameters were never chosen by a marginal criterion
   # has no marginal likelihood, and says so rather than returning one
-  expect_error(logLik(fit, type = "marginal"), "marginal log-likelihood")
+  expect_error(logLik(fit, loglik_type = "marginal"), "marginal log-likelihood")
 })
 
 test_that("the two likelihoods of a penalized fit are both available", {
@@ -636,7 +636,7 @@ test_that("the two likelihoods of a penalized fit are both available", {
                  outer_criterion = ml())
 
   lc <- logLik(fit)
-  lm_ <- logLik(fit, type = "marginal")
+  lm_ <- logLik(fit, loglik_type = "marginal")
   # the conditional one is read at the fitted coefficients and is the
   # LARGER; the marginal integrates the random effects away
   expect_gt(as.numeric(lc), as.numeric(lm_))

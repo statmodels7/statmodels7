@@ -10,7 +10,7 @@ statmod_stat_at(
   coefname,
   value = 0,
   test = wald_test(),
-  type = bayesian_vcov(),
+  vcov_type = bayesian_vcov(),
   mode_error = FALSE,
   objective0 = NULL
 )
@@ -26,7 +26,7 @@ statmod_stat_at(
 \item{test}{A \link{test_statistic} object: \code{\link[=wald_test]{wald_test()}}, \code{\link[=lr_test]{lr_test()}},
 \code{\link[=score_test]{score_test()}} or \code{\link[=gradient_test]{gradient_test()}}.}
 
-\item{type}{A \link{vcov_type} object, the variance that the Wald statistic
+\item{vcov_type}{A \link{vcov_type} object, the variance that the Wald statistic
 reads, as \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} takes it.}
 
 \item{mode_error}{Whether to read how far above its mode the restricted
@@ -77,10 +77,10 @@ The likelihood ratio is taken on \eqn{\ell_p} and not on \eqn{\ell}.
 \eqn{\ell(\hat\beta)} and the difference of log-likelihoods can be
 negative. The other three statistics read the penalized objective as well:
 \eqn{U} and \eqn{K} are its gradient and its curvature, and the Wald
-variance is \eqn{(H+S)^{-1}} under \code{type = bayesian_vcov()}.
+variance is \eqn{(H+S)^{-1}} under \code{vcov_type = bayesian_vcov()}.
 
 For a shrunk coordinate this is the reading that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} gives
-under \code{type = bayesian_vcov()}: the penalty is a log-prior, so \eqn{\ell_p} is
+under \code{vcov_type = bayesian_vcov()}: the penalty is a log-prior, so \eqn{\ell_p} is
 a log posterior at the hyperparameters in force, and the interval by
 inversion is the set that the posterior does not reject, conditional on
 them. The interpretation that the Wald interval on such a row carries

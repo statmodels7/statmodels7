@@ -1,6 +1,6 @@
 ## The test statistic and the variance convention as objects.
 ##
-## `test` and `type` used to be character strings. Both are now S7 objects, a
+## `test` and `vcov_type` used to be character strings. Both are now S7 objects, a
 ## string is rejected with an error that names the constructor, and the
 ## default object has to give the numbers that the default string gave.
 
@@ -64,40 +64,40 @@ test_that("a string for test is rejected with the constructor to use", {
   expect_error(summary(fit, test = bayesian_vcov()), "must be a test_statistic")
 })
 
-test_that("a string for type is rejected with the constructor to use", {
+test_that("a string for vcov_type is rejected with the constructor to use", {
   fit <- small_fit()
-  expect_error(vcov(fit, type = "frequentist"),
-               "'type' must be a vcov_type object.*\"frequentist\" is no longer accepted.*frequentist_vcov\\(\\)")
-  expect_error(confint(fit, type = "bayesian"), "bayesian_vcov\\(\\)")
-  expect_error(summary(fit, type = "unconditional"), "unconditional_vcov\\(\\)")
+  expect_error(vcov(fit, vcov_type = "frequentist"),
+               "'vcov_type' must be a vcov_type object.*\"frequentist\" is no longer accepted.*frequentist_vcov\\(\\)")
+  expect_error(confint(fit, vcov_type = "bayesian"), "bayesian_vcov\\(\\)")
+  expect_error(summary(fit, vcov_type = "unconditional"), "unconditional_vcov\\(\\)")
   expect_error(statmod_test(fit, param = "mu", coefname = "x",
-                            type = "bayesian"), "bayesian_vcov\\(\\)")
-  expect_error(predict(fit, what = "mu", se = TRUE, type = "frequentist"),
+                            vcov_type = "bayesian"), "bayesian_vcov\\(\\)")
+  expect_error(predict(fit, what = "mu", se = TRUE, vcov_type = "frequentist"),
                "frequentist_vcov\\(\\)")
-  expect_error(vcov(fit, type = lr_test()), "must be a vcov_type")
-  expect_error(vcov(fit, type = 2), "bayesian_vcov\\(\\), frequentist_vcov\\(\\)")
+  expect_error(vcov(fit, vcov_type = lr_test()), "must be a vcov_type")
+  expect_error(vcov(fit, vcov_type = 2), "bayesian_vcov\\(\\), frequentist_vcov\\(\\)")
 })
 
 test_that("the default objects give what the defaults gave", {
   fit <- small_fit()
-  expect_identical(vcov(fit), vcov(fit, type = bayesian_vcov()))
-  expect_identical(confint(fit), confint(fit, type = bayesian_vcov(),
+  expect_identical(vcov(fit), vcov(fit, vcov_type = bayesian_vcov()))
+  expect_identical(confint(fit), confint(fit, vcov_type = bayesian_vcov(),
                                          test = wald_test()))
   expect_identical(summary(fit)@tables,
-                   summary(fit, type = bayesian_vcov(), test = wald_test())@tables)
-  expect_identical(summary(fit)@type@name, "bayesian")
+                   summary(fit, vcov_type = bayesian_vcov(), test = wald_test())@tables)
+  expect_identical(summary(fit)@vcov_type@name, "bayesian")
   expect_identical(summary(fit)@test@name, "wald")
   a <- statmod_test(fit, param = "mu", coefname = "x", value = 1)
   b <- statmod_test(fit, param = "mu", coefname = "x", value = 1,
-                    test = wald_test(), type = bayesian_vcov())
+                    test = wald_test(), vcov_type = bayesian_vcov())
   expect_identical(a@statistic, b@statistic)
   expect_identical(a@test@name, "wald")
   ## the Wald statistic is the squared estimate over the variance of the
   ## matrix that the convention selects
   for (ty in list(bayesian_vcov(), frequentist_vcov())) {
-    v <- vcov(fit, type = ty)[["mu:x", "mu:x"]]
+    v <- vcov(fit, vcov_type = ty)[["mu:x", "mu:x"]]
     s <- statmod_test(fit, param = "mu", coefname = "x", value = 1,
-                      type = ty)@statistic
+                      vcov_type = ty)@statistic
     expect_equal(s, (fit@coefficients$mu[[2L]] - 1)^2 / v)
   }
 })
@@ -119,9 +119,38 @@ test_that("the result of a test keeps the object, and prints its label", {
   expect_identical(tt@test@name, "score")
   out <- utils::capture.output(print(tt))
   expect_true(any(grepl("Rao score test on a statmod fit", out, fixed = TRUE)))
-  s <- summary(fit, test = gradient_test(), type = frequentist_vcov())
+  s <- summary(fit, test = gradient_test(), vcov_type = frequentist_vcov())
   out <- utils::capture.output(print(s))
   expect_true(any(grepl("frequentist variance;  gradient test, signed root",
                         out, fixed = TRUE)))
   expect_error(StatmodTest(test = "lr"), "test")
+})
+
+test_that("the old argument name type is rejected by name in every method", {
+  fit <- small_fit()
+  expect_error(vcov(fit, type = bayesian_vcov()), "'type' is now 'vcov_type'")
+  expect_error(confint(fit, type = bayesian_vcov()), "'type' is now 'vcov_type'")
+  expect_error(summary(fit, type = bayesian_vcov()), "'type' is now 'vcov_type'")
+  expect_error(predict(fit, what = "mu", se = TRUE, type = bayesian_vcov()),
+               "'type' is now 'vcov_type'")
+  expect_error(residuals(fit, type = "pearson"), "'type' is now 'residual_type'")
+  expect_error(logLik(fit, type = "marginal"), "'type' is now 'loglik_type'")
+  ## any other unknown argument of predict() is still named
+  expect_error(predict(fit, what = "mu", bogus = 3), "takes no argument 'bogus'")
+})
+
+test_that("residual_type and loglik_type select as type did", {
+  fit <- small_fit()
+  expect_identical(residuals(fit, residual_type = "response"),
+                   residuals(fit, "response"))
+  expect_gt(abs(sum(residuals(fit, residual_type = "pearson"))), 0)
+  expect_error(residuals(fit, residual_type = "deviance"), "should be one of")
+  expect_s3_class(logLik(fit, loglik_type = "conditional"), "logLik")
+  expect_true(is.finite(as.numeric(logLik(fit, loglik_type = "marginal"))))
+  expect_identical(predict(fit, what = "mu", se = TRUE,
+                           vcov_type = frequentist_vcov())$se,
+                   predict(fit, what = "mu", se = TRUE,
+                           vcov_type = frequentist_vcov())$se)
+  expect_error(predict(fit, what = "mu", vcov_type = frequentist_vcov()),
+               "read only with")
 })

@@ -16,7 +16,7 @@ penalized information: the information \eqn{H} of the log-likelihood plus
 the second derivative \eqn{S} of the penalty. It is the posterior variance
 under the prior whose negative logarithm is the penalty, conditional on the
 hyperparameters, and it is the default of every function that takes a
-\code{type}.
+\code{vcov_type}.
 }
 \details{
 Choose it for an interval around a penalized term: it carries the
@@ -33,8 +33,8 @@ dd <- data.frame(x = runif(80))
 dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 bayesian_vcov()
-vcov(fit, type = bayesian_vcov())
-confint(fit, type = bayesian_vcov())
+vcov(fit, vcov_type = bayesian_vcov())
+confint(fit, vcov_type = bayesian_vcov())
 }
 \seealso{
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} and \code{\link[=unconditional_vcov]{unconditional_vcov()}} for the siblings,

@@ -291,10 +291,10 @@ kinked_coords <- function(spec, design) {
 #' \eqn{\ell(\hat\beta)} and the difference of log-likelihoods can be
 #' negative. The other three statistics read the penalized objective as well:
 #' \eqn{U} and \eqn{K} are its gradient and its curvature, and the Wald
-#' variance is \eqn{(H+S)^{-1}} under `type = bayesian_vcov()`.
+#' variance is \eqn{(H+S)^{-1}} under `vcov_type = bayesian_vcov()`.
 #'
 #' For a shrunk coordinate this is the reading that [vcov.StatmodFit()] gives
-#' under `type = bayesian_vcov()`: the penalty is a log-prior, so \eqn{\ell_p} is
+#' under `vcov_type = bayesian_vcov()`: the penalty is a log-prior, so \eqn{\ell_p} is
 #' a log posterior at the hyperparameters in force, and the interval by
 #' inversion is the set that the posterior does not reject, conditional on
 #' them. The interpretation that the Wald interval on such a row carries
@@ -321,7 +321,7 @@ kinked_coords <- function(spec, design) {
 #'   `0`.
 #' @param test A [test_statistic] object: [wald_test()], [lr_test()],
 #'   [score_test()] or [gradient_test()].
-#' @param type A [vcov_type] object, the variance that the Wald statistic
+#' @param vcov_type A [vcov_type] object, the variance that the Wald statistic
 #'   reads, as [vcov.StatmodFit()] takes it.
 #' @param mode_error Whether to read how far above its mode the restricted
 #'   fit stopped ([restricted_mode_error()]). The default is `FALSE`, because
@@ -342,10 +342,10 @@ kinked_coords <- function(spec, design) {
 #'
 #' @keywords internal
 statmod_stat_at <- function(fit, param, coefname, value = 0,
-                         test = wald_test(), type = bayesian_vcov(),
+                         test = wald_test(), vcov_type = bayesian_vcov(),
                          mode_error = FALSE, objective0 = NULL) {
   test <- as_test_statistic(test)
-  type <- as_vcov_type(type)
+  vcov_type <- as_vcov_type(vcov_type)
   tname <- test@name
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -366,7 +366,7 @@ statmod_stat_at <- function(fit, param, coefname, value = 0,
   if (!test_restricted(test)) {
     # the only one that needs no refit, and the only one a reparametrization
     # moves. Nothing was refitted, so there is no mode to be above
-    V <- stats::vcov(fit, type = type)
+    V <- stats::vcov(fit, vcov_type = vcov_type)
     lab <- rownames(coef_labels(spec, design))[at]
     v <- if (is.na(at) || !lab %in% rownames(V)) NA_real_ else V[lab, lab]
     if (!isTRUE(is.finite(v)) || v <= 0) return(out(NA_real_, NA))
@@ -628,7 +628,7 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #'   unrestricted fit only; the other three cost one restricted refit. The
 #'   four are compared at [test_statistic]. A character string is rejected with
 #'   an error that names the constructor.
-#' @param type A [vcov_type] object, the variance that the Wald statistic
+#' @param vcov_type A [vcov_type] object, the variance that the Wald statistic
 #'   reads, passed to [vcov.StatmodFit()]: [bayesian_vcov()] (the default),
 #'   [frequentist_vcov()] or [unconditional_vcov()]. The conventions are
 #'   compared at [vcov_type].
@@ -651,13 +651,13 @@ S7::method(print, StatmodTest) <- print.StatmodTest
 #'
 #' @export
 statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
-                         type = bayesian_vcov()) {
+                         vcov_type = bayesian_vcov()) {
   test <- as_test_statistic(test)
-  type <- as_vcov_type(type)
+  vcov_type <- as_vcov_type(vcov_type)
   # the mode error is asked for HERE and nowhere else: this is the one
   # surface a reader reads one row of, so one extra Hessian is affordable,
   # where the two loops that call the same helper in quantity are not
-  s <- statmod_stat_at(fit, param, coefname, value, test, type,
+  s <- statmod_stat_at(fit, param, coefname, value, test, vcov_type,
                        mode_error = TRUE)
   design <- statmod_design(fit@spec)
   nms <- design[[param]]$coef_names
@@ -699,7 +699,7 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
 #' @param level The confidence level, a single number in (0, 1).
 #' @param test The [test_statistic] to invert: [lr_test()] (the default),
 #'   [score_test()], [gradient_test()] or [wald_test()].
-#' @param type The [vcov_type] that sets the starting bracket, and that the
+#' @param vcov_type The [vcov_type] that sets the starting bracket, and that the
 #'   Wald statistic reads.
 #' @param maxit How many widenings to try on each side before the search
 #'   stops.
@@ -713,10 +713,10 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
 #'
 #' @keywords internal
 statmod_invert <- function(fit, param, coefname, level = 0.95,
-                           test = lr_test(), type = bayesian_vcov(),
+                           test = lr_test(), vcov_type = bayesian_vcov(),
                            maxit = 40L) {
   test <- as_test_statistic(test)
-  type <- as_vcov_type(type)
+  vcov_type <- as_vcov_type(vcov_type)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
          call. = FALSE)
@@ -734,7 +734,7 @@ statmod_invert <- function(fit, param, coefname, level = 0.95,
   offs <- cumsum(npar) - npar
   at <- offs[[match(param, params)]] + j
   bhat <- fit@coefficients[[param]][[j]]
-  V <- stats::vcov(fit, type = type, readable = FALSE)
+  V <- stats::vcov(fit, vcov_type = vcov_type, readable = FALSE)
   lab <- rownames(coef_labels(spec, design))[at]
   se <- if (lab %in% rownames(V)) sqrt(V[lab, lab]) else NA_real_
   if (!isTRUE(is.finite(se)) || se <= 0) return(c(lower = NA_real_,
@@ -742,7 +742,7 @@ statmod_invert <- function(fit, param, coefname, level = 0.95,
 
   o0 <- if (identical(test@name, "lr")) joint_objective(fit) else NULL
   gap <- function(b) {
-    s <- statmod_stat_at(fit, param, coefname, b, test, type,
+    s <- statmod_stat_at(fit, param, coefname, b, test, vcov_type,
                          objective0 = o0)$statistic
     if (!isTRUE(is.finite(s))) return(NA_real_)
     s - q

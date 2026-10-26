@@ -7,7 +7,7 @@
 \method{summary}{StatmodFit}(
   object,
   level = 0.95,
-  type = bayesian_vcov(),
+  vcov_type = bayesian_vcov(),
   expected = NULL,
   approx = c("opg", "bartlett", "integrate", "mc"),
   correct = FALSE,
@@ -21,7 +21,7 @@
 
 \item{level}{The confidence level.}
 
-\item{type}{A \link{vcov_type} object, the variance matrix, passed to
+\item{vcov_type}{A \link{vcov_type} object, the variance matrix, passed to
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}. The last carries the
 uncertainty of the hyperparameters into every standard error under it,

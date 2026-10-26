@@ -6,7 +6,7 @@
 \usage{
 \method{vcov}{StatmodFit}(
   object,
-  type = bayesian_vcov(),
+  vcov_type = bayesian_vcov(),
   expected = NULL,
   approx = c("opg", "bartlett", "integrate", "mc"),
   readable = TRUE,
@@ -17,7 +17,7 @@
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{type}{A \link{vcov_type} object, which selects the convention of the
+\item{vcov_type}{A \link{vcov_type} object, which selects the convention of the
 matrix. \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default) returns \eqn{V_b = (H+S)^{-1}},
 the posterior variance conditional on the hyperparameters.
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} returns the sandwich
@@ -162,7 +162,7 @@ ds <- data.frame(x = runif(200))
 ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
 fs <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
 vapply(list(frequentist_vcov(), bayesian_vcov(), unconditional_vcov()),
-       function(ty) sqrt(diag(vcov(fs, type = ty)))[["mu:s(x).z2"]], 0)
+       function(ty) sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]], 0)
 }
 \references{
 Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model

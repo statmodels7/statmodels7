@@ -229,8 +229,8 @@ test_that("the quantile residual sees a modelled scale where a response one cann
   expect_lt(abs(stats::sd(residuals(fit, seed = 1)) - 1), 0.1)
   # the response residual is the numerator alone and carries the varying
   # scale with it
-  expect_gt(abs(stats::sd(residuals(fit, type = "response")) - 1), 0.15)
-  expect_lt(abs(stats::sd(residuals(fit, type = "pearson")) - 1), 0.1)
+  expect_gt(abs(stats::sd(residuals(fit, residual_type = "response")) - 1), 0.15)
+  expect_lt(abs(stats::sd(residuals(fit, residual_type = "pearson")) - 1), 0.1)
 })
 
 test_that("a score-driven term's predictor carries its own uncertainty", {

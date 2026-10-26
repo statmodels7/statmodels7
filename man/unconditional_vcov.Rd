@@ -39,7 +39,7 @@ ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
 fs <- statmod(y ~ s(x, bspline_smooth(k = 10)),
               distributions7::gaussian1_distrib(), ds)
 unconditional_vcov()
-sqrt(diag(vcov(fs, type = unconditional_vcov())))[["mu:s(x).z2"]]
+sqrt(diag(vcov(fs, vcov_type = unconditional_vcov())))[["mu:s(x).z2"]]
 }
 \seealso{
 \code{\link[=bayesian_vcov]{bayesian_vcov()}} and \code{\link[=frequentist_vcov]{frequentist_vcov()}} for the siblings,

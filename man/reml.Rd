@@ -201,7 +201,7 @@ c(reml = sum(fit@edf$edf), ml = sum(fml@edf$edf))
 
 # The marginal log-likelihood, which these criteria maximize, is only
 # available where one of them ran.
-logLik(fit, type = "marginal")
+logLik(fit, loglik_type = "marginal")
 
 }
 \references{

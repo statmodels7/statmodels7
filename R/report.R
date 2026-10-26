@@ -384,7 +384,7 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #'
 #' # When the marginal one is available
 #'
-#' `type = "marginal"` returns the value of the outer criterion at the fit.
+#' `loglik_type = "marginal"` returns the value of the outer criterion at the fit.
 #' Its degrees of freedom count the parameters that the marginal model
 #' estimates: the coefficients that are not covered by any penalty, the
 #' dimension of the null space of each penalty without a kink (the straight
@@ -399,7 +399,7 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' Where no outer criterion ran, or where it is [aic()] or [bic()], there is
 #' no marginal likelihood, and requesting one signals an error.
 #' @param object A [StatmodFit()].
-#' @param type `"conditional"` (the default) or `"marginal"`.
+#' @param loglik_type `"conditional"` (the default) or `"marginal"`.
 #' @param ... Unused.
 #' @return A `logLik` object: a single number with attributes `df`, the
 #'   degrees of freedom, and `nobs`, the sum of the prior weights (the number
@@ -411,9 +411,11 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @seealso [loglik()]
 #' @keywords internal
 logLik.StatmodFit <- function(object,
-                              type = c("conditional", "marginal"), ...) {
-  type <- match.arg(type)
-  if (identical(type, "marginal")) {
+                              loglik_type = c("conditional", "marginal"), ...) {
+  reject_old_type(...names(), "loglik_type",
+                  "logLik(fit, loglik_type = \"marginal\")")
+  loglik_type <- match.arg(loglik_type)
+  if (identical(loglik_type, "marginal")) {
     outer <- object@methods$outer
     if (is.null(outer) || !outer@kind %in% c("ml", "reml")) {
       stop(paste0(
@@ -421,7 +423,7 @@ logLik.StatmodFit <- function(object,
         "optimizes,\n  and ",
         if (is.null(outer)) "this fit ran no outer criterion" else
           sprintf("this fit used %s()", outer@kind),
-        ". There is no marginal likelihood to\n  report; logLik(type = ",
+        ". There is no marginal likelihood to\n  report; logLik(loglik_type = ",
         "\"conditional\") is available."), call. = FALSE)
     }
     if (!length(object@criterion) || !is.finite(object@criterion)) {
@@ -793,7 +795,8 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #' packages report.
 #'
 #' @param object A [StatmodFit()].
-#' @param type `"quantile"` (the default), `"pearson"` or `"response"`.
+#' @param residual_type `"quantile"` (the default), `"pearson"` or
+#'   `"response"`.
 #'   The argument is matched with [match.arg()].
 #' @param seed An integer used to seed the randomization, or `NULL` for the
 #'   ambient state. Read only where the distribution function jumps, so it
@@ -833,9 +836,12 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #'
 #' @keywords internal
 residuals.StatmodFit <- function(object,
-                                 type = c("quantile", "pearson", "response"),
+                                 residual_type = c("quantile", "pearson",
+                                                   "response"),
                                  seed = NULL, ...) {
-  type <- match.arg(type)
+  reject_old_type(...names(), "residual_type",
+                  "residuals(fit, residual_type = \"pearson\")")
+  residual_type <- match.arg(residual_type)
   spec <- object@spec
   d <- spec@distrib
   y <- spec@response
@@ -844,17 +850,18 @@ residuals.StatmodFit <- function(object,
     stop("The fit carries no fitted parameters against which to compare the response.",
          call. = FALSE)
   }
-  if (identical(type, "response") || identical(type, "pearson")) {
+  if (identical(residual_type, "response") ||
+      identical(residual_type, "pearson")) {
     m <- tryCatch(mean(d, th), error = function(e) {
       warning(sprintf(paste0(
         "The mean of '%s' could not be computed at the fitted parameters, ",
         "so the %s residuals are NA: %s It may not exist there."),
-        d@distrib_name, type, conditionMessage(e)), call. = FALSE)
+        d@distrib_name, residual_type, conditionMessage(e)), call. = FALSE)
       NA_real_
     })
     r <- as.numeric(y) - as.numeric(m)
     if (all(is.na(r))) return(r)
-    if (identical(type, "response")) return(r)
+    if (identical(residual_type, "response")) return(r)
     # A family with no closed-form variance reaches it by quadrature, which
     # does not converge where the variance does not exist (a log-logistic of
     # shape below 2). That used to end in an error listing every observation;

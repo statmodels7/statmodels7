@@ -6,7 +6,7 @@
 \usage{
 \method{residuals}{StatmodFit}(
   object,
-  type = c("quantile", "pearson", "response"),
+  residual_type = c("quantile", "pearson", "response"),
   seed = NULL,
   ...
 )
@@ -14,7 +14,8 @@
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{type}{\code{"quantile"} (the default), \code{"pearson"} or \code{"response"}.
+\item{residual_type}{\code{"quantile"} (the default), \code{"pearson"} or
+\code{"response"}.
 The argument is matched with \code{\link[=match.arg]{match.arg()}}.}
 
 \item{seed}{An integer used to seed the randomization, or \code{NULL} for the

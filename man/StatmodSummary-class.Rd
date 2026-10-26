@@ -22,7 +22,7 @@ StatmodSummary(
   converged = logical(0),
   elapsed = integer(0),
   level = integer(0),
-  type = vcov_type(),
+  vcov_type = vcov_type(),
   test = wald_test(),
   max_coef = NULL,
   notes = character(0),
@@ -65,7 +65,7 @@ correction for estimated hyperparameters where it was requested.}
 
 \item{level}{The confidence level at which the intervals were built.}
 
-\item{type}{Which variance convention was used.}
+\item{vcov_type}{Which variance convention was used.}
 
 \item{test}{Which statistic the coefficient tables report: \code{"wald"},
 \code{"lr"}, \code{"score"} or \code{"gradient"}.}

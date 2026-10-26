@@ -10,7 +10,7 @@ statmod_invert(
   coefname,
   level = 0.95,
   test = lr_test(),
-  type = bayesian_vcov(),
+  vcov_type = bayesian_vcov(),
   maxit = 40L
 )
 }
@@ -24,7 +24,7 @@ statmod_invert(
 \item{test}{The \link{test_statistic} to invert: \code{\link[=lr_test]{lr_test()}} (the default),
 \code{\link[=score_test]{score_test()}}, \code{\link[=gradient_test]{gradient_test()}} or \code{\link[=wald_test]{wald_test()}}.}
 
-\item{type}{The \link{vcov_type} that sets the starting bracket, and that the
+\item{vcov_type}{The \link{vcov_type} that sets the starting bracket, and that the
 Wald statistic reads.}
 
 \item{maxit}{How many widenings to try on each side before the search

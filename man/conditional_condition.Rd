@@ -14,7 +14,7 @@ A condition of class \code{statmod_conditional_variance}.
 }
 \description{
 Returns a classed warning, so a caller can catch the one raised when
-\code{vcov(type = unconditional_vcov())} cannot read the hyperparameters' own
+\code{vcov(vcov_type = unconditional_vcov())} cannot read the hyperparameters' own
 uncertainty and returns the conditional variance instead.
 }
 \details{

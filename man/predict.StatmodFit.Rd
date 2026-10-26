@@ -15,6 +15,7 @@
   predictive = c("averaged", "plugin", "bootstrap"),
   n_boot = 200L,
   boot_refit = c("coefficients", "full"),
+  vcov_type = bayesian_vcov(),
   ...
 )
 }
@@ -73,15 +74,18 @@ read only where \code{predictive = "bootstrap"}.}
 at the fit's hyperparameters, or \code{"full"}, choosing them again. It is
 read only where \code{predictive = "bootstrap"}.}
 
-\item{...}{Only \code{type}, a \link{vcov_type} object that selects the variance
-convention of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
+\item{vcov_type}{A \link{vcov_type} object that selects the variance convention
+of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{\link[=bayesian_vcov]{bayesian_vcov()}} (the default),
 \code{\link[=frequentist_vcov]{frequentist_vcov()}} or \code{\link[=unconditional_vcov]{unconditional_vcov()}}, which also accounts for
 the estimated smoothing parameters. It is read where
 \code{se} is \code{TRUE}, with \code{interval = "group"}, and with
-\code{interval = "prediction"} and \code{predictive = "averaged"}, and it signals an
-error elsewhere. Any other argument signals an error that names it. The
-unconditional variance differs most from the others in a band around a
-penalized term, since a smoothing parameter moves the fitted values.}
+\code{interval = "prediction"} and \code{predictive = "averaged"}, and a value other
+than the default signals an error elsewhere. The unconditional variance
+differs most from the others in a band around a penalized term, since a
+smoothing parameter moves the fitted values. The conventions are compared
+at \link{vcov_type}.}
+
+\item{...}{Not used. Any argument signals an error that names it.}
 }
 \value{
 With \code{se = FALSE}, a numeric vector with one value per row of

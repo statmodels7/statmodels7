@@ -20,7 +20,7 @@ error. Every object that inherits from it has the property \code{name}.
 Three conventions set the variance matrix of the coefficients of a fit:
 the Bayesian one, the frequentist one and the unconditional one. Each is
 an object built by \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=frequentist_vcov]{frequentist_vcov()}} or
-\code{\link[=unconditional_vcov]{unconditional_vcov()}}, and the object is passed as the argument \code{type} of
+\code{\link[=unconditional_vcov]{unconditional_vcov()}}, and the object is passed as the argument \code{vcov_type} of
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
 \code{\link[=statmod_test]{statmod_test()}} and \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}. The default is
 \code{\link[=bayesian_vcov]{bayesian_vcov()}}.
@@ -77,7 +77,7 @@ fs <- statmod(y ~ s(x, bspline_smooth(k = 10)),
 # the standard error of one penalized coordinate under each convention
 types <- list(frequentist_vcov(), bayesian_vcov(), unconditional_vcov())
 vapply(types, function(ty) {
-  sqrt(diag(vcov(fs, type = ty)))[["mu:s(x).z2"]]
+  sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]]
 }, numeric(1))
 
 # the class itself is abstract

@@ -480,7 +480,7 @@ stack_coords <- function(spec, design, pos) {
 #' @param A The penalized information over the kept coordinates.
 #' @param keep The kept coordinates, a logical vector over the stacked
 #'   coefficients.
-#' @param type The `name` of a [vcov_type] object, `"bayesian"` or
+#' @param convention The `name` of a [vcov_type] object, `"bayesian"` or
 #'   `"unconditional"`.
 #'
 #' @return The variance over the kept coordinates, or `NULL` where the fit
@@ -488,7 +488,7 @@ stack_coords <- function(spec, design, pos) {
 #'   structural term, or where a piece cannot be read.
 #'
 #' @keywords internal
-marginal_vcov <- function(object, design, A, keep, type) {
+marginal_vcov <- function(object, design, A, keep, convention) {
   method <- object@methods$outer
   if (is.null(method) || !method@kind %in% c("ml", "reml")) return(NULL)
   if (length(attr(design, "structural"))) return(NULL)
@@ -496,9 +496,9 @@ marginal_vcov <- function(object, design, A, keep, type) {
                              method, object@methods$pinned)
   if (!length(mc$gam$where)) return(NULL)
   mb <- marginal_blocks(mc, object@coefficients, object@hyper, method, A,
-                        keep, full = !identical(type, "bayesian"))
+                        keep, full = !identical(convention, "bayesian"))
   if (is.null(mb)) return(NULL)
-  if (identical(type, "bayesian") || !mb$nh) {
+  if (identical(convention, "bayesian") || !mb$nh) {
     sel <- mb$nh + seq_len(mb$ng)
     Vv <- hyper_variance(-mb$Hv[sel, sel, drop = FALSE])
     B <- mb$Bg
