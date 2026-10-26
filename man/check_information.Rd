@@ -4,7 +4,13 @@
 \alias{check_information}
 \title{Check That an Argument Is an Information Object}
 \usage{
-check_information(x, arg = "information", fn = "reml", auto = TRUE)
+check_information(
+  x,
+  arg = "information",
+  fn = "reml",
+  auto = TRUE,
+  null = FALSE
+)
 }
 \arguments{
 \item{x}{The value to check.}
@@ -14,6 +20,8 @@ check_information(x, arg = "information", fn = "reml", auto = TRUE)
 \item{fn}{The function whose argument it is, used in the message.}
 
 \item{auto}{Whether an \code{\link[=auto_info]{auto_info()}} object is admissible.}
+
+\item{null}{Whether \code{NULL} is admissible.}
 }
 \value{
 \code{x}, invisibly.
@@ -21,7 +29,8 @@ check_information(x, arg = "information", fn = "reml", auto = TRUE)
 \description{
 Returns \code{x} invisibly when it inherits from
 \link[distributions7:Information]{distributions7::Information} and signals an error otherwise. With
-\code{auto = FALSE}, an \code{\link[=auto_info]{auto_info()}} object is rejected as well.
+\code{auto = FALSE}, an \code{\link[=auto_info]{auto_info()}} object is rejected as well, and with
+\code{null = TRUE}, \code{NULL} is accepted.
 }
 \seealso{
 \link{information_objects}

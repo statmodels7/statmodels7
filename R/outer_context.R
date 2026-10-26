@@ -24,7 +24,11 @@
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
-#' @param approx The approximation for the expected information.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return An environment carrying the point and, as they are requested, the
 #'   quantities derived from it.
@@ -33,13 +37,13 @@
 #'   [statmod_marginal_hess()]
 #'
 #' @keywords internal
-outer_context <- function(spec, design, coef, hyper, approx = distributions7::expect_opg()) {
+outer_context <- function(spec, design, coef, hyper, emethod = NULL) {
   e <- new.env(parent = emptyenv())
   e$spec <- spec
   e$design <- design
   e$coef <- coef
   e$hyper <- hyper
-  e$approx <- approx
+  e$emethod <- emethod
   e
 }
 
@@ -83,21 +87,25 @@ ctx_usable <- function(ctx, coef, hyper) {
 #'   `NULL`.
 #' @param hyper The hyperparameters, for the context's own check.
 #' @param expected Whether the expected information is read.
-#' @param approx The approximation for the expected information.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return A square matrix.
 #'
 #' @keywords internal
 ctx_information <- function(ctx, spec, design, coef, hyper, expected,
-                            approx = distributions7::expect_opg()) {
+                            emethod = NULL) {
   if (!ctx_usable(ctx, coef, hyper)) {
-    return(statmod_information_at(spec, coef, design, expected, approx))
+    return(statmod_information_at(spec, coef, design, expected, emethod))
   }
   key <- if (expected) "H_expected" else "H_observed"
   v <- ctx[[key]]
   if (is.null(v)) {
     v <- statmod_information_at(ctx$spec, ctx$coef, ctx$design, expected,
-                                ctx$approx)
+                                ctx$emethod)
     assign(key, v, envir = ctx)
   }
   v
@@ -186,7 +194,7 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE,
   if (laplace && !kinked) laplace <- FALSE
   build <- function() {
     H <- ctx_information(ctx, spec, design, coef, hyper, expected,
-                         ctx_approx(ctx))
+                         ctx_emethod(ctx))
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     K <- H + S
     # a coefficient the marginal criterion holds is not integrated, and is
@@ -631,7 +639,9 @@ ctx_kmove <- function(ctx, spec, design, coef, hyper, method) {
     th <- ctx_theta(ctx, spec, design, coef, hyper)
     distributions7::distrib_dexpected_hessian(spec@distrib, spec@response, th,
                                               scale = "link",
-                                              approx = ctx_approx(ctx))
+                                              method = resolve_emethod(
+                                                spec@distrib,
+                                                ctx_emethod(ctx)))
   }
   v <- if (ctx_usable(ctx, coef, hyper)) {
     if (is.null(ctx$dexp)) ctx$dexp <- build()
@@ -671,6 +681,9 @@ ctx_kmove2 <- function(ctx, spec, design, coef, hyper) {
     th <- ctx_theta(ctx, spec, design, coef, hyper)
     distributions7::distrib_d2expected_hessian(spec@distrib, spec@response, th,
                                                scale = "link",
+                                               method = resolve_emethod(
+                                                 spec@distrib,
+                                                 ctx_emethod(ctx)),
                                                threads = spec@threads)
   }
   v <- if (ctx_usable(ctx, coef, hyper)) {
@@ -683,17 +696,18 @@ ctx_kmove2 <- function(ctx, spec, design, coef, hyper) {
 }
 
 
-#' The Approximation With Which a Context Was Built
+#' The Method With Which a Context Was Built
 #'
 #' @param ctx A context, or `NULL`.
 #'
-#' @return A single string: the approximation that the context carries, or
-#'   [distributions7::expect_opg()] where `ctx` is `NULL` or carries none.
+#' @return `NULL`, for the closed form of the family or the outer product of
+#'   the scores, or the object that inherits from
+#'   [distributions7::ExpectMethod] with which the context was built. It is
+#'   `NULL` where `ctx` is `NULL` or carries none.
 #'
 #' @keywords internal
-ctx_approx <- function(ctx) {
-  if (is.null(ctx) || is.null(ctx$approx)) distributions7::expect_opg()
-  else ctx$approx
+ctx_emethod <- function(ctx) {
+  if (is.null(ctx)) NULL else ctx$emethod
 }
 
 

@@ -200,8 +200,11 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #'   an object that inherits from [distributions7::Information].
 #'   [distributions7::observed_info()] (the default) gives the Hessian of the
 #'   log-likelihood at the data, and [distributions7::expected_info()] gives
-#'   minus the Fisher information, with an `approx` read only for a family
-#'   that has no closed form for it. [auto_info()] is not accepted.
+#'   minus the Fisher information, whose `method` selects how the expectation
+#'   is obtained. [auto_info()] is not accepted. The default is
+#'   [distributions7::observed_info()], whatever the family, because the
+#'   result is a Hessian and not a variance; the variance objects resolve a
+#'   `NULL` information by the family (see [information_objects]).
 #' @param ... Passed to methods. The shipped methods do not read it.
 #'
 #' @return `loglik()` gives a single number. `gradient()` gives a named list
@@ -364,7 +367,7 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
   # the information is minus the Hessian, and what is asked for here is the
   # Hessian of the log-likelihood itself
   -statmod_information_at(spec, par_at(object, par, design), design,
-                          info_expected(information), info_approx(information))
+                          info_expected(information), info_emethod(information))
 }
 
 

@@ -279,18 +279,18 @@ test_that("the coordinate descent refuses a hold instead of ignoring it", {
                         held_coef = list(mu = stats::setNames(3, nl[[2L]])))
   des <- statmod_design(spec)
   blk <- statmod_blocks(spec, des)
-  obj <- statmod_objective(spec, fl@hyper, des, TRUE, distributions7::expect_opg())
+  obj <- statmod_objective(spec, fl@hyper, des, TRUE, NULL)
   beta <- unlist(fl@coefficients, use.names = FALSE)
   expect_error(
-    coord_fit(obj, beta, blk$sparse[[1L]], fl@hyper, spec, des, TRUE, distributions7::expect_opg()),
+    coord_fit(obj, beta, blk$sparse[[1L]], fl@hyper, spec, des, TRUE, NULL),
     "cannot leave one where it was")
 
   ## and a block with nothing held runs as it did
   obj0 <- statmod_objective(fl@spec, fl@hyper, statmod_design(fl@spec),
-                            TRUE, distributions7::expect_opg())
+                            TRUE, NULL)
   blk0 <- statmod_blocks(fl@spec, statmod_design(fl@spec))
   expect_silent(coord_fit(obj0, beta, blk0$sparse[[1L]], fl@hyper, fl@spec,
-                          statmod_design(fl@spec), TRUE, distributions7::expect_opg()))
+                          statmod_design(fl@spec), TRUE, NULL))
 })
 
 

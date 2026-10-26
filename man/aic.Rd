@@ -19,17 +19,19 @@ size is unknown until then.}
 
 \item{information}{The information on which the criterion is built, an
 object that inherits from \link[distributions7:Information]{distributions7::Information}: \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default)
-or \code{\link[distributions7:expected_info]{distributions7::expected_info()}}. \code{\link[=auto_info]{auto_info()}} is not admissible, since the effective
-degrees of freedom are the trace on one named matrix, and signals an
-error. The exact gradient is available on either matrix wherever the
-family writes its expected information out; the Hessian is exact on the
-observed one and is not available on the expected one, where the search
-uses an optimizer that needs only the gradient. A family that does not
-write it out would read the outer product of its scores at the data under
-the default \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, and \code{\link[=statmod]{statmod()}} rejects
-\code{\link[distributions7:expected_info]{distributions7::expected_info()}} there unless its \code{approx} takes an expectation: see
-\code{\link[=assert_criterion_information]{assert_criterion_information()}}. \link{information_objects} compares the
-objects. A character string signals an error.}
+or \code{\link[distributions7:expected_info]{distributions7::expected_info()}}, whose \code{method} is \code{NULL} (the closed form of the
+family where it has one, and \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or
+one of \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}
+and \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} (see
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}). \code{\link[=auto_info]{auto_info()}} is not
+admissible, since the effective degrees of freedom are the trace on one
+named matrix, and signals an error. The exact gradient is available on
+either matrix; the Hessian is exact on the observed one and is not
+available on the expected one, where the search uses an optimizer that
+needs only the gradient. On the expected information, the \code{method} object
+defines the matrix and the derivative of it that the gradient reads, as
+described for the \code{information} of \code{\link[=reml]{reml()}}. \link{information_objects}
+compares the objects.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object with properties \code{kind} (\code{"aic"} or

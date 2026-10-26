@@ -14,8 +14,7 @@ log-likelihood that a computation inverts or takes the determinant of.
 Three objects are available: \code{\link[distributions7:observed_info]{distributions7::observed_info()}} and
 \code{\link[distributions7:expected_info]{distributions7::expected_info()}}, which \pkg{distributions7} defines and
 documents, and \code{\link[=auto_info]{auto_info()}}, which \pkg{statmodels7} defines. All three
-inherit from \link[distributions7:Information]{distributions7::Information}. A character string is not
-accepted.
+inherit from \link[distributions7:Information]{distributions7::Information}.
 
 Three arguments take them, and each one selects the matrix for its own
 computation, so that the choices are independent:
@@ -33,7 +32,11 @@ degrees of freedom of \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}. T
 \code{\link[distributions7:observed_info]{distributions7::observed_info()}}.}
 \item{\code{information} of \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=frequentist_vcov]{frequentist_vcov()}} and
 \code{\link[=unconditional_vcov]{unconditional_vcov()}}}{The matrix inverted for the standard errors.
-The default is \code{\link[distributions7:observed_info]{distributions7::observed_info()}}.}
+The default is \code{NULL}, which selects the matrix by the family of the
+fit: the observed information where the log-likelihood is twice
+differentiable in every parameter of the family, and
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} otherwise (see "The default of the
+variance objects" below).}
 }
 }
 \details{
@@ -54,27 +57,71 @@ the location of a Laplace response, is singular, and a variance that
 inverts it is not available there.}
 \item{\code{\link[distributions7:expected_info]{distributions7::expected_info()}}}{The Fisher information,
 \eqn{\mathbb{E}[-\partial^2 \ell / \partial\beta\,\partial\beta^\top]},
-a function of the parameters alone. Where the family writes the
-expectation out, the closed form is used. Where it does not, the
-expectation is approximated by the \code{approx} of the object (see
-\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}).}
+a function of the parameters alone. Its \code{method} selects how the
+expectation is obtained (see "The method of the expected information"
+below).}
 \item{\code{\link[=auto_info]{auto_info()}}}{A choice that is settled once the family is known.
 The rule depends on where the object is passed and is given below.
 The fitted model records the settled choice.}
 }
 }
 \section{Which function accepts which object}{
-\tabular{lccc}{
-Argument \tab observed \tab expected \tab auto \cr
-\code{inner_information} of \code{\link[=statmod]{statmod()}} \tab yes \tab yes \tab yes (default) \cr
-\code{information} of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} \tab yes (default) \tab yes \tab yes \cr
-\code{information} of \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}} \tab yes (default) \tab yes \tab no \cr
-\code{information} of the three variance objects \tab yes (default) \tab yes
+\tabular{lcccc}{
+Argument \tab observed \tab expected \tab auto \tab \code{NULL} \cr
+\code{inner_information} of \code{\link[=statmod]{statmod()}} \tab yes \tab yes \tab yes (default)
 \tab no \cr
+\code{information} of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} \tab yes (default) \tab yes \tab yes
+\tab no \cr
+\code{information} of \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}} \tab yes (default) \tab yes \tab no
+\tab no \cr
+\code{information} of the three variance objects \tab yes \tab yes \tab no
+\tab yes (default) \cr
 }
 
 \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and the variance objects reject \code{\link[=auto_info]{auto_info()}} because the
 quantity that they compute is defined on one named matrix.
+}
+
+\section{The method of the expected information}{
+The \code{method} of \code{\link[distributions7:expected_info]{distributions7::expected_info()}} and of \code{\link[=auto_info]{auto_info()}}
+selects how the expected information, and the derivatives of it that an
+exact outer gradient reads, are obtained. It is \code{NULL} or one of
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} and
+\code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}; the three are compared in
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}.
+\itemize{
+\item With \code{method = NULL}, the default, the closed form of the family is used
+where the family writes the expected information out (see
+\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}), and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise. The values are those of the
+closed form for every shipped family, and the outer criterion under the
+default is the same criterion as before the argument existed.
+\item An object is always used, also for a family that has the closed form.
+\item The three arguments above are independent, and so are their methods.
+}
+
+In an outer criterion (\code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}}) on the expected
+information, one method object defines the matrix and every derivative of
+it that the exact outer gradient and Hessian read. The derivative is the
+derivative of the matrix that the method defines:
+\itemize{
+\item for the closed form, the closed form of the derivative;
+\item for \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} and \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}},
+the derivative of the expectation, which moves the density as well as the
+integrand;
+\item for \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the exact derivative of the outer
+product of the scores at the data, which treats the data as fixed.
+}
+
+Where the method is \code{NULL} and the family has no closed form for the
+derivative, the matrix and its derivatives are both
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}. The outer product of the scores depends on
+the response, so a criterion built on it is a smooth function of the
+hyperparameters with exact derivatives, and it is not the Laplace
+approximation of an expectation. \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} draws a new
+sample at each call of the matrix and of each derivative, so that the
+derivative is that of the expectation and not of the sampled matrix; the
+outer search is then noisy at the level of the Monte Carlo error.
 }
 
 \section{The rule of auto_info()}{
@@ -105,17 +152,21 @@ observed information is not positive definite at an outlier, and the
 observed information otherwise.
 }
 
-\section{The approximation}{
-\code{approx} is read only when the family has no closed-form expected
-information (see \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}). It defaults to
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the outer product of the scores, which
-costs one gradient. The three arguments above are independent, and so are
-their approximations. A criterion on the expected information of a family
-with no closed form is rejected under the default
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, because the outer product of the scores at
-the data is not an expectation; the criterion needs
-\code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}} or another approximation that takes an
-expectation.
+\section{The default of the variance objects}{
+The \code{information} of \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=frequentist_vcov]{frequentist_vcov()}} and
+\code{\link[=unconditional_vcov]{unconditional_vcov()}} is \code{NULL}. It is resolved for each fit by the family
+of the fit, in the same way as the \code{information} of
+\code{\link[distributions7:vcov.distrib_fit]{distributions7::vcov.distrib_fit()}}: the matrix is
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} when \code{\link[distributions7:params_order]{distributions7::params_order()}} is
+at least 2 for every parameter of the family, that is, when the
+log-likelihood is twice differentiable in every parameter, and
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} with \code{method = NULL} otherwise, for the
+whole matrix. A family with a kink in a parameter (the Laplace, the elastic
+net) has a singular or undefined observed information in that parameter,
+and the closed-form expected information gives finite standard errors.
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix whenever it is not the observed
+information, and a printed variance object states the information that it
+names.
 
 A model that carries a structural term (a score-driven filter or a mixture
 over states) is fitted and inverted on the observed information whatever
@@ -125,7 +176,7 @@ the object says, because those terms have no expected information.
 \examples{
 distributions7::observed_info()
 distributions7::expected_info()
-auto_info(approx = distributions7::expect_bartlett())
+auto_info(method = distributions7::expect_integrate(identity = "score"))
 
 set.seed(1)
 dd <- data.frame(x = runif(120, -2, 2))
@@ -144,8 +195,9 @@ sqrt(diag(vcov(fit, vcov_type = bayesian_vcov(
 \seealso{
 \code{\link[distributions7:observed_info]{distributions7::observed_info()}} and
 \code{\link[distributions7:expected_info]{distributions7::expected_info()}} for the two matrices, \code{\link[=auto_info]{auto_info()}} for
-the third object, \link{AutoInfo} for its class, \code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}},
-\code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \link{vcov_method} for the functions
-that take an object, and \link{iwls_solvers} for the factorization of the
-matrix.
+the third object, \link{AutoInfo} for its class,
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods} for the methods of the
+expected information, \code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}, \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}},
+\code{\link[=bic]{bic()}} and \link{vcov_method} for the functions that take an object, and
+\link{iwls_solvers} for the factorization of the matrix.
 }

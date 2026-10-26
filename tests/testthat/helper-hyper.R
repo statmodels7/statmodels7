@@ -29,10 +29,10 @@ fit_at_hyper <- function(formula, distrib, data, hy, inner = iwls(),
   design <- statmod_design(spec)
   blocks <- statmod_blocks(spec, design)
   cfg <- inner_settings(inner, distrib)
-  obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$approx)
+  obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$emethod)
   beta <- statmod_start(spec, design, obj, start)
   r <- statmod_alternate(spec, design, blocks, hy, inner, beta, cfg$expected,
-                         cfg$approx, cfg$maxit, cfg$tol, verbosity(0))
+                         cfg$emethod, cfg$maxit, cfg$tol, verbosity(0))
   # statmod()'s second fit from the information-scaled start of a
   # score-driven term, where the fit from the term's own start does not
   # converge
@@ -42,7 +42,7 @@ fit_at_hyper <- function(formula, distrib, data, hy, inner = iwls(),
     zinfo <- sst$zeta
     for (tn in names(alt)) sst$zeta[[tn]] <- alt[[tn]]
     r2 <- statmod_alternate(spec, design, blocks, hy, inner, beta,
-                            cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                            cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                             verbosity(0))
     if (isTRUE(r2$converged)) r <- r2 else sst$zeta <- zinfo
   }
@@ -53,7 +53,7 @@ fit_at_hyper <- function(formula, distrib, data, hy, inner = iwls(),
       stop("fit_at_hyper(polish = TRUE) covers a fixed design with smooth ",
            "penalties only", call. = FALSE)
     }
-    obs <- statmod_objective(spec, hy, design, FALSE, cfg$approx)
+    obs <- statmod_objective(spec, hy, design, FALSE, cfg$emethod)
     for (k in seq_len(8L)) {
       g <- obs$gr(par)
       if (max(abs(g)) < 1e-11) break
@@ -73,9 +73,9 @@ fit_at_hyper_spec <- function(spec, design, hy, distrib,
                               inner = iwls(tol = 1e-11, maxit = 500)) {
   blocks <- statmod_blocks(spec, design)
   cfg <- inner_settings(inner, distrib)
-  obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$approx)
+  obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$emethod)
   beta <- statmod_start(spec, design, obj, NULL)
   r <- statmod_alternate(spec, design, blocks, hy, inner, beta, cfg$expected,
-                         cfg$approx, cfg$maxit, cfg$tol, verbosity(0))
+                         cfg$emethod, cfg$maxit, cfg$tol, verbosity(0))
   r$obj$split(r$par)
 }

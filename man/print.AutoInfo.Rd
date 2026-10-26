@@ -15,11 +15,11 @@
 \code{x}, invisibly. The function is called for the output that it writes.
 }
 \description{
-Writes one line naming the object and the approximation of the expectation.
+Writes one line naming the object and the method of the expectation.
 }
 \examples{
 auto_info()
-auto_info(approx = distributions7::expect_mc(nsim = 500))
+auto_info(method = distributions7::expect_mc(nsim = 500))
 
 }
 \seealso{

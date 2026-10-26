@@ -119,20 +119,22 @@ sufficient-decrease test at a point already under the rule would accept or
 reject by the last bits, and the criterion would jump between nearby
 hyperparameters.
 
-The \code{approx} carried by \code{\link[distributions7:expected_info]{distributions7::expected_info()}} and \code{\link[=auto_info]{auto_info()}}
-is passed to \pkg{distributions7} and is read only where the family has no
-closed expected information. \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is
-the predicate that records which case a family is in. The default is
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the outer product of the observed scores,
-which costs one gradient. The alternative readings evaluate the expectation
-itself (a sum over the support for a discrete family, a quadrature for a
-continuous one) and cost much more inside a loop that rebuilds the
-curvature at every iteration. The price of the cheap matrix is paid in
-variance and not in the answer: the score is exact, so a scoring step
-driven by any positive definite matrix reaches the same stationary point,
-and the outer product is positive semidefinite by construction, whereas
-the observed Hessian need not be. The information behind a standard error
-is chosen separately; see \link{vcov_method}.
+The \code{method} carried by \code{\link[distributions7:expected_info]{distributions7::expected_info()}} and \code{\link[=auto_info]{auto_info()}}
+is passed to \pkg{distributions7}. With \code{method = NULL}, the default, the
+closed form of the family is used where the family has one
+(\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} records which case a family is
+in), and \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the outer product of the observed
+scores, which costs one gradient, otherwise. An object is used for every
+family, also for one that has the closed form. \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}
+and \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} evaluate the expectation itself (a sum
+over the support or a quadrature, or simulated draws) and cost much more
+inside a loop that rebuilds the curvature at every iteration.
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods} compares the three. The price
+of the cheap matrix is paid in variance and not in the answer: the score is
+exact, so a scoring step driven by any positive definite matrix reaches the
+same stationary point, and the outer product is positive semidefinite by
+construction, whereas the observed Hessian need not be. The information
+behind a standard error is chosen separately; see \link{vcov_method}.
 }
 
 \section{The solver}{

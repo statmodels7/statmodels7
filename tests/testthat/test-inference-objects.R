@@ -47,7 +47,9 @@ test_that("the three variance constructors build objects of the right classes", 
 test_that("the objects print one line", {
   expect_identical(utils::capture.output(print(lr_test())), "<test> Likelihood-ratio")
   expect_identical(utils::capture.output(print(frequentist_vcov())),
-                   "<vcov> frequentist (observed information)")
+                   "<vcov> frequentist")
+  expect_identical(utils::capture.output(print(frequentist_vcov(
+    information = observed_info()))), "<vcov> frequentist (observed information)")
   expect_identical(utils::capture.output(print(bayesian_vcov(
     information = expected_info()))), "<vcov> bayesian (expected information)")
 })

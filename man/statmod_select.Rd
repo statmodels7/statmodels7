@@ -13,7 +13,7 @@ statmod_select(
   method,
   optimizer,
   beta,
-  approx,
+  emethod,
   maxit,
   tol,
   vb,
@@ -39,7 +39,11 @@ hyperparameters, or \code{NULL}.}
 
 \item{beta}{The starting coefficients.}
 
-\item{approx}{The approximation for the expected information.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 
 \item{maxit, tol}{The inner budget.}
 

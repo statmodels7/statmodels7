@@ -271,7 +271,7 @@ test_that("an unavailable point is a barrier the search steps back from", {
   beta <- statmodels7:::statmod_start(spec, design, obj, NULL)
 
   res <- statmodels7:::outer_fit(spec, design, blocks, hyper, iwls(),
-                                 reml(), NULL, beta, distributions7::expect_bartlett(), 100L, 1e-6,
+                                 reml(), NULL, beta, NULL, 100L, 1e-6,
                                  statmodels7:::verbosity(0))
   expect_true(is.finite(res$criterion))
   # the search reports which optimizer ran, defaults included
@@ -378,9 +378,9 @@ test_that("a hyperparameter estimated by REML carries a standard error", {
     hy <- eta_to_hyper(e, idx, fit@hyper)
     r <- statmod_alternate(sp, de, blk, hy, iwls(),
                            unlist(fit@coefficients, use.names = FALSE),
-                           TRUE, distributions7::expect_bartlett(), 200L, 1e-6, verbosity(0))
+                           TRUE, NULL, 200L, 1e-6, verbosity(0))
     statmod_marginal(sp, de, r$obj$split(r$par), hy, fit@methods$outer,
-                     distributions7::expect_bartlett(), basis)$value
+                     NULL, basis)$value
   }
   h <- 0.05
   H <- (crit(eta0 - h) - 2 * crit(eta0) + crit(eta0 + h)) / h^2
@@ -534,17 +534,17 @@ test_that("a resolution is refused where the inner fit is not at a mode", {
   io     <- iwls(); cfg <- inner_settings(io, spec@distrib); bud <- method_budget(io)
   method <- reml()
   basis  <- integrated_basis(spec, design, method@kind)
-  obj0   <- statmod_objective(spec, hyper, design, cfg$expected, cfg$approx)
+  obj0   <- statmod_objective(spec, hyper, design, cfg$expected, cfg$emethod)
   b0     <- statmod_start(spec, design, obj0, NULL)
   res    <- statmod_alternate(spec, design, blocks, hyper, io, b0,
-                              cfg$expected, cfg$approx, bud$maxit, bud$tol,
+                              cfg$expected, cfg$emethod, bud$maxit, bud$tol,
                               verbosity(0), hold_refresh = TRUE)
   cf  <- res$obj$split(res$par)
-  ctx <- outer_context(spec, design, cf, hyper, cfg$approx)
-  m   <- statmod_marginal(spec, design, cf, hyper, method, cfg$approx, basis,
+  ctx <- outer_context(spec, design, cf, hyper, cfg$emethod)
+  m   <- statmod_marginal(spec, design, cf, hyper, method, cfg$emethod, basis,
                           ctx)
   crit_at <- function(cff, hy, par, cx = NULL) {
-    statmod_marginal(spec, design, cff, hy, method, cfg$approx, basis, cx)
+    statmod_marginal(spec, design, cff, hy, method, cfg$emethod, basis, cx)
   }
   st <- list(ok = TRUE, ctx = ctx, cf = cf, hy = hyper, par = res$par,
              split = res$obj$split, score = res$obj$gr(res$par),

@@ -4,14 +4,14 @@
 \alias{regime_hessian_sum}
 \title{The Second-Derivative Components of a Mixture, Averaged Over Its States}
 \usage{
-regime_hessian_sum(spec, ev, expected, approx)
+regime_hessian_sum(spec, ev, expected, emethod)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{ev}{What \code{\link[=statmod_eta]{statmod_eta()}} returns, carrying \code{regimes}.}
 
-\item{expected, approx}{As in \code{\link[=statmod_information_at]{statmod_information_at()}}.}
+\item{expected, emethod}{As in \code{\link[=statmod_information_at]{statmod_information_at()}}.}
 }
 \value{
 A named list of numeric vectors of length \code{n_obs}, keyed as

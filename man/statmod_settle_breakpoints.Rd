@@ -12,7 +12,7 @@ statmod_settle_breakpoints(
   inner_optimizer,
   res,
   expected,
-  approx,
+  emethod,
   maxit,
   tol,
   vb,
@@ -24,7 +24,7 @@ statmod_settle_breakpoints(
 
 \item{design}{The design, carrying the terms in its state.}
 
-\item{blocks, hyper, inner_optimizer, expected, approx, maxit, tol, vb}{As
+\item{blocks, hyper, inner_optimizer, expected, emethod, maxit, tol, vb}{As
 \code{\link[=statmod_alternate]{statmod_alternate()}}.}
 
 \item{res}{The fit to settle, as \code{\link[=statmod_alternate]{statmod_alternate()}} returns it.}

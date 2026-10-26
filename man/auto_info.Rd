@@ -4,13 +4,26 @@
 \alias{auto_info}
 \title{Information Chosen Against the Family}
 \usage{
-auto_info(approx = distributions7::expect_opg(), repair_floor = 1e-08)
+auto_info(method = NULL, repair_floor = 1e-08)
 }
 \arguments{
-\item{approx}{The approximation of the expected information, as in
-\code{\link[distributions7:expected_info]{distributions7::expected_info()}}. It is read only where the settled
-choice or the fallback uses the expected information of a family that
-has no closed form for it. The default is \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}.}
+\item{method}{\code{NULL} (the default) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}; it is used as the \code{method} of the
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} that the settled choice or the fallback
+selects:
+\itemize{
+\item \code{NULL}: the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise;
+\item \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}: the outer product of the observed
+scores, which costs one gradient;
+\item \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}: quadrature (or summation over the
+support), with \code{identity = "hessian"} or \code{identity = "score"};
+\item \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}: Monte Carlo.
+}
+
+An object is used also for a family that has the closed form.
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods} compares the methods. Any
+other value signals an error.}
 
 \item{repair_floor}{A single positive number. A penalized observed
 information whose smallest eigenvalue is below \code{repair_floor} times the
@@ -23,7 +36,7 @@ is read by \code{\link[=iwls]{iwls()}} only.}
 }
 \value{
 An S7 object of class \code{AutoInfo}, which inherits from
-\link[distributions7:Information]{distributions7::Information}, with the properties \code{approx} and
+\link[distributions7:Information]{distributions7::Information}, with the properties \code{method} and
 \code{repair_floor}.
 }
 \description{
@@ -51,7 +64,8 @@ quantity that each of them computes is defined on one named matrix.
 }
 \examples{
 auto_info()
-auto_info(approx = distributions7::expect_bartlett(), repair_floor = 1e-10)
+auto_info(method = distributions7::expect_integrate(identity = "score"),
+          repair_floor = 1e-10)
 
 set.seed(1)
 dd <- data.frame(x = runif(120, -2, 2))
@@ -66,7 +80,8 @@ fit@methods$smooth
 \seealso{
 \code{\link[distributions7:observed_info]{distributions7::observed_info()}} and
 \code{\link[distributions7:expected_info]{distributions7::expected_info()}} for the objects that name a matrix;
-\link{information_objects} for the comparison; \link{AutoInfo} for the class;
-\code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}, \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} for the functions that take
-the object.
+\link{information_objects} for the comparison;
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods} for the methods; \link{AutoInfo}
+for the class; \code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}, \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} for the
+functions that take the object.
 }

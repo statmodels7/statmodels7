@@ -280,15 +280,15 @@ bootstrap_refit <- function(object, spec_b, refit, method, cfg, beta0) {
   if (identical(refit, "full") &&
       (!is.null(crit) || !is.null(sm$sparse_criterion))) {
     res <- statmod_select(spec_b, design, blocks, hyper, method, crit, NULL,
-                          beta0, cfg$approx, cfg$maxit, cfg$tol, vb, NULL,
+                          beta0, cfg$emethod, cfg$maxit, cfg$tol, vb, NULL,
                           sm$sparse_criterion)
     hyper <- res$hyper
   } else if (marg) {
     res <- outer_fit(spec_b, design, blocks, hyper, method, crit, NULL, beta0,
-                     cfg$approx, cfg$maxit, cfg$tol, vb, hold_hyper = TRUE)
+                     cfg$emethod, cfg$maxit, cfg$tol, vb, hold_hyper = TRUE)
   } else {
     res <- statmod_alternate(spec_b, design, blocks, hyper, method, beta0,
-                             cfg$expected, cfg$approx, cfg$maxit, cfg$tol, vb)
+                             cfg$expected, cfg$emethod, cfg$maxit, cfg$tol, vb)
   }
   list(coefficients = res$obj$split(res$par), hyper = hyper)
 }

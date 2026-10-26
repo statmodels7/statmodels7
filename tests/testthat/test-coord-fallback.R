@@ -22,8 +22,8 @@ test_that("the theta block of a negbin2 stays on the coordinate descent", {
   seen$cd_null <- 0L
   seen$cd_theta <- 0L
   local_mocked_bindings(
-    coord_working = function(spec, ep, coef, design, p, expected, approx) {
-      r <- cw(spec, ep, coef, design, p, expected, approx)
+    coord_working = function(spec, ep, coef, design, p, expected, emethod) {
+      r <- cw(spec, ep, coef, design, p, expected, emethod)
       if (is.null(r) && !expected) seen$observed_null <- seen$observed_null + 1L
       r
     },

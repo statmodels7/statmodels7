@@ -26,10 +26,10 @@ kink_setup <- function(sig) {
   run <- function(start) {
     design <- statmod_design(spec)
     blocks <- statmod_blocks(spec, design)
-    obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$approx)
+    obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$emethod)
     if (is.null(start)) start <- statmod_start(spec, design, obj, NULL)
     r <- statmod_alternate(spec, design, blocks, hy, inner, start,
-                           cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                           cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                            verbosity(0), hold_refresh = TRUE)
     # the constraints that hold the kinked break-point on its observation,
     # and the gradient in the directions that they leave free

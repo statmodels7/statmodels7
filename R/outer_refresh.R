@@ -274,17 +274,21 @@ mode_solver <- function(spec, design, coef, K, Kinv, Dm, npar, offs) {
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param expected Whether the information is the expected one.
-#' @param approx The approximation for the expected information.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
 #' @return A named list of numeric vectors.
 #'
 #' @keywords internal
 refresh_hessian <- function(spec, design, coef, expected = FALSE,
-                            approx = distributions7::expect_opg()) {
+                            emethod = NULL) {
   th <- statmod_eta(spec, design, coef)$theta
   if (expected) {
     distributions7::distrib_expected_hessian(spec@distrib, spec@response, th,
-                                             scale = "link", approx = approx, threads = spec@threads)
+                                             scale = "link", method = emethod, threads = spec@threads)
   } else {
     distributions7::distrib_hessian(spec@distrib, spec@response, th,
                                     scale = "link", threads = spec@threads)

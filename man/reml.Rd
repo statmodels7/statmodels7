@@ -11,28 +11,46 @@ ml(information = observed_info(), marginal = NULL)
 }
 \arguments{
 \item{information}{The information that enters the determinant, an object
-that inherits from \link[distributions7:Information]{distributions7::Information}. \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default) is the
-curvature of the log-likelihood at the data, which makes the criterion the
-Laplace approximation. \code{\link[distributions7:expected_info]{distributions7::expected_info()}} is the Fisher information, a
-function of the parameters alone, and carries an \code{approx} for a family
-that does not write it out. \code{\link[=auto_info]{auto_info()}} is settled against the family by
-\code{\link[=statmod]{statmod()}} through \code{\link[=outer_resolve]{outer_resolve()}}: the expected information for a
-Student t, a skew t or a Cauchy response, whose observed information is
-not positive definite at an outlier, and the observed information
-otherwise. The expected information is used where the caller names it, as
-for a Student t whose degrees of freedom are modeled. The fitted model
-records the information used. On the expected route the outer gradient is
-exact wherever the family writes its expected information out, as every
-shipped family does, and the outer Hessian is exact wherever the family
-also supplies the derivative of that information that the Hessian reads
-(every shipped family except \code{\link[distributions7:enet_distrib]{distributions7::enet_distrib()}}). A family
-that does not write its expected information out reads the outer product
-of its scores at the data under the default
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, which is not an expectation, and
-\code{\link[=statmod]{statmod()}} rejects \code{expected_info()} there unless its \code{approx} takes an
-expectation, as \code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}} does: see
-\code{\link[=assert_criterion_information]{assert_criterion_information()}}. \link{information_objects} compares the three
-objects. A character string signals an error.}
+that inherits from \link[distributions7:Information]{distributions7::Information}:
+\itemize{
+\item \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default): the curvature of the log-likelihood at
+the data, which makes the criterion the Laplace approximation;
+\item \code{\link[distributions7:expected_info]{distributions7::expected_info()}}: the Fisher information, a function of the parameters
+alone. Its \code{method} selects how the expectation is obtained: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise), \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}},
+\code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} or \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}
+(see \link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods});
+\item \code{\link[=auto_info]{auto_info()}}: settled against the family by \code{\link[=statmod]{statmod()}} through
+\code{\link[=outer_resolve]{outer_resolve()}}, as the expected information for a Student t, a skew t
+or a Cauchy response, whose observed information is not positive
+definite at an outlier, and as the observed information otherwise.
+}
+
+The expected information is used where the caller names it, as for a
+Student t whose degrees of freedom are modeled. The fitted model records
+the information used.
+
+On the expected information, the \code{method} object defines the matrix and
+every derivative of it that the exact outer gradient and Hessian read, so
+that the derivatives are those of the criterion that is evaluated. With the
+closed form of the family, the derivative is the closed form of the
+derivative (every shipped family; the Hessian also needs the second
+derivative of the information, which every shipped family supplies except
+\code{\link[distributions7:enet_distrib]{distributions7::enet_distrib()}}). With \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}
+or \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}, it is the derivative of the expectation,
+which moves the density as well as the integrand. With
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the matrix is the outer product of the
+scores at the data and the derivative is its exact derivative at fixed
+data. A family without a closed form reads \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}
+for the matrix and for the derivatives when \code{method} is \code{NULL}. The outer
+product depends on the response, so the criterion built on it has exact
+derivatives and is not the Laplace approximation of an expectation.
+\code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} draws a new sample at each call of the
+matrix and of each derivative, so that its derivative is that of the
+expectation and not of the sampled matrix, and the outer search is noisy at
+the level of the Monte Carlo error. \link{information_objects} compares the three
+objects.}
 
 \item{marginal}{Which distribution parameters have their unpenalized
 coefficients estimated by maximizing this criterion, instead of being

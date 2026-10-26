@@ -14,7 +14,7 @@ inner_settings(method, distrib = NULL)
 distribution is an error rather than a guess.}
 }
 \value{
-A list of four: \code{expected} (a logical), \code{approx} (an object),
+A list of four: \code{expected} (a logical), \code{emethod} (an object),
 \code{maxit} and \code{tol}.
 }
 \description{
@@ -32,9 +32,9 @@ as that function's second derivative, which is the observed information;
 the expected information is a different matrix, so a Newton step on it
 would be Fisher scoring under another name. Where a family writes neither
 out, the expected information is also far more expensive to form than the
-observed one. \code{approx} is \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} for such a method,
-the default of \code{\link[=iwls]{iwls()}} itself; it is read only where \code{expected} is \code{TRUE},
-so for an optimizer it records a default and not a choice.
+observed one. \code{emethod} is \code{NULL} for such a method, the default of
+\code{\link[=iwls]{iwls()}} itself; it is read only where \code{expected} is \code{TRUE}, so for an
+optimizer it records a default and not a choice.
 }
 \seealso{
 \code{\link[=method_budget]{method_budget()}} for the last two,

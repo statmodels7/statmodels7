@@ -10,14 +10,15 @@ test_that("the three information objects are built, validated and printed", {
   expect_true(S7::S7_inherits(e, ExpectedInfo))
   expect_true(S7::S7_inherits(a, AutoInfo))
   expect_true(S7::S7_inherits(a, Information))
-  # the default approximation is the outer product of the scores
-  expect_true(S7::S7_inherits(e@approx, distributions7::ExpectOPG))
-  expect_true(S7::S7_inherits(a@approx, distributions7::ExpectOPG))
+  # the default method is NULL: the closed form where the family has one and
+  # the outer product of the scores otherwise
+  expect_null(e@method)
+  expect_null(a@method)
   expect_identical(a@repair_floor, 1e-8)
-  m <- expected_info(approx = distributions7::expect_mc(nsim = 321))
-  expect_identical(m@approx@nsim, 321)
-  expect_identical(auto_info(approx = distributions7::expect_bartlett())@approx,
-                   distributions7::expect_bartlett())
+  m <- expected_info(method = distributions7::expect_mc(nsim = 321))
+  expect_identical(m@method@nsim, 321)
+  sc <- distributions7::expect_integrate(identity = "score")
+  expect_identical(auto_info(method = sc)@method, sc)
   expect_identical(auto_info(repair_floor = 1e-10)@repair_floor, 1e-10)
   expect_output(print(o), "Observed information")
   expect_output(print(e), "Expected information .*outer product")
@@ -29,7 +30,10 @@ test_that("the three information objects are built, validated and printed", {
   expect_true(info_expected(e))
   expect_false(info_expected(o))
   expect_true(info_auto(a))
-  expect_true(S7::S7_inherits(info_approx(o), distributions7::ExpectOPG))
+  expect_null(info_emethod(o))
+  expect_null(info_emethod(e))
+  expect_identical(info_emethod(m), m@method)
+  expect_identical(info_emethod(auto_info(method = sc)), sc)
 })
 
 test_that("the classes of the observed and the expected information are those of distributions7", {
@@ -41,10 +45,10 @@ test_that("the classes of the observed and the expected information are those of
   expect_true("auto_info" %in% getNamespaceExports("statmodels7"))
 })
 
-test_that("a wrong object for the approximation or the floor is an error", {
-  expect_error(auto_info(approx = "bartlett"), "must be an expectation object")
-  expect_error(expected_info(approx = 3))
-  expect_error(auto_info(approx = observed_info()), "must be an expectation object")
+test_that("a wrong object for the method or the floor is an error", {
+  expect_error(auto_info(method = "score"), "'method' must be NULL or an ExpectMethod object")
+  expect_error(expected_info(method = 3))
+  expect_error(auto_info(method = observed_info()), "'method' must be NULL or an ExpectMethod object")
   expect_error(auto_info(repair_floor = 0), "'repair_floor' must be a single positive number")
   expect_error(auto_info(repair_floor = c(1, 2)), "repair_floor")
   expect_error(auto_info(repair_floor = "a"), "repair_floor")
@@ -83,20 +87,20 @@ test_that("aic(), bic() and the variance objects reject the information that is 
   expect_true(S7::S7_inherits(iwls()@hessian, AutoInfo))
 })
 
-test_that("auto_info() keeps its approximation when it is settled", {
-  b <- distributions7::expect_bartlett()
+test_that("auto_info() keeps its method when it is settled", {
+  b <- distributions7::expect_integrate(identity = "score")
   m <- iwls()
   # settled against a family without a closed form, the observed information
   # stands and the expected one that takes the step where it cannot keeps the
   # approximation
-  r <- iwls_resolve(m, pig_bare_distrib(), auto_info(approx = b))
+  r <- iwls_resolve(m, pig_bare_distrib(), auto_info(method = b))
   expect_identical(info_label(r@hessian), "observed")
   expect_identical(info_label(r@backup), "expected")
-  expect_identical(r@backup@approx, b)
+  expect_identical(r@backup@method, b)
   # settled on a family with a closed form, the expected information keeps it
-  g <- iwls_resolve(m, distributions7::gaussian1_distrib(), auto_info(approx = b))
+  g <- iwls_resolve(m, distributions7::gaussian1_distrib(), auto_info(method = b))
   expect_identical(info_label(g@hessian), "expected")
-  expect_identical(g@hessian@approx, b)
+  expect_identical(g@hessian@method, b)
   expect_null(g@backup)
   # the repair floor travels to the method
   rf <- iwls_resolve(m, distributions7::gaussian1_distrib(),
@@ -107,16 +111,16 @@ test_that("auto_info() keeps its approximation when it is settled", {
   nm <- iwls_resolve(iwls(solver = solve_chol(floor = 1e-6)), NULL, observed_info())
   expect_true(is.na(nm@repair_floor))
   expect_identical(iwls_definite_tol(nm), 1e-6)
-  # an observed method carries the default approximation
-  expect_true(S7::S7_inherits(info_approx(nm@hessian), distributions7::ExpectOPG))
-  # the outer criterion resolves with its own approximation
-  rr <- outer_resolve(reml(information = auto_info(approx = b)),
+  # an observed method carries no method of the expected information
+  expect_null(info_emethod(nm@hessian))
+  # the outer criterion resolves with its own method
+  rr <- outer_resolve(reml(information = auto_info(method = b)),
                       distributions7::student_t1_distrib())
   expect_identical(info_label(rr@hessian), "expected")
-  expect_identical(rr@hessian@approx, b)
+  expect_identical(rr@hessian@method, b)
 })
 
-test_that("the approximation of a criterion is its own", {
+test_that("the method of a criterion is its own", {
   skip_on_cran()
   set.seed(31)
   n <- 60L
@@ -124,17 +128,17 @@ test_that("the approximation of a criterion is its own", {
   dd <- data.frame(x = x, y = distributions7::distrib_rng(
     distributions7::pig1_distrib(), n, list(mu = exp(1.2 + 0.4 * x), sigma = 0.8)))
   pig <- pig_bare_distrib()
-  expect_error(statmod(y ~ x, pig, dd,
-                       outer_criterion = reml(information = expected_info())),
-               "pig bare")
+  sc <- distributions7::expect_integrate(identity = "score")
   fb <- statmod(y ~ x, pig, dd,
-                outer_criterion = reml(information = expected_info(
-                  approx = distributions7::expect_bartlett())))
+                outer_criterion = reml(information = expected_info(method = sc)))
   fi <- statmod(y ~ x, pig, dd,
-                inner_information = auto_info(
-                  approx = distributions7::expect_bartlett()),
-                outer_criterion = reml(information = expected_info(
-                  approx = distributions7::expect_bartlett())))
+                inner_information = auto_info(method = sc),
+                outer_criterion = reml(information = expected_info(method = sc)))
+  # the default method of the same criterion reads the outer product of the
+  # scores for this family, and the fit exists
+  fn <- statmod(y ~ x, pig, dd,
+                outer_criterion = reml(information = expected_info()))
+  expect_true(fn@converged)
   expect_equal(unlist(coef(fb)), unlist(coef(fi)), tolerance = 1e-5)
   expect_equal(as.numeric(logLik(fb)), as.numeric(logLik(fi)), tolerance = 1e-6)
 })

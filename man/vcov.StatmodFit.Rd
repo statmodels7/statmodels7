@@ -16,8 +16,9 @@ conditional on the hyperparameters. \code{\link[=frequentist_vcov]{frequentist_v
 sandwich \eqn{V_f = (H+S)^{-1}H(H+S)^{-1}}, conditional on the
 hyperparameters as well. \code{\link[=unconditional_vcov]{unconditional_vcov()}} returns
 \eqn{V' = V_b + J V_\theta J'}, which adds the uncertainty of the
-hyperparameters. Each takes \code{information}, which is
-\code{\link[distributions7:observed_info]{distributions7::observed_info()}} by default and may be
+hyperparameters. Each takes \code{information}, which is \code{NULL} by default (the
+observed information, or the expected information for a family with a kink
+in a parameter, resolved for each fit) and may be \code{\link[distributions7:observed_info]{distributions7::observed_info()}} or
 \code{\link[distributions7:expected_info]{distributions7::expected_info()}}. The conventions are compared at
 \link{vcov_method}.}
 
@@ -124,29 +125,38 @@ argument. The \code{information} of \code{vcov_type} selects the matrix used as
 the penalized block of the other two.
 
 The \code{information} of \code{vcov_type} selects the matrix used as \eqn{H}. Its
-default is \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the curvature of the
-likelihood at the data in hand, for every fit: the choice does not depend on
-the information with which the fit was computed (\code{inner_information} of
-\code{\link[=statmod]{statmod()}}). \code{\link[distributions7:expected_info]{distributions7::expected_info()}} selects the Fisher
-information, the information averaged over the model. The two agree
-asymptotically and not in a sample. A model that carries a structural term
-is always inverted on the observed information, because a filter and a
-mixture over states do not have an expected information.
+default is \code{NULL}, which is resolved for each fit by the family of the fit
+with the rule of \code{\link[distributions7:vcov.distrib_fit]{distributions7::vcov.distrib_fit()}}: the matrix is
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the curvature of the likelihood at the
+data in hand, when the log-likelihood is twice differentiable in every
+parameter of the family (every \code{\link[distributions7:params_order]{distributions7::params_order()}} is at least
+2), and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} with \code{method = NULL}, for the
+whole matrix, otherwise. The choice does not depend on the information with
+which the fit was computed (\code{inner_information} of \code{\link[=statmod]{statmod()}}). An object
+in \code{information} overrides the rule. \code{\link[distributions7:expected_info]{distributions7::expected_info()}}
+selects the Fisher information, the information averaged over the model. The
+two agree asymptotically and not in a sample. A model that carries a
+structural term is always inverted on the observed information, because a
+filter and a mixture over states do not have an expected information.
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix when it is not the observed one.
 
 The observed information is singular where the second derivative of the
 log-likelihood in a coefficient is zero at the estimates, as for the
-location of a Laplace response. The rows and columns of the coordinates that
-it does not identify are then missing, as described above for a flat
-direction, and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} reads a finite value.
+location of a Laplace response. The family has a kink in that parameter, so
+the default \code{NULL} reads the expected information, which is finite there,
+and the variance is available. With \code{information = observed_info()} the rows
+and columns of the coordinates that it does not identify are missing, as
+described above for a flat direction.
 
-Where the family has no closed form for the expected information, the
-\code{approx} of \code{\link[distributions7:expected_info]{distributions7::expected_info()}} selects the approximation.
-\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the default, is the outer product of the
-observed scores and costs one gradient; \code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}}
-evaluates the expectation itself, a sum over the support for a discrete
-family and a quadrature for a continuous one, and is orders of magnitude
-more expensive. \link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods} compares the
-four approximations.
+The \code{method} of \code{\link[distributions7:expected_info]{distributions7::expected_info()}} selects how the expected
+information is obtained. With \code{method = NULL} the closed form of the family
+is used where the family has one, and \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, the
+outer product of the observed scores, which costs one gradient, otherwise.
+\code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} evaluates the expectation itself, a sum
+over the support for a discrete family and a quadrature for a continuous
+one, and is orders of magnitude more expensive;
+\code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} simulates it.
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods} compares the three methods.
 }
 \examples{
 set.seed(1)

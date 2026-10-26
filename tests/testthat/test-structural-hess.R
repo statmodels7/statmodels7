@@ -80,7 +80,7 @@ sh_grad <- function(fit, p) {
     if (!is.null(z0)) sst$zeta <- z0
     hy <- eta_to_hyper(eta, p$idx, p$hyper)
     r <- statmod_alternate(p$spec, p$design, p$blocks, hy, inner, beta0,
-                           cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                           cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                            verbosity(0), hold_refresh = TRUE)
     statmod_marginal_grad(p$spec, p$design, r$obj$split(r$par), hy, p$method,
                           p$idx, p$basis)

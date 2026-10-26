@@ -75,8 +75,8 @@ test_that("the structural table reports standard errors beside a mixed covarianc
   expect_true(all(tab$se[free] > 0))
 })
 
-test_that("a context without an approximation reads the default one", {
-  expect_identical(ctx_approx(NULL), distributions7::expect_opg())
+test_that("a context without a method reads the default one", {
+  expect_null(ctx_emethod(NULL))
 })
 
 test_that("statmod_breakpoint_test() rejects k and n_boot that are not whole", {
@@ -153,7 +153,7 @@ test_that("a restart budget of zero proposes nothing", {
   cfg <- inner_settings(fit@methods$smooth)
   res <- statmod_alternate(spec, design, blocks, fit@hyper, fit@methods$smooth,
                            unlist(fit@coefficients, use.names = FALSE),
-                           cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                           cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                            verbosity(0))
   calls <- 0L
   local_mocked_bindings(seg_polish = function(...) {
@@ -162,7 +162,7 @@ test_that("a restart budget of zero proposes nothing", {
   }, .package = "modelterms7")
   out <- statmod_boot_restart(spec, design, blocks, fit@hyper,
                               fit@methods$smooth, res, cfg$expected,
-                              cfg$approx, cfg$maxit, cfg$tol, verbosity(0), 0L)
+                              cfg$emethod, cfg$maxit, cfg$tol, verbosity(0), 0L)
   expect_identical(calls, 0L)
   expect_identical(out$par, res$par)
 })
@@ -260,13 +260,13 @@ kink_fit <- function(hessian) {
     b0 <- beta0
     b0[mc$gam$where] <- v[nh + seq_len(ng)]
     r <- statmod_alternate(spv, mc$design, bl, hy, inner, b0, cfg$expected,
-                           cfg$approx, cfg$maxit, cfg$tol, verbosity(0),
+                           cfg$emethod, cfg$maxit, cfg$tol, verbosity(0),
                            hold_refresh = TRUE)
     list(sp = spv, cf = r$obj$split(r$par), hy = hy)
   }
   value <- function(v) {
     r <- mode(v)
-    statmod_marginal(r$sp, mc$design, r$cf, r$hy, m, distributions7::expect_opg(), basis)$value
+    statmod_marginal(r$sp, mc$design, r$cf, r$hy, m, NULL, basis)$value
   }
   grad <- function(v) {
     r <- mode(v)
@@ -332,9 +332,9 @@ test_that("a break-point developed over a covariate slides along the hyperplane 
   start[k] <- start[k] + 0.05 * dirn
   cfg <- inner_settings(fit@methods$smooth)
   r <- statmod_alternate(sp, ds, bl, fit@hyper, fit@methods$smooth, start,
-                         cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                         cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                          verbosity(0))
-  obj <- statmod_objective(sp, fit@hyper, ds, FALSE, distributions7::expect_opg())
+  obj <- statmod_objective(sp, fit@hyper, ds, FALSE, NULL)
   f <- function(t) {
     b <- r$par
     b[k] <- b[k] + t * dirn

@@ -59,7 +59,7 @@ mp_check <- function(p) {
   at <- function(eta) {
     hy <- eta_to_hyper(eta, p$idx, p$fit@hyper)
     r <- statmod_alternate(p$spec, p$design, p$blocks, hy, inner, beta0,
-                           cfg$expected, cfg$approx, cfg$maxit, 1e-10,
+                           cfg$expected, cfg$emethod, cfg$maxit, 1e-10,
                            verbosity(0))
     list(coef = r$obj$split(r$par), hy = hy)
   }

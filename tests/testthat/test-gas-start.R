@@ -58,7 +58,7 @@ test_that("the level chart's derivatives are those of the composed objective", {
                distrib = distributions7::gaussian1_distrib(), data = nile)
   spec <- b@spec
   design <- statmod_design(spec)
-  obj <- statmod_objective(spec, b@hyper, design, FALSE, distributions7::expect_bartlett())
+  obj <- statmod_objective(spec, b@hyper, design, FALSE, NULL)
   jp <- statmod_joint_pieces(spec, design, obj, b@hyper)
   lv <- joint_level_chart(spec, jp)
   expect_false(is.null(lv))

@@ -100,12 +100,11 @@ chol_blocks <- function(Om) {
 #'   named list of \eqn{n}-vectors, one per distribution parameter.
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   negated observed Hessian.
-#' @param approx How the expected information is approximated for a family
-#'   that has no closed form, passed through to \pkg{distributions7}:
-#'   as an object that inherits from [distributions7::ExpectApprox], with
-#'   [distributions7::expect_opg()] as the default. It is
-#'   ignored when `expected` is `FALSE` or when the family computes its expected
-#'   information exactly.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param H The family's link-scale second derivatives, as
 #'   [statmod_family_hessian()] returns them, when the caller has already
 #'   computed them at `theta`; `NULL` computes them here.
@@ -117,13 +116,13 @@ chol_blocks <- function(Om) {
 #'   [statmod_information_at()] for the assembled \eqn{Z'\Omega Z}.
 #'
 #' @keywords internal
-info_blocks <- function(spec, theta, expected = TRUE, approx = distributions7::expect_opg(),
+info_blocks <- function(spec, theta, expected = TRUE, emethod = NULL,
                         H = NULL) {
   params <- spec@distrib@params
   K <- length(params)
   n <- spec@n_obs
   # given by the caller where it has already asked for them at this point
-  if (is.null(H)) H <- statmod_family_hessian(spec, theta, expected, approx)
+  if (is.null(H)) H <- statmod_family_hessian(spec, theta, expected, emethod)
   Om <- array(0, dim = c(n, K, K))
   for (a in seq_len(K)) {
     for (b in seq.int(a, K)) {

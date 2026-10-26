@@ -4,13 +4,7 @@
 \alias{refresh_hessian}
 \title{The Log-Density's Curvature Used by the Refresh Corrections}
 \usage{
-refresh_hessian(
-  spec,
-  design,
-  coef,
-  expected = FALSE,
-  approx = distributions7::expect_opg()
-)
+refresh_hessian(spec, design, coef, expected = FALSE, emethod = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -21,7 +15,11 @@ refresh_hessian(
 
 \item{expected}{Whether the information is the expected one.}
 
-\item{approx}{The approximation for the expected information.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 }
 \value{
 A named list of numeric vectors.

@@ -53,7 +53,7 @@ test_that("the full Hessian of a smoothed break-point is the objective's", {
     distributions7::gaussian1_distrib(), d, outer_criterion = NULL))
   spec <- fit@spec
   design <- statmod_design(spec)
-  obj <- statmod_objective(spec, fit@hyper, design, FALSE, distributions7::expect_opg())
+  obj <- statmod_objective(spec, fit@hyper, design, FALSE, NULL)
   par <- obj$stack(fit@coefficients)
   par[3] <- par[3] + 0.002
   npar <- obj$npar

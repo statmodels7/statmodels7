@@ -26,7 +26,8 @@ StatmodSummary(
   test = wald_test(),
   max_coef = NULL,
   notes = character(0),
-  certificate = NULL
+  certificate = NULL,
+  information = NULL
 )
 }
 \arguments{

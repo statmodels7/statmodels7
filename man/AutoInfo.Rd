@@ -4,19 +4,21 @@
 \alias{AutoInfo}
 \title{S7 Class for the Information Chosen Against the Family}
 \usage{
-AutoInfo(approx = distributions7::ExpectApprox(), repair_floor = integer(0))
+AutoInfo(method = NULL, repair_floor = integer(0))
 }
 \arguments{
-\item{approx}{An object that inherits from \link[distributions7:ExpectApprox]{distributions7::ExpectApprox},
-the approximation of the expected information for a family that has no
-closed form for it.}
+\item{method}{\code{NULL} or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}, the method that obtains the expected
+information wherever the settled choice or the fallback uses it. \code{NULL}
+selects the closed form of the family where it has one and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise.}
 
 \item{repair_floor}{A single positive number, the relative floor of the
 repair of an indefinite observed information.}
 }
 \value{
 An S7 object of class \code{AutoInfo}, which inherits from
-\link[distributions7:Information]{distributions7::Information}, with the properties \code{approx} and
+\link[distributions7:Information]{distributions7::Information}, with the properties \code{method} and
 \code{repair_floor}.
 }
 \description{
@@ -29,10 +31,10 @@ that \code{S7::S7_inherits()} can test an object. \link{information_objects} com
 the three objects.
 }
 \examples{
-a <- auto_info(approx = distributions7::expect_mc(nsim = 500))
+a <- auto_info(method = distributions7::expect_mc(nsim = 500))
 S7::S7_inherits(a, distributions7::Information)
 S7::S7_inherits(a, AutoInfo)
-a@approx
+a@method
 
 }
 \seealso{

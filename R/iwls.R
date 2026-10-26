@@ -143,20 +143,22 @@ Iwls <- S7::new_class("Iwls",
 #' reject by the last bits, and the criterion would jump between nearby
 #' hyperparameters.
 #'
-#' The `approx` carried by [distributions7::expected_info()] and [auto_info()]
-#' is passed to \pkg{distributions7} and is read only where the family has no
-#' closed expected information. [distributions7::expected_hessian_exact()] is
-#' the predicate that records which case a family is in. The default is
-#' [distributions7::expect_opg()], the outer product of the observed scores,
-#' which costs one gradient. The alternative readings evaluate the expectation
-#' itself (a sum over the support for a discrete family, a quadrature for a
-#' continuous one) and cost much more inside a loop that rebuilds the
-#' curvature at every iteration. The price of the cheap matrix is paid in
-#' variance and not in the answer: the score is exact, so a scoring step
-#' driven by any positive definite matrix reaches the same stationary point,
-#' and the outer product is positive semidefinite by construction, whereas
-#' the observed Hessian need not be. The information behind a standard error
-#' is chosen separately; see [vcov_method].
+#' The `method` carried by [distributions7::expected_info()] and [auto_info()]
+#' is passed to \pkg{distributions7}. With `method = NULL`, the default, the
+#' closed form of the family is used where the family has one
+#' ([distributions7::expected_hessian_exact()] records which case a family is
+#' in), and [distributions7::expect_opg()], the outer product of the observed
+#' scores, which costs one gradient, otherwise. An object is used for every
+#' family, also for one that has the closed form. [distributions7::expect_integrate()]
+#' and [distributions7::expect_mc()] evaluate the expectation itself (a sum
+#' over the support or a quadrature, or simulated draws) and cost much more
+#' inside a loop that rebuilds the curvature at every iteration.
+#' [distributions7::expected_derivative_methods] compares the three. The price
+#' of the cheap matrix is paid in variance and not in the answer: the score is
+#' exact, so a scoring step driven by any positive definite matrix reaches the
+#' same stationary point, and the outer product is positive semidefinite by
+#' construction, whereas the observed Hessian need not be. The information
+#' behind a standard error is chosen separately; see [vcov_method].
 #'
 #' # The solver
 #'
@@ -424,7 +426,7 @@ iwls_resolve <- function(method, distrib, information = NULL) {
   }
   exact <- distributions7::expected_hessian_exact(distrib) &&
     !distributions7::expected_hessian_costly(distrib)
-  expd <- distributions7::expected_info(approx = information@approx)
+  expd <- distributions7::expected_info(method = information@method)
   method@hessian <- if (exact) expd else distributions7::observed_info()
   method@backup <- if (exact) NULL else expd
   method@switching <- exact
@@ -729,8 +731,9 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0),
 #' @param coef A named list of coefficient vectors, one per distribution
 #'   parameter.
 #' @param hyper The hyperparameters, per penalized term.
-#' @param method An [Iwls()] object, read for `solver`, `hessian` and
-#'   `approx`.
+#' @param method An [Iwls()] object, read for `solver` and `hessian`, whose
+#'   `method` (see [distributions7::expected_info()]) gives the method of the
+#'   expected information.
 #'
 #' @return A list with `R`, `C` and `A` and, on the square-root route,
 #'   `threads`, the thread count. The matrices that the route does not need are
@@ -752,12 +755,12 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0),
 iwls_pieces <- function(spec, design, coef, hyper, method) {
   if (info_auto(method@hessian)) method <- iwls_resolve(method, spec@distrib)
   expected <- info_expected(method@hessian)
-  approx <- info_approx(method@hessian)
+  emethod <- info_emethod(method@hessian)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   assembled <- function(H = NULL) {
     list(R = NULL, C = NULL,
          A = statmod_information_at(spec, coef, design, expected,
-                                    approx, H = H) + S)
+                                    emethod, H = H) + S)
   }
   if (!(solver_how(method@solver) %in% c("qr", "svd"))) return(assembled())
   ev <- statmod_eta(spec, design, coef)
@@ -773,8 +776,8 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
   # mixture over regimes reads a different set per component, so it is left
   # to ask for its own.
   H <- if (length(ev$regimes)) NULL else
-    statmod_family_hessian(spec, ev$theta, expected, approx)
-  L <- chol_blocks(info_blocks(spec, ev$theta, expected, approx, H = H))
+    statmod_family_hessian(spec, ev$theta, expected, emethod)
+  L <- chol_blocks(info_blocks(spec, ev$theta, expected, emethod, H = H))
   R <- sqrt_design(statmod_design_at(spec, coef, design), L)
   C <- penalty_sqrt(S)
   if (is.null(R) || is.null(C)) return(assembled(H))

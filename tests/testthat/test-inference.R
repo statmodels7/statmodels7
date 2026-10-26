@@ -649,7 +649,7 @@ test_that("the zeros of a kinked penalty are checked against their kink", {
   cf <- fit@coefficients
   cf$mu[] <- c(g2@coefficients$mu[1], 0, g2@coefficients$mu[-1])
   cf$sigma[] <- g2@coefficients$sigma
-  obj <- statmod_objective(spec, fit@hyper, design, FALSE, distributions7::expect_bartlett())
+  obj <- statmod_objective(spec, fit@hyper, design, FALSE, NULL)
   bad <- zero_readings(spec, design, obj, cf, fit@hyper, lab)
   expect_gt(bad[["ratio"]], 5)
 
@@ -1122,7 +1122,7 @@ test_that("the correction is what the edf correction contracts", {
     vcov(fit, vcov_type = bayesian_vcov(information = expected_info()),
          readable = FALSE)
   H <- statmod_information_at(fit@spec, fit@coefficients, design,
-                              TRUE, distributions7::expect_opg())
+                              TRUE, NULL)
   want <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
                                  design, fit@methods$outer)$total
   expect_gt(want, 0)
@@ -1299,7 +1299,7 @@ test_that("the mode's movement is the one two refits of it give", {
     r <- statmod_alternate(spec, design, blocks,
                            eta_to_hyper(eta, idx, fit@hyper),
                            fit@methods$smooth, beta0, cfg$expected,
-                           cfg$approx, cfg$maxit, cfg$tol, verbosity(0),
+                           cfg$emethod, cfg$maxit, cfg$tol, verbosity(0),
                            hold_refresh = TRUE)
     key <- names(sst$zeta)[1L]
     z <- sst$zeta[[key]]

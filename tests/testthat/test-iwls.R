@@ -212,7 +212,6 @@ test_that("iwls states what it rejects and prints itself", {
   expect_error(iwls(solver = "lu"), "solver object")
   expect_error(iwls(solver = "qr"), "must be a solver object")
   expect_error(iwls(information = observed_info()), "unused argument")
-  expect_error(iwls(approx = distributions7::expect_opg()), "unused argument")
   expect_error(iwls(maxit = 0), "positive integer")
   expect_error(iwls(tol = -1), "positive number")
   expect_error(iwls(decrement_limit = 0), "decrement_limit")

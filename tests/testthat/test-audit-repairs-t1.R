@@ -75,7 +75,7 @@ test_that("a kinked zero whose reading cannot be computed is not settled", {
   fit <- statmod(y ~ lasso(X, lambda = 20), g1, dd)
   sp <- fit@spec
   des <- statmod_design(sp)
-  obj <- statmod_objective(sp, fit@hyper, des, FALSE, distributions7::expect_bartlett())
+  obj <- statmod_objective(sp, fit@hyper, des, FALSE, NULL)
   b <- obj$stack(fit@coefficients)
   expect_true(any(b == 0))
   pen <- statmod_penalty_at
@@ -88,10 +88,10 @@ test_that("a kinked zero whose reading cannot be computed is not settled", {
       }
       pen(spec, coef, hyper, design, what, ...)
     })
-  r <- alternation_readings(sp, des, obj, b, fit@hyper, FALSE, distributions7::expect_bartlett())
+  r <- alternation_readings(sp, des, obj, b, fit@hyper, FALSE, NULL)
   expect_identical(r[["kkt"]], Inf)
   expect_false(alternation_settled(sp, des, obj, b, fit@hyper, FALSE,
-                                   distributions7::expect_bartlett()))
+                                   NULL))
 })
 
 test_that("rows of weight zero keep the lasso on coordinate descent", {

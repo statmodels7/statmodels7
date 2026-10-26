@@ -104,7 +104,7 @@ test_that("the two are estimated apart and counted together", {
   des <- statmod_design(fit@spec)
   tm <- fit@spec@terms$mu[[tn]]
   cols <- des$mu$blocks[[tn]]
-  H <- statmod_information_at(fit@spec, fit@coefficients, des, TRUE, distributions7::expect_bartlett())
+  H <- statmod_information_at(fit@spec, fit@coefficients, des, TRUE, NULL)
   ref <- modelterms7::edf(
     tm, coef = fit@coefficients$mu[cols], hessian = H[cols, cols, drop = FALSE],
     theta = list(lo = as.list(h[[paste0(tn, "::lo")]]),

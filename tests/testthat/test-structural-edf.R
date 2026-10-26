@@ -104,7 +104,7 @@ test_that("a model with no filter keeps the coefficient-only reading", {
   expect_null(joint_smoother_diag(fit@spec, fit@coefficients, design,
                                   fit@hyper))
 
-  H <- statmod_information_at(fit@spec, fit@coefficients, design, TRUE, distributions7::expect_opg())
+  H <- statmod_information_at(fit@spec, fit@coefficients, design, TRUE, NULL)
   S <- zap_nonfinite(statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper,
                                         design, "hessian"))
   d <- diag(solve(as_dense(H + S), as_dense(H)))

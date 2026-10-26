@@ -119,7 +119,7 @@ seg_boot_total <- function(spec) {
 #'   it. It is returned unchanged when no proposal improves the objective, and
 #'   also when the design carries no state, or when the response is a matrix,
 #'   is not numeric or has missing values.
-#' @param expected,approx,maxit,tol Passed to [statmod_alternate()] for each
+#' @param expected,emethod,maxit,tol Passed to [statmod_alternate()] for each
 #'   refit, with the meanings that they have there.
 #' @param vb The resolved verbosity, as [verbosity()] returns it.
 #' @param nb The budget: the maximum number of proposals to try, as
@@ -141,7 +141,7 @@ seg_boot_total <- function(spec) {
 #'
 #' @keywords internal
 statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
-                                 res, expected, approx, maxit, tol, vb, nb) {
+                                 res, expected, emethod, maxit, tol, vb, nb) {
   st <- attr(design, "state")
   if (is.null(st)) return(res)
   y0 <- spec@response
@@ -182,7 +182,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
   net_y <- function(r, tm) {
     cfl <- obj_split(best$par)
     ep <- statmod_eta(spec, design, cfl)
-    wk <- coord_working(spec, ep, cfl, design, r$param, TRUE, approx)
+    wk <- coord_working(spec, ep, cfl, design, r$param, TRUE, emethod)
     if (is.null(wk)) stop("there is no working response")
     eta <- rep_len(if (is.null(ep$eta_static)) ep$eta[[r$param]] else
       ep$eta_static[[r$param]], n)
@@ -252,7 +252,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
     }
     ro <- tryCatch(
       statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
-                        start, expected, approx, maxit, tol, vbq,
+                        start, expected, emethod, maxit, tol, vbq,
                         working_budget = 200L),
       error = function(e) NULL)
     if (!is.null(ro) && is.finite(ro$value) &&
@@ -321,7 +321,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #'
 #' @param spec The specification, including the holds.
 #' @param design The design, carrying the terms in its state.
-#' @param blocks,hyper,inner_optimizer,expected,approx,maxit,tol,vb As
+#' @param blocks,hyper,inner_optimizer,expected,emethod,maxit,tol,vb As
 #'   [statmod_alternate()].
 #' @param res The fit to settle, as [statmod_alternate()] returns it.
 #' @param rounds The maximum number of times that the polished positions are
@@ -340,7 +340,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #'
 #' @keywords internal
 statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
-                                       inner_optimizer, res, expected, approx,
+                                       inner_optimizer, res, expected, emethod,
                                        maxit, tol, vb, rounds = 5L) {
   st <- attr(design, "state")
   rf <- attr(design, "refresh")
@@ -377,7 +377,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
   }
   refit <- function(par) {
     tryCatch(statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
-                               par, expected, approx, maxit, tol, vbq),
+                               par, expected, emethod, maxit, tol, vbq),
              error = function(e) NULL)
   }
   ok_fit <- function(r) !is.null(r) && is.finite(r$value)
@@ -414,7 +414,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
       # that equation, with the working weights: for a gaussian mean it is the
       # response itself, and in any other equation it is the quadratic model
       # of the objective a scoring step reads
-      wk <- tryCatch(coord_working(spec, ep, cfl, design, p, TRUE, approx),
+      wk <- tryCatch(coord_working(spec, ep, cfl, design, p, TRUE, emethod),
                      error = function(e) NULL)
       if (is.null(wk)) next
       eta <- rep_len(if (is.null(ep$eta_static)) ep$eta[[p]] else
@@ -467,7 +467,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
       cfl <- obj_split(best$par)
       ep <- tryCatch(statmod_eta(spec, design, cfl), error = function(e) NULL)
       wk <- if (is.null(ep)) NULL else
-        tryCatch(coord_working(spec, ep, cfl, design, r$param, TRUE, approx),
+        tryCatch(coord_working(spec, ep, cfl, design, r$param, TRUE, emethod),
                  error = function(e) NULL)
       if (!is.null(wk)) {
         tmb <- best_terms[[r$param]][[r$term]]
@@ -578,7 +578,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
 #'
 #' @keywords internal
 statmod_settle_seg <- function(spec, design, blocks, hyper, inner_optimizer,
-                               res, expected, approx, maxit, tol, vb,
+                               res, expected, emethod, maxit, tol, vb,
                                rounds = 5L) {
   st <- attr(design, "state")
   rf <- attr(design, "refresh")
@@ -617,7 +617,7 @@ statmod_settle_seg <- function(spec, design, blocks, hyper, inner_optimizer,
   }
   refit <- function(par) {
     tryCatch(statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
-                               par, expected, approx, maxit, tol, vbq),
+                               par, expected, emethod, maxit, tol, vbq),
              error = function(e) NULL)
   }
   better <- function(r1, r0) {
@@ -629,7 +629,7 @@ statmod_settle_seg <- function(spec, design, blocks, hyper, inner_optimizer,
     cfl <- obj_split(par)
     ep <- tryCatch(statmod_eta(spec, design, cfl), error = function(e) NULL)
     if (is.null(ep)) return(NULL)
-    wk <- tryCatch(coord_working(spec, ep, cfl, design, r$param, TRUE, approx),
+    wk <- tryCatch(coord_working(spec, ep, cfl, design, r$param, TRUE, emethod),
                    error = function(e) NULL)
     if (is.null(wk)) return(NULL)
     eta <- rep_len(if (is.null(ep$eta_static)) ep$eta[[r$param]] else

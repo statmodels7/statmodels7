@@ -421,11 +421,20 @@ as_test_statistic <- function(test, arg = "test") {
 #' Write \eqn{H} for the information of the log-likelihood and \eqn{S} for the
 #' second derivative of the penalty, both at the estimates. The argument
 #' `information` of [bayesian_vcov()], [frequentist_vcov()] and
-#' [unconditional_vcov()] selects \eqn{H}: [distributions7::observed_info()]
-#' (the default), the negative Hessian of the log-likelihood at the data, or
-#' [distributions7::expected_info()], the Fisher information, with an `approx`
-#' for a family that has no closed form. [auto_info()] is not accepted, since
-#' the variance is defined on one named matrix. The choice is independent of
+#' [unconditional_vcov()] selects \eqn{H}: `NULL` (the default), which is
+#' resolved for each fit by the family, [distributions7::observed_info()], the
+#' negative Hessian of the log-likelihood at the data, or
+#' [distributions7::expected_info()], the Fisher information, with a `method`
+#' that selects how the expectation is obtained. The default is the observed
+#' information where the log-likelihood is twice differentiable in every
+#' parameter of the family (every [distributions7::params_order()] is at least
+#' 2), and the expected information, for the whole matrix, otherwise: a family
+#' such as the Laplace has a singular observed information in its location, and
+#' the closed form of the expected information gives finite standard errors.
+#' [auto_info()] is not accepted, since the variance is defined on one named
+#' matrix. [summary.StatmodFit()] states the matrix whenever it is not the
+#' observed one, and a printed variance object states the information that it
+#' names. The choice is independent of
 #' the information with which the fit was computed (`inner_information` of
 #' [statmod()]) and of the one of the outer criterion (the `information` of
 #' [reml()]). A model that carries a structural term is inverted on the
@@ -458,8 +467,8 @@ as_test_statistic <- function(test, arg = "test") {
 #' Where the observed information is singular at the estimates, as it is for a
 #' coefficient on which the second derivative of the log-likelihood is zero (the
 #' location of a Laplace response), the rows of the coefficients that it does
-#' not identify are missing, and [distributions7::expected_info()] is the
-#' alternative that reads a finite value.
+#' not identify are missing. The default `NULL` reads the expected information
+#' for such a family, which is finite there.
 #' Where no hyperparameter was estimated by a differentiable criterion the
 #' correction of the unconditional matrix is zero and it equals \eqn{V_b}.
 #' The coefficients that [reml()] and [ml()] estimate on the criterion (the
@@ -521,9 +530,10 @@ vcov_method <- S7::new_class(
 #' carries its `name`. Use the constructors, which set the property.
 #'
 #' @param name A single string, the short name of the convention.
-#' @param information An object that inherits from
+#' @param information `NULL` or an object that inherits from
 #'   [distributions7::Information]: [distributions7::observed_info()] or
-#'   [distributions7::expected_info()].
+#'   [distributions7::expected_info()]. `NULL` is resolved for each fit by the
+#'   family (see [bayesian_vcov()]).
 #'
 #' @return An S7 object inheriting from [vcov_method], with the properties
 #'   `name` and `information`.
@@ -539,17 +549,17 @@ vcov_method <- S7::new_class(
 #' @aliases BayesianVcov FrequentistVcov UnconditionalVcov
 #' @keywords internal
 BayesianVcov <- S7::new_class("BayesianVcov", parent = vcov_method,
-  properties = list(information = distributions7::Information))
+  properties = list(information = S7::new_union(NULL, distributions7::Information)))
 
 #' @rdname BayesianVcov
 #' @keywords internal
 FrequentistVcov <- S7::new_class("FrequentistVcov", parent = vcov_method,
-  properties = list(information = distributions7::Information))
+  properties = list(information = S7::new_union(NULL, distributions7::Information)))
 
 #' @rdname BayesianVcov
 #' @keywords internal
 UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method,
-  properties = list(information = distributions7::Information))
+  properties = list(information = S7::new_union(NULL, distributions7::Information)))
 
 
 #' @title Bayesian Variance of a Fit
@@ -569,17 +579,30 @@ UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method,
 #' [unconditional_vcov()] is the convention. See [vcov_method] for the three side
 #' by side and [vcov.StatmodFit()] for the matrices in full.
 #'
-#' @param information The matrix \eqn{H}, an object that inherits from
-#'   [distributions7::Information]:
-#'   - [distributions7::observed_info()], the default: the negative Hessian of
-#'     the log-likelihood at the data;
-#'   - [distributions7::expected_info()]: the Fisher information, whose `approx`
-#'     is read only for a family that has no closed form for it (see
+#' @param information `NULL` (the default) or the matrix \eqn{H}, an object that
+#'   inherits from [distributions7::Information]:
+#'   - `NULL`: the matrix is chosen for each fit by the family of the fit, as
+#'     [distributions7::observed_info()] where the log-likelihood is twice
+#'     differentiable in every parameter of the family (every
+#'     [distributions7::params_order()] is at least 2), and as
+#'     [distributions7::expected_info()] with `method = NULL`, for the whole
+#'     matrix, otherwise. The families with a kink in a parameter, such as the
+#'     Laplace, have a singular observed information in that parameter and
+#'     take the expected one;
+#'   - [distributions7::observed_info()]: the negative Hessian of the
+#'     log-likelihood at the data;
+#'   - [distributions7::expected_info()]: the Fisher information, whose
+#'     `method` is `NULL` (the closed form of the family where it has one,
+#'     [distributions7::expect_opg()] otherwise) or one of
+#'     [distributions7::expect_opg()], [distributions7::expect_integrate()]
+#'     and [distributions7::expect_mc()] (see
 #'     [distributions7::expected_derivative_methods]).
 #'
 #'   [auto_info()] is not accepted. A model with a structural term is inverted
 #'   on the observed information whatever the object says. The choice does not
 #'   depend on how the fit was computed (`inner_information` of [statmod()]).
+#'   [summary.StatmodFit()] states the matrix when it is not the observed
+#'   one, and a printed variance object states the information that it names.
 #'   [information_objects] compares the objects.
 #'
 #' @return A `BayesianVcov` object, inheriting from [vcov_method], with the
@@ -603,9 +626,9 @@ UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method,
 #' vcov(fit, vcov_type = bayesian_vcov(
 #'   information = distributions7::expected_info()))
 #' @export
-bayesian_vcov <- function(information = distributions7::observed_info()) {
+bayesian_vcov <- function(information = NULL) {
   check_information(information, arg = "information", fn = "bayesian_vcov",
-                    auto = FALSE)
+                    auto = FALSE, null = TRUE)
   BayesianVcov(name = "bayesian", information = information)
 }
 
@@ -644,9 +667,9 @@ bayesian_vcov <- function(information = distributions7::observed_info()) {
 #' summary(fit, vcov_type = frequentist_vcov())
 #' frequentist_vcov(information = distributions7::expected_info())
 #' @export
-frequentist_vcov <- function(information = distributions7::observed_info()) {
+frequentist_vcov <- function(information = NULL) {
   check_information(information, arg = "information", fn = "frequentist_vcov",
-                    auto = FALSE)
+                    auto = FALSE, null = TRUE)
   FrequentistVcov(name = "frequentist", information = information)
 }
 
@@ -693,9 +716,9 @@ frequentist_vcov <- function(information = distributions7::observed_info()) {
 #' sqrt(diag(vcov(fs, vcov_type = unconditional_vcov())))[["mu:s(x).z2"]]
 #' unconditional_vcov(information = distributions7::expected_info())
 #' @export
-unconditional_vcov <- function(information = distributions7::observed_info()) {
+unconditional_vcov <- function(information = NULL) {
   check_information(information, arg = "information",
-                    fn = "unconditional_vcov", auto = FALSE)
+                    fn = "unconditional_vcov", auto = FALSE, null = TRUE)
   UnconditionalVcov(name = "unconditional", information = information)
 }
 
@@ -714,7 +737,7 @@ unconditional_vcov <- function(information = distributions7::observed_info()) {
 #' @keywords internal
 S7::method(print, vcov_method) <- function(x, ...) {
   cat("<vcov> ", x@name, sep = "")
-  if (S7::prop_exists(x, "information")) {
+  if (S7::prop_exists(x, "information") && !is.null(x@information)) {
     cat(" (", tolower(substr(info_title(x@information), 1L, 1L)),
         substring(info_title(x@information), 2L), ")", sep = "")
   }
@@ -743,22 +766,71 @@ as_vcov_method <- function(x, arg = "vcov_type") {
 }
 
 
-#' The Information of a Variance Convention
+#' The Information of a Variance Convention for a Family
 #'
 #' @description
-#' Returns the `information` property of a [vcov_method] object that has one,
-#' and [distributions7::observed_info()] for a convention that does not.
+#' Returns the `information` property of a [vcov_method] object that has one
+#' and that is not `NULL`, and [default_vcov_information()] of `distrib`
+#' otherwise (a `NULL` property, or a convention that has no property).
 #'
 #' @param x A [vcov_method] object.
+#' @param distrib The [distributions7::distrib] of the fit.
 #'
 #' @return An object that inherits from [distributions7::Information].
 #'
-#' @seealso [vcov_method]
+#' @seealso [vcov_method], [default_vcov_information()]
 #'
 #' @keywords internal
-vcov_information <- function(x) {
-  if (S7::prop_exists(x, "information")) x@information
-  else distributions7::observed_info()
+vcov_information <- function(x, distrib) {
+  info <- if (S7::prop_exists(x, "information")) x@information else NULL
+  if (is.null(info)) default_vcov_information(distrib) else info
+}
+
+
+#' The Default Information of the Variance Objects
+#'
+#' @description
+#' Returns [distributions7::observed_info()] when every parameter of the family
+#' has [distributions7::params_order()] of at least 2, and
+#' [distributions7::expected_info()] with `method = NULL` otherwise. A
+#' parameter whose order is not established (`NA`) does not satisfy the
+#' condition. It is the rule of the same name in \pkg{distributions7}, which
+#' the `information` of [distributions7::vcov.distrib_fit()] follows.
+#'
+#' @param distrib An object inheriting from [distributions7::distrib].
+#'
+#' @return An [distributions7::Information] object.
+#'
+#' @seealso [information_objects], [vcov_information()]
+#'
+#' @keywords internal
+default_vcov_information <- function(distrib) {
+  ord <- distributions7::params_order(distrib)
+  if (isTRUE(all(ord >= 2))) distributions7::observed_info()
+  else distributions7::expected_info()
+}
+
+
+#' The Method of an Information Object in Words
+#'
+#' @description
+#' Returns the text that follows "Expected information" in a header: the
+#' empty string for the closed form of the family (`method = NULL`), and the
+#' method in parentheses otherwise.
+#'
+#' @param x An [distributions7::expected_info()] object.
+#'
+#' @return A single string.
+#'
+#' @seealso [info_title()]
+#'
+#' @keywords internal
+info_method_note <- function(x) {
+  m <- info_emethod(x)
+  if (is.null(m)) return("")
+  paste0(" (", sub("^Expectation by ", "expectation by ",
+                   paste(utils::capture.output(print(m)), collapse = " ")),
+         ")")
 }
 
 

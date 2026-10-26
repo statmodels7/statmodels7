@@ -199,29 +199,38 @@ aliased_labels <- function(spec, design, idx) {
 #' the penalized block of the other two.
 #'
 #' The `information` of `vcov_type` selects the matrix used as \eqn{H}. Its
-#' default is [distributions7::observed_info()], the curvature of the
-#' likelihood at the data in hand, for every fit: the choice does not depend on
-#' the information with which the fit was computed (`inner_information` of
-#' [statmod()]). [distributions7::expected_info()] selects the Fisher
-#' information, the information averaged over the model. The two agree
-#' asymptotically and not in a sample. A model that carries a structural term
-#' is always inverted on the observed information, because a filter and a
-#' mixture over states do not have an expected information.
+#' default is `NULL`, which is resolved for each fit by the family of the fit
+#' with the rule of [distributions7::vcov.distrib_fit()]: the matrix is
+#' [distributions7::observed_info()], the curvature of the likelihood at the
+#' data in hand, when the log-likelihood is twice differentiable in every
+#' parameter of the family (every [distributions7::params_order()] is at least
+#' 2), and [distributions7::expected_info()] with `method = NULL`, for the
+#' whole matrix, otherwise. The choice does not depend on the information with
+#' which the fit was computed (`inner_information` of [statmod()]). An object
+#' in `information` overrides the rule. [distributions7::expected_info()]
+#' selects the Fisher information, the information averaged over the model. The
+#' two agree asymptotically and not in a sample. A model that carries a
+#' structural term is always inverted on the observed information, because a
+#' filter and a mixture over states do not have an expected information.
+#' [summary.StatmodFit()] states the matrix when it is not the observed one.
 #'
 #' The observed information is singular where the second derivative of the
 #' log-likelihood in a coefficient is zero at the estimates, as for the
-#' location of a Laplace response. The rows and columns of the coordinates that
-#' it does not identify are then missing, as described above for a flat
-#' direction, and [distributions7::expected_info()] reads a finite value.
+#' location of a Laplace response. The family has a kink in that parameter, so
+#' the default `NULL` reads the expected information, which is finite there,
+#' and the variance is available. With `information = observed_info()` the rows
+#' and columns of the coordinates that it does not identify are missing, as
+#' described above for a flat direction.
 #'
-#' Where the family has no closed form for the expected information, the
-#' `approx` of [distributions7::expected_info()] selects the approximation.
-#' [distributions7::expect_opg()], the default, is the outer product of the
-#' observed scores and costs one gradient; [distributions7::expect_bartlett()]
-#' evaluates the expectation itself, a sum over the support for a discrete
-#' family and a quadrature for a continuous one, and is orders of magnitude
-#' more expensive. [distributions7::expected_derivative_methods] compares the
-#' four approximations.
+#' The `method` of [distributions7::expected_info()] selects how the expected
+#' information is obtained. With `method = NULL` the closed form of the family
+#' is used where the family has one, and [distributions7::expect_opg()], the
+#' outer product of the observed scores, which costs one gradient, otherwise.
+#' [distributions7::expect_integrate()] evaluates the expectation itself, a sum
+#' over the support for a discrete family and a quadrature for a continuous
+#' one, and is orders of magnitude more expensive;
+#' [distributions7::expect_mc()] simulates it.
+#' [distributions7::expected_derivative_methods] compares the three methods.
 #'
 #' @param object A [StatmodFit()].
 #' @param vcov_type A [vcov_method] object, which selects the convention of the
@@ -231,8 +240,9 @@ aliased_labels <- function(spec, design, idx) {
 #'   sandwich \eqn{V_f = (H+S)^{-1}H(H+S)^{-1}}, conditional on the
 #'   hyperparameters as well. [unconditional_vcov()] returns
 #'   \eqn{V' = V_b + J V_\theta J'}, which adds the uncertainty of the
-#'   hyperparameters. Each takes `information`, which is
-#'   [distributions7::observed_info()] by default and may be
+#'   hyperparameters. Each takes `information`, which is `NULL` by default (the
+#'   observed information, or the expected information for a family with a kink
+#'   in a parameter, resolved for each fit) and may be [distributions7::observed_info()] or
 #'   [distributions7::expected_info()]. The conventions are compared at
 #'   [vcov_method].
 #' @param readable Whether the matrix is over the quantities that the model
@@ -282,9 +292,9 @@ vcov.StatmodFit <- function(object,
   check_dots("vcov", ...)
   vcov_type <- as_vcov_method(vcov_type)
   convention <- vcov_type@name
-  info <- vcov_information(vcov_type)
+  info <- vcov_information(vcov_type, object@spec@distrib)
   expected <- info_expected(info)
-  approx <- info_approx(info)
+  emethod <- info_emethod(info)
   spec <- object@spec
   design <- statmod_design(spec)
   coef <- object@coefficients
@@ -300,7 +310,7 @@ vcov.StatmodFit <- function(object,
   # filter nor a mixture over states has an expected information to offer.
   fil <- length(attr(design, "structural")) > 0L
   H <- if (fil) statmod_full_information(spec, coef, design) else
-    statmod_information_at(spec, coef, design, expected, approx)
+    statmod_information_at(spec, coef, design, expected, emethod)
   S <- statmod_penalty_at(spec, coef, object@hyper, design, "hessian")
   nz <- nrow(H) - total
   if (nz > 0L) {
@@ -2225,7 +2235,11 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     # the reading of statmod_certificate(), or NULL where it could not be
     # taken. A list rather than columns: its four readings are of different
     # kinds and one of them is a set of names.
-    certificate = S7::new_property(S7::class_any, default = NULL)
+    certificate = S7::new_property(S7::class_any, default = NULL),
+    # the information object that the standard errors invert, after the
+    # variance object's NULL has been resolved against the family; print()
+    # names it when it is not the observed one
+    information = S7::new_property(S7::class_any, default = NULL)
   )
 )
 
@@ -2615,15 +2629,19 @@ summary.StatmodFit <- function(object, level = 0.95,
   # and they were estimated from the same data. Adding what that costs is
   # off by default because it changes a number a reader may be comparing
   # with an earlier fit.
+  # the matrix the standard errors invert: the one that the variance object
+  # names, or the family's default where it names none, and the observed one
+  # where a structural term has no expected information
+  info_used <- if (length(attr(design, "structural"))) {
+    distributions7::observed_info()
+  } else vcov_information(vcov_type, spec@distrib)
   corr <- 0
   if (isTRUE(correct)) {
     cc <- tryCatch(statmod_edf_correction(spec, object@coefficients,
                                           object@hyper, design,
                                           object@methods$outer,
-                                          expected = info_expected(
-                                            vcov_information(vcov_type)),
-                                          approx = info_approx(
-                                            vcov_information(vcov_type)),
+                                          expected = info_expected(info_used),
+                                          emethod = info_emethod(info_used),
                                           pinned = object@methods$pinned),
                    error = function(e)
                      list(total = 0, per = numeric(0), n_hyper = NA_integer_))
@@ -2828,7 +2846,7 @@ summary.StatmodFit <- function(object, level = 0.95,
     bic = -2 * object@loglik + log(weight_total(spec)) * df,
     converged = object@converged, elapsed = object@elapsed,
     level = level, vcov_type = vcov_type, test = test, max_coef = max_coef,
-    notes = notes, certificate = cert)
+    notes = notes, certificate = cert, information = info_used)
 }
 S7::method(summary, StatmodFit) <- summary.StatmodFit
 
@@ -4195,7 +4213,7 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL,
       js <- joint_smoother_diag(spec, coef, design, hyper)
       if (!is.null(js) && !isTRUE(js$failed)) c(js$beta, js$zeta) else {
         H <- statmod_information_at(spec, coef, design, TRUE,
-                                  distributions7::expect_opg())
+                                  NULL)
         S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design,
                                               "hessian"))
         diag(solve_pd(as_dense(H + S), "the penalized information") %*%
@@ -4464,7 +4482,12 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
     for (b in blocks) print_block(b, digits, max_coef, stat)
   }
 
-  cat(sprintf("\n%.0f%% intervals, %s variance%s\n", 100 * x@level, x@vcov_type@name,
+  cat(sprintf("\n%.0f%% intervals, %s variance%s%s\n", 100 * x@level,
+              x@vcov_type@name,
+              if (is.null(x@information) ||
+                  !info_expected(x@information)) "" else
+                paste0(" on the ", tolower(info_title(x@information)),
+                       info_method_note(x@information)),
               if (identical(tst, "wald")) "" else
                 sprintf(";  %s test, signed root", tst)))
   # WHICH log-likelihood and WHICH degrees of freedom, because the pairing
@@ -5231,7 +5254,7 @@ certificate_core <- function(fit, tol, flat, edge) {
   }
   if (length(fit@methods$pinned)) attr(design, "pinned") <- fit@methods$pinned
   ctx <- tryCatch(outer_context(spec, design, cf, hy,
-                       distributions7::expect_bartlett()),
+                       NULL),
                   error = function(e) NULL)
 
   # HOW FAR ABOVE THE MODE, in log-likelihood units: the decrease the mode's
@@ -5241,7 +5264,7 @@ certificate_core <- function(fit, tol, flat, edge) {
                     error = function(e) NULL)
     if (!is.null(pen)) {
       obj <- tryCatch(statmod_objective(spec, hy, design, FALSE,
-                                          distributions7::expect_bartlett()),
+                                          NULL),
                       error = function(e) NULL)
       sc <- if (is.null(obj)) NULL else
         tryCatch(obj$gr(obj$stack(cf)), error = function(e) NULL)
@@ -5509,7 +5532,7 @@ certificate_core <- function(fit, tol, flat, edge) {
     # claim more than has been checked. What it can honestly do is name the
     # coordinate, so the reader is not left with "not finite".
     H0 <- tryCatch(ctx_information(ctx, spec, design, cf, hy, FALSE,
-                                   distributions7::expect_bartlett()),
+                                   NULL),
                    error = function(e) NULL)
     frozen <- if (is.null(H0)) integer(0) else boundary_coords(H0)
     if (length(frozen)) {
@@ -5799,8 +5822,8 @@ criterion_differenced <- function(fit, spec, design, blocks, method, idx, cf,
   io <- fit@methods$smooth
   budget <- method_budget(io)
   cfg <- inner_settings(io)
-  approx <- cfg$approx
-  obj <- statmod_objective(spec, hy, design, cfg$expected, approx)
+  emethod <- cfg$emethod
+  obj <- statmod_objective(spec, hy, design, cfg$expected, emethod)
   warm <- obj$stack(cf)
   basis <- integrated_basis(spec, design, method@kind)
   eta0 <- hyper_to_eta(hy, idx)
@@ -5808,11 +5831,11 @@ criterion_differenced <- function(fit, spec, design, blocks, method, idx, cf,
   at <- function(d) {
     hy2 <- eta_to_hyper(eta0 + d, idx, hy)
     res <- statmod_alternate(spec, design, blocks, hy2, io, warm, cfg$expected,
-                             approx, budget$maxit, budget$tol, verbosity(0),
+                             emethod, budget$maxit, budget$tol, verbosity(0),
                              hold_refresh = TRUE)
     cf2 <- res$obj$split(res$par)
-    ctx2 <- outer_context(spec, design, cf2, hy2, approx)
-    m <- statmod_marginal(spec, design, cf2, hy2, method, approx, basis, ctx2)
+    ctx2 <- outer_context(spec, design, cf2, hy2, emethod)
+    m <- statmod_marginal(spec, design, cf2, hy2, method, emethod, basis, ctx2)
     if (is.null(m) || !is.finite(m$value)) stop("no criterion")
     m$value
   }

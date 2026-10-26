@@ -52,8 +52,11 @@ optimizer and an \pkg{optimizers7} optimizer is used as given.}
 \item{inner_information}{The matrix of second derivatives that the inner fit
 uses, an object that inherits from \link[distributions7:Information]{distributions7::Information}:
 \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the observed Hessian),
-\code{\link[distributions7:expected_info]{distributions7::expected_info()}} (the Fisher information, with an
-\code{approx} for a family that has no closed form) or \code{\link[=auto_info]{auto_info()}} (the
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} (the Fisher information, whose \code{method}
+is \code{NULL} for the closed form of the family or \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}},
+or one of \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}
+and \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}}; see
+\link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}) or \code{\link[=auto_info]{auto_info()}} (the
 default), which is settled against the family. With \code{\link[=iwls]{iwls()}} the matrix
 is inverted at each step (Newton for the observed information, Fisher
 scoring for the expected one); with an \pkg{optimizers7} optimizer it is

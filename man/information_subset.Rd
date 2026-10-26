@@ -4,7 +4,7 @@
 \alias{information_subset}
 \title{The Information Over Some of the Coefficients}
 \usage{
-information_subset(spec, design, ev, expected, approx, H, index)
+information_subset(spec, design, ev, expected, emethod, H, index)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -13,7 +13,7 @@ information_subset(spec, design, ev, expected, approx, H, index)
 
 \item{ev}{What \code{\link[=statmod_eta]{statmod_eta()}} returns at the coefficients.}
 
-\item{expected, approx}{As in \code{\link[=statmod_information_at]{statmod_information_at()}}.}
+\item{expected, emethod}{As in \code{\link[=statmod_information_at]{statmod_information_at()}}.}
 
 \item{H}{The second-derivative components, or \code{NULL} to compute them here.}
 

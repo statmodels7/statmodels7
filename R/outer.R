@@ -265,28 +265,44 @@ outer_path_defaults <- function() {
 #' is rejected by name, and the criterion does not assume a subspace for it.
 #'
 #' @param information The information that enters the determinant, an object
-#'   that inherits from [Information]. [observed_info()] (the default) is the
-#'   curvature of the log-likelihood at the data, which makes the criterion the
-#'   Laplace approximation. [expected_info()] is the Fisher information, a
-#'   function of the parameters alone, and carries an `approx` for a family
-#'   that does not write it out. [auto_info()] is settled against the family by
-#'   [statmod()] through [outer_resolve()]: the expected information for a
-#'   Student t, a skew t or a Cauchy response, whose observed information is
-#'   not positive definite at an outlier, and the observed information
-#'   otherwise. The expected information is used where the caller names it, as
-#'   for a Student t whose degrees of freedom are modeled. The fitted model
-#'   records the information used. On the expected route the outer gradient is
-#'   exact wherever the family writes its expected information out, as every
-#'   shipped family does, and the outer Hessian is exact wherever the family
-#'   also supplies the derivative of that information that the Hessian reads
-#'   (every shipped family except [distributions7::enet_distrib()]). A family
-#'   that does not write its expected information out reads the outer product
-#'   of its scores at the data under the default
-#'   [distributions7::expect_opg()], which is not an expectation, and
-#'   [statmod()] rejects `expected_info()` there unless its `approx` takes an
-#'   expectation, as [distributions7::expect_bartlett()] does: see
-#'   [assert_criterion_information()]. [information_objects] compares the three
-#'   objects. A character string signals an error.
+#'   that inherits from [Information]:
+#'   - [observed_info()] (the default): the curvature of the log-likelihood at
+#'     the data, which makes the criterion the Laplace approximation;
+#'   - [expected_info()]: the Fisher information, a function of the parameters
+#'     alone. Its `method` selects how the expectation is obtained: `NULL`
+#'     (the closed form of the family where it has one, and
+#'     [distributions7::expect_opg()] otherwise), [distributions7::expect_opg()],
+#'     [distributions7::expect_integrate()] or [distributions7::expect_mc()]
+#'     (see [distributions7::expected_derivative_methods]);
+#'   - [auto_info()]: settled against the family by [statmod()] through
+#'     [outer_resolve()], as the expected information for a Student t, a skew t
+#'     or a Cauchy response, whose observed information is not positive
+#'     definite at an outlier, and as the observed information otherwise.
+#'
+#'   The expected information is used where the caller names it, as for a
+#'   Student t whose degrees of freedom are modeled. The fitted model records
+#'   the information used.
+#'
+#'   On the expected information, the `method` object defines the matrix and
+#'   every derivative of it that the exact outer gradient and Hessian read, so
+#'   that the derivatives are those of the criterion that is evaluated. With the
+#'   closed form of the family, the derivative is the closed form of the
+#'   derivative (every shipped family; the Hessian also needs the second
+#'   derivative of the information, which every shipped family supplies except
+#'   [distributions7::enet_distrib()]). With [distributions7::expect_integrate()]
+#'   or [distributions7::expect_mc()], it is the derivative of the expectation,
+#'   which moves the density as well as the integrand. With
+#'   [distributions7::expect_opg()], the matrix is the outer product of the
+#'   scores at the data and the derivative is its exact derivative at fixed
+#'   data. A family without a closed form reads [distributions7::expect_opg()]
+#'   for the matrix and for the derivatives when `method` is `NULL`. The outer
+#'   product depends on the response, so the criterion built on it has exact
+#'   derivatives and is not the Laplace approximation of an expectation.
+#'   [distributions7::expect_mc()] draws a new sample at each call of the
+#'   matrix and of each derivative, so that its derivative is that of the
+#'   expectation and not of the sampled matrix, and the outer search is noisy at
+#'   the level of the Monte Carlo error. [information_objects] compares the three
+#'   objects.
 #'
 #' @param marginal Which distribution parameters have their unpenalized
 #'   coefficients estimated by maximizing this criterion, instead of being
@@ -388,7 +404,7 @@ ml <- function(information = observed_info(), marginal = NULL) {
 outer_resolve <- function(method, distrib) {
   if (!info_auto(method@hessian)) return(method)
   method@hessian <- if (observed_indefinite(distrib))
-    expected_info(approx = info_approx(method@hessian)) else observed_info()
+    expected_info(method = info_emethod(method@hessian)) else observed_info()
   method
 }
 
@@ -1098,7 +1114,11 @@ structural_range_cols <- function(spec, design, key, free) {
 #' @param coef The coefficients, at the penalized mode.
 #' @param hyper The hyperparameters.
 #' @param method An [OuterMethod()].
-#' @param approx The approximation for the expected information.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param basis The integrated subspace, from [integrated_basis()].
 #' @param ctx An evaluation context from [outer_context()] built at the same
 #'   coefficients and hyperparameters, or `NULL` to assemble the information
@@ -1111,7 +1131,7 @@ structural_range_cols <- function(spec, design, key, free) {
 #'
 #' @keywords internal
 statmod_marginal <- function(spec, design, coef, hyper, method,
-                             approx = distributions7::expect_opg(), basis = NULL, ctx = NULL) {
+                             emethod = NULL, basis = NULL, ctx = NULL) {
   expected <- info_expected(method@hessian)
   ll <- statmod_loglik_at(spec, coef, design)
   rho <- statmod_penalty_at(spec, coef, hyper, design, "value")
@@ -1129,7 +1149,7 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
     # gradient never reaches (every trial point of a line search) and there
     # is nothing to share at those. The cheap route below is sparse where the
     # matrix is, which serves the criterion-only points as well.
-    H <- ctx_information(ctx, spec, design, coef, hyper, expected, approx)
+    H <- ctx_information(ctx, spec, design, coef, hyper, expected, emethod)
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     M <- H + S
     if (!is.null(basis)) M <- crossprod(basis, M %*% basis)
@@ -1203,7 +1223,11 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 #'   supplies. With `NULL`, the stopping rule and the line search are also set
 #'   by the function.
 #' @param beta The starting coefficients, stacked.
-#' @param approx The approximation for the expected information.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #' @param maxit,tol The alternation's budget and tolerance.
 #' @param vb The resolved verbosity.
 #' @param hold_hyper `TRUE` to hold the hyperparameters at `hyper` and
@@ -1219,7 +1243,7 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 #'
 #' @keywords internal
 outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
-                      optimizer, beta, approx, maxit, tol, vb,
+                      optimizer, beta, emethod, maxit, tol, vb,
                       hold_hyper = FALSE) {
   # with the hyperparameters held the search runs over the criterion's own
   # coefficients alone, which is what a bootstrap replica refitted at the
@@ -1323,10 +1347,10 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   criterion_at <- function(cf, hy, par, ctx = NULL, sp = state$sp) {
     if (is.null(sp)) sp <- spec
     if (pe) {
-      statmod_pe(sp, design, cf, hy, method, approx,
+      statmod_pe(sp, design, cf, hy, method, emethod,
                  statmod_active(sp, blocks, par, hy))
     } else {
-      statmod_marginal(sp, design, cf, hy, method, approx, basis, ctx)
+      statmod_marginal(sp, design, cf, hy, method, emethod, basis, ctx)
     }
   }
 
@@ -1387,7 +1411,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     if (ng) warm[gam$where] <- v[nh + seq_len(ng)]
     body <- function() {
       res <<- statmod_alternate(sp, design, blocks, hy, inner_optimizer,
-                                warm, expected, approx, maxit, tol,
+                                warm, expected, emethod, maxit, tol,
                                 vb_inner(vb), hold_refresh = TRUE)
       cf <<- res$obj$split(res$par)
       # Both criteria are read AT THE MODE -- a Laplace approximation there,
@@ -1403,7 +1427,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # read the same information, the same penalty and the same factorization
       # instead of each assembling its own. It is built BEFORE the point is
       # judged, because what judges it reads that same factorization.
-      ctx <<- outer_context(sp, design, cf, hy, approx)
+      ctx <<- outer_context(sp, design, cf, hy, emethod)
       # ⚠️ AND THE FLAG IS NOT WHAT DECIDES, because it answers another
       # question. The flag says whether the inner stopping rule fired;
       # availability asks whether the criterion, a Laplace expansion AT THE
@@ -1458,7 +1482,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # criterion does not change dimension from one point to the next.
       if (is.null(m) && ng && !is.null(res)) {
         Kf <- tryCatch(statmod_penalized_at(sp, cf, design, hy, expected,
-                                            approx),
+                                            emethod),
                        error = function(e) NULL)
         fl <- if (is.null(Kf)) integer(0) else
           sort(unique(c(deficient_coords(Kf),
@@ -1633,7 +1657,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # Hessian, so both are kept rather than the second order being asked for
       # twice
       d <- statmod_pe_derivs(spec, design, st$cf, st$hy, method, idx, order,
-                             approx)
+                             emethod)
       if (is.null(st$grad)) {
         st$grad <- if (is.null(d$grad)) fallback(1L) else d$grad
       }
@@ -2145,14 +2169,14 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   }
   if (ng) warm[gam$where] <- res@par[nh + seq_len(ng)]
   inner <- statmod_alternate(sp, design, blocks, hy, inner_optimizer,
-                             warm, expected, approx, maxit, tol, vb,
+                             warm, expected, emethod, maxit, tol, vb,
                              hold_refresh = TRUE)
   cff <- inner$obj$split(inner$par)
   # a scaled SCAD or MCP is read at the curvature the refit settled at
   if (!is.null(inner$spec)) sp <- inner$spec
-  m <- if (pe) statmod_pe(sp, design, cff, hy, method, approx,
+  m <- if (pe) statmod_pe(sp, design, cff, hy, method, emethod,
                           statmod_active(sp, blocks, inner$par, hy)) else
-    statmod_marginal(sp, design, cff, hy, method, approx, basis)
+    statmod_marginal(sp, design, cff, hy, method, emethod, basis)
   list(par = inner$par, hyper = hy, value = inner$value,
        criterion = if (is.null(m)) NA_real_ else m$value,
        converged = res@converged && inner$converged,

@@ -4,7 +4,7 @@
 \alias{info_expected}
 \alias{info_auto}
 \alias{info_label}
-\alias{info_approx}
+\alias{info_emethod}
 \title{Predicates on an Information Object}
 \usage{
 info_expected(x)
@@ -13,21 +13,22 @@ info_auto(x)
 
 info_label(x)
 
-info_approx(x)
+info_emethod(x)
 }
 \arguments{
 \item{x}{An object inheriting from \link[distributions7:Information]{distributions7::Information}.}
 }
 \value{
-A logical, a string or an object inheriting from
-\link[distributions7:ExpectApprox]{distributions7::ExpectApprox}.
+A logical, a string, \code{NULL} or an object inheriting from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}.
 }
 \description{
 \code{info_expected()} returns \code{TRUE} for an \code{\link[distributions7:expected_info]{distributions7::expected_info()}}
 object and \code{info_auto()} for an \code{\link[=auto_info]{auto_info()}} object. \code{info_label()}
 returns the word that names the matrix (\code{"observed"}, \code{"expected"} or
-\code{"auto"}). \code{info_approx()} returns the approximation that the object
-carries, and \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} for an
+\code{"auto"}). \code{info_emethod()} returns the method of the expected information
+that the object carries, \code{NULL} for the closed form of the family or the
+outer product of the scores, and \code{NULL} also for an
 \code{\link[distributions7:observed_info]{distributions7::observed_info()}} object.
 }
 \seealso{

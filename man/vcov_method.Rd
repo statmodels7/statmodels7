@@ -38,11 +38,20 @@ resampled fits, does not carry it.
 Write \eqn{H} for the information of the log-likelihood and \eqn{S} for the
 second derivative of the penalty, both at the estimates. The argument
 \code{information} of \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=frequentist_vcov]{frequentist_vcov()}} and
-\code{\link[=unconditional_vcov]{unconditional_vcov()}} selects \eqn{H}: \code{\link[distributions7:observed_info]{distributions7::observed_info()}}
-(the default), the negative Hessian of the log-likelihood at the data, or
-\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, the Fisher information, with an \code{approx}
-for a family that has no closed form. \code{\link[=auto_info]{auto_info()}} is not accepted, since
-the variance is defined on one named matrix. The choice is independent of
+\code{\link[=unconditional_vcov]{unconditional_vcov()}} selects \eqn{H}: \code{NULL} (the default), which is
+resolved for each fit by the family, \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the
+negative Hessian of the log-likelihood at the data, or
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, the Fisher information, with a \code{method}
+that selects how the expectation is obtained. The default is the observed
+information where the log-likelihood is twice differentiable in every
+parameter of the family (every \code{\link[distributions7:params_order]{distributions7::params_order()}} is at least
+2), and the expected information, for the whole matrix, otherwise: a family
+such as the Laplace has a singular observed information in its location, and
+the closed form of the expected information gives finite standard errors.
+\code{\link[=auto_info]{auto_info()}} is not accepted, since the variance is defined on one named
+matrix. \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix whenever it is not the
+observed one, and a printed variance object states the information that it
+names. The choice is independent of
 the information with which the fit was computed (\code{inner_information} of
 \code{\link[=statmod]{statmod()}}) and of the one of the outer criterion (the \code{information} of
 \code{\link[=reml]{reml()}}). A model that carries a structural term is inverted on the
@@ -76,8 +85,8 @@ With no penalty \eqn{S = 0} and \eqn{V_b} and \eqn{V_f} are both
 Where the observed information is singular at the estimates, as it is for a
 coefficient on which the second derivative of the log-likelihood is zero (the
 location of a Laplace response), the rows of the coefficients that it does
-not identify are missing, and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} is the
-alternative that reads a finite value.
+not identify are missing. The default \code{NULL} reads the expected information
+for such a family, which is finite there.
 Where no hyperparameter was estimated by a differentiable criterion the
 correction of the unconditional matrix is zero and it equals \eqn{V_b}.
 The coefficients that \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} estimate on the criterion (the

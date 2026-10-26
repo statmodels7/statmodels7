@@ -13,21 +13,23 @@ NULL
 #' that `S7::S7_inherits()` can test an object. [information_objects] compares
 #' the three objects.
 #'
-#' @param approx An object that inherits from [distributions7::ExpectApprox],
-#'   the approximation of the expected information for a family that has no
-#'   closed form for it.
+#' @param method `NULL` or an object that inherits from
+#'   [distributions7::ExpectMethod], the method that obtains the expected
+#'   information wherever the settled choice or the fallback uses it. `NULL`
+#'   selects the closed form of the family where it has one and
+#'   [distributions7::expect_opg()] otherwise.
 #' @param repair_floor A single positive number, the relative floor of the
 #'   repair of an indefinite observed information.
 #'
 #' @return An S7 object of class `AutoInfo`, which inherits from
-#'   [distributions7::Information], with the properties `approx` and
+#'   [distributions7::Information], with the properties `method` and
 #'   `repair_floor`.
 #'
 #' @examples
-#' a <- auto_info(approx = distributions7::expect_mc(nsim = 500))
+#' a <- auto_info(method = distributions7::expect_mc(nsim = 500))
 #' S7::S7_inherits(a, distributions7::Information)
 #' S7::S7_inherits(a, AutoInfo)
-#' a@approx
+#' a@method
 #'
 #' @seealso [auto_info()] for the constructor and [information_objects] for the
 #'   comparison with [distributions7::observed_info()] and
@@ -35,7 +37,7 @@ NULL
 #' @export
 AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
   properties = list(
-    approx = distributions7::ExpectApprox,
+    method = S7::new_union(NULL, distributions7::ExpectMethod),
     repair_floor = S7::class_numeric
   )
 )
@@ -50,8 +52,7 @@ AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
 #' Three objects are available: [distributions7::observed_info()] and
 #' [distributions7::expected_info()], which \pkg{distributions7} defines and
 #' documents, and [auto_info()], which \pkg{statmodels7} defines. All three
-#' inherit from [distributions7::Information]. A character string is not
-#' accepted.
+#' inherit from [distributions7::Information].
 #'
 #' Three arguments take them, and each one selects the matrix for its own
 #' computation, so that the choices are independent:
@@ -69,7 +70,11 @@ AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
 #'     [distributions7::observed_info()].}
 #'   \item{`information` of [bayesian_vcov()], [frequentist_vcov()] and
 #'     [unconditional_vcov()]}{The matrix inverted for the standard errors.
-#'     The default is [distributions7::observed_info()].}
+#'     The default is `NULL`, which selects the matrix by the family of the
+#'     fit: the observed information where the log-likelihood is twice
+#'     differentiable in every parameter of the family, and
+#'     [distributions7::expected_info()] otherwise (see "The default of the
+#'     variance objects" below).}
 #' }
 #'
 #' @details
@@ -90,10 +95,9 @@ AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
 #'     inverts it is not available there.}
 #'   \item{[distributions7::expected_info()]}{The Fisher information,
 #'     \eqn{\mathbb{E}[-\partial^2 \ell / \partial\beta\,\partial\beta^\top]},
-#'     a function of the parameters alone. Where the family writes the
-#'     expectation out, the closed form is used. Where it does not, the
-#'     expectation is approximated by the `approx` of the object (see
-#'     [distributions7::expected_derivative_methods]).}
+#'     a function of the parameters alone. Its `method` selects how the
+#'     expectation is obtained (see "The method of the expected information"
+#'     below).}
 #'   \item{[auto_info()]}{A choice that is settled once the family is known.
 #'     The rule depends on where the object is passed and is given below.
 #'     The fitted model records the settled choice.}
@@ -101,17 +105,60 @@ AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
 #'
 #' # Which function accepts which object
 #'
-#' \tabular{lccc}{
-#'   Argument \tab observed \tab expected \tab auto \cr
-#'   `inner_information` of [statmod()] \tab yes \tab yes \tab yes (default) \cr
-#'   `information` of [reml()] and [ml()] \tab yes (default) \tab yes \tab yes \cr
-#'   `information` of [aic()] and [bic()] \tab yes (default) \tab yes \tab no \cr
-#'   `information` of the three variance objects \tab yes (default) \tab yes
+#' \tabular{lcccc}{
+#'   Argument \tab observed \tab expected \tab auto \tab `NULL` \cr
+#'   `inner_information` of [statmod()] \tab yes \tab yes \tab yes (default)
 #'     \tab no \cr
+#'   `information` of [reml()] and [ml()] \tab yes (default) \tab yes \tab yes
+#'     \tab no \cr
+#'   `information` of [aic()] and [bic()] \tab yes (default) \tab yes \tab no
+#'     \tab no \cr
+#'   `information` of the three variance objects \tab yes \tab yes \tab no
+#'     \tab yes (default) \cr
 #' }
 #'
 #' [aic()], [bic()] and the variance objects reject [auto_info()] because the
 #' quantity that they compute is defined on one named matrix.
+#'
+#' # The method of the expected information
+#'
+#' The `method` of [distributions7::expected_info()] and of [auto_info()]
+#' selects how the expected information, and the derivatives of it that an
+#' exact outer gradient reads, are obtained. It is `NULL` or one of
+#' [distributions7::expect_opg()], [distributions7::expect_integrate()] and
+#' [distributions7::expect_mc()]; the three are compared in
+#' [distributions7::expected_derivative_methods].
+#'
+#' - With `method = NULL`, the default, the closed form of the family is used
+#'   where the family writes the expected information out (see
+#'   [distributions7::expected_hessian_exact()]), and
+#'   [distributions7::expect_opg()] otherwise. The values are those of the
+#'   closed form for every shipped family, and the outer criterion under the
+#'   default is the same criterion as before the argument existed.
+#' - An object is always used, also for a family that has the closed form.
+#' - The three arguments above are independent, and so are their methods.
+#'
+#' In an outer criterion ([reml()], [ml()], [aic()], [bic()]) on the expected
+#' information, one method object defines the matrix and every derivative of
+#' it that the exact outer gradient and Hessian read. The derivative is the
+#' derivative of the matrix that the method defines:
+#'
+#' - for the closed form, the closed form of the derivative;
+#' - for [distributions7::expect_integrate()] and [distributions7::expect_mc()],
+#'   the derivative of the expectation, which moves the density as well as the
+#'   integrand;
+#' - for [distributions7::expect_opg()], the exact derivative of the outer
+#'   product of the scores at the data, which treats the data as fixed.
+#'
+#' Where the method is `NULL` and the family has no closed form for the
+#' derivative, the matrix and its derivatives are both
+#' [distributions7::expect_opg()]. The outer product of the scores depends on
+#' the response, so a criterion built on it is a smooth function of the
+#' hyperparameters with exact derivatives, and it is not the Laplace
+#' approximation of an expectation. [distributions7::expect_mc()] draws a new
+#' sample at each call of the matrix and of each derivative, so that the
+#' derivative is that of the expectation and not of the sampled matrix; the
+#' outer search is then noisy at the level of the Monte Carlo error.
 #'
 #' # The rule of auto_info()
 #'
@@ -140,18 +187,22 @@ AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
 #' observed information is not positive definite at an outlier, and the
 #' observed information otherwise.
 #'
-#' # The approximation
+#' # The default of the variance objects
 #'
-#' `approx` is read only when the family has no closed-form expected
-#' information (see [distributions7::expected_hessian_exact()]). It defaults to
-#' [distributions7::expect_opg()], the outer product of the scores, which
-#' costs one gradient. The three arguments above are independent, and so are
-#' their approximations. A criterion on the expected information of a family
-#' with no closed form is rejected under the default
-#' [distributions7::expect_opg()], because the outer product of the scores at
-#' the data is not an expectation; the criterion needs
-#' [distributions7::expect_bartlett()] or another approximation that takes an
-#' expectation.
+#' The `information` of [bayesian_vcov()], [frequentist_vcov()] and
+#' [unconditional_vcov()] is `NULL`. It is resolved for each fit by the family
+#' of the fit, in the same way as the `information` of
+#' [distributions7::vcov.distrib_fit()]: the matrix is
+#' [distributions7::observed_info()] when [distributions7::params_order()] is
+#' at least 2 for every parameter of the family, that is, when the
+#' log-likelihood is twice differentiable in every parameter, and
+#' [distributions7::expected_info()] with `method = NULL` otherwise, for the
+#' whole matrix. A family with a kink in a parameter (the Laplace, the elastic
+#' net) has a singular or undefined observed information in that parameter,
+#' and the closed-form expected information gives finite standard errors.
+#' [summary.StatmodFit()] states the matrix whenever it is not the observed
+#' information, and a printed variance object states the information that it
+#' names.
 #'
 #' A model that carries a structural term (a score-driven filter or a mixture
 #' over states) is fitted and inverted on the observed information whatever
@@ -163,15 +214,16 @@ AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
 #'
 #' @seealso [distributions7::observed_info()] and
 #'   [distributions7::expected_info()] for the two matrices, [auto_info()] for
-#'   the third object, [AutoInfo] for its class, [statmod()], [iwls()],
-#'   [reml()], [ml()], [aic()], [bic()] and [vcov_method] for the functions
-#'   that take an object, and [iwls_solvers] for the factorization of the
-#'   matrix.
+#'   the third object, [AutoInfo] for its class,
+#'   [distributions7::expected_derivative_methods] for the methods of the
+#'   expected information, [statmod()], [iwls()], [reml()], [ml()], [aic()],
+#'   [bic()] and [vcov_method] for the functions that take an object, and
+#'   [iwls_solvers] for the factorization of the matrix.
 #'
 #' @examples
 #' distributions7::observed_info()
 #' distributions7::expected_info()
-#' auto_info(approx = distributions7::expect_bartlett())
+#' auto_info(method = distributions7::expect_integrate(identity = "score"))
 #'
 #' set.seed(1)
 #' dd <- data.frame(x = runif(120, -2, 2))
@@ -215,10 +267,21 @@ NULL
 #' quantity that each of them computes is defined on one named matrix.
 #' [information_objects] compares the three information objects.
 #'
-#' @param approx The approximation of the expected information, as in
-#'   [distributions7::expected_info()]. It is read only where the settled
-#'   choice or the fallback uses the expected information of a family that
-#'   has no closed form for it. The default is [distributions7::expect_opg()].
+#' @param method `NULL` (the default) or an object that inherits from
+#'   [distributions7::ExpectMethod]; it is used as the `method` of the
+#'   [distributions7::expected_info()] that the settled choice or the fallback
+#'   selects:
+#'   - `NULL`: the closed form of the family where it has one, and
+#'     [distributions7::expect_opg()] otherwise;
+#'   - [distributions7::expect_opg()]: the outer product of the observed
+#'     scores, which costs one gradient;
+#'   - [distributions7::expect_integrate()]: quadrature (or summation over the
+#'     support), with `identity = "hessian"` or `identity = "score"`;
+#'   - [distributions7::expect_mc()]: Monte Carlo.
+#'
+#'   An object is used also for a family that has the closed form.
+#'   [distributions7::expected_derivative_methods] compares the methods. Any
+#'   other value signals an error.
 #' @param repair_floor A single positive number. A penalized observed
 #'   information whose smallest eigenvalue is below `repair_floor` times the
 #'   largest absolute eigenvalue is read as indefinite by [iwls()]. The step
@@ -229,12 +292,13 @@ NULL
 #'   is read by [iwls()] only.
 #'
 #' @return An S7 object of class `AutoInfo`, which inherits from
-#'   [distributions7::Information], with the properties `approx` and
+#'   [distributions7::Information], with the properties `method` and
 #'   `repair_floor`.
 #'
 #' @examples
 #' auto_info()
-#' auto_info(approx = distributions7::expect_bartlett(), repair_floor = 1e-10)
+#' auto_info(method = distributions7::expect_integrate(identity = "score"),
+#'           repair_floor = 1e-10)
 #'
 #' set.seed(1)
 #' dd <- data.frame(x = runif(120, -2, 2))
@@ -247,15 +311,15 @@ NULL
 #'
 #' @seealso [distributions7::observed_info()] and
 #'   [distributions7::expected_info()] for the objects that name a matrix;
-#'   [information_objects] for the comparison; [AutoInfo] for the class;
-#'   [statmod()], [iwls()], [reml()] and [ml()] for the functions that take
-#'   the object.
+#'   [information_objects] for the comparison;
+#'   [distributions7::expected_derivative_methods] for the methods; [AutoInfo]
+#'   for the class; [statmod()], [iwls()], [reml()] and [ml()] for the
+#'   functions that take the object.
 #' @export
-auto_info <- function(approx = distributions7::expect_opg(),
-                      repair_floor = 1e-8) {
-  check_info_approx(approx)
+auto_info <- function(method = NULL, repair_floor = 1e-8) {
+  check_info_method(method)
   check_positive_number(repair_floor, "repair_floor")
-  AutoInfo(approx = approx, repair_floor = as.numeric(repair_floor))
+  AutoInfo(method = method, repair_floor = as.numeric(repair_floor))
 }
 
 
@@ -280,24 +344,25 @@ check_positive_number <- function(x, arg) {
 }
 
 
-#' Check the Approximation Given to an Information Object
+#' Check the Method Given to an Information Object
 #'
 #' @description
-#' Returns `approx` invisibly when it inherits from
-#' [distributions7::ExpectApprox] and signals an error otherwise.
+#' Returns `method` invisibly when it is `NULL` or inherits from
+#' [distributions7::ExpectMethod] and signals an error otherwise.
 #'
-#' @param approx The value to check.
+#' @param method The value to check.
 #'
-#' @return `approx`, invisibly.
+#' @return `method`, invisibly.
 #'
 #' @seealso [auto_info()]
 #' @keywords internal
-check_info_approx <- function(approx) {
-  if (S7::S7_inherits(approx, distributions7::ExpectApprox)) {
-    return(invisible(approx))
+check_info_method <- function(method) {
+  if (is.null(method) ||
+      S7::S7_inherits(method, distributions7::ExpectMethod)) {
+    return(invisible(method))
   }
-  stop(paste0("'approx' must be an expectation object: expect_opg(), ",
-              "expect_bartlett(), expect_integrate() or expect_mc(nsim = ...)."),
+  stop(paste0("'method' must be NULL or an ExpectMethod object such as ",
+              "expect_opg(), expect_integrate() or expect_mc()."),
        call. = FALSE)
 }
 
@@ -307,21 +372,25 @@ check_info_approx <- function(approx) {
 #' @description
 #' Returns `x` invisibly when it inherits from
 #' [distributions7::Information] and signals an error otherwise. With
-#' `auto = FALSE`, an [auto_info()] object is rejected as well.
+#' `auto = FALSE`, an [auto_info()] object is rejected as well, and with
+#' `null = TRUE`, `NULL` is accepted.
 #'
 #' @param x The value to check.
 #' @param arg The argument name used in the message.
 #' @param fn The function whose argument it is, used in the message.
 #' @param auto Whether an [auto_info()] object is admissible.
+#' @param null Whether `NULL` is admissible.
 #'
 #' @return `x`, invisibly.
 #'
 #' @seealso [information_objects]
 #' @keywords internal
 check_information <- function(x, arg = "information", fn = "reml",
-                              auto = TRUE) {
+                              auto = TRUE, null = FALSE) {
+  if (null && is.null(x)) return(invisible(x))
   ok <- if (auto) "observed_info(), expected_info() or auto_info()"
         else "observed_info() or expected_info()"
+  if (null) ok <- paste0("NULL, ", ok)
   if (S7::S7_inherits(x, distributions7::Information)) {
     if (!auto && S7::S7_inherits(x, AutoInfo)) {
       stop(sprintf(paste0("'%s' of %s() must name one matrix: %s. ",
@@ -341,14 +410,15 @@ check_information <- function(x, arg = "information", fn = "reml",
 #' `info_expected()` returns `TRUE` for an [distributions7::expected_info()]
 #' object and `info_auto()` for an [auto_info()] object. `info_label()`
 #' returns the word that names the matrix (`"observed"`, `"expected"` or
-#' `"auto"`). `info_approx()` returns the approximation that the object
-#' carries, and [distributions7::expect_opg()] for an
+#' `"auto"`). `info_emethod()` returns the method of the expected information
+#' that the object carries, `NULL` for the closed form of the family or the
+#' outer product of the scores, and `NULL` also for an
 #' [distributions7::observed_info()] object.
 #'
 #' @param x An object inheriting from [distributions7::Information].
 #'
-#' @return A logical, a string or an object inheriting from
-#'   [distributions7::ExpectApprox].
+#' @return A logical, a string, `NULL` or an object inheriting from
+#'   [distributions7::ExpectMethod].
 #'
 #' @seealso [information_objects]
 #' @keywords internal
@@ -368,40 +438,114 @@ info_label <- function(x) {
 
 #' @rdname info_expected
 #' @keywords internal
-info_approx <- function(x) {
+info_emethod <- function(x) {
   if (S7::S7_inherits(x, distributions7::ExpectedInfo) ||
-      S7::S7_inherits(x, AutoInfo)) x@approx
-  else distributions7::expect_opg()
+      S7::S7_inherits(x, AutoInfo)) x@method
+  else NULL
 }
 
 
-#' The Approximation That a Criterion Reads
+#' The Method That a Criterion Reads
 #'
 #' @description
-#' Returns the approximation of the expected information that the fits made
-#' for a criterion use: the `approx` of the first of `sparse_method` and
-#' `method` whose information is an [distributions7::expected_info()] object,
-#' and `approx`, that of the inner method, when neither is.
+#' Returns the method of the expected information that the fits made for a
+#' criterion use: the `method` of the first of `sparse_method` and `method`
+#' whose information is an [distributions7::expected_info()] object, and
+#' `emethod`, that of the inner method, when neither is.
 #'
 #' @param method,sparse_method [OuterMethod()] objects, or `NULL`.
-#' @param approx The approximation of the inner method.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
 #'
-#' @return An object that inherits from [distributions7::ExpectApprox].
+#' @return `NULL` or an object that inherits from
+#'   [distributions7::ExpectMethod].
 #'
 #' @seealso [information_objects]
 #' @keywords internal
-select_approx <- function(method, sparse_method, approx) {
+select_emethod <- function(method, sparse_method, emethod) {
   for (m in list(sparse_method, method)) {
-    if (!is.null(m) && info_expected(m@hessian)) return(m@hessian@approx)
+    if (!is.null(m) && info_expected(m@hessian)) return(m@hessian@method)
   }
-  approx
+  emethod
+}
+
+
+# The one-slot memory of resolve_emethod(): the family last probed and the
+# answer, compared by identical() (a pointer comparison for the same object).
+.emethod_memory <- new.env(parent = emptyenv())
+
+#' The Method That Obtains the Derivatives of the Expected Information
+#'
+#' @description
+#' Returns the method object with which the derivatives of the expected
+#' information (the functions
+#' [distributions7::distrib_dexpected_hessian()] and
+#' [distributions7::distrib_d2expected_hessian()]) are called, so that the
+#' derivative is the derivative of the matrix that
+#' [distributions7::distrib_expected_hessian()] returns for the same `emethod`.
+#'
+#' @details
+#' An object is returned unchanged. For `NULL`, the matrix is the closed form
+#' of the family where the family has one, and the derivatives of the family
+#' are those of that closed form, so `NULL` is returned; where the family has
+#' no closed form the matrix is [distributions7::expect_opg()] and the
+#' derivatives signal an error with `NULL`, so [distributions7::expect_opg()]
+#' is returned and used for both. A family is read as having the closed form of
+#' its derivative when [distributions7::expected_hessian_exact()] is `TRUE`,
+#' and otherwise (a truncated family, whose expected information is a
+#' quadrature that the family registers with its derivative) when
+#' [distributions7::distrib_dexpected_hessian()] returns a value at a random
+#' point; the probe leaves the random stream of the caller as it was and the
+#' answer for the last family probed is kept.
+#'
+#' @param distrib A [distributions7::distrib] object.
+#' @param emethod The method that obtains the expected information: `NULL`
+#'   (the closed form of the family where it has one, and
+#'   [distributions7::expect_opg()] otherwise) or an object that inherits from
+#'   [distributions7::ExpectMethod]. It is read only where the expected
+#'   information is used.
+#'
+#' @return `NULL` or an object that inherits from
+#'   [distributions7::ExpectMethod].
+#'
+#' @seealso [information_objects], [expected_deriv_ok()]
+#' @keywords internal
+resolve_emethod <- function(distrib, emethod) {
+  if (!is.null(emethod)) return(emethod)
+  if (S7::S7_inherits(distrib, distributions7::multivariate_distrib)) {
+    return(NULL)
+  }
+  if (isTRUE(tryCatch(distributions7::expected_hessian_exact(distrib),
+                      error = function(e) FALSE))) {
+    return(NULL)
+  }
+  if (!is.null(.emethod_memory$distrib) &&
+      identical(.emethod_memory$distrib, distrib)) {
+    return(.emethod_memory$value)
+  }
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    old <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old, envir = globalenv()), add = TRUE)
+  } else {
+    on.exit(if (exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+      rm(".Random.seed", envir = globalenv()), add = TRUE)
+  }
+  set.seed(20261026L)
+  value <- if (isTRUE(expected_deriv_ok(distrib, NULL))) NULL else
+    distributions7::expect_opg()
+  .emethod_memory$distrib <- distrib
+  .emethod_memory$value <- value
+  value
 }
 
 
 #' Print an Information Object Chosen Against the Family
 #'
 #' @description
-#' Writes one line naming the object and the approximation of the expectation.
+#' Writes one line naming the object and the method of the expectation.
 #'
 #' @param x An [auto_info()] object.
 #' @param ... Unused.
@@ -410,15 +554,19 @@ select_approx <- function(method, sparse_method, approx) {
 #'
 #' @examples
 #' auto_info()
-#' auto_info(approx = distributions7::expect_mc(nsim = 500))
+#' auto_info(method = distributions7::expect_mc(nsim = 500))
 #'
 #' @seealso [information_objects]
 #' @name print.AutoInfo
 #' @keywords internal
 print.AutoInfo <- function(x, ...) {
-  lab <- paste(utils::capture.output(print(x@approx)), collapse = " ")
-  cat(sprintf("Information chosen against the family (%s)\n",
-              sub("^Expectation by ", "expectation by ", lab)))
+  lab <- if (is.null(x@method)) {
+    "closed form where the family has one, otherwise the outer product of the scores"
+  } else {
+    sub("^Expectation by ", "expectation by ",
+        paste(utils::capture.output(print(x@method)), collapse = " "))
+  }
+  cat(sprintf("Information chosen against the family (%s)\n", lab))
   invisible(x)
 }
 S7::method(print, AutoInfo) <- print.AutoInfo

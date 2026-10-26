@@ -4,22 +4,35 @@
 \alias{unconditional_vcov}
 \title{Unconditional Variance of a Fit}
 \usage{
-unconditional_vcov(information = distributions7::observed_info())
+unconditional_vcov(information = NULL)
 }
 \arguments{
-\item{information}{The matrix \eqn{H}, an object that inherits from
-\link[distributions7:Information]{distributions7::Information}:
+\item{information}{\code{NULL} (the default) or the matrix \eqn{H}, an object that
+inherits from \link[distributions7:Information]{distributions7::Information}:
 \itemize{
-\item \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the default: the negative Hessian of
-the log-likelihood at the data;
-\item \code{\link[distributions7:expected_info]{distributions7::expected_info()}}: the Fisher information, whose \code{approx}
-is read only for a family that has no closed form for it (see
+\item \code{NULL}: the matrix is chosen for each fit by the family of the fit, as
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} where the log-likelihood is twice
+differentiable in every parameter of the family (every
+\code{\link[distributions7:params_order]{distributions7::params_order()}} is at least 2), and as
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} with \code{method = NULL}, for the whole
+matrix, otherwise. The families with a kink in a parameter, such as the
+Laplace, have a singular observed information in that parameter and
+take the expected one;
+\item \code{\link[distributions7:observed_info]{distributions7::observed_info()}}: the negative Hessian of the
+log-likelihood at the data;
+\item \code{\link[distributions7:expected_info]{distributions7::expected_info()}}: the Fisher information, whose
+\code{method} is \code{NULL} (the closed form of the family where it has one,
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or one of
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}}
+and \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} (see
 \link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}).
 }
 
 \code{\link[=auto_info]{auto_info()}} is not accepted. A model with a structural term is inverted
 on the observed information whatever the object says. The choice does not
 depend on how the fit was computed (\code{inner_information} of \code{\link[=statmod]{statmod()}}).
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix when it is not the observed
+one, and a printed variance object states the information that it names.
 \link{information_objects} compares the objects.}
 }
 \value{

@@ -475,7 +475,7 @@ test_that("a term's edf is its share of the WHOLE model's smoother", {
   ref_total <- function(fit) {
     des <- statmod_design(fit@spec)
     H <- statmod_information_at(fit@spec, fit@coefficients, des, TRUE,
-                                distributions7::expect_bartlett())
+                                NULL)
     S <- statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper, des,
                             "hessian")
     S[!is.finite(S)] <- 0

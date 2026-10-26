@@ -2,21 +2,24 @@
 % Please edit documentation in R/inference_objects.R
 \name{vcov_information}
 \alias{vcov_information}
-\title{The Information of a Variance Convention}
+\title{The Information of a Variance Convention for a Family}
 \usage{
-vcov_information(x)
+vcov_information(x, distrib)
 }
 \arguments{
 \item{x}{A \link{vcov_method} object.}
+
+\item{distrib}{The \link[distributions7:distrib]{distributions7::distrib} of the fit.}
 }
 \value{
 An object that inherits from \link[distributions7:Information]{distributions7::Information}.
 }
 \description{
-Returns the \code{information} property of a \link{vcov_method} object that has one,
-and \code{\link[distributions7:observed_info]{distributions7::observed_info()}} for a convention that does not.
+Returns the \code{information} property of a \link{vcov_method} object that has one
+and that is not \code{NULL}, and \code{\link[=default_vcov_information]{default_vcov_information()}} of \code{distrib}
+otherwise (a \code{NULL} property, or a convention that has no property).
 }
 \seealso{
-\link{vcov_method}
+\link{vcov_method}, \code{\link[=default_vcov_information]{default_vcov_information()}}
 }
 \keyword{internal}

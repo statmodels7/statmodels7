@@ -42,8 +42,11 @@ likelihood needs one.}
 an object that inherits from \link[distributions7:Information]{distributions7::Information}.
 \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default) gives the Hessian of the
 log-likelihood at the data, and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} gives
-minus the Fisher information, with an \code{approx} read only for a family
-that has no closed form for it. \code{\link[=auto_info]{auto_info()}} is not accepted.}
+minus the Fisher information, whose \code{method} selects how the expectation
+is obtained. \code{\link[=auto_info]{auto_info()}} is not accepted. The default is
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}}, whatever the family, because the
+result is a Hessian and not a variance; the variance objects resolve a
+\code{NULL} information by the family (see \link{information_objects}).}
 }
 \value{
 \code{loglik()} gives a single number. \code{gradient()} gives a named list

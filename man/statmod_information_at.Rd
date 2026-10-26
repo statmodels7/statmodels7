@@ -9,7 +9,7 @@ statmod_information_at(
   coef,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = distributions7::expect_opg(),
+  emethod = NULL,
   H = NULL,
   index = NULL
 )
@@ -24,10 +24,11 @@ statmod_information_at(
 \item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
 negated observed Hessian.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form, an object that inherits from
-\link[distributions7:ExpectApprox]{distributions7::ExpectApprox} (\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} by
-default).}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 
 \item{H}{The second-derivative components at this point, as
 \code{\link[=statmod_family_hessian]{statmod_family_hessian()}} returns them, or \code{NULL} to compute them here.
@@ -59,8 +60,8 @@ inverts and which is positive definite wherever the family is regular.
 \code{expected = FALSE} gives the negated observed Hessian, which far from the
 optimum may be indefinite.
 
-\code{approx} reaches \pkg{distributions7} and is read only where the family
-has no closed expected information.
+\code{emethod} is the \code{method} of \code{\link[distributions7:distrib_expected_hessian]{distributions7::distrib_expected_hessian()}}
+and is read only when \code{expected} is \code{TRUE}.
 
 With \code{index} only the requested columns of each design enter a cross
 product, so that reading a few rows and columns does not require

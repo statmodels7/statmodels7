@@ -6,24 +6,19 @@
 \alias{UnconditionalVcov}
 \title{S7 Classes for the Shipped Variance Conventions}
 \usage{
-BayesianVcov(name = character(0), information = distributions7::Information())
+BayesianVcov(name = character(0), information = NULL)
 
-FrequentistVcov(
-  name = character(0),
-  information = distributions7::Information()
-)
+FrequentistVcov(name = character(0), information = NULL)
 
-UnconditionalVcov(
-  name = character(0),
-  information = distributions7::Information()
-)
+UnconditionalVcov(name = character(0), information = NULL)
 }
 \arguments{
 \item{name}{A single string, the short name of the convention.}
 
-\item{information}{An object that inherits from
+\item{information}{\code{NULL} or an object that inherits from
 \link[distributions7:Information]{distributions7::Information}: \code{\link[distributions7:observed_info]{distributions7::observed_info()}} or
-\code{\link[distributions7:expected_info]{distributions7::expected_info()}}.}
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}. \code{NULL} is resolved for each fit by the
+family (see \code{\link[=bayesian_vcov]{bayesian_vcov()}}).}
 }
 \value{
 An S7 object inheriting from \link{vcov_method}, with the properties

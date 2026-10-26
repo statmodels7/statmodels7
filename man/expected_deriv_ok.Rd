@@ -4,7 +4,7 @@
 \alias{expected_deriv_ok}
 \title{Does the Family Supply the Expected Information's Derivative?}
 \usage{
-expected_deriv_ok(distrib)
+expected_deriv_ok(distrib, emethod = NULL)
 }
 \arguments{
 \item{distrib}{A \pkg{distributions7} distribution.}

@@ -16,8 +16,9 @@ parameter.}
 
 \item{hyper}{The hyperparameters, per penalized term.}
 
-\item{method}{An \code{\link[=Iwls]{Iwls()}} object, read for \code{solver}, \code{hessian} and
-\code{approx}.}
+\item{method}{An \code{\link[=Iwls]{Iwls()}} object, read for \code{solver} and \code{hessian}, whose
+\code{method} (see \code{\link[distributions7:expected_info]{distributions7::expected_info()}}) gives the method of the
+expected information.}
 }
 \value{
 A list with \code{R}, \code{C} and \code{A} and, on the square-root route,

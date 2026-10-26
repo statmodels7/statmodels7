@@ -4,12 +4,7 @@
 \alias{statmod_family_hessian}
 \title{The Family's Second-Derivative Components at a Point}
 \usage{
-statmod_family_hessian(
-  spec,
-  theta,
-  expected = TRUE,
-  approx = distributions7::expect_opg()
-)
+statmod_family_hessian(spec, theta, expected = TRUE, emethod = NULL)
 }
 \arguments{
 \item{spec}{The specification, read for the distribution, the response and
@@ -20,9 +15,11 @@ the thread count.}
 \item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
 observed Hessian.}
 
-\item{approx}{The strategy that the expected information uses when the family
-has no closed form, passed through to
-\code{\link[distributions7:distrib_expected_hessian]{distributions7::distrib_expected_hessian()}}.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 }
 \value{
 The named list of second-derivative components on the link scale,

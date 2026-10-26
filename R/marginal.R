@@ -630,7 +630,7 @@ zero_unread <- function(V) {
 #' @param coef,hyper The fitted coefficients and hyperparameters.
 #' @param method The [OuterMethod()] that the fit ran.
 #' @param idx The hyperparameters' index.
-#' @param expected,approx Passed to [statmod_information_at()].
+#' @param expected,emethod Passed to [statmod_information_at()].
 #' @param zero The answer where the correction cannot be computed.
 #'
 #' @return A list with `total`, `per` and `n_hyper`, as
@@ -638,10 +638,10 @@ zero_unread <- function(V) {
 #'
 #' @keywords internal
 marginal_edf_correction <- function(mc, coef, hyper, method, idx, expected,
-                                    approx, zero) {
+                                    emethod, zero) {
   spec <- mc$spec
   design <- mc$design
-  H <- as_dense(statmod_information_at(spec, coef, design, expected, approx))
+  H <- as_dense(statmod_information_at(spec, coef, design, expected, emethod))
   S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design, "hessian"))
   A <- as_dense(H + S)
   keep <- rep(TRUE, nrow(A))

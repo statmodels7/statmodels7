@@ -9,7 +9,7 @@ statmod_objective(
   hyper,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = distributions7::expect_opg()
+  emethod = NULL
 )
 }
 \arguments{
@@ -24,8 +24,11 @@ absent.}
 \item{expected}{\code{TRUE} for the expected information in \code{he}, \code{FALSE} for
 the observed one.}
 
-\item{approx}{How the expected information is approximated for a family
-with no closed form.}
+\item{emethod}{The method that obtains the expected information: \code{NULL}
+(the closed form of the family where it has one, and
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} otherwise) or an object that inherits from
+\link[distributions7:ExpectMethod]{distributions7::ExpectMethod}. It is read only where the expected
+information is used.}
 }
 \value{
 A list with the elements

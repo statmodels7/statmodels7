@@ -142,7 +142,7 @@ statmod_restrict <- function(fit, param, coefname, value) {
   beta[at] <- as.numeric(value)
 
   res <- statmod_alternate(spec, design, blocks, fit@hyper, method, beta,
-                           cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                           cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                            verbosity(0))
   cf <- res$obj$split(res$par)
   # the objective is a MINIMAND -- the negative log-likelihood plus the
@@ -446,7 +446,7 @@ joint_objective <- function(fit) {
   cfg <- inner_settings(method)
   beta <- unlist(fit@coefficients[spec@distrib@params], use.names = FALSE)
   res <- statmod_alternate(spec, design, blocks, fit@hyper, method, beta,
-                           cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                           cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
                            verbosity(0))
   res$value
 }

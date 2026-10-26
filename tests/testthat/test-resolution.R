@@ -25,21 +25,21 @@ test_that("the criterion's resolution is read at the fit and tracks the inner ru
     hyper <- statmod_hyper_start(spec, design)
     blocks <- statmod_blocks(spec, design)
     cfg <- inner_settings(inner, spec@distrib)
-    obj <- statmod_objective(spec, hyper, design, cfg$expected, cfg$approx)
+    obj <- statmod_objective(spec, hyper, design, cfg$expected, cfg$emethod)
     beta0 <- statmod_start(spec, design, obj, NULL)
     basis <- integrated_basis(spec, design, meth@kind)
     bud <- method_budget(inner)
     res <- statmod_alternate(spec, design, blocks, hyper, inner, beta0,
-                             cfg$expected, cfg$approx, bud$maxit, bud$tol,
+                             cfg$expected, cfg$emethod, bud$maxit, bud$tol,
                              list(inner = FALSE, blocks = FALSE,
                                   outer = FALSE, path = FALSE))
     cf <- res$obj$split(res$par)
-    ctx <- outer_context(spec, design, cf, hyper, cfg$approx)
-    m <- statmod_marginal(spec, design, cf, hyper, meth, cfg$approx, basis, ctx)
+    ctx <- outer_context(spec, design, cf, hyper, cfg$emethod)
+    m <- statmod_marginal(spec, design, cf, hyper, meth, cfg$emethod, basis, ctx)
     st <- list(ok = TRUE, score = res$obj$gr(res$par), split = res$obj$split,
                par = res$par, cf = cf, hy = hyper, ctx = ctx, value = m$value)
     crit_at <- function(cf, hy, par, ctx = NULL) {
-      statmod_marginal(spec, design, cf, hy, meth, cfg$approx, basis, ctx)
+      statmod_marginal(spec, design, cf, hy, meth, cfg$emethod, basis, ctx)
     }
     list(res = criterion_resolution(st, spec, design, meth, crit_at), st = st,
          crit_at = crit_at, spec = spec, design = design)

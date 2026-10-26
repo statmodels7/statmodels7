@@ -321,7 +321,7 @@ test_that("the objective over the coefficients carries a mixed class's derivativ
   hy[[u$param]][[u$key]][[cor_nm]] <- 0.8
   set.seed(6)
   v <- stats::rnorm(nb, 0, 0.3)
-  obj <- statmod_objective(spec, hy, des, FALSE, distributions7::expect_bartlett())
+  obj <- statmod_objective(spec, hy, des, FALSE, NULL)
   g <- obj$gr(v)
   h <- 1e-5
   gn <- vapply(seq_len(nb), function(i) {
@@ -335,7 +335,7 @@ test_that("the objective over the coefficients carries a mixed class's derivativ
   cf <- obj$split(v)
   njoint <- max(c(nb, u$joint))
   extra <- as.matrix(obj$he(v)) -
-    as.matrix(statmod_information_at(spec, cf, des, FALSE, distributions7::expect_bartlett())) -
+    as.matrix(statmod_information_at(spec, cf, des, FALSE, NULL)) -
     as.matrix(statmod_penalty_at(spec, cf, hy, des, "hessian"))
   jh <- joint_penalty_at(spec, des, cf, hy, "hessian", njoint)
   expect_equal(unname(extra), unname(jh[seq_len(nb), seq_len(nb)]),

@@ -253,7 +253,7 @@ refresh_bits <- function(formula, data, shift = 0.3) {
   list(spec = spec, design = design, coef = cf, hyper = hy, M = M,
        params = params, npar = npar, offs = offs, total = total,
        d3 = ctx_deriv(NULL, spec, design, cf, hy, 3L),
-       Hl = refresh_hessian(spec, design, cf, FALSE, distributions7::expect_bartlett()),
+       Hl = refresh_hessian(spec, design, cf, FALSE, NULL),
        units = refresh_units(spec, design, cf, params, npar, offs))
 }
 
