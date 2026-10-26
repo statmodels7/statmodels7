@@ -196,8 +196,12 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #' @param data A data frame with the columns that the model names. Defaults to
 #'   the data used to fit the model. New data must carry the response, since a
 #'   likelihood needs one.
-#' @param expected `hessian()` only: `TRUE` for the expected information,
-#'   `FALSE` (the default) for the observed Hessian.
+#' @param information `hessian()` only: the matrix whose negative is returned,
+#'   an object that inherits from [distributions7::Information].
+#'   [distributions7::observed_info()] (the default) gives the Hessian of the
+#'   log-likelihood at the data, and [distributions7::expected_info()] gives
+#'   minus the Fisher information, with an `approx` read only for a family
+#'   that has no closed form for it. [auto_info()] is not accepted.
 #' @param ... Passed to methods. The shipped methods do not read it.
 #'
 #' @return `loglik()` gives a single number. `gradient()` gives a named list
@@ -244,7 +248,8 @@ gradient <- S7::new_generic("gradient", "object",
 #' @rdname loglik
 #' @export
 hessian <- S7::new_generic("hessian", "object",
-  function(object, par = NULL, data = NULL, expected = FALSE, ...)
+  function(object, par = NULL, data = NULL,
+           information = distributions7::observed_info(), ...)
     S7::S7_dispatch())
 
 
@@ -349,13 +354,17 @@ S7::method(gradient, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @name hessian.StatmodFit
 #' @keywords internal
 S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
-                                            expected = FALSE, ...) {
+                                            information = distributions7::observed_info(),
+                                            ...) {
   check_dots("hessian", ...)
+  check_information(information, arg = "information", fn = "hessian",
+                    auto = FALSE)
   spec <- spec_at(object, data)
   design <- statmod_design(spec)
   # the information is minus the Hessian, and what is asked for here is the
   # Hessian of the log-likelihood itself
-  -statmod_information_at(spec, par_at(object, par, design), design, expected)
+  -statmod_information_at(spec, par_at(object, par, design), design,
+                          info_expected(information), info_approx(information))
 }
 
 

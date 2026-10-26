@@ -491,7 +491,7 @@ test_that("statmod_test() carries the null a summary cannot be asked about", {
     ## against, and which coefficient of which equation
     expect_equal(tt@estimate, bx)
     expect_identical(tt@null_value, 0.5)
-    expect_identical(tt@parameter, "mu")
+    expect_identical(tt@param, "mu")
     expect_identical(tt@coefficient, "x")
   }
 
@@ -557,7 +557,7 @@ test_that("what a test says about the refit is the mode error, not the flag", {
     any(grepl("stopped above its own mode",
               utils::capture.output(print(StatmodTest(
                 test = lr_test(), statistic = 1, df = 1L, p.value = 0.3,
-                estimate = 1, null_value = 0, parameter = "mu",
+                estimate = 1, null_value = 0, param = "mu",
                 coefficient = "x", ...))), fixed = TRUE))
   }
   ## a located mode says nothing, WHATEVER the flag says -- this is the case
@@ -570,7 +570,7 @@ test_that("what a test says about the refit is the mode error, not the flag", {
   expect_false(warned(mode_error = NA_real_, converged = TRUE))
   expect_true(any(grepl("could not be read", utils::capture.output(print(
     StatmodTest(test = lr_test(), statistic = 1, df = 1L, p.value = 0.3,
-                estimate = 1, null_value = 0, parameter = "mu",
+                estimate = 1, null_value = 0, param = "mu",
                 coefficient = "x", mode_error = NA_real_,
                 converged = TRUE))), fixed = TRUE)))
   ## and Wald, which refits nothing, has no mode to be above

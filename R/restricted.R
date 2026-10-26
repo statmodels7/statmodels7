@@ -495,7 +495,7 @@ joint_objective <- function(fit) {
 #' @param p.value The upper tail of that \eqn{\chi^2_1}.
 #' @param estimate The unrestricted estimate of the coefficient.
 #' @param null_value The value against which the coefficient was tested.
-#' @param parameter,coefficient Which coefficient of which equation.
+#' @param param,coefficient Which coefficient of which equation.
 #' @param mode_error How far above its own mode the restricted refit
 #'   stopped, in log-likelihood units; `NA` for the Wald statistic.
 #' @param converged The inner optimizer's flag at the restricted refit;
@@ -529,7 +529,7 @@ StatmodTest <- S7::new_class("StatmodTest",
     # object says what the null WAS rather than leaving it to the call
     estimate = S7::class_numeric,
     null_value = S7::class_numeric,
-    parameter = S7::class_character,
+    param = S7::class_character,
     coefficient = S7::class_character,
     # how far above its own mode the restricted refit stopped, and the raw
     # flag beside it. The first is what print() reads; the second is kept
@@ -557,7 +557,7 @@ StatmodTest <- S7::new_class("StatmodTest",
 #' @keywords internal
 print.StatmodTest <- function(x, digits = 4L, ...) {
   cat("\n\t", x@test@label, " test on a statmod fit\n\n", sep = "")
-  cat("coefficient:  ", x@parameter, ":", x@coefficient, "\n", sep = "")
+  cat("coefficient:  ", x@param, ":", x@coefficient, "\n", sep = "")
   cat("X-squared = ", format(x@statistic, digits = digits),
       ",  df = ", x@df,
       ",  p-value ", format.pval(x@p.value, digits = digits, eps = 1e-16),
@@ -665,7 +665,7 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
   est <- if (is.na(j)) NA_real_ else fit@coefficients[[param]][[j]]
   StatmodTest(test = s$test, statistic = s$statistic, df = s$df,
               p.value = s$p.value, estimate = est,
-              null_value = as.numeric(value), parameter = param,
+              null_value = as.numeric(value), param = param,
               coefficient = coefname, mode_error = s$mode_error,
               converged = s$converged)
 }

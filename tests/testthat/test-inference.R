@@ -58,7 +58,7 @@ test_that("a ridge makes the bayesian variance the larger of the two", {
   expect_true(any(vb > vf * 1.000001))
   # V_f = V_b H V_b is the sandwich the definition states, computed here from
   # the pieces rather than read back from the function under test
-  H <- -hessian(fit, expected = FALSE)
+  H <- -hessian(fit)
   Vb <- vcov(fit, vcov_type = bayesian_vcov())
   expect_equal(Vb %*% H %*% Vb, vcov(fit, vcov_type = frequentist_vcov()), tolerance = 1e-8)
 })

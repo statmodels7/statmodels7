@@ -12,7 +12,7 @@ StatmodTest(
   p.value = integer(0),
   estimate = integer(0),
   null_value = integer(0),
-  parameter = character(0),
+  param = character(0),
   coefficient = character(0),
   mode_error = integer(0),
   converged = logical(0)
@@ -33,7 +33,7 @@ under which \code{print()} shows the statistic.}
 
 \item{null_value}{The value against which the coefficient was tested.}
 
-\item{parameter, coefficient}{Which coefficient of which equation.}
+\item{param, coefficient}{Which coefficient of which equation.}
 
 \item{mode_error}{How far above its own mode the restricted refit
 stopped, in log-likelihood units; \code{NA} for the Wald statistic.}

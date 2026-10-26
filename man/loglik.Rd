@@ -13,7 +13,13 @@ loglik(object, par = NULL, data = NULL, ...)
 
 gradient(object, par = NULL, data = NULL, ...)
 
-hessian(object, par = NULL, data = NULL, expected = FALSE, ...)
+hessian(
+  object,
+  par = NULL,
+  data = NULL,
+  information = distributions7::observed_info(),
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -32,8 +38,12 @@ likelihood needs one.}
 
 \item{...}{Passed to methods. The shipped methods do not read it.}
 
-\item{expected}{\code{hessian()} only: \code{TRUE} for the expected information,
-\code{FALSE} (the default) for the observed Hessian.}
+\item{information}{\code{hessian()} only: the matrix whose negative is returned,
+an object that inherits from \link[distributions7:Information]{distributions7::Information}.
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default) gives the Hessian of the
+log-likelihood at the data, and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} gives
+minus the Fisher information, with an \code{approx} read only for a family
+that has no closed form for it. \code{\link[=auto_info]{auto_info()}} is not accepted.}
 }
 \value{
 \code{loglik()} gives a single number. \code{gradient()} gives a named list

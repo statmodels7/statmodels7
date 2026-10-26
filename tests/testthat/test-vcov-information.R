@@ -42,9 +42,9 @@ test_that("the observed standard errors are the inverse of the observed Hessian"
   dd <- pig_data(150L)
   fit <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
                  outer_criterion = NULL)
-  H <- -hessian(fit, expected = FALSE)
+  H <- -hessian(fit, information = observed_info())
   expect_equal(unname(vcov(fit)), unname(solve(H)), tolerance = 1e-8)
-  Ie <- -hessian(fit, expected = TRUE)
+  Ie <- -hessian(fit, information = expected_info())
   expect_equal(unname(vcov(fit, vcov_type = bayesian_vcov(
     information = expected_info()))), unname(solve(Ie)), tolerance = 1e-8)
   expect_false(isTRUE(all.equal(vcov(fit), vcov(fit, vcov_type = bayesian_vcov(
@@ -134,4 +134,15 @@ test_that("a family with a closed form fits identically under either approx", {
                  approx = distributions7::expect_bartlett()))
   expect_equal(unlist(coef(a)), unlist(coef(b)))
   expect_equal(vcov(a), vcov(b))
+})
+
+test_that("hessian() takes the information as an object", {
+  dd <- pig_data(80L)
+  fit <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
+  expect_identical(hessian(fit), hessian(fit, information = observed_info()))
+  expect_false(isTRUE(all.equal(hessian(fit),
+                                hessian(fit, information = expected_info()))))
+  expect_error(hessian(fit, information = auto_info()), "not admissible")
+  expect_error(hessian(fit, information = "expected"), "information object")
+  expect_error(hessian(fit, expected = TRUE), "takes no argument 'expected'")
 })
