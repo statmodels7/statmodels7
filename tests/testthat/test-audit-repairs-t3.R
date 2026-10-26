@@ -144,7 +144,7 @@ test_that("a group interval under a Student t prior answers a missing row", {
                                        mu = 0))
   nd <- data.frame(x = c(0.5, NA), g = factor("new"))
   p <- predict(ft, what = "mu", newdata = nd, random = "zero",
-               interval = "group", se = TRUE)
+               interval = group_interval(), se = TRUE)
   expect_true(is.finite(p$lower[1]) && is.finite(p$upper[1]))
   expect_true(is.na(p$lower[2]) && is.na(p$upper[2]))
 })
@@ -282,10 +282,10 @@ test_that("a group interval past the link's domain is NA with a warning", {
   f <- statmod(y ~ x + random(~1 | g), pd, d)
   nd <- data.frame(x = c(-3, 0), g = factor("new"))
   pl <- suppressWarnings(predict(f, what = "link:mu", newdata = nd,
-                                 random = "zero", interval = "group"))
+                                 random = "zero", interval = group_interval()))
   expect_true(pl$lower[[1]] < 0)
   expect_warning(p <- predict(f, what = "mu", newdata = nd, random = "zero",
-                              interval = "group"),
+                              interval = group_interval()),
                  "leaves the domain")
   expect_true(is.na(p$lower[[1]]) && is.na(p$upper[[1]]))
 })

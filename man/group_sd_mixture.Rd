@@ -19,7 +19,7 @@ does not exist.}
 }
 \value{
 The standard deviation of \eqn{h^{-1}(\eta^*)}, or \code{NA} where it
-is not known to exist. See \code{\link[=group_interval]{group_interval()}}.
+is not known to exist. See \code{\link[=group_interval_ends]{group_interval_ends()}}.
 }
 \description{
 The Standard Deviation of a New Group's Parameter Under a Mixture

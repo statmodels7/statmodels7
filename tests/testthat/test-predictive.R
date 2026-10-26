@@ -8,8 +8,7 @@ gauss_fit <- function(n = 40, seed = 1) {
 test_that("the plug-in interval is the family's quantiles at the estimates", {
   fit <- gauss_fit()
   nw <- data.frame(x = c(0.2, 0.8))
-  p <- predict(fit, "response", nw, interval = "prediction",
-               predictive = "plugin")
+  p <- predict(fit, "response", nw, interval = prediction_interval(predictive = pred_plugin()))
   mu <- predict(fit, "mu", nw)
   s <- predict(fit, "sigma", nw)
   expect_equal(p$lower, stats::qnorm(0.025, mu, s), tolerance = 1e-8)
@@ -20,15 +19,14 @@ test_that("the plug-in interval is the family's quantiles at the estimates", {
 test_that("the averaged interval adds se0^2 and sigma-hat^2 e^{2v}", {
   fit <- gauss_fit()
   nw <- data.frame(x = 0.7)
-  p <- predict(fit, "response", nw, interval = "prediction")
+  p <- predict(fit, "response", nw, interval = prediction_interval())
   se0 <- predict(fit, "mu", nw, se = TRUE)$se
   V <- vcov(fit)
   v <- V["sigma:(Intercept)", "sigma:(Intercept)"]
   s <- predict(fit, "sigma", nw)
   expect_equal(p$se, sqrt(se0^2 + s^2 * exp(2 * v)), tolerance = 1e-6)
   # and it is wider than the plug-in one, which leaves both terms out
-  q <- predict(fit, "response", nw, interval = "prediction",
-               predictive = "plugin")
+  q <- predict(fit, "response", nw, interval = prediction_interval(predictive = pred_plugin()))
   expect_gt(p$upper - p$lower, q$upper - q$lower)
 })
 
@@ -51,11 +49,9 @@ test_that("the bootstrap gives an interval, reproducibly, for any family", {
   dd <- data.frame(x = x, y = rpois(50, exp(1 + x)))
   fp <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
   set.seed(9)
-  a <- predict(fp, "response", data.frame(x = 0.5), interval = "prediction",
-               predictive = "bootstrap", n_boot = 15)
+  a <- predict(fp, "response", data.frame(x = 0.5), interval = prediction_interval(predictive = pred_bootstrap(n = 15)))
   set.seed(9)
-  b <- predict(fp, "response", data.frame(x = 0.5), interval = "prediction",
-               predictive = "bootstrap", n_boot = 15)
+  b <- predict(fp, "response", data.frame(x = 0.5), interval = prediction_interval(predictive = pred_bootstrap(n = 15)))
   expect_identical(a, b)
   expect_true(a$lower <= a$fit && a$fit <= a$upper)
   # integer ends: the support is discrete
@@ -91,9 +87,8 @@ test_that("a prior that is not Gaussian is drawn for an observed group", {
                                   distributions7::gaussian1_distrib(), gg))
   old <- data.frame(x = 0, g = "3")
   set.seed(2)
-  b <- predict(fit, "response", old, interval = "prediction",
-               predictive = "bootstrap", n_boot = 10)
-  a <- predict(fit, "response", old, interval = "prediction")
+  b <- predict(fit, "response", old, interval = prediction_interval(predictive = pred_bootstrap(n = 10)))
+  a <- predict(fit, "response", old, interval = prediction_interval())
   expect_true(is.finite(b$lower) && is.finite(b$upper))
   # the observed group keeps its effect, so the two intervals are of one size
   expect_lt(abs(log((b$upper - b$lower) / (a$upper - a$lower))), 0.5)
@@ -107,8 +102,7 @@ test_that("a new group under a Student t prior is a scale mixture", {
   fit <- suppressWarnings(statmod(y ~ x + random(~ 1 | g, distrib = tp),
                                   distributions7::gaussian1_distrib(), gg))
   nw <- data.frame(x = 0.5, g = "new")
-  p <- predict(fit, "response", nw, random = "zero", interval = "prediction",
-               predictive = "plugin")
+  p <- predict(fit, "response", nw, random = "zero", interval = prediction_interval(predictive = pred_plugin()))
   h <- fit@hyper$mu[[1]]
   m <- predict(fit, "mu", nw, random = "zero")
   s <- predict(fit, "sigma", nw, random = "zero")
@@ -139,11 +133,9 @@ test_that("a new group under another prior is integrated on its quantiles", {
     distributions7::gaussian1_distrib(), gg))
   nw <- data.frame(x = 0.5, g = "new")
   set.seed(1)
-  p <- predict(fit, "response", nw, random = "zero", interval = "prediction",
-               predictive = "plugin")
+  p <- predict(fit, "response", nw, random = "zero", interval = prediction_interval(predictive = pred_plugin()))
   set.seed(2)
-  p2 <- predict(fit, "response", nw, random = "zero", interval = "prediction",
-                predictive = "plugin")
+  p2 <- predict(fit, "response", nw, random = "zero", interval = prediction_interval(predictive = pred_plugin()))
   # nodes and not draws: the seed does not move the interval
   expect_identical(p, p2)
   sb <- fit@hyper$mu[[1]][["sigma"]]
@@ -158,7 +150,7 @@ test_that("a new group under another prior is integrated on its quantiles", {
   expect_lt(abs(G(p$upper) - 0.975), 1e-4)
   # with the estimates averaged the coefficients the kink holds at zero have
   # no variance, and the typical group does not reach them
-  pa <- predict(fit, "response", nw, random = "zero", interval = "prediction")
+  pa <- predict(fit, "response", nw, random = "zero", interval = prediction_interval())
   expect_true(all(is.finite(unlist(pa))))
   expect_true(pa$upper - pa$lower > p$upper - p$lower)
   expect_true(is.finite(predict(fit, "mu", nw, random = "zero", se = TRUE)$se))
@@ -172,8 +164,7 @@ test_that("a Cauchy prior gives exact ends and no standard deviation", {
   fit <- suppressWarnings(statmod(y ~ x + random(~ 1 | g, distrib = cp),
                                   distributions7::gaussian1_distrib(), gg))
   nw <- data.frame(x = 0.5, g = "new")
-  p <- predict(fit, "response", nw, random = "zero", interval = "prediction",
-               predictive = "plugin")
+  p <- predict(fit, "response", nw, random = "zero", interval = prediction_interval(predictive = pred_plugin()))
   sb <- fit@hyper$mu[[1]][["sigma"]]
   m <- predict(fit, "mu", nw, random = "zero")
   s <- predict(fit, "sigma", nw, random = "zero")
@@ -204,12 +195,14 @@ test_that("a prior with no variance reports none", {
   expect_true(is.finite(r$lower))
 })
 
-test_that("predictive is refused where it is not read", {
+test_that("predictive and its settings are not arguments of predict()", {
   fit <- gauss_fit()
-  expect_error(predict(fit, "mu", predictive = "plugin"), "read only")
+  expect_error(predict(fit, "mu", predictive = pred_plugin()),
+               "takes no argument 'predictive'")
   expect_error(predict(fit, "response", data.frame(x = 0.5),
-                       interval = "prediction", predictive = "bootstrap",
-                       n_boot = 0), "n_boot")
+                       interval = prediction_interval(), n_boot = 10),
+               "takes no argument 'n_boot'")
+  expect_error(pred_bootstrap(n = 0), "positive whole number")
 })
 
 test_that("a broad effect against a narrow residual is integrated exactly", {
@@ -223,8 +216,7 @@ test_that("a broad effect against a narrow residual is integrated exactly", {
   nw <- data.frame(x = 0.5, g = "new")
   fg <- suppressWarnings(statmod(y ~ x + random(~ 1 | g),
                                  distributions7::gaussian1_distrib(), gg))
-  p <- predict(fg, "response", nw, random = "zero", interval = "prediction",
-               predictive = "plugin")
+  p <- predict(fg, "response", nw, random = "zero", interval = prediction_interval(predictive = pred_plugin()))
   m <- predict(fg, "mu", nw, random = "zero")
   s <- predict(fg, "sigma", nw, random = "zero")
   tau <- hyper(fg)$estimate
@@ -237,8 +229,7 @@ test_that("a broad effect against a narrow residual is integrated exactly", {
                                  distributions7::gaussian1_distrib(), gg))
   h <- hyper(ft)$estimate
   expect_lt(h[2], 1)
-  p <- predict(ft, "response", nw, random = "zero", interval = "prediction",
-               predictive = "plugin")
+  p <- predict(ft, "response", nw, random = "zero", interval = prediction_interval(predictive = pred_plugin()))
   m <- predict(ft, "mu", nw, random = "zero")
   s <- predict(ft, "sigma", nw, random = "zero")
   Fy <- function(y) stats::integrate(function(w)

@@ -102,7 +102,7 @@ test_that("random = 'marginal' averages a nonlinear term over its prior", {
                        random = stats::setNames("zero", key[2L])),
                fol(2, p0, ua1, 0), tolerance = 1e-12)
   expect_error(predict(f, what = "mu", newdata = nd, random = "zero",
-                       interval = "group"), "subformula")
+                       interval = group_interval()), "subformula")
 })
 
 test_that("random = 'zero' reaches a random break-point", {

@@ -88,6 +88,25 @@ reference:
   - statmod_latent
   - format_duration
 
+- title: Intervals of a prediction
+  desc: >
+    The argument `interval` of `predict()` takes an object that selects the
+    uncertainty that the interval describes: the estimates alone, the estimates
+    and the effects of a new group, or a new observation of the response. A
+    prediction interval holds a second object that sets how the estimation
+    uncertainty enters the predictive distribution.
+  contents:
+  - predict_intervals
+  - interval_type
+  - confidence_interval
+  - group_interval
+  - prediction_interval
+  - predictive_distributions
+  - predictive_type
+  - pred_averaged
+  - pred_plugin
+  - pred_bootstrap
+
 - title: Testing a coefficient
   desc: >
     One coefficient against one value, by Wald's statistic, the likelihood

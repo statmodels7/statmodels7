@@ -129,7 +129,7 @@ test_that("a quantity that needs the trials says so where they are missing", {
   expect_error(predict(s, what = "mean", newdata = grid),
                "needs the number of trials")
   expect_error(predict(s, what = "response", newdata = grid,
-                       interval = "prediction"),
+                       interval = prediction_interval()),
                "needs the number of trials")
   # with the response columns the moment is the trials times the probability
   grid2 <- transform(grid, y = 0, fail = 10)
