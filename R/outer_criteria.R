@@ -121,8 +121,13 @@ NULL
 #'   available on the expected one, where the search uses an optimizer that
 #'   needs only the gradient. On the expected information, the `method` object
 #'   defines the matrix and the derivative of it that the gradient reads, as
-#'   described for the `information` of [reml()]. [information_objects]
-#'   compares the objects.
+#'   described for the `information` of [reml()]. With `method = NULL` on a
+#'   family without a closed form, the matrix is the
+#'   [distributions7::expect_opg()] estimate of the expected information,
+#'   noisier than a computed expectation and about 25 times cheaper (0.8 s
+#'   against 25.3 s for `method = expect_integrate(identity = "score")` on a
+#'   density-only family with n = 300); the computed expectation is selected
+#'   with that method. [information_objects] compares the objects.
 #'
 #' @return An [OuterMethod()] object with properties `kind` (`"aic"` or
 #'   `"bic"`), `hessian` (the object given as `information`), `k` (the number

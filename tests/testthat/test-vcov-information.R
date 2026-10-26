@@ -163,7 +163,6 @@ test_that("hessian() takes the information as an object", {
 test_that("the default information of a variance object is resolved by the family", {
   # the rule of distributions7: observed where every parameter is twice
   # differentiable, expected (the whole matrix) otherwise
-  d7 <- asNamespace("distributions7")
   for (d in list(distributions7::gaussian1_distrib(),
                  distributions7::gamma1_distrib(),
                  distributions7::pig1_distrib(),
@@ -171,14 +170,13 @@ test_that("the default information of a variance object is resolved by the famil
                  distributions7::laplace2_distrib(),
                  distributions7::enet_distrib(),
                  pig_bare_distrib())) {
-    mine <- default_vcov_information(d)
-    theirs <- d7$default_information(d)
-    expect_identical(class(mine), class(theirs), label = d@distrib_name)
+    ord <- distributions7::params_order(d)
+    want <- if (isTRUE(all(ord >= 2))) ObservedInfo else ExpectedInfo
+    expect_true(S7::S7_inherits(distributions7::default_information(d), want),
+                label = d@distrib_name)
+    expect_true(S7::S7_inherits(vcov_information(bayesian_vcov(), d), want),
+                label = d@distrib_name)
   }
-  expect_true(S7::S7_inherits(default_vcov_information(distributions7::gaussian1_distrib()),
-                              ObservedInfo))
-  expect_true(S7::S7_inherits(default_vcov_information(distributions7::laplace_distrib()),
-                              ExpectedInfo))
   # a variance object that names no information, or one, resolves accordingly
   expect_true(S7::S7_inherits(
     vcov_information(bayesian_vcov(), distributions7::laplace_distrib()), ExpectedInfo))

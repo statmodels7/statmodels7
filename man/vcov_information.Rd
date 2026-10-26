@@ -16,10 +16,10 @@ An object that inherits from \link[distributions7:Information]{distributions7::I
 }
 \description{
 Returns the \code{information} property of a \link{vcov_method} object that has one
-and that is not \code{NULL}, and \code{\link[=default_vcov_information]{default_vcov_information()}} of \code{distrib}
+and that is not \code{NULL}, and \code{\link[distributions7:default_information]{distributions7::default_information()}} of \code{distrib}
 otherwise (a \code{NULL} property, or a convention that has no property).
 }
 \seealso{
-\link{vcov_method}, \code{\link[=default_vcov_information]{default_vcov_information()}}
+\link{vcov_method}, \code{\link[distributions7:default_information]{distributions7::default_information()}}
 }
 \keyword{internal}

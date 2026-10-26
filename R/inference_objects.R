@@ -770,7 +770,7 @@ as_vcov_method <- function(x, arg = "vcov_type") {
 #'
 #' @description
 #' Returns the `information` property of a [vcov_method] object that has one
-#' and that is not `NULL`, and [default_vcov_information()] of `distrib`
+#' and that is not `NULL`, and [distributions7::default_information()] of `distrib`
 #' otherwise (a `NULL` property, or a convention that has no property).
 #'
 #' @param x A [vcov_method] object.
@@ -778,37 +778,15 @@ as_vcov_method <- function(x, arg = "vcov_type") {
 #'
 #' @return An object that inherits from [distributions7::Information].
 #'
-#' @seealso [vcov_method], [default_vcov_information()]
+#' @seealso [vcov_method], [distributions7::default_information()]
 #'
 #' @keywords internal
 vcov_information <- function(x, distrib) {
   info <- if (S7::prop_exists(x, "information")) x@information else NULL
-  if (is.null(info)) default_vcov_information(distrib) else info
+  if (is.null(info)) distributions7::default_information(distrib) else info
 }
 
 
-#' The Default Information of the Variance Objects
-#'
-#' @description
-#' Returns [distributions7::observed_info()] when every parameter of the family
-#' has [distributions7::params_order()] of at least 2, and
-#' [distributions7::expected_info()] with `method = NULL` otherwise. A
-#' parameter whose order is not established (`NA`) does not satisfy the
-#' condition. It is the rule of the same name in \pkg{distributions7}, which
-#' the `information` of [distributions7::vcov.distrib_fit()] follows.
-#'
-#' @param distrib An object inheriting from [distributions7::distrib].
-#'
-#' @return An [distributions7::Information] object.
-#'
-#' @seealso [information_objects], [vcov_information()]
-#'
-#' @keywords internal
-default_vcov_information <- function(distrib) {
-  ord <- distributions7::params_order(distrib)
-  if (isTRUE(all(ord >= 2))) distributions7::observed_info()
-  else distributions7::expected_info()
-}
 
 
 #' The Method of an Information Object in Words
