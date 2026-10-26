@@ -4,7 +4,7 @@
 \alias{outer_context}
 \title{One Evaluation Point, Shared}
 \usage{
-outer_context(spec, design, coef, hyper, approx = "opg")
+outer_context(spec, design, coef, hyper, approx = distributions7::expect_opg())
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}

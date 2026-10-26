@@ -16,7 +16,7 @@ parameter.}
 
 \item{hyper}{The hyperparameters, per penalized term.}
 
-\item{method}{An \code{\link[=Iwls]{Iwls()}} object, read for \code{decomposition}, \code{hessian} and
+\item{method}{An \code{\link[=Iwls]{Iwls()}} object, read for \code{solver}, \code{hessian} and
 \code{approx}.}
 }
 \value{

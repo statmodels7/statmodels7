@@ -1,6 +1,6 @@
 # The exact gradient with the EXPECTED information.
 #
-# reml("expected") had no gradient at all, so its search was derivative-free
+# reml(information = expected_info()) had no gradient at all, so its search was derivative-free
 # and its evaluation count grew with the number of hyperparameters: measured on
 # three smooths and a random effect, 965 evaluations and 481 s against the
 # observed route's 13 and 5.9, for the same hyperparameters. What was missing
@@ -57,7 +57,7 @@ test_that("the expected route's gradient matches numDeriv on a gamma", {
   # mode's movement being read off the criterion's matrix instead of the
   # penalized likelihood's; corrected, the same comparison is 1.8e-08.
   h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 10)), dge, distributions7::gamma1_distrib(),
-                     reml(hessian = "expected"))
+                     reml(information = expected_info()))
   eta <- h$eta0 + 0.4
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
@@ -70,7 +70,7 @@ test_that("it matches with a second penalized equation", {
   # fail this one
   h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)) | phi ~ s(z, bspline_smooth(k = 6)), dge,
                      distributions7::gamma1_distrib(),
-                     reml(hessian = "expected"))
+                     reml(information = expected_info()))
   eta <- h$eta0 + c(0.3, -0.4)
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
@@ -84,13 +84,13 @@ test_that("it holds under ml, on the range space", {
   # and full. This is where a version that confused them shows it worst, and
   # every other test in this file is reml.
   h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 10)), dge, distributions7::gamma1_distrib(),
-                     ml(hessian = "expected"))
+                     ml(information = expected_info()))
   eta <- h$eta0 + 0.4
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 
   h2 <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)) | phi ~ s(z, bspline_smooth(k = 6)), dge,
                       distributions7::gamma1_distrib(),
-                      ml(hessian = "expected"))
+                      ml(information = expected_info()))
   eta2 <- h2$eta0 + c(0.3, -0.4)
   expect_equal(h2$gr(eta2), numDeriv::grad(h2$fn, eta2), tolerance = 1e-7)
 })
@@ -107,20 +107,20 @@ test_that("the two routes are one route where the link is canonical", {
   dp$y <- rpois(400, exp(0.5 * sin(1.4 * dp$x) + 1))
   f <- y ~ s(x, bspline_smooth(k = 8))
   d <- distributions7::poisson_distrib()
-  h <- crit_of_eta_e(f, dp, d, reml(hessian = "expected"))
+  h <- crit_of_eta_e(f, dp, d, reml(information = expected_info()))
   eta <- h$eta0 + 0.35
   hy <- eta_to_hyper(eta, h$idx, statmod_hyper_start(h$spec, h$design))
   cf <- fit_at_hyper(f, d, dp, hy, iwls(tol = 1e-9))$coefficients
   basis <- integrated_basis(h$spec, h$design, "reml")
   go <- statmod_marginal_grad(h$spec, h$design, cf, hy,
-                              reml(hessian = "observed"), h$idx, basis)
+                              reml(information = observed_info()), h$idx, basis)
   ge <- statmod_marginal_grad(h$spec, h$design, cf, hy,
-                              reml(hessian = "expected"), h$idx, basis)
+                              reml(information = expected_info()), h$idx, basis)
   expect_equal(go, ge, tolerance = 1e-10)
   # and the two whole fits therefore land on the same optimum, to whatever
   # their own searches resolve
-  fo <- statmod(f, d, dp, outer_criterion = reml(hessian = "observed"))
-  fe <- statmod(f, d, dp, outer_criterion = reml(hessian = "expected"))
+  fo <- statmod(f, d, dp, outer_criterion = reml(information = observed_info()))
+  fe <- statmod(f, d, dp, outer_criterion = reml(information = expected_info()))
   expect_equal(unlist(lapply(fo@hyper, unlist)),
                unlist(lapply(fe@hyper, unlist)), tolerance = 1e-4)
   expect_equal(as.numeric(logLik(fo)), as.numeric(logLik(fe)),
@@ -135,7 +135,7 @@ test_that("the mode's movement is read off the penalized likelihood", {
   skip_if_not_installed("numDeriv")
   h300 <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 10)), dge,
                         distributions7::gamma1_distrib(),
-                        reml(hessian = "expected"))
+                        reml(information = expected_info()))
   eta <- h300$eta0 + 0.4
   g <- h300$gr(eta)
   fd <- numDeriv::grad(h300$fn, eta)
@@ -146,14 +146,14 @@ test_that("the mode's movement is read off the penalized likelihood", {
 
 test_that("the expected route is admitted only where the family answers", {
   h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)), dge, distributions7::gamma1_distrib(),
-                     reml(hessian = "expected"))
+                     reml(information = expected_info()))
   expect_true(outer_gradient_ok(h$spec, h$design, h$idx,
-                                reml(hessian = "expected"), 1L))
+                                reml(information = expected_info()), 1L))
   # order 2 where the family writes out the next order of the same object,
   # which a gamma1 does; since distributions7 0.62.0 every family whose
   # expected information is written out does, so the refusal is injected
   expect_true(outer_gradient_ok(h$spec, h$design, h$idx,
-                                reml(hessian = "expected"), 2L))
+                                reml(information = expected_info()), 2L))
   expect_true(expected_deriv2_ok(distributions7::gamma1_distrib()))
   testthat::with_mocked_bindings(
     expect_false(expected_deriv2_ok(distributions7::gamma2_distrib())),
@@ -171,7 +171,7 @@ test_that("the criterion's own information is the one that is factorized", {
   # the exact gradient ran on no other route and became a gradient of the
   # wrong function the moment the expected route was admitted.
   h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)), dge, distributions7::gamma1_distrib(),
-                     reml(hessian = "expected"))
+                     reml(information = expected_info()))
   eta <- h$eta0 + 0.2
   hy <- eta_to_hyper(eta, h$idx, statmod_hyper_start(h$spec, h$design))
   cf <- fit_at_hyper(y ~ s(x, bspline_smooth(k = 8)), distributions7::gamma1_distrib(), dge,

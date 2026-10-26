@@ -544,7 +544,8 @@ path_steps <- function(spec, design, block, beta, split) {
     X <- coord_block(d$X, block$cols)
     coef <- split(beta)
     ep <- statmod_eta(spec, design, coef)
-    wq <- coord_working(spec, ep, coef, design, block$param, FALSE, "bartlett")
+    wq <- coord_working(spec, ep, coef, design, block$param, FALSE,
+                          distributions7::expect_bartlett())
     if (is.null(wq)) return(NULL)
     v <- wxsq(X, wq$w, spec@threads)
     if (any(!is.finite(v)) || any(v <= 0)) return(NULL)
@@ -1281,7 +1282,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
                          optimizer, beta, approx, maxit, tol, vb, data,
                          rows, sweeps = 2L,
                          nested_method = NULL) {
-  expected <- identical(method@hessian, "expected")
+  expected <- info_expected(method@hessian)
   # the information statmod() reads the curvature of a scaled SCAD or MCP
   # with at the fitted coefficients, which a point is scored with as well
   curv_expected <- inner_settings(inner_optimizer)$expected
@@ -2012,7 +2013,7 @@ path_top_shared <- function(obj, beta, blocks, row, hyper, b) {
 #'
 #' @export
 cv <- function(nfolds = 10, folds = NULL, rule = c("min", "1se")) {
-  OuterMethod(kind = "cv", hessian = "observed", k = NA_real_,
+  OuterMethod(kind = "cv", hessian = observed_info(), k = NA_real_,
               nfolds = as.numeric(nfolds), rule = match.arg(rule),
               folds = if (is.null(folds)) numeric(0) else as.numeric(folds))
 }
@@ -2073,6 +2074,9 @@ statmod_select <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # can have its smoothing parameter by REML and its lasso by BIC at once --
   # which one argument could not express.
   sm <- if (is.null(sparse_method)) method else sparse_method
+  # a criterion on the expected information reads the approximation of its
+  # own object, in the fits it makes as well as in the determinant
+  approx <- select_approx(method, sparse_method, approx)
   rows <- path_rows(spec, blocks, hyper)
   if (!nrow(rows)) {
     if (is.null(method)) {
@@ -2080,7 +2084,7 @@ statmod_select <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # whatever the selection ends with, so every select route refines the
       # break-points exactly once
       return(statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
-                               beta, identical(sm@hessian, "expected"),
+                               beta, info_expected(sm@hessian),
                                approx, maxit, tol, vb, hold_refresh = TRUE))
     }
     if (identical(method@kind, "cv")) stop_cv_nothing()

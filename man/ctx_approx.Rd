@@ -11,7 +11,7 @@ ctx_approx(ctx)
 }
 \value{
 A single string: the approximation that the context carries, or
-\code{"opg"} where \code{ctx} is \code{NULL} or carries none.
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} where \code{ctx} is \code{NULL} or carries none.
 }
 \description{
 The Approximation With Which a Context Was Built

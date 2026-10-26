@@ -9,7 +9,7 @@ statmod_objective(
   hyper,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = "opg"
+  approx = distributions7::expect_opg()
 )
 }
 \arguments{

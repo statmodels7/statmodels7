@@ -15,7 +15,7 @@ sparse_fit(
   spec = NULL,
   design = NULL,
   expected = TRUE,
-  approx = "opg"
+  approx = distributions7::expect_opg()
 )
 }
 \arguments{

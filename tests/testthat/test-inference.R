@@ -303,7 +303,7 @@ test_that("a fit whose information is singular says so rather than guessing", {
   expect_true(is.na(coef(f)$mu[["xcopy"]]))
 
   fc <- statmod(y ~ x + xcopy, distributions7::gaussian1_distrib(), sim,
-                inner_optimizer = iwls(decomposition = "chol"))
+                inner_optimizer = iwls(solver = solve_chol()))
   expect_identical(fc@aliased, "mu:xcopy")
   expect_equal(sqrt(diag(vcov(fc)))[c("mu:(Intercept)", "mu:x")],
                sqrt(diag(V))[c("mu:(Intercept)", "mu:x")], tolerance = 1e-5)
@@ -649,7 +649,7 @@ test_that("the zeros of a kinked penalty are checked against their kink", {
   cf <- fit@coefficients
   cf$mu[] <- c(g2@coefficients$mu[1], 0, g2@coefficients$mu[-1])
   cf$sigma[] <- g2@coefficients$sigma
-  obj <- statmod_objective(spec, fit@hyper, design, FALSE, "bartlett")
+  obj <- statmod_objective(spec, fit@hyper, design, FALSE, distributions7::expect_bartlett())
   bad <- zero_readings(spec, design, obj, cf, fit@hyper, lab)
   expect_gt(bad[["ratio"]], 5)
 
@@ -1115,7 +1115,7 @@ test_that("the correction is what the edf correction contracts", {
   C <- vcov(fit, type = "unconditional", readable = FALSE) -
     vcov(fit, readable = FALSE)
   H <- statmod_information_at(fit@spec, fit@coefficients, design,
-                              fit_expected(fit), "opg")
+                              fit_expected(fit), distributions7::expect_opg())
   want <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
                                  design, fit@methods$outer)$total
   expect_gt(want, 0)

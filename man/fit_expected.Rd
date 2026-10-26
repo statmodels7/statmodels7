@@ -15,7 +15,7 @@ A single logical.
 \description{
 Returns \code{TRUE} when \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} inverts the expected information:
 when the fit itself inverted it, which only \code{\link[=iwls]{iwls()}} does and only with
-\code{hessian = "expected"}, and when the family writes that information out in
+\code{information = expected_info()}, and when the family writes that information out in
 closed form.
 }
 \details{

@@ -94,7 +94,7 @@ test_that("the exact gradient and Hessian over (eta, gamma) match differences", 
     b <- beta0
     b[gam$where] <- v[nh + seq_len(ng)]
     res <- statmod_alternate(sp, design, blocks, hy,
-                             iwls(tol = 1e-12, maxit = 500), b, FALSE, "opg",
+                             iwls(tol = 1e-12, maxit = 500), b, FALSE, distributions7::expect_opg(),
                              500, 1e-12, verbosity(0))
     # the mode polished by Newton steps on the free coordinates: a reference
     # refitted to a stall is biased, not noisy
@@ -107,7 +107,7 @@ test_that("the exact gradient and Hessian over (eta, gamma) match differences", 
     }
     cf <- res$obj$split(par)
     list(sp = sp, hy = hy, cf = cf,
-         val = statmod_marginal(sp, design, cf, hy, method, "opg", basis)$value,
+         val = statmod_marginal(sp, design, cf, hy, method, distributions7::expect_opg(), basis)$value,
          g = statmod_marginal_grad(sp, design, cf, hy, method, idx, basis,
                                    gam = gam))
   }
@@ -283,7 +283,7 @@ test_that("the determinant leaves out every coordinate a kink covers", {
                         reml(marginal = "none"))
   nb <- length(unlist(f@coefficients))
   expect_identical(m$q, nb - length(kc))
-  H <- statmod_information_at(spec, f@coefficients, design, FALSE, "opg")
+  H <- statmod_information_at(spec, f@coefficients, design, FALSE, distributions7::expect_opg())
   keep <- setdiff(seq_len(nb), kc)
   expect_equal(m$logdet,
                as.numeric(determinant(as.matrix(H)[keep, keep])$modulus),
@@ -303,7 +303,7 @@ test_that("a coordinate a kink holds at zero adds nothing to the mode error", {
   design <- statmod_design(spec)
   zk <- zero_kinked(spec, design, f@coefficients)
   expect_gt(length(zk), 0L)
-  obj <- statmod_objective(spec, f@hyper, design, FALSE, "opg")
+  obj <- statmod_objective(spec, f@hyper, design, FALSE, distributions7::expect_opg())
   sc <- obj$gr(obj$stack(f@coefficients))
   expect_gt(max(abs(sc[zk])), 1)
   q <- inner_mode_error(NULL, spec, design, f@coefficients, f@hyper, sc)

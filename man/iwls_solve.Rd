@@ -94,7 +94,7 @@ tested again, and the test repeats until every column is finite.
 }
 
 \seealso{
-\code{\link[=iwls_pieces]{iwls_pieces()}} for the input, \code{\link[=iwls]{iwls()}} for the \code{decomposition}
+\code{\link[=iwls_pieces]{iwls_pieces()}} for the input, \code{\link[=iwls]{iwls()}} for the \code{solver}
 argument that this function serves.
 }
 \keyword{internal}

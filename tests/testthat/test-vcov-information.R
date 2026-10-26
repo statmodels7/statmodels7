@@ -21,19 +21,19 @@ test_that("fit_expected asks the family as well as the fit", {
   # observed information by default, and where it is asked for the expected
   # one it uses the approximation; the report does not
   f_pig <- statmod(y ~ x, pig_bare_distrib(), dd)
-  expect_identical(f_pig@methods$smooth@hessian, "observed")
+  expect_identical(info_label(f_pig@methods$smooth@hessian), "observed")
   expect_false(statmodels7:::fit_expected(f_pig))
   f_pig_e <- statmod(y ~ x, pig_bare_distrib(), dd,
-                     inner = iwls(hessian = "expected"))
-  expect_identical(f_pig_e@methods$smooth@hessian, "expected")
+                     inner = iwls(information = expected_info()))
+  expect_identical(info_label(f_pig_e@methods$smooth@hessian), "expected")
   expect_false(statmodels7:::fit_expected(f_pig_e))
   # a family whose expected information is exact but costly: observed by
   # default, and the expected one reported where it is asked for
   f_p1 <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
-  expect_identical(f_p1@methods$smooth@hessian, "observed")
+  expect_identical(info_label(f_p1@methods$smooth@hessian), "observed")
   expect_false(statmodels7:::fit_expected(f_p1))
   f_p1e <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
-                   inner = iwls(hessian = "expected"))
+                   inner = iwls(information = expected_info()))
   expect_true(statmodels7:::fit_expected(f_p1e))
 
   # one that writes it out keeps it
@@ -45,7 +45,7 @@ test_that("fit_expected asks the family as well as the fit", {
 
   # and an explicit "observed" is followed whatever the family
   f_obs <- statmod(y ~ x, distributions7::gaussian1_distrib(), gd,
-                   inner = iwls(hessian = "observed"))
+                   inner = iwls(information = observed_info()))
   expect_false(statmodels7:::fit_expected(f_obs))
 })
 
@@ -63,12 +63,13 @@ test_that("vcov takes approx and it reaches the family", {
   # anything: pig1 computes its own exactly since distributions7 0.65.0.
   dd <- pig_data(60L)
   fit <- statmod(y ~ x, pig_bare_distrib(), dd)
-  V_opg <- vcov(fit, expected = TRUE, approx = "opg")
-  V_bar <- vcov(fit, expected = TRUE, approx = "bartlett")
+  V_opg <- vcov(fit, expected = TRUE, approx = distributions7::expect_opg())
+  V_bar <- vcov(fit, expected = TRUE, approx = distributions7::expect_bartlett())
   expect_false(isTRUE(all.equal(V_opg, V_bar)))
   expect_identical(dimnames(V_opg), dimnames(V_bar))
   # a bad value is refused by name rather than passed on
-  expect_error(vcov(fit, approx = "nonesuch"))
+  expect_error(vcov(fit, approx = "nonesuch"), "expectation object")
+  expect_error(vcov(fit, approx = "bartlett"), "Use expect_bartlett\\(\\)")
 })
 
 test_that("summary passes expected and approx through to vcov", {
@@ -98,9 +99,10 @@ test_that("the cheap and the dear expected information reach the same fit", {
   # point. Small n, because the bartlett route sums over the support per row.
   dd <- pig_data(60L)
   f_opg <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
-                   inner = iwls(hessian = "expected"))
+                   inner = iwls(information = expected_info()))
   f_bar <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
-                   inner = iwls(hessian = "expected", approx = "bartlett"))
+                   inner = iwls(information = expected_info(
+                     approx = distributions7::expect_bartlett())))
   expect_equal(unlist(coef(f_opg)), unlist(coef(f_bar)), tolerance = 1e-4)
   expect_equal(as.numeric(logLik(f_opg)), as.numeric(logLik(f_bar)),
                tolerance = 1e-6)
@@ -112,7 +114,8 @@ test_that("a family with a closed form fits identically under either approx", {
   gd$y <- 1 + 2 * gd$x + stats::rnorm(150, sd = 0.4)
   a <- statmod(y ~ x, distributions7::gaussian1_distrib(), gd)
   b <- statmod(y ~ x, distributions7::gaussian1_distrib(), gd,
-               inner = iwls(approx = "bartlett"))
+               inner = iwls(information = auto_info(
+                   approx = distributions7::expect_bartlett())))
   expect_equal(unlist(coef(a)), unlist(coef(b)))
   expect_equal(vcov(a), vcov(b))
 })

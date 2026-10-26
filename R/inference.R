@@ -119,7 +119,7 @@ aliased_labels <- function(spec, design, idx) {
 #' @description
 #' Returns `TRUE` when [vcov.StatmodFit()] inverts the expected information:
 #' when the fit itself inverted it, which only [iwls()] does and only with
-#' `hessian = "expected"`, and when the family writes that information out in
+#' `information = expected_info()`, and when the family writes that information out in
 #' closed form.
 #'
 #' @details
@@ -150,7 +150,7 @@ fit_expected <- function(object) {
   # inner_settings(), so it did not invert the expected one and the report
   # must not say it did: the rule above is that a standard error comes from
   # the matrix the step used.
-  used <- S7::S7_inherits(m, Iwls) && identical(m@hessian, "expected")
+  used <- S7::S7_inherits(m, Iwls) && info_expected(m@hessian)
   used && distributions7::expected_hessian_exact(object@spec@distrib)
 }
 
@@ -241,11 +241,13 @@ fit_expected <- function(object) {
 #' mixture over states do not have an expected information.
 #'
 #' Where the family has no closed form, `expected = TRUE` reaches an
-#' approximation, and `approx` selects it. `"opg"`, the default, is the outer
-#' product of the observed scores and costs one gradient; `"bartlett"`
-#' evaluates the expectation itself, a sum over the support for a discrete
-#' family and a quadrature for a continuous one, and is orders of magnitude
-#' more expensive. The expensive route is available and is not the default.
+#' approximation, and `approx` selects it. [distributions7::expect_opg()], the
+#' default, is the outer product of the observed scores and costs one gradient;
+#' [distributions7::expect_bartlett()] evaluates the expectation itself, a sum
+#' over the support for a discrete family and a quadrature for a continuous
+#' one, and is orders of magnitude more expensive. The expensive route is
+#' available and is not the default. [distributions7::expected_derivative_methods]
+#' compares the four approximations.
 #'
 #' @param object A [StatmodFit()].
 #' @param type `"bayesian"`, `"frequentist"` or `"unconditional"`. The first
@@ -256,10 +258,14 @@ fit_expected <- function(object) {
 #'   inverted it and the family writes it out, and the observed Hessian
 #'   otherwise. A model that
 #'   carries a structural term always uses the observed information.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form: `"opg"` (the default), `"bartlett"`, `"integrate"`
-#'   or `"mc"`. Read only when `expected` is `TRUE` and the family has no
-#'   closed form.
+#' @param approx The approximation of the expected information for a family
+#'   with no closed form, an object that inherits from
+#'   [distributions7::ExpectApprox]: [distributions7::expect_opg()] (the
+#'   default), [distributions7::expect_bartlett()],
+#'   [distributions7::expect_integrate()] or [distributions7::expect_mc()]; see
+#'   [distributions7::expected_derivative_methods]. Read only when `expected` is
+#'   `TRUE` and the family has no closed form. A character string signals an
+#'   error that names the object to use.
 #' @param readable Whether the matrix is over the quantities that the model
 #'   reports (`TRUE`, the default) or over the coordinates on which it was
 #'   estimated (`FALSE`). A structural term declares its quantities, for
@@ -299,11 +305,11 @@ vcov.StatmodFit <- function(object,
                             type = c("bayesian", "frequentist",
                                      "unconditional"),
                             expected = NULL,
-                            approx = c("opg", "bartlett", "integrate", "mc"),
+                            approx = distributions7::expect_opg(),
                             readable = TRUE,
                             parameter = NULL, ...) {
   type <- match.arg(type)
-  approx <- match.arg(approx)
+  check_info_approx(approx)
   if (is.null(expected)) expected <- fit_expected(object)
   spec <- object@spec
   design <- statmod_design(spec)
@@ -2405,9 +2411,10 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'   passed to [vcov.StatmodFit()]. `NULL`, the default, takes the expected
 #'   one where the fit inverted it and the family writes it out, and the
 #'   observed Hessian otherwise; `TRUE` or `FALSE` selects one.
-#' @param approx How the expected information is approximated for a family
-#'   with no closed form, passed to [vcov.StatmodFit()]: `"opg"` (the
-#'   default), `"bartlett"`, `"integrate"` or `"mc"`.
+#' @param approx The approximation of the expected information for a family
+#'   with no closed form, passed to [vcov.StatmodFit()]: an object that
+#'   inherits from [distributions7::ExpectApprox], with
+#'   [distributions7::expect_opg()] as the default.
 #' @param correct Whether the degrees of freedom include the cost of
 #'   estimating the hyperparameters. The ordinary count treats them as known
 #'   although they were estimated from the same data, so a criterion built on
@@ -2439,13 +2446,13 @@ summary.StatmodFit <- function(object, level = 0.95,
                                type = c("bayesian", "frequentist",
                                         "unconditional"),
                                expected = NULL,
-                               approx = c("opg", "bartlett", "integrate", "mc"),
+                               approx = distributions7::expect_opg(),
                                correct = FALSE,
                                test = c("wald", "lr", "score", "gradient"),
                                max_coef = NULL,
                                ...) {
   type <- match.arg(type)
-  approx <- match.arg(approx)
+  check_info_approx(approx)
   test <- match.arg(test)
   # A TERM WHOSE BLOCK IS A WORKING LINEARIZATION says so ONCE, as a note,
   # rather than once per call to vcov() -- of which this function makes more
@@ -4214,7 +4221,8 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL,
     smoother <<- tryCatch({
       js <- joint_smoother_diag(spec, coef, design, hyper)
       if (!is.null(js) && !isTRUE(js$failed)) c(js$beta, js$zeta) else {
-        H <- statmod_information_at(spec, coef, design, TRUE, "opg")
+        H <- statmod_information_at(spec, coef, design, TRUE,
+                                  distributions7::expect_opg())
         S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design,
                                               "hessian"))
         diag(solve_pd(as_dense(H + S), "the penalized information") %*%
@@ -5249,7 +5257,8 @@ certificate_core <- function(fit, tol, flat, edge) {
     spec <- statmod_hold(spec, gam, beta_all[gam$where])
   }
   if (length(fit@methods$pinned)) attr(design, "pinned") <- fit@methods$pinned
-  ctx <- tryCatch(outer_context(spec, design, cf, hy, "bartlett"),
+  ctx <- tryCatch(outer_context(spec, design, cf, hy,
+                       distributions7::expect_bartlett()),
                   error = function(e) NULL)
 
   # HOW FAR ABOVE THE MODE, in log-likelihood units: the decrease the mode's
@@ -5258,7 +5267,8 @@ certificate_core <- function(fit, tol, flat, edge) {
     pen <- tryCatch(ctx_penalized(ctx, spec, design, cf, hy, FALSE),
                     error = function(e) NULL)
     if (!is.null(pen)) {
-      obj <- tryCatch(statmod_objective(spec, hy, design, FALSE, "bartlett"),
+      obj <- tryCatch(statmod_objective(spec, hy, design, FALSE,
+                                          distributions7::expect_bartlett()),
                       error = function(e) NULL)
       sc <- if (is.null(obj)) NULL else
         tryCatch(obj$gr(obj$stack(cf)), error = function(e) NULL)
@@ -5526,7 +5536,8 @@ certificate_core <- function(fit, tol, flat, edge) {
     # claim more than has been checked. What it can honestly do is name the
     # coordinate, so the reader is not left with "not finite".
     H0 <- tryCatch(ctx_information(ctx, spec, design, cf, hy, FALSE,
-                                   "bartlett"), error = function(e) NULL)
+                                   distributions7::expect_bartlett()),
+                   error = function(e) NULL)
     frozen <- if (is.null(H0)) integer(0) else boundary_coords(H0)
     if (length(frozen)) {
       npar <- vapply(design, function(d) d$npar, integer(1))

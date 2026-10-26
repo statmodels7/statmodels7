@@ -12,12 +12,12 @@ iwls_resolve(method, distrib)
 \item{distrib}{The distribution to which the model is fitted.}
 }
 \value{
-An \code{\link[=Iwls]{Iwls()}} object whose \code{hessian} is \code{"expected"} or
-\code{"observed"} and whose \code{fallback} is \code{TRUE} exactly where \code{"auto"} was
-settled on the observed information.
+An \code{\link[=Iwls]{Iwls()}} object whose \code{hessian} is an \code{\link[=expected_info]{expected_info()}} or an
+\code{\link[=observed_info]{observed_info()}} object and whose \code{fallback} is \code{TRUE} exactly where
+\code{\link[=auto_info]{auto_info()}} was settled on the observed information.
 }
 \description{
-Turns an \code{\link[=iwls]{iwls()}} left at \code{hessian = "auto"} into the method that a fit
+Turns an \code{\link[=iwls]{iwls()}} left at \code{\link[=auto_info]{auto_info()}} into the method that a fit
 runs. The method uses the expected information where the family writes it
 exactly and at an acceptable cost; otherwise it uses the observed
 information, and the expected one takes the step where the observed step

@@ -54,7 +54,7 @@ as_hyper_list <- function(hy) {
 
 test_that("the gradient of a single smoothing parameter matches numDeriv", {
   skip_if_not_installed("numDeriv")
-  h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 10)), dg, reml(hessian = "observed"))
+  h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 10)), dg, reml(information = observed_info()))
   eta <- h$eta0 + 0.4
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
   # away from the start, where the mode has genuinely moved
@@ -69,7 +69,7 @@ test_that("the gradient matches numDeriv with the scale modelled too", {
   # pass the previous test and fail this one
   skip_if_not_installed("numDeriv")
   h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 8)) | sigma ~ z, dg,
-                   reml(hessian = "observed"))
+                   reml(information = observed_info()))
   eta <- h$eta0 + 0.2
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
@@ -80,7 +80,7 @@ test_that("the gradient matches numDeriv with several parameters at once", {
   dt <- data.frame(x1 = runif(200, -1, 1), x2 = runif(200, -1, 1))
   dt$y <- dt$x1^2 + sin(3 * dt$x2) + stats::rnorm(200, sd = 0.3)
   h <- crit_of_eta(y ~ s(x1, bspline_smooth(k = 8)) + s(x2, bspline_smooth(k = 8)), dt,
-                   reml(hessian = "observed"))
+                   reml(information = observed_info()))
   eta <- h$eta0 + c(0.5, -0.6)
   g <- h$gr(eta)
   expect_length(g, 2L)
@@ -91,7 +91,7 @@ test_that("the gradient matches numDeriv with several parameters at once", {
 
 test_that("the gradient matches numDeriv under ml, on the range space", {
   skip_if_not_installed("numDeriv")
-  h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 10)), dg, ml(hessian = "observed"))
+  h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 10)), dg, ml(information = observed_info()))
   eta <- h$eta0 + 0.3
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
@@ -116,7 +116,7 @@ test_that("a prior whose Hessian moves with the coefficients is differentiated",
   spec <- fit0@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
-  for (mt in list(reml(hessian = "observed"), aic(), bic())) {
+  for (mt in list(reml(information = observed_info()), aic(), bic())) {
     expect_true(outer_gradient_ok(spec, design, idx, mt, 1L))
     # Order 2 is exact here since 0.130.0; test-moving-penalty-hessian.R
     # validates it.
@@ -161,12 +161,12 @@ test_that("a prior whose Hessian moves with the coefficients is differentiated",
 
 test_that("the gradient vanishes at the reported optimum", {
   fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dg,
-                 outer_criterion = reml(hessian = "observed", marginal = "none"))
+                 outer_criterion = reml(information = observed_info(), marginal = "none"))
   spec <- fit@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   g <- statmod_marginal_grad(spec, design, fit@coefficients, fit@hyper,
-                             reml(hessian = "observed", marginal = "none"),
+                             reml(information = observed_info(), marginal = "none"),
                              idx)
   expect_lt(max(abs(g)), 1e-4)
 })
@@ -187,7 +187,7 @@ test_that("the gradient is exact where the block moves with the coefficients", {
   dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
   f <- y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp))
   for (hh in c("observed", "expected")) {
-    h <- crit_of_eta(f, dn, reml(hessian = hh), polish = FALSE)
+    h <- crit_of_eta(f, dn, reml(information = info_of(hh)), polish = FALSE)
     eta <- h$eta0 + 0.35
     # the reference refits the mode at the inner default, so it carries that
     # tolerance; the gradient itself measures 4.0e-09 against a mode located
@@ -216,7 +216,7 @@ test_that("the gradient is exact over a break-point nested in nl()", {
                            smoothed = numericals7::smooth_probit()),
                   links = list(r = linkfunctions7::log_link()),
                   start = list(a = 4))
-  h <- crit_of_eta(f, dn, reml(hessian = "observed"), polish = FALSE)
+  h <- crit_of_eta(f, dn, reml(information = observed_info()), polish = FALSE)
   eta <- hyper_to_eta(statmod(f, distributions7::gaussian1_distrib(), dn,
                               outer_criterion = NULL)@hyper, h$idx) + 0.3
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-4)
@@ -246,9 +246,9 @@ test_that("a penalty inside a refreshable term reaches the same optimum", {
   dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
   f <- y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp))
   fe <- statmod(f, distributions7::gaussian1_distrib(), dn,
-                outer_criterion = reml("observed"))
+                outer_criterion = reml(information = observed_info()))
   fd <- statmod(f, distributions7::gaussian1_distrib(), dn,
-                outer_criterion = reml("observed"),
+                outer_criterion = reml(information = observed_info()),
                 outer_optimizer = optimizers7::nelder_mead())
   expect_equal(unlist(lapply(fe@hyper, unlist)),
                unlist(lapply(fd@hyper, unlist)), tolerance = 5e-3)
@@ -285,25 +285,25 @@ test_that("the exact route is taken only where it applies", {
                        dg)
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
-  expect_true(outer_gradient_ok(spec, design, idx, reml("observed")))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = observed_info())))
   # The expected information needs the derivative in beta of -E[l''], which is
   # NOT -E[l''']: differentiating an expectation moves the measure as well as
   # the integrand. distributions7 carries it as distrib_dexpected_hessian()
   # and the route is available wherever the family answers -- a gaussian does.
-  expect_true(outer_gradient_ok(spec, design, idx, reml("expected")))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = expected_info())))
   # and at order 2 where the family writes out the next order of the same
   # object, d2E[l'']/deta^2 -- a gaussian1 does, and so since distributions7
   # 0.62.0 does a gaussian2, so the family that does not is built by
   # injecting the refusal
-  expect_true(outer_gradient_ok(spec, design, idx, reml("expected"), 2L))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = expected_info()), 2L))
   spec2 <- statmod_spec(y ~ s(x, bspline_smooth(k = 8)),
                         distributions7::gaussian2_distrib(), dg)
   design2 <- statmod_design(spec2)
   idx2 <- outer_hyper_index(spec2, statmod_blocks(spec2, design2))
-  expect_true(outer_gradient_ok(spec2, design2, idx2, reml("expected"), 1L))
-  expect_true(outer_gradient_ok(spec2, design2, idx2, reml("expected"), 2L))
+  expect_true(outer_gradient_ok(spec2, design2, idx2, reml(information = expected_info()), 1L))
+  expect_true(outer_gradient_ok(spec2, design2, idx2, reml(information = expected_info()), 2L))
   testthat::with_mocked_bindings(
-    expect_false(outer_gradient_ok(spec2, design2, idx2, reml("expected"), 2L)),
+    expect_false(outer_gradient_ok(spec2, design2, idx2, reml(information = expected_info()), 2L)),
     distrib_d2expected_hessian = function(...) stop("no analytic second derivative"),
     .package = "distributions7")
 
@@ -317,9 +317,9 @@ test_that("the exact route is taken only where it applies", {
                       distributions7::gaussian1_distrib(), dr)
   de2 <- statmod_design(sp2)
   ix2 <- outer_hyper_index(sp2, statmod_blocks(sp2, de2))
-  expect_true(outer_gradient_ok(sp2, de2, ix2, reml("observed")))
+  expect_true(outer_gradient_ok(sp2, de2, ix2, reml(information = observed_info())))
   f <- statmod(y ~ random(~ 1 | g), distributions7::gaussian1_distrib(), dr,
-               outer_criterion = reml("observed"))
+               outer_criterion = reml(information = observed_info()))
   expect_true(is.finite(f@criterion))
 
   # a lasso is not, its penalty having a kink where a Laplace approximation
@@ -337,9 +337,9 @@ test_that("exact and derivative-free reach the same hyperparameter", {
   # the two routes share the criterion and nothing else, so agreeing on where
   # it is largest is a check of the gradient rather than of the optimizer
   fast <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dg,
-                  outer_criterion = reml(hessian = "observed"))
+                  outer_criterion = reml(information = observed_info()))
   slow <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dg,
-                  outer_criterion = reml(hessian = "observed"),
+                  outer_criterion = reml(information = observed_info()),
                   outer_optimizer = optimizers7::nelder_mead())
   lam_f <- fast@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]]
   lam_s <- slow@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]]
@@ -430,7 +430,7 @@ test_that("the gradient reaches a penalty over a filter's own parameters", {
   dp <- sim_gas_panel(7, 3L, 35L)
   form <- y ~ x +
     gas(p = 1, q = 1, omega ~ random(~1 | id), by = id, time = t)
-  h <- struct_harness(form, dp, reml(hessian = "observed"))
+  h <- struct_harness(form, dp, reml(information = observed_info()))
   # the fit must be a sane one, or the reference is differentiating a flat
   # direction rather than the criterion
   expect_true(h$fit0@converged)
@@ -446,7 +446,7 @@ test_that("the structural gradient is right under ml and beside a smooth", {
   dp <- sim_gas_panel(7, 3L, 35L)
   form <- y ~ x +
     gas(p = 1, q = 1, omega ~ random(~1 | id), by = id, time = t)
-  hm <- struct_harness(form, dp, ml(hessian = "observed"))
+  hm <- struct_harness(form, dp, ml(information = observed_info()))
   expect_equal(hm$gr(hm$eta0 + 0.2), central(hm$fn, hm$eta0 + 0.2),
                tolerance = 1e-3)
 
@@ -457,7 +457,7 @@ test_that("the structural gradient is right under ml and beside a smooth", {
   dp$y <- dp$y + sin(1.6 * dp$z)
   f2 <- y ~ x + s(z, bspline_smooth(k = 6)) +
     gas(p = 1, q = 1, omega ~ random(~1 | id), by = id, time = t)
-  h2 <- struct_harness(f2, dp, reml(hessian = "observed"))
+  h2 <- struct_harness(f2, dp, reml(information = observed_info()))
   expect_identical(nrow(h2$idx), 2L)
   eta <- h2$eta0 + c(0.15, -0.15)
   ref <- central(h2$fn, eta)
@@ -479,7 +479,7 @@ test_that("the gradient reaches a covariance class inside a filter", {
   form <- y ~ 0 + gas(p = 1, q = 1, by = id, time = t,
                       omega ~ 1 + random(~ 1 | u | id),
                       kappa1 ~ 1 + random(~ 1 | u | id))
-  h <- struct_harness(form, dp, reml(hessian = "observed"))
+  h <- struct_harness(form, dp, reml(information = observed_info()))
   expect_identical(nrow(h$idx), 3L)
   expect_true(h$fit0@converged)
   ref <- central(h$fn, h$eta0)
@@ -528,9 +528,9 @@ test_that("an outer step the search takes back moves nothing", {
   form <- y ~ x +
     gas(p = 1, q = 1, omega ~ random(~1 | id), by = id, time = t)
   fast <- statmod(form, distributions7::gaussian1_distrib(), dp,
-                  outer_criterion = reml(hessian = "observed"))
+                  outer_criterion = reml(information = observed_info()))
   slow <- statmod(form, distributions7::gaussian1_distrib(), dp,
-                  outer_criterion = reml(hessian = "observed"),
+                  outer_criterion = reml(information = observed_info()),
                   outer_optimizer = optimizers7::nelder_mead())
   expect_true(fast@converged)
   expect_equal(fast@criterion, slow@criterion, tolerance = 1e-5)
@@ -548,10 +548,10 @@ test_that("the exact route is asked of the term, not of its class", {
   de <- statmod_design(sp)
   ix <- outer_hyper_index(sp, statmod_blocks(sp, de))
   expect_true(structural_penalized(sp, de))
-  expect_true(outer_gradient_ok(sp, de, ix, reml("observed")))
+  expect_true(outer_gradient_ok(sp, de, ix, reml(information = observed_info())))
   # the criterion's own SECOND derivative asks for a fourth order through the
   # recursion, and a gas term writes it, so order 2 is exact here too
-  expect_true(outer_gradient_ok(sp, de, ix, reml("observed"), order = 2L))
+  expect_true(outer_gradient_ok(sp, de, ix, reml(information = observed_info()), order = 2L))
 
   # and the question is put to the term. A gas term answers term_third; an
   # additive one inherits the zero that is right for it; a regime term bends
@@ -580,9 +580,9 @@ test_that("the gradient pays from the second hyperparameter on", {
   d3$y <- sin(1.4 * d3$a) + d3$b^2 + stats::rnorm(n2, sd = 0.3)
   f <- y ~ s(a, bspline_smooth(k = 8)) + s(b, bspline_smooth(k = 8))
   fast <- statmod(f, distributions7::gaussian1_distrib(), d3,
-                  outer_criterion = reml(hessian = "observed"))
+                  outer_criterion = reml(information = observed_info()))
   slow <- statmod(f, distributions7::gaussian1_distrib(), d3,
-                  outer_criterion = reml(hessian = "observed"),
+                  outer_criterion = reml(information = observed_info()),
                   outer_optimizer = optimizers7::nelder_mead())
   expect_equal(fast@criterion, slow@criterion, tolerance = 1e-5)
   expect_lt(nrow(fast@history$outer), nrow(slow@history$outer))
@@ -597,7 +597,7 @@ test_that("the outer gradient and Hessian are exact beside a developed joint fil
   form <- y ~ x +
     gas(p = 1, q = 1, omega ~ random(~1 | id), by = id, time = t) |
     sigma ~ gas(p = 1, q = 1, by = id, time = t)
-  method <- reml(hessian = "observed")
+  method <- reml(information = observed_info())
   h <- struct_harness(form, dp, method)
   expect_true(h$fit0@converged)
   for (d in c(0, -0.5)) {
@@ -664,7 +664,7 @@ test_that("the outer gradient and Hessian are exact beside a developed cross loa
                         p_cross = c(sigma = 1),
                         kappa1_sigma ~ 1 + random(~1 | id)) |
            sigma ~ 1))
-  method <- reml(hessian = "observed")
+  method <- reml(information = observed_info())
   # the refits of the reference run Newton to a gradient of 1e-8: the joint
   # route stops where the objective no longer resolves a step, and on the
   # one-way form that left a score of 5.7e-7 at eta0 - 1e-3 and - 2e-3, a

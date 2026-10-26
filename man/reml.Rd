@@ -5,31 +5,34 @@
 \alias{ml}
 \title{Estimate the Hyperparameters by a Marginal Likelihood}
 \usage{
-reml(hessian = c("observed", "auto", "expected"), marginal = NULL)
+reml(information = observed_info(), marginal = NULL)
 
-ml(hessian = c("observed", "auto", "expected"), marginal = NULL)
+ml(information = observed_info(), marginal = NULL)
 }
 \arguments{
-\item{hessian}{Which information enters the determinant: \code{"observed"}
-(the default), the curvature of the log-likelihood at the data, which
-makes the criterion the Laplace approximation, \code{"expected"}, the Fisher
-information, a function of the parameters alone, or \code{"auto"}, which
-\code{\link[=statmod]{statmod()}} settles against the family through \code{\link[=outer_resolve]{outer_resolve()}}: the
-expected information for a Student t, a skew t or a Cauchy response,
-whose observed information is not positive definite at an outlier, and
-the observed information otherwise. The default is \code{"observed"}; the
-expected information is used where the caller names it, as for a Student t
-whose degrees of freedom are modeled. The fitted model records the
-information used. The argument is matched with \code{\link[=match.arg]{match.arg()}}. On the
-expected route the outer gradient is exact wherever the family writes its
-expected information out, as every shipped family does, and the outer
-Hessian is exact wherever the family also supplies the derivative of that
-information that the Hessian reads (every shipped family except
-\code{\link[distributions7:enet_distrib]{distributions7::enet_distrib()}}). A family that does not write its
-expected information out reads the outer product of its scores at the data
-under the default \code{iwls(approx = "opg")}, which is not an expectation, and
-\code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
-\code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
+\item{information}{The information that enters the determinant, an object
+that inherits from \link{Information}. \code{\link[=observed_info]{observed_info()}} (the default) is the
+curvature of the log-likelihood at the data, which makes the criterion the
+Laplace approximation. \code{\link[=expected_info]{expected_info()}} is the Fisher information, a
+function of the parameters alone, and carries an \code{approx} for a family
+that does not write it out. \code{\link[=auto_info]{auto_info()}} is settled against the family by
+\code{\link[=statmod]{statmod()}} through \code{\link[=outer_resolve]{outer_resolve()}}: the expected information for a
+Student t, a skew t or a Cauchy response, whose observed information is
+not positive definite at an outlier, and the observed information
+otherwise. The expected information is used where the caller names it, as
+for a Student t whose degrees of freedom are modeled. The fitted model
+records the information used. On the expected route the outer gradient is
+exact wherever the family writes its expected information out, as every
+shipped family does, and the outer Hessian is exact wherever the family
+also supplies the derivative of that information that the Hessian reads
+(every shipped family except \code{\link[distributions7:enet_distrib]{distributions7::enet_distrib()}}). A family
+that does not write its expected information out reads the outer product
+of its scores at the data under the default
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}, which is not an expectation, and
+\code{\link[=statmod]{statmod()}} rejects \code{expected_info()} there unless its \code{approx} takes an
+expectation, as \code{\link[distributions7:expect_bartlett]{distributions7::expect_bartlett()}} does: see
+\code{\link[=assert_criterion_information]{assert_criterion_information()}}. \link{information_objects} compares the three
+objects. A character string signals an error that names the object to use.}
 
 \item{marginal}{Which distribution parameters have their unpenalized
 coefficients estimated by maximizing this criterion, instead of being
@@ -52,8 +55,8 @@ all, and a \code{reml()} or \code{ml()} passed by name is rejected.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \code{"ml"}, whose
-\code{hessian} and \code{marginal} are as supplied and whose path settings are
-unused.
+\code{hessian} holds the object given as \code{information} and whose \code{marginal} is
+as supplied; its path settings are unused.
 }
 \description{
 Build the criterion object that \code{\link[=statmod]{statmod()}} uses to choose a model's smooth
@@ -211,6 +214,6 @@ likelihood estimation of semiparametric generalized linear models.
 }
 \seealso{
 \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}} for the prediction-error criteria,
-\code{\link[=statmod]{statmod()}} for where these are passed, \code{\link[=hyper]{hyper()}} for reading back what
-they chose.
+\link{information_objects} for the argument \code{information}, \code{\link[=statmod]{statmod()}} for
+where these are passed, \code{\link[=hyper]{hyper()}} for reading back what they chose.
 }

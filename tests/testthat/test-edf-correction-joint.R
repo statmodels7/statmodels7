@@ -81,7 +81,7 @@ test_that("the route it replaced returns exactly zero on the same fit", {
   dz <- statmod_design(fit@spec)
   idx <- outer_hyper_index(fit@spec, statmod_blocks(fit@spec, dz))
 
-  H <- statmod_information_at(fit@spec, fit@coefficients, dz, TRUE, "opg")
+  H <- statmod_information_at(fit@spec, fit@coefficients, dz, TRUE, distributions7::expect_opg())
   nb <- nrow(as.matrix(H))
   cr0 <- hyper_mode_cross(fit@spec, dz, fit@coefficients, fit@hyper, idx, nb)
   expect_equal(cr0$skipped, 1L)
@@ -148,7 +148,7 @@ test_that("a model with no filter takes the branch that was there before", {
                                     fit@hyper))
 
   idx <- outer_hyper_index(fit@spec, statmod_blocks(fit@spec, dz))
-  H <- statmod_information_at(fit@spec, fit@coefficients, dz, TRUE, "opg")
+  H <- statmod_information_at(fit@spec, fit@coefficients, dz, TRUE, distributions7::expect_opg())
   S <- zap_nonfinite(statmod_penalty_at(fit@spec, fit@coefficients,
                                         fit@hyper, dz, "hessian"))
   J <- -solve(H + S) %*%

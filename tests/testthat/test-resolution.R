@@ -14,7 +14,7 @@ test_that("the criterion's resolution is read at the fit and tracks the inner ru
   n <- 300L
   x <- sort(runif(n, -3, 3))
   d <- data.frame(x = x, y = sin(1.5 * x) + rnorm(n, sd = 0.35))
-  meth <- reml(hessian = "observed")
+  meth <- reml(information = observed_info())
 
   at_tol <- function(tol) {
     inner <- iwls(tol = tol, maxit = 300L)
@@ -83,7 +83,7 @@ test_that("the resolution is read off the criterion the SEARCH runs", {
   a <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), d,
                outer_criterion = aic())
   r <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), d,
-               outer_criterion = reml(hessian = "observed"))
+               outer_criterion = reml(information = observed_info()))
   expect_gt(abs(a@criterion - r@criterion), 1)
 
   # and an aic() fit reaches its own optimum: the criterion at the reported

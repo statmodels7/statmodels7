@@ -32,7 +32,7 @@ test_that("a criterion refuses a kinked family by name, with the remedy", {
 
 test_that("every criterion gives the same refusal, since all five read the curvature", {
   dd <- lap_data()
-  crits <- list(reml(hessian = "observed"), reml(hessian = "expected"),
+  crits <- list(reml(information = observed_info()), reml(information = expected_info()),
                 ml(), aic(), bic())
   seen <- vapply(crits, function(cr) {
     tryCatch({

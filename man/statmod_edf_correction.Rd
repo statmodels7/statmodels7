@@ -11,7 +11,7 @@ statmod_edf_correction(
   design,
   method,
   expected = TRUE,
-  approx = "opg",
+  approx = distributions7::expect_opg(),
   pinned = NULL
 )
 }

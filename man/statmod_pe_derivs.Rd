@@ -12,7 +12,7 @@ statmod_pe_derivs(
   method,
   idx,
   order = 1L,
-  approx = "opg"
+  approx = distributions7::expect_opg()
 )
 }
 \arguments{

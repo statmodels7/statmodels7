@@ -4,7 +4,15 @@
 \alias{ctx_information}
 \title{The Information at the Context's Point}
 \usage{
-ctx_information(ctx, spec, design, coef, hyper, expected, approx = "opg")
+ctx_information(
+  ctx,
+  spec,
+  design,
+  coef,
+  hyper,
+  expected,
+  approx = distributions7::expect_opg()
+)
 }
 \arguments{
 \item{ctx}{A context, or \code{NULL}.}

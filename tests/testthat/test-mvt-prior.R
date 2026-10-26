@@ -29,7 +29,7 @@ test_that("the exact outer gradient over a multivariate t prior is exact", {
   spec <- fit0@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
-  for (mt in list(reml(hessian = "observed", marginal = "none"), aic())) {
+  for (mt in list(reml(information = observed_info(), marginal = "none"), aic())) {
     expect_true(outer_gradient_ok(spec, design, idx, mt, 1L))
     expect_true(outer_gradient_ok(spec, design, idx, mt, 2L))
     at <- function(eta) {

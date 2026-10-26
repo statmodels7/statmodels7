@@ -304,7 +304,7 @@ test_that("the curvature is differenced where the form has no analytic one", {
   obs <- statmod(f, gaussian1_distrib(), d,
                  outer_criterion = reml(marginal = "none"))
   exp_ <- statmod(f, gaussian2_distrib(), d,
-                  outer_criterion = reml("expected", marginal = "none"))
+                  outer_criterion = reml(information = expected_info(), marginal = "none"))
   co <- statmod_certificate(obs)
   ce <- statmod_certificate(exp_)
   expect_identical(co$curvature, "analytic")

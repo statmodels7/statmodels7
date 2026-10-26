@@ -14,7 +14,7 @@ u_refresh(
   offs,
   total,
   expected = FALSE,
-  approx = "opg",
+  approx = distributions7::expect_opg(),
   units = NULL,
   Hl = NULL
 )

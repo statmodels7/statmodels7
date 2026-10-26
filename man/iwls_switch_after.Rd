@@ -10,7 +10,7 @@ iwls_switch_after()
 A single number.
 }
 \description{
-Returns the iteration after which an \code{\link[=iwls]{iwls()}} left at \code{hessian = "auto"},
+Returns the iteration after which an \code{\link[=iwls]{iwls()}} left at \code{\link[=auto_info]{auto_info()}},
 and settled on the expected information, continues on the observed
 information.
 }

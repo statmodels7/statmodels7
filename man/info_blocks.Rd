@@ -4,7 +4,13 @@
 \alias{info_blocks}
 \title{The Per-Observation Information Blocks}
 \usage{
-info_blocks(spec, theta, expected = TRUE, approx = "opg", H = NULL)
+info_blocks(
+  spec,
+  theta,
+  expected = TRUE,
+  approx = distributions7::expect_opg(),
+  H = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, read for the distribution, the weights and
@@ -18,7 +24,8 @@ negated observed Hessian.}
 
 \item{approx}{How the expected information is approximated for a family
 that has no closed form, passed through to \pkg{distributions7}:
-\code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}. It is
+as an object that inherits from \link[distributions7:ExpectApprox]{distributions7::ExpectApprox}, with
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} as the default. It is
 ignored when \code{expected} is \code{FALSE} or when the family computes its expected
 information exactly.}
 

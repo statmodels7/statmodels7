@@ -132,7 +132,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # -2.90568, beta1 -3.24139 against -3.24222), exact only on the Poisson,
   # whose log link is canonical. Where order 2 is not admitted the exact
   # gradient is differenced instead.
-  expected <- identical(method@hessian, "expected")
+  expected <- info_expected(method@hessian)
   if (expected && !outer_gradient_ok(spec, design, idx, method, 2L,
                                      gamma = ng > 0L)) {
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
@@ -187,7 +187,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # leaves every expression below untouched.
   units <- refresh_units(spec, design, coef, params, npar, offs)
   Hl <- if (length(units)) {
-    refresh_hessian(spec, design, coef, identical(method@hessian, "expected"),
+    refresh_hessian(spec, design, coef, info_expected(method@hessian),
                     ctx_approx(ctx))
   } else NULL
   # the trace of the refresh part of T[v] against M is v'u, with u the same
@@ -195,7 +195,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # adjoint of term_block_deriv(), so no second route to it is needed
   uref <- if (length(units)) {
     u_refresh(spec, design, coef, M, params, npar, offs, total,
-              identical(method@hessian, "expected"), ctx_approx(ctx),
+              info_expected(method@hessian), ctx_approx(ctx),
               units = units, Hl = Hl)
   } else NULL
   # the weight the block's SECOND derivative is paired with depends on neither
@@ -999,7 +999,7 @@ d4_key <- function(params, a, b, k, q, keys) {
 #'
 #' @keywords internal
 statmod_edf_correction <- function(spec, coef, hyper, design, method,
-                                   expected = TRUE, approx = "opg",
+                                   expected = TRUE, approx = distributions7::expect_opg(),
                                    pinned = NULL) {
   # `n_hyper` is what tells a zero correction from an unavailable one: with
   # no estimated hyperparameter there is nothing to propagate and zero is the

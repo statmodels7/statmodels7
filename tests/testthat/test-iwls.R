@@ -38,18 +38,19 @@ test_that("every decomposition reaches the same point", {
   spec <- statmod_spec(y ~ x + g, distributions7::gaussian1_distrib(), dd)
   ref <- unname(stats::coef(stats::lm(y ~ x + g, dd)))
   for (how in c("qr", "svd", "chol")) {
-    out <- fit_pieces(spec, iwls(decomposition = how))
+    out <- fit_pieces(spec, iwls(solver = switch(how, qr = solve_qr(), svd = solve_svd(),
+                                         chol = solve_chol())))
     expect_equal(out$coef$mu, ref, tolerance = 1e-9, info = how)
   }
 })
 
 test_that("the augmented route is taken, and says when it is not", {
   spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
-  out <- fit_pieces(spec, iwls(decomposition = "qr"))
+  out <- fit_pieces(spec, iwls(solver = solve_qr()))
   expect_true(all(out$res$history$route == "qr"))
   # the observed curvature away from the optimum is routinely indefinite, so
   # the square root does not exist and the step falls back, reporting it
-  out2 <- fit_pieces(spec, iwls(hessian = "observed", decomposition = "qr"))
+  out2 <- fit_pieces(spec, iwls(information = observed_info(), solver = solve_qr()))
   expect_true(out2$res$converged)
   expect_true(any(grepl("chol", out2$res$history$route)))
 })
@@ -207,9 +208,15 @@ test_that("a penalized term shrinks towards zero", {
 })
 
 test_that("iwls states what it rejects and prints itself", {
-  expect_error(iwls(decomposition = "lu"), "arg")
+  expect_error(iwls(solver = "lu"), "solver object")
+  expect_error(iwls(solver = "qr"), "Use solve_qr\\(\\)")
+  expect_error(iwls(information = "expected"), "Use expected_info\\(\\)")
+  expect_error(iwls(information = expected_info(), approx = "opg"),
+               "unused argument")
+  expect_error(iwls(information = expected_info(approx = "opg")),
+               "Use expect_opg\\(\\)")
   expect_error(iwls(maxit = 0), "positive integer")
   expect_error(iwls(tol = -1), "positive number")
   expect_output(print(iwls()), "auto information, qr")
-  expect_output(print(iwls(hessian = "expected")), "expected information, qr")
+  expect_output(print(iwls(information = expected_info())), "expected information, qr")
 })

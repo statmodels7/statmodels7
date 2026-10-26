@@ -10,7 +10,7 @@ statmod_marginal(
   coef,
   hyper,
   method,
-  approx = "opg",
+  approx = distributions7::expect_opg(),
   basis = NULL,
   ctx = NULL
 )

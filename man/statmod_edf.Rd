@@ -10,7 +10,7 @@ statmod_edf(
   design,
   hyper,
   expected = TRUE,
-  approx = "opg",
+  approx = distributions7::expect_opg(),
   aliased = integer(0)
 )
 }

@@ -157,7 +157,8 @@ assert_criterion_order <- function(distrib, method) {
 #' writes that information out, [distributions7::expected_hessian_exact()]
 #' returns `TRUE` and the check is skipped. Where a family does not write it
 #' out, for example a family written outside the toolkit, the information
-#' falls back on the strategy named by `approx`, and the default, `"opg"`,
+#' falls back on the strategy named by the `approx` of the criterion's
+#' [expected_info()], and the default, [distributions7::expect_opg()],
 #' returns \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an
 #' unbiased estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not
 #' the information itself: it depends on the response, as the observed curvature
@@ -170,44 +171,42 @@ assert_criterion_order <- function(distrib, method) {
 #' Hessian and is searched with Newton's method; the outer-product route has
 #' neither and is searched without derivatives.
 #'
-#' The expectation can be requested with another `approx` in [iwls()], and
-#' this check does not reject it: `"bartlett"` sums or integrates over the
-#' support and gives a genuine expected information, at a much higher cost per
-#' evaluation.
+#' The expectation can be requested with another `approx` in the criterion's
+#' [expected_info()], and this check does not reject it:
+#' [distributions7::expect_bartlett()] sums or integrates over the support and
+#' gives a genuine expected information, at a much higher cost per evaluation.
 #'
 #' @param distrib A distributions7 family.
 #' @param method An [OuterMethod()], or `NULL`.
-#' @param approx The approximation with which the fit reads the expected
-#'   information, taken from [inner_settings()].
 #'
 #' @return `NULL`, invisibly. The function is called for the error.
 #'
 #' @examples
 #' statmodels7:::assert_criterion_information(
-#'   distributions7::gaussian1_distrib(), reml("expected"), "opg")
+#'   distributions7::gaussian1_distrib(), reml(information = expected_info()))
 #' # the Poisson-inverse Gaussian computes its expected information exactly
 #' statmodels7:::assert_criterion_information(
-#'   distributions7::pig1_distrib(), reml("expected"), "opg")
+#'   distributions7::pig1_distrib(), reml(information = expected_info()))
 #'
 #' @seealso [expected_is_opg()], the predicate, and [assert_criterion_order()].
 #' @keywords internal
-assert_criterion_information <- function(distrib, method, approx) {
-  if (is.null(method) || !identical(method@hessian, "expected")) {
+assert_criterion_information <- function(distrib, method) {
+  if (is.null(method) || !info_expected(method@hessian)) {
     return(invisible(NULL))
   }
-  if (!expected_is_opg(distrib, approx)) return(invisible(NULL))
-  crit <- sprintf("%s(hessian = \"expected\")", method@kind)
+  if (!expected_is_opg(distrib, method@hessian@approx)) return(invisible(NULL))
+  crit <- sprintf("%s(information = expected_info())", method@kind)
   stop(sprintf(paste0(
     "%s reads the expected information, which '%s' does not write out: with ",
-    "approx = \"opg\" it would read the outer product of the scores at the ",
-    "data, which depends on the response and is not an expectation, so the ",
-    "criterion would be neither the Laplace approximation nor its Fisher ",
+    "approx = expect_opg() it would read the outer product of the scores at ",
+    "the data, which depends on the response and is not an expectation, so ",
+    "the criterion would be neither the Laplace approximation nor its Fisher ",
     "variant and would have no exact outer derivatives. Use ",
-    "%s(hessian = \"observed\"), whose outer gradient and Hessian are exact on ",
-    "this family, or name the expectation with ",
-    "iwls(approx = \"bartlett\"), which sums or integrates over the support at ",
-    "a much higher cost per evaluation."),
-    crit, distrib@distrib_name, method@kind), call. = FALSE)
+    "%s(information = observed_info()), whose outer gradient and Hessian are ",
+    "exact on this family, or name the expectation with ",
+    "%s(information = expected_info(approx = expect_bartlett())), which sums ",
+    "or integrates over the support at a much higher cost per evaluation."),
+    crit, distrib@distrib_name, method@kind, method@kind), call. = FALSE)
 }
 
 #' Does the Family's Expected Information Depend on the Response?
@@ -223,21 +222,23 @@ assert_criterion_information <- function(distrib, method, approx) {
 #' one parameter value and compares the two answers. A family that
 #' [distributions7::expected_hessian_exact()] reports as writing its
 #' information out is not probed, and the probe is not run for any `approx`
-#' other than `"opg"`, the only strategy that reads the response. For a
+#' other than [distributions7::expect_opg()], the only strategy that reads the
+#' response. For a
 #' truncated family, the predicate returns `FALSE` although the expected
 #' information is a quadrature that does not depend on the response, so this
 #' function also returns `FALSE`, and the answer is determined by the probe and
 #' not by the predicate. The caller's random stream is restored.
 #'
 #' @param distrib A distributions7 family.
-#' @param approx The approximation, a string.
+#' @param approx The approximation, an object that inherits from
+#'   [distributions7::ExpectApprox].
 #'
 #' @return A single logical.
 #'
 #' @seealso [assert_criterion_information()]
 #' @keywords internal
 expected_is_opg <- function(distrib, approx) {
-  if (!identical(approx, "opg")) return(FALSE)
+  if (!S7::S7_inherits(approx, distributions7::ExpectOPG)) return(FALSE)
   if (S7::S7_inherits(distrib, distributions7::multivariate_distrib)) return(FALSE)
   exact <- tryCatch(distributions7::expected_hessian_exact(distrib),
                     error = function(e) TRUE)

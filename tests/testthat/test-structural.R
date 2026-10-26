@@ -58,7 +58,7 @@ test_that("a filter beside a random effect meets a SPARSE design", {
   # at a probe hyperparameter -- neither of which is this defect, and both
   # of which made earlier versions of this test fail for the wrong reason.
   hyper <- statmod_hyper_start(spec, design)
-  obj <- statmod_objective(spec, hyper, design, FALSE, "bartlett")
+  obj <- statmod_objective(spec, hyper, design, FALSE, distributions7::expect_bartlett())
   beta <- statmod_start(spec, design, obj, NULL)
   K <- statmod_full_information(spec, obj$split(beta), design)
   nb <- sum(vapply(design, function(d) d$npar, integer(1)))
@@ -744,9 +744,9 @@ panel_at <- function(spec, design, blocks, hyper, beta, value, method,
   hy <- hyper
   for (k in names(hy$mu)) hy$mu[[k]][[1L]] <- value
   res <- statmod_alternate(spec, design, blocks, hy, iwls(), beta, FALSE,
-                           "bartlett", 50, 1e-6, vb_inner(verbosity(0)))
+                           distributions7::expect_bartlett(), 50, 1e-6, vb_inner(verbosity(0)))
   cf <- res$obj$split(res$par)
-  m <- statmod_marginal(spec, design, cf, hy, method, "bartlett", basis)
+  m <- statmod_marginal(spec, design, cf, hy, method, distributions7::expect_bartlett(), basis)
   z <- statmod_structural_state(design)$zeta[[1L]]
   list(m = m, coef = cf, hyper = hy,
        dev = as.numeric(z[grepl(".random", names(z), fixed = TRUE)]))
@@ -759,7 +759,7 @@ test_that("a marginal criterion reaches a penalty on a filter's parameters", {
   design <- statmod_design(spec)
   blocks <- statmod_blocks(spec, design)
   hyper <- statmod_hyper_start(spec, design)
-  obj0 <- statmod_objective(spec, hyper, design, FALSE, "bartlett")
+  obj0 <- statmod_objective(spec, hyper, design, FALSE, distributions7::expect_bartlett())
   beta <- statmod_start(spec, design, obj0, NULL)
 
   # the penalty covers the term's own parameters, one entry per parameter
@@ -783,7 +783,7 @@ test_that("a marginal criterion reaches a penalty on a filter's parameters", {
   # a route that shares no arithmetic with it: numDeriv on the objective
   b <- unlist(got$coef[spec@distrib@params], use.names = FALSE)
   z0 <- as.numeric(sst$zeta[[key]][free])
-  obj <- statmod_objective(spec, got$hyper, design, FALSE, "bartlett")
+  obj <- statmod_objective(spec, got$hyper, design, FALSE, distributions7::expect_bartlett())
   pen_of <- function(u) {
     v <- sst$zeta[[key]]
     v[free] <- u[nb + seq_along(free)]
@@ -808,15 +808,15 @@ test_that("a marginal criterion reaches a penalty on a filter's parameters", {
   # term's parameters, and the missing piece was its third derivative,
   # contracted in the one direction the mode moves in
   # (modelterms7::term_third).
-  expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 1L))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = observed_info()), 1L))
   # and its own SECOND derivative asks for a fourth order through the
   # recursion, which modelterms7::term_fourth() writes
-  expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 2L))
+  expect_true(outer_gradient_ok(spec, design, idx, reml(information = observed_info()), 2L))
   # and the expected information rejects here even though the FAMILY answers
   # distrib_dexpected_hessian(): statmod_marginal_full() assembles the joint
   # curvature from term_curvature(), which is the observed one, so this branch
   # has no expected criterion to differentiate in the first place
-  expect_false(outer_gradient_ok(spec, design, idx, reml("expected"), 1L))
+  expect_false(outer_gradient_ok(spec, design, idx, reml(information = expected_info()), 1L))
 })
 
 test_that("the criterion prefers shrinkage where the groups do not differ", {
@@ -827,7 +827,7 @@ test_that("the criterion prefers shrinkage where the groups do not differ", {
   design <- statmod_design(spec)
   blocks <- statmod_blocks(spec, design)
   hyper <- statmod_hyper_start(spec, design)
-  obj0 <- statmod_objective(spec, hyper, design, FALSE, "bartlett")
+  obj0 <- statmod_objective(spec, hyper, design, FALSE, distributions7::expect_bartlett())
   beta <- statmod_start(spec, design, obj0, NULL)
 
   # the effects' prior is written by its standard deviation, so a tight
