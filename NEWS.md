@@ -1,3 +1,33 @@
+# statmodels7 0.211.0
+
+* The choices of a method are S7 objects. `statmod()` takes
+  `inner_information = auto_info()` (the matrix of the inner fit, which an
+  optimizers7 optimizer such as `newton()` also receives); `iwls()` takes
+  `solver = solve_qr()`, `solve_svd()` or `solve_chol()` and the loop's
+  tolerances; `reml()`, `ml()`, `aic()` and `bic()` take
+  `information = observed_info()` or `expected_info(method = )`. In the outer
+  criterion the matrix and every derivative of it read the same method, so
+  the exact outer gradient and Hessian are available on a family without a
+  closed-form expected information, where `method = NULL` is the
+  `expect_opg()` estimate.
+
+* The variance of the estimates is `vcov_type = bayesian_vcov()`,
+  `frequentist_vcov()` or `unconditional_vcov()` (class `vcov_method`), each
+  with `information = NULL`, resolved by `distributions7::default_information()`.
+  The argument `type` no longer exists: `residuals()` takes `residual_type`
+  and `logLik()` takes `loglik_type`. `vcov()` takes `param`, and
+  `hessian()` takes `information`.
+
+* The test of `statmod_test()`, `confint()` and `summary()` is
+  `wald_test()`, `lr_test()`, `score_test()` or `gradient_test()`.
+
+* `predict()` takes `interval = confidence_interval()`, `group_interval()`
+  or `prediction_interval(predictive = pred_averaged())`, with
+  `pred_plugin()` and `pred_bootstrap(n, refit)`, and `vcov_type` as a named
+  argument.
+
+* A method whose `...` is unused signals an error naming the argument.
+
 # statmodels7 0.210.1
 
 * The leverage diagonal of the outer derivatives takes the compiled kernel
