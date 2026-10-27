@@ -29,7 +29,9 @@ test_that("the evaluation environment of the formula serializes in a few kilobyt
   expect_true(bindingIsActive("s", env))
   # the terms of a fit keep the environment, so the specification stays light
   f <- light_fit()
-  expect_lt(ser_mb(f@spec), 3)
+  fenv <- environment(f@spec@terms$mu[["linpar"]]@formula)
+  expect_true(bindingIsActive("s", fenv))
+  expect_lt(ser_mb(fenv), 0.5)
 })
 
 test_that("a formula with several constructors is read through the bindings", {
