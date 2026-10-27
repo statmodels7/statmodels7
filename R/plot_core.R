@@ -290,8 +290,10 @@ S7::method(plot, StatmodFit) <- plot.StatmodFit
 #' Assemble a Graph from Its Data and Its Layers
 #'
 #' @description
-#' Calls [plot_data()] and [plot_layers()] and adds the layers, the labels
-#' recorded on the data and the theme to an empty `ggplot2::ggplot()`.
+#' Calls [plot_data()] and [plot_layers()] and adds the theme, the layers
+#' and the labels recorded on the data to an empty `ggplot2::ggplot()`. The
+#' theme comes first, so that a list of layers may also carry
+#' `ggplot2::theme()` elements.
 #'
 #' @param type An object inheriting from [plot_type].
 #' @param x The term or family on which [plot_data()] dispatches.
@@ -304,7 +306,8 @@ S7::method(plot, StatmodFit) <- plot.StatmodFit
 plot_assemble <- function(type, x, fit, ctx) {
   d <- plot_data(type, x, fit, ctx = ctx)
   lab <- attr(d, "labels")
-  p <- ggplot2::ggplot() + plot_layers(type, d) + ggplot2::theme_bw()
+  # the theme first, so that a type's layers may adjust its elements
+  p <- ggplot2::ggplot() + ggplot2::theme_bw() + plot_layers(type, d)
   if (length(lab)) p <- p + do.call(ggplot2::labs, lab)
   p
 }
