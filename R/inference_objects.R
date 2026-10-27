@@ -1,4 +1,4 @@
-#' @include predict.R
+#' @include predict.R sandwich.R
 NULL
 
 # The two choices that every inference function of a fit shares, written as
@@ -414,8 +414,8 @@ as_test_statistic <- function(test, arg = "test") {
 #' has the property `name` only. The three conventions of this topic compute
 #' the variance from the curvature of the likelihood and carry one more
 #' property, `information`, which selects the matrix \eqn{H} (see below).
-#' A convention that does not read the curvature, such as one built on
-#' resampled fits, does not carry it.
+#' A convention that does not read the curvature, such as [bootstrap_vcov()],
+#' which is the covariance of refitted, resampled data sets, does not carry it.
 #'
 #' @details
 #' Write \eqn{H} for the information of the log-likelihood and \eqn{S} for the
@@ -555,7 +555,8 @@ BayesianVcov <- S7::new_class("BayesianVcov", parent = vcov_method,
 #' @rdname BayesianVcov
 #' @keywords internal
 FrequentistVcov <- S7::new_class("FrequentistVcov", parent = vcov_method,
-  properties = list(information = S7::new_union(NULL, distributions7::Information)))
+  properties = list(information = S7::new_union(NULL, distributions7::Information),
+                    sandwich = S7::new_union(NULL, SandwichMethod)))
 
 #' @rdname BayesianVcov
 #' @keywords internal
@@ -649,9 +650,14 @@ bayesian_vcov <- function(information = NULL) {
 #' conventions side by side and [vcov.StatmodFit()] for the matrices in full.
 #'
 #' @inheritParams bayesian_vcov
+#' @param sandwich `NULL` (the default) or an object from [hc0_sandwich()] or
+#'   [hc1_sandwich()]. `NULL` keeps \eqn{H} as the meat, the matrix above.
+#'   Otherwise the meat is built from the scores of the observations and the
+#'   matrix is the robust sandwich variance described at [hc0_sandwich()].
 #'
 #' @return A `FrequentistVcov` object, inheriting from [vcov_method], with the
-#'   property `name` equal to `"frequentist"` and the property `information`.
+#'   property `name` equal to `"frequentist"` and the properties `information`
+#'   and `sandwich`.
 #'
 #' @seealso [bayesian_vcov()] and [unconditional_vcov()] for the siblings,
 #'   [vcov_method] for the comparison, and [vcov.StatmodFit()],
@@ -667,11 +673,17 @@ bayesian_vcov <- function(information = NULL) {
 #' vcov(fit, vcov_type = frequentist_vcov())
 #' summary(fit, vcov_type = frequentist_vcov())
 #' frequentist_vcov(information = distributions7::expected_info())
+#' frequentist_vcov(sandwich = hc1_sandwich())
 #' @export
-frequentist_vcov <- function(information = NULL) {
+frequentist_vcov <- function(information = NULL, sandwich = NULL) {
   check_information(information, arg = "information", fn = "frequentist_vcov",
                     auto = FALSE, null = TRUE)
-  FrequentistVcov(name = "frequentist", information = information)
+  if (!is.null(sandwich) && !S7::S7_inherits(sandwich, SandwichMethod)) {
+    stop(paste0("'sandwich' must be NULL or an object such as ",
+                "hc0_sandwich() or hc1_sandwich()."), call. = FALSE)
+  }
+  FrequentistVcov(name = "frequentist", information = information,
+                  sandwich = sandwich)
 }
 
 #' @title Unconditional Variance of a Fit
@@ -741,6 +753,9 @@ S7::method(print, vcov_method) <- function(x, ...) {
   if (S7::prop_exists(x, "information") && !is.null(x@information)) {
     cat(" (", tolower(substr(info_title(x@information), 1L, 1L)),
         substring(info_title(x@information), 2L), ")", sep = "")
+  }
+  if (S7::prop_exists(x, "sandwich") && !is.null(x@sandwich)) {
+    cat(" with ", x@sandwich@type, " sandwich", sep = "")
   }
   cat("\n")
   invisible(x)
