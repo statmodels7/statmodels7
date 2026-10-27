@@ -169,6 +169,11 @@ reference:
     penalized block, a random effect or a structural term.
   contents:
   - plot_effect
+  - plot_breakpoint
+  - plot_filter
+  - plot_news_impact
+  - plot_states
+  - plot_regime_density
 
 - title: Installing and updating
   desc: >
