@@ -370,7 +370,11 @@ statmod_stat_at <- function(fit, param, coefname, value = 0,
     lab <- rownames(coef_labels(spec, design))[at]
     v <- if (is.na(at) || !lab %in% rownames(V)) NA_real_ else V[lab, lab]
     if (!isTRUE(is.finite(v)) || v <= 0) return(out(NA_real_, NA))
-    return(out((bhat - value)^2 / v, NA))
+    res <- out((bhat - value)^2 / v, NA)
+    # CR2: the t reference with Satterthwaite degrees of freedom
+    dfs <- sandwich_wald_df(fit, vcov_type, lab)
+    if (is.finite(dfs)) res$p.value <- wald_pvalue(sqrt(res$statistic), dfs)
+    return(res)
   }
 
   r <- statmod_restrict(fit, param, coefname, value)

@@ -27,11 +27,19 @@ SandwichMethod <- S7::new_class(
   properties = list(
     type = S7::class_character,
     cluster = S7::new_union(NULL, S7::class_formula),
-    data = S7::new_union(NULL, S7::class_data.frame)
+    data = S7::new_union(NULL, S7::class_data.frame),
+    reference = S7::new_property(S7::class_character, default = "normal")
   ),
   validator = function(self) {
-    if (length(self@type) != 1L || !self@type %in% c("HC0", "HC1")) {
-      return("@type must be \"HC0\" or \"HC1\".")
+    if (length(self@type) != 1L ||
+        !self@type %in% c("HC0", "HC1", "HC2", "HC3", "HC4")) {
+      return("@type must be \"HC0\", \"HC1\", \"HC2\", \"HC3\" or \"HC4\".")
+    }
+    if (identical(self@type, "HC4") && !is.null(self@cluster)) {
+      return("HC4 has no version for clusters.")
+    }
+    if (length(self@reference) != 1L || !self@reference %in% c("t", "normal")) {
+      return("@reference must be \"t\" or \"normal\".")
     }
     cl <- self@cluster
     if (!is.null(cl) && (length(cl) != 2L || !is.name(cl[[2L]]))) {
@@ -289,7 +297,8 @@ sandwich_check <- function(fit, design) {
 #'   [vcov.StatmodFit()], which calls it.
 #'
 #' @keywords internal
-sandwich_vcov <- function(fit, design, Vb, cols, sw) {
+sandwich_vcov <- function(fit, design, Vb, cols, sw, expected = FALSE,
+                          emethod = NULL) {
   spec <- fit@spec
   n <- spec@n_obs
   id <- if (is.null(sw@cluster)) NULL else sandwich_cluster(fit, design, sw)
@@ -301,6 +310,13 @@ sandwich_vcov <- function(fit, design, Vb, cols, sw) {
   }
   w <- spec@weights
   g <- statmod_score_obs(spec, fit@coefficients, design)
+  df_fn <- NULL
+  if (sw@type %in% c("HC2", "HC3", "HC4")) {
+    adj <- sandwich_adjusted(fit, design, Vb, cols, g, id, sw, expected,
+                             emethod)
+    g <- adj$g
+    df_fn <- adj$df_fn
+  }
   # g already carries w_i. Without a cluster the meat is sum w_i g_i g_i',
   # the meat of w_i separate copies of row i, so each row enters as
   # g_i sqrt(w_i) = (w_i g_i) / sqrt(w_i). With a cluster the copies stay in
@@ -328,7 +344,7 @@ sandwich_vcov <- function(fit, design, Vb, cols, sw) {
     U <- A %*% U
   }
   B <- as.matrix(Matrix::crossprod(U))
-  scale <- if (sw@type == "HC0") 1 else if (is.null(id)) {
+  scale <- if (sw@type %in% c("HC0", "HC2", "HC3", "HC4")) 1 else if (is.null(id)) {
     if (n - p <= 0) stop("HC1 needs fewer effective parameters than observations.",
                          call. = FALSE)
     n / (n - p)
@@ -338,5 +354,7 @@ sandwich_vcov <- function(fit, design, Vb, cols, sw) {
     G / (G - 1) * (n - 1) / (n - p)
   }
   V <- scale * (Vb %*% B %*% Vb)
-  (V + t(V)) / 2
+  V <- (V + t(V)) / 2
+  if (!is.null(df_fn)) attr(V, "df_fn") <- df_fn
+  V
 }

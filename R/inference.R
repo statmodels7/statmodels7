@@ -532,7 +532,7 @@ vcov.StatmodFit <- function(object,
       as_dense(Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb)
     } else {
       sandwich_vcov(object, design, as_dense(Vb), which(keep_full),
-                    vcov_type@sandwich)
+                    vcov_type@sandwich, expected, emethod)
     },
     unconditional = {
       # THE OTHER TWO ARE CONDITIONAL ON THE HYPERPARAMETERS, both read at
@@ -603,6 +603,9 @@ vcov.StatmodFit <- function(object,
     }
   }
   dimnames(out) <- list(rn, rn)
+  if (is.function(attr(V, "df_fn"))) {
+    attr(out, "df_fn") <- sandwich_df_by_name(attr(V, "df_fn"), rn[keep_full])
+  }
   if (isTRUE(readable)) {
     out <- readable_vcov(spec, design, object, out)
   } else if (nz) {
@@ -2045,8 +2048,17 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
     }
     out <- out[keep, , drop = FALSE]
   }
+  # a t reference where the sandwich carries degrees of freedom (CR2)
+  dfq <- wald_reference(V, rownames(out), out$se, level)
+  if (any(is.finite(dfq$df))) {
+    out$lower <- out$estimate - dfq$z * out$se
+    out$upper <- out$estimate + dfq$z * out$se
+  }
   if (test_restricted(test)) {
     out <- invert_rows(object, out, level, test, vcov_type)
+  }
+  if (any(is.finite(dfq$df))) {
+    attr(out, "df") <- stats::setNames(dfq$df, rownames(out))
   }
   out
 }
@@ -2656,7 +2668,7 @@ summary.StatmodFit <- function(object, level = 0.95,
       paste(unique(held_terms), collapse = ", ")))
   }
   ci$statistic <- ci$estimate / ci$se
-  ci$p_value <- 2 * stats::pnorm(-abs(ci$statistic))
+  ci$p_value <- wald_pvalue(ci$statistic, attr(ci, "df"))
   test_msg <- character(0)
   if (test_restricted(test)) {
     rs <- restricted_stat_rows(object, ci, test, vcov_type, spec, design)

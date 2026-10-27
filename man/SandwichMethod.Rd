@@ -4,7 +4,12 @@
 \alias{SandwichMethod}
 \title{S7 Class for the Meat of a Sandwich Variance}
 \usage{
-SandwichMethod(type = character(0), cluster = NULL, data = NULL)
+SandwichMethod(
+  type = character(0),
+  cluster = NULL,
+  data = NULL,
+  reference = "normal"
+)
 }
 \arguments{
 \item{type}{A single string, \code{"HC0"} or \code{"HC1"}.}
