@@ -1,7 +1,7 @@
 # Reject a Fit That the HAC Variance Does Not Cover
 
-Signals an error for a fit with a term whose block moves with its
-coefficients, and for a model with no structural term and no `time`.
+Signals an error for a fit with a sharp break-point term, and for a
+model with no structural term and no `time`.
 
 ## Usage
 

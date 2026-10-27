@@ -1,7 +1,7 @@
 # Reject a Fit That the Sandwich Variance Does Not Cover
 
-Signals an error for a fit with a structural term, a term whose block
-moves with its coefficients.
+Signals an error for a fit with a structural term or with a sharp
+break-point term.
 
 ## Usage
 

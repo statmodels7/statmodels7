@@ -243,6 +243,8 @@ the extractor that reads them.
   : Parametric Resampling
 - [`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
   : Case Resampling
+- [`bayesian_resample()`](https://statmodels7.github.io/statmodels7/reference/bayesian_resample.md)
+  : Bayesian Resampling
 - [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
   : Cluster Resampling
 - [`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md)
@@ -254,8 +256,10 @@ the extractor that reads them.
 - [`bootstrap_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
   [`PercentileInterval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
   [`BasicInterval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  [`BcaInterval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
   [`percentile_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
   [`basic_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  [`bca_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
   : Bootstrap Intervals for the Coefficients of a Fit
 
 ## Graphs of a fit
@@ -407,6 +411,7 @@ helper functions. Using the package does not require any of it.
 
 - [`ParametricResample()`](https://statmodels7.github.io/statmodels7/reference/ParametricResample.md)
   [`CaseResample()`](https://statmodels7.github.io/statmodels7/reference/ParametricResample.md)
+  [`BayesianResample()`](https://statmodels7.github.io/statmodels7/reference/ParametricResample.md)
   [`ClusterResample()`](https://statmodels7.github.io/statmodels7/reference/ParametricResample.md)
   : S7 Classes for the Shipped Resampling Schemes
 
@@ -588,6 +593,12 @@ helper functions. Using the package does not require any of it.
 - [`blocks_at_kink()`](https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.md)
   : Record Where a Path Has Just Been
 
+- [`boot_bca_check()`](https://statmodels7.github.io/statmodels7/reference/boot_bca_check.md)
+  : Reject a Resampling Scheme That the BCa Interval Cannot Use
+
+- [`boot_bca_limits()`](https://statmodels7.github.io/statmodels7/reference/boot_bca_limits.md)
+  : The BCa Limits of One Quantity
+
 - [`boot_body()`](https://statmodels7.github.io/statmodels7/reference/boot_body.md)
   : The Function That Refits the Replicates of a Round
 
@@ -626,8 +637,14 @@ helper functions. Using the package does not require any of it.
 - [`boot_interval_vcov()`](https://statmodels7.github.io/statmodels7/reference/boot_interval_vcov.md)
   : The Bootstrap Variance That Supplies a Bootstrap Interval
 
+- [`boot_jackknife_get()`](https://statmodels7.github.io/statmodels7/reference/boot_jackknife_get.md)
+  : The Stored Refits Without One Unit
+
 - [`boot_key()`](https://statmodels7.github.io/statmodels7/reference/boot_key.md)
   : The Key of an Entry in the Collection
+
+- [`boot_light()`](https://statmodels7.github.io/statmodels7/reference/boot_light.md)
+  : The Fit as the Workers Receive It
 
 - [`boot_mode()`](https://statmodels7.github.io/statmodels7/reference/boot_mode.md)
   : The Kind of Model That the Bootstrap Treats Apart
@@ -703,6 +720,9 @@ helper functions. Using the package does not require any of it.
 - [`bootstrap_engine()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_engine.md)
   : The Engine of the Bootstrap
 
+- [`bootstrap_jackknife()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_jackknife.md)
+  : The Refits Without One Observation or One Cluster
+
 - [`bootstrap_plan()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_plan.md)
   : The Draw of One Bootstrap Replicate
 
@@ -720,6 +740,9 @@ helper functions. Using the package does not require any of it.
 
 - [`bp_test_locate()`](https://statmodels7.github.io/statmodels7/reference/bp_test_locate.md)
   : Where the Break-Point Term of a Fit Is
+
+- [`break_edges()`](https://statmodels7.github.io/statmodels7/reference/break_edges.md)
+  : The Range of a Break-Point Position
 
 - [`breakpoint_inset()`](https://statmodels7.github.io/statmodels7/reference/breakpoint_inset.md)
   : The Profile Inset of the Break-Point Graph
@@ -1121,6 +1144,9 @@ helper functions. Using the package does not require any of it.
 - [`expected_deriv_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.md)
   : Does the Family Supply the Expected Information's Derivative?
 
+- [`export_binding()`](https://statmodels7.github.io/statmodels7/reference/export_binding.md)
+  : The Active Binding of One Export of modelterms7
+
 - [`family(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/family.StatmodFit.md)
   : The Distribution of a Fitted Model
 
@@ -1401,6 +1427,9 @@ helper functions. Using the package does not require any of it.
 - [`iwls_tied()`](https://statmodels7.github.io/statmodels7/reference/iwls_tied.md)
   : The Scoring Fit on the Subspace That a Kink Leaves Free
 
+- [`jackknife_plan()`](https://statmodels7.github.io/statmodels7/reference/jackknife_plan.md)
+  : The Plan of a Delete-One Refit
+
 - [`jacobian_depends()`](https://statmodels7.github.io/statmodels7/reference/jacobian_depends.md)
   : Which Readings a Chart's Coordinate Enters
 
@@ -1654,6 +1683,9 @@ helper functions. Using the package does not require any of it.
 
 - [`observed_indefinite()`](https://statmodels7.github.io/statmodels7/reference/observed_indefinite.md)
   : Whether a Family's Observed Information Can Be Indefinite
+
+- [`offset_variables()`](https://statmodels7.github.io/statmodels7/reference/offset_variables.md)
+  : Variables of the Offsets
 
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression

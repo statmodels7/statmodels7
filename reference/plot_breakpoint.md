@@ -85,8 +85,9 @@ The interval of a break-point of a
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
 term is `confint(fit, parm, test = test, readable = FALSE)` on its
 coefficient, so that `test = lr_test()` inverts the likelihood ratio
-test of the position and `test = wald_test()` gives the Wald interval.
-The position of a
+test of the position and `test = wald_test()` gives the Wald interval. A
+limit that the data do not bound is infinite, and the bar is drawn to
+the end of the range of the variable. The position of a
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
 or
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)

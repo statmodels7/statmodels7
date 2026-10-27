@@ -9,7 +9,7 @@ locating the two points where the statistic crosses its critical value."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,10 +89,11 @@ stops.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A numeric vector of two, <code>lower</code> and <code>upper</code>. An end that the
-search could not bracket within <code>maxit</code> widenings, or at which the
-statistic could not be evaluated, is <code>NA</code>; both ends are <code>NA</code> when the
-standard error of the coefficient is not finite and positive.</p>
+    <p>A numeric vector of two, <code>lower</code> and <code>upper</code>. A side of the
+position of a break-point that the data do not bound is <code>-Inf</code> or <code>Inf</code>.
+An end that the search could not bracket within <code>maxit</code> widenings, or at
+which the statistic could not be evaluated, is <code>NA</code>; both ends are <code>NA</code>
+when the standard error of the coefficient is not finite and positive.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -110,6 +111,13 @@ the crossing with <code><a href="https://rdrr.io/r/stats/uniroot.html" class="ex
 Each evaluation is one restricted refit, warm-started at the unrestricted
 estimates and run at the fitted hyperparameters, so the interval requires
 no outer search.</p>
+<p>The position of a break-point has a range: a value at or beyond the
+smallest or the largest observation of the variable leaves the term with no
+effect, so that every such value gives the same refit. <code><a href="break_edges.html">break_edges()</a></code>
+returns that range, and the search never leaves it. On a side where the
+statistic is still under its critical value when the search reaches the end
+of the range, the data do not bound the position, and the limit is
+<code>-Inf</code> or <code>Inf</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

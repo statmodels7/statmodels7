@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,23 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.215.0" id="statmodels7-02150">statmodels7 0.215.0<a class="anchor" aria-label="anchor" href="#statmodels7-02150"></a></h2>
+<ul><li>
+<code><a href="../reference/bayesian_resample.html">bayesian_resample()</a></code> selects the Bayesian bootstrap. Each replicate gives every observation a weight drawn from the flat Dirichlet distribution and scaled to sum to the number of observations, so no replicate loses a level of a factor. It is rejected beside <code>random()</code> and structural terms, like <code><a href="../reference/case_resample.html">case_resample()</a></code>.</li>
+<li>
+<code><a href="../reference/bootstrap_interval.html">bca_interval()</a></code> is the third interval of <code>confint(interval = )</code>, beside <code><a href="../reference/bootstrap_interval.html">percentile_interval()</a></code> and <code><a href="../reference/bootstrap_interval.html">basic_interval()</a></code>. The acceleration comes from the refits without one observation (or one cluster), which are made once and stored in the entry of the bootstrap. It is available for the case, cluster and Bayesian schemes.</li>
+<li>
+<code><a href="../reference/hc0_sandwich.html">hc0_sandwich()</a></code> to <code><a href="../reference/hc2_sandwich.html">hc4_sandwich()</a></code> take <code>weights = "frequency"</code> (the default, as before) or <code>"sampling"</code>. The sampling reading takes the prior weights as inverse probabilities of selection, uses <code>sum(w^2 g g')</code> without a cluster and does not change when the weights are rescaled.</li>
+<li>The sandwich and HAC variances accept <code>seg()</code>, <code>nl()</code> and the break-point terms with a held or smoothed position; the scores are read on the design refreshed at the fit.</li>
+<li>The environment that a fit keeps for the formula binds the exports of modelterms7 by active bindings. A fit of a smooth model with 2000 observations is 16 MB smaller, and the bootstrap sends its workers a fit without the stored outer search (50.0 to 7.5 MB for one round).</li>
+<li>The documentation of the resampling schemes states how the replicates of a kinked penalty are read.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.214.0" id="statmodels7-02140">statmodels7 0.214.0<a class="anchor" aria-label="anchor" href="#statmodels7-02140"></a></h2>
+<ul><li>
+<code>confint(test = lr_test())</code>, <code><a href="../reference/score_test.html">score_test()</a></code> and <code><a href="../reference/gradient_test.html">gradient_test()</a></code> on the position of a <code>seg()</code> break-point stop the search at the range of the variable, where the refit no longer changes. A limit that the data do not bound is <code>-Inf</code> or <code>Inf</code> where it was <code>NA</code> after up to 40 refits beyond the data (52 refits for a second break-point with a weak slope, now 15), and <code><a href="../reference/plot_breakpoint.html">plot_breakpoint()</a></code> draws that bar to the end of the range. <code>NA</code> is left to a refit that fails.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.213.0" id="statmodels7-02130">statmodels7 0.213.0<a class="anchor" aria-label="anchor" href="#statmodels7-02130"></a></h2>
 <ul><li><p>A model with a <code>gas()</code> term has an expected information: the one conditional on the past, <code>sum_t J_t' I(eta_t) J_t</code>, with <code>J_t</code> the Jacobian of the predictors of observation <code>t</code> in the coefficients and the filter’s own parameters. <code><a href="../reference/bayesian_vcov.html">bayesian_vcov()</a></code>, <code><a href="../reference/frequentist_vcov.html">frequentist_vcov()</a></code> and <code><a href="../reference/unconditional_vcov.html">unconditional_vcov()</a></code> invert it where their <code>information</code> is <code>expected_info()</code>, and the <code>method</code> of that object is applied at the fitted predictors, so a family with its density alone is served too (<code>expect_opg()</code> gives the sum of the outer products of the per-observation scores). The structural table and the effective degrees of freedom of <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> read the same matrix. A <code>NULL</code> information resolves by the family as before, so a family with a kink now has finite standard errors beside a filter.</p></li>

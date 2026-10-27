@@ -43,7 +43,8 @@ boot_body(
 
 - plans:
 
-  The draws of the round.
+  The draws of the round, or a function of the position that returns the
+  draw.
 
 - ref:
 

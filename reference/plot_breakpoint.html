@@ -17,7 +17,7 @@ the position of the break-point."><meta property="og:image" content="https://sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,7 +119,9 @@ coefficients) and \(V\) the variance of the coefficients of the term.</p>
 <p>The interval of a break-point of a <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code> term is
 <code>confint(fit, parm, test = test, readable = FALSE)</code> on its coefficient, so
 that <code>test = lr_test()</code> inverts the likelihood ratio test of the position
-and <code>test = wald_test()</code> gives the Wald interval. The position of a
+and <code>test = wald_test()</code> gives the Wald interval. A limit that the data do
+not bound is infinite, and the bar is drawn to the end of the range of the
+variable. The position of a
 <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> or <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> term is read off other
 coefficients and has no coordinate to invert a test on; its interval is
 the set of positions, connected to the estimate, at which the profile

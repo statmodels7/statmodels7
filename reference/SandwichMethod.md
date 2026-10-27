@@ -15,7 +15,8 @@ SandwichMethod(
   type = character(0),
   cluster = NULL,
   data = NULL,
-  reference = "normal"
+  reference = "normal",
+  weights = "frequency"
 )
 ```
 
@@ -33,9 +34,14 @@ SandwichMethod(
 
   `NULL` or the data frame that holds the cluster variable.
 
+- weights:
+
+  `"frequency"` or `"sampling"`, the reading of the prior weights.
+
 ## Value
 
-An S7 object with the properties `type`, `cluster` and `data`.
+An S7 object with the properties `type`, `cluster`, `data` and
+`weights`.
 
 ## See also
 

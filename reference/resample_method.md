@@ -1,21 +1,23 @@
 # Resampling Schemes for the Bootstrap of a Fit
 
-Three schemes generate the data sets from which
+Four schemes generate the data sets from which
 [`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md)
 refits a model.
 [`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md)
 draws a new response from the fitted model,
 [`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
-draws observations with replacement, and
+draws observations with replacement,
 [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
-draws groups of observations with replacement. Each is an object, and
+draws groups of observations with replacement, and
+[`bayesian_resample()`](https://statmodels7.github.io/statmodels7/reference/bayesian_resample.md)
+gives the observations random positive weights. Each is an object, and
 the object is passed as the argument `resample` of
 [`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md),
 [`bootstrap_vcov()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_vcov.md)
 and
 [`statmod_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/statmod_bootstrap.md).
 
-`resample_method` is the abstract parent of the three classes. It cannot
+`resample_method` is the abstract parent of the four classes. It cannot
 be instantiated, and serves to test membership with
 [`S7::S7_inherits()`](https://rconsortium.github.io/S7/reference/S7_inherits.html).
 
@@ -47,7 +49,24 @@ where the penalties and hyperparameters are held). The case and cluster
 schemes resample the data, so they do not depend on the variance
 specification of the model: with a heteroscedastic response fitted by a
 homoscedastic model the case bootstrap converges to the sandwich
-variance, which the parametric bootstrap does not.
+variance, which the parametric bootstrap does not. The Bayesian scheme
+is a smoothed version of the case scheme: its weights are positive, so
+no replicate loses a level of a factor or separates a logistic
+regression, and its variance is close to that of the case scheme.
+
+With a kinked penalty
+([`modelterms7::lasso()`](https://statmodels7.github.io/modelterms7/reference/lasso.html),
+[`modelterms7::enet()`](https://statmodels7.github.io/modelterms7/reference/enet.html),
+[`modelterms7::scad()`](https://statmodels7.github.io/modelterms7/reference/scad.html),
+[`modelterms7::mcp()`](https://statmodels7.github.io/modelterms7/reference/mcp.html))
+the replicates are those of the penalized estimator. They carry its bias
+toward zero, so an interval taken from them covers the expected value of
+that estimator and not the coefficient, and the frequency with which a
+coordinate is nonzero in the replicates, which
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+prints, is not the probability that the fit selects that coordinate.
+Every scheme draws \\n\\ observations; resampling fewer than \\n\\ is
+not offered.
 
 A resampled data set is represented by frequency weights, which multiply
 the weights of the fit. The design is not rebuilt, so the knots of a
@@ -63,10 +82,11 @@ blueprints of the fit for every term other than the random-effect terms
 ## See also
 
 [`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md),
-[`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
-and
+[`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md),
 [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
-for the three schemes,
+and
+[`bayesian_resample()`](https://statmodels7.github.io/statmodels7/reference/bayesian_resample.md)
+for the four schemes,
 [`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md)
 for the function that takes one.
 

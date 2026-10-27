@@ -107,10 +107,11 @@ the order and the groups.
 The prior weights of
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 multiply the log-likelihood contribution of an observation, and so its
-score; they are not otherwise interpreted. Models with a term whose
-block moves with its coefficients (the break-point terms and
-[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html))
-are rejected.
+score; they are not otherwise interpreted. A model with a term whose
+block moves with its coefficients is accepted when
+[`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md)
+accepts it: the scores are those of the block read at the fit, and a
+frozen working linearization of a sharp step is rejected.
 
 ## References
 

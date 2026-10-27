@@ -1,7 +1,8 @@
 # New Data for an Effect on the Response Scale
 
-Completes a grid with every variable of the model: those in `at` take
-the given values, and the others their median or first level in `data`.
+Completes a grid with every variable of the model, those of the terms
+and those of the offsets: the variables in `at` take the given values,
+and the others their median or first level in `data`.
 
 ## Usage
 

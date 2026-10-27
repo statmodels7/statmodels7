@@ -63,6 +63,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/auto_info.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/bayesian_resample.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bind_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_column_rank.html</loc></url>
@@ -72,6 +73,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_rows_shown.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_stem.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/boot_bca_check.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/boot_bca_limits.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_body.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_cluster_ids.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_cluster_random_check.html</loc></url>
@@ -83,7 +86,9 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_fill.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_interval_new.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_interval_vcov.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/boot_jackknife_get.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_key.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/boot_light.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_mode.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_plan_structural.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boot_plan_wrap.html</loc></url>
@@ -109,6 +114,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bootstrap_check.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bootstrap_engine.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/bootstrap_jackknife.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bootstrap_plan.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bootstrap_refit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bootstrap_simulator.html</loc></url>
@@ -116,6 +122,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boundary_coords.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bounded_bump.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bp_test_locate.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/break_edges.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/breakpoint_inset.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/case_resample.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/certificate_core.html</loc></url>
@@ -250,6 +257,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/eval_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/expected_deriv2_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/export_binding.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/family.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/filter_curvature.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/filter_data.html</loc></url>
@@ -352,6 +360,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_solvers.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_tied.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/jackknife_plan.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/jacobian_depends.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/join_gas_terms.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_callbacks.html</loc></url>
@@ -435,6 +444,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/null_basis.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/null_coordinates.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/observed_indefinite.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/offset_variables.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/one_sided.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/order_available.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/order_shortfall.html</loc></url>

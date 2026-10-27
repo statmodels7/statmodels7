@@ -11,7 +11,7 @@ returned by statmod_bootstrap()."><meta property="og:image" content="https://sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,8 @@ returned by <code><a href="statmod_bootstrap.html">statmod_bootstrap()</a></code
 
 <dt id="arg-resample">resample<a class="anchor" aria-label="anchor" href="#arg-resample"></a></dt>
 <dd><p>A <a href="resample_method.html">resample_method</a> object: <code><a href="parametric_resample.html">parametric_resample()</a></code> (the
-default), <code><a href="case_resample.html">case_resample()</a></code> or <code><a href="cluster_resample.html">cluster_resample()</a></code>.</p></dd>
+default), <code><a href="case_resample.html">case_resample()</a></code>, <code><a href="cluster_resample.html">cluster_resample()</a></code> or
+<code><a href="bayesian_resample.html">bayesian_resample()</a></code>.</p></dd>
 
 
 <dt id="arg-refit">refit<a class="anchor" aria-label="anchor" href="#arg-refit"></a></dt>
@@ -115,16 +116,16 @@ replicate conditions the bootstrap on success, so it understates the
 variability when failures are frequent.</p>
 <p>The refits use the <code>inner_information</code> of the fit. A fit with a response that
 is not one number per observation, or (with <code>refit = "full"</code>) a <code><a href="cv.html">cv()</a></code>
-criterion is rejected, and so is <code><a href="case_resample.html">case_resample()</a></code> beside a
-<code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term.</p>
+criterion is rejected, and so are <code><a href="case_resample.html">case_resample()</a></code> and
+<code><a href="bayesian_resample.html">bayesian_resample()</a></code> beside a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term.</p>
 <p>A fit with a score-driven or a regime term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>,
 <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>) takes <code><a href="parametric_resample.html">parametric_resample()</a></code> only. Each replicate
 is a new path of the series, drawn through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_simulate.html" class="external-link">modelterms7::term_simulate()</a></code>
 at the fitted coefficients and parameters of the term, so the recursion of
 the filter runs on the draws; it is not the fitted filtered path with new
 noise. A resample of rows or of groups breaks the recursion at every join, and
-<code><a href="case_resample.html">case_resample()</a></code> and <code><a href="cluster_resample.html">cluster_resample()</a></code> signal an error that names
-<code><a href="parametric_resample.html">parametric_resample()</a></code>. The effects of a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term keep
+<code><a href="case_resample.html">case_resample()</a></code>, <code><a href="cluster_resample.html">cluster_resample()</a></code> and <code><a href="bayesian_resample.html">bayesian_resample()</a></code> signal an
+error that names <code><a href="parametric_resample.html">parametric_resample()</a></code>. The effects of a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term keep
 their estimates in the draws. The replicates hold the free parameters of the
 term after the coefficients, on the unconstrained scale, in the order of
 <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>. A replicate is kept when the Newton decrement of the refit over

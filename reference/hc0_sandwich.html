@@ -13,7 +13,7 @@ sandwich argument of frequentist_vcov()."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,9 +51,9 @@ sandwich argument of frequentist_vcov()."><meta property="og:image" content="htt
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hc0_sandwich</span><span class="op">(</span>cluster <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hc0_sandwich</span><span class="op">(</span>cluster <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span>, weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"frequency"</span>, <span class="st">"sampling"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">hc1_sandwich</span><span class="op">(</span>cluster <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">hc1_sandwich</span><span class="op">(</span>cluster <span class="op">=</span> <span class="cn">NULL</span>, data <span class="op">=</span> <span class="cn">NULL</span>, weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"frequency"</span>, <span class="st">"sampling"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,11 +69,16 @@ variable of the data, such as <code>~ id</code>.</p></dd>
 <dd><p><code>NULL</code> (the default) or the data frame that holds the cluster
 variable, with one row for each observation of the fit.</p></dd>
 
+
+<dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
+<dd><p><code>"frequency"</code> (the default) or <code>"sampling"</code>: whether the
+prior weights of the fit are frequencies or sampling weights.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>SandwichMethod</code> object with the properties <code>type</code> (<code>"HC0"</code> or
-<code>"HC1"</code>), <code>cluster</code> and <code>data</code>.</p>
+<code>"HC1"</code>), <code>cluster</code>, <code>data</code> and <code>weights</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -108,20 +113,40 @@ sandwich includes that offset.</p>
 <p>A cluster must contain every group of a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term
 entirely. With no <code>cluster</code> the observations are treated as independent
 given the random effects.</p>
-<p>Models with a structural term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>),
-with a term whose block moves with its coefficients (the break-point terms
-and <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>) are rejected. <code><a href="hac_sandwich.html">hac_sandwich()</a></code> covers the
-structural terms.</p>
-<p>The prior weights \(w_i\) of <code><a href="statmod.html">statmod()</a></code> are frequency weights: row
-\(i\) stands for \(w_i\) identical observations. Without a cluster
-the copies are separate observations and
-\(B = \sum_i w_i g_i g_i'\), with \(g_i\) the score of one copy, and
-\(n = \sum_i w_i\) in the HC1 factor. With a cluster the copies stay in
-the cluster of the row, so \(U_g = \sum_{i \in g} w_i g_i\), \(G\) is
-the number of clusters with positive weight and \(n = \sum_i w_i\). A
-row with weight zero contributes nothing and is not counted. The result
-equals the unweighted estimator on the data expanded to \(w_i\) copies
-of each row, for integer weights.</p>
+<p>Models with a structural term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>)
+are rejected, and <code><a href="hac_sandwich.html">hac_sandwich()</a></code> covers them. A term whose block moves with
+its coefficients (<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> and the
+smoothed <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> and <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>) is accepted: its
+block is the Jacobian of its contribution in the coefficients and the
+position of the break-point, read at the fit, so the score of the position
+is part of \(u_i\). The position of a sharp <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> or
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> is held by the fit, and its slot has no variance, as
+in the other conventions; a block that is still a frozen working
+linearization is rejected, because a step has no derivative in its
+position. A coordinate that a kinked penalty holds at zero has no variance
+either.</p>
+<p>The prior weights \(w_i\) of <code><a href="statmod.html">statmod()</a></code> multiply the log-likelihood, and
+the argument <code>weights</code> says how the sandwich reads them. With
+<code>weights = "frequency"</code> (the default) row \(i\) stands for \(w_i\)
+identical observations. Without a cluster the copies are separate
+observations and \(B = \sum_i w_i g_i g_i'\), with \(g_i\) the score of
+one copy, and \(n = \sum_i w_i\) in the HC1 factor. With a cluster the
+copies stay in the cluster of the row, so
+\(U_g = \sum_{i \in g} w_i g_i\), \(G\) is the number of clusters with
+positive weight and \(n = \sum_i w_i\). A row with weight zero
+contributes nothing and is not counted. The result equals the unweighted
+estimator on the data expanded to \(w_i\) copies of each row, for
+integer weights, and it changes when every weight is multiplied by a
+constant.</p>
+<p>With <code>weights = "sampling"</code> the weights are sampling weights, such as the
+inverse probabilities of selection of a survey, and each row is one unit
+whose score is the weighted score \(w_i g_i\). Without a cluster
+\(B = \sum_i w_i^2 g_i g_i'\) and \(n\) in the HC1 factor is the number
+of rows with positive weight. With a cluster \(B\) is the same as under
+the frequency reading, and only the \(n\) of the CR1 factor differs. The
+variance does not change when every weight is multiplied by a constant. The
+point estimates are the same under both readings, and so are the variances
+of the other conventions, which read the weights as frequencies.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

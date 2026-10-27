@@ -13,7 +13,7 @@ other name that the caller wrote resolves as usual, one step further out."><meta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,7 +81,12 @@ of <span class="pkg">modelterms7</span> then rejects the value, naming the class
 and the call as written.</p>
 <p>The function binds each export of <span class="pkg">modelterms7</span> for which
 <code><a href="https://rdrr.io/r/base/is.function.html" class="external-link">is.function()</a></code> is <code>TRUE</code>. The S7 class generators of that package are
-functions and are copied with the others.</p>
+functions and are bound with the others. Each name is an active binding
+made by <code><a href="export_binding.html">export_binding()</a></code>, which reads the object from the namespace when
+the name is evaluated. A term keeps this environment as the environment of
+its formula, and copies of the objects would be serialized with every fit:
+the S7 generics and classes of <span class="pkg">modelterms7</span> weigh about 16 MB, against
+about 0.1 MB for the bindings.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

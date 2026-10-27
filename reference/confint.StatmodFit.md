@@ -74,8 +74,12 @@ confint(
   [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md)
   are inverted by
   [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md)
-  and cost a few dozen restricted refits per interval. The four are
-  compared at
+  and cost a few dozen restricted refits per interval. For the position
+  of a break-point of a
+  [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
+  term, a limit that the data do not bound (the statistic is under its
+  critical value at the end of the range of the variable) is `-Inf` or
+  `Inf`. The four are compared at
   [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md).
 
 - interval:

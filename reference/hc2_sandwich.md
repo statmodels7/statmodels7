@@ -10,11 +10,16 @@ estimators CR2 and CR3, and `hc4_sandwich()`. Pass the object as the
 ## Usage
 
 ``` r
-hc2_sandwich(cluster = NULL, data = NULL, reference = c("t", "normal"))
+hc2_sandwich(
+  cluster = NULL,
+  data = NULL,
+  reference = c("t", "normal"),
+  weights = c("frequency", "sampling")
+)
 
-hc3_sandwich(cluster = NULL, data = NULL)
+hc3_sandwich(cluster = NULL, data = NULL, weights = c("frequency", "sampling"))
 
-hc4_sandwich()
+hc4_sandwich(weights = c("frequency", "sampling"))
 ```
 
 ## Arguments
@@ -35,10 +40,16 @@ hc4_sandwich()
   `"normal"`, the reference distribution of the Wald intervals and
   tests.
 
+- weights:
+
+  `"frequency"` (the default) or `"sampling"`: whether the prior weights
+  of the fit are frequencies or sampling weights, as at
+  [`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md).
+
 ## Value
 
 A `SandwichMethod` object with the properties `type` (`"HC2"`, `"HC3"`
-or `"HC4"`), `cluster`, `data` and `reference`.
+or `"HC4"`), `cluster`, `data`, `reference` and `weights`.
 
 ## Details
 
@@ -107,7 +118,10 @@ treated as at
 Prior weights enter the leverage through \\W_i\\; without a cluster the
 leverage of one of the \\w_i\\ copies of a row is \\1/w_i\\ times that
 of the row, which is what the estimator uses, and with a cluster the
-copies of a row are corrected within the cluster.
+copies of a row are corrected within the cluster. With
+`weights = "sampling"` and no cluster the leverage is that of the row,
+not divided by \\w_i\\, and the mean leverage of HC4 is the mean over
+the rows with positive weight.
 
 **Few clusters.** With CR2 and `reference = "t"` (the default),
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)

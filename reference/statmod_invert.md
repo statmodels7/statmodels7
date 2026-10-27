@@ -58,10 +58,11 @@ statmod_invert(
 
 ## Value
 
-A numeric vector of two, `lower` and `upper`. An end that the search
-could not bracket within `maxit` widenings, or at which the statistic
-could not be evaluated, is `NA`; both ends are `NA` when the standard
-error of the coefficient is not finite and positive.
+A numeric vector of two, `lower` and `upper`. A side of the position of
+a break-point that the data do not bound is `-Inf` or `Inf`. An end that
+the search could not bracket within `maxit` widenings, or at which the
+statistic could not be evaluated, is `NA`; both ends are `NA` when the
+standard error of the coefficient is not finite and positive.
 
 ## Details
 
@@ -81,6 +82,15 @@ locates the crossing with
 method) at tolerance 1e-7. Each evaluation is one restricted refit,
 warm-started at the unrestricted estimates and run at the fitted
 hyperparameters, so the interval requires no outer search.
+
+The position of a break-point has a range: a value at or beyond the
+smallest or the largest observation of the variable leaves the term with
+no effect, so that every such value gives the same refit.
+[`break_edges()`](https://statmodels7.github.io/statmodels7/reference/break_edges.md)
+returns that range, and the search never leaves it. On a side where the
+statistic is still under its critical value when the search reaches the
+end of the range, the data do not bound the position, and the limit is
+`-Inf` or `Inf`.
 
 ## See also
 

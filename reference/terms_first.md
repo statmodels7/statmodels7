@@ -42,8 +42,14 @@ returned and the call as written.
 
 The function binds each export of modelterms7 for which
 [`is.function()`](https://rdrr.io/r/base/is.function.html) is `TRUE`.
-The S7 class generators of that package are functions and are copied
-with the others.
+The S7 class generators of that package are functions and are bound with
+the others. Each name is an active binding made by
+[`export_binding()`](https://statmodels7.github.io/statmodels7/reference/export_binding.md),
+which reads the object from the namespace when the name is evaluated. A
+term keeps this environment as the environment of its formula, and
+copies of the objects would be serialized with every fit: the S7
+generics and classes of modelterms7 weigh about 16 MB, against about 0.1
+MB for the bindings.
 
 ## See also
 

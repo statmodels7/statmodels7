@@ -1,9 +1,10 @@
 # Build a Bootstrap Interval Object
 
 Checks the arguments of
-[`percentile_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
-and
+[`percentile_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md),
 [`basic_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+and
+[`bca_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
 and builds the object.
 
 ## Usage

@@ -20,7 +20,8 @@ StatmodBootstrap(
   seed = list(),
   fingerprint = integer(0),
   raw = NULL,
-  raw_cols = NULL
+  raw_cols = NULL,
+  jackknife = NULL
 )
 ```
 

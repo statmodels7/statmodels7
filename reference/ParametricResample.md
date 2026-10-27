@@ -2,9 +2,10 @@
 
 These are the classes that
 [`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md),
-[`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
-and
+[`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md),
 [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
+and
+[`bayesian_resample()`](https://statmodels7.github.io/statmodels7/reference/bayesian_resample.md)
 instantiate. Each inherits from
 [resample_method](https://statmodels7.github.io/statmodels7/reference/resample_method.md).
 Use the constructors, which set the properties.
@@ -15,6 +16,8 @@ Use the constructors, which set the properties.
 ParametricResample(name = character(0))
 
 CaseResample(name = character(0))
+
+BayesianResample(name = character(0))
 
 ClusterResample(name = character(0), cluster = NULL, data = NULL)
 ```

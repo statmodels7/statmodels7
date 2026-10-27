@@ -11,7 +11,7 @@ test."><meta property="og:image" content="https://statmodels7.github.io/statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,6 +98,9 @@ the interval. <code><a href="wald_test.html">wald_test()</a></code> (the default
 symmetric about the estimate, from the variance matrix and with no refit.
 <code><a href="lr_test.html">lr_test()</a></code>, <code><a href="score_test.html">score_test()</a></code> and <code><a href="gradient_test.html">gradient_test()</a></code> are inverted by
 <code><a href="statmod_invert.html">statmod_invert()</a></code> and cost a few dozen restricted refits per interval.
+For the position of a break-point of a <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code> term, a
+limit that the data do not bound (the statistic is under its critical
+value at the end of the range of the variable) is <code>-Inf</code> or <code>Inf</code>.
 The four are compared at <a href="test_statistic.html">test_statistic</a>.</p></dd>
 
 

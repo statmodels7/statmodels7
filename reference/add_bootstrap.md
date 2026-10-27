@@ -35,9 +35,10 @@ add_bootstrap(
   object:
   [`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md)
   (the default),
-  [`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
+  [`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md),
+  [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
   or
-  [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md).
+  [`bayesian_resample()`](https://statmodels7.github.io/statmodels7/reference/bayesian_resample.md).
 
 - refit:
 
@@ -92,8 +93,10 @@ when failures are frequent.
 The refits use the `inner_information` of the fit. A fit with a response
 that is not one number per observation, or (with `refit = "full"`) a
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
-criterion is rejected, and so is
+criterion is rejected, and so are
 [`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
+and
+[`bayesian_resample()`](https://statmodels7.github.io/statmodels7/reference/bayesian_resample.md)
 beside a
 [`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
 term.
@@ -109,9 +112,10 @@ at the fitted coefficients and parameters of the term, so the recursion
 of the filter runs on the draws; it is not the fitted filtered path with
 new noise. A resample of rows or of groups breaks the recursion at every
 join, and
-[`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
-and
+[`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md),
 [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
+and
+[`bayesian_resample()`](https://statmodels7.github.io/statmodels7/reference/bayesian_resample.md)
 signal an error that names
 [`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md).
 The effects of a

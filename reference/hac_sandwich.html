@@ -17,7 +17,7 @@ and West (1987) with the Bartlett kernel."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -145,8 +145,9 @@ the environment of the model formula. For a model with a structural term
 they are not accepted, since the term fixes the order and the groups.</p>
 <p>The prior weights of <code><a href="statmod.html">statmod()</a></code> multiply the log-likelihood contribution
 of an observation, and so its score; they are not otherwise interpreted.
-Models with a term whose block moves with its coefficients (the
-break-point terms and <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>) are rejected.</p>
+A model with a term whose block moves with its coefficients is accepted when
+<code><a href="hc0_sandwich.html">hc0_sandwich()</a></code> accepts it: the scores are those of the block read at the
+fit, and a frozen working linearization of a sharp step is rejected.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
