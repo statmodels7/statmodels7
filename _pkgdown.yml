@@ -170,6 +170,24 @@ reference:
   contents:
   - plot_effect
 
+- title: Diagnostic graphs
+  desc: >
+    Graphs of the fit against the data, selected without `term`: the
+    quantile residuals in a quantile-quantile graph, a worm plot, a histogram
+    of the probability integral transform and a calibration graph, the
+    residuals against a quantity or in order, the scores and the influence of
+    the observations, and a comparison with simulated responses.
+  contents:
+  - plot_qq
+  - plot_worm
+  - plot_residuals
+  - plot_pit
+  - plot_calibration
+  - plot_score
+  - plot_influence
+  - plot_acf
+  - plot_ppc
+
 - title: Installing and updating
   desc: >
     The toolkit is not on CRAN, so the install path is GitHub and the
