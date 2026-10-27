@@ -9,7 +9,7 @@ not cover."><meta property="og:image" content="https://statmodels7.github.io/sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,13 +74,16 @@ not cover.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A model with a structural term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>,
-<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>), a block that moves with its coefficients
-(<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>,
-<code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>) and a response that is not one number per observation
-is rejected. So are <code>refit = "full"</code> with a <code><a href="cv.html">cv()</a></code> criterion, which needs
-the folds of the data, and the case and cluster schemes beside a
-<code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term.</p>
+    <p>A response that is not one number per observation is rejected. So are
+<code>refit = "full"</code> with a <code><a href="cv.html">cv()</a></code> criterion, which needs the folds of the
+data, the case scheme beside a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term, and the
+cluster scheme beside a random-effect term that
+<code><a href="boot_cluster_random_check.html">boot_cluster_random_check()</a></code> cannot regroup. A model with a structural
+term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>) takes
+<code><a href="parametric_resample.html">parametric_resample()</a></code> only; a model with a block that moves with its
+coefficients (<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>) takes any scheme and is
+refitted by <code><a href="boot_refit_breakpoint.html">boot_refit_breakpoint()</a></code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

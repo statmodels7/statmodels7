@@ -9,7 +9,7 @@ observations with replacement and refits the model on them."><meta property="og:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,9 +78,28 @@ have no missing values. A group drawn \(k\) times gives all its observations the
 count \(k\). Without random effects the likelihood is a sum over
 observations, so this is the fit to the duplicated groups with the design
 held.</p>
-<p>In this version a fit with a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term is rejected. The
-coordinates of the individual random effects have no counterpart between
-replicates, because a group can be absent or appear twice.</p>
+<p>Beside a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term the groups drawn more than once
+become new groups: each copy of a cluster has its own groups, with an
+effect of its own, as in Stata's <code>bootstrap, cluster() idcluster()</code>. A
+weight is not enough in this case, because the prior of the effects would
+count a group drawn twice once. The grouping variable of each random-effect
+term is relabeled in the replicate when every one of its groups lies in a
+single cluster (the groups of a term that is the cluster variable itself,
+or nested in it). A grouping variable that spans several clusters keeps its
+labels, and its effects are shared by the copies. The design is rebuilt on
+the rows drawn: the other terms are reapplied with
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_predict.html" class="external-link">modelterms7::term_predict()</a></code>, so a basis keeps the knots of the fit and a
+factor its contrasts, and the random-effect terms are built on the new
+groups with the hyperparameters of the fit.</p>
+<p>The individual effects of different replicates are effects of different
+groups, so no remapping between replicates exists. The replicates store the
+coordinates that every replicate has: the coefficients of the other terms,
+and with <code>refit = "full"</code> the hyperparameters, the variance components
+among them. The coordinates of the individual random effects are missing in
+the stored matrix, and their rows and columns in the variance are <code>NA</code>. A
+term that shares a covariance through a label, a smooth random effect
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/RandomSmoothTerm.html" class="external-link">modelterms7::RandomSmoothTerm()</a></code>) and a random effect inside the
+subformula of another term are rejected.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -98,6 +117,15 @@ replicates, because a group can be absent or appear twice.</p>
 <span class="r-in"><span><span class="fu"><a href="statmod_bootstrap.html">statmod_bootstrap</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       resample        refit replicates replaced error mode_error unidentified</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 cluster (~g) coefficients         30        0     0          0            0</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># beside a random intercept the groups drawn again are new groups</span></span></span>
+<span class="r-in"><span><span class="va">fit_re</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">+</span> <span class="fu">random</span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">g</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                  <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit_re</span> <span class="op">&lt;-</span> <span class="fu"><a href="add_bootstrap.html">add_bootstrap</a></span><span class="op">(</span><span class="va">fit_re</span>, n <span class="op">=</span> <span class="fl">10</span>, resample <span class="op">=</span> <span class="fu">cluster_resample</span><span class="op">(</span><span class="op">~</span> <span class="va">g</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fit_re</span>, vcov_type <span class="op">=</span> <span class="fu"><a href="bootstrap_vcov.html">bootstrap_vcov</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  resample <span class="op">=</span> <span class="fu">cluster_resample</span><span class="op">(</span><span class="op">~</span> <span class="va">g</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)           mu:x </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          0.347          0.223 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

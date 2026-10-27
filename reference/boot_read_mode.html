@@ -11,7 +11,7 @@ identify there."><meta property="og:image" content="https://statmodels7.github.i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,15 @@ identify there.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">boot_read_mode</span><span class="op">(</span><span class="va">object</span>, <span class="va">spec</span>, <span class="va">design</span>, <span class="va">cf</span>, <span class="va">hy</span>, <span class="va">cfg</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">boot_read_mode</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  <span class="va">spec</span>,</span>
+<span>  <span class="va">design</span>,</span>
+<span>  <span class="va">cf</span>,</span>
+<span>  <span class="va">hy</span>,</span>
+<span>  <span class="va">cfg</span>,</span>
+<span>  pinned <span class="op">=</span> <span class="va">object</span><span class="op">@</span><span class="va">methods</span><span class="op">$</span><span class="va">pinned</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,6 +77,11 @@ identify there.</p>
 
 <dt id="arg-cfg">cfg<a class="anchor" aria-label="anchor" href="#arg-cfg"></a></dt>
 <dd><p>The inner settings of the fit.</p></dd>
+
+
+<dt id="arg-pinned">pinned<a class="anchor" aria-label="anchor" href="#arg-pinned"></a></dt>
+<dd><p>The pinned coordinates at the point read, in its own stacked
+positions; those of the fit by default.</p></dd>
 
 </dl></div>
     <div class="section level2">

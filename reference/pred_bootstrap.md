@@ -43,7 +43,14 @@ response that is not one number per observation, and, with
 `refit = "full"`, for a cross-validated criterion. The replicas use the
 random number generator of the session, so
 [`set.seed()`](https://rdrr.io/r/base/Random.html) before the call
-reproduces them. See
+reproduces them. If the fit holds a stored parametric bootstrap
+([`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md))
+with the same `refit`, its first `n` replicates are used and nothing is
+refitted; an entry with fewer than `n` replicates is extended and stored
+again. With
+[`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
+terms the entry is used when `random` sets every one of them aside and
+the entry holds the refitted random effects. See
 [predictive_distributions](https://statmodels7.github.io/statmodels7/reference/predictive_distributions.md)
 and
 [`predictive_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/predictive_bootstrap.md).

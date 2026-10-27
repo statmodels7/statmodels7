@@ -15,6 +15,7 @@ confint(
   vcov_type = bayesian_vcov(),
   readable = TRUE,
   test = wald_test(),
+  interval = NULL,
   ...
 )
 ```
@@ -76,6 +77,20 @@ confint(
   and cost a few dozen restricted refits per interval. The four are
   compared at
   [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md).
+
+- interval:
+
+  `NULL` (the default), which inverts `test`, or a
+  [bootstrap_interval](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  object,
+  [`percentile_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  or
+  [`basic_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md),
+  whose limits are quantiles of the bootstrap replicates stored in the
+  fit. The standard error is then the bootstrap one, and `vcov_type` and
+  a `test` other than
+  [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md)
+  are rejected.
 
 - ...:
 

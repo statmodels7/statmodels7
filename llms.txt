@@ -475,6 +475,14 @@ adds the uncertainty of the hyperparameters.
 - [`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md)
   [`hc1_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md)
   : Sandwich Variance of the Coefficients
+- [`hc2_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc2_sandwich.md)
+  [`hc3_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc2_sandwich.md)
+  [`hc4_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc2_sandwich.md)
+  : Sandwich Variances with a Leverage Correction
+- [`statmod_leverage()`](https://statmodels7.github.io/statmodels7/reference/statmod_leverage.md)
+  : Leverage of the Observations in a Distributional Regression
+- [`hac_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hac_sandwich.md)
+  : HAC Sandwich Variance of the Coefficients
 - [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
   : Unconditional Variance of a Fit
 - [`bootstrap_vcov()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_vcov.md)
@@ -500,6 +508,12 @@ the extractor that reads them.
   : Read the Stored Bootstrap of a Fit
 - [`StatmodBootstrap()`](https://statmodels7.github.io/statmodels7/reference/StatmodBootstrap.md)
   : Stored Replicates of a Bootstrap
+- [`bootstrap_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  [`PercentileInterval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  [`BasicInterval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  [`percentile_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  [`basic_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  : Bootstrap Intervals for the Coefficients of a Fit
 
 ## Graphs of a fit
 
@@ -639,6 +653,9 @@ helper functions. Using the package does not require any of it.
   [`PredBootstrap()`](https://statmodels7.github.io/statmodels7/reference/ConfidenceInterval-class.md)
   : S7 Classes for the Shipped Intervals and Predictive Distributions
 
+- [`HacSandwich()`](https://statmodels7.github.io/statmodels7/reference/HacSandwich.md)
+  : S7 Class for the Meat of a HAC Variance
+
 - [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
   : The Iterated Weighted Least Squares Method
 
@@ -777,6 +794,9 @@ helper functions. Using the package does not require any of it.
 - [`armijo_ok()`](https://statmodels7.github.io/statmodels7/reference/armijo_ok.md)
   : Armijo's Sufficient-Decrease Condition
 
+- [`as_boot_interval()`](https://statmodels7.github.io/statmodels7/reference/as_boot_interval.md)
+  : Check the Argument That Selects a Bootstrap Interval
+
 - [`as_resample_method()`](https://statmodels7.github.io/statmodels7/reference/as_resample_method.md)
   : Check the Argument That Selects a Resampling Scheme
 
@@ -829,7 +849,21 @@ helper functions. Using the package does not require any of it.
   : The Function That Refits the Replicates of a Round
 
 - [`boot_cluster_ids()`](https://statmodels7.github.io/statmodels7/reference/boot_cluster_ids.md)
+  [`boot_cluster_data()`](https://statmodels7.github.io/statmodels7/reference/boot_cluster_ids.md)
   : The Groups of a Cluster Bootstrap
+
+- [`boot_cluster_random_check()`](https://statmodels7.github.io/statmodels7/reference/boot_cluster_random_check.md)
+  : Reject a Random-Effect Term That the Cluster Bootstrap Cannot
+  Regroup
+
+- [`boot_cluster_random_plan()`](https://statmodels7.github.io/statmodels7/reference/boot_cluster_random_plan.md)
+  : The Draw of a Cluster Replicate Beside Random Effects
+
+- [`boot_cluster_validate()`](https://statmodels7.github.io/statmodels7/reference/boot_cluster_validate.md)
+  : The Status of One Refitted Cluster Replicate With Regrouped Effects
+
+- [`boot_coord_names()`](https://statmodels7.github.io/statmodels7/reference/boot_coord_names.md)
+  : The Names of the Coordinates of the Stored Replicates
 
 - [`boot_env()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
   [`boot_fingerprint()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
@@ -843,8 +877,26 @@ helper functions. Using the package does not require any of it.
 - [`boot_fill()`](https://statmodels7.github.io/statmodels7/reference/boot_fill.md)
   : Bring an Entry to a Number of Replicates
 
+- [`boot_interval_new()`](https://statmodels7.github.io/statmodels7/reference/boot_interval_new.md)
+  : Build a Bootstrap Interval Object
+
+- [`boot_interval_vcov()`](https://statmodels7.github.io/statmodels7/reference/boot_interval_vcov.md)
+  : The Bootstrap Variance That Supplies a Bootstrap Interval
+
 - [`boot_key()`](https://statmodels7.github.io/statmodels7/reference/boot_key.md)
   : The Key of an Entry in the Collection
+
+- [`boot_mode()`](https://statmodels7.github.io/statmodels7/reference/boot_mode.md)
+  : The Kind of Model That the Bootstrap Treats Apart
+
+- [`boot_plan_structural()`](https://statmodels7.github.io/statmodels7/reference/boot_plan_structural.md)
+  : The Draw of a Replicate of a Model With a Structural Term
+
+- [`boot_plan_wrap()`](https://statmodels7.github.io/statmodels7/reference/boot_plan_wrap.md)
+  : Add the Refit Seed to the Draw of a Break-Point Model
+
+- [`boot_raw_cols()`](https://statmodels7.github.io/statmodels7/reference/boot_raw_cols.md)
+  : The Columns of the Refitted Random Effects
 
 - [`boot_read_mode()`](https://statmodels7.github.io/statmodels7/reference/boot_read_mode.md)
   : How Far From Its Mode a Fit Is, and What It Does Not Identify
@@ -852,8 +904,29 @@ helper functions. Using the package does not require any of it.
 - [`boot_readable_cov()`](https://statmodels7.github.io/statmodels7/reference/boot_readable_cov.md)
   : The Covariance of the Readable Quantities of the Replicates
 
+- [`boot_readable_values()`](https://statmodels7.github.io/statmodels7/reference/boot_readable_values.md)
+  : The Readable Quantities of Every Replicate
+
+- [`boot_record_positions()`](https://statmodels7.github.io/statmodels7/reference/boot_record_positions.md)
+  : Store the Position of a Held Break-Point in Its Slot
+
+- [`boot_refit_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/boot_refit_breakpoint.md)
+  : Refit One Replicate of a Model With a Break-Point Term
+
+- [`boot_replicate_matrix()`](https://statmodels7.github.io/statmodels7/reference/boot_replicate_matrix.md)
+  : The Replicates of a Model With a Structural Term
+
 - [`boot_resolve()`](https://statmodels7.github.io/statmodels7/reference/boot_resolve.md)
   : Resolve a Bootstrap Variance Against the Stored Entries
+
+- [`boot_special_replicate()`](https://statmodels7.github.io/statmodels7/reference/boot_special_replicate.md)
+  : One Replicate of a Special Model
+
+- [`boot_special_status()`](https://statmodels7.github.io/statmodels7/reference/boot_special_status.md)
+  : The Status of a Replicate of a Special Model
+
+- [`boot_stored_replicas()`](https://statmodels7.github.io/statmodels7/reference/boot_stored_replicas.md)
+  : The Stored Replicates That a Predictive Bootstrap Can Reuse
 
 - [`boot_strip()`](https://statmodels7.github.io/statmodels7/reference/boot_strip.md)
   : The Scheme as It Is Stored
@@ -866,11 +939,20 @@ helper functions. Using the package does not require any of it.
   [`boot_ambiguous()`](https://statmodels7.github.io/statmodels7/reference/boot_table.md)
   : The Table of Bootstrap Entries
 
+- [`boot_tail_values()`](https://statmodels7.github.io/statmodels7/reference/boot_tail_values.md)
+  : The Free Parameters of a Structural Term in a Refit
+
+- [`boot_term_values()`](https://statmodels7.github.io/statmodels7/reference/boot_term_values.md)
+  : The Quantities of a Structural Term at Each Replicate
+
 - [`boot_validate()`](https://statmodels7.github.io/statmodels7/reference/boot_validate.md)
   : The Status of One Refitted Replicate
 
 - [`boot_vcov_matrix()`](https://statmodels7.github.io/statmodels7/reference/boot_vcov_matrix.md)
   : The Covariance of the Stored Replicates
+
+- [`boot_vcov_structural()`](https://statmodels7.github.io/statmodels7/reference/boot_vcov_structural.md)
+  : The Covariance of the Replicates of a Model With a Structural Term
 
 - [`bootstrap_check()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_check.md)
   : Reject a Fit That the Bootstrap Does Not Handle
@@ -1026,6 +1108,9 @@ helper functions. Using the package does not require any of it.
 - [`confint(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
   : Confidence Intervals for a Fit
 
+- [`confint_interval()`](https://statmodels7.github.io/statmodels7/reference/confint_interval.md)
+  : The Bootstrap Intervals of a Table of Coefficients
+
 - [`continued_deriv_inputs()`](https://statmodels7.github.io/statmodels7/reference/continued_deriv_inputs.md)
   : The Inputs to the Derivative of a Continued Filter
 
@@ -1085,6 +1170,9 @@ helper functions. Using the package does not require any of it.
 
 - [`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md)
   : The Working Response and Weights of One Equation
+
+- [`cr2_df_closure()`](https://statmodels7.github.io/statmodels7/reference/cr2_df_closure.md)
+  : Satterthwaite Degrees of Freedom of the CR2 Variance
 
 - [`criterion_differenced()`](https://statmodels7.github.io/statmodels7/reference/criterion_differenced.md)
   : The Outer Criterion Differenced by Refitting
@@ -1382,6 +1470,24 @@ helper functions. Using the package does not require any of it.
 - [`group_sd_mixture()`](https://statmodels7.github.io/statmodels7/reference/group_sd_mixture.md)
   : The Standard Deviation of a New Group's Parameter Under a Mixture
 
+- [`hac_check()`](https://statmodels7.github.io/statmodels7/reference/hac_check.md)
+  : Reject a Fit That the HAC Variance Does Not Cover
+
+- [`hac_joint()`](https://statmodels7.github.io/statmodels7/reference/hac_joint.md)
+  : The HAC Variance Over the Joint Unknowns
+
+- [`hac_kernel()`](https://statmodels7.github.io/statmodels7/reference/hac_kernel.md)
+  : The Kernel of a HAC Variance
+
+- [`hac_meat()`](https://statmodels7.github.io/statmodels7/reference/hac_meat.md)
+  : The HAC Meat
+
+- [`hac_series()`](https://statmodels7.github.io/statmodels7/reference/hac_series.md)
+  : The Series of a HAC Variance
+
+- [`hac_vcov()`](https://statmodels7.github.io/statmodels7/reference/hac_vcov.md)
+  : The HAC Variance of the Coefficients
+
 - [`has_sharp_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/has_sharp_breakpoint.md)
   : Whether a Model Carries a Sharp Break-Point Term
 
@@ -1623,6 +1729,9 @@ helper functions. Using the package does not require any of it.
 - [`joint_scale_matrix()`](https://statmodels7.github.io/statmodels7/reference/joint_scale_matrix.md)
   : The Scaling Matrix of a Joint Filter and Its First Derivative
 
+- [`joint_scores()`](https://statmodels7.github.io/statmodels7/reference/joint_scores.md)
+  : The Scores of the Observations in the Joint Vector of Unknowns
+
 - [`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md)
   : The Model's Smoother Over the Coefficients and a Filter's Parameters
 
@@ -1665,8 +1774,23 @@ helper functions. Using the package does not require any of it.
 - [`laplace_pinned()`](https://statmodels7.github.io/statmodels7/reference/laplace_pinned.md)
   : The Coordinates That the Marginal Determinant Leaves Out
 
+- [`leverage_blocks()`](https://statmodels7.github.io/statmodels7/reference/leverage_blocks.md)
+  : The Leverage Block of Each Observation
+
+- [`leverage_information()`](https://statmodels7.github.io/statmodels7/reference/leverage_information.md)
+  : The Information of the Leverage
+
+- [`leverage_inverse()`](https://statmodels7.github.io/statmodels7/reference/leverage_inverse.md)
+  : The Inverse Penalized Information of the Hat Matrix
+
 - [`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
   : The Leverage Diagonal Over the Nonzeros of Two Rows
+
+- [`leverage_parts()`](https://statmodels7.github.io/statmodels7/reference/leverage_parts.md)
+  : The Per-Observation Pieces of the Hat Matrix of a Fit
+
+- [`leverage_power()`](https://statmodels7.github.io/statmodels7/reference/leverage_power.md)
+  : Apply a Function of a Symmetric Block Through Its Eigenvalues
 
 - [`link_kind()`](https://statmodels7.github.io/statmodels7/reference/link_kind.md)
   : The Kind of Inverse Link, for the Moments of a New Group's Parameter
@@ -2009,6 +2133,9 @@ helper functions. Using the package does not require any of it.
 - [`print(`*`<StatmodTest>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodTest.md)
   : Print a Test
 
+- [`print.bootstrap_interval`](https://statmodels7.github.io/statmodels7/reference/print.bootstrap_interval.md)
+  : Print a Bootstrap Interval
+
 - [`print.interval_type`](https://statmodels7.github.io/statmodels7/reference/print.interval_type.md)
   [`print.predictive_type`](https://statmodels7.github.io/statmodels7/reference/print.interval_type.md)
   : Print an Interval or a Predictive Distribution
@@ -2058,6 +2185,9 @@ helper functions. Using the package does not require any of it.
 - [`project_blocks()`](https://statmodels7.github.io/statmodels7/reference/project_blocks.md)
   : Project a Reference Fit's Predictor onto the Blocks That Did Not
   Match
+
+- [`psd_roots()`](https://statmodels7.github.io/statmodels7/reference/psd_roots.md)
+  : Symmetric Square Roots of a Stack of Small Information Matrices
 
 - [`quadratic_path()`](https://statmodels7.github.io/statmodels7/reference/quadratic_path.md)
   : The Path of a Quadratic Penalty in Closed Form
@@ -2147,6 +2277,9 @@ helper functions. Using the package does not require any of it.
 
 - [`regime_parameters()`](https://statmodels7.github.io/statmodels7/reference/regime_parameters.md)
   : The Parameters of a Regime Term
+
+- [`regime_scores()`](https://statmodels7.github.io/statmodels7/reference/regime_scores.md)
+  : The Scores of the Increments of a Regime Likelihood
 
 - [`reject_duplicate_names()`](https://statmodels7.github.io/statmodels7/reference/reject_duplicate_names.md)
   : Reject Two Terms of One Equation That Name Their Coefficients Alike
@@ -2238,14 +2371,27 @@ helper functions. Using the package does not require any of it.
 - [`same_term_kind()`](https://statmodels7.github.io/statmodels7/reference/same_term_kind.md)
   : Whether Two Terms Are of the Same Kind
 
+- [`sandwich_adjusted()`](https://statmodels7.github.io/statmodels7/reference/sandwich_adjusted.md)
+  : Rescale the Scores of a Fit by the Leverage
+
 - [`sandwich_check()`](https://statmodels7.github.io/statmodels7/reference/sandwich_check.md)
   : Reject a Fit That the Sandwich Variance Does Not Cover
 
 - [`sandwich_cluster()`](https://statmodels7.github.io/statmodels7/reference/sandwich_cluster.md)
   : The Cluster Index of a Sandwich Variance
 
+- [`sandwich_df_by_name()`](https://statmodels7.github.io/statmodels7/reference/sandwich_df_by_name.md)
+  [`print(`*`<statmod_df_fn>`*`)`](https://statmodels7.github.io/statmodels7/reference/sandwich_df_by_name.md)
+  : Degrees of Freedom Addressed by Coordinate Name
+
+- [`sandwich_power()`](https://statmodels7.github.io/statmodels7/reference/sandwich_power.md)
+  : The Exponent of the Leverage Correction
+
 - [`sandwich_vcov()`](https://statmodels7.github.io/statmodels7/reference/sandwich_vcov.md)
   : The Sandwich Variance of the Coefficients
+
+- [`sandwich_wald_df()`](https://statmodels7.github.io/statmodels7/reference/sandwich_wald_df.md)
+  : Degrees of Freedom of One Coefficient Under a CR2 Variance
 
 - [`se_answer()`](https://statmodels7.github.io/statmodels7/reference/se_answer.md)
   : The Shape in Which a Prediction With Its Uncertainty Is Returned
@@ -2634,6 +2780,10 @@ helper functions. Using the package does not require any of it.
 - [`structural_chain_extra2()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra2.md)
   : The Joint Second Derivative of the Penalized Information, Traced
 
+- [`structural_convention_block()`](https://statmodels7.github.io/statmodels7/reference/structural_convention_block.md)
+  : The Joint Variance of a Convention, in the Order of the Joint
+  Information
+
 - [`structural_display()`](https://statmodels7.github.io/statmodels7/reference/structural_display.md)
   : The Equation and the Reported Name of a Structural Term's Parameters
 
@@ -2814,6 +2964,12 @@ helper functions. Using the package does not require any of it.
 
 - [`verbosity()`](https://statmodels7.github.io/statmodels7/reference/verbosity.md)
   : Resolve the Verbosity Setting
+
+- [`wald_pvalue()`](https://statmodels7.github.io/statmodels7/reference/wald_pvalue.md)
+  : The Two-Sided P-Value of a Wald Statistic
+
+- [`wald_reference()`](https://statmodels7.github.io/statmodels7/reference/wald_reference.md)
+  : The Reference Quantile of a Wald Interval
 
 - [`warn_aliased()`](https://statmodels7.github.io/statmodels7/reference/warn_aliased.md)
   : Report a Model Whose Columns Are Not All Identified

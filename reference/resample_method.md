@@ -52,7 +52,13 @@ variance, which the parametric bootstrap does not.
 A resampled data set is represented by frequency weights, which multiply
 the weights of the fit. The design is not rebuilt, so the knots of a
 basis and the levels of a factor stay those of the fit, and a refit on
-the weights is the refit on the duplicated rows with the basis held.
+the weights is the refit on the duplicated rows with the basis held. A
+cluster scheme beside a
+[`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
+term is the exception: the design is rebuilt on the rows drawn, with the
+blueprints of the fit for every term other than the random-effect terms
+(see
+[`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)).
 
 ## See also
 

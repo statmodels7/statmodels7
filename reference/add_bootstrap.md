@@ -89,8 +89,7 @@ outnumber the successes after ten draws. Replacing a failed replicate
 conditions the bootstrap on success, so it understates the variability
 when failures are frequent.
 
-The refits use the `inner_information` of the fit. A fit with a
-structural term, a block that moves with its coefficients, a response
+The refits use the `inner_information` of the fit. A fit with a response
 that is not one number per observation, or (with `refit = "full"`) a
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
 criterion is rejected, and so is
@@ -98,6 +97,55 @@ criterion is rejected, and so is
 beside a
 [`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
 term.
+
+A fit with a score-driven or a regime term
+([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html))
+takes
+[`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md)
+only. Each replicate is a new path of the series, drawn through
+[`modelterms7::term_simulate()`](https://statmodels7.github.io/modelterms7/reference/term_simulate.html)
+at the fitted coefficients and parameters of the term, so the recursion
+of the filter runs on the draws; it is not the fitted filtered path with
+new noise. A resample of rows or of groups breaks the recursion at every
+join, and
+[`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
+and
+[`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
+signal an error that names
+[`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md).
+The effects of a
+[`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
+term keep their estimates in the draws. The replicates hold the free
+parameters of the term after the coefficients, on the unconstrained
+scale, in the order of [`vcov()`](https://rdrr.io/r/stats/vcov.html). A
+replicate is kept when the Newton decrement of the refit over the
+coefficients and the term's parameters is below
+[`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
+(a score-driven term), or when the refit is finite (a regime term).
+
+A fit with a break-point term
+([`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
+[`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
+[`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html))
+or a nonlinear term
+([`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html))
+is refitted on every replicate from the break-points and coefficients of
+the fit, and the refit then runs the restart cycle of
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+(bootstrap restarting with the budget `n_boot` of the terms, and the
+settling of the sharp break-points), because a refit that stopped at the
+local optimum nearest to the fit's positions would be another estimator.
+A position is a coefficient of the term, so its variance is that of the
+replicates. The slot of a sharp
+[`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
+or
+[`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html),
+which the fit holds at a working value, stores the position of the
+break-point in the replicates. The generator of the restart cycle is
+seeded from the draw of the replicate, so the result does not depend on
+the number of workers. A replicate is kept when its coefficients are
+finite.
 
 ## See also
 

@@ -7,7 +7,15 @@ identify there.
 ## Usage
 
 ``` r
-boot_read_mode(object, spec, design, cf, hy, cfg)
+boot_read_mode(
+  object,
+  spec,
+  design,
+  cf,
+  hy,
+  cfg,
+  pinned = object@methods$pinned
+)
 ```
 
 ## Arguments
@@ -29,6 +37,11 @@ boot_read_mode(object, spec, design, cf, hy, cfg)
 - cfg:
 
   The inner settings of the fit.
+
+- pinned:
+
+  The pinned coordinates at the point read, in its own stacked
+  positions; those of the fit by default.
 
 ## Value
 

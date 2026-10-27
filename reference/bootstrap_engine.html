@@ -11,7 +11,7 @@ add_bootstrap() and the predictive bootstrap of pred_bootstrap() share."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,8 +133,12 @@ replicate as \(\hat b^* - b^* + \hat b\).</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>coefficients</code> (a matrix with a row for each replicate
 kept), <code>hyper</code> (a matrix, or <code>NULL</code>), <code>status</code> (an integer for every
-draw), <code>seed_start</code>, <code>seed_end</code>, <code>random</code> and <code>kept</code> (the refits, if a
-hook asked for them to be returned).</p>
+draw), <code>seed_start</code>, <code>seed_end</code>, <code>random</code>, <code>raw</code> (the matrix of the
+random-effect coefficients of the replicates as refitted, without the
+adjustment of the random effects, for a parametric scheme with
+<code>adjust = TRUE</code> beside random effects, and <code>NULL</code> otherwise) and
+<code>raw_cols</code> (the positions of the columns of <code>raw</code> among the columns of
+<code>coefficients</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

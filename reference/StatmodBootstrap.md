@@ -18,7 +18,9 @@ StatmodBootstrap(
   random = character(0),
   status = integer(0),
   seed = list(),
-  fingerprint = integer(0)
+  fingerprint = integer(0),
+  raw = NULL,
+  raw_cols = NULL
 )
 ```
 
@@ -51,7 +53,9 @@ The properties are
 
 - `random`:
 
-  how the random effects were treated: `"redrawn"` or `"none"`;
+  how the random effects were treated: `"redrawn"`, `"regrouped"` (a
+  cluster scheme that gave the groups drawn again new levels, with the
+  random-effect coordinates missing) or `"none"`;
 
 - `status`:
 
@@ -69,7 +73,19 @@ The properties are
 - `fingerprint`:
 
   the coefficients and hyperparameters of the fit that the replicates
-  belong to.
+  belong to;
+
+- `raw`, `raw_cols`:
+
+  for the parametric scheme beside random effects, a matrix with one
+  column for each random-effect coordinate that holds the coefficients
+  as the replicates were refitted, \\\hat b^\*\\, where `coefficients`
+  holds \\\hat b^\* - b^\* + \hat b\\, and the positions of those
+  columns among the columns of `coefficients`. Both are `NULL`
+  otherwise, and for an entry stored by an older version.
+  [`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md)
+  rebuilds the refitted coefficients from `coefficients` and `raw` to
+  reuse the entry.
 
 ## See also
 

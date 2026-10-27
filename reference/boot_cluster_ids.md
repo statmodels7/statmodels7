@@ -8,6 +8,8 @@ on the data of the fit.
 
 ``` r
 boot_cluster_ids(object, resample, spec0)
+
+boot_cluster_data(object, resample, spec0)
 ```
 
 ## Arguments

@@ -9,7 +9,16 @@ outer product of the scores, and \\c\\ the correction of the type.
 ## Usage
 
 ``` r
-sandwich_vcov(fit, design, Vb, cols, sw)
+sandwich_vcov(
+  fit,
+  design,
+  Vb,
+  cols,
+  sw,
+  expected = FALSE,
+  emethod = NULL,
+  lev_info = NULL
+)
 ```
 
 ## Arguments
@@ -37,6 +46,16 @@ sandwich_vcov(fit, design, Vb, cols, sw)
   The
   [SandwichMethod](https://statmodels7.github.io/statmodels7/reference/SandwichMethod.md)
   object.
+
+- expected, emethod:
+
+  The information that the bread `Vb` was built from.
+
+- lev_info:
+
+  The information of the leverage, from
+  [`leverage_information()`](https://statmodels7.github.io/statmodels7/reference/leverage_information.md);
+  `NULL` takes the one of the bread.
 
 ## Value
 

@@ -99,8 +99,12 @@ bootstrap_engine(
 
 A list with `coefficients` (a matrix with a row for each replicate
 kept), `hyper` (a matrix, or `NULL`), `status` (an integer for every
-draw), `seed_start`, `seed_end`, `random` and `kept` (the refits, if a
-hook asked for them to be returned).
+draw), `seed_start`, `seed_end`, `random`, `raw` (the matrix of the
+random-effect coefficients of the replicates as refitted, without the
+adjustment of the random effects, for a parametric scheme with
+`adjust = TRUE` beside random effects, and `NULL` otherwise) and
+`raw_cols` (the positions of the columns of `raw` among the columns of
+`coefficients`).
 
 ## Details
 

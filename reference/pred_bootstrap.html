@@ -15,7 +15,7 @@ and it costs n refits."><meta property="og:image" content="https://statmodels7.g
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,7 +86,12 @@ cost of a whole fit per replica. The bootstrap is rejected for a model with
 a block that moves with its coefficients, for a response that is not one
 number per observation, and, with <code>refit = "full"</code>, for a cross-validated
 criterion. The replicas use the random number generator of the session, so
-<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> before the call reproduces them. See
+<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> before the call reproduces them. If the fit holds a
+stored parametric bootstrap (<code><a href="add_bootstrap.html">add_bootstrap()</a></code>) with the same <code>refit</code>, its
+first <code>n</code> replicates are used and nothing is refitted; an entry with fewer
+than <code>n</code> replicates is extended and stored again. With
+<code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> terms the entry is used when <code>random</code> sets every
+one of them aside and the entry holds the refitted random effects. See
 <a href="predictive_distributions.html">predictive_distributions</a> and <code><a href="predictive_bootstrap.html">predictive_bootstrap()</a></code>.</p>
     </div>
     <div class="section level2">

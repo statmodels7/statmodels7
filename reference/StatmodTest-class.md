@@ -16,7 +16,8 @@ StatmodTest(
   param = character(0),
   coefficient = character(0),
   mode_error = integer(0),
-  converged = logical(0)
+  converged = logical(0),
+  df_denom = Inf
 )
 ```
 
@@ -68,6 +69,13 @@ StatmodTest(
 
   The inner optimizer's flag at the restricted refit; `NA` for the Wald
   statistic.
+
+- df_denom:
+
+  The denominator degrees of freedom when the statistic is referred to
+  an \\F(1, \nu)\\ distribution, which is the case of a Wald statistic
+  under the CR2 variance with a \\t\\ reference; `Inf` otherwise, when
+  the reference is the chi-squared distribution.
 
 ## Value
 

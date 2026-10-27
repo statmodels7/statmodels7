@@ -7,7 +7,7 @@ the joint observed information.
 ## Usage
 
 ``` r
-statmod_structural_table(fit, level = 0.95)
+statmod_structural_table(fit, level = 0.95, vcov_type = NULL)
 ```
 
 ## Arguments
@@ -20,6 +20,24 @@ statmod_structural_table(fit, level = 0.95)
 - level:
 
   The interval's level, `0.95` by default.
+
+- vcov_type:
+
+  `NULL` or a
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  object. `NULL` and
+  [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+  read the inverse of the penalized joint information. Any other
+  convention (frequentist with or without a sandwich, unconditional)
+  reads the block of the joint variance that
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
+  returns for the term's own parameters under that convention.
+  [`bootstrap_vcov()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_vcov.md)
+  does not use a delta method: each quantity is evaluated at every
+  replicate, its standard error is the standard deviation over the
+  replicates (the value that `vcov(readable = TRUE)` reports), and the
+  interval is the Wald interval \\\hat q \pm z\\\mathrm{se}\\ on the
+  scale of the quantity.
 
 ## Value
 

@@ -13,7 +13,7 @@ sandwich argument of frequentist_vcov()."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,7 +110,8 @@ entirely. With no <code>cluster</code> the observations are treated as independe
 given the random effects.</p>
 <p>Models with a structural term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>),
 with a term whose block moves with its coefficients (the break-point terms
-and <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>) are rejected.</p>
+and <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>) are rejected. <code><a href="hac_sandwich.html">hac_sandwich()</a></code> covers the
+structural terms.</p>
 <p>The prior weights \(w_i\) of <code><a href="statmod.html">statmod()</a></code> are frequency weights: row
 \(i\) stands for \(w_i\) identical observations. Without a cluster
 the copies are separate observations and

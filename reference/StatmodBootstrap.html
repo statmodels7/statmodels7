@@ -13,7 +13,7 @@ replicates."><meta property="og:image" content="https://statmodels7.github.io/st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,9 @@ replicates.</p>
 <span>  random <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  status <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  fingerprint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span>  fingerprint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>  raw <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  raw_cols <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -85,8 +87,9 @@ per coordinate, in the order of <code>coef(fit, readable = FALSE)</code>;</p></d
 <a href="resample_method.html">resample_method</a> and the refit;</p></dd>
 
 <dt><code>random</code></dt>
-<dd><p>how the random effects were treated: <code>"redrawn"</code> or
-<code>"none"</code>;</p></dd>
+<dd><p>how the random effects were treated: <code>"redrawn"</code>,
+<code>"regrouped"</code> (a cluster scheme that gave the groups drawn again new
+levels, with the random-effect coordinates missing) or <code>"none"</code>;</p></dd>
 
 <dt><code>status</code></dt>
 <dd><p>an integer for every draw of the stream up to the last
@@ -101,7 +104,17 @@ continues;</p></dd>
 
 <dt><code>fingerprint</code></dt>
 <dd><p>the coefficients and hyperparameters of the fit that
-the replicates belong to.</p></dd>
+the replicates belong to;</p></dd>
+
+<dt><code>raw</code>, <code>raw_cols</code></dt>
+<dd><p>for the parametric scheme beside random effects,
+a matrix with one column for each random-effect coordinate that holds
+the coefficients as the replicates were refitted, \(\hat b^*\),
+where <code>coefficients</code> holds \(\hat b^* - b^* + \hat b\), and the
+positions of those columns among the columns of <code>coefficients</code>. Both
+are <code>NULL</code> otherwise, and for an entry stored by an older version.
+<code><a href="pred_bootstrap.html">pred_bootstrap()</a></code> rebuilds the refitted coefficients from
+<code>coefficients</code> and <code>raw</code> to reuse the entry.</p></dd>
 
 
 </dl></div>

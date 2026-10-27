@@ -59,13 +59,16 @@ frequentist_vcov(information = NULL, sandwich = NULL)
 - sandwich:
 
   `NULL` (the default) or an object from
-  [`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md)
+  [`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md),
+  [`hc1_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md)
   or
-  [`hc1_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md).
+  [`hac_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hac_sandwich.md).
   `NULL` keeps \\H\\ as the meat, the matrix above. Otherwise the meat
   is built from the scores of the observations and the matrix is the
   robust sandwich variance described at
-  [`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md).
+  [`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md),
+  or the HAC variance for dependent observations described at
+  [`hac_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hac_sandwich.md).
 
 ## Value
 
@@ -137,7 +140,7 @@ summary(fit, vcov_type = frequentist_vcov())
 #> 95% intervals, frequentist variance
 #> conditional log-likelihood -29.891019    effective df 3.00
 #> cAIC 65.782    cBIC 72.928
-#> fitted in 103 ms
+#> fitted in 101 ms
 #> inner   max |grad|/se 8.8e-16   min eigen 0.11
 #> outer   max |grad|/se 8.2e-15   min eigen 1
 frequentist_vcov(information = distributions7::expected_info())

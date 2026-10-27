@@ -46,4 +46,7 @@ The weights multiply the weights of the fit. A cluster replicate gives
 the observations of a group the number of times that the group was
 drawn. The attribute `kind` of the result is `"parametric"` or
 `"weights"`; `targets` lists the random-effect coordinates of a
-parametric draw, and `random` says whether the effects are redrawn.
+parametric draw, and `random` says whether the effects are redrawn. A
+cluster scheme beside random effects returns the plan of
+[`boot_cluster_random_plan()`](https://statmodels7.github.io/statmodels7/reference/boot_cluster_random_plan.md),
+of kind `"regrouped"`.

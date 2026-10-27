@@ -11,7 +11,7 @@ test."><meta property="og:image" content="https://statmodels7.github.io/statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,7 @@ test.</p>
 <span>  vcov_type <span class="op">=</span> <span class="fu"><a href="bayesian_vcov.html">bayesian_vcov</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  readable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  test <span class="op">=</span> <span class="fu"><a href="wald_test.html">wald_test</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  interval <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -98,6 +99,14 @@ symmetric about the estimate, from the variance matrix and with no refit.
 <code><a href="lr_test.html">lr_test()</a></code>, <code><a href="score_test.html">score_test()</a></code> and <code><a href="gradient_test.html">gradient_test()</a></code> are inverted by
 <code><a href="statmod_invert.html">statmod_invert()</a></code> and cost a few dozen restricted refits per interval.
 The four are compared at <a href="test_statistic.html">test_statistic</a>.</p></dd>
+
+
+<dt id="arg-interval">interval<a class="anchor" aria-label="anchor" href="#arg-interval"></a></dt>
+<dd><p><code>NULL</code> (the default), which inverts <code>test</code>, or a
+<a href="bootstrap_interval.html">bootstrap_interval</a> object, <code><a href="bootstrap_interval.html">percentile_interval()</a></code> or
+<code><a href="bootstrap_interval.html">basic_interval()</a></code>, whose limits are quantiles of the bootstrap
+replicates stored in the fit. The standard error is then the bootstrap
+one, and <code>vcov_type</code> and a <code>test</code> other than <code><a href="wald_test.html">wald_test()</a></code> are rejected.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

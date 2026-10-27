@@ -11,7 +11,12 @@ variable is read. Use the constructors, which set the properties.
 ## Usage
 
 ``` r
-SandwichMethod(type = character(0), cluster = NULL, data = NULL)
+SandwichMethod(
+  type = character(0),
+  cluster = NULL,
+  data = NULL,
+  reference = "normal"
+)
 ```
 
 ## Arguments

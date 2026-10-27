@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -519,6 +519,27 @@
 
         <dt>
 
+          <code><a href="hc2_sandwich.html">hc2_sandwich()</a></code> <code><a href="hc2_sandwich.html">hc3_sandwich()</a></code> <code><a href="hc2_sandwich.html">hc4_sandwich()</a></code>
+
+        </dt>
+        <dd>Sandwich Variances with a Leverage Correction</dd>
+
+        <dt>
+
+          <code><a href="statmod_leverage.html">statmod_leverage()</a></code>
+
+        </dt>
+        <dd>Leverage of the Observations in a Distributional Regression</dd>
+
+        <dt>
+
+          <code><a href="hac_sandwich.html">hac_sandwich()</a></code>
+
+        </dt>
+        <dd>HAC Sandwich Variance of the Coefficients</dd>
+
+        <dt>
+
           <code><a href="unconditional_vcov.html">unconditional_vcov()</a></code>
 
         </dt>
@@ -588,6 +609,13 @@
 
         </dt>
         <dd>Stored Replicates of a Bootstrap</dd>
+
+        <dt>
+
+          <code><a href="bootstrap_interval.html">bootstrap_interval()</a></code> <code><a href="bootstrap_interval.html">PercentileInterval()</a></code> <code><a href="bootstrap_interval.html">BasicInterval()</a></code> <code><a href="bootstrap_interval.html">percentile_interval()</a></code> <code><a href="bootstrap_interval.html">basic_interval()</a></code>
+
+        </dt>
+        <dd>Bootstrap Intervals for the Coefficients of a Fit</dd>
       </dl></div><div class="section level2">
       <h2 id="graphs-of-a-fit">Graphs of a fit<a class="anchor" aria-label="anchor" href="#graphs-of-a-fit"></a></h2>
 
@@ -904,6 +932,13 @@
 
         <dt>
 
+          <code><a href="HacSandwich.html">HacSandwich()</a></code>
+
+        </dt>
+        <dd>S7 Class for the Meat of a HAC Variance</dd>
+
+        <dt>
+
           <code><a href="Iwls-class.html">Iwls()</a></code>
 
         </dt>
@@ -1184,6 +1219,13 @@
 
         <dt>
 
+          <code><a href="as_boot_interval.html">as_boot_interval()</a></code>
+
+        </dt>
+        <dd>Check the Argument That Selects a Bootstrap Interval</dd>
+
+        <dt>
+
           <code><a href="as_resample_method.html">as_resample_method()</a></code>
 
         </dt>
@@ -1303,10 +1345,38 @@
 
         <dt>
 
-          <code><a href="boot_cluster_ids.html">boot_cluster_ids()</a></code>
+          <code><a href="boot_cluster_ids.html">boot_cluster_ids()</a></code> <code><a href="boot_cluster_ids.html">boot_cluster_data()</a></code>
 
         </dt>
         <dd>The Groups of a Cluster Bootstrap</dd>
+
+        <dt>
+
+          <code><a href="boot_cluster_random_check.html">boot_cluster_random_check()</a></code>
+
+        </dt>
+        <dd>Reject a Random-Effect Term That the Cluster Bootstrap Cannot Regroup</dd>
+
+        <dt>
+
+          <code><a href="boot_cluster_random_plan.html">boot_cluster_random_plan()</a></code>
+
+        </dt>
+        <dd>The Draw of a Cluster Replicate Beside Random Effects</dd>
+
+        <dt>
+
+          <code><a href="boot_cluster_validate.html">boot_cluster_validate()</a></code>
+
+        </dt>
+        <dd>The Status of One Refitted Cluster Replicate With Regrouped Effects</dd>
+
+        <dt>
+
+          <code><a href="boot_coord_names.html">boot_coord_names()</a></code>
+
+        </dt>
+        <dd>The Names of the Coordinates of the Stored Replicates</dd>
 
         <dt>
 
@@ -1331,10 +1401,52 @@
 
         <dt>
 
+          <code><a href="boot_interval_new.html">boot_interval_new()</a></code>
+
+        </dt>
+        <dd>Build a Bootstrap Interval Object</dd>
+
+        <dt>
+
+          <code><a href="boot_interval_vcov.html">boot_interval_vcov()</a></code>
+
+        </dt>
+        <dd>The Bootstrap Variance That Supplies a Bootstrap Interval</dd>
+
+        <dt>
+
           <code><a href="boot_key.html">boot_key()</a></code>
 
         </dt>
         <dd>The Key of an Entry in the Collection</dd>
+
+        <dt>
+
+          <code><a href="boot_mode.html">boot_mode()</a></code>
+
+        </dt>
+        <dd>The Kind of Model That the Bootstrap Treats Apart</dd>
+
+        <dt>
+
+          <code><a href="boot_plan_structural.html">boot_plan_structural()</a></code>
+
+        </dt>
+        <dd>The Draw of a Replicate of a Model With a Structural Term</dd>
+
+        <dt>
+
+          <code><a href="boot_plan_wrap.html">boot_plan_wrap()</a></code>
+
+        </dt>
+        <dd>Add the Refit Seed to the Draw of a Break-Point Model</dd>
+
+        <dt>
+
+          <code><a href="boot_raw_cols.html">boot_raw_cols()</a></code>
+
+        </dt>
+        <dd>The Columns of the Refitted Random Effects</dd>
 
         <dt>
 
@@ -1352,10 +1464,59 @@
 
         <dt>
 
+          <code><a href="boot_readable_values.html">boot_readable_values()</a></code>
+
+        </dt>
+        <dd>The Readable Quantities of Every Replicate</dd>
+
+        <dt>
+
+          <code><a href="boot_record_positions.html">boot_record_positions()</a></code>
+
+        </dt>
+        <dd>Store the Position of a Held Break-Point in Its Slot</dd>
+
+        <dt>
+
+          <code><a href="boot_refit_breakpoint.html">boot_refit_breakpoint()</a></code>
+
+        </dt>
+        <dd>Refit One Replicate of a Model With a Break-Point Term</dd>
+
+        <dt>
+
+          <code><a href="boot_replicate_matrix.html">boot_replicate_matrix()</a></code>
+
+        </dt>
+        <dd>The Replicates of a Model With a Structural Term</dd>
+
+        <dt>
+
           <code><a href="boot_resolve.html">boot_resolve()</a></code>
 
         </dt>
         <dd>Resolve a Bootstrap Variance Against the Stored Entries</dd>
+
+        <dt>
+
+          <code><a href="boot_special_replicate.html">boot_special_replicate()</a></code>
+
+        </dt>
+        <dd>One Replicate of a Special Model</dd>
+
+        <dt>
+
+          <code><a href="boot_special_status.html">boot_special_status()</a></code>
+
+        </dt>
+        <dd>The Status of a Replicate of a Special Model</dd>
+
+        <dt>
+
+          <code><a href="boot_stored_replicas.html">boot_stored_replicas()</a></code>
+
+        </dt>
+        <dd>The Stored Replicates That a Predictive Bootstrap Can Reuse</dd>
 
         <dt>
 
@@ -1380,6 +1541,20 @@
 
         <dt>
 
+          <code><a href="boot_tail_values.html">boot_tail_values()</a></code>
+
+        </dt>
+        <dd>The Free Parameters of a Structural Term in a Refit</dd>
+
+        <dt>
+
+          <code><a href="boot_term_values.html">boot_term_values()</a></code>
+
+        </dt>
+        <dd>The Quantities of a Structural Term at Each Replicate</dd>
+
+        <dt>
+
           <code><a href="boot_validate.html">boot_validate()</a></code>
 
         </dt>
@@ -1391,6 +1566,13 @@
 
         </dt>
         <dd>The Covariance of the Stored Replicates</dd>
+
+        <dt>
+
+          <code><a href="boot_vcov_structural.html">boot_vcov_structural()</a></code>
+
+        </dt>
+        <dd>The Covariance of the Replicates of a Model With a Structural Term</dd>
 
         <dt>
 
@@ -1737,6 +1919,13 @@
 
         <dt>
 
+          <code><a href="confint_interval.html">confint_interval()</a></code>
+
+        </dt>
+        <dd>The Bootstrap Intervals of a Table of Coefficients</dd>
+
+        <dt>
+
           <code><a href="continued_deriv_inputs.html">continued_deriv_inputs()</a></code>
 
         </dt>
@@ -1867,6 +2056,13 @@
 
         </dt>
         <dd>The Working Response and Weights of One Equation</dd>
+
+        <dt>
+
+          <code><a href="cr2_df_closure.html">cr2_df_closure()</a></code>
+
+        </dt>
+        <dd>Satterthwaite Degrees of Freedom of the CR2 Variance</dd>
 
         <dt>
 
@@ -2542,6 +2738,48 @@
 
         <dt>
 
+          <code><a href="hac_check.html">hac_check()</a></code>
+
+        </dt>
+        <dd>Reject a Fit That the HAC Variance Does Not Cover</dd>
+
+        <dt>
+
+          <code><a href="hac_joint.html">hac_joint()</a></code>
+
+        </dt>
+        <dd>The HAC Variance Over the Joint Unknowns</dd>
+
+        <dt>
+
+          <code><a href="hac_kernel.html">hac_kernel()</a></code>
+
+        </dt>
+        <dd>The Kernel of a HAC Variance</dd>
+
+        <dt>
+
+          <code><a href="hac_meat.html">hac_meat()</a></code>
+
+        </dt>
+        <dd>The HAC Meat</dd>
+
+        <dt>
+
+          <code><a href="hac_series.html">hac_series()</a></code>
+
+        </dt>
+        <dd>The Series of a HAC Variance</dd>
+
+        <dt>
+
+          <code><a href="hac_vcov.html">hac_vcov()</a></code>
+
+        </dt>
+        <dd>The HAC Variance of the Coefficients</dd>
+
+        <dt>
+
           <code><a href="has_sharp_breakpoint.html">has_sharp_breakpoint()</a></code>
 
         </dt>
@@ -3074,6 +3312,13 @@
 
         <dt>
 
+          <code><a href="joint_scores.html">joint_scores()</a></code>
+
+        </dt>
+        <dd>The Scores of the Observations in the Joint Vector of Unknowns</dd>
+
+        <dt>
+
           <code><a href="joint_smoother_diag.html">joint_smoother_diag()</a></code>
 
         </dt>
@@ -3172,10 +3417,45 @@
 
         <dt>
 
+          <code><a href="leverage_blocks.html">leverage_blocks()</a></code>
+
+        </dt>
+        <dd>The Leverage Block of Each Observation</dd>
+
+        <dt>
+
+          <code><a href="leverage_information.html">leverage_information()</a></code>
+
+        </dt>
+        <dd>The Information of the Leverage</dd>
+
+        <dt>
+
+          <code><a href="leverage_inverse.html">leverage_inverse()</a></code>
+
+        </dt>
+        <dd>The Inverse Penalized Information of the Hat Matrix</dd>
+
+        <dt>
+
           <code><a href="leverage_pairs.html">leverage_pairs()</a></code>
 
         </dt>
         <dd>The Leverage Diagonal Over the Nonzeros of Two Rows</dd>
+
+        <dt>
+
+          <code><a href="leverage_parts.html">leverage_parts()</a></code>
+
+        </dt>
+        <dd>The Per-Observation Pieces of the Hat Matrix of a Fit</dd>
+
+        <dt>
+
+          <code><a href="leverage_power.html">leverage_power()</a></code>
+
+        </dt>
+        <dd>Apply a Function of a Symmetric Block Through Its Eigenvalues</dd>
 
         <dt>
 
@@ -3942,6 +4222,13 @@
 
         <dt>
 
+          <code><a href="print.bootstrap_interval.html">print.bootstrap_interval</a></code>
+
+        </dt>
+        <dd>Print a Bootstrap Interval</dd>
+
+        <dt>
+
           <code><a href="print.interval_type.html">print.interval_type</a></code> <code><a href="print.interval_type.html">print.predictive_type</a></code>
 
         </dt>
@@ -4051,6 +4338,13 @@
 
         </dt>
         <dd>Project a Reference Fit's Predictor onto the Blocks That Did Not Match</dd>
+
+        <dt>
+
+          <code><a href="psd_roots.html">psd_roots()</a></code>
+
+        </dt>
+        <dd>Symmetric Square Roots of a Stack of Small Information Matrices</dd>
 
         <dt>
 
@@ -4257,6 +4551,13 @@
 
         <dt>
 
+          <code><a href="regime_scores.html">regime_scores()</a></code>
+
+        </dt>
+        <dd>The Scores of the Increments of a Regime Likelihood</dd>
+
+        <dt>
+
           <code><a href="reject_duplicate_names.html">reject_duplicate_names()</a></code>
 
         </dt>
@@ -4460,6 +4761,13 @@
 
         <dt>
 
+          <code><a href="sandwich_adjusted.html">sandwich_adjusted()</a></code>
+
+        </dt>
+        <dd>Rescale the Scores of a Fit by the Leverage</dd>
+
+        <dt>
+
           <code><a href="sandwich_check.html">sandwich_check()</a></code>
 
         </dt>
@@ -4474,10 +4782,31 @@
 
         <dt>
 
+          <code><a href="sandwich_df_by_name.html">sandwich_df_by_name()</a></code> <code><a href="sandwich_df_by_name.html">print(<i>&lt;statmod_df_fn&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Degrees of Freedom Addressed by Coordinate Name</dd>
+
+        <dt>
+
+          <code><a href="sandwich_power.html">sandwich_power()</a></code>
+
+        </dt>
+        <dd>The Exponent of the Leverage Correction</dd>
+
+        <dt>
+
           <code><a href="sandwich_vcov.html">sandwich_vcov()</a></code>
 
         </dt>
         <dd>The Sandwich Variance of the Coefficients</dd>
+
+        <dt>
+
+          <code><a href="sandwich_wald_df.html">sandwich_wald_df()</a></code>
+
+        </dt>
+        <dd>Degrees of Freedom of One Coefficient Under a CR2 Variance</dd>
 
         <dt>
 
@@ -5349,6 +5678,13 @@
 
         <dt>
 
+          <code><a href="structural_convention_block.html">structural_convention_block()</a></code>
+
+        </dt>
+        <dd>The Joint Variance of a Convention, in the Order of the Joint Information</dd>
+
+        <dt>
+
           <code><a href="structural_display.html">structural_display()</a></code>
 
         </dt>
@@ -5752,6 +6088,20 @@
 
         </dt>
         <dd>Resolve the Verbosity Setting</dd>
+
+        <dt>
+
+          <code><a href="wald_pvalue.html">wald_pvalue()</a></code>
+
+        </dt>
+        <dd>The Two-Sided P-Value of a Wald Statistic</dd>
+
+        <dt>
+
+          <code><a href="wald_reference.html">wald_reference()</a></code>
+
+        </dt>
+        <dd>The Reference Quantile of a Wald Interval</dd>
 
         <dt>
 

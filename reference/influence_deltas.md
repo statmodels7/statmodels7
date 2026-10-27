@@ -8,7 +8,7 @@ distance, as described at
 ## Usage
 
 ``` r
-influence_deltas(fit, param, information, adjust = TRUE)
+influence_deltas(fit, param, information = NULL, adjust = TRUE)
 ```
 
 ## Arguments
@@ -24,7 +24,7 @@ influence_deltas(fit, param, information, adjust = TRUE)
 
 - information:
 
-  An object from
+  `NULL` (the expected information) or an object from
   [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
   or
   [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html).

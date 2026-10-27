@@ -1,5 +1,72 @@
 # Changelog
 
+## statmodels7 0.212.0
+
+- [`confint()`](https://rdrr.io/r/stats/confint.html) takes
+  `interval = percentile_interval()` or
+  [`basic_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md),
+  bootstrap intervals from the replicates stored by
+  [`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md)
+  (1000 replicates by default when none are stored, with a warning when
+  a tail holds fewer than ten). With `readable = TRUE` each quantity is
+  computed on every replicate before the quantiles.
+
+- [`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md)
+  reads a stored parametric bootstrap instead of refitting, and extends
+  it when it holds fewer replicates than requested. The entry keeps the
+  refitted random-effect coordinates (`raw`, with `raw_cols`), so the
+  reuse also covers a model with `random()` when the prediction sets
+  every random term aside.
+
+- [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
+  works on a fit with `random()` terms: groups drawn more than once
+  become new groups with their own effects, and the design is rebuilt on
+  the drawn rows with the blueprints of the fit. A grouping crossed with
+  the cluster keeps its labels. The individual random effects have
+  variance `NA`. A random term with a covariance label, a smooth random
+  effect or a random term inside a subformula is rejected.
+
+- [`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md)
+  covers `seg()`, `jump()`, `jseg()` and `nl()` (each replicate refitted
+  from the fit’s positions, then the restart cycle) and, under
+  [`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md),
+  `gas()` and `regime()` (each replicate a new path drawn with
+  `term_simulate()`).
+
+- [`statmod_leverage()`](https://statmodels7.github.io/statmodels7/reference/statmod_leverage.md)
+  returns the diagonal block of the hat matrix of each observation over
+  the coefficients of all equations, with the expected information
+  unless an information is given.
+  [`hc2_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc2_sandwich.md),
+  [`hc3_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc2_sandwich.md)
+  and
+  [`hc4_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc2_sandwich.md)
+  are leverage-corrected sandwiches; with `cluster`, the first two are
+  CR2 and CR3. With CR2,
+  [`confint()`](https://rdrr.io/r/stats/confint.html),
+  [`summary()`](https://rdrr.io/r/base/summary.html) (readable rows
+  included) and the Wald
+  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
+  use a t with Satterthwaite degrees of freedom per contrast, and
+  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
+  prints the statistic as F(1, df).
+  [`plot_influence()`](https://statmodels7.github.io/statmodels7/reference/plot_influence.md)
+  reads the same leverage.
+
+- [`hac_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hac_sandwich.md)
+  gives a Newey-West sandwich for `gas()` and `regime()` fits (Bartlett,
+  Parzen or truncated kernel, bandwidth floor(4 (T/100)^(2/9)) by
+  default), with lags within groups for panels, and for other fits
+  ordered by `time` (and `cluster`). The per-observation scores of
+  `regime()` come from
+  [`modelterms7::term_scores()`](https://statmodels7.github.io/modelterms7/reference/term_scores.html).
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) reads the variance
+  of the selected `vcov_type` for the table of a structural term’s own
+  parameters, for every convention; under
+  [`bootstrap_vcov()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_vcov.md)
+  each quantity is evaluated on every replicate.
+
 ## statmodels7 0.211.0
 
 - [`plot()`](https://rdrr.io/r/graphics/plot.default.html) and

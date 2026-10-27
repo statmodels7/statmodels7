@@ -81,6 +81,8 @@ with a term whose block moves with its coefficients (the break-point
 terms and
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html))
 are rejected.
+[`hac_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hac_sandwich.md)
+covers the structural terms.
 
 The prior weights \\w_i\\ of
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
