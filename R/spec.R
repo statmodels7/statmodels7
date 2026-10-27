@@ -2195,33 +2195,57 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
     info <- tryCatch(predictor_information(spec), error = function(e) NULL)
     for (i in filt) {
       u <- su[[i]]
-      I <- info[[u$param]]
-      if (is.null(I) || !is.finite(I) || I <= 0) next
       tm <- spec@terms[[u$param]][[u$term]]
       lks <- modelterms7::term_links(tm)
       z <- sst$zeta[[u$term]]
-      # 0.1 / I written as it was at d = 0: 0.1 * I^-1 can differ from it in
-      # the last bit, and a fit started from either can end elsewhere
-      d_sc <- filter_scaling(tm)
-      a_start <- if (d_sc == 0) 0.1 / I else 0.1 * I^(d_sc - 1)
-      for (a in grep("^kappa[0-9]+$", modelterms7::term_params(tm),
-                     value = TRUE)) {
-        lk <- lks[[a]]
-        if (is.null(lk)) lk <- linkfunctions7::log_link()
-        new <- tryCatch(linkfunctions7::linkfun(lk, a_start),
-                        error = function(e) NA_real_)
-        old <- tryCatch(linkfunctions7::linkfun(lk, 0.1),
-                        error = function(e) NA_real_)
-        if (!is.finite(new)) next
-        if (a %in% names(z)) {
-          z[[a]] <- new
-        } else if (is.finite(old) && old != 0) {
-          # a developed loading starts at the constant projected onto its
-          # design, which is linear in the constant
-          dev <- startsWith(names(z), paste0(a, "."))
-          z[dev] <- z[dev] * (new / old)
+      # A JOINT FILTER IS SCALED EQUATION BY EQUATION. Its loadings are named
+      # after their equation (mu.kappa1, phi.kappa1) and each multiplies the
+      # score of its own parameter, so each takes the information of that
+      # parameter. Read on the bare names and on u$param alone, this start
+      # was the first one unchanged: on a beta share in Seatbelts with both
+      # mu and phi filtered (I = 88.1 and 0.50) the fit stopped unconverged
+      # at -7897.30 from both, and from 0.1/I per equation it converges at
+      # 674.81. A driver has no loading of its own and is skipped.
+      parts <- if (is_joint_filter(tm)) {
+        Filter(Negate(is.null), lapply(tm@params, function(q) {
+          sub <- tm@terms[[q]]
+          if (S7::S7_inherits(sub, modelterms7::GasDriver)) return(NULL)
+          list(prefix = paste0(q, "."), tm = sub, param = q)
+        }))
+      } else {
+        list(list(prefix = "", tm = tm, param = u$param))
+      }
+      changed <- FALSE
+      for (pt in parts) {
+        I <- info[[pt$param]]
+        if (is.null(I) || !is.finite(I) || I <= 0) next
+        # 0.1 / I written as it was at d = 0: 0.1 * I^-1 can differ from it
+        # in the last bit, and a fit started from either can end elsewhere
+        d_sc <- filter_scaling(pt$tm)
+        a_start <- if (d_sc == 0) 0.1 / I else 0.1 * I^(d_sc - 1)
+        for (a0 in grep("^kappa[0-9]+$", modelterms7::term_params(pt$tm),
+                        value = TRUE)) {
+          a <- paste0(pt$prefix, a0)
+          lk <- lks[[a]]
+          if (is.null(lk)) lk <- linkfunctions7::log_link()
+          new <- tryCatch(linkfunctions7::linkfun(lk, a_start),
+                          error = function(e) NA_real_)
+          old <- tryCatch(linkfunctions7::linkfun(lk, 0.1),
+                          error = function(e) NA_real_)
+          if (!is.finite(new)) next
+          if (a %in% names(z)) {
+            z[[a]] <- new
+            changed <- TRUE
+          } else if (is.finite(old) && old != 0) {
+            # a developed loading starts at the constant projected onto its
+            # design, which is linear in the constant
+            dev <- startsWith(names(z), paste0(a, "."))
+            z[dev] <- z[dev] * (new / old)
+            changed <- changed || any(dev)
+          }
         }
       }
+      if (!changed) next
       if (is.null(sst$info_start)) sst$info_start <- list()
       sst$info_start[[u$term]] <- z
     }
