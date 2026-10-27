@@ -438,8 +438,19 @@ as_test_statistic <- function(test, arg = "test") {
 #' are read on the same matrix. The choice is independent of
 #' the information with which the fit was computed (`inner_information` of
 #' [statmod()]) and of the one of the outer criterion (the `information` of
-#' [reml()]). A model that carries a structural term is inverted on the
-#' observed information whatever the object says. The three matrices are
+#' [reml()]). A model with a score-driven filter
+#' ([modelterms7::gas()]) is inverted over the coefficients and the filter's
+#' own parameters together, on the observed information or, with
+#' [distributions7::expected_info()], on the expected information conditional
+#' on the past, \eqn{\sum_t J_t^\top \mathcal{I}(\eta_t) J_t} with
+#' \eqn{J_t} the Jacobian of the predictors at observation \eqn{t} (see
+#' [statmod_full_information()]). Its `method` applies at the fitted
+#' predictors, so a family with no closed form is served as well: with
+#' [distributions7::expect_opg()] the matrix is the sum of the outer products
+#' of the per-observation scores. A model with a term of the likelihood shape
+#' ([modelterms7::regime()], a marginal break-point term) has no expected
+#' information: `NULL` resolves to the observed information there, and
+#' [distributions7::expected_info()] is an error. The three matrices are
 #' \deqn{V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}, \qquad
 #'   V' = V_b + J V_\theta J'.}
 #'
@@ -600,8 +611,8 @@ UnconditionalVcov <- S7::new_class("UnconditionalVcov", parent = vcov_method,
 #'     and [distributions7::expect_mc()] (see
 #'     [distributions7::expected_derivative_methods]).
 #'
-#'   [auto_info()] is not accepted. A model with a structural term is inverted
-#'   on the observed information whatever the object says. The choice does not
+#'   [auto_info()] is not accepted. For a model with a structural term, see
+#'   [vcov_method]. The choice does not
 #'   depend on how the fit was computed (`inner_information` of [statmod()]).
 #'   [summary.StatmodFit()] states the matrix when it is not the observed
 #'   one, and a printed variance object states the information that it names.
@@ -792,17 +803,36 @@ as_vcov_method <- function(x, arg = "vcov_type") {
 #' and that is not `NULL`, and [distributions7::default_information()] of `distrib`
 #' otherwise (a `NULL` property, or a convention that has no property).
 #'
+#' @details
+#' Where `design` carries a structural term of the likelihood shape
+#' ([modelterms7::regime()], a marginal break-point term), the default is
+#' [distributions7::observed_info()] whatever the family, and a property that
+#' names [distributions7::expected_info()] signals an error (see
+#' [structural_expected_check()]): the likelihood of such a model is a mixture
+#' over latent components and has no expected information.
+#'
 #' @param x A [vcov_method] object.
 #' @param distrib The [distributions7::distrib] of the fit.
+#' @param design The design of the fit, or `NULL` where it is not at hand.
 #'
 #' @return An object that inherits from [distributions7::Information].
 #'
 #' @seealso [vcov_method], [distributions7::default_information()]
 #'
 #' @keywords internal
-vcov_information <- function(x, distrib) {
+vcov_information <- function(x, distrib, design = NULL) {
   info <- if (S7::prop_exists(x, "information")) x@information else NULL
-  if (is.null(info)) distributions7::default_information(distrib) else info
+  loglik <- any(vapply(attr(design, "structural"),
+                       function(u) identical(u$kind, "loglik"), logical(1)))
+  if (is.null(info)) {
+    if (loglik) return(distributions7::observed_info())
+    return(distributions7::default_information(distrib))
+  }
+  if (loglik && info_expected(info)) {
+    structural_expected_check(design, sprintf("The 'information' of %s_vcov()",
+                                              x@name))
+  }
+  info
 }
 
 

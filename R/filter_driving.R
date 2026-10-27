@@ -41,6 +41,26 @@ filter_scaling <- function(tm) {
 #' derivative, and the third and fourth derivatives of the information are
 #' finite differences of it.
 #'
+#' @details
+#' The information that scales the score is part of the model, and it is read
+#' in closed form at the predictor of every step of the recursion. A family
+#' that carries only its density has no closed form, and neither of the two
+#' substitutes defines the same model at a usable cost:
+#'
+#' - [distributions7::expect_opg()] reads the information at the data as the
+#'   square of the score, \eqn{s_t^2}, so the scaled score becomes
+#'   \eqn{s_t/|s_t|^{2d}}, that is \eqn{1/s_t} at \eqn{d = 1} and the sign of
+#'   \eqn{s_t} at \eqn{d = 1/2}, which is another model;
+#' - [distributions7::expect_integrate()] gives the information of the same
+#'   model, but the recursion would evaluate one quadrature per step, and per
+#'   derivative order, in sequence, since each step starts from the predictor
+#'   of the step before.
+#'
+#' A family supplies the closed form through methods for
+#' [distributions7::distrib_expected_hessian()],
+#' [distributions7::distrib_dexpected_hessian()] and
+#' [distributions7::distrib_d2expected_hessian()].
+#'
 #' @param d A distribution object.
 #' @param y The response.
 #' @param theta The parameters, one value per observation or one in all.
@@ -49,6 +69,11 @@ filter_scaling <- function(tm) {
 #'
 #' @keywords internal
 check_filter_scaling <- function(d, y, theta) {
+  # Measured on 2026-10-27 (misure_info_strutt/RISULTATI.md): with
+  # expect_opg() the Nile at d = 1 reaches -667.34 against -637.40 with the
+  # closed form, a persistence of -0.019 against 0.845; a scalar quadrature
+  # costs 0.21-0.25 s, its first derivative 0.66-0.77 s, and one exact
+  # gradient over 25 observations of a density-only gaussian took 79 s.
   if (S7::S7_inherits(d, distributions7::multivariate_distrib)) {
     stop("a scaled score is available for univariate families only.",
          call. = FALSE)
@@ -60,8 +85,12 @@ check_filter_scaling <- function(d, y, theta) {
   }, error = function(e) FALSE)
   if (!ok) {
     stop(sprintf(paste0(
-      "gas(scaling = ) needs the expected information of '%s' and its\n",
-      "  analytic second derivative, which the family does not carry."),
+      "gas(scaling = ) needs the expected information of '%s' in closed\n",
+      "  form, with its first and second derivatives, which the family does\n",
+      "  not carry. Write methods for distributions7::distrib_expected_hessian(),\n",
+      "  distributions7::distrib_dexpected_hessian() and\n",
+      "  distributions7::distrib_d2expected_hessian() for the family, or use\n",
+      "  scaling = 0."),
       d@distrib_name), call. = FALSE)
   }
   invisible(NULL)

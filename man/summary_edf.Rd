@@ -37,10 +37,13 @@ the same \eqn{H}.
 The table stored in the fit is kept in three cases: a criterion that prices
 the fit with the count (\code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}}) reads the count on its own
 information, and a summary that recomputed it would no longer reproduce that
-criterion; a model with a structural term reads the joint vector of the
-coefficients and the term's parameters, which has no expected information; and
-a variance convention without an \code{information} property has no matrix to
-read.
+criterion; a model with a structural term of the likelihood shape
+(\code{\link[modelterms7:regime]{modelterms7::regime()}}, a marginal break-point term), which has no
+expected information; and a variance convention without an \code{information}
+property has no matrix to read. A model with a score-driven filter reads the
+joint vector of the coefficients and the filter's parameters, on the
+observed information or on the expected information conditional on the
+past.
 
 The eigenvalues of \eqn{(H+S)^{-1}H} are
 \eqn{v^\top H v/(v^\top H v + v^\top S v)} for the eigenvectors \eqn{v} of

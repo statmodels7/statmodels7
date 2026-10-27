@@ -4,12 +4,14 @@
 \alias{outer_resolve}
 \title{Settle a Marginal Criterion's Information Against the Family}
 \usage{
-outer_resolve(method, distrib)
+outer_resolve(method, distrib, design = NULL)
 }
 \arguments{
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{distrib}{The response family.}
+
+\item{design}{The design, or \code{NULL}.}
 }
 \value{
 \code{method}, in which \code{hessian} is settled.
@@ -27,5 +29,9 @@ their observed information is not positive definite at an outlier, and
 the Laplace determinant built on it can fail there. The expected
 information is therefore used for these families, and the observed
 information for the others.
+
+For a model with a structural term the observed information is used for
+every family, since the criterion over the joint vector is written on it
+(see \code{\link[=structural_outer_check]{structural_outer_check()}}).
 }
 \keyword{internal}

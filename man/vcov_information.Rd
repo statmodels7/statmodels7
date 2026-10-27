@@ -4,12 +4,14 @@
 \alias{vcov_information}
 \title{The Information of a Variance Convention for a Family}
 \usage{
-vcov_information(x, distrib)
+vcov_information(x, distrib, design = NULL)
 }
 \arguments{
 \item{x}{A \link{vcov_method} object.}
 
 \item{distrib}{The \link[distributions7:distrib]{distributions7::distrib} of the fit.}
+
+\item{design}{The design of the fit, or \code{NULL} where it is not at hand.}
 }
 \value{
 An object that inherits from \link[distributions7:Information]{distributions7::Information}.
@@ -18,6 +20,14 @@ An object that inherits from \link[distributions7:Information]{distributions7::I
 Returns the \code{information} property of a \link{vcov_method} object that has one
 and that is not \code{NULL}, and \code{\link[distributions7:default_information]{distributions7::default_information()}} of \code{distrib}
 otherwise (a \code{NULL} property, or a convention that has no property).
+}
+\details{
+Where \code{design} carries a structural term of the likelihood shape
+(\code{\link[modelterms7:regime]{modelterms7::regime()}}, a marginal break-point term), the default is
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} whatever the family, and a property that
+names \code{\link[distributions7:expected_info]{distributions7::expected_info()}} signals an error (see
+\code{\link[=structural_expected_check]{structural_expected_check()}}): the likelihood of such a model is a mixture
+over latent components and has no expected information.
 }
 \seealso{
 \link{vcov_method}, \code{\link[distributions7:default_information]{distributions7::default_information()}}

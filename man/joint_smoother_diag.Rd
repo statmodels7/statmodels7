@@ -4,7 +4,14 @@
 \alias{joint_smoother_diag}
 \title{The Model's Smoother Over the Coefficients and a Filter's Parameters}
 \usage{
-joint_smoother_diag(spec, coef, design, hyper)
+joint_smoother_diag(
+  spec,
+  coef,
+  design,
+  hyper,
+  expected = FALSE,
+  emethod = NULL
+)
 }
 \arguments{
 \item{spec}{The specification.}
@@ -14,6 +21,9 @@ joint_smoother_diag(spec, coef, design, hyper)
 \item{design}{The design.}
 
 \item{hyper}{The hyperparameters.}
+
+\item{expected, emethod}{Whether the matrix is the expected information
+conditional on the past, and its \code{method}.}
 }
 \value{
 A list with \code{beta}, the diagonal over the stacked coefficients,
@@ -58,8 +68,9 @@ predictor has no such joint determinant, because \code{\link[=statmod_marginal_f
 returns \code{NULL} for it, so the count falls back to the coefficient-only
 reading.
 
-The joint route reads the observed information, because a filter has no
-expected one: \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} assembles from
+The joint route reads the observed information by default, and the
+expected information conditional on the past with \code{expected = TRUE} (see
+\code{\link[=statmod_full_information]{statmod_full_information()}}); \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} assembles from
 \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}}, and the criterion of such a model already
 reads that same matrix. A model carrying no filter never reaches here and is
 untouched.

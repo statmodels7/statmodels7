@@ -563,12 +563,95 @@ deriv5_key <- function(params, a, b, c, d, e) {
 }
 
 
-#' The Observed Information Over the Coefficients and a Filter's Parameters
+#' Reject the Expected Information Beside a Term of the Likelihood Shape
+#'
+#' @description
+#' Signals an error where the model carries a structural term of the
+#' likelihood shape (a [modelterms7::regime()] term or a marginal break-point
+#' term) and returns `NULL` invisibly otherwise.
+#'
+#' @details
+#' The likelihood of such a model is a mixture over latent components: the
+#' states of a regime term, the positions of a marginal break-point term. The
+#' expectation of its second derivatives over the response has no closed form,
+#' so neither the inner fit, nor an outer criterion, nor a variance can be
+#' computed on the expected information there.
+#'
+#' @param design The design.
+#' @param what The argument that named the expected information, as it is to
+#'   be printed.
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @seealso [structural_outer_check()], [statmod_full_information()]
+#'
+#' @keywords internal
+structural_expected_check <- function(design, what) {
+  su <- Filter(function(u) identical(u$kind, "loglik"),
+               attr(design, "structural"))
+  if (!length(su)) return(invisible(NULL))
+  stop(sprintf(paste0(
+    "%s is distributions7::expected_info(), which is not available for\n",
+    "  a model with the term\n    %s\n",
+    "  The likelihood of that term is a mixture over latent components, and\n",
+    "  the expectation of its second derivatives has no closed form. Use\n",
+    "  distributions7::observed_info()."),
+    what, su[[1L]]$term), call. = FALSE)
+}
+
+
+#' Reject an Outer Criterion on the Expected Information Beside a Structural Term
+#'
+#' @description
+#' Signals an error where `method` is an outer criterion ([reml()], [ml()],
+#' [aic()] or [bic()]) whose `information` is
+#' [distributions7::expected_info()] and the model carries a structural term,
+#' and returns `NULL` invisibly otherwise.
+#'
+#' @details
+#' A criterion over a model with a structural term reads the information over
+#' the coefficients and the term's own parameters together, and its exact
+#' gradient and Hessian are written for the observed information of that
+#' vector. On the expected information conditional on the past, which
+#' [statmod_full_information()] computes for a filter, the determinant is a
+#' different criterion, and its exact derivatives would need the derivative of
+#' the filter's Jacobian; such a criterion is therefore not offered. For a term
+#' of the likelihood shape the expected information does not exist at all (see
+#' [structural_expected_check()]).
+#'
+#' @param method An [OuterMethod()] or `NULL`.
+#' @param design The design.
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @seealso [outer_resolve()], which settles [auto_info()] as the observed
+#'   information for such a model.
+#'
+#' @keywords internal
+structural_outer_check <- function(method, design) {
+  su <- attr(design, "structural")
+  if (is.null(method) || !length(su) || !info_expected(method@hessian)) {
+    return(invisible(NULL))
+  }
+  what <- sprintf("The 'information' of %s()", method@kind)
+  structural_expected_check(design, what)
+  stop(sprintf(paste0(
+    "%s is distributions7::expected_info(), which is not available for\n",
+    "  an outer criterion of a model with the structural term\n    %s\n",
+    "  The criterion and its exact derivatives are those of the observed\n",
+    "  information over the coefficients and the term's own parameters. Use\n",
+    "  %s(information = distributions7::observed_info())."),
+    what, su[[1L]]$term, method@kind), call. = FALSE)
+}
+
+
+#' The Information Over the Coefficients and a Filter's Parameters
 #'
 #' @description
 #' Computes the information of a model carrying a structural filter, over the
-#' coefficients of every equation and the term's own parameters, with the
-#' recursion's own curvature in it.
+#' coefficients of every equation and the term's own parameters: the observed
+#' information, with the recursion's own curvature in it, or the expected
+#' information conditional on the past.
 #'
 #' @details
 #' The gradient of such a model is exact already, through
@@ -594,34 +677,70 @@ deriv5_key <- function(params, a, b, c, d, e) {
 #' The term's parameters are the last columns, which is the convention that
 #' `term_curvature()` shares with its caller.
 #'
+#' With `expected = TRUE` the second sum is dropped and \eqn{\ell_{qr,t}} is
+#' replaced by its expectation given the observations before \eqn{t}:
+#'
+#' \deqn{\mathcal{I}_{\rm cond} = \sum_t w_t \sum_{q,r}
+#'   \mathcal{I}_{qr}(\eta_t)\, V_{q,t}^\top V_{r,t},}
+#'
+#' where \eqn{\mathcal{I}_{qr}(\eta_t)} is the expected information of the
+#' family on the link scale at the predictors of observation \eqn{t}, from
+#' [distributions7::distrib_expected_hessian()] with `method = emethod`. The
+#' predictors \eqn{\eta_t} and their Jacobian \eqn{V_{q,t}} depend on the
+#' observations before \eqn{t} only, and the score at \eqn{t} has
+#' conditional mean zero, so the second sum has conditional mean zero and
+#' drops out. The matrix is positive semidefinite and needs the first
+#' derivative of the recursion only. With [distributions7::expect_opg()],
+#' \eqn{\mathcal{I}_{qr}(\eta_t)} is the product of the scores at the data,
+#' and the matrix is the sum of the outer products of the per-observation
+#' scores in \eqn{u}.
+#'
 #' A term that mixes over latent states, in place of shifting the predictor,
 #' is routed to [statmod_regime_information()], whose Hessian
 #' comes from the same forward recursion that computes the likelihood; for a
 #' model that carries neither kind of term, the ordinary information is used.
+#' The likelihood of a model with a term of that kind is a mixture over
+#' latent components, and the expectation of its second derivatives has no
+#' closed form, so `expected = TRUE` signals an error there (see
+#' [structural_expected_check()]).
 #'
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design.
+#' @param expected `FALSE` (the default) for the observed information, `TRUE`
+#'   for the expected information conditional on the past.
+#' @param emethod The `method` of [distributions7::expected_info()], read only
+#'   where `expected` is `TRUE`.
 #'
 #' @return A square matrix over the coefficients followed by the term's free
 #'   parameters (a level held because an intercept carries it leaves the
-#'   matrix), or the ordinary observed information where there is no
-#'   structural term.
+#'   matrix), or the ordinary information where there is no structural term.
 #'
 #' @seealso [statmod_structural_score()],
 #'   [statmod_regime_information()]
 #'
 #' @keywords internal
 statmod_full_information <- function(spec, coef,
-                                     design = statmod_design(spec)) {
+                                     design = statmod_design(spec),
+                                     expected = FALSE, emethod = NULL) {
   params <- spec@distrib@params
   ev <- statmod_eta(spec, design, coef)
   if (!length(ev$filters) && !length(ev$regimes)) {
-    return(statmod_information_at(spec, coef, design, expected = FALSE))
+    return(statmod_information_at(spec, coef, design, expected = expected,
+                                  emethod = emethod))
   }
+  if (expected) structural_expected_check(design, "information")
   # the criterion, its gradient and the joint step all read this matrix at
   # the mode they share, so the same point is asked for several times over
   sst <- statmod_structural_state(design)
+  if (expected) {
+    return(structural_memo(design, "info_expected",
+                           list(coef = coef, zeta = sst$zeta,
+                                emethod = emethod), function() {
+      statmod_full_information_impl(spec, coef, design, params, ev,
+                                    expected = TRUE, emethod = emethod)
+    }))
+  }
   structural_memo(design, "info",
                   list(coef = coef, zeta = sst$zeta), function() {
     statmod_full_information_impl(spec, coef, design, params, ev)
@@ -632,7 +751,8 @@ statmod_full_information <- function(spec, coef,
 #' @param params,ev The parameter names and the evaluated predictors,
 #'   already in hand at the caller.
 #' @keywords internal
-statmod_full_information_impl <- function(spec, coef, design, params, ev) {
+statmod_full_information_impl <- function(spec, coef, design, params, ev,
+                                          expected = FALSE, emethod = NULL) {
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   nb <- sum(npar)
@@ -691,6 +811,10 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
     Vs[[ap]] <- cv$jacobian
   }
 
+  # the conditional expectation of the family's second derivatives at the
+  # predictors the filter reached, which are fixed given the past; the
+  # recursion's own curvature has conditional mean zero and is left out
+  if (expected) H <- statmod_family_hessian(spec, ev$theta, TRUE, emethod)
   out <- matrix(0, m, m)
   for (a in seq_along(params)) {
     for (b in seq_along(params)) {
@@ -701,7 +825,7 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
   # the (a, b) and (b, a) terms are transposes of one another and are formed
   # by separate crossproducts, so the sum is symmetric to a rounding and not
   # to the bit; a caller about to factor it wants the symmetry exact
-  out <- -(out + cv$curvature)
+  out <- if (expected) -out else -(out + cv$curvature)
   out <- (out + t(out)) / 2
   # a level the equation's intercept carries is held rather than estimated,
   # so its row and column leave the information: keeping them would report a
@@ -1234,6 +1358,12 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 #' @param optimizer An `optimizers7` optimizer, or `NULL` for
 #'   Newton's method with the exact joint information.
 #' @param verbose Logical; report the run.
+#' @param information The Hessian that the optimizer receives:
+#'   [distributions7::observed_info()] (the default) or
+#'   [distributions7::expected_info()], for the expected information
+#'   conditional on the past, with which Newton's method is Fisher scoring
+#'   over the joint vector. [joint_inner_info()] determines it from the inner
+#'   method.
 #'
 #' @return A list with `par` (the stacked coefficients only; the filter's free
 #'   parameters are written into the design's structural state), `value`,
@@ -1244,9 +1374,11 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 #'
 #' @keywords internal
 statmod_fit_joint <- function(spec, design, obj, beta, hyper,
-                              optimizer = NULL, verbose = FALSE) {
+                              optimizer = NULL, verbose = FALSE,
+                              information = distributions7::observed_info()) {
   jp <- statmod_joint_pieces(spec, design, obj, hyper,
-                             kinds = c("filter", "loglik"))
+                             kinds = c("filter", "loglik"),
+                             information = information)
   u0 <- c(beta, jp$zeta())
   jp$raw(u0)
   if (is.null(optimizer)) optimizer <- optimizers7::newton()
@@ -1445,6 +1577,10 @@ joint_level_chart <- function(spec, jp) {
 #' @param kinds The kinds of structural unit from which to take the term:
 #'   `"filter"` for the joint step, and `"loglik"` as well where a mixture
 #'   over latent states is read at a fitted point.
+#' @param information The information that `he` returns:
+#'   [distributions7::observed_info()] (the default) or
+#'   [distributions7::expected_info()], for the expected information
+#'   conditional on the past (see [statmod_full_information()]).
 #'
 #' @return A list with `fn`, `gr`, `he`, `raw`, `setz` (writes the filter's
 #'   free parameters into the design's structural state), `zeta` (reads
@@ -1452,7 +1588,8 @@ joint_level_chart <- function(spec, jp) {
 #'   in which the term sits).
 #'
 #' @keywords internal
-statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter") {
+statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
+                                 information = distributions7::observed_info()) {
   sst <- statmod_structural_state(design)
   su <- Filter(function(u) u$kind %in% kinds, attr(design, "structural"))
   key <- su[[1L]]$term
@@ -1508,7 +1645,9 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter") {
     b <- u[seq_len(nb)]
     setz(u[ix])
     cf <- obj$split(b)
-    H <- statmod_full_information(spec, cf, design)
+    H <- statmod_full_information(spec, cf, design,
+                                  info_expected(information),
+                                  info_emethod(information))
     P <- matrix(0, nrow(H), ncol(H))
     # as_dense() for the reason statmod_full_information() records: this
     # matrix spans the coefficients AND the term's own parameters, so it is
@@ -1670,8 +1809,13 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
     tryCatch(boot_term_values(fit, boot_replicate_matrix(fit, vcov_type), spec,
                               design), error = function(e) NULL)
   } else NULL
+  # the information of the variance convention, resolved as vcov() resolves
+  # it: the family's default where it names none
+  info <- vcov_information(if (is.null(vcov_type) || is_boot) bayesian_vcov()
+                           else vcov_type, spec@distrib, design)
   V <- tryCatch({
-    I <- statmod_full_information(spec, fit@coefficients, design)
+    I <- statmod_full_information(spec, fit@coefficients, design,
+                                  info_expected(info), info_emethod(info))
     # with a penalty over the term's own parameters the matrix to invert is
     # the penalized one: the deviations of a panel are identified by that
     # penalty and by nothing else, so the unpenalized information is singular

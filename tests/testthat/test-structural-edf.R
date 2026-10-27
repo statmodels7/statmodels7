@@ -194,8 +194,8 @@ test_that("a count that cannot be read is missing, not the old rule", {
 
   utils::assignInNamespace(
     "joint_smoother_diag",
-    function(spec, coef, design, hyper) list(beta = NULL, zeta = NULL,
-                                             failed = TRUE),
+    function(spec, coef, design, hyper, ...) list(beta = NULL, zeta = NULL,
+                                                  failed = TRUE),
     ns = "statmodels7")
   # the value is captured by assignment: in the third edition expect_warning()
   # returns the CONDITION and not the value of its argument
