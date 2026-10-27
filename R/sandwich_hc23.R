@@ -303,7 +303,7 @@ sandwich_adjusted <- function(fit, design, Vb, cols, g, id, sw, expected,
 #'   `contrast`, that returns a numeric vector of degrees of freedom. With
 #'   `contrast` (a matrix with one row for each coordinate of `Vb` and one
 #'   column for each quantity), the degrees of freedom are those of the
-#'   contrasts \eqn{c'eta} given by the columns, and `k` is ignored.
+#'   contrasts \eqn{c'\beta} given by the columns, and `k` is ignored.
 #'
 #' @keywords internal
 cr2_df_closure <- function(parts, blk, Vb) {
