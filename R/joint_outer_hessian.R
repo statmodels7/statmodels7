@@ -38,7 +38,7 @@ joint_dk_matrix <- function(spec, design, jd, st, v) {
   seed <- stats::setNames(jd$V, params)
   dV <- lapply(st$Vk, function(x) as.numeric(x %*% v))
 
-  cv3 <- modelterms7::term_third(f$tm, NULL, NULL, NULL, NULL, f$psi, st$gw,
+  cv3 <- modelterms7::term_third(f$tm, f$eta_static, NULL, NULL, NULL, f$psi, st$gw,
                                  seed, st$bd, vfull)
   out <- -cv3$curvature[keep, keep, drop = FALSE]
   kappa <- matrix(0, n, length(GF))
@@ -48,7 +48,7 @@ joint_dk_matrix <- function(spec, design, jd, st, v) {
         rep_len(st$H[[hess_key(params, GF[k], b)]], n) * dV[[b]]
     }
   }
-  cvk <- modelterms7::term_curvature(f$tm, NULL, NULL, NULL, NULL, f$psi,
+  cvk <- modelterms7::term_curvature(f$tm, f$eta_static, NULL, NULL, NULL, f$psi,
                                      w * kappa, seed, st$bd)
   out <- out - cvk$curvature[keep, keep, drop = FALSE]
 
@@ -125,7 +125,7 @@ joint_chain_extra2 <- function(spec, design, jd, M, st, v, w) {
   keys3 <- names(D3)
   hk <- function(a, b) rep_len(H[[hess_key(params, a, b)]], n)
 
-  cv4 <- modelterms7::term_fourth(f$tm, NULL, NULL, NULL, NULL, f$psi, st$gw,
+  cv4 <- modelterms7::term_fourth(f$tm, f$eta_static, NULL, NULL, NULL, f$psi, st$gw,
                                   seed, st$bd, list(vfull, wfull))
   dphi_v <- lapply(seq_len(K), function(k)
     cv4$dphi[[k]][[1L]][, keep, drop = FALSE])
@@ -149,7 +149,7 @@ joint_chain_extra2 <- function(spec, design, jd, M, st, v, w) {
     }
     for (j in seq_len(K)) gk[, k] <- gk[, k] + hk(GF[k], GF[j]) * phi_vw[[j]]
   }
-  cv0 <- modelterms7::term_curvature(f$tm, NULL, NULL, NULL, NULL, f$psi,
+  cv0 <- modelterms7::term_curvature(f$tm, f$eta_static, NULL, NULL, NULL, f$psi,
                                      wt * gk, seed, st$bd)
   tot <- tot + sum(M * cv0$curvature[keep, keep, drop = FALSE])
 
@@ -163,7 +163,7 @@ joint_chain_extra2 <- function(spec, design, jd, M, st, v, w) {
     out
   }
   for (pair in list(list(kap(dVv), wfull), list(kap(dVw), vfull))) {
-    cv3 <- modelterms7::term_third(f$tm, NULL, NULL, NULL, NULL, f$psi,
+    cv3 <- modelterms7::term_third(f$tm, f$eta_static, NULL, NULL, NULL, f$psi,
                                    wt * pair[[1L]], seed, st$bd, pair[[2L]])
     tot <- tot + sum(M * cv3$curvature[keep, keep, drop = FALSE])
   }

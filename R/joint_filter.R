@@ -516,7 +516,7 @@ joint_filter_curvature <- function(spec, design, f, Vs, gl, H, D3, theta) {
   seed <- stats::setNames(Vs, params)
   structural_memo(design, "curv", list(zeta = f$psi, eta = f$eta_static,
                                        g = gw), function() {
-    modelterms7::term_curvature(f$tm, NULL, NULL, NULL, NULL, f$psi, gw,
+    modelterms7::term_curvature(f$tm, f$eta_static, NULL, NULL, NULL, f$psi, gw,
                                 seed, bd)
   })
 }

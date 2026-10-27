@@ -34,6 +34,28 @@ test_that("a score loading has a second start on the scale of its score", {
                tolerance = 1e-10)
 })
 
+test_that("a joint filter's second start is scaled equation by equation", {
+  # The loadings of a joint filter are named after their equation, and each
+  # multiplies the score of its own parameter. Read on the bare names this
+  # start was the first one unchanged, and on DriversKilled/drivers with mu
+  # and phi filtered the fit stopped unconverged at -7897.30.
+  sb <- data.frame(t = seq_len(nrow(datasets::Seatbelts)),
+                   y = as.numeric(datasets::Seatbelts[, "DriversKilled"] /
+                                    datasets::Seatbelts[, "drivers"]))
+  form <- y ~ gas(p = 1, q = 1, time = t) | phi ~ gas(p = 1, q = 1, time = t)
+  spec <- statmod_spec(form, distributions7::beta1_distrib(), sb)
+  info <- predictor_information(spec)
+  st <- statmod_structural_state(statmod_design(spec))
+  z <- st$info_start[[1L]]
+  expect_equal(exp(z[["mu.kappa1"]]), 0.1 / info[["mu"]], tolerance = 1e-12)
+  expect_equal(exp(z[["phi.kappa1"]]), 0.1 / info[["phi"]], tolerance = 1e-12)
+  expect_equal(z[c("mu.pacf1", "phi.pacf1")], st$zeta[[1L]][c("mu.pacf1", "phi.pacf1")])
+  fit <- statmod(form, distributions7::beta1_distrib(), sb)
+  fit0 <- statmod(y ~ 1, distributions7::beta1_distrib(), sb)
+  expect_identical(statmod_certificate(fit)$state, "converged")
+  expect_gt(as.numeric(logLik(fit)), as.numeric(logLik(fit0)))
+})
+
 test_that("a free level fits the same model as the intercept spelling", {
   # flow ~ 0 + gas() searched omega and the persistence on the ridge
   # omega = L (1 - sum phi) and stopped after 200 Newton iterations at
