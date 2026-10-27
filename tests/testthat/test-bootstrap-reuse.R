@@ -63,13 +63,21 @@ test_that("a random-intercept model reuses the stored entry", {
   fr <- add_bootstrap(fr, n = 20)
   ent <- statmod_bootstrap(fr, resample = parametric_resample())
   expect_identical(ent@random, "redrawn")
-  expect_identical(dim(ent@raw), dim(ent@coefficients))
-  # the fixed coordinates agree, the random-effect ones differ by b - b*
+  # only the random-effect columns are stored, with their positions
   nm <- colnames(ent@coefficients)
-  fixed <- !grepl("g", nm, fixed = TRUE) & !grepl("random", nm, fixed = TRUE)
-  expect_true(any(fixed))
-  expect_identical(ent@raw[, fixed], ent@coefficients[, fixed])
-  expect_false(isTRUE(all.equal(ent@raw, ent@coefficients)))
+  expect_identical(ncol(ent@raw), 8L)
+  expect_identical(length(ent@raw_cols), 8L)
+  expect_identical(colnames(ent@raw), nm[ent@raw_cols])
+  expect_false(isTRUE(all.equal(unname(ent@raw),
+                                unname(ent@coefficients[, ent@raw_cols]))))
+  # the refitted matrix rebuilt from the two parts has the fixed coordinates
+  # of coefficients and the random ones of raw
+  rb <- boot_stored_replicas(fr, random_modes(fr@spec, "zero"),
+                             "coefficients", 20)
+  got <- do.call(rbind, lapply(rb, function(z) unlist(z$coefficients)))
+  fixed <- setdiff(seq_len(ncol(got)), ent@raw_cols)
+  expect_equal(unname(got[, fixed]), unname(ent@coefficients[, fixed]))
+  expect_equal(unname(got[, ent@raw_cols]), unname(ent@raw))
 
   testthat::local_mocked_bindings(
     bootstrap_engine = function(...) stop("the engine was called"))
@@ -92,20 +100,3 @@ test_that("a random-intercept model reuses the stored entry", {
   expect_identical(p_reuse, p_own)
 })
 
-test_that("the memory of the refitted effects is reported for 500 replicates and 30 groups", {
-  skip_on_cran()
-  set.seed(6)
-  gg <- data.frame(g = factor(rep(1:30, each = 4)), x = rnorm(120))
-  gg$y <- 1 + gg$x + rnorm(30)[gg$g] + rnorm(120)
-  fr <- statmod(y ~ x + random(~ 1 | g), g1, gg)
-  set.seed(1)
-  tm <- system.time(fr <- add_bootstrap(fr, n = 500))[["elapsed"]]
-  ent <- statmod_bootstrap(fr, resample = parametric_resample())
-  mb <- function(x) as.numeric(utils::object.size(x)) / 1024
-  message(sprintf(paste0("bootstrap n = 500, 30 groups: %d coordinates, ",
-                         "coefficients %.0f KB, raw %.0f KB, %.1f s"),
-                  ncol(ent@coefficients), mb(ent@coefficients), mb(ent@raw),
-                  tm))
-  expect_identical(dim(ent@raw), c(500L, ncol(ent@coefficients)))
-  expect_equal(mb(ent@raw), mb(ent@coefficients), tolerance = 0.01)
-})

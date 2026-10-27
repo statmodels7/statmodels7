@@ -25,11 +25,18 @@ of refits in the shape that the engine hands to the hook of
 for the one that the prediction would make.
 }
 \details{
-The entry is used when its scheme is \code{\link[=parametric_resample]{parametric_resample()}}, its refit is
-\code{refit}, it holds at least \code{n} replicates, and the model has no
-random-effect term. The stored replicates of a random-effect coordinate are
-those of the prediction error (\eqn{\hat b^* - b^* + \hat b}), which differ
-from the refitted coefficients that the predictive bootstrap reads, so a
-model with a random-effect term is not reused.
+The entry is used when its scheme is \code{\link[=parametric_resample]{parametric_resample()}} and its refit
+is \code{refit}. An entry with fewer than \code{n} replicates is extended first, from
+the stream saved with it, and the extension is stored in the fit; the
+stream of the session is restored afterwards.
+
+The stored replicates of a random-effect coordinate are those of the
+prediction error (\eqn{\hat b^* - b^* + \hat b}), which differ from the
+refitted coefficients that the predictive bootstrap reads. A model with
+random-effect terms is therefore reused only when the entry holds the
+refitted random effects (the property \code{raw} of \link{StatmodBootstrap}) and the
+prediction sets aside every random-effect term, which is how the entry
+redrew them. An entry without \code{raw}, or a prediction that keeps some term
+conditional, is not reused.
 }
 \keyword{internal}

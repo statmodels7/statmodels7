@@ -20,7 +20,7 @@ A function of \code{k}, positions among the coordinates of \code{Vb}, and
 \code{contrast}, that returns a numeric vector of degrees of freedom. With
 \code{contrast} (a matrix with one row for each coordinate of \code{Vb} and one
 column for each quantity), the degrees of freedom are those of the
-contrasts \eqn{c'eta} given by the columns, and \code{k} is ignored.
+contrasts \eqn{c'\beta} given by the columns, and \code{k} is ignored.
 }
 \description{
 Returns a function that computes the Satterthwaite degrees of freedom of

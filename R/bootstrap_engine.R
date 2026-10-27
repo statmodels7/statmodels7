@@ -53,10 +53,12 @@ NULL
 #'
 #' @return A list with `coefficients` (a matrix with a row for each replicate
 #'   kept), `hyper` (a matrix, or `NULL`), `status` (an integer for every
-#'   draw), `seed_start`, `seed_end`, `random` and `raw` (the matrix of the
-#'   coefficients of the replicates as refitted, without the adjustment of the
-#'   random effects, for a parametric scheme with `adjust = TRUE` beside
-#'   random effects, and `NULL` otherwise).
+#'   draw), `seed_start`, `seed_end`, `random`, `raw` (the matrix of the
+#'   random-effect coefficients of the replicates as refitted, without the
+#'   adjustment of the random effects, for a parametric scheme with
+#'   `adjust = TRUE` beside random effects, and `NULL` otherwise) and
+#'   `raw_cols` (the positions of the columns of `raw` among the columns of
+#'   `coefficients`).
 #'
 #' @seealso [add_bootstrap()], [predictive_bootstrap()], [worker_map()]
 #'
@@ -152,14 +154,18 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
   hyper <- if (identical(refit, "full") && length(hypers)) {
     do.call(rbind, hypers)
   } else NULL
-  raw <- if (length(rows) && length(raws) == length(rows)) {
+  raw_cols <- boot_raw_cols(attr(draw, "targets"), object@coefficients,
+                            spec0@distrib@params)
+  raw <- if (length(rows) && length(raws) == length(rows) &&
+             !any(vapply(raws, is.null, TRUE))) {
     m <- do.call(rbind, raws)
-    dimnames(m) <- list(NULL, nm)
+    dimnames(m) <- list(NULL, nm[raw_cols])
     m
   } else NULL
   list(coefficients = coefficients, hyper = hyper, status = status,
        seed_start = seed_start, seed_end = seed_end,
-       random = attr(draw, "random"), raw = raw)
+       random = attr(draw, "random"), raw = raw,
+       raw_cols = if (is.null(raw)) NULL else raw_cols)
 }
 
 
@@ -371,6 +377,7 @@ boot_body <- function(object, spec0, draw, refit, method, cfg, beta0, plans,
   build <- attr(draw, "build")
   params <- spec0@distrib@params
   cf_fit <- object@coefficients
+  raw_cols <- boot_raw_cols(targets, cf_fit, params)
   force(plans)
   function(i) {
     pl <- plans[[i]]
@@ -430,12 +437,34 @@ boot_body <- function(object, spec0, draw, refit, method, cfg, beta0, plans,
     }
     list(status = 0L, beta = unlist(cf[params], use.names = FALSE),
          raw = if (length(targets) && !is.null(pl$cf)) {
-           unlist(r$coefficients[params], use.names = FALSE)
+           unlist(r$coefficients[params], use.names = FALSE)[raw_cols]
          } else NULL,
          hyper = if (identical(refit, "full")) unlist(r$hyper) else NULL,
          fit = if (keep_fit) list(coefficients = r$coefficients,
                                   hyper = r$hyper))
   }
+}
+
+
+#' The Columns of the Refitted Random Effects
+#'
+#' @description
+#' Returns the positions, among the stacked coefficients, of the
+#' random-effect coordinates that a parametric replicate redraws.
+#'
+#' @param targets The coordinates of the draw, from `attr(draw, "targets")`.
+#' @param cf The coefficients of the fit, a list by equation.
+#' @param params The names of the equations, in the order of the stack.
+#'
+#' @return A sorted integer vector, empty when there are no targets.
+#'
+#' @keywords internal
+boot_raw_cols <- function(targets, cf, params) {
+  if (!length(targets)) return(integer(0))
+  lens <- vapply(cf[params], length, integer(1))
+  offs <- cumsum(lens) - lens
+  sort(unique(unlist(lapply(targets, function(tg)
+    offs[[match(tg$param, params)]] + tg$pos))))
 }
 
 

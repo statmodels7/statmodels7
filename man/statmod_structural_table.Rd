@@ -13,9 +13,14 @@ statmod_structural_table(fit, level = 0.95, vcov_type = NULL)
 
 \item{vcov_type}{\code{NULL} or a \link{vcov_method} object. \code{NULL} and
 \code{\link[=bayesian_vcov]{bayesian_vcov()}} read the inverse of the penalized joint information.
-Any other convention (frequentist with or without a sandwich, unconditional,
-bootstrap) reads the block of the joint variance that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}
-returns for the term's own parameters under that convention.}
+Any other convention (frequentist with or without a sandwich,
+unconditional) reads the block of the joint variance that
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} returns for the term's own parameters under that
+convention. \code{\link[=bootstrap_vcov]{bootstrap_vcov()}} does not use a delta method: each
+quantity is evaluated at every replicate, its standard error is the
+standard deviation over the replicates (the value that
+\code{vcov(readable = TRUE)} reports), and the interval is the Wald interval
+\eqn{\hat q \pm z\,\mathrm{se}} on the scale of the quantity.}
 }
 \value{
 A data frame with one row per quantity that each structural term

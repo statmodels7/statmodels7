@@ -405,3 +405,73 @@ boot_vcov_structural <- function(object, B, readable, spec, design, nm) {
   dimnames(out) <- list(nmq, nmq)
   out
 }
+
+
+#' The Replicates of a Model With a Structural Term
+#'
+#' @description
+#' Returns the matrix of bootstrap replicates over the joint coordinates of
+#' [vcov.StatmodFit()], as [boot_vcov_matrix()] reads it, with the aliased
+#' coordinates missing.
+#'
+#' @param object The [StatmodFit()].
+#' @param vt A `BootstrapVcov` object.
+#'
+#' @return A matrix with one row for each replicate used.
+#'
+#' @keywords internal
+boot_replicate_matrix <- function(object, vt) {
+  vt <- boot_resolve(object, vt)
+  e <- boot_entries(object)
+  e <- boot_match(e, vt@resample, vt@refit)[[1L]]
+  B <- e@coefficients[seq_len(vt@n), , drop = FALSE]
+  spec <- object@spec
+  design <- statmod_design(spec)
+  nm <- rownames(coef_labels(spec, design))
+  nz <- ncol(B) - length(nm)
+  B[, c(nm %in% object@aliased, rep(FALSE, nz))] <- NA_real_
+  B
+}
+
+
+#' The Quantities of a Structural Term at Each Replicate
+#'
+#' @description
+#' Evaluates, for every bootstrap replicate, the quantities that a structural
+#' term reports ([modelterms7::term_readable()]) from the replicate's free
+#' parameters of the term.
+#'
+#' @param object The [StatmodFit()].
+#' @param B The matrix of replicates of [boot_replicate_matrix()].
+#' @param spec,design The specification and design of the fit.
+#'
+#' @return A named list, one entry for each structural term, holding a matrix
+#'   with one row for each replicate and one column for each quantity of the
+#'   term, in the order of [modelterms7::term_readable()]. A replicate with a
+#'   missing parameter of the term gives a row of missing values.
+#'
+#' @keywords internal
+boot_term_values <- function(object, B, spec, design) {
+  su <- attr(design, "structural")
+  sst <- statmod_structural_state(design)
+  total <- nrow(coef_labels(spec, design))
+  at <- total
+  out <- list()
+  for (u in su) {
+    tm <- spec@terms[[u$param]][[u$term]]
+    nmp <- modelterms7::term_params(tm)
+    free <- setdiff(nmp, sst$held[[u$term]])
+    cols <- at + seq_along(free)
+    at <- at + length(free)
+    nq <- length(modelterms7::term_readable(tm, sst$zeta[[u$term]])$name)
+    Q <- matrix(NA_real_, nrow(B), nq)
+    for (b in seq_len(nrow(B))) {
+      if (anyNA(B[b, cols])) next
+      z <- sst$zeta[[u$term]]
+      z[free] <- B[b, cols]
+      Q[b, ] <- modelterms7::term_readable(tm, z)$value
+    }
+    out[[u$term]] <- Q
+  }
+  out
+}

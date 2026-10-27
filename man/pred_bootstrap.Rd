@@ -33,10 +33,12 @@ cost of a whole fit per replica. The bootstrap is rejected for a model with
 a block that moves with its coefficients, for a response that is not one
 number per observation, and, with \code{refit = "full"}, for a cross-validated
 criterion. The replicas use the random number generator of the session, so
-\code{set.seed()} before the call reproduces them. If the fit has no
-\code{\link[modelterms7:random]{modelterms7::random()}} term and holds a stored parametric bootstrap
-(\code{\link[=add_bootstrap]{add_bootstrap()}}) with the same \code{refit} and at least \code{n} replicates, the
-first \code{n} stored replicates are used and nothing is refitted. See
+\code{set.seed()} before the call reproduces them. If the fit holds a
+stored parametric bootstrap (\code{\link[=add_bootstrap]{add_bootstrap()}}) with the same \code{refit}, its
+first \code{n} replicates are used and nothing is refitted; an entry with fewer
+than \code{n} replicates is extended and stored again. With
+\code{\link[modelterms7:random]{modelterms7::random()}} terms the entry is used when \code{random} sets every
+one of them aside and the entry holds the refitted random effects. See
 \link{predictive_distributions} and \code{\link[=predictive_bootstrap]{predictive_bootstrap()}}.
 }
 \examples{

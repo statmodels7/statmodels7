@@ -9,9 +9,11 @@ statmod_leverage(fit, information = NULL)
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{information}{An object from \code{\link[distributions7:observed_info]{distributions7::observed_info()}} or
-\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, or \code{NULL} for the information that
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} resolves for the family.}
+\item{information}{\code{NULL} (the default), which is
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} with the closed form of the family, or
+an object from \code{\link[distributions7:expected_info]{distributions7::expected_info()}} or
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}}. The default does not depend on the
+information that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} resolves for the family.}
 }
 \value{
 A list with \code{blocks}, an array of dimension \eqn{n \times d \times
@@ -58,7 +60,7 @@ information, the block of the mean equation is the scalar
 \eqn{h_i = x_i'(X'X)^{-1}x_i} of \code{\link[stats:influence.measures]{stats::hatvalues()}}. For one equation
 of a larger model, the diagonal element \eqn{(a, a)} of the block is the
 leverage that \code{\link[=plot_influence]{plot_influence()}} computes for that equation, provided that
-\code{information} is \code{\link[distributions7:expected_info]{distributions7::expected_info()}}. Both read
+\code{information} is \code{\link[distributions7:expected_info]{distributions7::expected_info()}}, the default. Both read
 \eqn{K^{-1}} and not the Bayesian variance of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which
 for a coordinate that the marginal criterion estimates holds the
 curvature of that criterion.
@@ -79,7 +81,7 @@ set.seed(1)
 dd <- data.frame(x = runif(60))
 dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.3)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-lv <- statmod_leverage(fit, information = distributions7::expected_info())
+lv <- statmod_leverage(fit)
 range(lv$leverage[, "mu"] - hatvalues(lm(y ~ x, dd)))
 }
 \references{

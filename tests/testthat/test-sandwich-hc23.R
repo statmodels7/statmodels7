@@ -425,3 +425,41 @@ test_that("statmod_test prints the CR2 statistic as F(1, df)", {
   expect_match(paste(capture.output(print(sn)), collapse = "\n"), "X-squared",
                fixed = TRUE)
 })
+
+# ---- third round: the leverage defaults to the expected information
+
+test_that("the leverage and HC2/HC3 default to the expected information", {
+  dd <- lm_fit(70, 5)
+  f <- statmod(y ~ x + z, distributions7::gaussian1_distrib(), dd)
+  lv <- statmod_leverage(f)
+  expect_identical(lv, statmod_leverage(f, information = ex_info()))
+  # the mean equation has the leverage of the linear model: the expected
+  # information is block diagonal in (mu, sigma)
+  h <- unname(hatvalues(lm(y ~ x + z, dd)))
+  expect_equal(unname(lv$leverage[, "mu"]), h, tolerance = 1e-12)
+  expect_equal(sum(lv$trace), 4, tolerance = 1e-12)
+  expect_equal(lv$clipped, 0)
+  # the observed information is a different matrix, and is still available
+  lo <- statmod_leverage(f, information = distributions7::observed_info())
+  expect_gt(max(abs(lo$leverage[, "mu"] - h)), 1e-6)
+
+  # HC2 and HC3 with the default information, against the textbook formulas
+  f1 <- statmod(y ~ x + z, distributions7::gaussian1_distrib(), dd)
+  X <- cbind(1, dd$x, dd$z)
+  m <- lm(y ~ x + z, dd)
+  e <- unname(resid(m))
+  hh <- unname(hatvalues(m))
+  XtXi <- solve(crossprod(X))
+  tb <- function(w) unname(XtXi %*% crossprod(X * w, X) %*% XtXi)
+  v2 <- vcov(f1, vcov_type = frequentist_vcov(sandwich = hc2_sandwich()),
+             param = "mu", readable = FALSE)
+  v3 <- vcov(f1, vcov_type = frequentist_vcov(sandwich = hc3_sandwich()),
+             param = "mu", readable = FALSE)
+  expect_equal(unname(v2), tb(e^2 / (1 - hh)), tolerance = 1e-9)
+  expect_equal(unname(v3), tb(e^2 / (1 - hh)^2), tolerance = 1e-9)
+  # an explicit observed information changes the correction
+  v2o <- vcov(f1, vcov_type = frequentist_vcov(
+    information = distributions7::observed_info(), sandwich = hc2_sandwich()),
+    param = "mu", readable = FALSE)
+  expect_gt(max(abs(v2o / v2 - 1)), 1e-6)
+})

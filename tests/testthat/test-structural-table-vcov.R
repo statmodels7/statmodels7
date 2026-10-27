@@ -54,15 +54,16 @@ test_that("the table of a gas() term reads the variance of every convention", {
     tb <- statmod_structural_table(fit, 0.95, types[[k]])
     expect_true(all(is.finite(tb$se)), info = k)
     se[[k]] <- stats::setNames(tb$se, tb$name)
-    # against the readable matrix, where it is a delta method too
+    # against the readable matrix (for the bootstrap, the quantities
+    # evaluated replicate by replicate)
+    Vr <- vcov(fit, vcov_type = types[[k]], readable = TRUE)
+    ref <- sqrt(diag(Vr))[paste0("mu:gas.", tb$name)]
+    expect_equal(unname(tb$se), unname(ref), tolerance = 1e-10, info = k)
+    # and, for the others, against the delta method written here
     if (k != "bootstrap") {
-      Vr <- vcov(fit, vcov_type = types[[k]], readable = TRUE)
-      ref <- sqrt(diag(Vr))[paste0("mu:gas.", tb$name)]
-      expect_equal(unname(tb$se), unname(ref), tolerance = 1e-10, info = k)
+      expect_equal(se[[k]], tbl_delta_se(fit, types[[k]], tm_name)[tb$name],
+                   tolerance = 1e-10, info = k)
     }
-    # and against the delta method written here
-    expect_equal(se[[k]], tbl_delta_se(fit, types[[k]], tm_name)[tb$name],
-                 tolerance = 1e-10, info = k)
   }
   # the conventions differ where they should: the HAC and the bootstrap
   # variances are not the inverse information
@@ -126,16 +127,22 @@ test_that("a regime() table reads the bootstrap variance", {
   expect_identical(tb$name, tb0$name)
   expect_true(any(is.finite(tb$se)))
   expect_false(isTRUE(all.equal(tb$se, tb0$se)))
-  # the delta method over the stored replicates' covariance
-  V <- vcov(fit, vcov_type = bootstrap_vcov(), readable = FALSE)
-  design <- statmod_design(fit@spec)
-  tm <- fit@spec@terms$mu[[names(fit@spec@terms$mu)[1L]]]
-  nm <- modelterms7::term_params(tm)
-  rd <- modelterms7::term_readable(
-    tm, statmod_structural_state(design)$zeta[[1L]])
-  rn <- rownames(V)[startsWith(rownames(V), "mu:") & !grepl("sigma", rownames(V))]
-  rn <- tail(rn, length(nm))
-  ref <- sqrt(pmax(diag(rd$jacobian %*% V[rn, rn] %*% t(rd$jacobian)), 0))
+  # the standard deviation over the replicates of the quantities, which is
+  # what vcov(readable = TRUE) reports
+  Vr <- vcov(fit, vcov_type = bootstrap_vcov(), readable = TRUE)
+  ref <- sqrt(diag(Vr))
+  hit <- vapply(tb$name, function(z) {
+    k <- which(endsWith(names(ref), paste0(":", z)) |
+               endsWith(names(ref), paste0(".", z)))
+    if (length(k) == 1L) k else NA_integer_
+  }, integer(1))
   fin <- is.finite(tb$se)
-  expect_equal(unname(tb$se[fin]), unname(ref[fin]), tolerance = 1e-8)
+  expect_true(all(!is.na(hit[fin])))
+  expect_equal(unname(tb$se[fin]), unname(ref[hit[fin]]), tolerance = 1e-10)
+  # and the interval is the Wald interval on the scale of the quantity
+  zz <- stats::qnorm(0.975)
+  expect_equal(tb$lower[fin], tb$estimate[fin] - zz * tb$se[fin],
+               tolerance = 1e-12)
+  expect_equal(tb$upper[fin], tb$estimate[fin] + zz * tb$se[fin],
+               tolerance = 1e-12)
 })

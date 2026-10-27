@@ -1634,9 +1634,14 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #' @param level The interval's level, `0.95` by default.
 #' @param vcov_type `NULL` or a [vcov_method] object. `NULL` and
 #'   [bayesian_vcov()] read the inverse of the penalized joint information.
-#'   Any other convention (frequentist with or without a sandwich, unconditional,
-#'   bootstrap) reads the block of the joint variance that [vcov.StatmodFit()]
-#'   returns for the term's own parameters under that convention.
+#'   Any other convention (frequentist with or without a sandwich,
+#'   unconditional) reads the block of the joint variance that
+#'   [vcov.StatmodFit()] returns for the term's own parameters under that
+#'   convention. [bootstrap_vcov()] does not use a delta method: each
+#'   quantity is evaluated at every replicate, its standard error is the
+#'   standard deviation over the replicates (the value that
+#'   `vcov(readable = TRUE)` reports), and the interval is the Wald interval
+#'   \eqn{\hat q \pm z\,\mathrm{se}} on the scale of the quantity.
 #'
 #' @return A data frame with one row per quantity that each structural term
 #'   reports and the columns `parameter`, `term`, `name`, `estimate`, `se`,
@@ -1658,6 +1663,13 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
   if (is.null(su) || !length(su)) return(NULL)
 
   nb <- sum(vapply(design, function(d) d$npar, integer(1)))
+  # under the bootstrap each quantity is evaluated at every replicate and its
+  # standard error is the standard deviation over the replicates
+  is_boot <- !is.null(vcov_type) && identical(vcov_type@name, "bootstrap")
+  Qboot <- if (is_boot) {
+    tryCatch(boot_term_values(fit, boot_replicate_matrix(fit, vcov_type), spec,
+                              design), error = function(e) NULL)
+  } else NULL
   V <- tryCatch({
     I <- statmod_full_information(spec, fit@coefficients, design)
     # with a penalty over the term's own parameters the matrix to invert is
@@ -1700,7 +1712,8 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
     Vk[keep, keep] <- solve(I[keep, keep, drop = FALSE])
     # any other convention reads its own variance: the block of the joint
     # matrix that vcov() returns for the same convention
-    if (!is.null(vcov_type) && !identical(vcov_type@name, "bayesian")) {
+    if (!is.null(vcov_type) && !identical(vcov_type@name, "bayesian") &&
+        !is_boot) {
       Vk <- structural_convention_block(fit, spec, design, vcov_type,
                                         nrow(Vk), term_held_stack(spec, design))
     }
@@ -1744,6 +1757,13 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
     if (ok && any(badz)) {
       vq[apply(J[, badz, drop = FALSE] != 0, 1L, any)] <- NA_real_
     }
+    if (is_boot) {
+      Qt <- Qboot[[u$term]]
+      vq <- if (!is.null(Qt) && ncol(Qt) == length(rd$name)) {
+        apply(Qt, 2L, stats::var)
+      } else rep(NA_real_, length(rd$name))
+      ok <- !is.null(Qt)
+    }
     # WHICH of the term's own parameters a reported quantity belongs to, and
     # WHERE in the parameter vector it sits, read off the Jacobian's support
     # rather than off the quantity's name. A quantity reading coordinates of
@@ -1774,7 +1794,10 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
              sqrt(max(vq[[i]], 0)) else NA_real_
       val <- rd$value[[i]]
       lo <- hi <- NA_real_
-      if (is.finite(s)) {
+      if (is.finite(s) && is_boot) {
+        lo <- val - z * s
+        hi <- val + z * s
+      } else if (is.finite(s)) {
         # the interval is built on the scale that keeps the quantity in its
         # own set and mapped back, as every interval in the toolkit is
         g <- rd$scale[[i]]

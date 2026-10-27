@@ -316,7 +316,7 @@ boot_readable_values <- function(object, spec, design, B) {
 #' prediction error (\eqn{\hat b^* - b^* + \hat b}), which differ from the
 #' refitted coefficients that the predictive bootstrap reads. A model with
 #' random-effect terms is therefore reused only when the entry holds the
-#' refitted coefficients (the property `raw` of [StatmodBootstrap]) and the
+#' refitted random effects (the property `raw` of [StatmodBootstrap]) and the
 #' prediction sets aside every random-effect term, which is how the entry
 #' redrew them. An entry without `raw`, or a prediction that keeps some term
 #' conditional, is not reused.
@@ -341,7 +341,8 @@ boot_stored_replicas <- function(object, aside, refit, n) {
   ents <- boot_match(boot_entries(object), parametric_resample(), refit)
   if (length(ents) != 1L) return(NULL)
   e <- ents[[1L]]
-  if (has_random && (!identical(e@random, "redrawn") || is.null(e@raw))) {
+  if (has_random && (!identical(e@random, "redrawn") || is.null(e@raw) ||
+                      is.null(e@raw_cols))) {
     return(NULL)
   }
   if (e@n < n) {
@@ -351,9 +352,10 @@ boot_stored_replicas <- function(object, aside, refit, n) {
                        inherits = FALSE)) get(".Random.seed", envir = globalenv())
     e <- boot_fill(object, n, parametric_resample(), refit, say = TRUE)
     if (!is.null(seed)) assign(".Random.seed", seed, envir = globalenv())
-    if (has_random && is.null(e@raw)) return(NULL)
+    if (has_random && (is.null(e@raw) || is.null(e@raw_cols))) return(NULL)
   }
-  B <- if (has_random) e@raw else e@coefficients
+  B <- e@coefficients
+  if (has_random) B[, e@raw_cols] <- e@raw
   params <- spec0@distrib@params
   lens <- vapply(object@coefficients[params], length, integer(1))
   grp <- factor(rep(params, lens), levels = params)

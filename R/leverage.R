@@ -226,7 +226,7 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' \eqn{h_i = x_i'(X'X)^{-1}x_i} of [stats::hatvalues()]. For one equation
 #' of a larger model, the diagonal element \eqn{(a, a)} of the block is the
 #' leverage that [plot_influence()] computes for that equation, provided that
-#' `information` is [distributions7::expected_info()]. Both read
+#' `information` is [distributions7::expected_info()], the default. Both read
 #' \eqn{K^{-1}} and not the Bayesian variance of [vcov.StatmodFit()], which
 #' for a coordinate that the marginal criterion estimates holds the
 #' curvature of that criterion.
@@ -243,9 +243,11 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' one of the row as a unit, \eqn{w_i} times the block of one of its copies.
 #'
 #' @param fit A [StatmodFit()].
-#' @param information An object from [distributions7::observed_info()] or
-#'   [distributions7::expected_info()], or `NULL` for the information that
-#'   [vcov.StatmodFit()] resolves for the family.
+#' @param information `NULL` (the default), which is
+#'   [distributions7::expected_info()] with the closed form of the family, or
+#'   an object from [distributions7::expected_info()] or
+#'   [distributions7::observed_info()]. The default does not depend on the
+#'   information that [vcov.StatmodFit()] resolves for the family.
 #'
 #' @return A list with `blocks`, an array of dimension \eqn{n \times d \times
 #'   d} of the matrices \eqn{H_{ii}}, `leverage`, the \eqn{n \times d} matrix
@@ -267,14 +269,13 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' dd <- data.frame(x = runif(60))
 #' dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.3)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' lv <- statmod_leverage(fit, information = distributions7::expected_info())
+#' lv <- statmod_leverage(fit)
 #' range(lv$leverage[, "mu"] - hatvalues(lm(y ~ x, dd)))
 #' @export
 statmod_leverage <- function(fit, information = NULL) {
   if (!S7::S7_inherits(fit, StatmodFit)) {
     stop("'fit' must be a fitted statmod() model.", call. = FALSE)
   }
-  vt <- bayesian_vcov(information = information)
   spec <- fit@spec
   design <- statmod_design(spec)
   if (length(attr(design, "structural")) > 0L ||
@@ -283,25 +284,71 @@ statmod_leverage <- function(fit, information = NULL) {
                 "term or with a term whose block moves with its coefficients."),
          call. = FALSE)
   }
+  info <- if (is.null(information)) distributions7::expected_info() else
+    information
+  vt <- bayesian_vcov(information = info)
   V <- vcov(fit, vcov_type = vt, readable = FALSE)
   cols <- which(is.finite(diag(V)))
-  info <- vcov_information(vt, spec@distrib)
   parts <- leverage_parts(fit, design, cols, info_expected(info),
                           info_emethod(info))
-  # K^-1 itself: the Bayesian variance above can carry the curvature of the
-  # marginal criterion in place of K^-1 for a coordinate that criterion
-  # estimates (the scale of a Gaussian under REML), and the hat matrix is the
-  # projection that K^-1 defines
-  coef <- fit@coefficients
-  K <- statmod_information_at(spec, coef, design, info_expected(info),
-                              info_emethod(info)) +
-    statmod_penalty_at(spec, coef, fit@hyper, design, "hessian")
-  K <- as_dense(K)[cols, cols, drop = FALSE]
-  Vb <- as_dense(solve_pd(K, "the penalized information", rownames(V)[cols]))
+  Vb <- leverage_inverse(fit, design, cols, info_expected(info),
+                         info_emethod(info), rownames(V)[cols])
   blocks <- leverage_blocks(parts, Vb)
   dimnames(blocks) <- list(NULL, parts$params, parts$params)
   lev <- vapply(seq_len(parts$d), function(a) blocks[, a, a], numeric(parts$n))
   lev <- matrix(lev, parts$n, parts$d, dimnames = list(NULL, parts$params))
   tr <- rowSums(lev)
   list(blocks = blocks, leverage = lev, trace = tr, clipped = parts$clipped)
+}
+
+
+#' The Information of the Leverage
+#'
+#' @description
+#' Returns the information on which the hat matrix of a corrected sandwich
+#' variance is computed: the expected information when the variance object
+#' selects none, and the selected one otherwise.
+#'
+#' @param vcov_type The [vcov_method] object.
+#' @param info The information of the bread, as [vcov_information()] resolves
+#'   it.
+#'
+#' @return An object from [distributions7::expected_info()] or
+#'   [distributions7::observed_info()].
+#'
+#' @keywords internal
+leverage_information <- function(vcov_type, info) {
+  sel <- if (S7::prop_exists(vcov_type, "information")) vcov_type@information
+  if (!is.null(sel)) return(sel)
+  if (info_expected(info)) info else distributions7::expected_info()
+}
+
+
+#' The Inverse Penalized Information of the Hat Matrix
+#'
+#' @description
+#' Computes \eqn{K^{-1}}, with \eqn{K} the information of the observations
+#' plus the Hessian of the penalty, over the coordinates `cols`. It is the
+#' matrix that the hat matrix projects with, and not the Bayesian variance
+#' of [vcov.StatmodFit()], which for a coordinate that the marginal criterion
+#' estimates holds the curvature of that criterion.
+#'
+#' @param fit The [StatmodFit()].
+#' @param design The design of the fit.
+#' @param cols The positions, among the stacked coefficients, of the
+#'   coordinates that the variance covers.
+#' @param expected,emethod As in [statmod_information_at()].
+#' @param labels The names of the coordinates, for error messages.
+#'
+#' @return A dense matrix.
+#'
+#' @keywords internal
+leverage_inverse <- function(fit, design, cols, expected, emethod,
+                             labels = NULL) {
+  spec <- fit@spec
+  coef <- fit@coefficients
+  K <- statmod_information_at(spec, coef, design, expected, emethod) +
+    statmod_penalty_at(spec, coef, fit@hyper, design, "hessian")
+  K <- as_dense(K)[cols, cols, drop = FALSE]
+  as_dense(solve_pd(K, "the penalized information", labels))
 }

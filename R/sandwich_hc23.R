@@ -55,11 +55,14 @@ NULL
 #' The correction is the exact bias removal for the linearized fit when the
 #' working model is the model itself (the observations independent, with
 #' variance \eqn{W_i^{-1}} for their scores), and it uses the information
-#' selected in [frequentist_vcov()], for the roots \eqn{W_i^{1/2}} as well as
-#' for the inverse \eqn{K^{-1}}: with the observed information, an
-#' observation whose matrix \eqn{W_i} is indefinite contributes the positive
-#' part, with the pseudo-inverse root ([statmod_leverage()] returns how many
-#' observations that concerns). With penalties the leverage is that of
+#' selected by the `information` argument of [frequentist_vcov()] when it is
+#' given, for the roots \eqn{W_i^{1/2}} as well as for the inverse
+#' \eqn{K^{-1}}. When that argument is `NULL`, the leverage is computed on the
+#' expected information, whatever information the bread \eqn{V_b} resolves
+#' for the family. With the observed information, an observation whose matrix
+#' \eqn{W_i} is indefinite contributes the positive part, with the
+#' pseudo-inverse root ([statmod_leverage()] returns how many observations
+#' that concerns). With penalties the leverage is that of
 #' the penalized fit, so that the sum of the traces is the effective degrees of
 #' freedom of the model. Prior weights, random effects, aliased coordinates
 #' and the models that are rejected are treated as at [hc0_sandwich()]. Prior
@@ -193,6 +196,9 @@ leverage_power <- function(H, power) {
 #' @param id `NULL` or the cluster numbers.
 #' @param sw The [SandwichMethod] object.
 #' @param expected,emethod The information that the bread was built from.
+#' @param lev_info The information of the leverage: the roots \eqn{W_i^{1/2}}
+#'   and the inverse \eqn{K^{-1}} of the hat matrix are read on it. `NULL`
+#'   takes the information of the bread.
 #'
 #' @return A list with `g`, the list `g` with the rescaled scores in the place
 #'   of the originals, and `df_fn`, `NULL` unless the type is CR2 with a
@@ -201,10 +207,20 @@ leverage_power <- function(H, power) {
 #'
 #' @keywords internal
 sandwich_adjusted <- function(fit, design, Vb, cols, g, id, sw, expected,
-                              emethod) {
+                              emethod, lev_info = NULL) {
   spec <- fit@spec
   w <- spec@weights
-  parts <- leverage_parts(fit, design, cols, expected, emethod)
+  if (is.null(lev_info)) {
+    lev_info <- if (expected) distributions7::expected_info(method = emethod)
+    else distributions7::observed_info()
+  }
+  lev_exp <- info_expected(lev_info)
+  lev_meth <- info_emethod(lev_info)
+  parts <- leverage_parts(fit, design, cols, lev_exp, lev_meth)
+  # the hat matrix is the projection of the leverage's information: when that
+  # differs from the bread's, K^-1 is rebuilt on it
+  Vl <- if (identical(lev_exp, expected) && identical(lev_meth, emethod)) Vb else
+    leverage_inverse(fit, design, cols, lev_exp, lev_meth, colnames(Vb))
   n <- parts$n
   d <- parts$d
   S <- vapply(parts$params, function(p) g[[p]], numeric(n))
@@ -216,7 +232,7 @@ sandwich_adjusted <- function(fit, design, Vb, cols, g, id, sw, expected,
   df_fn <- NULL
 
   if (is.null(id)) {
-    Hb <- leverage_blocks(parts, Vb)
+    Hb <- leverage_blocks(parts, Vl)
     pos <- w > 0
     Hc <- Hb
     for (a in seq_len(d)) for (b in seq_len(d)) {
@@ -261,7 +277,7 @@ sandwich_adjusted <- function(fit, design, Vb, cols, g, id, sw, expected,
         Whg[rr, rr] <- matrix(Rt[idx[[j]], , ], d, d)
         Whgp[rr, rr] <- matrix(Rp[idx[[j]], , ], d, d)
       }
-      ZV <- as.matrix(Zg %*% Vb)
+      ZV <- as.matrix(Zg %*% Vl)
       Mg <- ZV %*% t(as.matrix(Zg))
       Hg <- Whg %*% Mg %*% Whg
       fp <- leverage_power(Hg, pw)
@@ -272,7 +288,7 @@ sandwich_adjusted <- function(fit, design, Vb, cols, g, id, sw, expected,
       blk[[k]] <- list(zr = zr, Zg = Zg, Whg = Whg, F = fp$F)
     }
     if (identical(sw@type, "HC2") && identical(sw@reference, "t")) {
-      df_fn <- cr2_df_closure(parts, blk, Vb)
+      df_fn <- cr2_df_closure(parts, blk, Vl)
     }
   }
   if (capped > 0L) {

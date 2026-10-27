@@ -537,7 +537,8 @@ vcov.StatmodFit <- function(object,
                vcov_type@sandwich)
     } else {
       sandwich_vcov(object, design, as_dense(Vb), which(keep_full),
-                    vcov_type@sandwich, expected, emethod)
+                    vcov_type@sandwich, expected, emethod,
+                    leverage_information(vcov_type, info))
     },
     unconditional = {
       # THE OTHER TWO ARE CONDITIONAL ON THE HYPERPARAMETERS, both read at

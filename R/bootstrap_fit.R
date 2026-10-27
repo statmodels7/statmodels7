@@ -371,7 +371,10 @@ boot_fill <- function(fit, n, resample, refit, say = FALSE) {
     fingerprint = boot_fingerprint(fit),
     raw = if (is.null(old)) eng$raw else if (is.null(old@raw) ||
                                               is.null(eng$raw)) NULL else
-      rbind(old@raw, eng$raw))
+      rbind(old@raw, eng$raw),
+    raw_cols = if (is.null(old)) eng$raw_cols else if (is.null(old@raw) ||
+                                                       is.null(eng$raw)) NULL else
+      old@raw_cols)
   assign(key, entry, envir = env)
   entry
 }

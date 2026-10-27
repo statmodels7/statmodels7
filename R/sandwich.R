@@ -291,6 +291,9 @@ sandwich_check <- function(fit, design) {
 #' @param cols The positions, among the coefficients stacked by equation, of
 #'   the coordinates that `Vb` covers.
 #' @param sw The [SandwichMethod] object.
+#' @param expected,emethod The information that the bread `Vb` was built from.
+#' @param lev_info The information of the leverage, from
+#'   [leverage_information()]; `NULL` takes the one of the bread.
 #'
 #' @return A symmetric matrix of the dimension of `Vb`.
 #'
@@ -299,7 +302,7 @@ sandwich_check <- function(fit, design) {
 #'
 #' @keywords internal
 sandwich_vcov <- function(fit, design, Vb, cols, sw, expected = FALSE,
-                          emethod = NULL) {
+                          emethod = NULL, lev_info = NULL) {
   spec <- fit@spec
   n <- spec@n_obs
   id <- if (is.null(sw@cluster)) NULL else sandwich_cluster(fit, design, sw)
@@ -313,8 +316,12 @@ sandwich_vcov <- function(fit, design, Vb, cols, sw, expected = FALSE,
   g <- statmod_score_obs(spec, fit@coefficients, design)
   df_fn <- NULL
   if (sw@type %in% c("HC2", "HC3", "HC4")) {
+    if (is.null(lev_info)) {
+      lev_info <- if (expected) distributions7::expected_info(method = emethod)
+      else distributions7::observed_info()
+    }
     adj <- sandwich_adjusted(fit, design, Vb, cols, g, id, sw, expected,
-                             emethod)
+                             emethod, lev_info)
     g <- adj$g
     df_fn <- adj$df_fn
   }

@@ -4,7 +4,18 @@
 \alias{sandwich_adjusted}
 \title{Rescale the Scores of a Fit by the Leverage}
 \usage{
-sandwich_adjusted(fit, design, Vb, cols, g, id, sw, expected, emethod)
+sandwich_adjusted(
+  fit,
+  design,
+  Vb,
+  cols,
+  g,
+  id,
+  sw,
+  expected,
+  emethod,
+  lev_info = NULL
+)
 }
 \arguments{
 \item{fit}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -23,6 +34,10 @@ the coordinates that \code{Vb} covers.}
 \item{sw}{The \link{SandwichMethod} object.}
 
 \item{expected, emethod}{The information that the bread was built from.}
+
+\item{lev_info}{The information of the leverage: the roots \eqn{W_i^{1/2}}
+and the inverse \eqn{K^{-1}} of the hat matrix are read on it. \code{NULL}
+takes the information of the bread.}
 }
 \value{
 A list with \code{g}, the list \code{g} with the rescaled scores in the place

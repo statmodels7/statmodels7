@@ -453,12 +453,14 @@ S7::method(print, BootstrapVcov) <- function(x, ...) {
 #'     continues;}
 #'   \item{`fingerprint`}{the coefficients and hyperparameters of the fit that
 #'     the replicates belong to;}
-#'   \item{`raw`}{for the parametric scheme beside random effects, a matrix
-#'     of the same shape as `coefficients` that holds the coefficients as the
-#'     replicates were refitted, \eqn{\hat b^*} for a random-effect coordinate,
-#'     where `coefficients` holds \eqn{\hat b^* - b^* + \hat b}; `NULL`
-#'     otherwise, and for an entry stored by an older version. [pred_bootstrap()]
-#'     reads it to reuse the entry.}
+#'   \item{`raw`, `raw_cols`}{for the parametric scheme beside random effects,
+#'     a matrix with one column for each random-effect coordinate that holds
+#'     the coefficients as the replicates were refitted, \eqn{\hat b^*},
+#'     where `coefficients` holds \eqn{\hat b^* - b^* + \hat b}, and the
+#'     positions of those columns among the columns of `coefficients`. Both
+#'     are `NULL` otherwise, and for an entry stored by an older version.
+#'     [pred_bootstrap()] rebuilds the refitted coefficients from
+#'     `coefficients` and `raw` to reuse the entry.}
 #' }
 #'
 #' @return `coef()` on an entry returns the matrix of replicates, and
@@ -488,7 +490,8 @@ StatmodBootstrap <- S7::new_class("StatmodBootstrap",
     status = S7::class_integer,
     seed = S7::class_list,
     fingerprint = S7::class_numeric,
-    raw = S7::class_any
+    raw = S7::class_any,
+    raw_cols = S7::class_any
   )
 )
 

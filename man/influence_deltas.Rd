@@ -4,15 +4,15 @@
 \alias{influence_deltas}
 \title{One-Step Deletion Quantities of an Equation}
 \usage{
-influence_deltas(fit, param, information, adjust = TRUE)
+influence_deltas(fit, param, information = NULL, adjust = TRUE)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{param}{The equation.}
 
-\item{information}{An object from \code{\link[distributions7:observed_info]{distributions7::observed_info()}} or
-\code{\link[distributions7:expected_info]{distributions7::expected_info()}}.}
+\item{information}{\code{NULL} (the expected information) or an object from
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} or \code{\link[distributions7:expected_info]{distributions7::expected_info()}}.}
 
 \item{adjust}{Whether to divide the step by one minus the leverage.}
 }

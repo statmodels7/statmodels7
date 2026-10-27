@@ -13,7 +13,9 @@ StatmodBootstrap(
   random = character(0),
   status = integer(0),
   seed = list(),
-  fingerprint = integer(0)
+  fingerprint = integer(0),
+  raw = NULL,
+  raw_cols = NULL
 )
 }
 \value{
@@ -47,7 +49,15 @@ that is not identified;}
 stream and after the last draw that was kept, from which an extension
 continues;}
 \item{\code{fingerprint}}{the coefficients and hyperparameters of the fit that
-the replicates belong to.}
+the replicates belong to;}
+\item{\code{raw}, \code{raw_cols}}{for the parametric scheme beside random effects,
+a matrix with one column for each random-effect coordinate that holds
+the coefficients as the replicates were refitted, \eqn{\hat b^*},
+where \code{coefficients} holds \eqn{\hat b^* - b^* + \hat b}, and the
+positions of those columns among the columns of \code{coefficients}. Both
+are \code{NULL} otherwise, and for an entry stored by an older version.
+\code{\link[=pred_bootstrap]{pred_bootstrap()}} rebuilds the refitted coefficients from
+\code{coefficients} and \code{raw} to reuse the entry.}
 }
 }
 \examples{

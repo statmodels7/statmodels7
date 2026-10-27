@@ -1105,8 +1105,8 @@ plot_influence <- function(param, measure = "cook", adjust = TRUE,
 #'
 #' @param fit A [StatmodFit()].
 #' @param param The equation.
-#' @param information An object from [distributions7::observed_info()] or
-#'   [distributions7::expected_info()].
+#' @param information `NULL` (the expected information) or an object from
+#'   [distributions7::observed_info()] or [distributions7::expected_info()].
 #' @param adjust Whether to divide the step by one minus the leverage.
 #'
 #' @return A list with `delta` (a matrix with one row per observation and one
@@ -1114,7 +1114,8 @@ plot_influence <- function(param, measure = "cook", adjust = TRUE,
 #'   `leverage`, `cook` and `p_eff`.
 #'
 #' @keywords internal
-influence_deltas <- function(fit, param, information, adjust = TRUE) {
+influence_deltas <- function(fit, param, information = NULL, adjust = TRUE) {
+  if (is.null(information)) information <- distributions7::expected_info()
   spec <- fit@spec
   des <- statmod_design(spec)[[param]]
   X <- as.matrix(des$X)
