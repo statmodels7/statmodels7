@@ -7,8 +7,8 @@
   the scores of the log-likelihood in the whole coefficient vector, random
   effects included. The correction of HC1 and CR1 uses the effective degrees
   of freedom of the model. The sandwich is rejected for a model with `gas()`,
-  `regime()`, a break-point term or `nl()`, and for prior weights other than
-  one. `vcov()`, `confint()`, `summary()`, `predict()` and the tests take it
+  `regime()`, a break-point term or `nl()`. Prior weights are frequency
+  weights. `vcov()`, `confint()`, `summary()`, `predict()` and the tests take it
   through `vcov_type`; with `sandwich = NULL` the result is unchanged.
 
 # statmodels7 0.211.0

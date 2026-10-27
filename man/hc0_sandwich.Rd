@@ -53,10 +53,11 @@ again in the environment of the model formula. A fit does not keep its
 data, so the second route fails once the data frame is gone or has
 changed.
 
-A coordinate that the marginal criterion estimates, such as the scale of
-a Gaussian under \code{\link[=reml]{reml()}}, has a nonzero likelihood score at the fit. The
-meat reads the likelihood score at the estimate, so that coordinate enters
-\eqn{B} with a score that is not centered.
+The meat always uses the score of the likelihood. With \code{\link[=ml]{ml()}} the scores
+sum to zero at the fit, apart from the penalty. Under \code{\link[=reml]{reml()}} a
+coordinate that the marginal criterion estimates, such as the scale of a
+Gaussian, has a likelihood score that is not zero at the fit, and the
+sandwich includes that offset.
 
 A cluster must contain every group of a \code{\link[modelterms7:random]{modelterms7::random()}} term
 entirely. With no \code{cluster} the observations are treated as independent
@@ -64,8 +65,18 @@ given the random effects.
 
 Models with a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}),
 with a term whose block moves with its coefficients (the break-point terms
-and \code{\link[modelterms7:nl]{modelterms7::nl()}}) and fits with prior weights other than one are
-rejected.
+and \code{\link[modelterms7:nl]{modelterms7::nl()}}) are rejected.
+
+The prior weights \eqn{w_i} of \code{\link[=statmod]{statmod()}} are frequency weights: row
+\eqn{i} stands for \eqn{w_i} identical observations. Without a cluster
+the copies are separate observations and
+\eqn{B = \sum_i w_i g_i g_i'}, with \eqn{g_i} the score of one copy, and
+\eqn{n = \sum_i w_i} in the HC1 factor. With a cluster the copies stay in
+the cluster of the row, so \eqn{U_g = \sum_{i \in g} w_i g_i}, \eqn{G} is
+the number of clusters with positive weight and \eqn{n = \sum_i w_i}. A
+row with weight zero contributes nothing and is not counted. The result
+equals the unweighted estimator on the data expanded to \eqn{w_i} copies
+of each row, for integer weights.
 }
 \examples{
 set.seed(1)

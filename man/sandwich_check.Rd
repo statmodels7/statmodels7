@@ -16,15 +16,9 @@ sandwich_check(fit, design)
 }
 \description{
 Signals an error for a fit with a structural term, a term whose block moves
-with its coefficients, prior weights other than one, or a missing
-effective-degrees-of-freedom table.
+with its coefficients.
 }
 \details{
-The weights of \code{\link[=statmod]{statmod()}} multiply the log-likelihood, so they are
-frequency weights. The meaning of such weights for the meat is open: a
-weight \eqn{w_i} gives a score \eqn{w_i g_i} for one row, which is the sum
-of \eqn{w_i} identical scores, and the meat of the expanded data
-\eqn{w_i g_i g_i'} differs from the \eqn{w_i^2 g_i g_i'} of the row. Weights
-other than one are rejected until that is decided.
+Prior weights are accepted; see \code{\link[=hc0_sandwich]{hc0_sandwich()}} for their meaning.
 }
 \keyword{internal}

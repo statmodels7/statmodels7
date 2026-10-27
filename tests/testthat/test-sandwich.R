@@ -186,10 +186,6 @@ test_that("unsupported fits and bad clusters are rejected", {
                "missing values")
   expect_error(hc1_sandwich(cluster = id ~ x), "one-sided")
   expect_error(hc1_sandwich(cluster = ~ id + x), "one-sided")
-  # prior weights other than one
-  fw <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                weights = rep(c(1, 2), 30))
-  expect_error(vcov(fw, vcov_type = fsw(hc1_sandwich())), "prior weights")
   # a structural term
   fg <- suppressWarnings(statmod(y ~ x + gas(p = 1, q = 1),
                                  distributions7::gaussian1_distrib(), dd))
@@ -215,4 +211,34 @@ test_that("a lasso coordinate at zero is missing, as in the other conventions", 
   Vs <- vcov(f, vcov_type = fsw(hc1_sandwich()), readable = FALSE)
   expect_identical(is.na(diag(Vf)), is.na(diag(Vs)))
   expect_true(anyNA(diag(Vs)))
+})
+
+test_that("prior weights are frequency weights", {
+  set.seed(10)
+  n <- 60
+  id <- rep(1:12, each = 5)
+  w <- sample(0:3, n, replace = TRUE)
+  dd <- data.frame(x = rnorm(n), id = id, w = w)
+  dd$y <- 1 + dd$x + rnorm(12)[id] + rnorm(n, sd = 0.5 + abs(dd$x))
+  g <- distributions7::gaussian1_distrib()
+  fw <- statmod(y ~ x | sigma ~ x, g, dd[dd$w > 0, ], weights = w,
+                outer_criterion = ml())
+  ex <- dd[rep(seq_len(n), w), ]
+  fe <- statmod(y ~ x | sigma ~ x, g, ex, outer_criterion = ml())
+  expect_equal(unlist(fw@coefficients), unlist(fe@coefficients),
+               tolerance = 1e-6)
+  for (sw in list(hc0_sandwich, hc1_sandwich,
+                  function() hc0_sandwich(cluster = ~ id),
+                  function() hc1_sandwich(cluster = ~ id))) {
+    a <- vcov(fw, vcov_type = fsw(sw()), readable = FALSE)
+    b <- vcov(fe, vcov_type = fsw(sw()), readable = FALSE)
+    expect_equal(a, b, tolerance = 1e-7)
+  }
+  # zero weights contribute nothing and are not counted
+  fz <- statmod(y ~ x | sigma ~ x, g, dd, weights = w, outer_criterion = ml())
+  for (sw in list(hc1_sandwich, function() hc1_sandwich(cluster = ~ id))) {
+    expect_equal(vcov(fz, vcov_type = fsw(sw()), readable = FALSE),
+                 vcov(fw, vcov_type = fsw(sw()), readable = FALSE),
+                 tolerance = 1e-7)
+  }
 })

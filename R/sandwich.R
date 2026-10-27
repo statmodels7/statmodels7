@@ -77,10 +77,11 @@ SandwichMethod <- S7::new_class(
 #' data, so the second route fails once the data frame is gone or has
 #' changed.
 #'
-#' A coordinate that the marginal criterion estimates, such as the scale of
-#' a Gaussian under [reml()], has a nonzero likelihood score at the fit. The
-#' meat reads the likelihood score at the estimate, so that coordinate enters
-#' \eqn{B} with a score that is not centered.
+#' The meat always uses the score of the likelihood. With [ml()] the scores
+#' sum to zero at the fit, apart from the penalty. Under [reml()] a
+#' coordinate that the marginal criterion estimates, such as the scale of a
+#' Gaussian, has a likelihood score that is not zero at the fit, and the
+#' sandwich includes that offset.
 #'
 #' A cluster must contain every group of a [modelterms7::random()] term
 #' entirely. With no `cluster` the observations are treated as independent
@@ -88,8 +89,18 @@ SandwichMethod <- S7::new_class(
 #'
 #' Models with a structural term ([modelterms7::gas()], [modelterms7::regime()]),
 #' with a term whose block moves with its coefficients (the break-point terms
-#' and [modelterms7::nl()]) and fits with prior weights other than one are
-#' rejected.
+#' and [modelterms7::nl()]) are rejected.
+#'
+#' The prior weights \eqn{w_i} of [statmod()] are frequency weights: row
+#' \eqn{i} stands for \eqn{w_i} identical observations. Without a cluster
+#' the copies are separate observations and
+#' \eqn{B = \sum_i w_i g_i g_i'}, with \eqn{g_i} the score of one copy, and
+#' \eqn{n = \sum_i w_i} in the HC1 factor. With a cluster the copies stay in
+#' the cluster of the row, so \eqn{U_g = \sum_{i \in g} w_i g_i}, \eqn{G} is
+#' the number of clusters with positive weight and \eqn{n = \sum_i w_i}. A
+#' row with weight zero contributes nothing and is not counted. The result
+#' equals the unweighted estimator on the data expanded to \eqn{w_i} copies
+#' of each row, for integer weights.
 #'
 #' @param cluster `NULL` (the default) or a one-sided formula with a single
 #'   variable of the data, such as `~ id`.
@@ -229,16 +240,10 @@ sandwich_cluster <- function(fit, design, sw) {
 #'
 #' @description
 #' Signals an error for a fit with a structural term, a term whose block moves
-#' with its coefficients, prior weights other than one, or a missing
-#' effective-degrees-of-freedom table.
+#' with its coefficients.
 #'
 #' @details
-#' The weights of [statmod()] multiply the log-likelihood, so they are
-#' frequency weights. The meaning of such weights for the meat is open: a
-#' weight \eqn{w_i} gives a score \eqn{w_i g_i} for one row, which is the sum
-#' of \eqn{w_i} identical scores, and the meat of the expanded data
-#' \eqn{w_i g_i g_i'} differs from the \eqn{w_i^2 g_i g_i'} of the row. Weights
-#' other than one are rejected until that is decided.
+#' Prior weights are accepted; see [hc0_sandwich()] for their meaning.
 #'
 #' @param fit The [StatmodFit()].
 #' @param design The design of the fit.
@@ -258,10 +263,6 @@ sandwich_check <- function(fit, design) {
     stop(paste0("A sandwich variance is not available for a model with a ",
                 "term whose block moves with its coefficients (seg(), ",
                 "jump(), jseg() or nl()). It is rejected."), call. = FALSE)
-  }
-  if (!isTRUE(all(spec@weights == 1))) {
-    stop(paste0("A sandwich variance is not available for a fit with prior ",
-                "weights other than one. It is rejected."), call. = FALSE)
   }
   invisible(NULL)
 }
@@ -298,7 +299,17 @@ sandwich_vcov <- function(fit, design, Vb, cols, sw) {
     stop("The effective degrees of freedom of the fit are not available.",
          call. = FALSE)
   }
+  w <- spec@weights
   g <- statmod_score_obs(spec, fit@coefficients, design)
+  # g already carries w_i. Without a cluster the meat is sum w_i g_i g_i',
+  # the meat of w_i separate copies of row i, so each row enters as
+  # g_i sqrt(w_i) = (w_i g_i) / sqrt(w_i). With a cluster the copies stay in
+  # their cluster, and U_g sums w_i g_i as it stands.
+  if (is.null(id)) {
+    sw_row <- ifelse(w > 0, 1 / sqrt(w), 0)
+    g <- lapply(g, function(v) v * sw_row)
+  }
+  n <- sum(w)
   blocks <- list()
   for (q in spec@distrib@params) {
     d <- design[[q]]
@@ -311,8 +322,9 @@ sandwich_vcov <- function(fit, design, Vb, cols, sw) {
     do.call(cbind, blocks)
   U <- U[, cols, drop = FALSE]
   if (!is.null(id)) {
-    G <- max(id)
-    A <- Matrix::sparseMatrix(i = id, j = seq_len(n), x = 1, dims = c(G, n))
+    G <- length(unique(id[w > 0]))
+    A <- Matrix::sparseMatrix(i = id, j = seq_along(id), x = 1,
+                              dims = c(max(id), length(id)))
     U <- A %*% U
   }
   B <- as.matrix(Matrix::crossprod(U))
