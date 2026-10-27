@@ -262,9 +262,12 @@ terms_first <- function(env) {
 #' [makeActiveBinding()] takes in [terms_first()].
 #'
 #' @details
-#' The function is created here and not inside [terms_first()] so that its
-#' environment holds `name` and nothing else: a closure made in the body of
-#' [terms_first()] would carry the environment that the caller passed.
+#' The function is built from an expression, with the environment of the base
+#' package, so that it holds nothing but the name. A closure written in the
+#' body of [terms_first()] would carry the environment that the caller passed,
+#' and a closure written here would carry its source reference: a package
+#' installed with the source kept (`R_KEEP_PKG_SOURCE=yes`) serializes the
+#' source of the whole package with each such reference.
 #'
 #' @param name A single string, the name of an export.
 #'
@@ -274,6 +277,6 @@ terms_first <- function(env) {
 #'
 #' @keywords internal
 export_binding <- function(name) {
-  force(name)
-  function() get(name, envir = asNamespace("modelterms7"))
+  as.function(list(bquote(get(.(name), envir = asNamespace("modelterms7")))),
+              envir = baseenv())
 }

@@ -9,6 +9,11 @@ light_fit <- function(n = 300, seed = 3) {
 
 ser_mb <- function(x) length(serialize(x, NULL)) / 2^20
 
+# A package installed with its source kept (R_KEEP_PKG_SOURCE=yes, as on CI)
+# serializes the source of the whole package with any closure that carries a
+# source reference. The size of one function of the package is that baseline.
+src_mb <- function() ser_mb(statmodels7:::boot_light)
+
 test_that("the evaluation environment of the formula serializes in a few kilobytes", {
   env <- statmodels7:::terms_first(globalenv())
   expect_lt(ser_mb(env), 0.5)
@@ -48,7 +53,7 @@ test_that("the fit the workers receive keeps what a refit reads", {
   expect_identical(lf@coefficients, f@coefficients)
   expect_identical(lf@hyper, f@hyper)
   expect_lt(ser_mb(lf), ser_mb(f))
-  expect_lt(ser_mb(lf), 4)
+  expect_lt(ser_mb(lf), 4 + src_mb())
 })
 
 test_that("the replicates do not depend on the light fit", {
