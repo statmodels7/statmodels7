@@ -89,6 +89,7 @@ Collate:
     'predict_objects.R'
     'report.R'
     'predict.R'
+    'sandwich.R'
     'inference_objects.R'
     'inference.R'
     'outer.R'
