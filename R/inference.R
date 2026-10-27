@@ -411,6 +411,9 @@ vcov.StatmodFit <- function(object,
   emethod <- info_emethod(info)
   spec <- object@spec
   design <- statmod_design(spec)
+  if (convention == "frequentist" && !is.null(vcov_type@sandwich)) {
+    sandwich_check(object, design)
+  }
   coef <- object@coefficients
   lab <- coef_labels(spec, design)
   total <- nrow(lab)
@@ -522,7 +525,12 @@ vcov.StatmodFit <- function(object,
     # comes back an S4 Matrix, and writing that into a slice of the base
     # matrix assembled below is a length error rather than a conversion. The
     # product is dense whatever H is, Vb being dense, so nothing is given up.
-    frequentist = as_dense(Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb),
+    frequentist = if (is.null(vcov_type@sandwich)) {
+      as_dense(Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb)
+    } else {
+      sandwich_vcov(object, design, as_dense(Vb), which(keep_full),
+                    vcov_type@sandwich)
+    },
     unconditional = {
       # THE OTHER TWO ARE CONDITIONAL ON THE HYPERPARAMETERS, both read at
       # the value the search stopped at as though it had been known. This

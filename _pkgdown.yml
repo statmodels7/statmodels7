@@ -145,6 +145,7 @@ reference:
   - vcov_method
   - bayesian_vcov
   - frequentist_vcov
+  - hc0_sandwich
   - unconditional_vcov
 
 - title: Installing and updating

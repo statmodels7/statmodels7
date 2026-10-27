@@ -1,3 +1,16 @@
+# statmodels7 (development version)
+
+* `frequentist_vcov()` takes `sandwich = hc0_sandwich()` or
+  `hc1_sandwich()`, each with an optional `cluster = ~ id` (CR0 and CR1).
+  The matrix is `V_b B V_b`, with `V_b` the inverse penalized information and
+  `B` the sum over observations, or over clusters, of the outer product of
+  the scores of the log-likelihood in the whole coefficient vector, random
+  effects included. The correction of HC1 and CR1 uses the effective degrees
+  of freedom of the model. The sandwich is rejected for a model with `gas()`,
+  `regime()`, a break-point term or `nl()`. Prior weights are frequency
+  weights. `vcov()`, `confint()`, `summary()`, `predict()` and the tests take it
+  through `vcov_type`; with `sandwich = NULL` the result is unchanged.
+
 # statmodels7 0.211.0
 
 * The choices of a method are S7 objects. `statmod()` takes
