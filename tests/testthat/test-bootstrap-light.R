@@ -4,7 +4,11 @@ light_fit <- function(n = 300, seed = 3) {
   set.seed(seed)
   d <- data.frame(x = runif(n))
   d$y <- sin(2 * pi * d$x) + rnorm(n, sd = 0.3)
-  statmod(y ~ s(x, bspline_smooth(k = 10)), g1l, d, outer_criterion = reml())
+  # the formula carries the global environment, so that the environment of the
+  # term is the shim and its parent only and not the frame of this function
+  fml <- y ~ s(x, basis7::bspline_smooth(k = 10))
+  environment(fml) <- globalenv()
+  statmod(fml, g1l, d, outer_criterion = reml())
 }
 
 ser_mb <- function(x) length(serialize(x, NULL)) / 2^20
