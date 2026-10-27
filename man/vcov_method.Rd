@@ -31,8 +31,8 @@ instantiated, and serves to test membership with \code{S7::S7_inherits()}. It
 has the property \code{name} only. The three conventions of this topic compute
 the variance from the curvature of the likelihood and carry one more
 property, \code{information}, which selects the matrix \eqn{H} (see below).
-A convention that does not read the curvature, such as one built on
-resampled fits, does not carry it.
+A convention that does not read the curvature, such as \code{\link[=bootstrap_vcov]{bootstrap_vcov()}},
+which is the covariance of refitted, resampled data sets, does not carry it.
 }
 \details{
 Write \eqn{H} for the information of the log-likelihood and \eqn{S} for the

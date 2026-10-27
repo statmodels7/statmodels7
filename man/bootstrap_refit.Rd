@@ -20,7 +20,7 @@ bootstrap_refit(object, spec_b, refit, method, cfg, beta0)
 \item{beta0}{The fit's coefficients, the replica's start.}
 }
 \value{
-A list with \code{coefficients} and \code{hyper}.
+A list with \code{coefficients}, \code{hyper} and the \code{design} of the replica.
 }
 \description{
 Re-estimates the coefficients of a fit on a simulated response, either at

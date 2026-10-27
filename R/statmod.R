@@ -108,7 +108,12 @@ StatmodFit <- S7::new_class("StatmodFit",
     criterion = S7::class_numeric,
     history = S7::class_list,
     methods = S7::class_list,
-    call = S7::class_any
+    call = S7::class_any,
+    # the bootstrap entries of add_bootstrap(), kept in an environment so that
+    # a variance asked for later can store the replicates it computes; empty
+    # after statmod(), and read only through statmod_bootstrap()
+    bootstrap = S7::new_property(S7::class_environment,
+                                 default = quote(new.env(parent = emptyenv())))
   )
 )
 

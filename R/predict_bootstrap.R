@@ -105,42 +105,26 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
                 "refit = \"coefficients\" holds them at the fit's ",
                 "values."), call. = FALSE)
   }
-  draw <- bootstrap_simulator(object, spec0, design0, aside)
-  params <- spec0@distrib@params
-  method <- sm$smooth
-  cfg <- inner_settings(method)
-  # every replica starts at the fit's optimum: its coefficients here, its
-  # hyperparameters through object@hyper in bootstrap_refit()
-  beta0 <- unlist(object@coefficients[params], use.names = FALSE)
+  # the draws, the refits and the failures belong to the engine; each replica
+  # kept becomes the components of the mixture at once, so that the stream of
+  # the session is consumed replica by replica, as the replicas ask for it
   comps <- list()
   inf_var <- FALSE
-  failed <- 0L
-  for (b in seq_len(n_boot)) {
-    y <- draw()
-    spec_b <- S7::set_props(spec0, response = y)
-    # a trial point of a refit may meet a penalized information the sparse
-    # factorization reports as not positive definite; the refit steps away
-    # from it, and the warning says nothing about the replica
-    r <- tryCatch(withCallingHandlers(
-      bootstrap_refit(object, spec_b, refit, method, cfg, beta0),
-      warning = function(w) {
-        if (grepl("CHOLMOD", conditionMessage(w), fixed = TRUE)) {
-          invokeRestart("muffleWarning")
-        }
-      }), error = function(e) NULL)
-    if (is.null(r)) {
-      failed <- failed + 1L
-      next
-    }
+  hook <- function(r, b) {
     fit_b <- S7::set_props(object, coefficients = r$coefficients,
                            hyper = r$hyper)
     cb <- predictive_mixture(fit_b, spec, design, aside,
                              statmod_eta(spec, design, r$coefficients)$eta,
                              NULL, weight = 1,
                              n_draw = max(1L, ceiling(5000 / n_boot)))
-    inf_var <- inf_var || isTRUE(attr(cb, "infinite_variance"))
-    comps <- c(comps, cb)
+    inf_var <<- inf_var || isTRUE(attr(cb, "infinite_variance"))
+    comps <<- c(comps, cb)
   }
+  eng <- bootstrap_engine(object, n_boot, parametric_resample(), refit,
+                          aside = aside, replace = FALSE, validate = FALSE,
+                          hook = hook, batch = 1L, stream = FALSE,
+                          adjust = FALSE, check = FALSE)
+  failed <- sum(eng$status != 0L)
   if (!length(comps)) {
     stop("Every bootstrap replica failed to refit.", call. = FALSE)
   }
@@ -182,6 +166,9 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
 #' @param spec0,design0 Its specification and design at the fitting rows.
 #' @param aside The rows of [random_modes()] whose effects are redrawn; the
 #'   other effects keep their estimates.
+#' @param keep `TRUE` makes the function return a list with the response `y`
+#'   and the coefficients `cf` that it was drawn from. The attribute `targets`
+#'   of the function lists the coordinates of the effects that it redraws.
 #'
 #' @return A function returning a numeric vector of `spec0@n_obs` values.
 #'
@@ -197,7 +184,7 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
 #' length(draw())
 #'
 #' @keywords internal
-bootstrap_simulator <- function(object, spec0, design0, aside) {
+bootstrap_simulator <- function(object, spec0, design0, aside, keep = FALSE) {
   params <- spec0@distrib@params
   set_aside <- paste(aside$param, aside$key)
   is_random <- function(u) {
@@ -221,7 +208,7 @@ bootstrap_simulator <- function(object, spec0, design0, aside) {
          tg = tg)
   })
   cf0 <- object@coefficients
-  function() {
+  out <- function() {
     cf <- cf0
     for (d in draws) {
       v <- penalties7::penalty_draw(d$pen, d$th)
@@ -235,8 +222,13 @@ bootstrap_simulator <- function(object, spec0, design0, aside) {
       }
     }
     th <- statmod_eta(spec0, design0, cf)$theta
-    distributions7::distrib_rng(spec0@distrib, spec0@n_obs, th)
+    y <- distributions7::distrib_rng(spec0@distrib, spec0@n_obs, th)
+    if (keep) list(y = y, cf = cf) else y
   }
+  attr(out, "targets") <- unlist(lapply(draws, function(d)
+    lapply(unique(d$tg$param), function(p)
+      list(param = p, pos = d$tg$pos[d$tg$param == p]))), recursive = FALSE)
+  out
 }
 
 
@@ -254,7 +246,7 @@ bootstrap_simulator <- function(object, spec0, design0, aside) {
 #' @param cfg Its [inner_settings()].
 #' @param beta0 The fit's coefficients, the replica's start.
 #'
-#' @return A list with `coefficients` and `hyper`.
+#' @return A list with `coefficients`, `hyper` and the `design` of the replica.
 #'
 #' @examples
 #' set.seed(4)
@@ -290,5 +282,5 @@ bootstrap_refit <- function(object, spec_b, refit, method, cfg, beta0) {
     res <- statmod_alternate(spec_b, design, blocks, hyper, method, beta0,
                              cfg$expected, cfg$emethod, cfg$maxit, cfg$tol, vb)
   }
-  list(coefficients = res$obj$split(res$par), hyper = hyper)
+  list(coefficients = res$obj$split(res$par), hyper = hyper, design = design)
 }

@@ -4,7 +4,7 @@
 \alias{bootstrap_simulator}
 \title{A Simulator of the Response From a Fitted Model}
 \usage{
-bootstrap_simulator(object, spec0, design0, aside)
+bootstrap_simulator(object, spec0, design0, aside, keep = FALSE)
 }
 \arguments{
 \item{object}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -13,6 +13,10 @@ bootstrap_simulator(object, spec0, design0, aside)
 
 \item{aside}{The rows of \code{\link[=random_modes]{random_modes()}} whose effects are redrawn; the
 other effects keep their estimates.}
+
+\item{keep}{\code{TRUE} makes the function return a list with the response \code{y}
+and the coefficients \code{cf} that it was drawn from. The attribute \code{targets}
+of the function lists the coordinates of the effects that it redraws.}
 }
 \value{
 A function returning a numeric vector of \code{spec0@n_obs} values.

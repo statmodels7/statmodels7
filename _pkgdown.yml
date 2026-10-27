@@ -146,6 +146,21 @@ reference:
   - bayesian_vcov
   - frequentist_vcov
   - unconditional_vcov
+  - bootstrap_vcov
+
+- title: Bootstrap
+  desc: >
+    The bootstrap variance of the coefficients: the schemes that resample the
+    data, the function that stores the refitted replicates in a fit, and the
+    extractor that reads them.
+  contents:
+  - resample_method
+  - parametric_resample
+  - case_resample
+  - cluster_resample
+  - add_bootstrap
+  - statmod_bootstrap
+  - StatmodBootstrap
 
 - title: Installing and updating
   desc: >

@@ -27,7 +27,8 @@ StatmodSummary(
   max_coef = NULL,
   notes = character(0),
   certificate = NULL,
-  information = NULL
+  information = NULL,
+  bootstrap = NULL
 )
 }
 \arguments{
