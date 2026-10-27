@@ -213,7 +213,7 @@ test_that("pred_bootstrap reuses the stored parametric replicates", {
     bootstrap_engine = function(...) stop("the engine was called"))
   p_reuse <- ivl(fit, 20)
   expect_error(ivl(statmod(y ~ x, g1, d), 20), "the engine was called")
-  # more replicates than stored: the predictive bootstrap makes its own
+  # more replicates than stored: the entry is extended by the engine
   expect_error(ivl(fit, 40), "the engine was called")
   testthat::local_mocked_bindings(
     bootstrap_engine = eng0)
@@ -225,7 +225,7 @@ test_that("pred_bootstrap reuses the stored parametric replicates", {
   expect_identical(p_reuse, p_own)
 })
 
-test_that("pred_bootstrap reuse is faster than the refits and keeps a model with random effects out", {
+test_that("pred_bootstrap reuse is faster than the refits", {
   set.seed(8)
   d <- data.frame(x = runif(40))
   d$y <- 1 + d$x + rnorm(40, sd = 0.4)
@@ -241,20 +241,6 @@ test_that("pred_bootstrap reuse is faster than the refits and keeps a model with
   t_reuse <- system.time(ivl(fit))[["elapsed"]]
   t_own <- system.time(ivl(statmod(y ~ x, g1, d)))[["elapsed"]]
   expect_lt(t_reuse, t_own)
-  # a model with a random-effect term is not reused
-  gg <- data.frame(g = factor(rep(1:8, each = 5)), x = rnorm(40))
-  gg$y <- 1 + gg$x + rnorm(8)[gg$g] + rnorm(40)
-  fr <- statmod(y ~ x + random(~ 1 | g), g1, gg)
-  set.seed(2)
-  fr <- add_bootstrap(fr, n = 20)
-  testthat::local_mocked_bindings(
-    bootstrap_engine = function(...) stop("the engine was called"))
-  expect_error(
-    predict(fr, what = "response", newdata = data.frame(x = 0, g = "new"),
-            random = "zero",
-            interval = prediction_interval(
-              predictive = pred_bootstrap(n = 20))),
-    "the engine was called")
 })
 
 test_that("pred_bootstrap reuses a refit = \"full\" entry with its hyperparameters", {

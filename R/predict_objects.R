@@ -525,10 +525,12 @@ pred_plugin <- function() {
 #' a block that moves with its coefficients, for a response that is not one
 #' number per observation, and, with `refit = "full"`, for a cross-validated
 #' criterion. The replicas use the random number generator of the session, so
-#' `set.seed()` before the call reproduces them. If the fit has no
-#' [modelterms7::random()] term and holds a stored parametric bootstrap
-#' ([add_bootstrap()]) with the same `refit` and at least `n` replicates, the
-#' first `n` stored replicates are used and nothing is refitted. See
+#' `set.seed()` before the call reproduces them. If the fit holds a
+#' stored parametric bootstrap ([add_bootstrap()]) with the same `refit`, its
+#' first `n` replicates are used and nothing is refitted; an entry with fewer
+#' than `n` replicates is extended and stored again. With
+#' [modelterms7::random()] terms the entry is used when `random` sets every
+#' one of them aside and the entry holds the refitted random effects. See
 #' [predictive_distributions] and [predictive_bootstrap()].
 #'
 #' @param n The number of replicas, a single positive whole number. The default

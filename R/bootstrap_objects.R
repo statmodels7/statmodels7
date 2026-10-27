@@ -452,7 +452,13 @@ S7::method(print, BootstrapVcov) <- function(x, ...) {
 #'     stream and after the last draw that was kept, from which an extension
 #'     continues;}
 #'   \item{`fingerprint`}{the coefficients and hyperparameters of the fit that
-#'     the replicates belong to.}
+#'     the replicates belong to;}
+#'   \item{`raw`}{for the parametric scheme beside random effects, a matrix
+#'     of the same shape as `coefficients` that holds the coefficients as the
+#'     replicates were refitted, \eqn{\hat b^*} for a random-effect coordinate,
+#'     where `coefficients` holds \eqn{\hat b^* - b^* + \hat b}; `NULL`
+#'     otherwise, and for an entry stored by an older version. [pred_bootstrap()]
+#'     reads it to reuse the entry.}
 #' }
 #'
 #' @return `coef()` on an entry returns the matrix of replicates, and
@@ -481,7 +487,8 @@ StatmodBootstrap <- S7::new_class("StatmodBootstrap",
     random = S7::class_character,
     status = S7::class_integer,
     seed = S7::class_list,
-    fingerprint = S7::class_numeric
+    fingerprint = S7::class_numeric,
+    raw = S7::class_any
   )
 )
 

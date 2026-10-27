@@ -368,7 +368,10 @@ boot_fill <- function(fit, n, resample, refit, say = FALSE) {
     status = c(if (!is.null(old)) old@status, eng$status),
     seed = list(start = if (is.null(old)) eng$seed_start else old@seed$start,
                 end = eng$seed_end),
-    fingerprint = boot_fingerprint(fit))
+    fingerprint = boot_fingerprint(fit),
+    raw = if (is.null(old)) eng$raw else if (is.null(old@raw) ||
+                                              is.null(eng$raw)) NULL else
+      rbind(old@raw, eng$raw))
   assign(key, entry, envir = env)
   entry
 }

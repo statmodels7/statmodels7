@@ -307,12 +307,19 @@ boot_readable_values <- function(object, spec, design, B) {
 #' for the one that the prediction would make.
 #'
 #' @details
-#' The entry is used when its scheme is [parametric_resample()], its refit is
-#' `refit`, it holds at least `n` replicates, and the model has no
-#' random-effect term. The stored replicates of a random-effect coordinate are
-#' those of the prediction error (\eqn{\hat b^* - b^* + \hat b}), which differ
-#' from the refitted coefficients that the predictive bootstrap reads, so a
-#' model with a random-effect term is not reused.
+#' The entry is used when its scheme is [parametric_resample()] and its refit
+#' is `refit`. An entry with fewer than `n` replicates is extended first, from
+#' the stream saved with it, and the extension is stored in the fit; the
+#' stream of the session is restored afterwards.
+#'
+#' The stored replicates of a random-effect coordinate are those of the
+#' prediction error (\eqn{\hat b^* - b^* + \hat b}), which differ from the
+#' refitted coefficients that the predictive bootstrap reads. A model with
+#' random-effect terms is therefore reused only when the entry holds the
+#' refitted coefficients (the property `raw` of [StatmodBootstrap]) and the
+#' prediction sets aside every random-effect term, which is how the entry
+#' redrew them. An entry without `raw`, or a prediction that keeps some term
+#' conditional, is not reused.
 #'
 #' @param object The [StatmodFit()].
 #' @param aside The rows of [random_modes()] that the prediction sets aside.
@@ -324,15 +331,34 @@ boot_readable_values <- function(object, spec, design, B) {
 #' @keywords internal
 boot_stored_replicas <- function(object, aside, refit, n) {
   spec0 <- object@spec
-  if (nrow(random_modes(spec0, "zero")) || nrow(aside)) return(NULL)
+  rm0 <- random_modes(spec0, "zero")
+  has_random <- nrow(rm0) > 0L
+  if (has_random &&
+      !setequal(paste(rm0$param, rm0$key), paste(aside$param, aside$key))) {
+    return(NULL)
+  }
+  if (!has_random && nrow(aside)) return(NULL)
   ents <- boot_match(boot_entries(object), parametric_resample(), refit)
-  if (length(ents) != 1L || ents[[1L]]@n < n) return(NULL)
+  if (length(ents) != 1L) return(NULL)
   e <- ents[[1L]]
+  if (has_random && (!identical(e@random, "redrawn") || is.null(e@raw))) {
+    return(NULL)
+  }
+  if (e@n < n) {
+    # the entry is extended from its saved stream, as bootstrap_vcov() does;
+    # the stream of the session is left where it was
+    seed <- if (exists(".Random.seed", envir = globalenv(),
+                       inherits = FALSE)) get(".Random.seed", envir = globalenv())
+    e <- boot_fill(object, n, parametric_resample(), refit, say = TRUE)
+    if (!is.null(seed)) assign(".Random.seed", seed, envir = globalenv())
+    if (has_random && is.null(e@raw)) return(NULL)
+  }
+  B <- if (has_random) e@raw else e@coefficients
   params <- spec0@distrib@params
   lens <- vapply(object@coefficients[params], length, integer(1))
   grp <- factor(rep(params, lens), levels = params)
   lapply(seq_len(n), function(b) {
-    cf <- split(e@coefficients[b, ], grp)
+    cf <- split(B[b, ], grp)
     cf <- Map(function(v, p) stats::setNames(v, names(object@coefficients[[p]])),
               cf, params)
     hy <- if (identical(refit, "full") && !is.null(e@hyper)) {

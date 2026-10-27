@@ -53,8 +53,10 @@ NULL
 #'
 #' @return A list with `coefficients` (a matrix with a row for each replicate
 #'   kept), `hyper` (a matrix, or `NULL`), `status` (an integer for every
-#'   draw), `seed_start`, `seed_end`, `random` and `kept` (the refits, if a
-#'   hook asked for them to be returned).
+#'   draw), `seed_start`, `seed_end`, `random` and `raw` (the matrix of the
+#'   coefficients of the replicates as refitted, without the adjustment of the
+#'   random effects, for a parametric scheme with `adjust = TRUE` beside
+#'   random effects, and `NULL` otherwise).
 #'
 #' @seealso [add_bootstrap()], [predictive_bootstrap()], [worker_map()]
 #'
@@ -99,6 +101,7 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
   } else seed_start <- NULL
   seed_end <- seed_start
   rows <- list()
+  raws <- list()
   hypers <- list()
   kept <- list()
   status <- integer(0)
@@ -124,6 +127,7 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
       if (st != 0L) next
       accepted <- accepted + 1L
       rows[[accepted]] <- res[[j]]$beta
+      raws[[accepted]] <- res[[j]]$raw
       hypers[[accepted]] <- res[[j]]$hyper
       if (!is.null(hook)) hook(res[[j]]$fit, accepted)
       if (replace && accepted >= n) break
@@ -148,9 +152,14 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
   hyper <- if (identical(refit, "full") && length(hypers)) {
     do.call(rbind, hypers)
   } else NULL
+  raw <- if (length(rows) && length(raws) == length(rows)) {
+    m <- do.call(rbind, raws)
+    dimnames(m) <- list(NULL, nm)
+    m
+  } else NULL
   list(coefficients = coefficients, hyper = hyper, status = status,
        seed_start = seed_start, seed_end = seed_end,
-       random = attr(draw, "random"))
+       random = attr(draw, "random"), raw = raw)
 }
 
 
@@ -420,6 +429,9 @@ boot_body <- function(object, spec0, draw, refit, method, cfg, beta0, plans,
                                            hyper = r$hyper)))
     }
     list(status = 0L, beta = unlist(cf[params], use.names = FALSE),
+         raw = if (length(targets) && !is.null(pl$cf)) {
+           unlist(r$coefficients[params], use.names = FALSE)
+         } else NULL,
          hyper = if (identical(refit, "full")) unlist(r$hyper) else NULL,
          fit = if (keep_fit) list(coefficients = r$coefficients,
                                   hyper = r$hyper))
