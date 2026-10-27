@@ -114,6 +114,8 @@ Collate:
     'outer_context.R'
     'plot_core.R'
     'plot_effect.R'
+    'plot_penalized.R'
+    'plot_random.R'
     'predict_random.R'
     'predict_interval.R'
     'predict_bootstrap.R'
