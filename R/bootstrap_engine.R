@@ -220,9 +220,11 @@ bootstrap_check <- function(object, resample, refit, spec0, design0) {
   }
   has_random <- nrow(random_modes(spec0, "zero")) > 0L ||
     nrow(attr(random_modes(spec0, "zero"), "nested")) > 0L
-  if (has_random && S7::S7_inherits(resample, CaseResample)) {
-    stop(paste0("case_resample() breaks the groups of a random() term. ",
-                "cluster_resample() resamples the groups."), call. = FALSE)
+  if (has_random && (S7::S7_inherits(resample, CaseResample) ||
+                     S7::S7_inherits(resample, BayesianResample))) {
+    stop(paste0(resample@name, "_resample() breaks the groups of a random() ",
+                "term. cluster_resample() resamples the groups."),
+         call. = FALSE)
   }
   if (has_random && S7::S7_inherits(resample, ClusterResample)) {
     boot_cluster_random_check(spec0)
@@ -279,6 +281,15 @@ bootstrap_plan <- function(object, resample, spec0, design0, aside, adjust) {
   }
   if (S7::S7_inherits(resample, CaseResample)) {
     out <- function() list(w = tabulate(sample.int(n, n, TRUE), n) * w0)
+  } else if (S7::S7_inherits(resample, BayesianResample)) {
+    pos <- w0 > 0
+    np <- sum(pos)
+    out <- function() {
+      e <- stats::rexp(np)
+      w <- numeric(n)
+      w[pos] <- w0[pos] * e * (np / sum(e))
+      list(w = w)
+    }
   } else {
     id <- boot_cluster_ids(object, resample, spec0)
     gi <- match(id, unique(id))

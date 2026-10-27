@@ -14,14 +14,15 @@ Nothing: the class is abstract and its constructor signals an
 error. Every object that inherits from it has the property \code{name}.
 }
 \description{
-Three schemes generate the data sets from which \code{\link[=add_bootstrap]{add_bootstrap()}} refits a
+Four schemes generate the data sets from which \code{\link[=add_bootstrap]{add_bootstrap()}} refits a
 model. \code{\link[=parametric_resample]{parametric_resample()}} draws a new response from the fitted model,
-\code{\link[=case_resample]{case_resample()}} draws observations with replacement, and
-\code{\link[=cluster_resample]{cluster_resample()}} draws groups of observations with replacement. Each is
-an object, and the object is passed as the argument \code{resample} of
+\code{\link[=case_resample]{case_resample()}} draws observations with replacement,
+\code{\link[=cluster_resample]{cluster_resample()}} draws groups of observations with replacement, and
+\code{\link[=bayesian_resample]{bayesian_resample()}} gives the observations random positive weights. Each
+is an object, and the object is passed as the argument \code{resample} of
 \code{\link[=add_bootstrap]{add_bootstrap()}}, \code{\link[=bootstrap_vcov]{bootstrap_vcov()}} and \code{\link[=statmod_bootstrap]{statmod_bootstrap()}}.
 
-\code{resample_method} is the abstract parent of the three classes. It cannot be
+\code{resample_method} is the abstract parent of the four classes. It cannot be
 instantiated, and serves to test membership with \code{S7::S7_inherits()}.
 }
 \details{
@@ -33,7 +34,10 @@ penalties and hyperparameters are held). The case and cluster schemes
 resample the data, so they do not depend on the variance specification of
 the model: with a heteroscedastic response fitted by a homoscedastic model
 the case bootstrap converges to the sandwich variance, which the parametric
-bootstrap does not.
+bootstrap does not. The Bayesian scheme is a smoothed version of the case
+scheme: its weights are positive, so no replicate loses a level of a factor
+or separates a logistic regression, and its variance is close to that of
+the case scheme.
 
 A resampled data set is represented by frequency weights, which multiply
 the weights of the fit. The design is not rebuilt, so the knots of a basis
@@ -48,7 +52,7 @@ S7::S7_inherits(case_resample(), resample_method)
 try(resample_method(name = "mine"))
 }
 \seealso{
-\code{\link[=parametric_resample]{parametric_resample()}}, \code{\link[=case_resample]{case_resample()}} and
-\code{\link[=cluster_resample]{cluster_resample()}} for the three schemes, \code{\link[=add_bootstrap]{add_bootstrap()}} for the
+\code{\link[=parametric_resample]{parametric_resample()}}, \code{\link[=case_resample]{case_resample()}}, \code{\link[=cluster_resample]{cluster_resample()}}
+and \code{\link[=bayesian_resample]{bayesian_resample()}} for the four schemes, \code{\link[=add_bootstrap]{add_bootstrap()}} for the
 function that takes one.
 }

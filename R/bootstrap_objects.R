@@ -9,14 +9,15 @@ NULL
 #' @name resample_method
 #'
 #' @description
-#' Three schemes generate the data sets from which [add_bootstrap()] refits a
+#' Four schemes generate the data sets from which [add_bootstrap()] refits a
 #' model. [parametric_resample()] draws a new response from the fitted model,
-#' [case_resample()] draws observations with replacement, and
-#' [cluster_resample()] draws groups of observations with replacement. Each is
-#' an object, and the object is passed as the argument `resample` of
+#' [case_resample()] draws observations with replacement,
+#' [cluster_resample()] draws groups of observations with replacement, and
+#' [bayesian_resample()] gives the observations random positive weights. Each
+#' is an object, and the object is passed as the argument `resample` of
 #' [add_bootstrap()], [bootstrap_vcov()] and [statmod_bootstrap()].
 #'
-#' `resample_method` is the abstract parent of the three classes. It cannot be
+#' `resample_method` is the abstract parent of the four classes. It cannot be
 #' instantiated, and serves to test membership with `S7::S7_inherits()`.
 #'
 #' @details
@@ -28,7 +29,10 @@ NULL
 #' resample the data, so they do not depend on the variance specification of
 #' the model: with a heteroscedastic response fitted by a homoscedastic model
 #' the case bootstrap converges to the sandwich variance, which the parametric
-#' bootstrap does not.
+#' bootstrap does not. The Bayesian scheme is a smoothed version of the case
+#' scheme: its weights are positive, so no replicate loses a level of a factor
+#' or separates a logistic regression, and its variance is close to that of
+#' the case scheme.
 #'
 #' A resampled data set is represented by frequency weights, which multiply
 #' the weights of the fit. The design is not rebuilt, so the knots of a basis
@@ -43,8 +47,8 @@ NULL
 #' @return Nothing: the class is abstract and its constructor signals an
 #'   error. Every object that inherits from it has the property `name`.
 #'
-#' @seealso [parametric_resample()], [case_resample()] and
-#'   [cluster_resample()] for the three schemes, [add_bootstrap()] for the
+#' @seealso [parametric_resample()], [case_resample()], [cluster_resample()]
+#'   and [bayesian_resample()] for the four schemes, [add_bootstrap()] for the
 #'   function that takes one.
 #'
 #' @examples
@@ -60,9 +64,9 @@ resample_method <- S7::new_class(
 #' @title S7 Classes for the Shipped Resampling Schemes
 #'
 #' @description
-#' These are the classes that [parametric_resample()], [case_resample()] and
-#' [cluster_resample()] instantiate. Each inherits from [resample_method]. Use
-#' the constructors, which set the properties.
+#' These are the classes that [parametric_resample()], [case_resample()],
+#' [cluster_resample()] and [bayesian_resample()] instantiate. Each inherits
+#' from [resample_method]. Use the constructors, which set the properties.
 #'
 #' @param name A single string, the short name of the scheme.
 #' @param cluster For a cluster scheme, the one-sided formula that names the
@@ -88,6 +92,10 @@ ParametricResample <- S7::new_class("ParametricResample",
 #' @rdname ParametricResample
 #' @keywords internal
 CaseResample <- S7::new_class("CaseResample", parent = resample_method)
+
+#' @rdname ParametricResample
+#' @keywords internal
+BayesianResample <- S7::new_class("BayesianResample", parent = resample_method)
 
 #' @rdname ParametricResample
 #' @keywords internal
@@ -169,6 +177,55 @@ parametric_resample <- function() ParametricResample(name = "parametric")
 #' sqrt(diag(vcov(fit, vcov_type = bootstrap_vcov(resample = case_resample()))))
 #' @export
 case_resample <- function() CaseResample(name = "case")
+
+#' @title Bayesian Resampling
+#'
+#' @description
+#' Selects the Bayesian bootstrap: every replicate gives each observation a
+#' random positive weight and refits the model on the weighted data.
+#'
+#' @details
+#' The weights of a replicate are \eqn{n} times a draw from the Dirichlet
+#' distribution with all parameters equal to one, which is a vector of
+#' independent standard exponential variables divided by their mean. They sum
+#' to \eqn{n} and multiply the weights of the fit. The design is not rebuilt, so
+#' the knots of a basis stay those of the fit. An observation with prior weight
+#' zero keeps weight zero and is not drawn.
+#'
+#' Every observation of a replicate has a positive weight, so no replicate
+#' loses a level of a factor, and a rare level does not make a coefficient
+#' unidentified or a logistic regression separable, as the case scheme does
+#' when it leaves all the observations of the level out. The variance of the
+#' replicates is that of the case scheme times a factor close to
+#' \eqn{n/(n + 1)}, and it converges to the sandwich variance in the same way.
+#' The scheme breaks the groups of a [modelterms7::random()] term, and a fit
+#' with one is rejected, like the case scheme. A fit with a structural term
+#' is rejected as well, and a [cv()] criterion is rejected with
+#' `refit = "full"`.
+#'
+#' @return A `BayesianResample` object, inheriting from [resample_method].
+#'
+#' @references
+#' Rubin, D. B. (1981). The Bayesian bootstrap. *The Annals of Statistics*,
+#' 9(1), 130--134.
+#'
+#' Newton, M. A. and Raftery, A. E. (1994). Approximate Bayesian inference
+#' with the weighted likelihood bootstrap. *Journal of the Royal Statistical
+#' Society: Series B*, 56(1), 3--48.
+#'
+#' @seealso [resample_method] for the comparison of the schemes,
+#'   [add_bootstrap()] and [bootstrap_vcov()] for the functions that take it.
+#'
+#' @examples
+#' set.seed(1)
+#' dd <- data.frame(x = runif(60))
+#' dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
+#' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
+#' fit <- add_bootstrap(fit, n = 30, resample = bayesian_resample())
+#' sqrt(diag(vcov(fit, vcov_type = bootstrap_vcov(
+#'   resample = bayesian_resample()))))
+#' @export
+bayesian_resample <- function() BayesianResample(name = "bayesian")
 
 #' @title Cluster Resampling
 #'
@@ -296,7 +353,8 @@ resample_label <- function(x) {
 as_resample_method <- function(x) {
   if (S7::S7_inherits(x, resample_method)) return(x)
   stop("'resample' must be a resample_method object: parametric_resample(), ",
-       "case_resample() or cluster_resample().", call. = FALSE)
+       "case_resample(), cluster_resample() or bayesian_resample().",
+       call. = FALSE)
 }
 
 
