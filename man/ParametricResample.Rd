@@ -32,7 +32,7 @@ the constructors, which set the properties.
 }
 \examples{
 class(case_resample())
-cluster_resample(~ g)@by
+cluster_resample(~ g)@cluster
 
 }
 \seealso{

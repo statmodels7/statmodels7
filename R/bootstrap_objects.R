@@ -74,7 +74,7 @@ resample_method <- S7::new_class(
 #'
 #' @examples
 #' class(case_resample())
-#' cluster_resample(~ g)@by
+#' cluster_resample(~ g)@cluster
 #'
 #' @name ParametricResample
 #' @aliases ParametricResample CaseResample ClusterResample
@@ -424,10 +424,8 @@ S7::method(print, BootstrapVcov) <- function(x, ...) {
 #'     the replicates belong to.}
 #' }
 #'
-#' @param x,object A `StatmodBootstrap` object.
-#' @param ... Unused.
-#'
-#' @return `coef()` returns the matrix of replicates. The class itself has no
+#' @return `coef()` on an entry returns the matrix of replicates, and
+#'   `print()` returns the entry invisibly. The class itself has no
 #'   constructor to call.
 #'
 #' @seealso [add_bootstrap()], [statmod_bootstrap()], [bootstrap_vcov()].

@@ -16,13 +16,9 @@ StatmodBootstrap(
   fingerprint = integer(0)
 )
 }
-\arguments{
-\item{x, object}{A \code{StatmodBootstrap} object.}
-
-\item{...}{Unused.}
-}
 \value{
-\code{coef()} returns the matrix of replicates. The class itself has no
+\code{coef()} on an entry returns the matrix of replicates, and
+\code{print()} returns the entry invisibly. The class itself has no
 constructor to call.
 }
 \description{
