@@ -303,3 +303,125 @@ test_that("integer prior weights equal the data expanded to copies", {
     expect_equal(unname(vw), unname(ve), tolerance = 1e-7, ignore_attr = TRUE)
   }
 })
+
+# ---- second round: roots on the information of the fit, t on readable rows
+
+test_that("the leverage roots follow the information of the fit", {
+  # a canonical link: observed and expected information coincide, so the two
+  # leverages are equal and nothing is clipped
+  set.seed(9)
+  dp <- data.frame(x = rnorm(90))
+  dp$y <- rpois(90, exp(0.2 + 0.4 * dp$x))
+  fp <- statmod(y ~ x, distributions7::poisson_distrib(), dp)
+  le <- statmod_leverage(fp, information = ex_info())
+  lo <- statmod_leverage(fp, information = distributions7::observed_info())
+  expect_equal(lo$leverage, le$leverage, tolerance = 1e-9)
+  expect_equal(le$clipped, 0)
+  expect_equal(lo$clipped, 0)
+  # the Gaussian mean with an estimated scale: the observed information of one
+  # observation in (mu, log sigma) is [[1, 2r], [2r, 2r^2]] / s^2 with
+  # r = y - mu, of negative determinant, so every observation is clipped.
+  # The hat block is written out here from the positive part of that matrix
+  dd <- lm_fit(50, 8)
+  f <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
+  X <- cbind(1, dd$x)
+  n <- nrow(dd)
+  mu <- drop(X %*% f@coefficients$mu)
+  sg <- exp(drop(X %*% f@coefficients$sigma))
+  r <- dd$y - mu
+  Wl <- lapply(seq_len(n), function(i)
+    matrix(c(1, 2 * r[i], 2 * r[i], 2 * r[i]^2) / sg[i]^2, 2, 2))
+  Zl <- lapply(seq_len(n), function(i)
+    rbind(c(X[i, ], 0, 0), c(0, 0, X[i, ])))
+  K <- Reduce(`+`, lapply(seq_len(n), function(i) t(Zl[[i]]) %*% Wl[[i]] %*% Zl[[i]]))
+  Ki <- solve(K)
+  lo <- statmod_leverage(f, information = distributions7::observed_info())
+  expect_equal(lo$clipped, n)
+  for (i in c(1, 20, 50)) {
+    e <- eigen(Wl[[i]], symmetric = TRUE)
+    lam <- pmax(e$values, 0)
+    Rt <- e$vectors %*% (sqrt(lam) * t(e$vectors))
+    Hi <- Rt %*% Zl[[i]] %*% Ki %*% t(Zl[[i]]) %*% Rt
+    expect_equal(unname(lo$blocks[i, , ]), unname(Hi), tolerance = 1e-8)
+  }
+  le <- statmod_leverage(f, information = ex_info())
+  expect_equal(le$clipped, 0)
+  expect_equal(sum(le$trace), 4, tolerance = 1e-8)
+  # the observed-root trace differs from the expected one
+  expect_gt(abs(sum(lo$trace) - 4), 0.05)
+  message(sprintf("observed-root trace %.3f against 4, %d of %d clipped",
+                  sum(lo$trace), lo$clipped, n))
+  # the sandwich built on it uses those roots and is finite
+  V <- vcov(f, vcov_type = frequentist_vcov(
+    information = distributions7::observed_info(), sandwich = hc2_sandwich()),
+    readable = FALSE)
+  expect_true(all(is.finite(diag(V))))
+})
+
+test_that("the df of a readable row is the Satterthwaite df of its contrast", {
+  dd <- clustered(c(3, 5, 4, 6, 2, 5, 4, 7), seed = 21)
+  f <- statmod(y ~ x + z, distributions7::gaussian1_distrib(), dd)
+  m <- lm(y ~ x + z, dd)
+  vt <- fvx(hc2_sandwich(cluster = ~ id))
+  rj0 <- readable_joint(f@spec, statmod_design(f@spec), f)
+  # two quantities that are known linear combinations of the coefficients,
+  # appended to the coefficients themselves
+  J <- rbind(rj0$jacobian[1:3, ], c(0, 1, 1, 0), c(0, 1, -2, 0))
+  nr <- nrow(J)
+  rj <- rj0
+  rj$jacobian <- J
+  rj$name <- c(rj0$name[1:3], "xz", "x2z")
+  rj$parameter <- rep("mu", nr)
+  rj$term <- rep(rj0$term[[1]], nr)
+  rj$held <- rep(FALSE, nr)
+  rj$scale <- rep(rj0$scale[1], nr)
+  rj$value <- drop(J[, 1:3] %*% unlist(f@coefficients["mu"]))
+  testthat::local_mocked_bindings(readable_joint = function(...) rj)
+  V <- vcov(f, vcov_type = vt, readable = TRUE)
+  fn <- attr(V, "df_fn")
+  expect_true(is.function(fn))
+  got <- fn(rownames(V))
+  want <- c(pt_df(m, dd$id, c(1, 0, 0)), pt_df(m, dd$id, c(0, 1, 0)),
+            pt_df(m, dd$id, c(0, 0, 1)), pt_df(m, dd$id, c(0, 1, 1)),
+            pt_df(m, dd$id, c(0, 1, -2)))
+  expect_equal(got, want, tolerance = 1e-7)
+  # the variance of the combination is the quadratic form of the matrix
+  V0 <- vcov(f, vcov_type = vt, readable = FALSE)[1:3, 1:3]
+  expect_equal(unname(V[4, 4]), drop(c(0, 1, 1) %*% V0 %*% c(0, 1, 1)),
+               tolerance = 1e-9)
+  # confint(): the interval of a readable row is estimate +- qt(df) se
+  ci <- confint(f, vcov_type = vt, readable = TRUE)
+  se <- sqrt(diag(V))
+  expect_equal(unname(ci$upper), unname(ci$estimate + qt(0.975, want) * se),
+               tolerance = 1e-9)
+  expect_equal(unname(attr(ci, "df")), want, tolerance = 1e-7)
+  # the normal reference keeps the normal quantile
+  cn <- confint(f, vcov_type = fvx(hc2_sandwich(cluster = ~ id,
+                                                reference = "normal")),
+                readable = TRUE)
+  expect_equal(unname(cn$upper), unname(cn$estimate + qnorm(0.975) * se),
+               tolerance = 1e-9)
+})
+
+test_that("statmod_test prints the CR2 statistic as F(1, df)", {
+  dd <- clustered(c(3, 5, 4, 6, 2, 5, 4, 7), seed = 21)
+  f <- statmod(y ~ x + z, distributions7::gaussian1_distrib(), dd)
+  vt <- fvx(hc2_sandwich(cluster = ~ id))
+  V <- vcov(f, vcov_type = vt, readable = FALSE)
+  df <- attr(V, "df_fn")("mu:x")
+  st <- statmod_test(f, param = "mu", coefname = "x", vcov_type = vt)
+  expect_equal(st@df_denom, df, tolerance = 1e-9)
+  zz <- f@coefficients$mu[[2]] / sqrt(V["mu:x", "mu:x"])
+  expect_equal(st@statistic, zz^2, tolerance = 1e-9)
+  expect_equal(st@p.value, 2 * pt(-abs(zz), df), tolerance = 1e-9)
+  out <- paste(capture.output(print(st)), collapse = "\n")
+  expect_match(out, sprintf("F(1, %s) = ", format(df, digits = 4L)),
+               fixed = TRUE)
+  expect_false(grepl("X-squared", out, fixed = TRUE))
+  sn <- statmod_test(f, param = "mu", coefname = "x",
+                     vcov_type = fvx(hc2_sandwich(cluster = ~ id,
+                                                  reference = "normal")))
+  expect_true(is.infinite(sn@df_denom))
+  expect_match(paste(capture.output(print(sn)), collapse = "\n"), "X-squared",
+               fixed = TRUE)
+})

@@ -41,13 +41,16 @@ that the score of the observation in the coefficients is
 log-likelihood in the \eqn{d} link-scale predictors. The matrix
 \eqn{W_i} is the \eqn{d \times d} information of the observation in those
 predictors (the negative second derivative, or its expectation), times the
-prior weight. It is always the expected information (with the method of
-the fit's information when that is expected, and the closed form of the
-family otherwise), because it is the covariance of the score of the
-observation under the model and is positive semi-definite, which the
-observed information of a single observation is not. Its symmetric square
-root \eqn{W_i^{1/2}} is taken from the eigen decomposition. The
-pseudo-inverse of the root is kept beside it, since an observation can have
-a singular \eqn{W_i}.
+prior weight. It follows \code{expected}: the expected information (with the
+method of the fit's information when that is expected, and the closed form
+of the family otherwise) or the observed one. The expected information of
+one observation is the covariance of its score under the model and is
+positive semi-definite; the observed information of one observation can be
+indefinite. Its symmetric square root \eqn{W_i^{1/2}} is taken from the
+eigen decomposition of the positive part (eigenvalues below
+\eqn{10^{-12}} times the largest in absolute value are set to zero), and the
+number of observations with a negative eigenvalue is returned as \code{clipped}.
+The pseudo-inverse of the root is kept beside it, since an observation can
+have a singular \eqn{W_i}.
 }
 \keyword{internal}

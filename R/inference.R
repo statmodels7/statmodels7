@@ -703,6 +703,23 @@ readable_vcov <- function(spec, design, fit, V) {
   out[, bad] <- NA_real_
   nm <- paste(rj$parameter, rj$name, sep = ":")
   dimnames(out) <- list(nm, nm)
+  # CR2: the degrees of freedom of a quantity are those of the contrast given
+  # by its row of the Jacobian, over the coordinates of the joint matrix
+  dfn <- attr(V, "df_fn")
+  if (is.function(dfn)) {
+    jn <- rownames(V)
+    attr(out, "df_fn") <- structure(function(nm_q) {
+      pos <- match(nm_q, nm)
+      res <- rep(NA_real_, length(nm_q))
+      ok <- !is.na(pos)
+      if (any(ok)) {
+        C <- t(J[pos[ok], , drop = FALSE])
+        rownames(C) <- jn
+        res[ok] <- dfn(contrast = C)
+      }
+      res
+    }, class = c("statmod_df_fn", "function"))
+  }
   out
 }
 
@@ -1996,8 +2013,13 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
     # no interval a scalar link expresses and rides the identity. Read on
     # the raw scale a positive quantity routinely gets a negative lower end.
     lo <- hi <- rep(NA_real_, length(est))
+    # a t reference where the sandwich carries degrees of freedom (CR2), for
+    # the contrast that each quantity's gradient defines
+    dfq <- wald_reference(V, rownames(V), se, level)
+    zq <- if (any(is.finite(dfq$df))) dfq$z else rep(z, length(est))
     for (i in seq_along(est)) {
       if (!is.finite(se[[i]])) next
+      z <- zq[[i]]
       g <- rj$scale[[i]]
       t0 <- linkfunctions7::linkfun(g, est[[i]])
       st <- se[[i]] * abs(linkfunctions7::dlinkfun(g, est[[i]]))
@@ -2014,6 +2036,9 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
       al <- rownames(out) %in% object@aliased
       if (any(al)) out$estimate[al] <- NA_real_
     }
+    if (any(is.finite(dfq$df))) {
+      attr(out, "df") <- stats::setNames(dfq$df, rownames(out))
+    }
     if (is.null(parm)) return(out)
     keep <- rownames(out) %in% parm | out$parameter %in% parm |
       out$term %in% parm | out$coefficient %in% parm
@@ -2025,7 +2050,9 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
                    paste(spec@distrib@params, collapse = ", ")),
            call. = FALSE)
     }
-    return(out[keep, , drop = FALSE])
+    out <- out[keep, , drop = FALSE]
+    if (!is.null(attr(out, "df"))) attr(out, "df") <- attr(out, "df")[keep]
+    return(out)
   }
   lab <- coef_labels(spec, design)
   est <- unlist(object@coefficients[spec@distrib@params], use.names = FALSE)
@@ -3651,6 +3678,20 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       se[bad] <- NA_real_
     }
     z <- stats::qnorm(1 - (1 - level) / 2)
+    # CR2: a t whose degrees of freedom belong to the contrast that the
+    # quantity's gradient defines in the coefficients of the block
+    dfq <- rep(Inf, length(se))
+    dfn <- if (is.null(V)) NULL else attr(V, "df_fn")
+    if (is.function(dfn) && all(key %in% rownames(V))) {
+      C <- matrix(0, nrow(V), length(se), dimnames = list(rownames(V), NULL))
+      C[key, ] <- t(rd$jacobian)
+      use <- is.finite(se)
+      if (any(use)) {
+        got <- dfn(contrast = C[, use, drop = FALSE])
+        dfq[use][!is.na(got)] <- got[!is.na(got)]
+      }
+    }
+    z <- stats::qt(1 - (1 - level) / 2, dfq)
     st <- rd$value / se
     # A break-point gets an estimate and an interval and NO test. The null
     # a z of value/se would report on is that the position is zero, which
@@ -3659,7 +3700,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     # nuisance parameter that vanishes, so the classical p-value is wrong
     # by a factor of three to five (Davies' problem). segmented prints the
     # estimate and the standard error alone for the same reason.
-    pv <- 2 * stats::pnorm(-abs(st))
+    pv <- wald_pvalue(st, if (any(is.finite(dfq))) dfq else NULL)
     # under a restricted test the statistic of a quantity that IS one of the
     # term's coefficients is that coefficient's restricted statistic; a
     # quantity that mixes coefficients has no restricted statistic, and the
