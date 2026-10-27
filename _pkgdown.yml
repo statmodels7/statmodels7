@@ -184,6 +184,17 @@ reference:
   - plot_states
   - plot_regime_density
 
+- title: Graphs of the fitted distribution
+  desc: >
+    Graphs of the whole fitted distribution as a function of the covariates,
+    without a term: a parameter with its band, the conditional quantile
+    curves, the density at chosen covariate values and the moments.
+  contents:
+  - plot_param
+  - plot_quantiles
+  - plot_density
+  - plot_moments
+
 - title: Installing and updating
   desc: >
     The toolkit is not on CRAN, so the install path is GitHub and the
