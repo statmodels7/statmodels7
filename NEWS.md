@@ -1,4 +1,4 @@
-# statmodels7 (development version)
+# statmodels7 0.214.0
 
 * `confint(test = lr_test())`, `score_test()` and `gradient_test()` on the
   position of a `seg()` break-point stop the search at the range of the
