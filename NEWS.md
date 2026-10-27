@@ -1,5 +1,22 @@
 # statmodels7 0.211.0
 
+* `plot()` and `autoplot()` draw a fit with ggplot2 and return the ggplot2
+  object; ggplot2 and patchwork are imported. The graph is an S7 object
+  passed as `type`, its data are computed by `plot_data()`, which dispatches
+  on the type and on the term or the family, and drawn by `plot_layers()`.
+  The graphs of a term (`term =`, `param =`) are `plot_effect()` with partial
+  residuals from the working response, `plot_derivative()`,
+  `plot_surface()`, `plot_criterion()`, `plot_shrinkage()`, `plot_path()`,
+  `plot_caterpillar()`, `plot_prior()`, `plot_random_cov()`, `plot_curves()`,
+  `plot_breakpoint()`, `plot_filter()`, `plot_news_impact()`,
+  `plot_states()` and `plot_regime_density()`; those of the fitted
+  distribution are `plot_param()`, `plot_quantiles()`, `plot_density()` and
+  `plot_moments()`; the diagnostic graphs are `plot_qq()`, `plot_worm()`,
+  `plot_residuals()`, `plot_pit()`, `plot_calibration()`, `plot_score()`,
+  `plot_influence()`, `plot_acf()` and `plot_ppc()`. `plot(fit)` without
+  arguments draws `diagnostics()`. A fit does not keep its data, so a graph
+  that reads the covariates takes the fitting data as `data`.
+
 * `frequentist_vcov()` takes `sandwich = hc0_sandwich()` or
   `hc1_sandwich()`, each with an optional `cluster = ~ id` (CR0 and CR1).
   The matrix is `V_b B V_b`, with `V_b` the inverse penalized information and

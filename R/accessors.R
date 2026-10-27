@@ -336,8 +336,8 @@ S7::method(simulate, StatmodFit) <- simulate.StatmodFit
 #' @title Generics Not Available for a Fit
 #' @name statmod_unavailable
 #' @description
-#' Three generics of \pkg{stats} and the generic [base::plot()] signal an
-#' error on a statmod fit, and each error names the function to use instead.
+#' Three generics of \pkg{stats} signal an error on a statmod fit, and each
+#' error names the function to use instead.
 #' @details
 #' `terms()` has no single answer where a fit has one set of terms per
 #' distribution parameter, and the formula of a fit is not a `terms` object,
@@ -357,10 +357,6 @@ S7::method(simulate, StatmodFit) <- simulate.StatmodFit
 #' its terms, which is not corrected for the estimation of the smoothing
 #' parameters; `summary(fit, correct = TRUE)` applies that correction.
 #'
-#' `plot()` has no single picture to draw for a model with an equation
-#' per parameter, any number of terms and any number of covariates. The
-#' fitted curves come from [predict.StatmodFit()] on a grid of new data, and
-#' the residuals from [residuals.StatmodFit()].
 #' @param object,x,formula A [StatmodFit()].
 #' @param ... Unused.
 #' @return Nothing. Each method signals an error that names the function to
@@ -400,17 +396,6 @@ anova.StatmodFit <- function(object, ...) {
 }
 S7::method(anova, StatmodFit) <- anova.StatmodFit
 
-#' @rdname statmod_unavailable
-#' @keywords internal
-plot.StatmodFit <- function(x, ...) {
-  stop("a statmod fit has no plot() method: a model with an equation per ",
-       "parameter has
-  no single picture. predict(fit, newdata = grid) ",
-       "gives the fitted curves and
-  residuals(fit) the quantile residuals ",
-       "to draw.", call. = FALSE)
-}
-S7::method(plot, StatmodFit) <- plot.StatmodFit
 
 
 #' Reject an Argument That a Method Does Not Take

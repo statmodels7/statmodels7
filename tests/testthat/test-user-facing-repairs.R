@@ -59,13 +59,14 @@ test_that("predict() of one parameter does not need the other equations' covaria
                    character(0))
 })
 
-test_that("plot() on a fit names what to use instead", {
+test_that("plot() on a fit draws the diagnostics and returns them", {
   set.seed(10)
   d <- data.frame(x = runif(50))
   d$y <- 1 + d$x + rnorm(50, sd = 0.2)
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), d)
-  expect_error(plot(fit), "no plot() method", fixed = TRUE)
-  expect_error(plot(fit), "predict(fit, newdata = grid)", fixed = TRUE)
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_s3_class(plot(fit), "patchwork")
 })
 
 test_that("Pearson residuals are NA, with a warning, where the variance fails", {

@@ -163,6 +163,72 @@ reference:
   - statmod_bootstrap
   - StatmodBootstrap
 
+- title: Graphs of a fit
+  desc: >
+    `plot()` and `autoplot()` draw one aspect of a fit as a ggplot2 object.
+    The graph is selected by an object passed as `type`, and its data are
+    computed by `plot_data()` and drawn by `plot_layers()`, the two generics
+    through which a new graph is added. Without a type, `plot()` draws the
+    diagnostic graphs of `diagnostics()`.
+  contents:
+  - autoplot.StatmodFit
+  - diagnostics
+  - plot_type
+  - default_plot
+  - plot_data
+  - plot_layers
+
+- title: Graphs of a term
+  desc: >
+    Graphs of one term of one equation, selected by `term`: its effect with
+    the partial residuals, and the graphs that describe a smooth, a
+    penalized block, a random effect or a structural term.
+  contents:
+  - plot_effect
+  - plot_derivative
+  - plot_surface
+  - plot_criterion
+  - plot_shrinkage
+  - plot_path
+  - plot_caterpillar
+  - plot_prior
+  - plot_random_cov
+  - plot_curves
+  - plot_breakpoint
+  - plot_filter
+  - plot_news_impact
+  - plot_states
+  - plot_regime_density
+
+- title: Graphs of the fitted distribution
+  desc: >
+    Graphs of the whole fitted distribution as a function of the covariates,
+    without a term: a parameter with its band, the conditional quantile
+    curves, the density at chosen covariate values and the moments.
+  contents:
+  - plot_param
+  - plot_quantiles
+  - plot_density
+  - plot_moments
+
+- title: Diagnostic graphs
+  desc: >
+    Graphs of the fit against the data, selected without `term`: the
+    quantile residuals in a quantile-quantile graph, a worm plot, a histogram
+    of the probability integral transform and a calibration graph, the
+    residuals against a quantity or in order, the scores and the influence of
+    the observations, and a comparison with simulated responses.
+  contents:
+  - plot_qq
+  - plot_worm
+  - plot_residuals
+  - plot_pit
+  - plot_calibration
+  - plot_score
+  - plot_influence
+  - plot_acf
+  - plot_ppc
+
 - title: Installing and updating
   desc: >
     The toolkit is not on CRAN, so the install path is GitHub and the
