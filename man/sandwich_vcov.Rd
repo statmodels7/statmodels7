@@ -4,7 +4,7 @@
 \alias{sandwich_vcov}
 \title{The Sandwich Variance of the Coefficients}
 \usage{
-sandwich_vcov(fit, design, Vb, cols, sw)
+sandwich_vcov(fit, design, Vb, cols, sw, expected = FALSE, emethod = NULL)
 }
 \arguments{
 \item{fit}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
