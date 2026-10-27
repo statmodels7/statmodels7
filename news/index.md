@@ -1,5 +1,12 @@
 # Changelog
 
+## statmodels7 0.215.1
+
+- The bindings that give a formula the exports of modelterms7 are built
+  without source references. A package installed with its source kept,
+  as on the continuous integration, serialized the source of the whole
+  package with them, and three size tests of the bootstrap failed.
+
 ## statmodels7 0.215.0
 
 - [`bayesian_resample()`](https://statmodels7.github.io/statmodels7/reference/bayesian_resample.md)

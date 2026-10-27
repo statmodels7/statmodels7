@@ -11,7 +11,7 @@ makeActiveBinding() takes in terms_first()."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,9 +65,12 @@ the namespace of <span class="pkg">modelterms7</span>. It is the function that
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function is created here and not inside <code><a href="terms_first.html">terms_first()</a></code> so that its
-environment holds <code>name</code> and nothing else: a closure made in the body of
-<code><a href="terms_first.html">terms_first()</a></code> would carry the environment that the caller passed.</p>
+    <p>The function is built from an expression, with the environment of the base
+package, so that it holds nothing but the name. A closure written in the
+body of <code><a href="terms_first.html">terms_first()</a></code> would carry the environment that the caller passed,
+and a closure written here would carry its source reference: a package
+installed with the source kept (<code>R_KEEP_PKG_SOURCE=yes</code>) serializes the
+source of the whole package with each such reference.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

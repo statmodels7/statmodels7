@@ -23,12 +23,14 @@ A function of no arguments.
 
 ## Details
 
-The function is created here and not inside
+The function is built from an expression, with the environment of the
+base package, so that it holds nothing but the name. A closure written
+in the body of
 [`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
-so that its environment holds `name` and nothing else: a closure made in
-the body of
-[`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
-would carry the environment that the caller passed.
+would carry the environment that the caller passed, and a closure
+written here would carry its source reference: a package installed with
+the source kept (`R_KEEP_PKG_SOURCE=yes`) serializes the source of the
+whole package with each such reference.
 
 ## See also
 
