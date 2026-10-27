@@ -28,6 +28,14 @@
 
 * A method whose `...` is unused signals an error naming the argument.
 
+* The effective degrees of freedom stored in a fit read the information of
+  the outer criterion: that of `aic()` or `bic()` as before, that of
+  `reml()` or `ml()` (observed by default), and the inner information only
+  without an outer criterion. `summary()` reports them on the information of
+  its `vcov_type`, the matrix of the standard errors that it prints, except
+  for a fit priced by `aic()` or `bic()` and a model with a structural term,
+  and notes when the observed information read for them is indefinite.
+
 # statmodels7 0.210.1
 
 * The leverage diagonal of the outer derivatives takes the compiled kernel
