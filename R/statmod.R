@@ -330,8 +330,15 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   [information_objects]). The fitted model records the settled object, and
 #'   every later refit of the model (the folds of a cross-validation, the
 #'   restricted fits of a test, the resampled fits of a bootstrap) reads the
-#'   same one. A model with a structural term is fitted on the observed
-#'   information whatever the object says. The outer criterion has its own
+#'   same one. Beside a score-driven filter ([modelterms7::gas()]) the
+#'   coefficients and the filter's own parameters are fitted in one system,
+#'   whose Hessian is the observed information, or the expected information
+#'   conditional on the past where [distributions7::expected_info()] is named
+#'   here (Fisher scoring over that system); [auto_info()] leaves that system
+#'   on the observed information. A model with a term of the likelihood shape
+#'   ([modelterms7::regime()], a marginal break-point term) has no expected
+#'   information, and [distributions7::expected_info()] is an error there. The
+#'   outer criterion has its own
 #'   `information` (see [reml()]) and the standard errors have theirs (see
 #'   [vcov_method]); the three choices are independent.
 #' @param outer_criterion How the smooth hyperparameters are estimated:
@@ -472,12 +479,12 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                        linpar = linpar_control)
   spec@threads <- n_thr
   spec@workers <- numericals7::worker_count(threads)
-  # a marginal criterion left at auto_info() is settled against the
-  # family here, as an iwls() left at "auto" is below
-  if (S7::S7_inherits(outer_criterion, OuterMethod)) {
-    outer_criterion <- outer_resolve(outer_criterion, spec@distrib)
-  }
   design <- statmod_design(spec)
+  # a marginal criterion left at auto_info() is settled against the family
+  # and the structural terms here, as an iwls() left at "auto" is below
+  if (S7::S7_inherits(outer_criterion, OuterMethod)) {
+    outer_criterion <- outer_resolve(outer_criterion, spec@distrib, design)
+  }
   hyper <- statmod_hyper_start(spec, design)
   if (!is.null(outer_criterion)) {
     hyper <- statmod_hyper_scale_start(spec, design, hyper)
@@ -489,6 +496,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # record read the same curvature
   check_information(inner_information, arg = "inner_information",
                     fn = "statmod")
+  if (info_expected(inner_information)) {
+    structural_expected_check(design, "'inner_information'")
+  }
   inner_optimizer <- inner_bind(inner_optimizer, spec@distrib,
                                 inner_information)
   cfg <- inner_settings(inner_optimizer)
@@ -558,6 +568,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       !nrow(path_rows(spec, blocks, hyper))) {
     sparse_criterion <- NULL
   }
+  structural_outer_check(sparse_criterion, design)
   # and it steps aside for a caller who set the hyperparameters by hand:
   # `hyper` says HELD AT THESE VALUES, so estimating them away would answer a
   # question nobody asked. Asking for a criterion explicitly overrides that,
@@ -595,6 +606,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       !length(marginal_coords(spec, design, outer_criterion)$where)
     if (nothing) outer_criterion <- NULL
   }
+  structural_outer_check(outer_criterion, design)
 
   # A criterion is a Laplace expansion at the penalized mode and reads the
   # curvature there, so it needs TWO derivatives of the log-density in every
@@ -1064,6 +1076,16 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   edf_emethod <- if (length(edf_reader)) {
     select_emethod(edf_reader[[1L]], NULL, emethod)
   } else emethod
+  # without a criterion, a model with a filter reads the count on the matrix
+  # of its joint step, which is the observed information unless the caller
+  # named the expected one
+  if (!length(edf_reader) &&
+      any(vapply(attr(design, "structural"),
+                 function(u) identical(u$kind, "filter"), logical(1)))) {
+    ji <- joint_inner_info(inner_optimizer)
+    edf_expected <- info_expected(ji)
+    edf_emethod <- info_emethod(ji)
+  }
   edf_information <- if (edf_expected) {
     distributions7::expected_info(method = edf_emethod)
   } else distributions7::observed_info()
@@ -1290,7 +1312,8 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
                                optimizer = if (S7::S7_inherits(
                                  inner_optimizer, optimizers7::optimizer))
                                  inner_optimizer else NULL,
-                               verbose = vb$blocks)
+                               verbose = vb$blocks,
+                               information = joint_inner_info(inner_optimizer))
       beta <- res$par
       value <- res$value
       smooth_ok <- isTRUE(res$converged)
@@ -1919,7 +1942,8 @@ inner_bind <- function(method, distrib, information) {
     information <- if (exact) {
       distributions7::expected_info(method = information@method)
     } else distributions7::observed_info()
-  }
+    attr(method, "inner_auto") <- TRUE
+  } else attr(method, "inner_auto") <- NULL
   attr(method, "inner_information") <- information
   method
 }
@@ -1944,6 +1968,45 @@ inner_info <- function(method) {
   if (S7::S7_inherits(method, Iwls)) return(method@hessian)
   info <- attr(method, "inner_information", exact = TRUE)
   if (is.null(info)) distributions7::observed_info() else info
+}
+
+
+#' The Information of the Joint Step Beside a Filter
+#'
+#' @description
+#' Returns the information that [statmod_fit_joint()] uses for a model with a
+#' score-driven filter: the [distributions7::expected_info()] object bound to
+#' `method` where the caller named it as `inner_information`, and
+#' [distributions7::observed_info()] otherwise.
+#'
+#' @details
+#' The joint step runs over the coefficients and the filter's own parameters,
+#' where the expected information is the one conditional on the past (see
+#' [statmod_full_information()]). Fisher scoring on that matrix converges
+#' linearly near the mode, so an [auto_info()] that the family settled on the
+#' expected information leaves the joint step on the observed one, and only
+#' an [distributions7::expected_info()] that the caller named is used. The
+#' settlement is read from the method: an [iwls()] settled from
+#' [auto_info()] on the expected information switches to the observed one, and
+#' an \pkg{optimizers7} optimizer settled from it carries the attribute
+#' `"inner_auto"`.
+#'
+#' @param method The inner method, bound by [inner_bind()].
+#'
+#' @return An object that inherits from [distributions7::Information].
+#'
+#' @seealso [inner_info()], [statmod_fit_joint()]
+#'
+#' @keywords internal
+joint_inner_info <- function(method) {
+  # measured on 2026-10-27 over 22 filter models (misure_info_strutt): Fisher
+  # scoring on the conditional information took more iterations than Newton
+  # on the observed one in 19 and did not converge in 2, so auto_info()
+  # stays on the observed information here
+  info <- inner_info(method)
+  auto <- if (S7::S7_inherits(method, Iwls)) isTRUE(method@switching) else
+    isTRUE(attr(method, "inner_auto", exact = TRUE))
+  if (info_expected(info) && !auto) info else distributions7::observed_info()
 }
 
 
@@ -2910,7 +2973,7 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   if (any(vapply(statmod_penalized(spec, design),
                  function(u) !penalty_has_kink(u$penalty, u$key),
                  logical(1)))) {
-    js <- joint_smoother_diag(spec, coef, design, hyper)
+    js <- joint_smoother_diag(spec, coef, design, hyper, expected, emethod)
     if (!is.null(js) && !isTRUE(js$failed)) {
       smoother <- js$beta
       zsmooth <- js$zeta
@@ -3146,8 +3209,9 @@ kinked_edf_diag <- function(spec, coef, design, hyper, expected, emethod,
 #' returns `NULL` for it, so the count falls back to the coefficient-only
 #' reading.
 #'
-#' The joint route reads the observed information, because a filter has no
-#' expected one: [statmod_marginal_full()] assembles from
+#' The joint route reads the observed information by default, and the
+#' expected information conditional on the past with `expected = TRUE` (see
+#' [statmod_full_information()]); [statmod_marginal_full()] assembles from
 #' [modelterms7::term_curvature()], and the criterion of such a model already
 #' reads that same matrix. A model carrying no filter never reaches here and is
 #' untouched.
@@ -3156,6 +3220,8 @@ kinked_edf_diag <- function(spec, coef, design, hyper, expected, emethod,
 #' @param coef The coefficients.
 #' @param design The design.
 #' @param hyper The hyperparameters.
+#' @param expected,emethod Whether the matrix is the expected information
+#'   conditional on the past, and its `method`.
 #'
 #' @return A list with `beta`, the diagonal over the stacked coefficients,
 #'   `zeta`, the diagonal over the structural term's free parameters, named as
@@ -3169,7 +3235,8 @@ kinked_edf_diag <- function(spec, coef, design, hyper, expected, emethod,
 #' @seealso [statmod_edf()] and [summary_class_blocks()], its callers.
 #'
 #' @keywords internal
-joint_smoother_diag <- function(spec, coef, design, hyper) {
+joint_smoother_diag <- function(spec, coef, design, hyper, expected = FALSE,
+                                emethod = NULL) {
   sst <- statmod_structural_state(design)
   if (is.null(sst)) return(NULL)
   su <- Filter(function(u) identical(u$kind, "filter"),
@@ -3180,8 +3247,9 @@ joint_smoother_diag <- function(spec, coef, design, hyper) {
   nb <- sum(vapply(design[spec@distrib@params], function(d) d$npar,
                    integer(1)))
   d <- tryCatch({
-    K <- statmod_full_information(spec, coef, design)
-    M <- statmod_marginal_full(spec, design, coef, hyper)
+    K <- statmod_full_information(spec, coef, design, expected, emethod)
+    M <- statmod_marginal_full(spec, design, coef, hyper, expected = expected,
+                               emethod = emethod)
     if (is.null(K) || is.null(M) || nrow(M) != nb + length(free) ||
         !identical(dim(K), dim(M))) {
       NULL

@@ -4,7 +4,15 @@
 \alias{statmod_marginal_full}
 \title{The Penalized Curvature Over the Coefficients and a Filter's Parameters}
 \usage{
-statmod_marginal_full(spec, design, coef, hyper, basis = NULL)
+statmod_marginal_full(
+  spec,
+  design,
+  coef,
+  hyper,
+  basis = NULL,
+  expected = FALSE,
+  emethod = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}

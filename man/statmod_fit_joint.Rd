@@ -11,7 +11,8 @@ statmod_fit_joint(
   beta,
   hyper,
   optimizer = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  information = distributions7::observed_info()
 )
 }
 \arguments{
@@ -29,6 +30,13 @@ statmod_fit_joint(
 Newton's method with the exact joint information.}
 
 \item{verbose}{Logical; report the run.}
+
+\item{information}{The Hessian that the optimizer receives:
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default) or
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, for the expected information
+conditional on the past, with which Newton's method is Fisher scoring
+over the joint vector. \code{\link[=joint_inner_info]{joint_inner_info()}} determines it from the inner
+method.}
 }
 \value{
 A list with \code{par} (the stacked coefficients only; the filter's free

@@ -179,10 +179,52 @@ and the closed-form expected information gives finite standard errors.
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix whenever it is not the observed
 information, and a printed variance object states the information that it
 names.
+}
 
-A model that carries a structural term (a score-driven filter or a mixture
-over states) is fitted and inverted on the observed information whatever
-the object says, because those terms have no expected information.
+\section{Models with a structural term}{
+A model with a score-driven filter (\code{\link[modelterms7:gas]{modelterms7::gas()}}) fits the
+coefficients and the filter's own parameters in one system and inverts the
+information over both. Writing \eqn{J_t} for the Jacobian of the predictors
+of observation \eqn{t} in that vector, the observed information is
+\deqn{\sum_t J_t^\top \bigl(-\ell_{\eta\eta}(y_t;\eta_t)\bigr) J_t -
+  \sum_t \sum_k s_{t,k}\,
+  \frac{\partial^2 \eta_{t,k}}{\partial\theta\,\partial\theta^\top},}
+with \eqn{s_{t,k}} the score in the predictor \eqn{k}. The predictor
+\eqn{\eta_t} depends on the observations before \eqn{t}, and the score at
+\eqn{t} has mean zero given them, so the expectation given the past drops
+the second sum and leaves the expected information conditional on the past,
+\deqn{\mathcal{I}_{\rm cond} = \sum_t J_t^\top
+  \mathcal{I}_{\eta\eta}(\eta_t)\, J_t,}
+which is positive semidefinite and needs the first derivative of the filter
+only. \code{\link[distributions7:expected_info]{distributions7::expected_info()}} selects this matrix:
+\itemize{
+\item as \code{inner_information}, the joint system is fitted by Fisher scoring on
+it. Fisher scoring converges linearly near the mode, where the two
+matrices differ, so \code{\link[=auto_info]{auto_info()}} leaves the system on the observed
+information;
+\item as the \code{information} of a variance object, it is the matrix inverted. Its
+\code{method} is applied at the fitted predictors, so a family with no closed
+form is served too, and with \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} the matrix is
+the sum of the outer products of the per-observation scores. In a
+correctly specified model the observed and the conditional information
+estimate the same limit, so the two give the same standard errors in
+large samples;
+\item as the \code{information} of \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}}, it is an
+error, and \code{\link[=auto_info]{auto_info()}} is settled as the observed information: the
+criterion and its exact derivatives are those of the observed information
+of the joint vector.
+}
+
+The scaling of a filter's score, \code{gas(scaling = )}, is part of the model
+and not a choice of matrix: it reads the expected information of the family
+in closed form at every step of the recursion (see \code{\link[=check_filter_scaling]{check_filter_scaling()}}).
+
+A model with a term of the likelihood shape (\code{\link[modelterms7:regime]{modelterms7::regime()}}, a
+marginal break-point term) has a likelihood that is a mixture over latent
+components, and the expectation of its second derivatives has no closed
+form. The fit and the variance read the observed information, \code{NULL} in a
+variance object resolves to it, and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} is an
+error in each of the three arguments.
 }
 
 \examples{

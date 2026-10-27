@@ -28,8 +28,8 @@ and \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} (see
 \link[distributions7:expected_derivative_methods]{distributions7::expected_derivative_methods}).
 }
 
-\code{\link[=auto_info]{auto_info()}} is not accepted. A model with a structural term is inverted
-on the observed information whatever the object says. The choice does not
+\code{\link[=auto_info]{auto_info()}} is not accepted. For a model with a structural term, see
+\link{vcov_method}. The choice does not
 depend on how the fit was computed (\code{inner_information} of \code{\link[=statmod]{statmod()}}).
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix when it is not the observed
 one, and a printed variance object states the information that it names.

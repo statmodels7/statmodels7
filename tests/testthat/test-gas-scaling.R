@@ -164,7 +164,7 @@ test_that("a family without the information's second derivative is rejected", {
                        sigma = linkfunctions7::log_link()))
   expect_error(statmod(y ~ gas(p = 1, q = 1, time = t, scaling = 1),
                        distrib = d, data = dl),
-               "analytic second derivative")
+               "distrib_d2expected_hessian()", fixed = TRUE)
 })
 
 # the outer criterion of a panel whose loading is developed with a random

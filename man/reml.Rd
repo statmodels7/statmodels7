@@ -58,7 +58,13 @@ The computed expectation is selected with
 matrix and of each derivative, so that its derivative is that of the
 expectation and not of the sampled matrix, and the outer search is noisy at
 the level of the Monte Carlo error. \link{information_objects} compares the three
-objects.}
+objects.
+
+For a model with a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}},
+\code{\link[modelterms7:regime]{modelterms7::regime()}}, a marginal break-point term) the criterion reads
+the observed information over the coefficients and the term's own
+parameters: \code{\link[=auto_info]{auto_info()}} is settled as \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, and
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} is an error.}
 
 \item{marginal}{Which distribution parameters have their unpenalized
 coefficients estimated by maximizing this criterion, instead of being

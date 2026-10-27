@@ -4,7 +4,14 @@
 \alias{statmod_joint_pieces}
 \title{The Joint Objective Over the Coefficients and a Filter's Parameters}
 \usage{
-statmod_joint_pieces(spec, design, obj, hyper, kinds = "filter")
+statmod_joint_pieces(
+  spec,
+  design,
+  obj,
+  hyper,
+  kinds = "filter",
+  information = distributions7::observed_info()
+)
 }
 \arguments{
 \item{spec, design, obj, hyper}{As \code{\link[=statmod_fit_joint]{statmod_fit_joint()}} takes them.}
@@ -12,6 +19,11 @@ statmod_joint_pieces(spec, design, obj, hyper, kinds = "filter")
 \item{kinds}{The kinds of structural unit from which to take the term:
 \code{"filter"} for the joint step, and \code{"loglik"} as well where a mixture
 over latent states is read at a fitted point.}
+
+\item{information}{The information that \code{he} returns:
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the default) or
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, for the expected information
+conditional on the past (see \code{\link[=statmod_full_information]{statmod_full_information()}}).}
 }
 \value{
 A list with \code{fn}, \code{gr}, \code{he}, \code{raw}, \code{setz} (writes the filter's

@@ -326,6 +326,12 @@ outer_path_defaults <- function() {
 #'   the level of the Monte Carlo error. [information_objects] compares the three
 #'   objects.
 #'
+#'   For a model with a structural term ([modelterms7::gas()],
+#'   [modelterms7::regime()], a marginal break-point term) the criterion reads
+#'   the observed information over the coefficients and the term's own
+#'   parameters: [auto_info()] is settled as [observed_info()], and
+#'   [expected_info()] is an error.
+#'
 #' @param marginal Which distribution parameters have their unpenalized
 #'   coefficients estimated by maximizing this criterion, instead of being
 #'   read at the joint mode (`ml()`) or integrated (`reml()`). `NULL`, the
@@ -417,15 +423,21 @@ ml <- function(information = observed_info(), marginal = NULL) {
 #' information is therefore used for these families, and the observed
 #' information for the others.
 #'
+#' For a model with a structural term the observed information is used for
+#' every family, since the criterion over the joint vector is written on it
+#' (see [structural_outer_check()]).
+#'
 #' @param method An [OuterMethod()].
 #' @param distrib The response family.
+#' @param design The design, or `NULL`.
 #'
 #' @return `method`, in which `hessian` is settled.
 #'
 #' @keywords internal
-outer_resolve <- function(method, distrib) {
+outer_resolve <- function(method, distrib, design = NULL) {
   if (!info_auto(method@hessian)) return(method)
-  method@hessian <- if (observed_indefinite(distrib))
+  structural <- length(attr(design, "structural")) > 0L
+  method@hessian <- if (!structural && observed_indefinite(distrib))
     expected_info(method = info_emethod(method@hessian)) else observed_info()
   method
 }
@@ -1040,7 +1052,8 @@ mixed_penalized <- function(spec, design) {
 #'   [structural_penalized()] for the predicate that selects this route.
 #'
 #' @keywords internal
-statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
+statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL,
+                                  expected = FALSE, emethod = NULL) {
   sst <- statmod_structural_state(design)
   su <- Filter(function(u) identical(u$kind, "filter"),
                attr(design, "structural"))
@@ -1050,7 +1063,8 @@ statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
   nb <- sum(vapply(design, function(d) d$npar, integer(1)))
   ix <- nb + seq_along(free)
 
-  K <- tryCatch(statmod_full_information(spec, coef, design),
+  K <- tryCatch(statmod_full_information(spec, coef, design, expected,
+                                         emethod),
                 error = function(e) NULL)
   if (is.null(K) || nrow(K) != nb + length(free)) return(NULL)
   S <- matrix(0, nrow(K), ncol(K))

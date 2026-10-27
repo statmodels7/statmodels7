@@ -55,8 +55,19 @@ names. The effective degrees of freedom that \code{\link[=summary.StatmodFit]{su
 are read on the same matrix. The choice is independent of
 the information with which the fit was computed (\code{inner_information} of
 \code{\link[=statmod]{statmod()}}) and of the one of the outer criterion (the \code{information} of
-\code{\link[=reml]{reml()}}). A model that carries a structural term is inverted on the
-observed information whatever the object says. The three matrices are
+\code{\link[=reml]{reml()}}). A model with a score-driven filter
+(\code{\link[modelterms7:gas]{modelterms7::gas()}}) is inverted over the coefficients and the filter's
+own parameters together, on the observed information or, with
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}}, on the expected information conditional
+on the past, \eqn{\sum_t J_t^\top \mathcal{I}(\eta_t) J_t} with
+\eqn{J_t} the Jacobian of the predictors at observation \eqn{t} (see
+\code{\link[=statmod_full_information]{statmod_full_information()}}). Its \code{method} applies at the fitted
+predictors, so a family with no closed form is served as well: with
+\code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} the matrix is the sum of the outer products
+of the per-observation scores. A model with a term of the likelihood shape
+(\code{\link[modelterms7:regime]{modelterms7::regime()}}, a marginal break-point term) has no expected
+information: \code{NULL} resolves to the observed information there, and
+\code{\link[distributions7:expected_info]{distributions7::expected_info()}} is an error. The three matrices are
 \deqn{V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}, \qquad
   V' = V_b + J V_\theta J'.}
 \itemize{

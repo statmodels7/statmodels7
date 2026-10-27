@@ -23,4 +23,25 @@ derivatives of a filter driven by a scaled score read that second
 derivative, and the third and fourth derivatives of the information are
 finite differences of it.
 }
+\details{
+The information that scales the score is part of the model, and it is read
+in closed form at the predictor of every step of the recursion. A family
+that carries only its density has no closed form, and neither of the two
+substitutes defines the same model at a usable cost:
+\itemize{
+\item \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}} reads the information at the data as the
+square of the score, \eqn{s_t^2}, so the scaled score becomes
+\eqn{s_t/|s_t|^{2d}}, that is \eqn{1/s_t} at \eqn{d = 1} and the sign of
+\eqn{s_t} at \eqn{d = 1/2}, which is another model;
+\item \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} gives the information of the same
+model, but the recursion would evaluate one quadrature per step, and per
+derivative order, in sequence, since each step starts from the predictor
+of the step before.
+}
+
+A family supplies the closed form through methods for
+\code{\link[distributions7:distrib_expected_hessian]{distributions7::distrib_expected_hessian()}},
+\code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} and
+\code{\link[distributions7:distrib_d2expected_hessian]{distributions7::distrib_d2expected_hessian()}}.
+}
 \keyword{internal}

@@ -134,10 +134,13 @@ aliased_labels <- function(spec, design, idx) {
 #' The table stored in the fit is kept in three cases: a criterion that prices
 #' the fit with the count ([aic()] or [bic()]) reads the count on its own
 #' information, and a summary that recomputed it would no longer reproduce that
-#' criterion; a model with a structural term reads the joint vector of the
-#' coefficients and the term's parameters, which has no expected information; and
-#' a variance convention without an `information` property has no matrix to
-#' read.
+#' criterion; a model with a structural term of the likelihood shape
+#' ([modelterms7::regime()], a marginal break-point term), which has no
+#' expected information; and a variance convention without an `information`
+#' property has no matrix to read. A model with a score-driven filter reads the
+#' joint vector of the coefficients and the filter's parameters, on the
+#' observed information or on the expected information conditional on the
+#' past.
 #'
 #' The eigenvalues of \eqn{(H+S)^{-1}H} are
 #' \eqn{v^\top H v/(v^\top H v + v^\top S v)} for the eigenvectors \eqn{v} of
@@ -166,9 +169,11 @@ summary_edf <- function(object, vcov_type, spec, design) {
               note = character(0))
   if (is.null(object@edf) || is.null(out$info)) return(out)
   structural <- length(attr(design, "structural")) > 0L
-  if (!structural && !isTRUE(object@methods$edf_priced) &&
+  loglik <- any(vapply(attr(design, "structural"),
+                       function(u) identical(u$kind, "loglik"), logical(1)))
+  if (!loglik && !isTRUE(object@methods$edf_priced) &&
       S7::prop_exists(vcov_type, "information")) {
-    want <- vcov_information(vcov_type, spec@distrib)
+    want <- vcov_information(vcov_type, spec@distrib, design)
     have <- out$info
     differs <- !identical(info_expected(want), info_expected(have)) ||
       (info_expected(want) &&
@@ -409,11 +414,11 @@ vcov.StatmodFit <- function(object,
   if (identical(convention, "bootstrap")) {
     return(boot_vcov_matrix(object, vcov_type, readable, param))
   }
-  info <- vcov_information(vcov_type, object@spec@distrib)
-  expected <- info_expected(info)
-  emethod <- info_emethod(info)
   spec <- object@spec
   design <- statmod_design(spec)
+  info <- vcov_information(vcov_type, spec@distrib, design)
+  expected <- info_expected(info)
+  emethod <- info_emethod(info)
   if (convention == "frequentist" && !is.null(vcov_type@sandwich)) {
     if (S7::S7_inherits(vcov_type@sandwich, HacSandwich)) {
       hac_check(object, design, vcov_type@sandwich)
@@ -428,10 +433,12 @@ vcov.StatmodFit <- function(object,
   # the term's own parameters together, and the coefficient block of that
   # inverse is taken. Inverting the coefficient block alone would report the
   # variance that would hold with the term's parameters known, which is not
-  # what was estimated. The information there is the observed one: neither a
-  # filter nor a mixture over states has an expected information to offer.
+  # what was estimated. A filter's expected information is the one
+  # conditional on the past; a mixture over states has none, which
+  # vcov_information() has already settled.
   fil <- length(attr(design, "structural")) > 0L
-  H <- if (fil) statmod_full_information(spec, coef, design) else
+  H <- if (fil) statmod_full_information(spec, coef, design, expected,
+                                         emethod) else
     statmod_information_at(spec, coef, design, expected, emethod)
   S <- statmod_penalty_at(spec, coef, object@hyper, design, "hessian")
   nz <- nrow(H) - total
@@ -2861,11 +2868,9 @@ summary.StatmodFit <- function(object, level = 0.95,
   # off by default because it changes a number a reader may be comparing
   # with an earlier fit.
   # the matrix the standard errors invert: the one that the variance object
-  # names, or the family's default where it names none, and the observed one
-  # where a structural term has no expected information
-  info_used <- if (length(attr(design, "structural"))) {
-    distributions7::observed_info()
-  } else vcov_information(vcov_type, spec@distrib)
+  # names, or the default where it names none (the observed one beside a
+  # term of the likelihood shape)
+  info_used <- vcov_information(vcov_type, spec@distrib, design)
   corr <- 0
   if (isTRUE(correct)) {
     cc <- tryCatch(statmod_edf_correction(spec, object@coefficients,
@@ -4466,7 +4471,7 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL,
     built <<- TRUE
     if (is.null(coef) || is.null(hyper)) return(NULL)
     smoother <<- tryCatch({
-      js <- joint_smoother_diag(spec, coef, design, hyper)
+      js <- joint_smoother_diag(spec, coef, design, hyper, expected, emethod)
       if (!is.null(js) && !isTRUE(js$failed)) c(js$beta, js$zeta) else {
         H <- statmod_information_at(spec, coef, design, expected, emethod)
         S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design,

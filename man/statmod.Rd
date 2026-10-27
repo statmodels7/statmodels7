@@ -71,8 +71,15 @@ expected information take a step that the observed one cannot (see
 \link{information_objects}). The fitted model records the settled object, and
 every later refit of the model (the folds of a cross-validation, the
 restricted fits of a test, the resampled fits of a bootstrap) reads the
-same one. A model with a structural term is fitted on the observed
-information whatever the object says. The outer criterion has its own
+same one. Beside a score-driven filter (\code{\link[modelterms7:gas]{modelterms7::gas()}}) the
+coefficients and the filter's own parameters are fitted in one system,
+whose Hessian is the observed information, or the expected information
+conditional on the past where \code{\link[distributions7:expected_info]{distributions7::expected_info()}} is named
+here (Fisher scoring over that system); \code{\link[=auto_info]{auto_info()}} leaves that system
+on the observed information. A model with a term of the likelihood shape
+(\code{\link[modelterms7:regime]{modelterms7::regime()}}, a marginal break-point term) has no expected
+information, and \code{\link[distributions7:expected_info]{distributions7::expected_info()}} is an error there. The
+outer criterion has its own
 \code{information} (see \code{\link[=reml]{reml()}}) and the standard errors have theirs (see
 \link{vcov_method}); the three choices are independent.}
 
