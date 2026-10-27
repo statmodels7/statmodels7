@@ -419,7 +419,9 @@ resolve_plot_term <- function(fit, term, param, data) {
 #'
 #' @description
 #' Returns the names of the variables that a term reads: those of the formula
-#' for the linear part, and those of the call that names the term otherwise.
+#' for the linear part, and those of the call that names the term otherwise;
+#' for a nonlinear term, only those of the call that the build recorded as
+#' data, since the call also names the term's parameters.
 #'
 #' @param tm A model term.
 #' @param name The name of the term in its equation.
@@ -432,6 +434,11 @@ term_variables <- function(tm, name) {
     return(all.vars(tm@formula))
   }
   out <- tryCatch(all.vars(str2lang(name)), error = function(e) character(0))
+  # the call of nl() also names the term's own parameters; the variables of
+  # the data are those among the ones the build recorded
+  if (S7::S7_inherits(tm, modelterms7::NlTerm)) {
+    out <- intersect(out, names(tm@blueprint$data_vars))
+  }
   setdiff(out, c("TRUE", "FALSE"))
 }
 

@@ -19,7 +19,9 @@ plot_assemble(type, x, fit, ctx)
 A ggplot2 object.
 }
 \description{
-Calls \code{\link[=plot_data]{plot_data()}} and \code{\link[=plot_layers]{plot_layers()}} and adds the layers, the labels
-recorded on the data and the theme to an empty \code{ggplot2::ggplot()}.
+Calls \code{\link[=plot_data]{plot_data()}} and \code{\link[=plot_layers]{plot_layers()}} and adds the theme, the layers
+and the labels recorded on the data to an empty \code{ggplot2::ggplot()}. The
+theme comes first, so that a list of layers may also carry
+\code{ggplot2::theme()} elements.
 }
 \keyword{internal}

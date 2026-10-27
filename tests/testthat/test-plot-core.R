@@ -88,3 +88,17 @@ test_that("a term name ignores spaces", {
   p <- autoplot(fit, term = "random(~1|id)", data = dd)
   expect_s3_class(p, "ggplot")
 })
+
+test_that("a variable in a linear and a nonlinear term sums their values", {
+  set.seed(4)
+  dn <- data.frame(x = runif(150, 0, 3))
+  dn$y <- 0.5 * dn$x + 5 * exp(-0.8 * dn$x) + rnorm(150, sd = 0.2)
+  fn <- statmod(y ~ x + nl(~ a * exp(-r * x), start = list(a = 4, r = 1),
+                           links = list(r = linkfunctions7::log_link())),
+                distributions7::gaussian1_distrib(), dn)
+  p <- autoplot(fn, term = "x", data = dn)
+  d <- p$layers[[2]]$data
+  b <- coef(fn, readable = FALSE)$mu
+  expect_equal(d$fit, b[["x"]] * d$x + b[["nl.a"]] * exp(-exp(b[["nl.r"]]) * d$x),
+               tolerance = 1e-10)
+})
