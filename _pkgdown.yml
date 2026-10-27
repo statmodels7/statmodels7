@@ -147,6 +147,29 @@ reference:
   - frequentist_vcov
   - unconditional_vcov
 
+- title: Graphs of a fit
+  desc: >
+    `plot()` and `autoplot()` draw one aspect of a fit as a ggplot2 object.
+    The graph is selected by an object passed as `type`, and its data are
+    computed by `plot_data()` and drawn by `plot_layers()`, the two generics
+    through which a new graph is added. Without a type, `plot()` draws the
+    diagnostic graphs of `diagnostics()`.
+  contents:
+  - autoplot.StatmodFit
+  - diagnostics
+  - plot_type
+  - default_plot
+  - plot_data
+  - plot_layers
+
+- title: Graphs of a term
+  desc: >
+    Graphs of one term of one equation, selected by `term`: its effect with
+    the partial residuals, and the graphs that describe a smooth, a
+    penalized block, a random effect or a structural term.
+  contents:
+  - plot_effect
+
 - title: Installing and updating
   desc: >
     The toolkit is not on CRAN, so the install path is GitHub and the

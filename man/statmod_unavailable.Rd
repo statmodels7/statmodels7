@@ -5,7 +5,6 @@
 \alias{terms.StatmodFit}
 \alias{model.frame.StatmodFit}
 \alias{anova.StatmodFit}
-\alias{plot.StatmodFit}
 \title{Generics Not Available for a Fit}
 \usage{
 \method{terms}{StatmodFit}(x, ...)
@@ -13,8 +12,6 @@
 \method{model.frame}{StatmodFit}(formula, ...)
 
 \method{anova}{StatmodFit}(object, ...)
-
-\method{plot}{StatmodFit}(x, ...)
 }
 \arguments{
 \item{...}{Unused.}
@@ -26,8 +23,8 @@ Nothing. Each method signals an error that names the function to
 use instead.
 }
 \description{
-Three generics of \pkg{stats} and the generic \code{\link[base:plot]{base::plot()}} signal an
-error on a statmod fit, and each error names the function to use instead.
+Three generics of \pkg{stats} signal an error on a statmod fit, and each
+error names the function to use instead.
 }
 \details{
 \code{terms()} has no single answer where a fit has one set of terms per
@@ -47,11 +44,6 @@ distribution against which to compare. \code{\link[=logLik.StatmodFit]{logLik.St
 \code{BIC()} report the fit with the sum of the effective degrees of freedom of
 its terms, which is not corrected for the estimation of the smoothing
 parameters; \code{summary(fit, correct = TRUE)} applies that correction.
-
-\code{plot()} has no single picture to draw for a model with an equation
-per parameter, any number of terms and any number of covariates. The
-fitted curves come from \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} on a grid of new data, and
-the residuals from \code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}}.
 }
 \seealso{
 \code{\link[=formula.StatmodFit]{formula.StatmodFit()}},

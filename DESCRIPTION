@@ -26,6 +26,7 @@ Depends:
 Imports:
     basis7 (>= 0.14.0),
     distributions7 (>= 0.90.0),
+    ggplot2 (>= 3.5.0),
     linkfunctions7 (>= 0.5.0),
     Matrix (>= 1.6.2),
     methods,
@@ -34,6 +35,7 @@ Imports:
     optimizers7 (>= 0.16.0),
     parallel,
     parameters7,
+    patchwork,
     penalties7 (>= 0.32.0),
     Rcpp,
     RcppParallel,
@@ -110,6 +112,8 @@ Collate:
     'marginal.R'
     'order.R'
     'outer_context.R'
+    'plot_core.R'
+    'plot_effect.R'
     'predict_random.R'
     'predict_interval.R'
     'predict_bootstrap.R'
