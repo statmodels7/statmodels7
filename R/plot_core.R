@@ -155,10 +155,14 @@ S7::method(plot_data, list(plot_type, S7::class_any)) <-
 #' @seealso [plot_data()], [plot_type]
 #'
 #' @examples
-#' d <- list(curve = data.frame(x = 1:3, fit = c(0, 1, 0), lower = -1,
-#'                              upper = 2),
-#'           points = data.frame(x = numeric(0), y = numeric(0)))
-#' ggplot2::ggplot() + plot_layers(plot_effect(residuals = FALSE), d)
+#' set.seed(1)
+#' dd <- data.frame(x = runif(100))
+#' dd$y <- sin(2 * pi * dd$x) + rnorm(100, sd = 0.3)
+#' fit <- statmod(y ~ s(x), distributions7::gaussian1_distrib(), dd)
+#' d <- plot_data(plot_effect(), fit@spec@terms$mu[["s(x)"]], fit,
+#'                ctx = list(param = "mu", name = "s(x)", vars = "x",
+#'                           cols = NULL, data = dd))
+#' ggplot2::ggplot() + plot_layers(plot_effect(), d)
 #' @export
 plot_layers <- S7::new_generic("plot_layers", "type",
   function(type, data, ...) S7::S7_dispatch())
