@@ -11,9 +11,11 @@ statmod_structural_table(fit, level = 0.95, vcov_type = NULL)
 
 \item{level}{The interval's level, \code{0.95} by default.}
 
-\item{vcov_type}{\code{NULL} or a \link{vcov_method} object. A frequentist variance with
-\code{\link[=hac_sandwich]{hac_sandwich()}} replaces the inverse information by the HAC variance
-over the same unknowns; any other value leaves the inverse information.}
+\item{vcov_type}{\code{NULL} or a \link{vcov_method} object. \code{NULL} and
+\code{\link[=bayesian_vcov]{bayesian_vcov()}} read the inverse of the penalized joint information.
+Any other convention (frequentist with or without a sandwich, unconditional,
+bootstrap) reads the block of the joint variance that \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}
+returns for the term's own parameters under that convention.}
 }
 \value{
 A data frame with one row per quantity that each structural term

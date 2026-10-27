@@ -1632,9 +1632,11 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #'
 #' @param fit A [StatmodFit()].
 #' @param level The interval's level, `0.95` by default.
-#' @param vcov_type `NULL` or a [vcov_method] object. A frequentist variance with
-#'   [hac_sandwich()] replaces the inverse information by the HAC variance
-#'   over the same unknowns; any other value leaves the inverse information.
+#' @param vcov_type `NULL` or a [vcov_method] object. `NULL` and
+#'   [bayesian_vcov()] read the inverse of the penalized joint information.
+#'   Any other convention (frequentist with or without a sandwich, unconditional,
+#'   bootstrap) reads the block of the joint variance that [vcov.StatmodFit()]
+#'   returns for the term's own parameters under that convention.
 #'
 #' @return A data frame with one row per quantity that each structural term
 #'   reports and the columns `parameter`, `term`, `name`, `estimate`, `se`,
@@ -1696,9 +1698,11 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
     keep <- setdiff(seq_len(nrow(I)), term_held_stack(spec, design))
     Vk <- matrix(0, nrow(I), nrow(I))
     Vk[keep, keep] <- solve(I[keep, keep, drop = FALSE])
-    if (S7::S7_inherits(vcov_type, FrequentistVcov) &&
-        S7::S7_inherits(vcov_type@sandwich, HacSandwich)) {
-      Vk <- hac_joint(fit, design, Vk, vcov_type@sandwich)
+    # any other convention reads its own variance: the block of the joint
+    # matrix that vcov() returns for the same convention
+    if (!is.null(vcov_type) && !identical(vcov_type@name, "bayesian")) {
+      Vk <- structural_convention_block(fit, spec, design, vcov_type,
+                                        nrow(Vk), term_held_stack(spec, design))
     }
     Vk
   }, error = function(e) NULL)
@@ -1724,12 +1728,22 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
     # the term's own order
     Vz <- matrix(0, length(nm), length(nm), dimnames = list(nm, nm))
     ok <- !is.null(V) && nrow(V) == nb + length(free)
+    badz <- rep(FALSE, length(nm))
+    names(badz) <- nm
     if (ok) {
-      Vz[free, free] <- V[nb + seq_along(free), nb + seq_along(free),
-                          drop = FALSE]
+      Vt <- V[nb + seq_along(free), nb + seq_along(free), drop = FALSE]
+      # a coordinate without a variance under the convention (a flat
+      # direction, an aliased replicate) makes every quantity that reads it
+      # missing; the other entries stand
+      badz[free] <- is.na(diag(Vt))
+      Vt[is.na(Vt)] <- 0
+      Vz[free, free] <- Vt
     }
     J <- rd$jacobian
     vq <- if (ok) diag(J %*% Vz %*% t(J)) else rep(NA_real_, length(nm))
+    if (ok && any(badz)) {
+      vq[apply(J[, badz, drop = FALSE] != 0, 1L, any)] <- NA_real_
+    }
     # WHICH of the term's own parameters a reported quantity belongs to, and
     # WHERE in the parameter vector it sits, read off the Jacobian's support
     # rather than off the quantity's name. A quantity reading coordinates of
@@ -1756,8 +1770,8 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
     is_held <- apply(J != 0, 1L, function(r) any(r) && all(nm[r] %in% held))
     edge_q <- structural_edge_rows(tm, zeta, nm)
     for (i in seq_along(rd$name)) {
-      s <- if (ok && !touches_held[[i]] && !edge_q[[i]]) sqrt(max(vq[[i]], 0))
-           else NA_real_
+      s <- if (ok && !touches_held[[i]] && !edge_q[[i]] && !is.na(vq[[i]]))
+             sqrt(max(vq[[i]], 0)) else NA_real_
       val <- rd$value[[i]]
       lo <- hi <- NA_real_
       if (is.finite(s)) {
@@ -1782,6 +1796,44 @@ statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
     }
   }
   do.call(rbind, rows)
+}
+
+
+#' The Joint Variance of a Convention, in the Order of the Joint Information
+#'
+#' @description
+#' Returns the matrix that [vcov.StatmodFit()] reports for `vcov_type` with
+#' `readable = FALSE`, put back in the order of the joint information
+#' (coefficients, then the free parameters of the structural terms).
+#'
+#' @details
+#' [vcov.StatmodFit()] orders its output by equation; the permutation is
+#' undone here. A coordinate without a variance is missing in its row and
+#' column, except the slot of a held break-point, which is zero as in the
+#' inverse information.
+#'
+#' @param fit The [StatmodFit()].
+#' @param spec,design Its specification and design.
+#' @param vcov_type A [vcov_method] object.
+#' @param n The dimension of the joint information.
+#' @param held The held break-point slots, as `term_held_stack()` returns them.
+#'
+#' @return A square matrix of dimension `n`.
+#'
+#' @keywords internal
+structural_convention_block <- function(fit, spec, design, vcov_type, n, held) {
+  Vf <- suppressWarnings(vcov(fit, vcov_type = vcov_type, readable = FALSE))
+  lab <- coef_labels(spec, design)
+  total <- nrow(lab)
+  tl <- structural_tail_names(spec, design)
+  if (nrow(Vf) != n || length(tl) != n - total) stop("dimension", call. = FALSE)
+  who <- c(lab$parameter, names(tl))
+  ord <- order(match(who, spec@distrib@params))
+  inv <- order(ord)
+  V <- unname(Vf[inv, inv, drop = FALSE])
+  V[held, ] <- 0
+  V[, held] <- 0
+  V
 }
 
 
