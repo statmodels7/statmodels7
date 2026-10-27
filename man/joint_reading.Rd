@@ -29,7 +29,9 @@ The reading is the Newton decrement \eqn{\tfrac12 g^\top K^{-1} g} over the
 coordinates in \code{keep}, after three steps taken in this order.
 
 A coordinate whose diagonal of \eqn{K} is not positive is flat at an edge,
-with the sign set by rounding, and is left out.
+with the sign set by rounding, and is left out. If no coordinate has a
+positive diagonal the curvature is not flat but negative, nothing is left
+to read, and \code{ascent} is \code{TRUE}.
 
 The remaining curvature is read for a direction of ascent. If its smallest
 eigenvalue is below \eqn{-c\,\varepsilon\,\lambda_{\max}}, with \eqn{c} from

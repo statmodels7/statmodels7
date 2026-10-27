@@ -1471,7 +1471,9 @@ filter_decrement <- function(spec, design, res, hyper) {
 #' coordinates in `keep`, after three steps taken in this order.
 #'
 #' A coordinate whose diagonal of \eqn{K} is not positive is flat at an edge,
-#' with the sign set by rounding, and is left out.
+#' with the sign set by rounding, and is left out. If no coordinate has a
+#' positive diagonal the curvature is not flat but negative, nothing is left
+#' to read, and `ascent` is `TRUE`.
 #'
 #' The remaining curvature is read for a direction of ascent. If its smallest
 #' eigenvalue is below \eqn{-c\,\varepsilon\,\lambda_{\max}}, with \eqn{c} from
@@ -1504,19 +1506,35 @@ joint_reading <- function(g, K, keep) {
   if (is.null(K) || !is.matrix(K) || length(g) != nrow(K)) return(out)
   K <- (K + t(K)) / 2
   d <- diag(K)
-  ok <- is.finite(g[keep]) & is.finite(d[keep])
-  if (length(keep) && !any(ok)) return(out)
-  keep <- keep[ok]
-  keep <- keep[d[keep] > 0]
   if (!length(keep)) {
     out$decrement <- 0
     return(out)
   }
-  A <- K[keep, keep, drop = FALSE]
-  if (!all(is.finite(A))) return(out)
-  ev <- tryCatch(eigen(A, symmetric = TRUE, only.values = TRUE)$values,
-                 error = function(e) NULL)
+  ok <- is.finite(g[keep]) & is.finite(d[keep])
+  if (!any(ok)) return(out)
+  keep <- keep[ok]
+  eigs <- function(idx) {
+    A <- K[idx, idx, drop = FALSE]
+    if (!all(is.finite(A))) return(NULL)
+    tryCatch(eigen(A, symmetric = TRUE, only.values = TRUE)$values,
+             error = function(e) NULL)
+  }
+  # a curvature none of whose coordinates has a positive diagonal is not flat
+  # at an edge, it is negative: nothing is left to read, and the point is
+  # not a maximum (all six coordinates of an exploded filter had diagonals
+  # of -4e23 to -3e28, and leaving them all out read as a decrement of zero)
+  pos <- d[keep] > 0
+  if (!any(pos)) {
+    ev <- eigs(keep)
+    if (is.null(ev)) return(out)
+    out$ratio <- max(0, -min(ev)) / (.Machine$double.eps * max(abs(ev)))
+    out$ascent <- TRUE
+    return(out)
+  }
+  keep <- keep[pos]
+  ev <- eigs(keep)
   if (is.null(ev)) return(out)
+  A <- K[keep, keep, drop = FALSE]
   out$ratio <- max(0, -min(ev)) / (.Machine$double.eps * max(ev))
   if (out$ratio > curvature_ascent_limit()) {
     out$ascent <- TRUE

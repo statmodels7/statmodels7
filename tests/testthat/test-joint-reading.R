@@ -55,8 +55,19 @@ test_that("joint_reading() leaves out a coordinate that is flat at an edge", {
   expect_equal(r$decrement, 0.5 * (1 / 3 + 1 / 2))
   # nothing finite to read is not a decrement of zero
   expect_true(is.na(joint_reading(rep(NA_real_, 3), K, 1:3)$decrement))
-  # every coordinate flat: nothing to improve
-  expect_equal(joint_reading(g, diag(c(0, -1e-13, 0)), 1:3)$decrement, 0)
+  # no coordinate to read from the start: nothing to improve
+  expect_equal(joint_reading(g, K, integer(0))$decrement, 0)
+})
+
+test_that("joint_reading() reads a curvature with no positive diagonal as ascent", {
+  # an exploded filter had six diagonals of -4e23 to -3e28: leaving every
+  # coordinate out as flat read as a decrement of zero
+  K <- -diag(c(1e3, 2, 5))
+  g <- c(1e5, 1, 1)
+  r <- joint_reading(g, K, 1:3)
+  expect_true(r$ascent)
+  expect_true(is.na(r$decrement))
+  expect_gt(r$ratio, curvature_ascent_limit())
 })
 
 # the data of the fits below: base datasets
@@ -134,6 +145,16 @@ stalled <- list(
   k1025 = list("belt2_beta", c(mu.omega = 0, mu.kappa1 = -1.2039728043259359,
     mu.pacf1 = 2.6466524123622457, phi.omega = 0, phi.kappa1 = -1.2039728043259359,
     phi.pacf1 = 2.6466524123622457)),
+  # exploded filters whose curvature is negative in every coordinate
+  k1011 = list("belt2_beta", c(mu.omega = 0, mu.kappa1 = -2.3025850929940455,
+    mu.pacf1 = 1.4722194895832204, phi.omega = 0, phi.kappa1 = -2.3025850929940455,
+    phi.pacf1 = 1.4722194895832204)),
+  k1023 = list("belt2_beta", c(mu.omega = 0, mu.kappa1 = -1.2039728043259359,
+    mu.pacf1 = 1.4722194895832204, phi.omega = 0, phi.kappa1 = -1.2039728043259359,
+    phi.pacf1 = 1.4722194895832204)),
+  k1024 = list("belt2_beta", c(mu.omega = 0, mu.kappa1 = -1.2039728043259359,
+    mu.pacf1 = 2.0922957200349388, phi.omega = 0, phi.kappa1 = -1.2039728043259359,
+    phi.pacf1 = 2.0922957200349388)),
   # the loadings 0.05 and the persistences 0.9 on the share of drivers killed
   b4 = list("belt2_beta", c(mu.omega = 0, mu.kappa1 = -2.9957322735539909,
     mu.pacf1 = 1.4722194895832204, phi.omega = 0, phi.kappa1 = -2.9957322735539909,
