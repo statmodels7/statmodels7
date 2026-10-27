@@ -788,6 +788,12 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
       distrib@distrib_name), call. = FALSE)
   }
   assert_method_signatures(distrib)
+  # the family as given, before a two-column binomial response writes its
+  # trials onto it: the static model of a statically started filter is fitted
+  # from the same arguments
+  distrib_arg <- distrib
+  weights_arg <- weights
+  offsets_arg <- offsets
   params <- distrib@params
   split <- statmod_equations(formula, params)
 
@@ -839,13 +845,186 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
   weights <- check_weights(weights, n)
   offsets <- add_offsets(from_formula, check_offsets(offsets, params, n))
 
-  StatmodSpec(
+  spec <- StatmodSpec(
     formula = formula, distrib = distrib,
     equations = stripped, terms = terms_by_param,
     response = response, n_obs = as.integer(n),
     weights = weights, offsets = offsets, intercepts = intercepts,
     newdata = NULL, linpar = linpar
   )
+  static_filter_starts(spec, split, data, weights_arg, offsets_arg,
+                       distrib_arg, env, linpar)
+}
+
+
+#' The Constant at Which a Statically Started Filter Begins
+#'
+#' @description
+#' Sets the property `init_value` of every [modelterms7::gas()] term written
+#' with `init = "static"` to the predictor of the model without the term, read
+#' at the first row of each group of the filter.
+#'
+#' @details
+#' With `init = "static"` the first predictor of every group of the filter
+#' equals this constant whatever the parameters are, so the constant of the
+#' equation stays the level of the filter and does not double as its starting
+#' value. The model without the term is the same formula with each `gas()`
+#' call replaced by the development of its level (the right side of an
+#' `omega ~` subformula) or, without one, by an intercept, so that the static
+#' model carries a level where the filter carries one. It is fitted once by
+#' [statmod()] with the same family, data, weights and offsets, and the
+#' constant of each group is its predictor of the parameter at the group's
+#' first row. With covariates the constant follows them: on the share of
+#' front-seat casualties in Seatbelts, `share ~ law + gas(...)` starts at the
+#' predictor of `share ~ law` at the first month, where the intercept-only fit
+#' would start it at the mean of the whole series and lose 2.07 in
+#' log-likelihood.
+#'
+#' The fitted static model travels with the term as `init_source`, so a
+#' prediction that rebuilds the series on other rows reads the constants of
+#' its groups from the same model ([static_filter_restart()]).
+#'
+#' @param spec A [StatmodSpec()].
+#' @param split The equations, as [statmod_equations()] returns them.
+#' @param data,weights,offsets,distrib,env,linpar The arguments of
+#'   [statmod_spec()], with `env` the formula's environment.
+#'
+#' @return The specification, with the constant set on each such term.
+#'
+#' @keywords internal
+static_filter_starts <- function(spec, split, data, weights, offsets, distrib,
+                                 env, linpar) {
+  tms <- spec@terms
+  if (!any(unlist(lapply(tms, function(e) vapply(e, has_static_start,
+                                                  logical(1)))))) {
+    return(spec)
+  }
+  params <- spec@distrib@params
+  parts <- vapply(seq_along(params), function(i) {
+    rhs <- static_equation_rhs(split$equations[[params[i]]][[2L]])
+    r <- paste(deparse(rhs, width.cutoff = 500L), collapse = " ")
+    if (i == 1L) r else paste(params[i], "~", r)
+  }, character(1))
+  txt <- paste(paste(deparse(split$response, width.cutoff = 500L),
+                     collapse = " "), "~", paste(parts, collapse = " | "))
+  f_static <- stats::as.formula(txt, env = env)
+  # through do.call(), so that statmod() receives the weights as values and
+  # does not look a symbol up among the columns of the data
+  fit_s <- tryCatch(
+    do.call(statmod, list(f_static, distrib = distrib, data = data,
+                          weights = weights, offsets = offsets,
+                          linpar_control = if (length(linpar)) linpar
+                                           else linpar_options())),
+    error = function(e) e)
+  if (inherits(fit_s, "error")) {
+    stop(sprintf(paste0(
+      "gas(init = \"static\") starts at the predictor of the model without ",
+      "the term,\n  %s, which could not be fitted: %s"), txt,
+      conditionMessage(fit_s)), call. = FALSE)
+  }
+  for (p in names(tms)) {
+    for (k in names(tms[[p]])) {
+      tms[[p]][[k]] <- static_filter_restart(tms[[p]][[k]], p, fit_s, NULL)
+    }
+  }
+  S7::set_props(spec, terms = tms)
+}
+
+
+#' Whether a Term Carries a Statically Started Filter
+#'
+#' @param tm A model term.
+#'
+#' @return A single logical: `TRUE` for a [modelterms7::gas()] term with
+#'   `init = "static"`, or a joint filter with such a member.
+#'
+#' @keywords internal
+has_static_start <- function(tm) {
+  if (is_joint_filter(tm)) {
+    return(any(vapply(tm@terms, has_static_start, logical(1))))
+  }
+  S7::S7_inherits(tm, modelterms7::GasTerm) && identical(tm@init, "static")
+}
+
+
+#' Set the Constants of a Statically Started Filter From Its Static Model
+#'
+#' @description
+#' Reads the predictor of the static model at the first row of each group of
+#' a statically started filter and stores it, with the model, on the term;
+#' for a joint filter it does so for each member, on that member's parameter.
+#'
+#' @param tm A model term; any term other than a statically started filter is
+#'   returned unchanged.
+#' @param param The distribution parameter in whose equation the term sits.
+#' @param fit_s The fitted static model.
+#' @param newdata `NULL` for the fitting rows, or the rows on which the term
+#'   was rebuilt.
+#'
+#' @return The term.
+#'
+#' @keywords internal
+static_filter_restart <- function(tm, param, fit_s, newdata) {
+  if (is_joint_filter(tm)) {
+    sub <- tm@terms
+    for (q in names(sub)) sub[[q]] <- static_filter_restart(sub[[q]], q, fit_s,
+                                                           newdata)
+    tm@terms <- sub
+    return(tm)
+  }
+  if (!has_static_start(tm)) return(tm)
+  if (is.null(fit_s)) fit_s <- tm@init_source
+  eta <- as.numeric(stats::predict(fit_s, what = paste0("link:", param),
+                                   newdata = newdata))
+  first <- vapply(tm@blueprint$order, function(r) as.integer(r[[1L]]),
+                  integer(1))
+  v <- eta[first]
+  if (!all(is.finite(v))) {
+    stop(sprintf(paste0(
+      "the model without the gas() term of '%s' has no finite predictor at ",
+      "the first row of every group."), param), call. = FALSE)
+  }
+  S7::set_props(tm, init_value = v, init_source = fit_s)
+}
+
+
+#' The Right Side of an Equation Without Its Filters
+#'
+#' @description
+#' Replaces each `gas()` call of a right-hand side by the right side of its
+#' `omega ~` subformula, or by `1` where it has none.
+#'
+#' @param rhs The right-hand side, an expression.
+#'
+#' @return An expression.
+#'
+#' @keywords internal
+static_equation_rhs <- function(rhs) {
+  is_gas <- function(e) {
+    if (!is.call(e)) return(FALSE)
+    h <- e[[1L]]
+    identical(h, as.name("gas")) ||
+      (is.call(h) && identical(h[[1L]], as.name("::")) &&
+         identical(h[[3L]], as.name("gas")))
+  }
+  swap <- function(e) {
+    if (is_gas(e)) {
+      for (a in as.list(e)[-1L]) {
+        if (is.call(a) && identical(a[[1L]], as.name("~")) &&
+            length(a) == 3L && identical(a[[2L]], as.name("omega"))) {
+          return(call("(", a[[3L]]))
+        }
+      }
+      return(1)
+    }
+    if (is.call(e) && length(e) > 1L &&
+        (identical(e[[1L]], as.name("+")) || identical(e[[1L]], as.name("-")) ||
+           identical(e[[1L]], as.name("(")))) {
+      for (i in seq.int(2L, length(e))) e[[i]] <- swap(e[[i]])
+    }
+    e
+  }
+  swap(rhs)
 }
 
 
@@ -1028,6 +1207,10 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
     for (u in su) {
       tms[[u$param]][[u$term]] <-
         modelterms7::term_build(tms[[u$param]][[u$term]], data)
+      # a statically started filter starts the rebuilt series at the
+      # predictor of its static model on these rows
+      tms[[u$param]][[u$term]] <-
+        static_filter_restart(tms[[u$param]][[u$term]], u$param, NULL, data)
     }
     out@terms <- tms
   }

@@ -358,6 +358,14 @@ statmod_score_obs <- function(spec, coef, design) {
         out
       }), params)
       for (q in params) gv[[q]] <- gv[[q]] + add[[q]]
+      # a member started at a constant (gas(init = "static")) carries the
+      # static predictor of its first rows into the later levels through the
+      # start, which the reverse recursion returns separately
+      if (!is.null(ad$dstart)) {
+        for (l in seq_along(f$params)) {
+          gv[[f$params[l]]] <- gv[[f$params[l]]] + ad$dstart[, l]
+        }
+      }
       next
     }
     ad <- modelterms7::term_adjoint(f$tm, f$eta_static, spec@response,
@@ -374,6 +382,11 @@ statmod_score_obs <- function(spec, coef, design) {
       ad$dscore * rep_len(H[[hess_key(params, a, match(q, params))]], n)
     }), params)
     for (q in params) gv[[q]] <- gv[[q]] + add[[q]]
+    # a filter started at a constant (gas(init = "static")) has its first
+    # level at c minus the static predictor of the group's first row, so that
+    # predictor reaches every later level through the start and not through
+    # a score; the reverse recursion returns that part separately
+    if (!is.null(ad$dstart)) gv[[f$param]] <- gv[[f$param]] + ad$dstart
   }
 
   gv

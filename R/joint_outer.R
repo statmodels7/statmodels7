@@ -115,7 +115,7 @@ joint_chain_extra <- function(spec, design, jd, M, st, v) {
   seed <- stats::setNames(jd$V, params)
   dV <- lapply(st$Vk, function(x) as.numeric(x %*% v))
 
-  cv3 <- modelterms7::term_third(f$tm, NULL, NULL, NULL, NULL, f$psi, st$gw,
+  cv3 <- modelterms7::term_third(f$tm, f$eta_static, NULL, NULL, NULL, f$psi, st$gw,
                                  seed, st$bd, vfull)
   W3 <- cv3$curvature[keep, keep, drop = FALSE]
 
@@ -128,7 +128,7 @@ joint_chain_extra <- function(spec, design, jd, M, st, v) {
         rep_len(st$H[[hess_key(params, GF[k], b)]], n) * dV[[b]]
     }
   }
-  cvk <- modelterms7::term_curvature(f$tm, NULL, NULL, NULL, NULL, f$psi,
+  cvk <- modelterms7::term_curvature(f$tm, f$eta_static, NULL, NULL, NULL, f$psi,
                                      w * kappa, seed, st$bd)
   Wk <- cvk$curvature[keep, keep, drop = FALSE]
 
