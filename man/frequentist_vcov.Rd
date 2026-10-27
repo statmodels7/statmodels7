@@ -35,10 +35,12 @@ depend on how the fit was computed (\code{inner_information} of \code{\link[=sta
 one, and a printed variance object states the information that it names.
 \link{information_objects} compares the objects.}
 
-\item{sandwich}{\code{NULL} (the default) or an object from \code{\link[=hc0_sandwich]{hc0_sandwich()}} or
-\code{\link[=hc1_sandwich]{hc1_sandwich()}}. \code{NULL} keeps \eqn{H} as the meat, the matrix above.
-Otherwise the meat is built from the scores of the observations and the
-matrix is the robust sandwich variance described at \code{\link[=hc0_sandwich]{hc0_sandwich()}}.}
+\item{sandwich}{\code{NULL} (the default) or an object from \code{\link[=hc0_sandwich]{hc0_sandwich()}},
+\code{\link[=hc1_sandwich]{hc1_sandwich()}} or \code{\link[=hac_sandwich]{hac_sandwich()}}. \code{NULL} keeps \eqn{H} as the meat,
+the matrix above. Otherwise the meat is built from the scores of the
+observations and the matrix is the robust sandwich variance described at
+\code{\link[=hc0_sandwich]{hc0_sandwich()}}, or the HAC variance for dependent observations
+described at \code{\link[=hac_sandwich]{hac_sandwich()}}.}
 }
 \value{
 A \code{FrequentistVcov} object, inheriting from \link{vcov_method}, with the

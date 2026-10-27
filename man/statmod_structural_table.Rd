@@ -4,12 +4,16 @@
 \alias{statmod_structural_table}
 \title{A Structural Term's Parameters, With Standard Errors}
 \usage{
-statmod_structural_table(fit, level = 0.95)
+statmod_structural_table(fit, level = 0.95, vcov_type = NULL)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{level}{The interval's level, \code{0.95} by default.}
+
+\item{vcov_type}{\code{NULL} or a \link{vcov_method} object. A frequentist variance with
+\code{\link[=hac_sandwich]{hac_sandwich()}} replaces the inverse information by the HAC variance
+over the same unknowns; any other value leaves the inverse information.}
 }
 \value{
 A data frame with one row per quantity that each structural term

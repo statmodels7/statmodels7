@@ -81,9 +81,10 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
   method <- sm$smooth
   cfg <- inner_settings(method)
   beta0 <- unlist(object@coefficients[params], use.names = FALSE)
-  draw <- bootstrap_plan(object, resample, spec0, design0, aside, adjust)
+  draw <- boot_plan_wrap(
+    bootstrap_plan(object, resample, spec0, design0, aside, adjust), design0)
   ref <- list(def = integer(0), singular = FALSE)
-  if (validate) {
+  if (validate && is.null(boot_mode(design0))) {
     ref <- boot_read_mode(object, spec0, design0, object@coefficients,
                           object@hyper, cfg)
   }
@@ -138,7 +139,7 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
     }
   }
   if (stream) assign(".Random.seed", seed_end, envir = globalenv())
-  nm <- rownames(coef_labels(spec0, design0))
+  nm <- boot_coord_names(spec0, design0)
   coefficients <- if (length(rows)) {
     m <- do.call(rbind, rows)
     dimnames(m) <- list(NULL, nm)
@@ -160,13 +161,14 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
 #' not cover.
 #'
 #' @details
-#' A model with a structural term ([modelterms7::gas()],
-#' [modelterms7::regime()]), a block that moves with its coefficients
-#' ([modelterms7::seg()], [modelterms7::jump()], [modelterms7::jseg()],
-#' [modelterms7::nl()]) and a response that is not one number per observation
-#' is rejected. So are `refit = "full"` with a [cv()] criterion, which needs
-#' the folds of the data, and the case and cluster schemes beside a
-#' [modelterms7::random()] term.
+#' A response that is not one number per observation is rejected. So are
+#' `refit = "full"` with a [cv()] criterion, which needs the folds of the
+#' data, and the case and cluster schemes beside a [modelterms7::random()]
+#' term. A model with a structural term ([modelterms7::gas()],
+#' [modelterms7::regime()]) takes [parametric_resample()] only; a model with a
+#' block that moves with its coefficients ([modelterms7::seg()],
+#' [modelterms7::jump()], [modelterms7::jseg()], [modelterms7::nl()]) takes any
+#' scheme and is refitted by [boot_refit_breakpoint()].
 #'
 #' @param object The [StatmodFit()].
 #' @param resample The [resample_method].
@@ -177,17 +179,12 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
 #'
 #' @keywords internal
 bootstrap_check <- function(object, resample, refit, spec0, design0) {
-  if (length(attr(design0, "structural"))) {
-    stop(paste0("The bootstrap is not available for a model with a ",
-                "structural term (gas(), regime()): a replicate would need a ",
-                "new path of the filter."), call. = FALSE)
-  }
-  if (length(attr(design0, "refresh"))) {
-    stop(paste0("The bootstrap is not available for a term whose block ",
-                "moves with its coefficients\n  (seg(), jump(), jseg(), ",
-                "nl()): a replicate would refit its break-points or its\n  ",
-                "nonlinear parameters from where the fit left them, which is ",
-                "a different estimator."), call. = FALSE)
+  if (length(attr(design0, "structural")) &&
+      !S7::S7_inherits(resample, ParametricResample)) {
+    stop(paste0("With a structural term (gas(), regime()) a bootstrap replicate ",
+                "needs a new path of the series, because a resample of rows ",
+                "or of groups breaks the recursion of the filter. Use ",
+                "parametric_resample()."), call. = FALSE)
   }
   y0 <- spec0@response
   if (!is.numeric(y0) || !is.null(dim(y0)) || length(y0) != spec0@n_obs) {
@@ -244,6 +241,9 @@ bootstrap_check <- function(object, resample, refit, spec0, design0) {
 #'
 #' @keywords internal
 bootstrap_plan <- function(object, resample, spec0, design0, aside, adjust) {
+  if (identical(boot_mode(design0), "structural")) {
+    return(boot_plan_structural(object, resample, spec0, design0))
+  }
   if (S7::S7_inherits(resample, ParametricResample)) {
     sim <- bootstrap_simulator(object, spec0, design0, aside, keep = adjust)
     out <- if (adjust) {
@@ -346,6 +346,7 @@ boot_cluster_ids <- function(object, resample, spec0) {
 boot_body <- function(object, spec0, draw, refit, method, cfg, beta0, plans,
                       ref, validate, isolate, keep_fit) {
   kind <- attr(draw, "kind")
+  mode <- attr(draw, "mode")
   targets <- attr(draw, "targets")
   params <- spec0@distrib@params
   cf_fit <- object@coefficients
@@ -361,6 +362,10 @@ boot_body <- function(object, spec0, draw, refit, method, cfg, beta0, plans,
     spec_b <- if (identical(kind, "parametric")) {
       S7::set_props(spec0, response = pl$y)
     } else S7::set_props(spec0, weights = pl$w)
+    if (!is.null(mode)) {
+      return(boot_special_replicate(object, spec_b, pl, mode, refit, method,
+                                    cfg, beta0, keep_fit))
+    }
     # a trial point of a refit may meet a penalized information the sparse
     # factorization reports as not positive definite; the refit steps away
     # from it, and the warning says nothing about the replica

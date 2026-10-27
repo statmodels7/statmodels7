@@ -415,7 +415,9 @@ vcov.StatmodFit <- function(object,
   spec <- object@spec
   design <- statmod_design(spec)
   if (convention == "frequentist" && !is.null(vcov_type@sandwich)) {
-    sandwich_check(object, design)
+    if (S7::S7_inherits(vcov_type@sandwich, HacSandwich)) {
+      hac_check(object, design, vcov_type@sandwich)
+    } else sandwich_check(object, design)
   }
   coef <- object@coefficients
   lab <- coef_labels(spec, design)
@@ -530,6 +532,9 @@ vcov.StatmodFit <- function(object,
     # product is dense whatever H is, Vb being dense, so nothing is given up.
     frequentist = if (is.null(vcov_type@sandwich)) {
       as_dense(Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb)
+    } else if (S7::S7_inherits(vcov_type@sandwich, HacSandwich)) {
+      hac_vcov(object, design, as_dense(Vb), which(keep_full),
+               vcov_type@sandwich)
     } else {
       sandwich_vcov(object, design, as_dense(Vb), which(keep_full),
                     vcov_type@sandwich)
@@ -2731,7 +2736,7 @@ summary.StatmodFit <- function(object, level = 0.95,
       if (length(edge_rows) == 1L) "sits" else "sit",
       if (length(edge_rows) == 1L) "it carries" else "they carry")
   }
-  strc <- tryCatch(statmod_structural_table(object, level),
+  strc <- tryCatch(statmod_structural_table(object, level, vcov_type),
                    error = function(e) NULL)
   tables <- lapply(spec@distrib@params, function(p)
     summary_blocks(object, spec, design, p, ci, level, V, strc, at_edge,

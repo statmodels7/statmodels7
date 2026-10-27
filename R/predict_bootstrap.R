@@ -282,5 +282,6 @@ bootstrap_refit <- function(object, spec_b, refit, method, cfg, beta0) {
     res <- statmod_alternate(spec_b, design, blocks, hyper, method, beta0,
                              cfg$expected, cfg$emethod, cfg$maxit, cfg$tol, vb)
   }
-  list(coefficients = res$obj$split(res$par), hyper = hyper, design = design)
+  list(coefficients = res$obj$split(res$par), hyper = hyper, design = design,
+       res = res)
 }

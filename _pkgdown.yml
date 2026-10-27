@@ -146,6 +146,7 @@ reference:
   - bayesian_vcov
   - frequentist_vcov
   - hc0_sandwich
+  - hac_sandwich
   - unconditional_vcov
   - bootstrap_vcov
 
