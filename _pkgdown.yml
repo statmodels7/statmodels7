@@ -172,6 +172,12 @@ reference:
   - plot_derivative
   - plot_surface
   - plot_criterion
+  - plot_shrinkage
+  - plot_path
+  - plot_caterpillar
+  - plot_prior
+  - plot_random_cov
+  - plot_curves
 
 - title: Installing and updating
   desc: >

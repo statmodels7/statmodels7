@@ -115,6 +115,8 @@ Collate:
     'plot_core.R'
     'plot_effect.R'
     'plot_smooth.R'
+    'plot_penalized.R'
+    'plot_random.R'
     'predict_random.R'
     'predict_interval.R'
     'predict_bootstrap.R'
