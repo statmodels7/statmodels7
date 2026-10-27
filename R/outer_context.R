@@ -772,6 +772,29 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
 mode_error_limit <- function() 1e-3
 
 
+#' The Size of a Negative Eigenvalue That Is Not Rounding
+#'
+#' @description
+#' Returns the factor \eqn{c} such that a curvature whose smallest eigenvalue
+#' is below \eqn{-c\,\varepsilon\,\lambda_{\max}} is read as having a direction
+#' of ascent, with \eqn{\varepsilon} the machine epsilon and
+#' \eqn{\lambda_{\max}} the largest eigenvalue.
+#'
+#' @details
+#' [joint_reading()] applies it to the joint curvature of the coefficients and
+#' a structural term's parameters. An information that is positive
+#' semidefinite and singular, such as one with a duplicated column, has a
+#' smallest eigenvalue that rounding makes slightly negative, and the factor is
+#' large enough for that eigenvalue not to be read as a direction of ascent.
+#'
+#' @return A single number.
+#'
+#' @seealso [joint_reading()]
+#'
+#' @keywords internal
+curvature_ascent_limit <- function() 1e3
+
+
 #' How Far Above Its Mode the Inner Fit Stopped
 #'
 #' @description

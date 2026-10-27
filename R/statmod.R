@@ -1623,10 +1623,12 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
                                  kinds = c("filter", "loglik"))
       u <- c(beta, jp$zeta())
       g <- jp$gr(u)
-      # the joint gradient returns zeros where it cannot be evaluated, which
-      # would read as a stationary point
-      if (!length(g) || all(g == 0)) stop("the gradient is unavailable")
-      list(g = g, K = as_dense(jp$he(u)), keep = c(which(!drop), jp$ix))
+      # the joint gradient is missing where it cannot be evaluated
+      if (!length(g) || !any(is.finite(g)) || all(g == 0, na.rm = TRUE)) {
+        stop("the gradient is unavailable")
+      }
+      list(g = g, K = as_dense(jp$he(u)), keep = c(which(!drop), jp$ix),
+           joint = TRUE)
     } else {
       list(g = obj$gr(beta),
            K = statmod_penalized_at(spec, cf, design, hyper, expected, emethod),
@@ -1638,26 +1640,36 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
   K <- pieces$K
   keep <- pieces$keep
   keep <- keep[is.finite(g[keep]) & is.finite(diag(K)[keep])]
-  # a free coordinate the information does not identify is left out, as an
-  # aliased one is: a lasso over two identical columns may share the effect
-  # between them, both are then free and the information over them is
-  # singular, and a reading that cannot be computed made every point of the
-  # path below the empty fit read as unsettled, so the path chose the empty
-  # fit (lambda 41.8 on an effect of 2)
-  if (length(keep) > 1L) {
-    A0 <- K[keep, keep, drop = FALSE]
-    dep <- tryCatch(deficient_coords((A0 + t(A0)) / 2),
-                    error = function(e) integer(0))
-    if (length(dep)) keep <- keep[-dep]
-  }
-  if (!length(keep)) {
-    out[["mode"]] <- 0
+  if (isTRUE(pieces$joint)) {
+    # THE JOINT VECTOR OF A STRUCTURAL TERM is read by joint_reading(): a
+    # curvature with a direction of ascent is not a maximum and reads as Inf,
+    # where deficient_coords() on it dropped the term's own parameters and
+    # left the coefficients' decrement (0.000453 at a point 473 below the
+    # maximum, with the term's parameters at 0.0187)
+    jr <- joint_reading(g, K, keep)
+    out[["mode"]] <- if (jr$ascent) Inf else jr$decrement
   } else {
-    A <- K[keep, keep, drop = FALSE]
-    A <- (A + t(A)) / 2
-    sol <- tryCatch(solve(A, g[keep]), error = function(e) NULL)
-    if (!is.null(sol) && all(is.finite(sol))) {
-      out[["mode"]] <- 0.5 * sum(g[keep] * sol)
+    # a free coordinate the information does not identify is left out, as an
+    # aliased one is: a lasso over two identical columns may share the effect
+    # between them, both are then free and the information over them is
+    # singular, and a reading that cannot be computed made every point of the
+    # path below the empty fit read as unsettled, so the path chose the empty
+    # fit (lambda 41.8 on an effect of 2)
+    if (length(keep) > 1L) {
+      A0 <- K[keep, keep, drop = FALSE]
+      dep <- tryCatch(deficient_coords((A0 + t(A0)) / 2),
+                      error = function(e) integer(0))
+      if (length(dep)) keep <- keep[-dep]
+    }
+    if (!length(keep)) {
+      out[["mode"]] <- 0
+    } else {
+      A <- K[keep, keep, drop = FALSE]
+      A <- (A + t(A)) / 2
+      sol <- tryCatch(solve(A, g[keep]), error = function(e) NULL)
+      if (!is.null(sol) && all(is.finite(sol))) {
+        out[["mode"]] <- 0.5 * sum(g[keep] * sol)
+      }
     }
   }
   z <- which(zero)

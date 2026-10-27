@@ -5343,6 +5343,16 @@ drop_common_prefix <- function(nms) {
 #' also carries a smooth penalty estimated by [reml()] or [ml()] has an outer
 #' gradient, which the certificate reads as usual.
 #'
+#' A model with a score-driven or latent-state term has its inner fit read
+#' over the coefficients and the term's own parameters together
+#' ([joint_reading()]). A coordinate whose curvature is flat at an edge is
+#' left out of the reading. If the curvature of the others has an eigenvalue
+#' below \eqn{-c\,\varepsilon\,\lambda_{\max}}, with \eqn{c} from
+#' [curvature_ascent_limit()], the point is not a maximum: the state is
+#' `"not converged"`, `ascent` gives the reason, and `mode_error` is `NA`. If
+#' the reading cannot be computed, `mode_error` is `NA` and a model with no
+#' outer gradient has the state `"unknown"`.
+#'
 #' A form whose criterion has no exact gradient ([outer_gradient_ok()] at
 #' order 1) has the criterion itself differenced by refits when it has at most
 #' two hyperparameters and no coefficient estimated on the criterion (three
@@ -5432,8 +5442,11 @@ drop_common_prefix <- function(nms) {
 #'
 #' @return A list with `state` (`"converged"`, `"boundary"`,
 #'   `"not converged"` or `"unknown"`), `decrement`, `gradient`,
-#'   `mode_error`, `curvature`, `boundary`, `boundary_key`, `ridge` and
-#'   `reason`. `ridge` is a list with one named vector per flat direction of
+#'   `mode_error`, `curvature`, `boundary`, `boundary_key`, `ridge`, `ascent`
+#'   and `reason`. `ascent` is empty, or states that the curvature of the
+#'   inner fit over the coefficients and the parameters of a structural term
+#'   has a direction of ascent ([joint_reading()]), in which case the state is
+#'   `"not converged"` and `mode_error` is `NA`. `ridge` is a list with one named vector per flat direction of
 #'   the outer curvature, over the coordinates that move along it.
 #'   The verdict uses `decrement`, and `gradient` is reported beside it.
 #'   `curvature` is `"analytic"` when the decrement was read against an analytic
@@ -5468,6 +5481,13 @@ drop_common_prefix <- function(nms) {
 #' @export
 statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
   out <- certificate_core(fit, tol, flat, edge)
+  # A CURVATURE WITH A DIRECTION OF ASCENT in the inner fit over the
+  # coefficients and a structural term's parameters is a point that is not a
+  # maximum, whatever the outer criterion reads
+  if (length(out$ascent)) {
+    out$state <- "not converged"
+    out$reason <- c(out$ascent, out$reason)
+  }
   # A COORDINATE AT THE EDGE OF ITS CHART THAT POINTS INWARD makes the point
   # something other than a maximum, whatever the readings above say: they
   # are taken on the free scale, where the chart's own derivative vanishes
@@ -5505,7 +5525,10 @@ certificate_core <- function(fit, tol, flat, edge) {
               ridge = list(), reason = character(0),
               inner = c(gradient = NA_real_, eigen = NA_real_),
               outer = c(gradient = NA_real_, eigen = NA_real_),
-              zeros = NULL)
+              zeros = NULL, ascent = character(0))
+  # what joint_reading() could not read, for the reason of a state that
+  # stays unknown
+  jnote <- character(0)
   method <- fit@methods$outer
   spec <- fit@spec
   design <- tryCatch(statmod_design(spec), error = function(e) NULL)
@@ -5579,7 +5602,8 @@ certificate_core <- function(fit, tol, flat, edge) {
       # FALSE. The coefficients' part of the gradient is the one read above,
       # with the held and kinked coordinates set to zero.
       su <- attr(design, "structural")
-      if (length(su) && !is.null(obj) && !is.null(sc) &&
+      suj <- Filter(function(u) u$kind %in% c("filter", "loglik"), su)
+      if (length(suj) && !is.null(obj) && !is.null(sc) &&
           all(is.finite(sc)) && is.finite(out$mode_error)) {
         mj <- tryCatch({
           jp <- statmod_joint_pieces(spec, design, obj, hy,
@@ -5606,10 +5630,7 @@ certificate_core <- function(fit, tol, flat, edge) {
           sz <- setdiff(seq_along(jp$ix), zk)
           if (is.null(kc)) {
             keep <- c(seq_along(sc), length(sc) + sz)
-            dep <- deficient_coords(Kj[keep, keep, drop = FALSE])
-            if (length(dep)) keep <- keep[-dep]
-            0.5 * sum(gj[keep] * solve(Kj[keep, keep, drop = FALSE],
-                                       gj[keep]))
+            joint_reading(gj, Kj, keep)
           } else {
             nz <- length(jp$ix)
             Nk <- null_basis(kc, length(sc))
@@ -5617,10 +5638,30 @@ certificate_core <- function(fit, tol, flat, edge) {
             N <- rbind(cbind(Nk, matrix(0, nrow(Nk), ncol(Iz))),
                        cbind(matrix(0, nz, ncol(Nk)), Iz))
             gn <- crossprod(N, gj)
-            0.5 * sum(gn * solve(crossprod(N, Kj %*% N), gn))
+            list(decrement = 0.5 * sum(gn * solve(crossprod(N, Kj %*% N), gn)),
+                 ascent = FALSE)
           }
-        }, error = function(e) NA_real_)
-        if (length(mj) == 1L && is.finite(mj)) out$mode_error <- abs(mj)
+        }, error = function(e) NULL)
+        # A JOINT READING THAT CANNOT BE MADE is not replaced by the reading
+        # of the coefficients alone, which leaves out the direction in which
+        # they and the term's parameters move together; and a curvature with
+        # a direction of ascent is a point that is not a maximum, whatever
+        # decrement a subset of its coordinates gives
+        if (is.null(mj) || (!isTRUE(mj$ascent) && !is.finite(mj$decrement))) {
+          out$mode_error <- NA_real_
+          jnote <- paste0("the joint reading of the coefficients and the ",
+                          "parameters of the structural term could not be ",
+                          "computed")
+        } else if (isTRUE(mj$ascent)) {
+          out$mode_error <- NA_real_
+          out$ascent <- sprintf(paste0(
+            "the curvature of the inner fit, over the coefficients and the ",
+            "parameters of the structural term, has a direction of ascent ",
+            "(its smallest eigenvalue is %.3g times rounding below zero), so ",
+            "the point is not a maximum"), mj$ratio)
+        } else {
+          out$mode_error <- abs(mj$decrement)
+        }
       }
       # THE TWO NUMBERS summary() PRINTS for the inner fit, over the
       # coordinates vcov() reports: a coefficient a kinked penalty set to zero
@@ -5742,7 +5783,8 @@ certificate_core <- function(fit, tol, flat, edge) {
       return(out)
     }
     if (!is.finite(out$mode_error)) {
-      out$reason <- "the model carries no penalty, and the mode error could not be read"
+      out$reason <- if (length(out$ascent)) character(0) else if (length(jnote))
+        jnote else "the model carries no penalty, and the mode error could not be read"
       return(out)
     }
     out$state <- if (out$mode_error <= mode_error_limit()) "converged" else
@@ -6055,6 +6097,7 @@ certificate_core <- function(fit, tol, flat, edge) {
              " are all read at that point"),
       out$mode_error))
   }
+  if (length(jnote)) out$reason <- c(out$reason, jnote)
   out
 }
 
