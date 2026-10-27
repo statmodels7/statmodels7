@@ -17,7 +17,9 @@ statmod_leverage(fit, information = NULL)
 A list with \code{blocks}, an array of dimension \eqn{n \times d \times
   d} of the matrices \eqn{H_{ii}}, \code{leverage}, the \eqn{n \times d} matrix
 of their diagonals with the equations as columns, and \code{trace}, the
-vector of the traces. The \eqn{d} equations are those that have
+vector of the traces, and \code{clipped}, the number of observations whose
+information had a negative eigenvalue set to zero (always zero with the
+expected information). The \eqn{d} equations are those that have
 coefficients. Coordinates whose variance is missing (aliased, or held at
 zero by a penalty) are not part of \eqn{Z_i}.
 }
@@ -61,11 +63,15 @@ leverage that \code{\link[=plot_influence]{plot_influence()}} computes for that 
 for a coordinate that the marginal criterion estimates holds the
 curvature of that criterion.
 
-The matrix \eqn{W_i} is the expected information of the observation
-whatever \code{information} is, while \eqn{K} is built from \code{information}.
-With the expected information the hat matrix is a projection
-and its trace is \eqn{P} when there is no penalty; with the observed
-information of the fit the trace is close to \eqn{P}. With prior weights \eqn{w_i} the block is the
+The matrix \eqn{W_i} and the matrix \eqn{K} are both read on \code{information}.
+With \code{\link[distributions7:expected_info]{distributions7::expected_info()}} the hat matrix is a projection and
+its trace is \eqn{P} when there is no penalty. With
+\code{\link[distributions7:observed_info]{distributions7::observed_info()}} the matrix \eqn{W_i} is the observed
+information of the observation, which can be indefinite; its root is then
+the symmetric square root of the positive part (the eigenvalues that are
+not positive are set to zero, with a zero pseudo-inverse), \code{clipped}
+counts the observations where that happened, and the trace is close to
+\eqn{P} but not equal to it. With prior weights \eqn{w_i} the block is the
 one of the row as a unit, \eqn{w_i} times the block of one of its copies.
 }
 \examples{

@@ -19,14 +19,17 @@ NULL
 #' log-likelihood in the \eqn{d} link-scale predictors. The matrix
 #' \eqn{W_i} is the \eqn{d \times d} information of the observation in those
 #' predictors (the negative second derivative, or its expectation), times the
-#' prior weight. It is always the expected information (with the method of
-#' the fit's information when that is expected, and the closed form of the
-#' family otherwise), because it is the covariance of the score of the
-#' observation under the model and is positive semi-definite, which the
-#' observed information of a single observation is not. Its symmetric square
-#' root \eqn{W_i^{1/2}} is taken from the eigen decomposition. The
-#' pseudo-inverse of the root is kept beside it, since an observation can have
-#' a singular \eqn{W_i}.
+#' prior weight. It follows `expected`: the expected information (with the
+#' method of the fit's information when that is expected, and the closed form
+#' of the family otherwise) or the observed one. The expected information of
+#' one observation is the covariance of its score under the model and is
+#' positive semi-definite; the observed information of one observation can be
+#' indefinite. Its symmetric square root \eqn{W_i^{1/2}} is taken from the
+#' eigen decomposition of the positive part (eigenvalues below
+#' \eqn{10^{-12}} times the largest in absolute value are set to zero), and the
+#' number of observations with a negative eigenvalue is returned as `clipped`.
+#' The pseudo-inverse of the root is kept beside it, since an observation can
+#' have a singular \eqn{W_i}.
 #'
 #' @param fit The [StatmodFit()].
 #' @param design The design of the fit.
@@ -52,12 +55,12 @@ leverage_parts <- function(fit, design, cols, expected, emethod) {
   act <- which(npar > 0L)
   d <- length(act)
   ev <- statmod_eta(spec, design, fit@coefficients)
-  # the roots always come from the EXPECTED information: it is the working
-  # covariance of the scores and is positive semi-definite, where the observed
-  # information of one observation is not. K^-1 keeps the information of the
-  # fit.
+  # the roots follow the information of the fit: the expected one (the working
+  # covariance of the scores, positive semi-definite) or the observed one, whose
+  # per-observation matrix can be indefinite and is then replaced by its
+  # positive part in psd_roots(), the count being returned as `clipped`
   H <- if (expected) statmod_family_hessian(spec, ev$theta, TRUE, emethod) else
-    statmod_family_hessian(spec, ev$theta, TRUE, NULL)
+    statmod_family_hessian(spec, ev$theta, FALSE, NULL)
   w <- spec@weights
   W <- array(0, c(n, d, d))
   for (a in seq_len(d)) {
@@ -228,11 +231,15 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' for a coordinate that the marginal criterion estimates holds the
 #' curvature of that criterion.
 #'
-#' The matrix \eqn{W_i} is the expected information of the observation
-#' whatever `information` is, while \eqn{K} is built from `information`.
-#' With the expected information the hat matrix is a projection
-#' and its trace is \eqn{P} when there is no penalty; with the observed
-#' information of the fit the trace is close to \eqn{P}. With prior weights \eqn{w_i} the block is the
+#' The matrix \eqn{W_i} and the matrix \eqn{K} are both read on `information`.
+#' With [distributions7::expected_info()] the hat matrix is a projection and
+#' its trace is \eqn{P} when there is no penalty. With
+#' [distributions7::observed_info()] the matrix \eqn{W_i} is the observed
+#' information of the observation, which can be indefinite; its root is then
+#' the symmetric square root of the positive part (the eigenvalues that are
+#' not positive are set to zero, with a zero pseudo-inverse), `clipped`
+#' counts the observations where that happened, and the trace is close to
+#' \eqn{P} but not equal to it. With prior weights \eqn{w_i} the block is the
 #' one of the row as a unit, \eqn{w_i} times the block of one of its copies.
 #'
 #' @param fit A [StatmodFit()].
@@ -243,7 +250,9 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' @return A list with `blocks`, an array of dimension \eqn{n \times d \times
 #'   d} of the matrices \eqn{H_{ii}}, `leverage`, the \eqn{n \times d} matrix
 #'   of their diagonals with the equations as columns, and `trace`, the
-#'   vector of the traces. The \eqn{d} equations are those that have
+#'   vector of the traces, and `clipped`, the number of observations whose
+#'   information had a negative eigenvalue set to zero (always zero with the
+#'   expected information). The \eqn{d} equations are those that have
 #'   coefficients. Coordinates whose variance is missing (aliased, or held at
 #'   zero by a penalty) are not part of \eqn{Z_i}.
 #'
@@ -294,5 +303,5 @@ statmod_leverage <- function(fit, information = NULL) {
   lev <- vapply(seq_len(parts$d), function(a) blocks[, a, a], numeric(parts$n))
   lev <- matrix(lev, parts$n, parts$d, dimnames = list(NULL, parts$params))
   tr <- rowSums(lev)
-  list(blocks = blocks, leverage = lev, trace = tr)
+  list(blocks = blocks, leverage = lev, trace = tr, clipped = parts$clipped)
 }

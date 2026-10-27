@@ -21,7 +21,11 @@ order of its columns.}
 }
 \value{
 A function of a character vector of names that returns the degrees
-of freedom, \code{NA} for a name the variance does not cover.
+of freedom, \code{NA} for a name the variance does not cover. Its second
+argument \code{contrast} is a matrix whose rows are named by coordinates and
+whose columns are contrasts; the degrees of freedom of those contrasts
+are returned, \code{NA} for a contrast that reads a coordinate the variance
+does not cover.
 }
 \description{
 Degrees of Freedom Addressed by Coordinate Name

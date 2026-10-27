@@ -360,7 +360,7 @@ statmod_stat_at <- function(fit, param, coefname, value = 0,
   out <- function(s, conv, me = NA_real_) {
     list(test = test, statistic = s, df = 1L,
          p.value = stats::pchisq(s, 1L, lower.tail = FALSE),
-         converged = conv, mode_error = me)
+         converged = conv, mode_error = me, df_denom = Inf)
   }
 
   if (!test_restricted(test)) {
@@ -373,7 +373,10 @@ statmod_stat_at <- function(fit, param, coefname, value = 0,
     res <- out((bhat - value)^2 / v, NA)
     # CR2: the t reference with Satterthwaite degrees of freedom
     dfs <- sandwich_wald_df(fit, vcov_type, lab)
-    if (is.finite(dfs)) res$p.value <- wald_pvalue(sqrt(res$statistic), dfs)
+    if (is.finite(dfs)) {
+      res$p.value <- wald_pvalue(sqrt(res$statistic), dfs)
+      res$df_denom <- dfs
+    }
     return(res)
   }
 
@@ -500,6 +503,10 @@ joint_objective <- function(fit) {
 #' @param estimate The unrestricted estimate of the coefficient.
 #' @param null_value The value against which the coefficient was tested.
 #' @param param,coefficient Which coefficient of which equation.
+#' @param df_denom The denominator degrees of freedom when the statistic is
+#'   referred to an \eqn{F(1, \nu)} distribution, which is the case of a Wald
+#'   statistic under the CR2 variance with a \eqn{t} reference; `Inf`
+#'   otherwise, when the reference is the chi-squared distribution.
 #' @param mode_error How far above its own mode the restricted refit
 #'   stopped, in log-likelihood units; `NA` for the Wald statistic.
 #' @param converged The inner optimizer's flag at the restricted refit;
@@ -539,7 +546,10 @@ StatmodTest <- S7::new_class("StatmodTest",
     # flag beside it. The first is what print() reads; the second is kept
     # because it is what the optimizer reported and a reader may want it
     mode_error = S7::class_numeric,
-    converged = S7::class_logical
+    converged = S7::class_logical,
+    # the denominator degrees of freedom of an F statistic: finite when the
+    # Wald statistic is referred to a t distribution (CR2), infinite otherwise
+    df_denom = S7::new_property(S7::class_numeric, default = Inf)
   )
 )
 
@@ -562,7 +572,12 @@ StatmodTest <- S7::new_class("StatmodTest",
 print.StatmodTest <- function(x, digits = 4L, ...) {
   cat("\n\t", x@test@label, " test on a statmod fit\n\n", sep = "")
   cat("coefficient:  ", x@param, ":", x@coefficient, "\n", sep = "")
-  cat("X-squared = ", format(x@statistic, digits = digits),
+  dd <- if (length(x@df_denom) == 1L) x@df_denom else Inf
+  if (is.finite(dd)) {
+    cat("F(", x@df, ", ", format(dd, digits = digits), ") = ",
+        format(x@statistic, digits = digits), ",  p-value ",
+        format.pval(x@p.value, digits = digits, eps = 1e-16), "\n", sep = "")
+  } else cat("X-squared = ", format(x@statistic, digits = digits),
       ",  df = ", x@df,
       ",  p-value ", format.pval(x@p.value, digits = digits, eps = 1e-16),
       "\n", sep = "")
@@ -671,7 +686,7 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
               p.value = s$p.value, estimate = est,
               null_value = as.numeric(value), param = param,
               coefficient = coefname, mode_error = s$mode_error,
-              converged = s$converged)
+              converged = s$converged, df_denom = s$df_denom)
 }
 
 

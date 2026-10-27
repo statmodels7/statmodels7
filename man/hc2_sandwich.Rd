@@ -79,7 +79,11 @@ coincide with \code{\link[=hc0_sandwich]{hc0_sandwich()}} when the leverage is z
 The correction is the exact bias removal for the linearized fit when the
 working model is the model itself (the observations independent, with
 variance \eqn{W_i^{-1}} for their scores), and it uses the information
-selected in \code{\link[=frequentist_vcov]{frequentist_vcov()}}. With penalties the leverage is that of
+selected in \code{\link[=frequentist_vcov]{frequentist_vcov()}}, for the roots \eqn{W_i^{1/2}} as well as
+for the inverse \eqn{K^{-1}}: with the observed information, an
+observation whose matrix \eqn{W_i} is indefinite contributes the positive
+part, with the pseudo-inverse root (\code{\link[=statmod_leverage]{statmod_leverage()}} returns how many
+observations that concerns). With penalties the leverage is that of
 the penalized fit, so that the sum of the traces is the effective degrees of
 freedom of the model. Prior weights, random effects, aliased coordinates
 and the models that are rejected are treated as at \code{\link[=hc0_sandwich]{hc0_sandwich()}}. Prior

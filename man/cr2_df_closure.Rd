@@ -16,8 +16,11 @@ the rows \code{zr}, the design \code{Zg}, the roots \code{Whg} and the matrix
 \item{Vb}{The inverse penalized information.}
 }
 \value{
-A function of \code{k}, positions among the coordinates of \code{Vb}, that
-returns a numeric vector of degrees of freedom.
+A function of \code{k}, positions among the coordinates of \code{Vb}, and
+\code{contrast}, that returns a numeric vector of degrees of freedom. With
+\code{contrast} (a matrix with one row for each coordinate of \code{Vb} and one
+column for each quantity), the degrees of freedom are those of the
+contrasts \eqn{c'eta} given by the columns, and \code{k} is ignored.
 }
 \description{
 Returns a function that computes the Satterthwaite degrees of freedom of

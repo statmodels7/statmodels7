@@ -55,7 +55,11 @@ NULL
 #' The correction is the exact bias removal for the linearized fit when the
 #' working model is the model itself (the observations independent, with
 #' variance \eqn{W_i^{-1}} for their scores), and it uses the information
-#' selected in [frequentist_vcov()]. With penalties the leverage is that of
+#' selected in [frequentist_vcov()], for the roots \eqn{W_i^{1/2}} as well as
+#' for the inverse \eqn{K^{-1}}: with the observed information, an
+#' observation whose matrix \eqn{W_i} is indefinite contributes the positive
+#' part, with the pseudo-inverse root ([statmod_leverage()] returns how many
+#' observations that concerns). With penalties the leverage is that of
 #' the penalized fit, so that the sum of the traces is the effective degrees of
 #' freedom of the model. Prior weights, random effects, aliased coordinates
 #' and the models that are rejected are treated as at [hc0_sandwich()]. Prior
@@ -295,14 +299,22 @@ sandwich_adjusted <- function(fit, design, Vb, cols, g, id, sw, expected,
 #'   \eqn{(I - H_{gg})^{-1/2}} as `F`.
 #' @param Vb The inverse penalized information.
 #'
-#' @return A function of `k`, positions among the coordinates of `Vb`, that
-#'   returns a numeric vector of degrees of freedom.
+#' @return A function of `k`, positions among the coordinates of `Vb`, and
+#'   `contrast`, that returns a numeric vector of degrees of freedom. With
+#'   `contrast` (a matrix with one row for each coordinate of `Vb` and one
+#'   column for each quantity), the degrees of freedom are those of the
+#'   contrasts \eqn{c'eta} given by the columns, and `k` is ignored.
 #'
 #' @keywords internal
 cr2_df_closure <- function(parts, blk, Vb) {
   force(parts); force(blk); force(Vb)
   Jm <- NULL
-  function(k = seq_len(ncol(Vb)), chunk = 40L) {
+  function(k = seq_len(ncol(Vb)), chunk = 40L, contrast = NULL) {
+    if (!is.null(contrast)) {
+      contrast <- as.matrix(contrast)
+      VCall <- Vb %*% contrast
+      k <- seq_len(ncol(contrast))
+    }
     if (is.null(Jm)) {
       n <- parts$n; d <- parts$d
       ij <- expand.grid(a = seq_len(d), b = seq_len(d))
@@ -320,7 +332,8 @@ cr2_df_closure <- function(parts, blk, Vb) {
     if (!length(k)) return(out)
     for (s0 in seq(1L, length(k), by = chunk)) {
       sel <- s0:min(length(k), s0 + chunk - 1L)
-      VC <- Vb[, k[sel], drop = FALSE]
+      VC <- if (is.null(contrast)) Vb[, k[sel], drop = FALSE] else
+        VCall[, sel, drop = FALSE]
       A <- array(0, c(nrow(Vb), G, length(sel)))
       tau <- matrix(0, G, length(sel))
       for (gi in seq_len(G)) {
@@ -399,12 +412,27 @@ wald_pvalue <- function(stat, df = NULL) {
 #'   order of its columns.
 #'
 #' @return A function of a character vector of names that returns the degrees
-#'   of freedom, `NA` for a name the variance does not cover.
+#'   of freedom, `NA` for a name the variance does not cover. Its second
+#'   argument `contrast` is a matrix whose rows are named by coordinates and
+#'   whose columns are contrasts; the degrees of freedom of those contrasts
+#'   are returned, `NA` for a contrast that reads a coordinate the variance
+#'   does not cover.
 #'
 #' @keywords internal
 sandwich_df_by_name <- function(fn, names) {
   force(fn); force(names)
-  structure(function(nm) {
+  structure(function(nm = NULL, contrast = NULL) {
+    if (!is.null(contrast)) {
+      pos <- match(rownames(contrast), names)
+      miss <- is.na(pos)
+      bad <- if (any(miss)) colSums(contrast[miss, , drop = FALSE] != 0) > 0 else
+        rep(FALSE, ncol(contrast))
+      Cf <- matrix(0, length(names), ncol(contrast))
+      Cf[pos[!miss], ] <- contrast[!miss, , drop = FALSE]
+      res <- rep(NA_real_, ncol(contrast))
+      if (any(!bad)) res[!bad] <- fn(contrast = Cf[, !bad, drop = FALSE])
+      return(res)
+    }
     pos <- match(nm, names)
     res <- rep(NA_real_, length(nm))
     ok <- !is.na(pos)
