@@ -11,8 +11,11 @@
 #' @param cluster `NULL` or a one-sided formula with one variable, such as
 #'   `~ id`.
 #' @param data `NULL` or the data frame that holds the cluster variable.
+#' @param weights `"frequency"` or `"sampling"`, the reading of the prior
+#'   weights.
 #'
-#' @return An S7 object with the properties `type`, `cluster` and `data`.
+#' @return An S7 object with the properties `type`, `cluster`, `data` and
+#'   `weights`.
 #'
 #' @seealso [hc0_sandwich()], [frequentist_vcov()]
 #'
@@ -28,7 +31,8 @@ SandwichMethod <- S7::new_class(
     type = S7::class_character,
     cluster = S7::new_union(NULL, S7::class_formula),
     data = S7::new_union(NULL, S7::class_data.frame),
-    reference = S7::new_property(S7::class_character, default = "normal")
+    reference = S7::new_property(S7::class_character, default = "normal"),
+    weights = S7::new_property(S7::class_character, default = "frequency")
   ),
   validator = function(self) {
     if (length(self@type) != 1L ||
@@ -40,6 +44,10 @@ SandwichMethod <- S7::new_class(
     }
     if (length(self@reference) != 1L || !self@reference %in% c("t", "normal")) {
       return("@reference must be \"t\" or \"normal\".")
+    }
+    if (length(self@weights) != 1L ||
+        !self@weights %in% c("frequency", "sampling")) {
+      return("@weights must be \"frequency\" or \"sampling\".")
     }
     cl <- self@cluster
     if (!is.null(cl) && (length(cl) != 2L || !is.name(cl[[2L]]))) {
@@ -100,24 +108,39 @@ SandwichMethod <- S7::new_class(
 #' and [modelterms7::nl()]) are rejected. [hac_sandwich()] covers the
 #' structural terms.
 #'
-#' The prior weights \eqn{w_i} of [statmod()] are frequency weights: row
-#' \eqn{i} stands for \eqn{w_i} identical observations. Without a cluster
-#' the copies are separate observations and
-#' \eqn{B = \sum_i w_i g_i g_i'}, with \eqn{g_i} the score of one copy, and
-#' \eqn{n = \sum_i w_i} in the HC1 factor. With a cluster the copies stay in
-#' the cluster of the row, so \eqn{U_g = \sum_{i \in g} w_i g_i}, \eqn{G} is
-#' the number of clusters with positive weight and \eqn{n = \sum_i w_i}. A
-#' row with weight zero contributes nothing and is not counted. The result
-#' equals the unweighted estimator on the data expanded to \eqn{w_i} copies
-#' of each row, for integer weights.
+#' The prior weights \eqn{w_i} of [statmod()] multiply the log-likelihood, and
+#' the argument `weights` says how the sandwich reads them. With
+#' `weights = "frequency"` (the default) row \eqn{i} stands for \eqn{w_i}
+#' identical observations. Without a cluster the copies are separate
+#' observations and \eqn{B = \sum_i w_i g_i g_i'}, with \eqn{g_i} the score of
+#' one copy, and \eqn{n = \sum_i w_i} in the HC1 factor. With a cluster the
+#' copies stay in the cluster of the row, so
+#' \eqn{U_g = \sum_{i \in g} w_i g_i}, \eqn{G} is the number of clusters with
+#' positive weight and \eqn{n = \sum_i w_i}. A row with weight zero
+#' contributes nothing and is not counted. The result equals the unweighted
+#' estimator on the data expanded to \eqn{w_i} copies of each row, for
+#' integer weights, and it changes when every weight is multiplied by a
+#' constant.
+#'
+#' With `weights = "sampling"` the weights are sampling weights, such as the
+#' inverse probabilities of selection of a survey, and each row is one unit
+#' whose score is the weighted score \eqn{w_i g_i}. Without a cluster
+#' \eqn{B = \sum_i w_i^2 g_i g_i'} and \eqn{n} in the HC1 factor is the number
+#' of rows with positive weight. With a cluster \eqn{B} is the same as under
+#' the frequency reading, and only the \eqn{n} of the CR1 factor differs. The
+#' variance does not change when every weight is multiplied by a constant. The
+#' point estimates are the same under both readings, and so are the variances
+#' of the other conventions, which read the weights as frequencies.
 #'
 #' @param cluster `NULL` (the default) or a one-sided formula with a single
 #'   variable of the data, such as `~ id`.
 #' @param data `NULL` (the default) or the data frame that holds the cluster
 #'   variable, with one row for each observation of the fit.
+#' @param weights `"frequency"` (the default) or `"sampling"`: whether the
+#'   prior weights of the fit are frequencies or sampling weights.
 #'
 #' @return A `SandwichMethod` object with the properties `type` (`"HC0"` or
-#'   `"HC1"`), `cluster` and `data`.
+#'   `"HC1"`), `cluster`, `data` and `weights`.
 #'
 #' @references
 #' White, H. (1980). A heteroskedasticity-consistent covariance matrix
@@ -151,19 +174,24 @@ SandwichMethod <- S7::new_class(
 #'   sandwich = hc1_sandwich(cluster = ~ id)), param = "mu")
 #' @name hc0_sandwich
 #' @export
-hc0_sandwich <- function(cluster = NULL, data = NULL) {
-  SandwichMethod(type = "HC0", cluster = cluster, data = data)
+hc0_sandwich <- function(cluster = NULL, data = NULL,
+                         weights = c("frequency", "sampling")) {
+  SandwichMethod(type = "HC0", cluster = cluster, data = data,
+                 weights = match.arg(weights))
 }
 
 #' @rdname hc0_sandwich
 #' @export
-hc1_sandwich <- function(cluster = NULL, data = NULL) {
-  SandwichMethod(type = "HC1", cluster = cluster, data = data)
+hc1_sandwich <- function(cluster = NULL, data = NULL,
+                         weights = c("frequency", "sampling")) {
+  SandwichMethod(type = "HC1", cluster = cluster, data = data,
+                 weights = match.arg(weights))
 }
 
 S7::method(print, SandwichMethod) <- function(x, ...) {
   cat("<sandwich> ", x@type,
       if (!is.null(x@cluster)) paste0(" clustered by ", all.vars(x@cluster)),
+      if (identical(x@weights, "sampling")) ", sampling weights",
       "\n", sep = "")
   invisible(x)
 }
@@ -314,6 +342,7 @@ sandwich_vcov <- function(fit, design, Vb, cols, sw, expected = FALSE,
   }
   w <- spec@weights
   g <- statmod_score_obs(spec, fit@coefficients, design)
+  sampling <- identical(sw@weights, "sampling")
   df_fn <- NULL
   if (sw@type %in% c("HC2", "HC3", "HC4")) {
     if (is.null(lev_info)) {
@@ -328,12 +357,14 @@ sandwich_vcov <- function(fit, design, Vb, cols, sw, expected = FALSE,
   # g already carries w_i. Without a cluster the meat is sum w_i g_i g_i',
   # the meat of w_i separate copies of row i, so each row enters as
   # g_i sqrt(w_i) = (w_i g_i) / sqrt(w_i). With a cluster the copies stay in
-  # their cluster, and U_g sums w_i g_i as it stands.
-  if (is.null(id)) {
+  # their cluster, and U_g sums w_i g_i as it stands. Under the sampling
+  # reading a row is one unit with score w_i g_i, so nothing is rescaled and
+  # n counts the rows.
+  if (is.null(id) && !sampling) {
     sw_row <- ifelse(w > 0, 1 / sqrt(w), 0)
     g <- lapply(g, function(v) v * sw_row)
   }
-  n <- sum(w)
+  n <- if (sampling) sum(w > 0) else sum(w)
   blocks <- list()
   for (q in spec@distrib@params) {
     d <- design[[q]]

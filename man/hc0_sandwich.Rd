@@ -5,9 +5,9 @@
 \alias{hc1_sandwich}
 \title{Sandwich Variance of the Coefficients}
 \usage{
-hc0_sandwich(cluster = NULL, data = NULL)
+hc0_sandwich(cluster = NULL, data = NULL, weights = c("frequency", "sampling"))
 
-hc1_sandwich(cluster = NULL, data = NULL)
+hc1_sandwich(cluster = NULL, data = NULL, weights = c("frequency", "sampling"))
 }
 \arguments{
 \item{cluster}{\code{NULL} (the default) or a one-sided formula with a single
@@ -15,10 +15,13 @@ variable of the data, such as \code{~ id}.}
 
 \item{data}{\code{NULL} (the default) or the data frame that holds the cluster
 variable, with one row for each observation of the fit.}
+
+\item{weights}{\code{"frequency"} (the default) or \code{"sampling"}: whether the
+prior weights of the fit are frequencies or sampling weights.}
 }
 \value{
 A \code{SandwichMethod} object with the properties \code{type} (\code{"HC0"} or
-\code{"HC1"}), \code{cluster} and \code{data}.
+\code{"HC1"}), \code{cluster}, \code{data} and \code{weights}.
 }
 \description{
 Select the meat of the frequentist variance \eqn{V = V_b B V_b}, with
@@ -68,16 +71,29 @@ with a term whose block moves with its coefficients (the break-point terms
 and \code{\link[modelterms7:nl]{modelterms7::nl()}}) are rejected. \code{\link[=hac_sandwich]{hac_sandwich()}} covers the
 structural terms.
 
-The prior weights \eqn{w_i} of \code{\link[=statmod]{statmod()}} are frequency weights: row
-\eqn{i} stands for \eqn{w_i} identical observations. Without a cluster
-the copies are separate observations and
-\eqn{B = \sum_i w_i g_i g_i'}, with \eqn{g_i} the score of one copy, and
-\eqn{n = \sum_i w_i} in the HC1 factor. With a cluster the copies stay in
-the cluster of the row, so \eqn{U_g = \sum_{i \in g} w_i g_i}, \eqn{G} is
-the number of clusters with positive weight and \eqn{n = \sum_i w_i}. A
-row with weight zero contributes nothing and is not counted. The result
-equals the unweighted estimator on the data expanded to \eqn{w_i} copies
-of each row, for integer weights.
+The prior weights \eqn{w_i} of \code{\link[=statmod]{statmod()}} multiply the log-likelihood, and
+the argument \code{weights} says how the sandwich reads them. With
+\code{weights = "frequency"} (the default) row \eqn{i} stands for \eqn{w_i}
+identical observations. Without a cluster the copies are separate
+observations and \eqn{B = \sum_i w_i g_i g_i'}, with \eqn{g_i} the score of
+one copy, and \eqn{n = \sum_i w_i} in the HC1 factor. With a cluster the
+copies stay in the cluster of the row, so
+\eqn{U_g = \sum_{i \in g} w_i g_i}, \eqn{G} is the number of clusters with
+positive weight and \eqn{n = \sum_i w_i}. A row with weight zero
+contributes nothing and is not counted. The result equals the unweighted
+estimator on the data expanded to \eqn{w_i} copies of each row, for
+integer weights, and it changes when every weight is multiplied by a
+constant.
+
+With \code{weights = "sampling"} the weights are sampling weights, such as the
+inverse probabilities of selection of a survey, and each row is one unit
+whose score is the weighted score \eqn{w_i g_i}. Without a cluster
+\eqn{B = \sum_i w_i^2 g_i g_i'} and \eqn{n} in the HC1 factor is the number
+of rows with positive weight. With a cluster \eqn{B} is the same as under
+the frequency reading, and only the \eqn{n} of the CR1 factor differs. The
+variance does not change when every weight is multiplied by a constant. The
+point estimates are the same under both readings, and so are the variances
+of the other conventions, which read the weights as frequencies.
 }
 \examples{
 set.seed(1)

@@ -69,7 +69,9 @@ NULL
 #' weights enter the leverage through \eqn{W_i}; without a cluster the leverage
 #' of one of the \eqn{w_i} copies of a row is \eqn{1/w_i} times that of the
 #' row, which is what the estimator uses, and with a cluster the copies of a
-#' row are corrected within the cluster.
+#' row are corrected within the cluster. With `weights = "sampling"` and no
+#' cluster the leverage is that of the row, not divided by \eqn{w_i}, and the
+#' mean leverage of HC4 is the mean over the rows with positive weight.
 #'
 #' **Few clusters.** With CR2 and `reference = "t"` (the default),
 #' [confint.StatmodFit()] and the Wald rows of [summary.StatmodFit()] and
@@ -93,9 +95,12 @@ NULL
 #' @param reference For `hc2_sandwich()` with a `cluster`: `"t"` (the default)
 #'   or `"normal"`, the reference distribution of the Wald intervals and
 #'   tests.
+#' @param weights `"frequency"` (the default) or `"sampling"`: whether the
+#'   prior weights of the fit are frequencies or sampling weights, as at
+#'   [hc0_sandwich()].
 #'
 #' @return A `SandwichMethod` object with the properties `type` (`"HC2"`,
-#'   `"HC3"` or `"HC4"`), `cluster`, `data` and `reference`.
+#'   `"HC3"` or `"HC4"`), `cluster`, `data`, `reference` and `weights`.
 #'
 #' @references
 #' MacKinnon, J. G. and White, H. (1985). Some heteroskedasticity-consistent
@@ -127,21 +132,25 @@ NULL
 #' @name hc2_sandwich
 #' @export
 hc2_sandwich <- function(cluster = NULL, data = NULL,
-                         reference = c("t", "normal")) {
+                         reference = c("t", "normal"),
+                         weights = c("frequency", "sampling")) {
   SandwichMethod(type = "HC2", cluster = cluster, data = data,
-                 reference = match.arg(reference))
+                 reference = match.arg(reference),
+                 weights = match.arg(weights))
 }
 
 #' @rdname hc2_sandwich
 #' @export
-hc3_sandwich <- function(cluster = NULL, data = NULL) {
-  SandwichMethod(type = "HC3", cluster = cluster, data = data)
+hc3_sandwich <- function(cluster = NULL, data = NULL,
+                         weights = c("frequency", "sampling")) {
+  SandwichMethod(type = "HC3", cluster = cluster, data = data,
+                 weights = match.arg(weights))
 }
 
 #' @rdname hc2_sandwich
 #' @export
-hc4_sandwich <- function() {
-  SandwichMethod(type = "HC4")
+hc4_sandwich <- function(weights = c("frequency", "sampling")) {
+  SandwichMethod(type = "HC4", weights = match.arg(weights))
 }
 
 
@@ -235,14 +244,15 @@ sandwich_adjusted <- function(fit, design, Vb, cols, g, id, sw, expected,
     Hb <- leverage_blocks(parts, Vl)
     pos <- w > 0
     Hc <- Hb
-    for (a in seq_len(d)) for (b in seq_len(d)) {
+    sampling <- identical(sw@weights, "sampling")
+    if (!sampling) for (a in seq_len(d)) for (b in seq_len(d)) {
       Hc[, a, b] <- ifelse(pos, Hb[, a, b] / ifelse(pos, w, 1), 0)
     }
     tr <- vapply(seq_len(d), function(a) Hc[, a, a], numeric(n))
     tr <- rowSums(matrix(tr, n, d))
     pw <- sandwich_power(sw@type)
     if (is.na(pw)) {
-      hbar <- sum(w * tr) / sum(w)
+      hbar <- if (sampling) mean(tr[pos]) else sum(w * tr) / sum(w)
       delta <- pmin(4, tr / hbar)
       pw_i <- -delta / 2
     } else pw_i <- rep(pw, n)
