@@ -23,13 +23,15 @@ Signals an error for a model that the bootstrap of \code{\link[=add_bootstrap]{a
 not cover.
 }
 \details{
-A model with a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}},
-\code{\link[modelterms7:regime]{modelterms7::regime()}}), a block that moves with its coefficients
-(\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:jseg]{modelterms7::jseg()}},
-\code{\link[modelterms7:nl]{modelterms7::nl()}}) and a response that is not one number per observation
-is rejected. So are \code{refit = "full"} with a \code{\link[=cv]{cv()}} criterion, which needs
-the folds of the data, the case scheme beside a \code{\link[modelterms7:random]{modelterms7::random()}}
-term, and the cluster scheme beside a random-effect term that
-\code{\link[=boot_cluster_random_check]{boot_cluster_random_check()}} cannot regroup.
+A response that is not one number per observation is rejected. So are
+\code{refit = "full"} with a \code{\link[=cv]{cv()}} criterion, which needs the folds of the
+data, the case scheme beside a \code{\link[modelterms7:random]{modelterms7::random()}} term, and the
+cluster scheme beside a random-effect term that
+\code{\link[=boot_cluster_random_check]{boot_cluster_random_check()}} cannot regroup. A model with a structural
+term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}) takes
+\code{\link[=parametric_resample]{parametric_resample()}} only; a model with a block that moves with its
+coefficients (\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}},
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}}) takes any scheme and is
+refitted by \code{\link[=boot_refit_breakpoint]{boot_refit_breakpoint()}}.
 }
 \keyword{internal}

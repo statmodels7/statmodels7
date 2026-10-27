@@ -148,6 +148,7 @@ reference:
   - hc0_sandwich
   - hc2_sandwich
   - statmod_leverage
+  - hac_sandwich
   - unconditional_vcov
   - bootstrap_vcov
 

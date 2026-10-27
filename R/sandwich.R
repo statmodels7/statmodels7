@@ -97,7 +97,8 @@ SandwichMethod <- S7::new_class(
 #'
 #' Models with a structural term ([modelterms7::gas()], [modelterms7::regime()]),
 #' with a term whose block moves with its coefficients (the break-point terms
-#' and [modelterms7::nl()]) are rejected.
+#' and [modelterms7::nl()]) are rejected. [hac_sandwich()] covers the
+#' structural terms.
 #'
 #' The prior weights \eqn{w_i} of [statmod()] are frequency weights: row
 #' \eqn{i} stands for \eqn{w_i} identical observations. Without a cluster

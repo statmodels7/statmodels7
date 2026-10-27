@@ -245,12 +245,13 @@ test_that("the settings the bootstrap does not cover are rejected", {
                "resample_method")
   expect_error(cluster_resample(y ~ x), "one-sided")
   expect_error(bootstrap_vcov(refit = "partial"), "coefficients")
-  # a model that moves a block with its coefficients
+  # a model that moves a block with its coefficients is bootstrapped, see
+  # test-bootstrap-structural.R
   set.seed(8)
   ds <- data.frame(x = runif(120))
   ds$y <- ifelse(ds$x < 0.5, ds$x, 0.5 + 2 * (ds$x - 0.5)) + rnorm(120, sd = 0.1)
   fsg <- quiet(statmod(y ~ seg(x, psi = 0.4), g1, ds))
-  expect_error(add_bootstrap(fsg, n = 3), "moves with its coefficients")
+  expect_no_error(add_bootstrap(fsg, n = 2, resample = case_resample()))
   # a replicate set belongs to the fit that computed it
   fit <- hf$fit
   set.seed(1)

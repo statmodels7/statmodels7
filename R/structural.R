@@ -1632,6 +1632,9 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #'
 #' @param fit A [StatmodFit()].
 #' @param level The interval's level, `0.95` by default.
+#' @param vcov_type `NULL` or a [vcov_method] object. A frequentist variance with
+#'   [hac_sandwich()] replaces the inverse information by the HAC variance
+#'   over the same unknowns; any other value leaves the inverse information.
 #'
 #' @return A data frame with one row per quantity that each structural term
 #'   reports and the columns `parameter`, `term`, `name`, `estimate`, `se`,
@@ -1646,7 +1649,7 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #'   [coef.StatmodFit()] for the same parameters without their uncertainty
 #'
 #' @keywords internal
-statmod_structural_table <- function(fit, level = 0.95) {
+statmod_structural_table <- function(fit, level = 0.95, vcov_type = NULL) {
   spec <- fit@spec
   design <- statmod_design(spec)
   su <- attr(design, "structural")
@@ -1693,6 +1696,10 @@ statmod_structural_table <- function(fit, level = 0.95) {
     keep <- setdiff(seq_len(nrow(I)), term_held_stack(spec, design))
     Vk <- matrix(0, nrow(I), nrow(I))
     Vk[keep, keep] <- solve(I[keep, keep, drop = FALSE])
+    if (S7::S7_inherits(vcov_type, FrequentistVcov) &&
+        S7::S7_inherits(vcov_type@sandwich, HacSandwich)) {
+      Vk <- hac_joint(fit, design, Vk, vcov_type@sandwich)
+    }
     Vk
   }, error = function(e) NULL)
   z <- stats::qnorm(1 - (1 - level) / 2)

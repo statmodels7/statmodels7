@@ -65,7 +65,8 @@ given the random effects.
 
 Models with a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}),
 with a term whose block moves with its coefficients (the break-point terms
-and \code{\link[modelterms7:nl]{modelterms7::nl()}}) are rejected.
+and \code{\link[modelterms7:nl]{modelterms7::nl()}}) are rejected. \code{\link[=hac_sandwich]{hac_sandwich()}} covers the
+structural terms.
 
 The prior weights \eqn{w_i} of \code{\link[=statmod]{statmod()}} are frequency weights: row
 \eqn{i} stands for \eqn{w_i} identical observations. Without a cluster

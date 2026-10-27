@@ -1,4 +1,4 @@
-#' @include predict.R sandwich.R
+#' @include predict.R sandwich.R sandwich_hac.R
 NULL
 
 # The two choices that every inference function of a fit shares, written as
@@ -556,7 +556,7 @@ BayesianVcov <- S7::new_class("BayesianVcov", parent = vcov_method,
 #' @keywords internal
 FrequentistVcov <- S7::new_class("FrequentistVcov", parent = vcov_method,
   properties = list(information = S7::new_union(NULL, distributions7::Information),
-                    sandwich = S7::new_union(NULL, SandwichMethod)))
+                    sandwich = S7::new_union(NULL, SandwichMethod, HacSandwich)))
 
 #' @rdname BayesianVcov
 #' @keywords internal
@@ -650,10 +650,12 @@ bayesian_vcov <- function(information = NULL) {
 #' conventions side by side and [vcov.StatmodFit()] for the matrices in full.
 #'
 #' @inheritParams bayesian_vcov
-#' @param sandwich `NULL` (the default) or an object from [hc0_sandwich()] or
-#'   [hc1_sandwich()]. `NULL` keeps \eqn{H} as the meat, the matrix above.
-#'   Otherwise the meat is built from the scores of the observations and the
-#'   matrix is the robust sandwich variance described at [hc0_sandwich()].
+#' @param sandwich `NULL` (the default) or an object from [hc0_sandwich()],
+#'   [hc1_sandwich()] or [hac_sandwich()]. `NULL` keeps \eqn{H} as the meat,
+#'   the matrix above. Otherwise the meat is built from the scores of the
+#'   observations and the matrix is the robust sandwich variance described at
+#'   [hc0_sandwich()], or the HAC variance for dependent observations
+#'   described at [hac_sandwich()].
 #'
 #' @return A `FrequentistVcov` object, inheriting from [vcov_method], with the
 #'   property `name` equal to `"frequentist"` and the properties `information`
@@ -678,9 +680,10 @@ bayesian_vcov <- function(information = NULL) {
 frequentist_vcov <- function(information = NULL, sandwich = NULL) {
   check_information(information, arg = "information", fn = "frequentist_vcov",
                     auto = FALSE, null = TRUE)
-  if (!is.null(sandwich) && !S7::S7_inherits(sandwich, SandwichMethod)) {
+  if (!is.null(sandwich) && !S7::S7_inherits(sandwich, SandwichMethod) &&
+      !S7::S7_inherits(sandwich, HacSandwich)) {
     stop(paste0("'sandwich' must be NULL or an object such as ",
-                "hc0_sandwich() or hc1_sandwich()."), call. = FALSE)
+                "hc0_sandwich(), hc1_sandwich() or hac_sandwich()."), call. = FALSE)
   }
   FrequentistVcov(name = "frequentist", information = information,
                   sandwich = sandwich)
