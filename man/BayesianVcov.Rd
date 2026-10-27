@@ -8,7 +8,7 @@
 \usage{
 BayesianVcov(name = character(0), information = NULL)
 
-FrequentistVcov(name = character(0), information = NULL)
+FrequentistVcov(name = character(0), information = NULL, sandwich = NULL)
 
 UnconditionalVcov(name = character(0), information = NULL)
 }

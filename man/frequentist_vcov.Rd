@@ -4,7 +4,7 @@
 \alias{frequentist_vcov}
 \title{Frequentist Variance of a Fit}
 \usage{
-frequentist_vcov(information = NULL)
+frequentist_vcov(information = NULL, sandwich = NULL)
 }
 \arguments{
 \item{information}{\code{NULL} (the default) or the matrix \eqn{H}, an object that
@@ -34,10 +34,16 @@ depend on how the fit was computed (\code{inner_information} of \code{\link[=sta
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix when it is not the observed
 one, and a printed variance object states the information that it names.
 \link{information_objects} compares the objects.}
+
+\item{sandwich}{\code{NULL} (the default) or an object from \code{\link[=hc0_sandwich]{hc0_sandwich()}} or
+\code{\link[=hc1_sandwich]{hc1_sandwich()}}. \code{NULL} keeps \eqn{H} as the meat, the matrix above.
+Otherwise the meat is built from the scores of the observations and the
+matrix is the robust sandwich variance described at \code{\link[=hc0_sandwich]{hc0_sandwich()}}.}
 }
 \value{
 A \code{FrequentistVcov} object, inheriting from \link{vcov_method}, with the
-property \code{name} equal to \code{"frequentist"} and the property \code{information}.
+property \code{name} equal to \code{"frequentist"} and the properties \code{information}
+and \code{sandwich}.
 }
 \description{
 Selects the sandwich variance
@@ -61,6 +67,7 @@ frequentist_vcov()
 vcov(fit, vcov_type = frequentist_vcov())
 summary(fit, vcov_type = frequentist_vcov())
 frequentist_vcov(information = distributions7::expected_info())
+frequentist_vcov(sandwich = hc1_sandwich())
 }
 \seealso{
 \code{\link[=bayesian_vcov]{bayesian_vcov()}} and \code{\link[=unconditional_vcov]{unconditional_vcov()}} for the siblings,
