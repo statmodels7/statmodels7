@@ -113,5 +113,5 @@ dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.3)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 lv <- statmod_leverage(fit)
 range(lv$leverage[, "mu"] - hatvalues(lm(y ~ x, dd)))
-#> [1] -1.804112e-16  1.387779e-17
+#> [1] 3.469447e-18 2.498002e-16
 ```
