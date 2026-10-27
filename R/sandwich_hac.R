@@ -291,21 +291,18 @@ joint_scores <- function(spec, coef, design = statmod_design(spec)) {
 #' The Scores of the Increments of a Regime Likelihood
 #'
 #' @description
-#' Differentiates, in forward mode, the increment
+#' Returns the derivative of the increment
 #' \eqn{\log p(y_t \mid y_1, \dots, y_{t-1})} of the scaled forward recursion
 #' of a [modelterms7::regime()] term, in the unknowns of [joint_scores()].
 #'
 #' @details
-#' It is the first-order part of the recursion of
-#' [modelterms7::term_hessian()], which accumulates the same quantities into
-#' their sum and returns only the sum. The state \eqn{a_t} and its derivative
-#' are carried, the increment is \eqn{\log c_t} with \eqn{c_t} the
-#' normalizing constant of the step, and its derivative is
-#' \eqn{\dot c_t / c_t}. The chart of the chain, the levels and their
-#' derivatives are those of the term, from the internal function that
-#' [modelterms7::term_hessian()] calls. The groups run in the order of the
-#' term's blueprint. The sum of the rows, weighted, is the `gradient` of
-#' [modelterms7::term_hessian()].
+#' The recursion is that of [modelterms7::term_scores()], which receives the
+#' log-density and its score in the predictors of the distribution, the
+#' derivative of each predictor in the unknowns, and the columns of the
+#' term's own parameters. The groups run in the order of the term's
+#' blueprint. The sum of the rows, weighted, is the `gradient` of
+#' [modelterms7::term_hessian()]. The columns of a level that the term holds
+#' are dropped.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
@@ -319,7 +316,6 @@ regime_scores <- function(spec, coef, design, ev) {
   params <- spec@distrib@params
   links <- spec@distrib@link_params
   n <- spec@n_obs
-  w <- spec@weights
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   nb <- sum(npar)
@@ -328,7 +324,6 @@ regime_scores <- function(spec, coef, design, ev) {
   zn <- modelterms7::term_params(r$tm)
   np <- length(zn)
   m <- nb + np
-  cols <- nb + seq_len(np)
   Vs <- lapply(seq_along(params), function(a) {
     M <- matrix(0, n, m)
     if (npar[a] > 0L) {
@@ -346,64 +341,23 @@ regime_scores <- function(spec, coef, design, ev) {
     if (is.matrix(spec@response)) spec@response[i, , drop = FALSE]
     else spec@response[i]
   }
-  tm <- r$tm
-  bp <- tm@blueprint
-  v <- unlist(r$psi[zn])
-  k <- tm@k
-  chart <- utils::getFromNamespace(".regime_chart", "modelterms7")
-  ch <- chart(v, k, zn, tm@chain)
-  idx <- seq_len(n)
-  LF <- matrix(0, n, k)
-  GM <- vector("list", k)
-  for (j in seq_len(k)) {
-    e <- rep_len(r$eta_static, n) + ch$mu[j]
-    LF[, j] <- as.numeric(distributions7::distrib_pdf(
-      spec@distrib, yof(idx), theta_at(e, idx), log = TRUE,
+  logdens <- function(e, i) {
+    as.numeric(distributions7::distrib_pdf(
+      spec@distrib, yof(i), theta_at(e, i), log = TRUE,
       threads = spec@threads))
-    g <- distributions7::distrib_gradient(spec@distrib, yof(idx),
-                                          theta_at(e, idx), scale = "link",
+  }
+  grad <- function(e, i) {
+    g <- distributions7::distrib_gradient(spec@distrib, yof(i),
+                                          theta_at(e, i), scale = "link",
                                           threads = spec@threads)
-    gm <- matrix(0, n, m)
-    for (q in seq_along(params)) {
-      gm <- gm + rep_len(as.numeric(g[[params[q]]]), n) * Vs[[q]]
-    }
-    gm[, cols] <- gm[, cols] + outer(rep_len(as.numeric(g[[r$param]]), n),
-                                     ch$dmu[j, ])
-    GM[[j]] <- gm
+    do.call(cbind, lapply(params, function(q) {
+      rep_len(as.numeric(g[[q]]), length(i))
+    }))
   }
-  P <- ch$P
-  U <- matrix(0, n, m)
-  for (rows in bp$order) {
-    a <- ch$delta
-    da <- matrix(0, k, m)
-    da[, cols] <- t(do.call(rbind, ch$ddelta))
-    for (tt in seq_along(rows)) {
-      row <- rows[tt]
-      lf <- LF[row, ]
-      wv <- exp(lf - max(lf))
-      if (tt == 1L) {
-        pred <- a
-        dpred <- da
-      } else {
-        pred <- as.numeric(a %*% P)
-        dpred <- crossprod(P, da)
-        for (l in seq_len(k)) {
-          Dl <- matrix(ch$dPz[, l, ], k, ch$np)
-          dpred[l, cols] <- dpred[l, cols] + as.numeric(a %*% Dl)
-        }
-      }
-      atil <- wv * pred
-      datil <- matrix(0, k, m)
-      for (l in seq_len(k)) {
-        datil[l, ] <- wv[l] * (GM[[l]][row, ] * pred[l] + dpred[l, ])
-      }
-      ct <- sum(atil)
-      dct <- colSums(datil)
-      U[row, ] <- w[row] * dct / ct
-      a <- atil / ct
-      da <- (datil - outer(atil, dct) / ct) / ct
-    }
-  }
+  U <- modelterms7::term_scores(
+    r$tm, eta = rep_len(r$eta_static, n), y = spec@response,
+    logdens = logdens, grad = grad, psi = r$psi[zn], seed = Vs,
+    cols = nb + seq_len(np), level = ap, weights = spec@weights)
   held <- statmod_structural_state(design)$held[[r$term]]
   if (length(held)) U <- U[, -(nb + match(held, zn)), drop = FALSE]
   U

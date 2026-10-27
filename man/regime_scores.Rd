@@ -19,20 +19,17 @@ regime_scores(spec, coef, design, ev)
 A matrix as \code{\link[=joint_scores]{joint_scores()}} returns it.
 }
 \description{
-Differentiates, in forward mode, the increment
+Returns the derivative of the increment
 \eqn{\log p(y_t \mid y_1, \dots, y_{t-1})} of the scaled forward recursion
 of a \code{\link[modelterms7:regime]{modelterms7::regime()}} term, in the unknowns of \code{\link[=joint_scores]{joint_scores()}}.
 }
 \details{
-It is the first-order part of the recursion of
-\code{\link[modelterms7:term_hessian]{modelterms7::term_hessian()}}, which accumulates the same quantities into
-their sum and returns only the sum. The state \eqn{a_t} and its derivative
-are carried, the increment is \eqn{\log c_t} with \eqn{c_t} the
-normalizing constant of the step, and its derivative is
-\eqn{\dot c_t / c_t}. The chart of the chain, the levels and their
-derivatives are those of the term, from the internal function that
-\code{\link[modelterms7:term_hessian]{modelterms7::term_hessian()}} calls. The groups run in the order of the
-term's blueprint. The sum of the rows, weighted, is the \code{gradient} of
-\code{\link[modelterms7:term_hessian]{modelterms7::term_hessian()}}.
+The recursion is that of \code{\link[modelterms7:term_scores]{modelterms7::term_scores()}}, which receives the
+log-density and its score in the predictors of the distribution, the
+derivative of each predictor in the unknowns, and the columns of the
+term's own parameters. The groups run in the order of the term's
+blueprint. The sum of the rows, weighted, is the \code{gradient} of
+\code{\link[modelterms7:term_hessian]{modelterms7::term_hessian()}}. The columns of a level that the term holds
+are dropped.
 }
 \keyword{internal}
