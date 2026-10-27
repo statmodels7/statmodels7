@@ -169,6 +169,9 @@ reference:
     penalized block, a random effect or a structural term.
   contents:
   - plot_effect
+  - plot_derivative
+  - plot_surface
+  - plot_criterion
 
 - title: Installing and updating
   desc: >
