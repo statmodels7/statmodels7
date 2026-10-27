@@ -30,6 +30,7 @@ The weights multiply the weights of the fit. A cluster replicate gives the
 observations of a group the number of times that the group was drawn. The
 attribute \code{kind} of the result is \code{"parametric"} or \code{"weights"}; \code{targets}
 lists the random-effect coordinates of a parametric draw, and \code{random} says
-whether the effects are redrawn.
+whether the effects are redrawn. A cluster scheme beside random effects
+returns the plan of \code{\link[=boot_cluster_random_plan]{boot_cluster_random_plan()}}, of kind \code{"regrouped"}.
 }
 \keyword{internal}

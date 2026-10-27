@@ -231,8 +231,8 @@ test_that("the settings the bootstrap does not cover are rejected", {
   fr <- statmod(y ~ x + random(~ 1 | g), g1, gg)
   expect_error(add_bootstrap(fr, n = 3, resample = case_resample()),
                "cluster_resample")
-  expect_error(add_bootstrap(fr, n = 3, resample = cluster_resample(~ g)),
-               "not yet available")
+  expect_equal(statmod_bootstrap(add_bootstrap(fr, n = 3,
+    resample = cluster_resample(~ g)))$replicates, 3L)
   hf <- het_fit(60, 2)
   set.seed(3)
   dl <- data.frame(matrix(rnorm(300), 60))

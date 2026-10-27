@@ -2,9 +2,12 @@
 % Please edit documentation in R/bootstrap_engine.R
 \name{boot_cluster_ids}
 \alias{boot_cluster_ids}
+\alias{boot_cluster_data}
 \title{The Groups of a Cluster Bootstrap}
 \usage{
 boot_cluster_ids(object, resample, spec0)
+
+boot_cluster_data(object, resample, spec0)
 }
 \arguments{
 \item{object}{The \code{\link[=StatmodFit]{StatmodFit()}}.}

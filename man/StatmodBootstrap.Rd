@@ -36,8 +36,9 @@ per coordinate, in the order of \code{coef(fit, readable = FALSE)};}
 \code{refit = "full"}, and \code{NULL} otherwise;}
 \item{\code{n}, \code{resample}, \code{refit}}{the number of replicates, the
 \link{resample_method} and the refit;}
-\item{\code{random}}{how the random effects were treated: \code{"redrawn"} or
-\code{"none"};}
+\item{\code{random}}{how the random effects were treated: \code{"redrawn"},
+\code{"regrouped"} (a cluster scheme that gave the groups drawn again new
+levels, with the random-effect coordinates missing) or \code{"none"};}
 \item{\code{status}}{an integer for every draw of the stream up to the last
 replicate kept: 0 for a replicate that was kept, 1 for an error, 2
 for a mode error above \code{\link[=mode_error_limit]{mode_error_limit()}} and 3 for a coefficient
