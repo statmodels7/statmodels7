@@ -558,7 +558,8 @@ StatmodBootstrap <- S7::new_class("StatmodBootstrap",
     seed = S7::class_list,
     fingerprint = S7::class_numeric,
     raw = S7::class_any,
-    raw_cols = S7::class_any
+    raw_cols = S7::class_any,
+    jackknife = S7::class_any
   )
 )
 

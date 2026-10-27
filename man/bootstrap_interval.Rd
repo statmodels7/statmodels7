@@ -4,8 +4,10 @@
 \alias{bootstrap_interval}
 \alias{PercentileInterval}
 \alias{BasicInterval}
+\alias{BcaInterval}
 \alias{percentile_interval}
 \alias{basic_interval}
+\alias{bca_interval}
 \title{Bootstrap Intervals for the Coefficients of a Fit}
 \usage{
 bootstrap_interval(
@@ -32,9 +34,19 @@ BasicInterval(
   refit = NULL
 )
 
+BcaInterval(
+  name = character(0),
+  label = character(0),
+  n = NULL,
+  resample = NULL,
+  refit = NULL
+)
+
 percentile_interval(n = NULL, resample = NULL, refit = NULL)
 
 basic_interval(n = NULL, resample = NULL, refit = NULL)
+
+bca_interval(n = NULL, resample = NULL, refit = NULL)
 }
 \arguments{
 \item{name}{A single string, the short name of the interval.}
@@ -48,19 +60,20 @@ basic_interval(n = NULL, resample = NULL, refit = NULL)
 \item{refit}{\code{"coefficients"}, \code{"full"} or \code{NULL}.}
 }
 \value{
-\code{percentile_interval()} and \code{basic_interval()} return an object
-that inherits from \code{bootstrap_interval}, with the properties \code{name},
-\code{label}, \code{n}, \code{resample} and \code{refit}. \code{bootstrap_interval} returns
-nothing: its constructor signals an error.
+\code{percentile_interval()}, \code{basic_interval()} and \code{bca_interval()}
+return an object that inherits from \code{bootstrap_interval}, with the
+properties \code{name}, \code{label}, \code{n}, \code{resample} and \code{refit}.
+\code{bootstrap_interval} returns nothing: its constructor signals an error.
 }
 \description{
-Two intervals are read from the replicates that \code{\link[=add_bootstrap]{add_bootstrap()}} stores in
-a fit: the percentile interval and the basic interval. Each is an object
-built by \code{\link[=percentile_interval]{percentile_interval()}} or \code{\link[=basic_interval]{basic_interval()}}, and the object is
-passed as the argument \code{interval} of \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}.
+Three intervals are read from the replicates that \code{\link[=add_bootstrap]{add_bootstrap()}} stores
+in a fit: the percentile interval, the basic interval and the BCa interval.
+Each is an object built by \code{\link[=percentile_interval]{percentile_interval()}}, \code{\link[=basic_interval]{basic_interval()}} or
+\code{\link[=bca_interval]{bca_interval()}}, and the object is passed as the argument \code{interval} of
+\code{\link[=confint.StatmodFit]{confint.StatmodFit()}}.
 
-\code{bootstrap_interval} is the abstract parent of the two classes. It cannot be
-instantiated, and serves to test membership with \code{S7::S7_inherits()}.
+\code{bootstrap_interval} is the abstract parent of the three classes. It cannot
+be instantiated, and serves to test membership with \code{S7::S7_inherits()}.
 }
 \details{
 Write \eqn{\hat\theta} for an estimate, \eqn{\theta^*_{(\alpha)}} for the
@@ -73,6 +86,31 @@ and the basic interval is
 the reflection of the percentile interval about the estimate (Davison and
 Hinkley 1997, chapter 5). The quantiles are those of \code{\link[stats:quantile]{stats::quantile()}}
 with its default type.
+
+The BCa interval (bias-corrected and accelerated) takes the quantiles of
+the replicates at adjusted levels,
+\deqn{\Phi\!\left(z_0 + \frac{z_0 + z_{\alpha'}}{1 - a\,(z_0 + z_{\alpha'})}
+  \right), \quad \alpha' \in \{\alpha/2,\; 1 - \alpha/2\},}
+where \eqn{\Phi} is the standard normal distribution function and
+\eqn{z_{\alpha'}} its quantile. The bias correction
+\eqn{z_0 = \Phi^{-1}(\hat p)} uses the proportion \eqn{\hat p} of replicates
+below the estimate, with the replicates equal to it counted by halves. The
+acceleration is
+\deqn{a = \frac{\sum_i (\bar\theta_{(\cdot)} - \hat\theta_{(-i)})^3}
+  {6\,[\sum_i (\bar\theta_{(\cdot)} - \hat\theta_{(-i)})^2]^{3/2}},}
+with \eqn{\hat\theta_{(-i)}} the estimate of the fit refitted without
+observation \eqn{i} (the weight of the observation set to zero) and
+\eqn{\bar\theta_{(\cdot)}} the mean of these estimates (Efron 1987). With
+\code{\link[=cluster_resample]{cluster_resample()}} the unit deleted is a cluster. The refits are made once
+and stored in the entry, one per observation or cluster, with the settings
+of the entry (\code{refit}), so that the first call of \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}
+costs as many refits as there are units, and later calls read them. The
+interval is available for \code{\link[=case_resample]{case_resample()}}, \code{\link[=cluster_resample]{cluster_resample()}} and
+\code{\link[=bayesian_resample]{bayesian_resample()}}. \code{\link[=parametric_resample]{parametric_resample()}} is rejected, because the
+acceleration needs the influence of the observations of the data, and so is
+\code{\link[=cluster_resample]{cluster_resample()}} beside a \code{\link[modelterms7:random]{modelterms7::random()}} term. A coordinate
+whose estimate lies outside the range of its replicates, or whose
+adjusted level is undefined, has \code{NA} limits.
 
 The quantity is the one that \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} reports. With
 \code{readable = TRUE} the readable quantities are computed on every replicate
@@ -98,10 +136,14 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 fit <- add_bootstrap(fit, n = 100, resample = case_resample())
 confint(fit, interval = percentile_interval(n = 100))
 confint(fit, interval = basic_interval(n = 100))
+confint(fit, interval = bca_interval(n = 100))
 }
 \references{
 Davison, A. C. and Hinkley, D. V. (1997). \emph{Bootstrap Methods and
 Their Application}. Cambridge University Press.
+
+Efron, B. (1987). Better bootstrap confidence intervals. \emph{Journal of the
+American Statistical Association}, 82(397), 171--185.
 }
 \seealso{
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=add_bootstrap]{add_bootstrap()}}, \code{\link[=bootstrap_vcov]{bootstrap_vcov()}}.

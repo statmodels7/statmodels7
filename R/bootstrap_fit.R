@@ -375,7 +375,8 @@ boot_fill <- function(fit, n, resample, refit, say = FALSE) {
       rbind(old@raw, eng$raw),
     raw_cols = if (is.null(old)) eng$raw_cols else if (is.null(old@raw) ||
                                                        is.null(eng$raw)) NULL else
-      old@raw_cols)
+      old@raw_cols,
+    jackknife = if (is.null(old)) NULL else old@jackknife)
   assign(key, entry, envir = env)
   entry
 }

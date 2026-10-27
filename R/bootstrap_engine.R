@@ -397,7 +397,8 @@ boot_cluster_data <- function(object, resample, spec0) {
 #' @param draw The function from [bootstrap_plan()], whose attributes give the
 #'   kind of plan and the targets.
 #' @param refit,method,cfg,beta0 As in [bootstrap_refit()].
-#' @param plans The draws of the round.
+#' @param plans The draws of the round, or a function of the position that
+#'   returns the draw.
 #' @param ref The reading of the fit itself, from [boot_read_mode()].
 #' @param validate,isolate,keep_fit As in [bootstrap_engine()], where `isolate`
 #'   is `stream`.
@@ -417,7 +418,7 @@ boot_body <- function(object, spec0, draw, refit, method, cfg, beta0, plans,
   raw_cols <- boot_raw_cols(targets, cf_fit, params)
   force(plans)
   function(i) {
-    pl <- plans[[i]]
+    pl <- if (is.function(plans)) plans(i) else plans[[i]]
     if (isolate && exists(".Random.seed", envir = globalenv(),
                           inherits = FALSE)) {
       old_seed <- get(".Random.seed", envir = globalenv())
