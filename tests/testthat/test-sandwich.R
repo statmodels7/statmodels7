@@ -190,14 +190,15 @@ test_that("unsupported fits and bad clusters are rejected", {
   fg <- suppressWarnings(statmod(y ~ x + gas(p = 1, q = 1),
                                  distributions7::gaussian1_distrib(), dd))
   expect_error(vcov(fg, vcov_type = fsw(hc1_sandwich())), "structural")
-  # a term whose block moves
+  # a term whose block moves is covered, see test-sandwich-refresh.R
   set.seed(8)
   x <- sort(runif(120))
   ds <- data.frame(x = x, y = ifelse(x < 0.5, x, 0.5 + 3 * (x - 0.5)) +
                      rnorm(120, sd = 0.05))
   fs <- suppressWarnings(statmod(y ~ seg(x, psi ~ 1),
                                  distributions7::gaussian1_distrib(), ds))
-  expect_error(vcov(fs, vcov_type = fsw(hc1_sandwich())), "moves with")
+  Vs <- vcov(fs, vcov_type = fsw(hc1_sandwich()), readable = FALSE)
+  expect_true(all(is.finite(diag(Vs))))
 })
 
 test_that("a lasso coordinate at zero is missing, as in the other conventions", {

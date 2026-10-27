@@ -93,13 +93,13 @@ NULL
 #'
 #' @examples
 #' set.seed(1)
-#' dd <- data.frame(x = runif(60))
-#' dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
+#' dd <- data.frame(x = runif(40))
+#' dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' fit <- add_bootstrap(fit, n = 100, resample = case_resample())
-#' confint(fit, interval = percentile_interval(n = 100))
-#' confint(fit, interval = basic_interval(n = 100))
-#' confint(fit, interval = bca_interval(n = 100))
+#' fit <- add_bootstrap(fit, n = 60, resample = case_resample())
+#' confint(fit, interval = percentile_interval(n = 60))
+#' confint(fit, interval = basic_interval(n = 60))
+#' confint(fit, interval = bca_interval(n = 60))
 #' @export
 bootstrap_interval <- S7::new_class(
   "bootstrap_interval",
