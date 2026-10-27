@@ -406,6 +406,9 @@ vcov.StatmodFit <- function(object,
   check_dots("vcov", ...)
   vcov_type <- as_vcov_method(vcov_type)
   convention <- vcov_type@name
+  if (identical(convention, "bootstrap")) {
+    return(boot_vcov_matrix(object, vcov_type, readable, param))
+  }
   info <- vcov_information(vcov_type, object@spec@distrib)
   expected <- info_expected(info)
   emethod <- info_emethod(info)
@@ -1945,7 +1948,7 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
                                readable = TRUE,
                                test = wald_test(),
                                ...) {
-  vcov_type <- as_vcov_method(vcov_type)
+  vcov_type <- resolve_vcov_method(object, as_vcov_method(vcov_type))
   test <- as_test_statistic(test)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
@@ -2361,7 +2364,11 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     # the information object that the standard errors invert, after the
     # variance object's NULL has been resolved against the family; print()
     # names it when it is not the observed one
-    information = S7::new_property(S7::class_any, default = NULL)
+    information = S7::new_property(S7::class_any, default = NULL),
+    # what a bootstrap variance reports about its replicates (their number,
+    # the replaced ones, the Monte Carlo error, the selection frequencies), or
+    # NULL for the other conventions
+    bootstrap = S7::new_property(S7::class_any, default = NULL)
   )
 )
 
@@ -2599,7 +2606,7 @@ summary.StatmodFit <- function(object, level = 0.95,
                                test = wald_test(),
                                max_coef = NULL,
                                ...) {
-  vcov_type <- as_vcov_method(vcov_type)
+  vcov_type <- resolve_vcov_method(object, as_vcov_method(vcov_type))
   test <- as_test_statistic(test)
   # A TERM WHOSE BLOCK IS A WORKING LINEARIZATION says so ONCE, as a note,
   # rather than once per call to vcov() -- of which this function makes more
@@ -3015,7 +3022,11 @@ summary.StatmodFit <- function(object, level = 0.95,
     bic = -2 * object@loglik + log(weight_total(spec)) * df,
     converged = object@converged, elapsed = object@elapsed,
     level = level, vcov_type = vcov_type, test = test, max_coef = max_coef,
-    notes = notes, certificate = cert, information = info_used)
+    notes = notes, certificate = cert,
+    information = if (S7::S7_inherits(vcov_type, BootstrapVcov)) NULL else
+      info_used,
+    bootstrap = if (S7::S7_inherits(vcov_type, BootstrapVcov))
+      boot_summary_info(object, vcov_type) else NULL)
 }
 S7::method(summary, StatmodFit) <- summary.StatmodFit
 
@@ -4665,6 +4676,21 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
                        info_method_note(x@information)),
               if (identical(tst, "wald")) "" else
                 sprintf(";  %s test, signed root", tst)))
+  if (!is.null(x@bootstrap)) {
+    bs <- x@bootstrap
+    cat(sprintf(paste0("bootstrap, %d replicates (%s, refit %s), %d ",
+                       "replaced, MC error about %.1f%%
+"),
+                bs$n, bs$resample, bs$refit, bs$replaced, bs$mc))
+    if (length(bs$selection)) {
+      cat(sprintf("selection frequency of the kinked coordinates: min %.2f, ",
+                  min(bs$selection)),
+          sprintf("median %.2f, max %.2f (%d coordinates)
+",
+                  stats::median(bs$selection), max(bs$selection),
+                  length(bs$selection)), sep = "")
+    }
+  }
   # WHICH log-likelihood and WHICH degrees of freedom, because the pairing
   # is what makes the criterion mean anything and the two conventions in
   # common use are not comparable. This one is conditional: the likelihood
