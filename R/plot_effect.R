@@ -259,7 +259,11 @@ parts_contribution <- function(fit, param, parts, newdata, vcov_type) {
   des <- statmod_design(fit@spec)
   Xs <- list()
   idx <- integer(0)
+  value <- 0
   for (p in parts) {
+    # the block of a term that moves with its coefficients (seg(), nl()) is
+    # the Jacobian of its contribution, so the contribution is term_value()
+    # and the block enters only the delta method
     X <- if (is.null(newdata)) modelterms7::term_matrix(p$term)
       else modelterms7::term_predict(p$term, newdata = newdata)
     X <- as.matrix(X)
@@ -267,16 +271,19 @@ parts_contribution <- function(fit, param, parts, newdata, vcov_type) {
     if (!is.null(p$cols)) {
       X <- X[, p$cols, drop = FALSE]
       j <- j[p$cols]
+      value <- value + drop(X %*% fit@coefficients[[param]][j])
+    } else {
+      value <- value + modelterms7::term_value(
+        p$term, coef = fit@coefficients[[param]][j], newdata = newdata)
     }
     Xs[[length(Xs) + 1L]] <- X
     idx <- c(idx, j)
   }
   X <- do.call(cbind, Xs)
-  b <- fit@coefficients[[param]][idx]
   nms <- paste0(param, ":", des[[param]]$coef_names[idx])
   V <- vcov(fit, vcov_type = vcov_type, readable = FALSE)[nms, nms,
                                                           drop = FALSE]
-  list(fit = drop(X %*% b), se = sqrt(pmax(rowSums((X %*% V) * X), 0)))
+  list(fit = as.numeric(value), se = sqrt(pmax(rowSums((X %*% V) * X), 0)))
 }
 
 
