@@ -8,7 +8,7 @@ dp$y <- rpois(150, exp(1 + dp$x + 0.3 * (dp$g == "b")))
 fp <- statmod(y ~ x + g, distributions7::poisson_distrib(), dp)
 
 test_that("plot_param equals predict() on the grid", {
-  p <- autoplot(fit, type = plot_param(param = "sigma", over = "x",
+  p <- autoplot(fit, plot_type = plot_param(param = "sigma", over = "x",
                                        n_grid = 25), data = dd)
   expect_s3_class(p, "ggplot")
   d <- plot_data(plot_param(param = "sigma", over = "x", n_grid = 25),
@@ -51,7 +51,7 @@ test_that("quantile curves are mu + sigma qnorm(p) for a gaussian", {
   expect_equal(nrow(d$points), nrow(dd))
   pdf(NULL)
   on.exit(dev.off())
-  expect_s3_class(print(autoplot(fit, type = pq, data = dd)), "ggplot")
+  expect_s3_class(print(autoplot(fit, plot_type = pq, data = dd)), "ggplot")
 })
 
 test_that("quantile curves of a Poisson fit are qpois and steps", {
@@ -63,7 +63,7 @@ test_that("quantile curves of a Poisson fit are qpois and steps", {
     expect_equal(d$curves$q[d$curves$prob == p], qpois(p, mu))
   }
   expect_true(isTRUE(attr(d, "discrete")))
-  p <- autoplot(fp, type = pq, data = dp)
+  p <- autoplot(fp, plot_type = pq, data = dp)
   expect_true(any(vapply(p$layers, function(l) inherits(l$geom,
                                                         "GeomStep"), TRUE)))
 })
@@ -86,7 +86,7 @@ test_that("densities integrate to one and masses sum to one", {
   sg <- predict(fit, what = "sigma", newdata = nd, random = "zero")
   r <- d$dens[d$dens$index == 2, ]
   expect_equal(r$dens, dnorm(r$y, mu, sg), tolerance = 1e-8)
-  expect_s3_class(autoplot(fit, type = plot_density(at = at), data = dd),
+  expect_s3_class(autoplot(fit, plot_type = plot_density(at = at), data = dd),
                   "ggplot")
   # discrete
   ap <- data.frame(x = c(0.2, 0.8), g = c("a", "b"))
@@ -94,18 +94,18 @@ test_that("densities integrate to one and masses sum to one", {
                    ctx = list(data = dp))
   s <- tapply(dp2$dens$dens, dp2$dens$index, sum)
   expect_equal(as.numeric(s), c(0.998, 0.998), tolerance = 5e-3)
-  expect_s3_class(autoplot(fp, type = plot_density(at = ap), data = dp),
+  expect_s3_class(autoplot(fp, plot_type = plot_density(at = ap), data = dp),
                   "ggplot")
-  expect_s3_class(autoplot(fp, type = plot_density(at = ap, over = "x"),
+  expect_s3_class(autoplot(fp, plot_type = plot_density(at = ap, over = "x"),
                            data = dp), "ggplot")
   # the label names the aesthetic that the graph maps, so that ggplot2 has no
   # unknown label to report when it builds the graph
   pdf(NULL)
   on.exit(dev.off())
   expect_no_message(ggplot2::ggplot_build(
-    autoplot(fit, type = plot_density(at = at), data = dd)))
+    autoplot(fit, plot_type = plot_density(at = at), data = dd)))
   expect_no_message(ggplot2::ggplot_build(
-    autoplot(fp, type = plot_density(at = ap), data = dp)))
+    autoplot(fp, plot_type = plot_density(at = ap), data = dp)))
 })
 
 test_that("moments of a gaussian are mu and sigma squared", {
@@ -118,7 +118,7 @@ test_that("moments of a gaussian are mu and sigma squared", {
   expect_equal(d$curve$value[d$curve$moment == "mean"], mu, tolerance = 1e-10)
   expect_equal(d$curve$value[d$curve$moment == "variance"], sg^2,
                tolerance = 1e-10)
-  p <- autoplot(fit, type = pm, data = dd)
+  p <- autoplot(fit, plot_type = pm, data = dd)
   expect_s3_class(p$facet, "FacetWrap")
   expect_error(plot_moments(over = "x", moments = "median"), "must be among")
 })
@@ -128,13 +128,13 @@ test_that("arguments and data are checked", {
   expect_error(plot_param(param = "mu"), "'over'")
   expect_error(plot_moments(), "'over'")
   expect_error(plot_density(at = 1), "data frame")
-  expect_error(autoplot(fit, type = plot_quantiles(over = "x")), "data")
-  expect_error(autoplot(fit, type = plot_param(param = "nu", over = "x"),
+  expect_error(autoplot(fit, plot_type = plot_quantiles(over = "x")), "data")
+  expect_error(autoplot(fit, plot_type = plot_param(param = "nu", over = "x"),
                         data = dd), "'param' must be one of")
-  expect_error(autoplot(fit, type = plot_quantiles(over = "x",
+  expect_error(autoplot(fit, plot_type = plot_quantiles(over = "x",
                                                    at = list(x = 1)),
                         data = dd), "variable on the axis")
-  expect_error(autoplot(fit, term = "s(x)", type = plot_moments(over = "x"),
+  expect_error(autoplot(fit, term = "s(x)", plot_type = plot_moments(over = "x"),
                         data = dd), "neither 'term' nor 'param'")
 })
 
@@ -145,7 +145,7 @@ test_that("scale sets the width of the vertical densities", {
   fs <- statmod(y ~ x, distributions7::gaussian1_distrib(), ds)
   at <- data.frame(x = c(0.2, 0.6))
   w <- function(sc) {
-    d <- autoplot(fs, type = plot_density(at = at, over = "x", scale = sc),
+    d <- autoplot(fs, plot_type = plot_density(at = at, over = "x", scale = sc),
                   data = ds)$layers[[2]]$data
     max(d$x - d$x0)
   }

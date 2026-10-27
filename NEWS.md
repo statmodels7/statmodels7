@@ -1,3 +1,10 @@
+# statmodels7 (development version)
+
+* The argument `type` of `autoplot()` and `plot()` is named `plot_type`, and
+  the argument `types` of `diagnostics()` is named `plot_types`. The default
+  group of `plot()` replaces the quantile-quantile graph by `plot_ppc()`, the
+  observed density of the response with the densities of simulated responses.
+
 # statmodels7 0.214.0
 
 * `confint(test = lr_test())`, `score_test()` and `gradient_test()` on the

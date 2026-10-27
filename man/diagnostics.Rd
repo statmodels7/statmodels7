@@ -4,12 +4,12 @@
 \alias{diagnostics}
 \title{Diagnostic Graphs of a Fitted Model}
 \usage{
-diagnostics(fit, types = NULL, data = NULL, compose = FALSE)
+diagnostics(fit, plot_types = NULL, data = NULL, compose = FALSE)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{types}{A list of objects inheriting from \link{diagnostic_plot}, or
+\item{plot_types}{A list of objects inheriting from \link{diagnostic_plot}, or
 \code{NULL} for the default set.}
 
 \item{data}{The data frame of the fit, or \code{NULL}; it is required by the
@@ -25,12 +25,13 @@ A named list of ggplot2 objects, or a patchwork object when
 \description{
 Draws a set of \link{diagnostic_plot} graphs of a fit and returns them as a
 named list of ggplot2 objects, or composed in one figure. The default set
-is the quantile-quantile graph of the quantile residuals (\code{\link[=plot_qq]{plot_qq()}}),
-the worm plot (\code{\link[=plot_worm]{plot_worm()}}), the calibration of the predicted quantiles
-(\code{\link[=plot_calibration]{plot_calibration()}}) and the quantile residuals against the predicted
-median (\code{\link[=plot_residuals]{plot_residuals()}} with \code{against = "median"}). None of the four
-reads a particular parameter, so the set applies to every family,
-including those without a location parameter.
+is the observed density of the response with the densities of simulated
+responses (\code{\link[=plot_ppc]{plot_ppc()}}), the worm plot (\code{\link[=plot_worm]{plot_worm()}}), the calibration of
+the predicted quantiles (\code{\link[=plot_calibration]{plot_calibration()}}) and the quantile residuals
+against the predicted median (\code{\link[=plot_residuals]{plot_residuals()}} with
+\code{against = "median"}). None of the four reads a particular parameter, so
+the set applies to every family, including those without a location
+parameter.
 }
 \examples{
 set.seed(1)
@@ -39,7 +40,7 @@ dd$y <- 1 + dd$x + rnorm(150, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 d <- diagnostics(fit)
 names(d)
-diagnostics(fit, types = list(plot_qq(), plot_pit()), compose = TRUE)
+diagnostics(fit, plot_types = list(plot_qq(), plot_pit()), compose = TRUE)
 }
 \seealso{
 \code{\link[=autoplot.StatmodFit]{autoplot.StatmodFit()}}, \link{diagnostic_plot}

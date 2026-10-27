@@ -44,7 +44,7 @@ test_that("more coefficients than the data identify is an error", {
   dup$x1b <- dup$x1
   f <- statmod(y ~ ridge(~ x1 + x1b + x2), G, dup)
   nm <- names(f@spec@terms$mu)[2]
-  expect_error(autoplot(f, term = nm, type = plot_shrinkage()),
+  expect_error(autoplot(f, term = nm, plot_type = plot_shrinkage()),
                "cannot be inverted")
 })
 
@@ -117,7 +117,7 @@ test_that("the caterpillar holds the coefficients, their se and the raw means", 
 })
 
 test_that("a random effect has no unpenalized estimate beside an intercept", {
-  expect_error(autoplot(rfit, term = gname, type = plot_shrinkage()),
+  expect_error(autoplot(rfit, term = gname, plot_type = plot_shrinkage()),
                "cannot be inverted")
 })
 
@@ -147,7 +147,7 @@ test_that("a random slope gives a panel for each coefficient and an ellipse", {
     statmod_penalized(sfit@spec, statmod_design(sfit@spec))[[1]]$penalty,
     as.list(sfit@hyper$mu[[1]]))
   expect_equal(sqrt(diag(S)), unname(rd$value[1:2]), tolerance = 1e-10)
-  expect_error(autoplot(rfit, term = gname, type = plot_random_cov()),
+  expect_error(autoplot(rfit, term = gname, plot_type = plot_random_cov()),
                "at least two")
 })
 
@@ -178,7 +178,7 @@ test_that("the defaults and the smooth shrinkage run", {
   expect_true(nrow(d$estimates) > 3)
   pdf(NULL)
   on.exit(dev.off())
-  expect_s3_class(print(autoplot(fl, term = lname, type = plot_path())),
+  expect_s3_class(print(autoplot(fl, term = lname, plot_type = plot_path())),
                   "ggplot")
   expect_error(plot_path(log_lambda = c(2, 1)), "increasing")
   expect_error(plot_random_cov(which = c(1, 1)), "different")

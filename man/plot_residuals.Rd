@@ -44,8 +44,8 @@ set.seed(1)
 dd <- data.frame(x = runif(150))
 dd$y <- 1 + dd$x + rnorm(150, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-ggplot2::autoplot(fit, type = plot_residuals())
-ggplot2::autoplot(fit, type = plot_residuals(against = "x"), data = dd)
+ggplot2::autoplot(fit, plot_type = plot_residuals())
+ggplot2::autoplot(fit, plot_type = plot_residuals(against = "x"), data = dd)
 }
 \seealso{
 \code{\link[=plot_qq]{plot_qq()}}, \code{\link[=plot_acf]{plot_acf()}}, \code{\link[=diagnostics]{diagnostics()}}

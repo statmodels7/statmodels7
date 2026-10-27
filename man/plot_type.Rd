@@ -27,8 +27,8 @@ error. Every object that inherits from \code{plot_type} has the property
 \code{plot_type} is the abstract S7 class of the objects that select a graph of
 a \code{\link[=StatmodFit]{StatmodFit()}}. A graph is drawn by \code{\link[=autoplot.StatmodFit]{autoplot.StatmodFit()}} (which returns
 it) or \code{\link[=plot.StatmodFit]{plot.StatmodFit()}} (which prints it), and the object passed as
-\code{type} decides which graph is drawn and with which options. Three abstract
-subclasses divide the types by what they read:
+\code{plot_type} decides which graph is drawn and with which options. Three
+abstract subclasses divide the types by what they read:
 \itemize{
 \item \code{term_plot}: one term of one equation, named by the argument \code{term}
 (\code{\link[=plot_effect]{plot_effect()}}, \code{\link[=plot_derivative]{plot_derivative()}}, \code{\link[=plot_shrinkage]{plot_shrinkage()}} and others);

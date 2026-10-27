@@ -74,9 +74,9 @@ PlotDerivative <- S7::new_class("PlotDerivative", parent = term_plot,
 #' dd <- data.frame(x = runif(150))
 #' dd$y <- sin(2 * pi * dd$x) + rnorm(150, sd = 0.3)
 #' fit <- statmod(y ~ s(x), distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, term = "s(x)", type = plot_derivative(), data = dd)
+#' ggplot2::autoplot(fit, term = "s(x)", plot_type = plot_derivative(), data = dd)
 #' ggplot2::autoplot(fit, term = "s(x)",
-#'                   type = plot_derivative(order = 2, simultaneous = TRUE,
+#'                   plot_type = plot_derivative(order = 2, simultaneous = TRUE,
 #'                                          n_sim = 2000, seed = 1),
 #'                   data = dd)
 #' @export
@@ -427,10 +427,10 @@ PlotSurface <- S7::new_class("PlotSurface", parent = term_plot,
 #' dd <- data.frame(x1 = runif(200), x2 = runif(200))
 #' dd$y <- sin(2 * pi * dd$x1) * dd$x2 + rnorm(200, sd = 0.2)
 #' fit <- statmod(y ~ te(x1, x2), distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, term = "te(x1, x2)", type = plot_surface(n_grid = 30),
+#' ggplot2::autoplot(fit, term = "te(x1, x2)", plot_type = plot_surface(n_grid = 30),
 #'                   data = dd)
 #' ggplot2::autoplot(fit, term = "te(x1, x2)",
-#'                   type = plot_surface(slices = c(0.2, 0.8)), data = dd)
+#'                   plot_type = plot_surface(slices = c(0.2, 0.8)), data = dd)
 #' @export
 plot_surface <- function(mask = TRUE, slices = NULL, level = 0.95,
                          vcov_type = bayesian_vcov(), n_grid = 60) {
@@ -646,7 +646,7 @@ PlotCriterion <- S7::new_class("PlotCriterion", parent = term_plot,
 #' dd$y <- sin(2 * pi * dd$x) + rnorm(120, sd = 0.3)
 #' fit <- statmod(y ~ s(x), distributions7::gaussian1_distrib(), dd)
 #' ggplot2::autoplot(fit, term = "s(x)",
-#'                   type = plot_criterion(log_lambda = seq(-3, 8, length.out = 12)))
+#'                   plot_type = plot_criterion(log_lambda = seq(-3, 8, length.out = 12)))
 #' @export
 plot_criterion <- function(log_lambda = NULL, method = "refit", hyper = NULL) {
   if (!is.null(log_lambda) && (!is.numeric(log_lambda) ||
