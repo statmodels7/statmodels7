@@ -334,7 +334,7 @@ boot_fill <- function(fit, n, resample, refit, say = FALSE) {
       rbind(old@coefficients, eng$coefficients),
     hyper = if (is.null(old)) eng$hyper else if (is.null(eng$hyper)) NULL else
       rbind(old@hyper, eng$hyper),
-    n = as.integer(m + nw), resample = resample, refit = refit,
+    n = as.integer(m + nw), resample = boot_strip(resample), refit = refit,
     random = eng$random,
     status = c(if (!is.null(old)) old@status, eng$status),
     seed = list(start = if (is.null(old)) eng$seed_start else old@seed$start,
@@ -474,4 +474,20 @@ boot_summary_info <- function(object, vt) {
 #' @keywords internal
 resolve_vcov_method <- function(fit, vt) {
   if (S7::S7_inherits(vt, BootstrapVcov)) boot_resolve(fit, vt) else vt
+}
+
+#' The Scheme as It Is Stored
+#'
+#' @description
+#' Returns the scheme without the data frame of a cluster scheme, so that an
+#' entry does not hold a copy of the data.
+#'
+#' @param x A [resample_method] object.
+#'
+#' @return A [resample_method] object.
+#'
+#' @keywords internal
+boot_strip <- function(x) {
+  if (S7::S7_inherits(x, ClusterResample)) x@data <- NULL
+  x
 }

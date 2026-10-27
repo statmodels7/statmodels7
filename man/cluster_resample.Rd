@@ -4,25 +4,30 @@
 \alias{cluster_resample}
 \title{Cluster Resampling}
 \usage{
-cluster_resample(by)
+cluster_resample(cluster, data = NULL)
 }
 \arguments{
-\item{by}{A one-sided formula with one variable, as in \code{~ id}.}
+\item{cluster}{A one-sided formula with one variable, as in \code{~ id}.}
+
+\item{data}{A data frame with that variable and one row for each
+observation of the fit, or \code{NULL}. With \code{NULL} the data frame is the
+\code{data} of the call that built the fit.}
 }
 \value{
 A \code{ClusterResample} object, inheriting from \link{resample_method}, with
-the property \code{by}.
+the properties \code{cluster} and \code{data}.
 }
 \description{
 Selects the cluster bootstrap: every replicate draws the groups of
 observations with replacement and refits the model on them.
 }
 \details{
-The groups are the values of the variable that the formula names. The
-variable is evaluated in the data that the fit was called with (the \code{data}
-argument of the call of \code{\link[=statmod]{statmod()}}, found in the environment of the model
-formula) and in the environment of the formula, and it must have one value
-per observation. A group drawn \eqn{k} times gives all its observations the
+The groups are the values of the variable that the formula names, a
+column of \code{data}. A fit does not keep its data: with \code{data = NULL} the data
+frame is the \code{data} argument of the call of \code{\link[=statmod]{statmod()}}, evaluated in the
+environment of the model formula, and an error says to pass \code{data} where
+that fails or where its number of rows is not the fit's. The variable must
+have no missing values. A group drawn \eqn{k} times gives all its observations the
 count \eqn{k}. Without random effects the likelihood is a sum over
 observations, so this is the fit to the duplicated groups with the design
 held.

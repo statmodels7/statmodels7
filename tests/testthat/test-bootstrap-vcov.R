@@ -89,9 +89,25 @@ test_that("a cluster bootstrap resamples the groups", {
   A <- solve(crossprod(X))
   cl <- sqrt(diag(A %*% crossprod(sc) %*% A))
   expect_lt(max(abs(se_b[1:2] / cl - 1)), 4 / sqrt(2 * 200))
-  # the variable is read from the call's data
   expect_error(add_bootstrap(fit, n = 5, resample = cluster_resample(~ nope)),
-               "was not found")
+               "not a column")
+  # the data object has gone: it is recovered from `data =`, and wrong data
+  # is rejected
+  local({
+    dd2 <- dd
+    fx <- statmod(y ~ x, g1, dd2)
+    rm(dd2)
+    expect_error(add_bootstrap(fx, n = 5, resample = cluster_resample(~ g)),
+                 "Pass it as cluster_resample")
+    set.seed(1)
+    fx <- add_bootstrap(fx, n = 20, resample = cluster_resample(~ g, data = dd))
+    expect_equal(statmod_bootstrap(fx)$replicates, 20L)
+    expect_error(add_bootstrap(fx, n = 30, resample = cluster_resample(
+      ~ g, data = dd[1:50, ])), "Pass it as cluster_resample")
+    # the stored entry does not hold the data
+    e <- statmod_bootstrap(fx, resample = cluster_resample(~ g))
+    expect_null(e@resample@data)
+  })
 })
 
 test_that("the draws are reproducible, extendable and independent of the batch", {

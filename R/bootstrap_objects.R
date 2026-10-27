@@ -62,11 +62,13 @@ resample_method <- S7::new_class(
 #' the constructors, which set the properties.
 #'
 #' @param name A single string, the short name of the scheme.
-#' @param by For a cluster scheme, the one-sided formula that names the
+#' @param cluster For a cluster scheme, the one-sided formula that names the
 #'   variable that identifies the groups.
+#' @param data For a cluster scheme, the data frame that holds that variable,
+#'   or `NULL`.
 #'
 #' @return An S7 object inheriting from [resample_method], with the property
-#'   `name`, and `by` for a cluster scheme.
+#'   `name`, and `cluster` and `data` for a cluster scheme.
 #'
 #' @seealso [resample_method] for the comparison of the schemes.
 #'
@@ -87,7 +89,7 @@ CaseResample <- S7::new_class("CaseResample", parent = resample_method)
 #' @rdname ParametricResample
 #' @keywords internal
 ClusterResample <- S7::new_class("ClusterResample", parent = resample_method,
-  properties = list(by = S7::class_any))
+  properties = list(cluster = S7::class_any, data = S7::class_any))
 
 
 #' @title Parametric Resampling
@@ -172,11 +174,12 @@ case_resample <- function() CaseResample(name = "case")
 #' observations with replacement and refits the model on them.
 #'
 #' @details
-#' The groups are the values of the variable that the formula names. The
-#' variable is evaluated in the data that the fit was called with (the `data`
-#' argument of the call of [statmod()], found in the environment of the model
-#' formula) and in the environment of the formula, and it must have one value
-#' per observation. A group drawn \eqn{k} times gives all its observations the
+#' The groups are the values of the variable that the formula names, a
+#' column of `data`. A fit does not keep its data: with `data = NULL` the data
+#' frame is the `data` argument of the call of [statmod()], evaluated in the
+#' environment of the model formula, and an error says to pass `data` where
+#' that fails or where its number of rows is not the fit's. The variable must
+#' have no missing values. A group drawn \eqn{k} times gives all its observations the
 #' count \eqn{k}. Without random effects the likelihood is a sum over
 #' observations, so this is the fit to the duplicated groups with the design
 #' held.
@@ -185,10 +188,13 @@ case_resample <- function() CaseResample(name = "case")
 #' coordinates of the individual random effects have no counterpart between
 #' replicates, because a group can be absent or appear twice.
 #'
-#' @param by A one-sided formula with one variable, as in `~ id`.
+#' @param cluster A one-sided formula with one variable, as in `~ id`.
+#' @param data A data frame with that variable and one row for each
+#'   observation of the fit, or `NULL`. With `NULL` the data frame is the
+#'   `data` of the call that built the fit.
 #'
 #' @return A `ClusterResample` object, inheriting from [resample_method], with
-#'   the property `by`.
+#'   the properties `cluster` and `data`.
 #'
 #' @seealso [resample_method] for the comparison of the three schemes,
 #'   [add_bootstrap()] and [bootstrap_vcov()] for the functions that take it.
@@ -201,14 +207,17 @@ case_resample <- function() CaseResample(name = "case")
 #' fit <- add_bootstrap(fit, n = 30, resample = cluster_resample(~ g))
 #' statmod_bootstrap(fit)
 #' @export
-cluster_resample <- function(by) {
-  if (!inherits(by, "formula") || length(by) != 2L ||
-      length(all.vars(by)) != 1L) {
-    stop("'by' must be a one-sided formula with one variable, as in ~ id.",
-         call. = FALSE)
+cluster_resample <- function(cluster, data = NULL) {
+  if (!inherits(cluster, "formula") || length(cluster) != 2L ||
+      length(all.vars(cluster)) != 1L) {
+    stop("'cluster' must be a one-sided formula with one variable, as in ",
+         "~ id.", call. = FALSE)
   }
-  environment(by) <- baseenv()
-  ClusterResample(name = "cluster", by = by)
+  if (!is.null(data) && !is.data.frame(data)) {
+    stop("'data' must be a data frame or NULL.", call. = FALSE)
+  }
+  environment(cluster) <- baseenv()
+  ClusterResample(name = "cluster", cluster = cluster, data = data)
 }
 
 #' @title Print a Resampling Scheme
@@ -239,7 +248,7 @@ S7::method(print, resample_method) <- function(x, ...) {
 #' @keywords internal
 resample_label <- function(x) {
   if (S7::S7_inherits(x, ClusterResample)) {
-    paste0(x@name, " (", paste(deparse(x@by), collapse = ""), ")")
+    paste0(x@name, " (", paste(deparse(x@cluster), collapse = ""), ")")
   } else x@name
 }
 

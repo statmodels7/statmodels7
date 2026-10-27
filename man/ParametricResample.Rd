@@ -10,17 +10,20 @@ ParametricResample(name = character(0))
 
 CaseResample(name = character(0))
 
-ClusterResample(name = character(0), by = NULL)
+ClusterResample(name = character(0), cluster = NULL, data = NULL)
 }
 \arguments{
 \item{name}{A single string, the short name of the scheme.}
 
-\item{by}{For a cluster scheme, the one-sided formula that names the
+\item{cluster}{For a cluster scheme, the one-sided formula that names the
 variable that identifies the groups.}
+
+\item{data}{For a cluster scheme, the data frame that holds that variable,
+or \code{NULL}.}
 }
 \value{
 An S7 object inheriting from \link{resample_method}, with the property
-\code{name}, and \code{by} for a cluster scheme.
+\code{name}, and \code{cluster} and \code{data} for a cluster scheme.
 }
 \description{
 These are the classes that \code{\link[=parametric_resample]{parametric_resample()}}, \code{\link[=case_resample]{case_resample()}} and

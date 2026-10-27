@@ -20,10 +20,9 @@ A vector with one value per observation.
 Evaluates the variable of \code{\link[=cluster_resample]{cluster_resample()}} on the data of the fit.
 }
 \details{
-The variable is looked up in the \code{data} of the call that built the fit,
-evaluated in the environment of the model formula, and then in that
-environment itself. The fit does not keep its data, so a \code{data} argument
-that no longer evaluates (a variable removed since the fit) is an error that
-says so.
+The data frame is the \code{data} of the scheme if given, and otherwise the
+\code{data} of the call that built the fit, evaluated in the environment of the
+model formula. The fit does not keep its data, so a \code{data} argument that no
+longer evaluates is an error that says to pass \code{data}.
 }
 \keyword{internal}

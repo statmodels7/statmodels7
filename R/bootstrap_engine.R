@@ -281,11 +281,10 @@ bootstrap_plan <- function(object, resample, spec0, design0, aside, adjust) {
 #' Evaluates the variable of [cluster_resample()] on the data of the fit.
 #'
 #' @details
-#' The variable is looked up in the `data` of the call that built the fit,
-#' evaluated in the environment of the model formula, and then in that
-#' environment itself. The fit does not keep its data, so a `data` argument
-#' that no longer evaluates (a variable removed since the fit) is an error that
-#' says so.
+#' The data frame is the `data` of the scheme if given, and otherwise the
+#' `data` of the call that built the fit, evaluated in the environment of the
+#' model formula. The fit does not keep its data, so a `data` argument that no
+#' longer evaluates is an error that says to pass `data`.
 #'
 #' @param object The [StatmodFit()].
 #' @param resample A [ClusterResample].
@@ -295,28 +294,30 @@ bootstrap_plan <- function(object, resample, spec0, design0, aside, adjust) {
 #'
 #' @keywords internal
 boot_cluster_ids <- function(object, resample, spec0) {
-  env <- environment(spec0@formula)
-  if (is.null(env)) env <- globalenv()
-  dat <- tryCatch(eval(object@call$data, env), error = function(e) NULL)
-  if (!is.data.frame(dat) && !is.list(dat)) dat <- NULL
-  ex <- resample@by[[2L]]
-  id <- tryCatch(eval(ex, dat, env), error = function(e) NULL)
-  if (is.null(id)) {
-    stop(sprintf(paste0("The variable '%s' of cluster_resample() was not ",
-                        "found. A fit does not keep its data: the variable ",
-                        "is read from the data of the call that built the ",
-                        "fit, or from the environment of the formula."),
-                 all.vars(resample@by)), call. = FALSE)
+  n <- spec0@n_obs
+  data <- resample@data
+  if (is.null(data)) {
+    data <- tryCatch({
+      env <- environment(spec0@formula)
+      if (is.null(env)) env <- globalenv()
+      eval(object@call$data, env)
+    }, error = function(e) NULL)
   }
-  if (length(id) != spec0@n_obs) {
-    stop(sprintf(paste0("The variable '%s' of cluster_resample() has %d ",
-                        "values and the fit has %d observations."),
-                 all.vars(resample@by), length(id), spec0@n_obs),
+  if (!is.data.frame(data) || nrow(data) != n) {
+    stop(paste0("The data frame with the cluster variable could not be ",
+                "recovered from the call of the fit. Pass it as ",
+                "cluster_resample(cluster = , data = ), with one row for ",
+                "each of the ", n, " observations."), call. = FALSE)
+  }
+  v <- all.vars(resample@cluster)
+  if (!v %in% names(data)) {
+    stop(sprintf("The cluster variable '%s' is not a column of the data.", v),
          call. = FALSE)
   }
+  id <- data[[v]]
   if (anyNA(id)) {
-    stop(sprintf("The variable '%s' of cluster_resample() has missing values.",
-                 all.vars(resample@by)), call. = FALSE)
+    stop(sprintf("The cluster variable '%s' has missing values.", v),
+         call. = FALSE)
   }
   id
 }
