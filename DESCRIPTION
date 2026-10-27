@@ -117,6 +117,7 @@ Collate:
     'plot_smooth.R'
     'plot_penalized.R'
     'plot_random.R'
+    'plot_structural.R'
     'predict_random.R'
     'predict_interval.R'
     'predict_bootstrap.R'

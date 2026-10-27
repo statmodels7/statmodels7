@@ -178,6 +178,11 @@ reference:
   - plot_prior
   - plot_random_cov
   - plot_curves
+  - plot_breakpoint
+  - plot_filter
+  - plot_news_impact
+  - plot_states
+  - plot_regime_density
 
 - title: Installing and updating
   desc: >
