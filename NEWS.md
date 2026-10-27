@@ -1,3 +1,26 @@
+# statmodels7 0.213.0
+
+* A `gas()` term written with `init = "static"` starts each group at the
+  predictor of the model without the term, read at the group's first row.
+  That model is the formula with each `gas()` replaced by the development of
+  its level (the right side of an `omega ~` subformula) or by an intercept,
+  fitted once with the same family, data, weights and offsets, and kept on
+  the term, so that a prediction that rebuilds the series on other rows
+  reads its constants from the same model. On the DAX returns of chapter 13
+  the log-scale gaussian filter then has one maximum (-2614.40) where the
+  start at the level has two (-2616.35 and -2591.37), and the GARCH(1, 1)
+  one maximum (-2594.80) where the start at the level has two (-2594.81 and
+  -2572.65). The default stays `init = "level"`.
+
+* The gradient of the objective adds the part of a filter's reverse pass
+  that passes through a static start (`dstart`), and the derivatives of a
+  joint filter receive the static predictors from which that start is read.
+
+* The second start of a joint filter scales each loading by the information
+  of its own parameter. It was the first start unchanged, so a beta in both
+  `mu` and `phi` on DriversKilled/drivers in Seatbelts stopped unconverged
+  at -7897.30; it now converges at 674.81.
+
 # statmodels7 0.212.0
 
 * `confint()` takes `interval = percentile_interval()` or
