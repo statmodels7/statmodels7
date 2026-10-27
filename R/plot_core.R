@@ -4,8 +4,8 @@
 #' `plot_type` is the abstract S7 class of the objects that select a graph of
 #' a [StatmodFit()]. A graph is drawn by [autoplot.StatmodFit()] (which returns
 #' it) or [plot.StatmodFit()] (which prints it), and the object passed as
-#' `type` decides which graph is drawn and with which options. Three abstract
-#' subclasses divide the types by what they read:
+#' `plot_type` decides which graph is drawn and with which options. Three
+#' abstract subclasses divide the types by what they read:
 #'
 #' * `term_plot`: one term of one equation, named by the argument `term`
 #'   ([plot_effect()], [plot_derivative()], [plot_shrinkage()] and others);
@@ -59,12 +59,25 @@ model_plot <- S7::new_class("model_plot", parent = plot_type, abstract = TRUE)
 diagnostic_plot <- S7::new_class("diagnostic_plot", parent = plot_type,
                                  abstract = TRUE)
 
+#' The Class of the Graph Types
+#'
+#' @description
+#' Returns the S7 class `plot_type`. The argument `plot_type` of
+#' [autoplot.StatmodFit()] hides the class inside that function, which calls
+#' this function to reach it.
+#'
+#' @return The S7 class `plot_type`.
+#'
+#' @keywords internal
+plot_type_class <- function() plot_type
+
 
 #' The Default Graph of a Term
 #'
 #' @description
 #' Returns the [plot_type] object that [autoplot.StatmodFit()] uses for a term
-#' when `type` is not given. The method for [modelterms7::model_term] returns
+#' when `plot_type` is not given. The method for [modelterms7::model_term]
+#' returns
 #' [plot_effect()], and a class of term with a more informative graph has a
 #' method of its own.
 #'
@@ -173,9 +186,9 @@ plot_layers <- S7::new_generic("plot_layers", "type",
 #' @description
 #' `autoplot()` returns a ggplot2 object that shows one aspect of a
 #' [StatmodFit()], and `plot()` prints that object and returns it invisibly.
-#' The graph is chosen by `type`, an object inheriting from [plot_type]:
+#' The graph is chosen by `plot_type`, an object inheriting from [plot_type]:
 #'
-#' * with `term`, a graph of that term ([plot_effect()] when `type` is not
+#' * with `term`, a graph of that term ([plot_effect()] when `plot_type` is not
 #'   given, or the term's [default_plot()]);
 #' * with a [model_plot] or a [diagnostic_plot] type, a graph of the whole
 #'   fit, for which `term` and `param` are not given;
@@ -205,7 +218,7 @@ plot_layers <- S7::new_generic("plot_layers", "type",
 #'   `NULL`.
 #' @param param The name of an equation (a parameter of the family), or
 #'   `NULL`.
-#' @param type An object inheriting from [plot_type], or `NULL`.
+#' @param plot_type An object inheriting from [plot_type], or `NULL`.
 #' @param data The data frame of the fit, or `NULL`.
 #' @param ... Unused.
 #'
@@ -223,62 +236,63 @@ plot_layers <- S7::new_generic("plot_layers", "type",
 #' fit <- statmod(y ~ z + s(x), distributions7::gaussian1_distrib(), dd)
 #' p <- ggplot2::autoplot(fit, term = "s(x)", data = dd)
 #' p + ggplot2::labs(title = "The smooth of x")
-#' ggplot2::autoplot(fit, term = "z", type = plot_effect(residuals = FALSE),
+#' ggplot2::autoplot(fit, term = "z", plot_type = plot_effect(residuals = FALSE),
 #'                   data = dd)
 #' @name autoplot.StatmodFit
 #' @export
-autoplot.StatmodFit <- function(object, term = NULL, param = NULL, type = NULL,
-                                data = NULL, ...) {
+autoplot.StatmodFit <- function(object, term = NULL, param = NULL,
+                                plot_type = NULL, data = NULL, ...) {
   check_dots("autoplot", ...)
   if (!is.null(data) && !is.data.frame(data)) {
     stop("'data' must be a data frame.", call. = FALSE)
   }
-  if (!is.null(type) && !S7::S7_inherits(type, plot_type)) {
-    stop("'type' must be a plot_type object, such as plot_effect().",
+  if (!is.null(plot_type) && !S7::S7_inherits(plot_type, plot_type_class())) {
+    stop("'plot_type' must be a plot_type object, such as plot_effect().",
          call. = FALSE)
   }
-  if (is.null(term) && is.null(type)) {
+  if (is.null(term) && is.null(plot_type)) {
     if (!is.null(param)) {
       stop("'param' selects the equation of a term; give 'term' as well.",
            call. = FALSE)
     }
     return(diagnostics(object, data = data, compose = TRUE))
   }
-  if (!is.null(type) && !S7::S7_inherits(type, term_plot)) {
+  if (!is.null(plot_type) && !S7::S7_inherits(plot_type, term_plot)) {
     if (!is.null(term) || !is.null(param)) {
       stop(sprintf(paste0("the graph %s describes the whole fit and takes ",
-                          "neither 'term' nor 'param'."), type@label),
+                          "neither 'term' nor 'param'."), plot_type@label),
            call. = FALSE)
     }
     ctx <- list(param = NULL, name = NULL, vars = NULL, cols = NULL,
                 data = data)
-    return(plot_assemble(type, object@spec@distrib, object, ctx))
+    return(plot_assemble(plot_type, object@spec@distrib, object, ctx))
   }
   if (is.null(term)) {
-    stop(sprintf("the graph %s needs 'term'.", type@label), call. = FALSE)
+    stop(sprintf("the graph %s needs 'term'.", plot_type@label), call. = FALSE)
   }
   unit <- resolve_plot_term(object, term, param, data)
-  if (is.null(type)) {
-    type <- if (length(unit$parts) == 1L) default_plot(unit$parts[[1L]]$term)
-      else plot_effect()
+  if (is.null(plot_type)) {
+    plot_type <- if (length(unit$parts) == 1L) {
+      default_plot(unit$parts[[1L]]$term)
+    } else plot_effect()
   }
   if (length(unit$parts) == 1L) {
     pt <- unit$parts[[1L]]
     ctx <- list(param = unit$param, name = pt$name, vars = unit$vars,
                 cols = pt$cols, data = data, title = unit$title)
-    plot_assemble(type, pt$term, object, ctx)
+    plot_assemble(plot_type, pt$term, object, ctx)
   } else {
     ctx <- list(param = unit$param, name = term, vars = unit$vars,
                 cols = NULL, data = data, title = unit$title)
-    plot_assemble(type, TermSum(parts = unit$parts), object, ctx)
+    plot_assemble(plot_type, TermSum(parts = unit$parts), object, ctx)
   }
 }
 
 #' @rdname autoplot.StatmodFit
 #' @export
-plot.StatmodFit <- function(x, term = NULL, param = NULL, type = NULL,
+plot.StatmodFit <- function(x, term = NULL, param = NULL, plot_type = NULL,
                             data = NULL, ...) {
-  p <- autoplot.StatmodFit(x, term = term, param = param, type = type,
+  p <- autoplot.StatmodFit(x, term = term, param = param, plot_type = plot_type,
                            data = data, ...)
   print(p)
   invisible(p)
@@ -713,15 +727,16 @@ check_level_grid <- function(level, n_grid) {
 #' @description
 #' Draws a set of [diagnostic_plot] graphs of a fit and returns them as a
 #' named list of ggplot2 objects, or composed in one figure. The default set
-#' is the quantile-quantile graph of the quantile residuals ([plot_qq()]),
-#' the worm plot ([plot_worm()]), the calibration of the predicted quantiles
-#' ([plot_calibration()]) and the quantile residuals against the predicted
-#' median ([plot_residuals()] with `against = "median"`). None of the four
-#' reads a particular parameter, so the set applies to every family,
-#' including those without a location parameter.
+#' is the observed density of the response with the densities of simulated
+#' responses ([plot_ppc()]), the worm plot ([plot_worm()]), the calibration of
+#' the predicted quantiles ([plot_calibration()]) and the quantile residuals
+#' against the predicted median ([plot_residuals()] with
+#' `against = "median"`). None of the four reads a particular parameter, so
+#' the set applies to every family, including those without a location
+#' parameter.
 #'
 #' @param fit A [StatmodFit()].
-#' @param types A list of objects inheriting from [diagnostic_plot], or
+#' @param plot_types A list of objects inheriting from [diagnostic_plot], or
 #'   `NULL` for the default set.
 #' @param data The data frame of the fit, or `NULL`; it is required by the
 #'   graphs that read a covariate.
@@ -740,28 +755,28 @@ check_level_grid <- function(level, n_grid) {
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' d <- diagnostics(fit)
 #' names(d)
-#' diagnostics(fit, types = list(plot_qq(), plot_pit()), compose = TRUE)
+#' diagnostics(fit, plot_types = list(plot_qq(), plot_pit()), compose = TRUE)
 #' @export
-diagnostics <- function(fit, types = NULL, data = NULL, compose = FALSE) {
+diagnostics <- function(fit, plot_types = NULL, data = NULL, compose = FALSE) {
   if (!S7::S7_inherits(fit, StatmodFit)) {
     stop("'fit' must be a statmod fit.", call. = FALSE)
   }
-  if (is.null(types)) {
-    types <- list(qq = plot_qq(), worm = plot_worm(),
+  if (is.null(plot_types)) {
+    plot_types <- list(ppc = plot_ppc(), worm = plot_worm(),
                   calibration = plot_calibration(),
                   residuals = plot_residuals(against = "median"))
   }
-  if (!is.list(types) || !length(types) ||
-      !all(vapply(types, S7::S7_inherits, logical(1), diagnostic_plot))) {
-    stop("'types' must be a list of diagnostic_plot objects, such as plot_qq().",
+  if (!is.list(plot_types) || !length(plot_types) ||
+      !all(vapply(plot_types, S7::S7_inherits, logical(1), diagnostic_plot))) {
+    stop("'plot_types' must be a list of diagnostic_plot objects, such as plot_qq().",
          call. = FALSE)
   }
-  if (is.null(names(types))) {
-    labs <- vapply(types, function(t) t@label, character(1))
-    names(types) <- sub("^plot_", "", sub("[(].*$", "", labs))
+  if (is.null(names(plot_types))) {
+    labs <- vapply(plot_types, function(t) t@label, character(1))
+    names(plot_types) <- sub("^plot_", "", sub("[(].*$", "", labs))
   }
   ctx <- list(param = NULL, name = NULL, vars = NULL, cols = NULL,
               data = data)
-  out <- lapply(types, function(t) plot_assemble(t, fit@spec@distrib, fit, ctx))
+  out <- lapply(plot_types, function(t) plot_assemble(t, fit@spec@distrib, fit, ctx))
   if (compose) patchwork::wrap_plots(out) else out
 }

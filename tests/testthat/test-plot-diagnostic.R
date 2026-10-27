@@ -20,7 +20,7 @@ sg1 <- fit1@fitted$sigma
 
 test_that("diagnostics() returns the four named graphs and autoplot() composes them", {
   d <- diagnostics(fit)
-  expect_named(d, c("qq", "worm", "calibration", "residuals"))
+  expect_named(d, c("ppc", "worm", "calibration", "residuals"))
   expect_true(all(vapply(d, ggplot2::is_ggplot, logical(1))))
   p <- autoplot(fit)
   expect_s3_class(p, "patchwork")
@@ -227,7 +227,7 @@ test_that("every graph builds and prints", {
                 plot_ppc(n_sim = 9, seed = 1),
                 plot_ppc(statistic = median, n_sim = 9, seed = 1))
   for (ty in types) {
-    p <- autoplot(fit, type = ty, data = dd)
+    p <- autoplot(fit, plot_type = ty, data = dd)
     expect_true(ggplot2::is_ggplot(p), info = ty@label)
     expect_no_error(print(p))
   }
@@ -242,7 +242,7 @@ test_that("arguments are checked and a multivariate family is not offered", {
   expect_error(plot_acf(lag_max = 0), "at least 1")
   expect_error(plot_qq(seed = "a"), "single number")
   expect_error(plot_influence(param = "mu", measure = "x"))
-  expect_error(autoplot(fit, term = "z", type = plot_qq()), "takes neither")
+  expect_error(autoplot(fit, term = "z", plot_type = plot_qq()), "takes neither")
   for (cl in list(PlotQq, PlotWorm, PlotResiduals, PlotPit, PlotCalibration,
                   PlotScore, PlotInfluence, PlotAcf, PlotPpc)) {
     m <- S7::method(plot_data, list(cl, distributions7::multivariate_distrib))

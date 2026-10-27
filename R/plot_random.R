@@ -87,7 +87,7 @@ PlotCurves <- S7::new_class("PlotCurves", parent = term_plot,
 #' dd$y <- 1 + dd$x + rnorm(12)[dd$id] + rnorm(120, sd = 0.5)
 #' fit <- statmod(y ~ x + random(~ 1 | id), distributions7::gaussian1_distrib(),
 #'                dd)
-#' ggplot2::autoplot(fit, term = "random(~1|id)", type = plot_caterpillar())
+#' ggplot2::autoplot(fit, term = "random(~1|id)", plot_type = plot_caterpillar())
 #' @export
 plot_caterpillar <- function(raw = TRUE, sort = TRUE, level = 0.95,
                              vcov_type = bayesian_vcov(),
@@ -136,7 +136,7 @@ plot_caterpillar <- function(raw = TRUE, sort = TRUE, level = 0.95,
 #' dd$y <- 1 + dd$x + rnorm(25)[dd$id] + rnorm(200, sd = 0.5)
 #' fit <- statmod(y ~ x + random(~ 1 | id), distributions7::gaussian1_distrib(),
 #'                dd)
-#' ggplot2::autoplot(fit, term = "random(~1|id)", type = plot_prior())
+#' ggplot2::autoplot(fit, term = "random(~1|id)", plot_type = plot_prior())
 #' @export
 plot_prior <- function() {
   PlotPrior(label = "plot_prior()")
@@ -174,7 +174,7 @@ plot_prior <- function() {
 #'   rnorm(300, sd = 0.5)
 #' fit <- statmod(y ~ x + random(~ 1 + x | id), distributions7::gaussian1_distrib(),
 #'                dd)
-#' ggplot2::autoplot(fit, term = "random(~1+x|id)", type = plot_random_cov())
+#' ggplot2::autoplot(fit, term = "random(~1+x|id)", plot_type = plot_random_cov())
 #' @export
 plot_random_cov <- function(level = 0.95, which = c(1, 2)) {
   check_level_grid(level, 2)
@@ -217,7 +217,7 @@ plot_random_cov <- function(level = 0.95, which = c(1, 2)) {
 #'   rnorm(240, sd = 0.3)
 #' fit <- statmod(y ~ s(x) + random(~ s(x) | id),
 #'                distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, term = "random(~s(x)|id)", type = plot_curves(),
+#' ggplot2::autoplot(fit, term = "random(~s(x)|id)", plot_type = plot_curves(),
 #'                   data = dd)
 #' @export
 plot_curves <- function(n_grid = 100, population = FALSE) {

@@ -39,7 +39,7 @@ set.seed(1)
 dd <- data.frame(x = runif(150))
 dd$y <- rgamma(150, shape = 3, rate = 3 / exp(1 + dd$x))
 fit <- statmod(y ~ x, distributions7::gamma1_distrib(), dd)
-ggplot2::autoplot(fit, type = plot_moments(over = "x",
+ggplot2::autoplot(fit, plot_type = plot_moments(over = "x",
                   moments = c("mean", "skewness")), data = dd)
 }
 \seealso{

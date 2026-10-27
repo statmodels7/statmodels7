@@ -45,8 +45,8 @@ set.seed(1)
 dd <- data.frame(x = runif(160))
 dd$y <- 1 + dd$x + rnorm(160, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-ggplot2::autoplot(fit, type = plot_worm())
-ggplot2::autoplot(fit, type = plot_worm(over = "x", n_inter = 3), data = dd)
+ggplot2::autoplot(fit, plot_type = plot_worm())
+ggplot2::autoplot(fit, plot_type = plot_worm(over = "x", n_inter = 3), data = dd)
 }
 \references{
 van Buuren, S. and Fredriks, M. (2001). Worm plot: a simple diagnostic

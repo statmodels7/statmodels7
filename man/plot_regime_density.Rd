@@ -41,7 +41,7 @@ dd <- data.frame(t = seq_len(n), y = c(0, 3)[s] + rnorm(n, sd = 0.7))
 fit <- statmod(y ~ regime(k = 2, time = t),
                distributions7::gaussian1_distrib(), dd)
 ggplot2::autoplot(fit, term = "regime(k = 2, time = t)",
-                  type = plot_regime_density())
+                  plot_type = plot_regime_density())
 }
 \seealso{
 \code{\link[=autoplot.StatmodFit]{autoplot.StatmodFit()}}, \code{\link[=plot_states]{plot_states()}}

@@ -356,8 +356,8 @@ PlotQq <- S7::new_class("PlotQq", parent = diagnostic_plot,
 #' dd <- data.frame(x = runif(120))
 #' dd$y <- 1 + dd$x + rnorm(120, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_qq())
-#' ggplot2::autoplot(fit, type = plot_qq(band = "simulated", n_sim = 49,
+#' ggplot2::autoplot(fit, plot_type = plot_qq())
+#' ggplot2::autoplot(fit, plot_type = plot_qq(band = "simulated", n_sim = 49,
 #'                                       seed = 1))
 #' @export
 plot_qq <- function(band = "order", level = 0.95, n_sim = 99, seed = NULL) {
@@ -440,8 +440,8 @@ PlotWorm <- S7::new_class("PlotWorm", parent = diagnostic_plot,
 #' dd <- data.frame(x = runif(160))
 #' dd$y <- 1 + dd$x + rnorm(160, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_worm())
-#' ggplot2::autoplot(fit, type = plot_worm(over = "x", n_inter = 3), data = dd)
+#' ggplot2::autoplot(fit, plot_type = plot_worm())
+#' ggplot2::autoplot(fit, plot_type = plot_worm(over = "x", n_inter = 3), data = dd)
 #' @export
 plot_worm <- function(over = NULL, n_inter = 4, band = "order", level = 0.95,
                       n_sim = 99, seed = NULL) {
@@ -526,8 +526,8 @@ PlotResiduals <- S7::new_class("PlotResiduals", parent = diagnostic_plot,
 #' dd <- data.frame(x = runif(150))
 #' dd$y <- 1 + dd$x + rnorm(150, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_residuals())
-#' ggplot2::autoplot(fit, type = plot_residuals(against = "x"), data = dd)
+#' ggplot2::autoplot(fit, plot_type = plot_residuals())
+#' ggplot2::autoplot(fit, plot_type = plot_residuals(against = "x"), data = dd)
 #' @export
 plot_residuals <- function(against = "median", param = NULL, smooth = TRUE,
                            seed = NULL) {
@@ -694,7 +694,7 @@ PlotPit <- S7::new_class("PlotPit", parent = diagnostic_plot,
 #' dd <- data.frame(x = runif(150))
 #' dd$y <- rpois(150, exp(1 + dd$x))
 #' fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_pit(bins = 10, seed = 1))
+#' ggplot2::autoplot(fit, plot_type = plot_pit(bins = 10, seed = 1))
 #' @export
 plot_pit <- function(bins = 20, seed = NULL, level = 0.95) {
   diag_check_count(bins, "bins", min = 2)
@@ -795,8 +795,8 @@ PlotCalibration <- S7::new_class("PlotCalibration", parent = diagnostic_plot,
 #' dd <- data.frame(x = runif(150))
 #' dd$y <- 1 + dd$x + rnorm(150, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_calibration())
-#' ggplot2::autoplot(fit, type = plot_calibration(over = "x", n_inter = 3),
+#' ggplot2::autoplot(fit, plot_type = plot_calibration())
+#' ggplot2::autoplot(fit, plot_type = plot_calibration(over = "x", n_inter = 3),
 #'                   data = dd)
 #' @export
 plot_calibration <- function(probs = seq(0.05, 0.95, by = 0.05), over = NULL,
@@ -915,8 +915,8 @@ PlotScore <- S7::new_class("PlotScore", parent = diagnostic_plot,
 #' dd <- data.frame(x = runif(120))
 #' dd$y <- 1 + dd$x + rnorm(120, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_score(param = "mu"))
-#' ggplot2::autoplot(fit, type = plot_score(param = "sigma", against = "x"),
+#' ggplot2::autoplot(fit, plot_type = plot_score(param = "mu"))
+#' ggplot2::autoplot(fit, plot_type = plot_score(param = "sigma", against = "x"),
 #'                   data = dd)
 #' @export
 plot_score <- function(param, against = "index") {
@@ -1075,8 +1075,8 @@ PlotInfluence <- S7::new_class("PlotInfluence", parent = diagnostic_plot,
 #' dd <- data.frame(x = runif(100))
 #' dd$y <- 1 + dd$x + rnorm(100, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_influence(param = "mu"))
-#' ggplot2::autoplot(fit, type = plot_influence(param = "mu",
+#' ggplot2::autoplot(fit, plot_type = plot_influence(param = "mu"))
+#' ggplot2::autoplot(fit, plot_type = plot_influence(param = "mu",
 #'                                              measure = "leverage"))
 #' @export
 plot_influence <- function(param, measure = "cook", adjust = TRUE,
@@ -1251,7 +1251,7 @@ PlotAcf <- S7::new_class("PlotAcf", parent = diagnostic_plot,
 #' dd <- data.frame(t = 1:150)
 #' dd$y <- as.numeric(arima.sim(list(ar = 0.5), n = 150))
 #' fit <- statmod(y ~ 1, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_acf(lag_max = 20))
+#' ggplot2::autoplot(fit, plot_type = plot_acf(lag_max = 20))
 #' @export
 plot_acf <- function(lag_max = 30, squared = FALSE, seed = NULL) {
   diag_check_count(lag_max, "lag_max", min = 1)
@@ -1348,8 +1348,8 @@ PlotPpc <- S7::new_class("PlotPpc", parent = diagnostic_plot,
 #' dd <- data.frame(x = runif(120))
 #' dd$y <- rpois(120, exp(1 + dd$x))
 #' fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_ppc(n_sim = 50, seed = 1))
-#' ggplot2::autoplot(fit, type = plot_ppc(statistic = max, n_sim = 50,
+#' ggplot2::autoplot(fit, plot_type = plot_ppc(n_sim = 50, seed = 1))
+#' ggplot2::autoplot(fit, plot_type = plot_ppc(statistic = max, n_sim = 50,
 #'                                        seed = 1))
 #' @export
 plot_ppc <- function(statistic = NULL, n_sim = 200, seed = NULL) {

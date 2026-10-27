@@ -107,6 +107,6 @@ test_that("confint() reports the infinite side and the graph draws it to the ran
   pdf(NULL)
   on.exit(dev.off())
   p <- autoplot(tb$fit, term = "seg(x, npsi = 2)", data = tb$data,
-                type = plot_breakpoint(profile = FALSE))
+                plot_type = plot_breakpoint(profile = FALSE))
   expect_no_error(print(p))
 })

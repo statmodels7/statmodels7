@@ -17,7 +17,8 @@ An object inheriting from \link{plot_type}.
 }
 \description{
 Returns the \link{plot_type} object that \code{\link[=autoplot.StatmodFit]{autoplot.StatmodFit()}} uses for a term
-when \code{type} is not given. The method for \link[modelterms7:model_term]{modelterms7::model_term} returns
+when \code{plot_type} is not given. The method for \link[modelterms7:model_term]{modelterms7::model_term}
+returns
 \code{\link[=plot_effect]{plot_effect()}}, and a class of term with a more informative graph has a
 method of its own.
 }

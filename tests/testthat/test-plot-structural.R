@@ -111,12 +111,12 @@ test_that("the break-point graph carries the position, the interval and the prof
   expect_s3_class(p, "ggplot")
   expect_no_error(print(p))
   q <- autoplot(sg$fit, term = sg$name, data = sg$data,
-                type = plot_breakpoint(profile = FALSE, test = wald_test()))
+                plot_type = plot_breakpoint(profile = FALSE, test = wald_test()))
   wi <- confint(sg$fit, parm = "mu:seg.psi1", readable = FALSE)
   d2 <- q$layers[[5]]$data
   expect_equal(c(d2$lower, d2$upper), c(wi$lower, wi$upper), tolerance = 1e-8)
   expect_error(plot_breakpoint(profile = NA), "TRUE or FALSE")
-  expect_error(autoplot(sg$fit, term = sg$name, type = plot_breakpoint()),
+  expect_error(autoplot(sg$fit, term = sg$name, plot_type = plot_breakpoint()),
                "does not keep its data")
 })
 
@@ -139,7 +139,7 @@ test_that("the filter graph draws the fitted path and its band", {
   pdf(NULL)
   on.exit(dev.off())
   expect_no_error(print(autoplot(gs$fit, term = gs$name,
-                                 type = plot_filter(response = TRUE))))
+                                 plot_type = plot_filter(response = TRUE))))
   expect_error(plot_filter(scale = "link", response = TRUE), "scale")
 })
 
@@ -191,7 +191,7 @@ test_that("the news impact is the loading times the scaled score", {
   pdf(NULL)
   on.exit(dev.off())
   expect_no_error(print(autoplot(gs$fit, term = gs$name,
-                                 type = plot_news_impact())))
+                                 plot_type = plot_news_impact())))
 })
 
 rg <- reg_fit()
@@ -238,7 +238,7 @@ test_that("the regime densities are the family's density at each level", {
   pdf(NULL)
   on.exit(dev.off())
   expect_no_error(print(autoplot(rg$fit, term = rg$name,
-                                 type = plot_regime_density())))
+                                 plot_type = plot_regime_density())))
 })
 
 test_that("the default graph of each term is its own", {

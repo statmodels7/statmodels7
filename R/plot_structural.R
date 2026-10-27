@@ -294,7 +294,7 @@ PlotBreakpoint <- S7::new_class("PlotBreakpoint", parent = term_plot,
 #' fit <- statmod(y ~ seg(x, npsi = 1), distributions7::gaussian1_distrib(), dd)
 #' ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd)
 #' ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd,
-#'                   type = plot_breakpoint(profile = FALSE,
+#'                   plot_type = plot_breakpoint(profile = FALSE,
 #'                                          test = wald_test()))
 #' @export
 plot_breakpoint <- function(profile = TRUE, test = lr_test(), level = 0.95,
@@ -624,7 +624,7 @@ PlotFilter <- S7::new_class("PlotFilter", parent = term_plot,
 #' fit <- statmod(y ~ x + gas(p = 1, q = 1, time = t, scaling = 0.5),
 #'                distributions7::poisson_distrib(), dd)
 #' ggplot2::autoplot(fit, term = "gas(p = 1, q = 1, time = t, scaling = 0.5)",
-#'                   type = plot_filter(response = TRUE))
+#'                   plot_type = plot_filter(response = TRUE))
 #' @export
 plot_filter <- function(level = 0.95, scale = "response", response = FALSE,
                         groups = NULL, vcov_type = bayesian_vcov()) {
@@ -859,7 +859,7 @@ PlotNewsImpact <- S7::new_class("PlotNewsImpact", parent = term_plot,
 #' fit <- statmod(y ~ x + gas(p = 1, q = 1, time = t, scaling = 0.5),
 #'                distributions7::poisson_distrib(), dd)
 #' ggplot2::autoplot(fit, term = "gas(p = 1, q = 1, time = t, scaling = 0.5)",
-#'                   type = plot_news_impact())
+#'                   plot_type = plot_news_impact())
 #' @export
 plot_news_impact <- function(range = c(-6, 6), at = NULL, n_points = 401) {
   if (!is.numeric(range) || length(range) != 2L || anyNA(range) ||
@@ -1095,7 +1095,7 @@ PlotStates <- S7::new_class("PlotStates", parent = term_plot,
 #'                distributions7::gaussian1_distrib(), dd)
 #' ggplot2::autoplot(fit, term = "regime(k = 2, time = t)")
 #' ggplot2::autoplot(fit, term = "regime(k = 2, time = t)",
-#'                   type = plot_states(smoothed = FALSE))
+#'                   plot_type = plot_states(smoothed = FALSE))
 #' @export
 plot_states <- function(smoothed = TRUE) {
   if (!is.logical(smoothed) || length(smoothed) != 1L || is.na(smoothed)) {
@@ -1239,7 +1239,7 @@ PlotRegimeDensity <- S7::new_class("PlotRegimeDensity", parent = term_plot,
 #' fit <- statmod(y ~ regime(k = 2, time = t),
 #'                distributions7::gaussian1_distrib(), dd)
 #' ggplot2::autoplot(fit, term = "regime(k = 2, time = t)",
-#'                   type = plot_regime_density())
+#'                   plot_type = plot_regime_density())
 #' @export
 plot_regime_density <- function(at = NULL, n_grid = 300) {
   if (!is.null(at) && (!is.numeric(at) || length(at) != 1L || is.na(at) ||

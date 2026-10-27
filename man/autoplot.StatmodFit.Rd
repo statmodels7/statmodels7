@@ -5,9 +5,9 @@
 \alias{plot.StatmodFit}
 \title{Graphs of a Fitted Model}
 \usage{
-\method{autoplot}{StatmodFit}(object, term = NULL, param = NULL, type = NULL, data = NULL, ...)
+\method{autoplot}{StatmodFit}(object, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
 
-\method{plot}{StatmodFit}(x, term = NULL, param = NULL, type = NULL, data = NULL, ...)
+\method{plot}{StatmodFit}(x, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
 }
 \arguments{
 \item{object, x}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -18,7 +18,7 @@
 \item{param}{The name of an equation (a parameter of the family), or
 \code{NULL}.}
 
-\item{type}{An object inheriting from \link{plot_type}, or \code{NULL}.}
+\item{plot_type}{An object inheriting from \link{plot_type}, or \code{NULL}.}
 
 \item{data}{The data frame of the fit, or \code{NULL}.}
 
@@ -32,9 +32,9 @@ printing it.
 \description{
 \code{autoplot()} returns a ggplot2 object that shows one aspect of a
 \code{\link[=StatmodFit]{StatmodFit()}}, and \code{plot()} prints that object and returns it invisibly.
-The graph is chosen by \code{type}, an object inheriting from \link{plot_type}:
+The graph is chosen by \code{plot_type}, an object inheriting from \link{plot_type}:
 \itemize{
-\item with \code{term}, a graph of that term (\code{\link[=plot_effect]{plot_effect()}} when \code{type} is not
+\item with \code{term}, a graph of that term (\code{\link[=plot_effect]{plot_effect()}} when \code{plot_type} is not
 given, or the term's \code{\link[=default_plot]{default_plot()}});
 \item with a \link{model_plot} or a \link{diagnostic_plot} type, a graph of the whole
 fit, for which \code{term} and \code{param} are not given;
@@ -67,7 +67,7 @@ dd$y <- sin(2 * pi * dd$x) + 0.5 * dd$z + rnorm(150, sd = 0.3)
 fit <- statmod(y ~ z + s(x), distributions7::gaussian1_distrib(), dd)
 p <- ggplot2::autoplot(fit, term = "s(x)", data = dd)
 p + ggplot2::labs(title = "The smooth of x")
-ggplot2::autoplot(fit, term = "z", type = plot_effect(residuals = FALSE),
+ggplot2::autoplot(fit, term = "z", plot_type = plot_effect(residuals = FALSE),
                   data = dd)
 }
 \seealso{

@@ -48,7 +48,7 @@ set.seed(1)
 dd <- data.frame(x = runif(150))
 dd$y <- 1 + dd$x + rnorm(150, sd = exp(-1 + dd$x))
 fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
-ggplot2::autoplot(fit, type = plot_quantiles(over = "x"), data = dd)
+ggplot2::autoplot(fit, plot_type = plot_quantiles(over = "x"), data = dd)
 }
 \seealso{
 \code{\link[=autoplot.StatmodFit]{autoplot.StatmodFit()}}, \code{\link[=plot_param]{plot_param()}}, \code{\link[=plot_density]{plot_density()}}

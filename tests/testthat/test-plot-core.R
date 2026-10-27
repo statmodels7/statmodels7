@@ -57,7 +57,7 @@ test_that("a variable selects its columns of the linear part", {
 
 test_that("the response scale is the fitted parameter", {
   p <- autoplot(fit, term = "x", param = "sigma",
-                type = plot_effect(scale = "response"), data = dd)
+                plot_type = plot_effect(scale = "response"), data = dd)
   d <- p$layers[[1]]$data
   b <- coef(fit, readable = FALSE)$sigma
   expect_equal(d$fit, exp(b[[1]] + b[[2]] * d$x), tolerance = 1e-10)
@@ -70,17 +70,17 @@ test_that("the response scale of a model with an offset holds the offset variabl
   fo <- statmod(y ~ x + offset(log(n)), distributions7::poisson_distrib(), do)
   b <- coef(fo, readable = FALSE)$mu
   # the offset variable takes its median, as every other variable does
-  d <- autoplot(fo, term = "x", type = plot_effect(scale = "response"),
+  d <- autoplot(fo, term = "x", plot_type = plot_effect(scale = "response"),
                 data = do)$layers[[2]]$data
   expect_equal(d$fit, stats::median(do$n) * exp(b[[1]] + b[[2]] * d$x),
                tolerance = 1e-10)
   # and a value in `at` replaces it
   d2 <- autoplot(fo, term = "x",
-                 type = plot_effect(scale = "response", at = list(n = 50)),
+                 plot_type = plot_effect(scale = "response", at = list(n = 50)),
                  data = do)$layers[[2]]$data
   expect_equal(d2$fit, 50 * exp(b[[1]] + b[[2]] * d2$x), tolerance = 1e-10)
   expect_error(autoplot(fo, term = "x",
-                        type = plot_effect(scale = "response",
+                        plot_type = plot_effect(scale = "response",
                                            at = list(m = 1)), data = do),
                "does not read")
 })
@@ -99,7 +99,7 @@ test_that("errors name what is missing", {
   expect_error(autoplot(fit, term = "x", data = dd), "give 'param'")
   expect_error(autoplot(fit, term = "s(x)", data = dd[1:10, ]),
                "10 rows")
-  expect_error(autoplot(fit, term = "s(x)", type = 3), "plot_type object")
+  expect_error(autoplot(fit, term = "s(x)", plot_type = 3), "plot_type object")
   expect_error(autoplot(fit, param = "mu"), "give 'term'")
   expect_error(plot_effect(level = 2), "'level'")
   expect_error(plot_effect(scale = "other"))

@@ -100,9 +100,9 @@ test_that("a smooth with a by factor has a curve and a critical value per level"
 test_that("the derivative graph rejects what it cannot draw", {
   f2 <- statmod(y ~ te(x, z), distributions7::gaussian1_distrib(), dd)
   nm <- grep("^te", names(f2@spec@terms$mu), value = TRUE)
-  expect_error(autoplot(f2, term = nm, type = plot_derivative(), data = dd),
+  expect_error(autoplot(f2, term = nm, plot_type = plot_derivative(), data = dd),
                "plot_surface")
-  expect_error(autoplot(fit, term = "s(x)", type = plot_derivative()),
+  expect_error(autoplot(fit, term = "s(x)", plot_type = plot_derivative()),
                "give the fitting data")
   expect_error(plot_derivative(order = 3), "'order'")
   expect_error(plot_derivative(n_sim = 5), "'n_sim'")
@@ -139,11 +139,11 @@ test_that("the surface is the contribution of the term on the grid", {
                tolerance = 1e-12)
   expect_error(plot_data(plot_surface(slices = 5), f2@spec@terms$mu[[nm]], f2,
                          cx), "range")
-  expect_error(autoplot(fit, term = "s(x)", type = plot_surface(), data = dd),
+  expect_error(autoplot(fit, term = "s(x)", plot_type = plot_surface(), data = dd),
                "draws a function of two")
   pdf(NULL)
   on.exit(dev.off())
-  expect_s3_class(print(autoplot(f2, term = nm, type = plot_surface(),
+  expect_s3_class(print(autoplot(f2, term = nm, plot_type = plot_surface(),
                                  data = dd)), "ggplot")
 })
 
@@ -209,18 +209,18 @@ test_that("the default grid and the errors of the criterion graph", {
   expect_equal(range(d$curve$x) - log(fit@hyper$mu[["s(x)"]]), c(-5, 5))
   fh <- statmod(y ~ x + s(z, hyper = 3), distributions7::gaussian1_distrib(), dd)
   nm <- grep("^s", names(fh@spec@terms$mu), value = TRUE)
-  expect_error(autoplot(fh, term = nm, type = plot_criterion(), data = dd),
+  expect_error(autoplot(fh, term = nm, plot_type = plot_criterion(), data = dd),
                "no hyperparameter")
-  expect_error(autoplot(fit, term = "s(x)", type = plot_criterion(hyper = "zz")),
+  expect_error(autoplot(fit, term = "s(x)", plot_type = plot_criterion(hyper = "zz")),
                "no estimated hyperparameter 'zz'")
   expect_error(plot_criterion(method = "newton"), "should be one of")
   expect_error(plot_criterion(log_lambda = 1), "log_lambda")
   fn <- statmod(y ~ s(x), distributions7::gaussian1_distrib(), dd,
                outer_criterion = NULL)
-  expect_error(autoplot(fn, term = "s(x)", type = plot_criterion()),
+  expect_error(autoplot(fn, term = "s(x)", plot_type = plot_criterion()),
                "no outer")
   pdf(NULL)
   on.exit(dev.off())
-  expect_s3_class(print(autoplot(fit, term = "s(x)", type = plot_criterion(),
+  expect_s3_class(print(autoplot(fit, term = "s(x)", plot_type = plot_criterion(),
                                  data = dd)), "ggplot")
 })

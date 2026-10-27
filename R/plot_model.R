@@ -126,7 +126,7 @@ check_at_list <- function(at) {
 #' dd <- data.frame(x = runif(150))
 #' dd$y <- 1 + dd$x + rnorm(150, sd = exp(-1 + dd$x))
 #' fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_param(param = "sigma", over = "x"),
+#' ggplot2::autoplot(fit, plot_type = plot_param(param = "sigma", over = "x"),
 #'                   data = dd)
 #' @export
 plot_param <- function(param, over, at = NULL, level = 0.95,
@@ -179,7 +179,7 @@ plot_param <- function(param, over, at = NULL, level = 0.95,
 #' dd <- data.frame(x = runif(150))
 #' dd$y <- 1 + dd$x + rnorm(150, sd = exp(-1 + dd$x))
 #' fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_quantiles(over = "x"), data = dd)
+#' ggplot2::autoplot(fit, plot_type = plot_quantiles(over = "x"), data = dd)
 #' @export
 plot_quantiles <- function(over, probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
                            at = NULL, points = TRUE, n_grid = 200) {
@@ -236,7 +236,7 @@ plot_quantiles <- function(over, probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
 #' dd <- data.frame(x = runif(150))
 #' dd$y <- 1 + dd$x + rnorm(150, sd = exp(-1 + dd$x))
 #' fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_density(at = data.frame(x = c(0.1, 0.5,
+#' ggplot2::autoplot(fit, plot_type = plot_density(at = data.frame(x = c(0.1, 0.5,
 #'                                                                   0.9)),
 #'                                            over = "x"), data = dd)
 #' @export
@@ -297,7 +297,7 @@ plot_density <- function(at, over = NULL, n_grid = 200, scale = 0.9) {
 #' dd <- data.frame(x = runif(150))
 #' dd$y <- rgamma(150, shape = 3, rate = 3 / exp(1 + dd$x))
 #' fit <- statmod(y ~ x, distributions7::gamma1_distrib(), dd)
-#' ggplot2::autoplot(fit, type = plot_moments(over = "x",
+#' ggplot2::autoplot(fit, plot_type = plot_moments(over = "x",
 #'                   moments = c("mean", "skewness")), data = dd)
 #' @export
 plot_moments <- function(over, moments = c("mean", "variance"), at = NULL,

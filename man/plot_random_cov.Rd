@@ -36,7 +36,7 @@ dd$y <- 1 + dd$x + rnorm(20)[dd$id] + 0.5 * rnorm(20)[dd$id] * dd$x +
   rnorm(300, sd = 0.5)
 fit <- statmod(y ~ x + random(~ 1 + x | id), distributions7::gaussian1_distrib(),
                dd)
-ggplot2::autoplot(fit, term = "random(~1+x|id)", type = plot_random_cov())
+ggplot2::autoplot(fit, term = "random(~1+x|id)", plot_type = plot_random_cov())
 }
 \seealso{
 \code{\link[=autoplot.StatmodFit]{autoplot.StatmodFit()}}, \code{\link[=plot_caterpillar]{plot_caterpillar()}}, \code{\link[=plot_prior]{plot_prior()}}
