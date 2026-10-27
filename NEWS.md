@@ -1,4 +1,4 @@
-# statmodels7 (development version)
+# statmodels7 0.211.0
 
 * `frequentist_vcov()` takes `sandwich = hc0_sandwich()` or
   `hc1_sandwich()`, each with an optional `cluster = ~ id` (CR0 and CR1).
@@ -27,8 +27,6 @@
   replaced ones, the Monte Carlo error and, for a kinked penalty, the
   selection frequencies. `pred_bootstrap()` runs on the same engine and gives
   the same replicas as before.
-
-# statmodels7 0.211.0
 
 * The choices of a method are S7 objects. `statmod()` takes
   `inner_information = auto_info()` (the matrix of the inner fit, which an
