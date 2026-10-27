@@ -1,3 +1,29 @@
+# statmodels7 0.215.0
+
+* `bayesian_resample()` selects the Bayesian bootstrap. Each replicate gives
+  every observation a weight drawn from the flat Dirichlet distribution and
+  scaled to sum to the number of observations, so no replicate loses a level
+  of a factor. It is rejected beside `random()` and structural terms, like
+  `case_resample()`.
+* `bca_interval()` is the third interval of `confint(interval = )`, beside
+  `percentile_interval()` and `basic_interval()`. The acceleration comes from
+  the refits without one observation (or one cluster), which are made once
+  and stored in the entry of the bootstrap. It is available for the case,
+  cluster and Bayesian schemes.
+* `hc0_sandwich()` to `hc4_sandwich()` take `weights = "frequency"` (the
+  default, as before) or `"sampling"`. The sampling reading takes the prior
+  weights as inverse probabilities of selection, uses `sum(w^2 g g')` without
+  a cluster and does not change when the weights are rescaled.
+* The sandwich and HAC variances accept `seg()`, `nl()` and the break-point
+  terms with a held or smoothed position; the scores are read on the design
+  refreshed at the fit.
+* The environment that a fit keeps for the formula binds the exports of
+  modelterms7 by active bindings. A fit of a smooth model with 2000
+  observations is 16 MB smaller, and the bootstrap sends its workers a fit
+  without the stored outer search (50.0 to 7.5 MB for one round).
+* The documentation of the resampling schemes states how the replicates of a
+  kinked penalty are read.
+
 # statmodels7 0.214.0
 
 * `confint(test = lr_test())`, `score_test()` and `gradient_test()` on the
