@@ -281,8 +281,7 @@ plot.StatmodFit <- function(x, term = NULL, param = NULL, type = NULL,
 }
 
 #' @importFrom ggplot2 autoplot
-#' @export
-ggplot2::autoplot
+NULL
 
 S7::method(autoplot, StatmodFit) <- autoplot.StatmodFit
 S7::method(plot, StatmodFit) <- plot.StatmodFit
