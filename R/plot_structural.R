@@ -248,8 +248,9 @@ PlotBreakpoint <- S7::new_class("PlotBreakpoint", parent = term_plot,
 #' that `test = lr_test()` inverts the likelihood ratio test of the position
 #' and `test = wald_test()` gives the Wald interval. The position of a
 #' [modelterms7::jump()] or [modelterms7::jseg()] term is read off other
-#' coefficients and has no coordinate to invert a test on; its line is drawn
-#' without an interval.
+#' coefficients and has no coordinate to invert a test on; its interval is
+#' the set of positions, connected to the estimate, at which the profile
+#' described below stays under the cutoff.
 #'
 #' The profile is computed on the working response of the equation,
 #' \eqn{y_i^* = f(x_i) + s_i / w_i}, where \eqn{s_i} is the score of the
@@ -321,6 +322,33 @@ plot_breakpoint <- function(profile = TRUE, test = lr_test(), level = 0.95,
 }
 
 
+#' The Interval of a Position from Its Profile
+#'
+#' @description
+#' Returns the smallest and largest grid positions of the run, connected to
+#' `psi`, over which the increase of the criterion stays at or under
+#' `cutoff`.
+#'
+#' @param x The grid of positions, increasing.
+#' @param delta The increase of the criterion at each position.
+#' @param psi The estimated position.
+#' @param cutoff The cutoff of the increase.
+#'
+#' @return A numeric vector of length two; `NA` where the profile is empty.
+#'
+#' @keywords internal
+profile_interval <- function(x, delta, psi, cutoff) {
+  if (!length(x)) return(c(NA_real_, NA_real_))
+  i0 <- which.min(abs(x - psi))
+  inside <- delta <= cutoff
+  lo <- i0
+  while (lo > 1L && inside[lo - 1L]) lo <- lo - 1L
+  hi <- i0
+  while (hi < length(x) && inside[hi + 1L]) hi <- hi + 1L
+  c(x[lo], x[hi])
+}
+
+
 S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
   function(type, x, fit, ctx, ...) {
     if (length(x@subformulas)) {
@@ -370,7 +398,11 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
     profile <- data.frame(x = numeric(0), delta = numeric(0),
                           k = integer(0))
     cutoff <- data.frame(cutoff = stats::qchisq(type@level, 1))
-    if (type@profile) {
+    # a jump() or jseg() position has no coefficient of its own, so its
+    # interval is read from the profile, which is then computed even when the
+    # inset is not drawn
+    from_profile <- !identical(x@kind, "seg")
+    if (type@profile || from_profile) {
       wp <- working_parts(fit, ctx$param, type@information)
       yn <- modelterms7::term_value(x) + wp$wr
       w <- fit@spec@weights * wp$w
@@ -391,6 +423,15 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
       })
       profile <- do.call(rbind, pieces)
     }
+    if (from_profile && nrow(profile)) {
+      for (k in seq_len(K)) {
+        pk <- profile[profile$k == k, , drop = FALSE]
+        iv <- profile_interval(pk$x, pk$delta, psi[k], cutoff$cutoff)
+        breaks$lower[k] <- iv[1L]
+        breaks$upper[k] <- iv[2L]
+      }
+    }
+    if (!type@profile) profile <- profile[0L, , drop = FALSE]
     out <- list(curve = eff$curve, points = eff$points, breaks = breaks,
                 profile = profile, cutoff = cutoff)
     attr(out, "labels") <- list(title = sprintf("%s: %s", ctx$param,
@@ -1019,17 +1060,17 @@ PlotStates <- S7::new_class("PlotStates", parent = term_plot,
 #' over the order of the series.
 #'
 #' @details
-#' With `smoothed = FALSE` (the default) the probabilities are the filtered
-#' ones, \eqn{P(S_t = j \mid y_1, \dots, y_t)}, from the forward recursion of
-#' the term at its fitted parameters. With `smoothed = TRUE` they are the
-#' smoothed ones, \eqn{P(S_t = j \mid y_1, \dots, y_n)}, as
-#' [statmod_latent()] reports them. The two coincide at the last observation of
+#' With `smoothed = TRUE` (the default) the probabilities are the smoothed
+#' ones, \eqn{P(S_t = j \mid y_1, \dots, y_n)}, as [statmod_latent()] reports
+#' them. With `smoothed = FALSE` they are the filtered ones,
+#' \eqn{P(S_t = j \mid y_1, \dots, y_t)}, from the forward recursion of the
+#' term at its fitted parameters. The two coincide at the last observation of
 #' each group. The horizontal axis is the variable named by `time` in the
 #' term, or the row order when it has none, and a panel is drawn for each
 #' group of a panel (at most twelve).
 #'
-#' @param smoothed Whether to draw the smoothed probabilities instead of the
-#'   filtered ones.
+#' @param smoothed Whether to draw the smoothed probabilities (`TRUE`) or the
+#'   filtered ones (`FALSE`).
 #'
 #' @return A `PlotStates` object, inheriting from [term_plot].
 #'
@@ -1047,9 +1088,9 @@ PlotStates <- S7::new_class("PlotStates", parent = term_plot,
 #'                distributions7::gaussian1_distrib(), dd)
 #' ggplot2::autoplot(fit, term = "regime(k = 2, time = t)")
 #' ggplot2::autoplot(fit, term = "regime(k = 2, time = t)",
-#'                   type = plot_states(smoothed = TRUE))
+#'                   type = plot_states(smoothed = FALSE))
 #' @export
-plot_states <- function(smoothed = FALSE) {
+plot_states <- function(smoothed = TRUE) {
   if (!is.logical(smoothed) || length(smoothed) != 1L || is.na(smoothed)) {
     stop("'smoothed' must be TRUE or FALSE.", call. = FALSE)
   }

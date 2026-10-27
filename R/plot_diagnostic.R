@@ -1062,8 +1062,8 @@ PlotInfluence <- S7::new_class("PlotInfluence", parent = diagnostic_plot,
 #' @param param The equation, a parameter of the family.
 #' @param measure `"cook"` (the default) or `"leverage"`.
 #' @param adjust Whether to divide the step by \eqn{1 - h_i}.
-#' @param information An object from [distributions7::observed_info()] (the
-#'   default) or [distributions7::expected_info()], the matrix of the
+#' @param information An object from [distributions7::expected_info()] (the
+#'   default) or [distributions7::observed_info()], the matrix of the
 #'   variance and of the weights \eqn{w_i}.
 #'
 #' @return A `PlotInfluence` object, inheriting from [diagnostic_plot].
@@ -1080,7 +1080,7 @@ PlotInfluence <- S7::new_class("PlotInfluence", parent = diagnostic_plot,
 #'                                              measure = "leverage"))
 #' @export
 plot_influence <- function(param, measure = "cook", adjust = TRUE,
-                           information = distributions7::observed_info()) {
+                           information = distributions7::expected_info()) {
   diag_check_name(param, "param", null = FALSE)
   measure <- match.arg(measure, c("cook", "leverage"))
   if (!is.logical(adjust) || length(adjust) != 1L || is.na(adjust)) {

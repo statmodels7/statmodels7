@@ -199,8 +199,8 @@ rg <- reg_fit()
 test_that("the state probabilities are distributions that agree with statmod_latent()", {
   tm <- rg$fit@spec@terms$mu[[rg$name]]
   ctx <- list(param = "mu", name = rg$name, data = rg$data)
-  ds <- plot_data(plot_states(smoothed = TRUE), tm, rg$fit, ctx = ctx)
-  df <- plot_data(plot_states(), tm, rg$fit, ctx = ctx)
+  ds <- plot_data(plot_states(), tm, rg$fit, ctx = ctx)
+  df <- plot_data(plot_states(smoothed = FALSE), tm, rg$fit, ctx = ctx)
   n <- nrow(rg$data)
   sm <- matrix(ds$states$prob, n, 2)
   fl <- matrix(df$states$prob, n, 2)
@@ -248,4 +248,28 @@ test_that("the default graph of each term is its own", {
                    "plot_filter()")
   expect_identical(default_plot(rg$fit@spec@terms$mu[[rg$name]])@label,
                    "plot_states()")
+})
+
+test_that("the interval of a jump() position is read from its profile", {
+  set.seed(2)
+  dj <- data.frame(x = sort(runif(150, 0, 10)))
+  dj$y <- 1 + 0.3 * dj$x + 2 * (dj$x > 6) + rnorm(150, sd = 0.4)
+  fj <- statmod(y ~ jump(x, npsi = 1), distributions7::gaussian1_distrib(), dj)
+  nm <- grep("jump", names(fj@spec@terms$mu), value = TRUE)
+  tm <- fj@spec@terms$mu[[nm]]
+  ctx <- list(param = "mu", name = nm, vars = "x", data = dj)
+  d <- plot_data(plot_breakpoint(profile = FALSE), tm, fj, ctx = ctx)
+  expect_equal(nrow(d$profile), 0)
+  expect_true(d$breaks$lower <= d$breaks$psi && d$breaks$psi <= d$breaks$upper)
+  dp <- plot_data(plot_breakpoint(), tm, fj, ctx = ctx)
+  inside <- dp$profile$x >= dp$breaks$lower & dp$profile$x <= dp$breaks$upper
+  expect_true(all(dp$profile$delta[inside] <= dp$cutoff$cutoff))
+  expect_equal(c(dp$breaks$lower, dp$breaks$upper),
+               c(d$breaks$lower, d$breaks$upper))
+})
+
+test_that("profile_interval keeps the run connected to the estimate", {
+  x <- 1:9
+  delta <- c(0, 5, 1, 0.5, 0, 0.5, 1, 5, 0)
+  expect_equal(profile_interval(x, delta, psi = 5, cutoff = 3.84), c(3, 7))
 })

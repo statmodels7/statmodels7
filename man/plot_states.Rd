@@ -4,11 +4,11 @@
 \alias{plot_states}
 \title{Graph of the State Probabilities of a Regime Term}
 \usage{
-plot_states(smoothed = FALSE)
+plot_states(smoothed = TRUE)
 }
 \arguments{
-\item{smoothed}{Whether to draw the smoothed probabilities instead of the
-filtered ones.}
+\item{smoothed}{Whether to draw the smoothed probabilities (\code{TRUE}) or the
+filtered ones (\code{FALSE}).}
 }
 \value{
 A \code{PlotStates} object, inheriting from \link{term_plot}.
@@ -19,11 +19,11 @@ Selects the graph of the probability of each regime of a
 over the order of the series.
 }
 \details{
-With \code{smoothed = FALSE} (the default) the probabilities are the filtered
-ones, \eqn{P(S_t = j \mid y_1, \dots, y_t)}, from the forward recursion of
-the term at its fitted parameters. With \code{smoothed = TRUE} they are the
-smoothed ones, \eqn{P(S_t = j \mid y_1, \dots, y_n)}, as
-\code{\link[=statmod_latent]{statmod_latent()}} reports them. The two coincide at the last observation of
+With \code{smoothed = TRUE} (the default) the probabilities are the smoothed
+ones, \eqn{P(S_t = j \mid y_1, \dots, y_n)}, as \code{\link[=statmod_latent]{statmod_latent()}} reports
+them. With \code{smoothed = FALSE} they are the filtered ones,
+\eqn{P(S_t = j \mid y_1, \dots, y_t)}, from the forward recursion of the
+term at its fitted parameters. The two coincide at the last observation of
 each group. The horizontal axis is the variable named by \code{time} in the
 term, or the row order when it has none, and a panel is drawn for each
 group of a panel (at most twelve).
@@ -39,7 +39,7 @@ fit <- statmod(y ~ regime(k = 2, time = t),
                distributions7::gaussian1_distrib(), dd)
 ggplot2::autoplot(fit, term = "regime(k = 2, time = t)")
 ggplot2::autoplot(fit, term = "regime(k = 2, time = t)",
-                  type = plot_states(smoothed = TRUE))
+                  type = plot_states(smoothed = FALSE))
 }
 \seealso{
 \code{\link[=autoplot.StatmodFit]{autoplot.StatmodFit()}}, \code{\link[=plot_regime_density]{plot_regime_density()}},

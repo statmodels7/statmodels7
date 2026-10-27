@@ -129,3 +129,19 @@ test_that("arguments and data are checked", {
   expect_error(autoplot(fit, term = "s(x)", type = plot_moments(over = "x"),
                         data = dd), "neither 'term' nor 'param'")
 })
+
+test_that("scale sets the width of the vertical densities", {
+  set.seed(5)
+  ds <- data.frame(x = runif(80))
+  ds$y <- ds$x + rnorm(80, sd = 0.3)
+  fs <- statmod(y ~ x, distributions7::gaussian1_distrib(), ds)
+  at <- data.frame(x = c(0.2, 0.6))
+  w <- function(sc) {
+    d <- autoplot(fs, type = plot_density(at = at, over = "x", scale = sc),
+                  data = ds)$layers[[2]]$data
+    max(d$x - d$x0)
+  }
+  expect_equal(w(0.9), 0.9 * 0.4, tolerance = 1e-12)
+  expect_equal(w(0.45), 0.45 * 0.4, tolerance = 1e-12)
+  expect_error(plot_density(at = at, scale = 0), "'scale'")
+})

@@ -57,8 +57,9 @@ The interval of a break-point of a \code{\link[modelterms7:seg]{modelterms7::seg
 that \code{test = lr_test()} inverts the likelihood ratio test of the position
 and \code{test = wald_test()} gives the Wald interval. The position of a
 \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} term is read off other
-coefficients and has no coordinate to invert a test on; its line is drawn
-without an interval.
+coefficients and has no coordinate to invert a test on; its interval is
+the set of positions, connected to the estimate, at which the profile
+described below stays under the cutoff.
 
 The profile is computed on the working response of the equation,
 \eqn{y_i^* = f(x_i) + s_i / w_i}, where \eqn{s_i} is the score of the

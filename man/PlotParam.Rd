@@ -26,7 +26,13 @@ PlotQuantiles(
   n_grid = integer(0)
 )
 
-PlotDensity(label = character(0), at = NULL, over = NULL, n_grid = integer(0))
+PlotDensity(
+  label = character(0),
+  at = NULL,
+  over = NULL,
+  n_grid = integer(0),
+  scale = integer(0)
+)
 
 PlotMoments(
   label = character(0),
@@ -37,7 +43,7 @@ PlotMoments(
 )
 }
 \arguments{
-\item{label, param, over, at, level, vcov_type, n_grid, probs, points, moments}{See the constructors.}
+\item{label, param, over, at, level, vcov_type, n_grid, probs, points, moments, scale}{See the constructors.}
 }
 \value{
 An object inheriting from \link{model_plot}.

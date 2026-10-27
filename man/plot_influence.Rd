@@ -8,7 +8,7 @@ plot_influence(
   param,
   measure = "cook",
   adjust = TRUE,
-  information = distributions7::observed_info()
+  information = distributions7::expected_info()
 )
 }
 \arguments{
@@ -18,8 +18,8 @@ plot_influence(
 
 \item{adjust}{Whether to divide the step by \eqn{1 - h_i}.}
 
-\item{information}{An object from \code{\link[distributions7:observed_info]{distributions7::observed_info()}} (the
-default) or \code{\link[distributions7:expected_info]{distributions7::expected_info()}}, the matrix of the
+\item{information}{An object from \code{\link[distributions7:expected_info]{distributions7::expected_info()}} (the
+default) or \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the matrix of the
 variance and of the weights \eqn{w_i}.}
 }
 \value{

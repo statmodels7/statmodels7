@@ -5,7 +5,7 @@
 #' [plot_moments()] instantiate. Use the constructors, which check the
 #' properties.
 #'
-#' @param label,param,over,at,level,vcov_type,n_grid,probs,points,moments
+#' @param label,param,over,at,level,vcov_type,n_grid,probs,points,moments,scale
 #'   See the constructors.
 #'
 #' @return An object inheriting from [model_plot].
@@ -40,7 +40,8 @@ PlotDensity <- S7::new_class("PlotDensity", parent = model_plot,
   properties = list(
     at = S7::class_any,
     over = S7::class_any,
-    n_grid = S7::class_numeric
+    n_grid = S7::class_numeric,
+    scale = S7::class_numeric
   ))
 
 #' @rdname PlotParam
@@ -222,6 +223,9 @@ plot_quantiles <- function(over, probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
 #'   the position of each density on the horizontal axis.
 #' @param n_grid The number of points of the response grid of a continuous
 #'   family.
+#' @param scale With `over`, the width of the widest density as a fraction of
+#'   the smallest gap between positions (of 15 per cent of the range of the
+#'   covariate for a single row).
 #'
 #' @return A `PlotDensity` object, inheriting from [model_plot].
 #'
@@ -236,7 +240,7 @@ plot_quantiles <- function(over, probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
 #'                                                                   0.9)),
 #'                                            over = "x"), data = dd)
 #' @export
-plot_density <- function(at, over = NULL, n_grid = 200) {
+plot_density <- function(at, over = NULL, n_grid = 200, scale = 0.9) {
   if (missing(at) || !is.data.frame(at) || !nrow(at)) {
     stop("'at' must be a data frame of covariate values with at least one row.",
          call. = FALSE)
@@ -252,8 +256,12 @@ plot_density <- function(at, over = NULL, n_grid = 200) {
     }
   }
   check_level_grid(0.5, n_grid)
+  if (!is.numeric(scale) || length(scale) != 1L || !is.finite(scale) ||
+      scale <= 0) {
+    stop("'scale' must be a single positive number.", call. = FALSE)
+  }
   PlotDensity(label = "plot_density()", at = at, over = over,
-              n_grid = n_grid)
+              n_grid = n_grid, scale = scale)
 }
 
 
@@ -600,12 +608,12 @@ density_data <- function(type, x, fit, ctx, discrete) {
   if (!is.null(type@over)) {
     pos <- rw$at[[type@over]]
     dens$x0 <- pos[dens$index]
-    # the widest density spans 90 per cent of the smallest gap between
-    # positions (15 per cent of the range of the data for a single row)
+    # the widest density spans `scale` times the smallest gap between
+    # positions (or 15 per cent of the range of the data for a single row)
     gaps <- diff(sort(unique(pos)))
     span <- if (length(gaps)) min(gaps) else
       0.15 * diff(range(rw$data[[type@over]], na.rm = TRUE))
-    dens$x <- dens$x0 + 0.9 * span * dens$dens / max(dens$dens)
+    dens$x <- dens$x0 + type@scale * span * dens$dens / max(dens$dens)
     y <- fit@spec@response
     if (is.null(dim(y)) && is.numeric(y)) {
       pts <- data.frame(x = rw$data[[type@over]], y = as.numeric(y))
