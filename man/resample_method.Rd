@@ -39,6 +39,15 @@ scheme: its weights are positive, so no replicate loses a level of a factor
 or separates a logistic regression, and its variance is close to that of
 the case scheme.
 
+With a kinked penalty (\code{\link[modelterms7:lasso]{modelterms7::lasso()}}, \code{\link[modelterms7:enet]{modelterms7::enet()}},
+\code{\link[modelterms7:scad]{modelterms7::scad()}}, \code{\link[modelterms7:mcp]{modelterms7::mcp()}}) the replicates are those of the
+penalized estimator. They carry its bias toward zero, so an interval taken
+from them covers the expected value of that estimator and not the
+coefficient, and the frequency with which a coordinate is nonzero in the
+replicates, which \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints, is not the probability that
+the fit selects that coordinate. Every scheme draws \eqn{n} observations;
+resampling fewer than \eqn{n} is not offered.
+
 A resampled data set is represented by frequency weights, which multiply
 the weights of the fit. The design is not rebuilt, so the knots of a basis
 and the levels of a factor stay those of the fit, and a refit on the

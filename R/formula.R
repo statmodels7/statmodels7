@@ -225,7 +225,12 @@ one_sided <- function(expr, env) {
 #'
 #' The function binds each export of \pkg{modelterms7} for which
 #' `is.function()` is `TRUE`. The S7 class generators of that package are
-#' functions and are copied with the others.
+#' functions and are bound with the others. Each name is an active binding
+#' made by [export_binding()], which reads the object from the namespace when
+#' the name is evaluated. A term keeps this environment as the environment of
+#' its formula, and copies of the objects would be serialized with every fit:
+#' the S7 generics and classes of \pkg{modelterms7} weigh about 16 MB, against
+#' about 0.1 MB for the bindings.
 #'
 #' @param env The environment that the formula carried, which becomes the
 #'   parent of the result. Everything visible from `env` stays visible.
@@ -242,8 +247,33 @@ terms_first <- function(env) {
   shim <- new.env(parent = env)
   ns <- asNamespace("modelterms7")
   for (nm in getNamespaceExports("modelterms7")) {
-    obj <- get(nm, envir = ns)
-    if (is.function(obj)) assign(nm, obj, envir = shim)
+    if (is.function(get(nm, envir = ns))) {
+      makeActiveBinding(nm, export_binding(nm), shim)
+    }
   }
   shim
+}
+
+#' The Active Binding of One Export of modelterms7
+#'
+#' @description
+#' Returns a function of no arguments that gets the object called `name` from
+#' the namespace of \pkg{modelterms7}. It is the function that
+#' [makeActiveBinding()] takes in [terms_first()].
+#'
+#' @details
+#' The function is created here and not inside [terms_first()] so that its
+#' environment holds `name` and nothing else: a closure made in the body of
+#' [terms_first()] would carry the environment that the caller passed.
+#'
+#' @param name A single string, the name of an export.
+#'
+#' @return A function of no arguments.
+#'
+#' @seealso [terms_first()]
+#'
+#' @keywords internal
+export_binding <- function(name) {
+  force(name)
+  function() get(name, envir = asNamespace("modelterms7"))
 }

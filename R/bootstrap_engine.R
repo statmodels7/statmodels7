@@ -79,6 +79,7 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
   spec0 <- object@spec
   design0 <- statmod_design(spec0)
   if (check) bootstrap_check(object, resample, refit, spec0, design0)
+  object <- boot_light(object)
   if (is.null(aside)) aside <- random_modes(spec0, "zero")
   sm <- object@methods
   params <- spec0@distrib@params
@@ -166,6 +167,31 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
        seed_start = seed_start, seed_end = seed_end,
        random = attr(draw, "random"), raw = raw,
        raw_cols = if (is.null(raw)) NULL else raw_cols)
+}
+
+
+#' The Fit as the Workers Receive It
+#'
+#' @description
+#' Returns the fit without the optimizer of its outer search.
+#'
+#' @details
+#' The closures of the engine hold the fit, and [worker_map()] serializes them
+#' for every worker. The optimizer that the outer search stores in
+#' `object@methods$search` keeps the environment of that search, which holds the
+#' design and the inner fit, and it is not read by a refit. Dropping it leaves
+#' the properties that [bootstrap_refit()], [boot_read_mode()] and the
+#' draws read.
+#'
+#' @param object The [StatmodFit()].
+#'
+#' @return The [StatmodFit()] with `methods$search` set to `NULL`.
+#'
+#' @keywords internal
+boot_light <- function(object) {
+  m <- object@methods
+  m["search"] <- list(NULL)
+  S7::set_props(object, methods = m)
 }
 
 
