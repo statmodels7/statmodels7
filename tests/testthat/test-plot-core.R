@@ -102,3 +102,19 @@ test_that("a variable in a linear and a nonlinear term sums their values", {
   expect_equal(d$fit, b[["x"]] * d$x + b[["nl.a"]] * exp(-exp(b[["nl.r"]]) * d$x),
                tolerance = 1e-10)
 })
+
+test_that("a factor is crossed only where it interacts with the variable", {
+  p <- autoplot(fit, term = "z", data = dd)
+  expect_false("group" %in% names(p$layers[[2]]$data))
+  set.seed(3)
+  di <- data.frame(z = rnorm(120), g = factor(sample(c("a", "b"), 120, TRUE)))
+  di$y <- di$z * c(1, -1)[di$g] + rnorm(120, sd = 0.3)
+  fi <- statmod(y ~ z * g, distributions7::gaussian1_distrib(), di)
+  q <- autoplot(fi, term = "z", data = di)
+  d <- q$layers[[2]]$data
+  expect_setequal(levels(d$group), c("a", "b"))
+  b <- coef(fi, readable = FALSE)$mu
+  db <- d[d$group == "b", ]
+  expect_equal(db$fit, (b[["z"]] + b[["z:gb"]]) * db$x + b[["gb"]] * 0,
+               tolerance = 1e-10)
+})

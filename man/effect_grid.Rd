@@ -4,7 +4,7 @@
 \alias{effect_grid}
 \title{A Grid over the Variables of an Effect}
 \usage{
-effect_grid(data, var, vars_all, n_grid)
+effect_grid(data, var, vars_all, n_grid, cross = vars_all)
 }
 \arguments{
 \item{data}{The data frame of the fit.}
@@ -14,6 +14,9 @@ effect_grid(data, var, vars_all, n_grid)
 \item{vars_all}{Every variable the term reads.}
 
 \item{n_grid}{The number of points for a numeric variable.}
+
+\item{cross}{The variables that may be crossed with the grid: those that
+enter the drawn contribution together with \code{var}.}
 }
 \value{
 A data frame with the attribute \code{"group"}, the name of the
@@ -22,7 +25,7 @@ crossed factor or \code{NULL}.
 \description{
 Builds new data for an effect: \code{n_grid} points over the range of a
 numeric variable, or its levels for a factor, crossed with the levels of a
-factor that the term also reads (when it has at most twelve), and every
+factor among \code{cross} (when it has at most twelve), and every
 other variable of \code{vars_all} held at its median or its first level.
 }
 \keyword{internal}

@@ -184,7 +184,13 @@ effect_data <- function(type, parts, fit, ctx) {
                         "plot_surface() draws a function of two."), ctx$name,
                  paste(num, collapse = " and ")), call. = FALSE)
   }
-  grid <- effect_grid(data, var, vars_all, type@n_grid)
+  # a factor is crossed with the grid only where it enters the drawn
+  # contribution: the variables of a whole term, or those that share an
+  # interaction with the variable in the columns of the linear part
+  cross <- unique(unlist(lapply(parts, function(p)
+    if (is.null(p$cols)) term_variables(p$term, p$name)
+    else linpar_partners(p$term, var))))
+  grid <- effect_grid(data, var, vars_all, type@n_grid, cross = cross)
   group <- attr(grid, "group")
   z <- stats::qnorm((1 + type@level) / 2)
   kind <- if (is.numeric(data[[var]])) "numeric" else "factor"
@@ -346,16 +352,26 @@ S7::method(plot_layers, PlotEffect) <- function(type, data, ...) {
                                     colour = .data$group)
       else ggplot2::aes(x = .data$x, y = .data$fit, ymin = .data$lower,
                         ymax = .data$upper)
-    out <- c(out, list(ggplot2::geom_pointrange(
-      data = data$curve, mapping = ca, colour = if (grouped) NULL else "#1f5fa8",
-      position = if (grouped) ggplot2::position_dodge(width = 0.4)
-        else "identity")))
-    return(out)
+    # a fixed colour is passed only where no group maps one, since a NULL
+    # parameter is reported by ggplot2 as an empty aesthetic
+    pr <- if (grouped) {
+      ggplot2::geom_pointrange(data = data$curve, mapping = ca,
+                               position = ggplot2::position_dodge(width = 0.4))
+    } else {
+      ggplot2::geom_pointrange(data = data$curve, mapping = ca,
+                               colour = "#1f5fa8")
+    }
+    return(c(out, list(pr)))
   }
   if (nrow(data$points)) {
-    out <- c(out, list(ggplot2::geom_point(
-      data = data$points, mapping = pa, alpha = 0.35, size = 0.9,
-      colour = if ("group" %in% names(data$points)) NULL else "grey30")))
+    pt <- if ("group" %in% names(data$points)) {
+      ggplot2::geom_point(data = data$points, mapping = pa, alpha = 0.35,
+                          size = 0.9)
+    } else {
+      ggplot2::geom_point(data = data$points, mapping = pa, alpha = 0.35,
+                          size = 0.9, colour = "grey30")
+    }
+    out <- c(out, list(pt))
   }
   if (grouped) {
     out <- c(out, list(

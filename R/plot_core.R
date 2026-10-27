@@ -443,6 +443,27 @@ term_variables <- function(tm, name) {
 }
 
 
+#' The Variables That Share a Linear Term with a Variable
+#'
+#' @description
+#' Returns the variables of the terms of a linear formula that involve
+#' `var`: `var` alone for a main effect, and the other variables of each
+#' interaction in which it appears.
+#'
+#' @param tm A [modelterms7::LinparTerm].
+#' @param var A single string.
+#'
+#' @return A character vector.
+#'
+#' @keywords internal
+linpar_partners <- function(tm, var) {
+  fac <- attr(stats::terms(tm@formula), "factors")
+  if (!length(fac) || !var %in% rownames(fac)) return(character(0))
+  uses <- fac[var, ] > 0
+  rownames(fac)[rowSums(fac[, uses, drop = FALSE] > 0) > 0]
+}
+
+
 #' The Columns of the Linear Part That Involve a Variable
 #'
 #' @description
@@ -574,19 +595,21 @@ working_residuals <- function(fit, param, information) {
 #' @description
 #' Builds new data for an effect: `n_grid` points over the range of a
 #' numeric variable, or its levels for a factor, crossed with the levels of a
-#' factor that the term also reads (when it has at most twelve), and every
+#' factor among `cross` (when it has at most twelve), and every
 #' other variable of `vars_all` held at its median or its first level.
 #'
 #' @param data The data frame of the fit.
 #' @param var The variable on the horizontal axis.
 #' @param vars_all Every variable the term reads.
 #' @param n_grid The number of points for a numeric variable.
+#' @param cross The variables that may be crossed with the grid: those that
+#'   enter the drawn contribution together with `var`.
 #'
 #' @return A data frame with the attribute `"group"`, the name of the
 #'   crossed factor or `NULL`.
 #'
 #' @keywords internal
-effect_grid <- function(data, var, vars_all, n_grid) {
+effect_grid <- function(data, var, vars_all, n_grid, cross = vars_all) {
   v <- data[[var]]
   xs <- if (is.numeric(v)) {
     seq(min(v, na.rm = TRUE), max(v, na.rm = TRUE), length.out = n_grid)
@@ -596,7 +619,7 @@ effect_grid <- function(data, var, vars_all, n_grid) {
   }
   others <- setdiff(vars_all, var)
   group <- NULL
-  for (o in others) {
+  for (o in intersect(others, cross)) {
     if (!is.numeric(data[[o]]) && is.null(group) &&
         nlevels(as.factor(data[[o]])) <= 12L) group <- o
   }
