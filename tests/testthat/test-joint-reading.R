@@ -125,9 +125,10 @@ stalled <- list(
   k326 = list("dax_t_nu_d0", c(sigma.omega = 0, sigma.kappa1 = -2.3025850929940455,
     sigma.pacf1 = 3.8002011672501994, nu.omega = 0, nu.kappa1 = -2.3025850929940455,
     nu.pacf1 = 3.8002011672501994)),
-  k357 = list("dax_t_nu_dh", c(sigma.omega = 0, sigma.kappa1 = -4.6819725148583924,
-    sigma.pacf1 = 3.8002011672501994, nu.omega = 0, nu.kappa1 = -3.4404300364371037,
-    nu.pacf1 = 3.8002011672501994)),
+  # k357 (dax_t_nu_dh) left the list in 0.218.0: with the second start of a
+  # joint filter scaled equation by equation it reaches a stationary point
+  # 5.58 below the maximum, nu's persistence at the edge of its chart
+  # (decrement 1.3e-7, smallest eigenvalue 1e-6), rather than stopping
   k974 = list("erupt_weib", c(mu.omega = 0, mu.kappa1 = -1.2039728043259359,
     mu.pacf1 = 1.4722194895832204, sigma.omega = 0, sigma.kappa1 = -1.2039728043259359,
     sigma.pacf1 = 1.4722194895832204)),
