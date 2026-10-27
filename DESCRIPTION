@@ -113,6 +113,7 @@ Collate:
     'order.R'
     'outer_context.R'
     'plot_core.R'
+    'plot_diagnostic.R'
     'plot_effect.R'
     'plot_smooth.R'
     'plot_penalized.R'
