@@ -79,6 +79,7 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
   spec0 <- object@spec
   design0 <- statmod_design(spec0)
   if (check) bootstrap_check(object, resample, refit, spec0, design0)
+  object <- boot_light(object)
   if (is.null(aside)) aside <- random_modes(spec0, "zero")
   sm <- object@methods
   params <- spec0@distrib@params
@@ -169,6 +170,31 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
 }
 
 
+#' The Fit as the Workers Receive It
+#'
+#' @description
+#' Returns the fit without the optimizer of its outer search.
+#'
+#' @details
+#' The closures of the engine hold the fit, and [worker_map()] serializes them
+#' for every worker. The optimizer that the outer search stores in
+#' `object@methods$search` keeps the environment of that search, which holds the
+#' design and the inner fit, and it is not read by a refit. Dropping it leaves
+#' the properties that [bootstrap_refit()], [boot_read_mode()] and the
+#' draws read.
+#'
+#' @param object The [StatmodFit()].
+#'
+#' @return The [StatmodFit()] with `methods$search` set to `NULL`.
+#'
+#' @keywords internal
+boot_light <- function(object) {
+  m <- object@methods
+  m["search"] <- list(NULL)
+  S7::set_props(object, methods = m)
+}
+
+
 #' Reject a Fit That the Bootstrap Does Not Handle
 #'
 #' @description
@@ -220,9 +246,11 @@ bootstrap_check <- function(object, resample, refit, spec0, design0) {
   }
   has_random <- nrow(random_modes(spec0, "zero")) > 0L ||
     nrow(attr(random_modes(spec0, "zero"), "nested")) > 0L
-  if (has_random && S7::S7_inherits(resample, CaseResample)) {
-    stop(paste0("case_resample() breaks the groups of a random() term. ",
-                "cluster_resample() resamples the groups."), call. = FALSE)
+  if (has_random && (S7::S7_inherits(resample, CaseResample) ||
+                     S7::S7_inherits(resample, BayesianResample))) {
+    stop(paste0(resample@name, "_resample() breaks the groups of a random() ",
+                "term. cluster_resample() resamples the groups."),
+         call. = FALSE)
   }
   if (has_random && S7::S7_inherits(resample, ClusterResample)) {
     boot_cluster_random_check(spec0)
@@ -279,6 +307,15 @@ bootstrap_plan <- function(object, resample, spec0, design0, aside, adjust) {
   }
   if (S7::S7_inherits(resample, CaseResample)) {
     out <- function() list(w = tabulate(sample.int(n, n, TRUE), n) * w0)
+  } else if (S7::S7_inherits(resample, BayesianResample)) {
+    pos <- w0 > 0
+    np <- sum(pos)
+    out <- function() {
+      e <- stats::rexp(np)
+      w <- numeric(n)
+      w[pos] <- w0[pos] * e * (np / sum(e))
+      list(w = w)
+    }
   } else {
     id <- boot_cluster_ids(object, resample, spec0)
     gi <- match(id, unique(id))
@@ -360,7 +397,8 @@ boot_cluster_data <- function(object, resample, spec0) {
 #' @param draw The function from [bootstrap_plan()], whose attributes give the
 #'   kind of plan and the targets.
 #' @param refit,method,cfg,beta0 As in [bootstrap_refit()].
-#' @param plans The draws of the round.
+#' @param plans The draws of the round, or a function of the position that
+#'   returns the draw.
 #' @param ref The reading of the fit itself, from [boot_read_mode()].
 #' @param validate,isolate,keep_fit As in [bootstrap_engine()], where `isolate`
 #'   is `stream`.
@@ -380,7 +418,7 @@ boot_body <- function(object, spec0, draw, refit, method, cfg, beta0, plans,
   raw_cols <- boot_raw_cols(targets, cf_fit, params)
   force(plans)
   function(i) {
-    pl <- plans[[i]]
+    pl <- if (is.function(plans)) plans(i) else plans[[i]]
     if (isolate && exists(".Random.seed", envir = globalenv(),
                           inherits = FALSE)) {
       old_seed <- get(".Random.seed", envir = globalenv())

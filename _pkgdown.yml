@@ -161,6 +161,7 @@ reference:
   - resample_method
   - parametric_resample
   - case_resample
+  - bayesian_resample
   - cluster_resample
   - add_bootstrap
   - statmod_bootstrap

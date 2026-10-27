@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.214.0
+Version: 0.217.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Fits distributional regression models, and installs and attaches
@@ -32,7 +32,7 @@ Imports:
     methods,
     modelterms7 (>= 0.110.0),
     numericals7 (>= 0.21.0),
-    optimizers7 (>= 0.16.0),
+    optimizers7 (>= 0.17.0),
     parallel,
     parameters7,
     patchwork,
@@ -94,10 +94,11 @@ Collate:
     'inference_objects.R'
     'bootstrap_objects.R'
     'bootstrap_engine.R'
-    'bootstrap_cluster_random.R'
+    'bootstrap_structural.R'
     'bootstrap_fit.R'
     'bootstrap_interval.R'
-    'bootstrap_structural.R'
+    'bootstrap_bca.R'
+    'bootstrap_cluster_random.R'
     'breakpoint_test.R'
     'conflicts.R'
     'inference.R'

@@ -27,7 +27,8 @@ kind of plan and the targets.}
 
 \item{refit, method, cfg, beta0}{As in \code{\link[=bootstrap_refit]{bootstrap_refit()}}.}
 
-\item{plans}{The draws of the round.}
+\item{plans}{The draws of the round, or a function of the position that
+returns the draw.}
 
 \item{ref}{The reading of the fit itself, from \code{\link[=boot_read_mode]{boot_read_mode()}}.}
 

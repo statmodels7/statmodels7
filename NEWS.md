@@ -1,9 +1,62 @@
-# statmodels7 (development version)
+# statmodels7 0.217.0
 
 * The argument `type` of `autoplot()` and `plot()` is named `plot_type`, and
   the argument `types` of `diagnostics()` is named `plot_types`. The default
   group of `plot()` replaces the quantile-quantile graph by `plot_ppc()`, the
   observed density of the response with the densities of simulated responses.
+
+# statmodels7 0.216.0
+
+* The certificate and the verdict of an alternation read the inner fit of a
+  model with a `gas()` or `regime()` term over the coefficients and the
+  term's parameters through `joint_reading()`. A coordinate whose curvature
+  is not positive is left out. A curvature with an eigenvalue below
+  `-1e3 * eps * lambda_max` (`curvature_ascent_limit()`) is a point that is
+  not a maximum: the certificate has the state `"not converged"` with the new
+  field `ascent`, and an alternation reads it as not settled. Before,
+  `deficient_coords()` on such a matrix dropped the term's parameters and the
+  decrement of the coefficients alone, 0.000453 at a log-likelihood 473 below
+  the maximum, gave `"converged"`. A joint reading that cannot be computed
+  gives `mode_error = NA` and the state `"unknown"`, where the reading of the
+  coefficients alone was used.
+
+* The joint gradient of a filter is missing (`NA`) where it cannot be
+  evaluated, and was zero. `newton()` read the zeros as a stationary point and
+  reported `converged = TRUE` at a log-likelihood 16734 below the maximum; it
+  now stops with `gradient not finite`.
+
+* The flag of a `gas()` fit reads the `stop_decrement` of `newton()` in
+  optimizers7: a run does not end as converged on a change of the parameters
+  or of the objective where the Hessian is not positive definite or the Newton
+  decrement exceeds that limit. The nine fits of the census of `gas()` models
+  that reported `converged = TRUE` away from a maximum (2.2 to 16733
+  log-likelihood units below it) report `FALSE`.
+
+# statmodels7 0.215.0
+
+* `bayesian_resample()` selects the Bayesian bootstrap. Each replicate gives
+  every observation a weight drawn from the flat Dirichlet distribution and
+  scaled to sum to the number of observations, so no replicate loses a level
+  of a factor. It is rejected beside `random()` and structural terms, like
+  `case_resample()`.
+* `bca_interval()` is the third interval of `confint(interval = )`, beside
+  `percentile_interval()` and `basic_interval()`. The acceleration comes from
+  the refits without one observation (or one cluster), which are made once
+  and stored in the entry of the bootstrap. It is available for the case,
+  cluster and Bayesian schemes.
+* `hc0_sandwich()` to `hc4_sandwich()` take `weights = "frequency"` (the
+  default, as before) or `"sampling"`. The sampling reading takes the prior
+  weights as inverse probabilities of selection, uses `sum(w^2 g g')` without
+  a cluster and does not change when the weights are rescaled.
+* The sandwich and HAC variances accept `seg()`, `nl()` and the break-point
+  terms with a held or smoothed position; the scores are read on the design
+  refreshed at the fit.
+* The environment that a fit keeps for the formula binds the exports of
+  modelterms7 by active bindings. A fit of a smooth model with 2000
+  observations is 16 MB smaller, and the bootstrap sends its workers a fit
+  without the stored outer search (50.0 to 7.5 MB for one round).
+* The documentation of the resampling schemes states how the replicates of a
+  kinked penalty are read.
 
 # statmodels7 0.214.0
 

@@ -34,7 +34,12 @@ and the call as written.
 
 The function binds each export of \pkg{modelterms7} for which
 \code{is.function()} is \code{TRUE}. The S7 class generators of that package are
-functions and are copied with the others.
+functions and are bound with the others. Each name is an active binding
+made by \code{\link[=export_binding]{export_binding()}}, which reads the object from the namespace when
+the name is evaluated. A term keeps this environment as the environment of
+its formula, and copies of the objects would be serialized with every fit:
+the S7 generics and classes of \pkg{modelterms7} weigh about 16 MB, against
+about 0.1 MB for the bindings.
 }
 \seealso{
 \code{\link[=statmod_equations]{statmod_equations()}} for the formula that is interpreted with

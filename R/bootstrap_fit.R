@@ -43,8 +43,8 @@ NULL
 #'
 #' The refits use the `inner_information` of the fit. A fit with a response that
 #' is not one number per observation, or (with `refit = "full"`) a [cv()]
-#' criterion is rejected, and so is `case_resample()` beside a
-#' [modelterms7::random()] term.
+#' criterion is rejected, and so are `case_resample()` and
+#' `bayesian_resample()` beside a [modelterms7::random()] term.
 #'
 #' A fit with a score-driven or a regime term ([modelterms7::gas()],
 #' [modelterms7::regime()]) takes `parametric_resample()` only. Each replicate
@@ -52,8 +52,8 @@ NULL
 #' at the fitted coefficients and parameters of the term, so the recursion of
 #' the filter runs on the draws; it is not the fitted filtered path with new
 #' noise. A resample of rows or of groups breaks the recursion at every join, and
-#' `case_resample()` and `cluster_resample()` signal an error that names
-#' `parametric_resample()`. The effects of a [modelterms7::random()] term keep
+#' `case_resample()`, `cluster_resample()` and `bayesian_resample()` signal an
+#' error that names `parametric_resample()`. The effects of a [modelterms7::random()] term keep
 #' their estimates in the draws. The replicates hold the free parameters of the
 #' term after the coefficients, on the unconstrained scale, in the order of
 #' [vcov()]. A replicate is kept when the Newton decrement of the refit over
@@ -78,7 +78,8 @@ NULL
 #' @param fit A [StatmodFit()].
 #' @param n A single whole number, the total number of replicates wanted.
 #' @param resample A [resample_method] object: [parametric_resample()] (the
-#'   default), [case_resample()] or [cluster_resample()].
+#'   default), [case_resample()], [cluster_resample()] or
+#'   [bayesian_resample()].
 #' @param refit `"coefficients"` (the default) re-estimates the coefficients at
 #'   the hyperparameters of the fit, and `"full"` selects the hyperparameters
 #'   again on every replicate.
@@ -374,7 +375,8 @@ boot_fill <- function(fit, n, resample, refit, say = FALSE) {
       rbind(old@raw, eng$raw),
     raw_cols = if (is.null(old)) eng$raw_cols else if (is.null(old@raw) ||
                                                        is.null(eng$raw)) NULL else
-      old@raw_cols)
+      old@raw_cols,
+    jackknife = if (is.null(old)) NULL else old@jackknife)
   assign(key, entry, envir = env)
   entry
 }

@@ -17,7 +17,8 @@ add_bootstrap(
 \item{n}{A single whole number, the total number of replicates wanted.}
 
 \item{resample}{A \link{resample_method} object: \code{\link[=parametric_resample]{parametric_resample()}} (the
-default), \code{\link[=case_resample]{case_resample()}} or \code{\link[=cluster_resample]{cluster_resample()}}.}
+default), \code{\link[=case_resample]{case_resample()}}, \code{\link[=cluster_resample]{cluster_resample()}} or
+\code{\link[=bayesian_resample]{bayesian_resample()}}.}
 
 \item{refit}{\code{"coefficients"} (the default) re-estimates the coefficients at
 the hyperparameters of the fit, and \code{"full"} selects the hyperparameters
@@ -66,8 +67,8 @@ variability when failures are frequent.
 
 The refits use the \code{inner_information} of the fit. A fit with a response that
 is not one number per observation, or (with \code{refit = "full"}) a \code{\link[=cv]{cv()}}
-criterion is rejected, and so is \code{case_resample()} beside a
-\code{\link[modelterms7:random]{modelterms7::random()}} term.
+criterion is rejected, and so are \code{case_resample()} and
+\code{bayesian_resample()} beside a \code{\link[modelterms7:random]{modelterms7::random()}} term.
 
 A fit with a score-driven or a regime term (\code{\link[modelterms7:gas]{modelterms7::gas()}},
 \code{\link[modelterms7:regime]{modelterms7::regime()}}) takes \code{parametric_resample()} only. Each replicate
@@ -75,8 +76,8 @@ is a new path of the series, drawn through \code{\link[modelterms7:term_simulate
 at the fitted coefficients and parameters of the term, so the recursion of
 the filter runs on the draws; it is not the fitted filtered path with new
 noise. A resample of rows or of groups breaks the recursion at every join, and
-\code{case_resample()} and \code{cluster_resample()} signal an error that names
-\code{parametric_resample()}. The effects of a \code{\link[modelterms7:random]{modelterms7::random()}} term keep
+\code{case_resample()}, \code{cluster_resample()} and \code{bayesian_resample()} signal an
+error that names \code{parametric_resample()}. The effects of a \code{\link[modelterms7:random]{modelterms7::random()}} term keep
 their estimates in the draws. The replicates hold the free parameters of the
 term after the coefficients, on the unconstrained scale, in the order of
 \code{\link[=vcov]{vcov()}}. A replicate is kept when the Newton decrement of the refit over
