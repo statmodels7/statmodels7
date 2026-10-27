@@ -27,7 +27,9 @@ the standard errors are computed is an argument of each of them
 uncertainty of the hyperparameters into every standard error under it,
 where \code{correct} carries the same uncertainty into the degrees of freedom;
 the two are the same quantity read on two surfaces, and both can be used
-in one call. The conventions are compared at \link{vcov_method}.}
+in one call. The conventions are compared at \link{vcov_method}. The effective
+degrees of freedom of the summary are read on this same information (see
+the section on the degrees of freedom).}
 
 \item{correct}{Whether the degrees of freedom include the cost of
 estimating the hyperparameters. The ordinary count treats them as known
@@ -93,6 +95,42 @@ filter's level, loadings and persistences, or the transition
 probabilities of a regime chain), with a level that an intercept holds
 marked as held.}
 }
+}
+\section{The effective degrees of freedom}{
+The edf of a term is its share of \eqn{\mathrm{tr}[(H+S)^{-1}H]}, with
+\eqn{H} the information of the log-likelihood and \eqn{S} the second
+derivative of the penalty, read over the coefficients of every equation at
+once. The summary reads \eqn{H} on the information of \code{vcov_type}
+(\code{\link[distributions7:default_information]{distributions7::default_information()}} of the family where the
+\code{information} of the variance object is \code{NULL}), which is the matrix that
+the standard errors above the edf invert. A call with
+\code{vcov_type = bayesian_vcov(information = expected_info())} therefore prints
+the standard errors and the edf on the expected information. The count
+stored in \code{fit@edf} was read at fit time on the information of the outer
+criterion: the observed information by default under \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}.
+With the defaults the two coincide, and the summary recomputes the count
+only where \code{vcov_type} names the other matrix.
+
+Three cases keep the count stored in the fit. Under \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}} the
+count is part of the criterion that prices the fit, and it is read on the
+\code{information} of that criterion, so the summary leaves it as it is and the
+printed criterion stays reproducible from it. A model with a structural
+term is read on the joint vector of the coefficients and the term's own
+parameters, as before. A variance object without an \code{information} property
+has no matrix to read.
+
+The eigenvalues of \eqn{(H+S)^{-1}H} are
+\eqn{v^\top H v/(v^\top H v + v^\top S v)}, for the generalized eigenvectors
+\eqn{v}. They lie in \eqn{[0, 1]}, and the total in \eqn{[0, p]} with
+\eqn{p} the number of coefficients, when \eqn{H} is positive semidefinite.
+The observed information can be indefinite (a Student t at an outlier, for
+example). A direction with \eqn{v^\top H v < 0} then contributes a negative
+share, an edf can be underestimated, and the bounds above can fail. The
+summary adds a note when the observed information used for the count has an
+eigenvalue below \eqn{-p\,\epsilon\,\lambda_{\max}} (\eqn{\epsilon} the
+machine epsilon and \eqn{\lambda_{\max}} the largest eigenvalue), the floor
+with which the package separates a flat direction from rounding. The
+expected information is positive semidefinite and carries no such note.
 
 A hyperparameter is the first row of its block, since it governs
 every coefficient under it, and its name carries a mark in square brackets
@@ -149,6 +187,7 @@ count: \code{aic} is \eqn{-2\ell + 2\,\mathrm{df}} and \code{bic} replaces the f
 2 by the logarithm of the sum of the prior weights, which are frequency
 weights.
 }
+
 \section{Reading the foot}{
 Below the criteria the summary describes the point at which the fit stopped
 with a few numbers from \code{\link[=statmod_certificate]{statmod_certificate()}}. The summary prints no

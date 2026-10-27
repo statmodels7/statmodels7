@@ -30,7 +30,22 @@ NULL
 #' @param objective The penalized objective there, not averaged.
 #' @param edf A data frame of effective degrees of freedom with the columns
 #'   `parameter`, `term`, `coefficients` and `edf`, one row per term of each
-#'   equation.
+#'   equation. The count of a term is its share of
+#'   \eqn{\mathrm{tr}[(H+S)^{-1}H]}, with \eqn{H} the information of the
+#'   log-likelihood and \eqn{S} the second derivative of the penalty, and it
+#'   is read at fit time on one information matrix, which `methods` records as
+#'   `edf_information`. That matrix is the `information` of [aic()] or
+#'   [bic()] where either prices the fit (the count is part of the
+#'   criterion), otherwise the `information` of [reml()] or [ml()]
+#'   ([distributions7::observed_info()] by default), and the information of
+#'   the inner fit (`inner_information` of [statmod()], with [auto_info()]
+#'   settled against the family) only where the model has no outer criterion.
+#'   For a positive semidefinite \eqn{H} the total lies in \eqn{[0, p]}, with
+#'   \eqn{p} the number of coefficients, and the count of a term lies between
+#'   0 and its number of coefficients. An indefinite observed information can
+#'   give a negative share to a direction of negative curvature, and then
+#'   these bounds can fail. [summary.StatmodFit()] reports the count on the
+#'   information of its `vcov_type` and leaves `fit@edf` unchanged.
 #' @param fitted A named list of the fitted parameters, one vector per
 #'   distribution parameter.
 #' @param converged A single logical. Where the fit does not alternate between
@@ -1020,23 +1035,33 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # the terms as the fit left them, so a break-point and a nonlinear
   # parameter are read off the fitted object and prediction reapplies them
   spec <- statmod_fitted_spec(spec, coef, design)
-  # WHICH INFORMATION THE PRINTED COUNT READS. aic() and bic() price a fit as
+  # WHICH INFORMATION THE STORED COUNT READS. aic() and bic() price a fit as
   # -2 l + k tau, and tau is the trace read on the information their own
-  # `hessian` names; the count printed beside that criterion is the same
+  # `information` names; the count stored beside that criterion is the same
   # quantity, so it reads the same matrix. It used to read the inner fit's
   # information whatever the criterion read, so under iwls()'s expected
   # information and aic()'s observed one the two disagreed: 6.754675 against
   # 6.754023 on one smooth, and the printed count no longer reproduced the
   # criterion printed above it. At most one criterion reading tau runs, a
   # prediction-error outer criterion being refused beside a path.
+  # reml() and ml() are not priced by the count, but the standard errors of
+  # the same fit read the information of the criterion that estimated the
+  # hyperparameters (observed_info() by default), so the count reads it too.
+  # Only a fit with no outer criterion falls back to the inner information.
   tau_reader <- Filter(function(m) !is.null(m) && m@kind %in% c("aic", "bic"),
                        list(sparse_criterion, outer_criterion))
-  edf_expected <- if (length(tau_reader)) {
-    info_expected(tau_reader[[1L]]@hessian)
+  marg_reader <- Filter(function(m) !is.null(m) && m@kind %in% c("reml", "ml"),
+                        list(outer_criterion))
+  edf_reader <- c(tau_reader, marg_reader)
+  edf_expected <- if (length(edf_reader)) {
+    info_expected(edf_reader[[1L]]@hessian)
   } else expected
-  edf_emethod <- if (length(tau_reader)) {
-    select_emethod(tau_reader[[1L]], NULL, emethod)
+  edf_emethod <- if (length(edf_reader)) {
+    select_emethod(edf_reader[[1L]], NULL, emethod)
   } else emethod
+  edf_information <- if (edf_expected) {
+    distributions7::expected_info(method = edf_emethod)
+  } else distributions7::observed_info()
   StatmodFit(
     spec = spec, coefficients = coef,
     structural = statmod_structural_par(spec, design), hyper = hyper,
@@ -1057,6 +1082,10 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     ),
     methods = list(smooth = inner_optimizer,
                    inner_information = inner_information,
+                   # the information that the stored edf was read on, and
+                   # whether a criterion prices the fit with that count
+                   edf_information = edf_information,
+                   edf_priced = length(tau_reader) > 0L,
                    outer = outer_criterion,
                    search = res$optimizer,
                    # the coordinates the marginal criterion left out of its

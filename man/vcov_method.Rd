@@ -51,7 +51,8 @@ the closed form of the expected information gives finite standard errors.
 \code{\link[=auto_info]{auto_info()}} is not accepted, since the variance is defined on one named
 matrix. \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} states the matrix whenever it is not the
 observed one, and a printed variance object states the information that it
-names. The choice is independent of
+names. The effective degrees of freedom that \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints
+are read on the same matrix. The choice is independent of
 the information with which the fit was computed (\code{inner_information} of
 \code{\link[=statmod]{statmod()}}) and of the one of the outer criterion (the \code{information} of
 \code{\link[=reml]{reml()}}). A model that carries a structural term is inverted on the

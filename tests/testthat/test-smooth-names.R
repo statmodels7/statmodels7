@@ -24,7 +24,8 @@ test_that("a smooth and its varying coefficient are fitted as in mgcv", {
   d$y <- sin(2 * pi * d$x) + (1 + 2 * d$x^2) * d$z + rnorm(300, sd = 0.5)
   fit <- statmod(y ~ s(x, basis7::bspline_smooth(k = 10)) +
                    s(x, basis7::bspline_smooth(k = 10), by = z),
-                 distrib = gaussian1_distrib(), data = d)
+                 distrib = gaussian1_distrib(), data = d,
+                 outer_criterion = reml(information = expected_info()))
   g <- mgcv::gam(y ~ s(x, bs = "bs", k = 10) + s(x, bs = "bs", k = 10, by = z),
                  data = d, method = "REML")
   expect_false(anyDuplicated(names(coef(fit)$mu)) > 0L)

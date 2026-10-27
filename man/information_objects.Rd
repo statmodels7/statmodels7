@@ -28,7 +28,10 @@ receives. The default is \code{\link[=auto_info]{auto_info()}}.}
 \item{\code{information} of \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}}{The matrix
 of the outer criterion: its determinant enters the Laplace
 approximation of \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, and its trace gives the effective
-degrees of freedom of \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}. The default is
+degrees of freedom of \code{\link[=aic]{aic()}} and \code{\link[=bic]{bic()}}. The effective degrees of
+freedom stored in the fitted model (\code{fit@edf}) are read on this matrix
+whenever an outer criterion ran, and on the matrix of \code{inner_information}
+only for a model without one. The default is
 \code{\link[distributions7:observed_info]{distributions7::observed_info()}}.}
 \item{\code{information} of \code{\link[=bayesian_vcov]{bayesian_vcov()}}, \code{\link[=frequentist_vcov]{frequentist_vcov()}} and
 \code{\link[=unconditional_vcov]{unconditional_vcov()}}}{The matrix inverted for the standard errors.
@@ -36,7 +39,9 @@ The default is \code{NULL}, which selects the matrix by the family of the
 fit: the observed information where the log-likelihood is twice
 differentiable in every parameter of the family, and
 \code{\link[distributions7:expected_info]{distributions7::expected_info()}} otherwise (see "The default of the
-variance objects" below).}
+variance objects" below). \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads the effective
+degrees of freedom it prints on this matrix too, so that they are shares
+of the same \eqn{H} as the standard errors beside them.}
 }
 }
 \details{

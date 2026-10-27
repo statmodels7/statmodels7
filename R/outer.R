@@ -163,6 +163,20 @@ outer_path_defaults <- function() {
 #' that a marginal criterion needs. Written out, the expression reproduces
 #' Wood's (2011) REML criterion term for term.
 #'
+#' # The effective degrees of freedom of the fit
+#'
+#' The effective degrees of freedom stored in the fitted model (`fit@edf`),
+#' the share of each term in \eqn{\mathrm{tr}[(H+S)^{-1}H]}, are read on the
+#' `information` of the criterion: [distributions7::observed_info()] by
+#' default, or the [distributions7::expected_info()] object with its `method`.
+#' The count is not part of the criterion here, but the standard errors of the
+#' same fit read the same default matrix, so the count and the standard errors
+#' of a summary agree. [summary.StatmodFit()] recomputes the count when its
+#' `vcov_type` names the other matrix. For a positive semidefinite \eqn{H} the
+#' total lies in \eqn{[0, p]}, with \eqn{p} the number of coefficients; an
+#' indefinite observed information can give a direction of negative curvature
+#' a negative share, and the summary then adds a note.
+#'
 #' # What each one integrates
 #'
 #' Write \eqn{\gamma} for the unpenalized coefficients of the parameters that

@@ -492,8 +492,9 @@ test_that("hyper() names every equation a class spans", {
 
   # the edf total is the trace of the assembled smoother, cross block and all
   des <- statmod_design(fit@spec)
+  # on the information of reml(), the observed one by default
   H <- as.matrix(statmod_information_at(fit@spec, fit@coefficients, des,
-                                        TRUE, NULL))
+                                        FALSE, NULL))
   S <- as.matrix(statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper,
                                     des, "hessian"))
   expect_equal(sum(fit@edf$edf), sum(diag(solve(H + S) %*% H)),

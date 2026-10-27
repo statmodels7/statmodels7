@@ -474,7 +474,8 @@ test_that("a term's edf is its share of the WHOLE model's smoother", {
   # the construction arranged does not survive.
   ref_total <- function(fit) {
     des <- statmod_design(fit@spec)
-    H <- statmod_information_at(fit@spec, fit@coefficients, des, TRUE,
+    # the information of reml(), the observed one by default
+    H <- statmod_information_at(fit@spec, fit@coefficients, des, FALSE,
                                 NULL)
     S <- statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper, des,
                             "hessian")

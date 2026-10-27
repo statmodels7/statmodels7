@@ -10,7 +10,9 @@ summary_class_blocks(
   tables,
   edf = NULL,
   coef = NULL,
-  hyper = NULL
+  hyper = NULL,
+  expected = TRUE,
+  emethod = NULL
 )
 }
 \arguments{
@@ -27,6 +29,14 @@ report what the class itself spends rather than what its members' terms
 do.}
 
 \item{hyper}{The hyperparameters, or \code{NULL}.}
+
+\item{expected}{Whether the smoother of a class is read on the expected
+information. It is the information on which the table \code{edf} was read, so
+that the count of a class and the counts of its members are shares of the
+same matrix.}
+
+\item{emethod}{The method that obtains the expected information, as for
+\code{\link[=statmod_edf]{statmod_edf()}}.}
 }
 \value{
 A list of block records in the shape that \code{\link[=print_block]{print_block()}} reads.

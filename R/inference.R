@@ -114,6 +114,120 @@ aliased_labels <- function(spec, design, idx) {
 }
 
 
+#' The Degrees of Freedom That a Summary Reports
+#'
+#' @description
+#' Returns the table of effective degrees of freedom that [summary.StatmodFit()]
+#' reports, read on the information of the variance convention `vcov_type`, and
+#' a note where that information is the observed one and is indefinite at the
+#' estimate.
+#'
+#' @details
+#' The table stored in the fit, `fit@edf`, was read on the information of the
+#' outer criterion ([reml()], [ml()], [aic()] or [bic()]) or, where there is none,
+#' on the inner information; the fit records that information in
+#' `fit@methods$edf_information`. The standard errors of a summary read the
+#' information of `vcov_type`, so the table is recomputed on that matrix when
+#' the two differ, and the count printed beside a standard error is a share of
+#' the same \eqn{H}.
+#'
+#' The table stored in the fit is kept in three cases: a criterion that prices
+#' the fit with the count ([aic()] or [bic()]) reads the count on its own
+#' information, and a summary that recomputed it would no longer reproduce that
+#' criterion; a model with a structural term reads the joint vector of the
+#' coefficients and the term's parameters, which has no expected information; and
+#' a variance convention without an `information` property has no matrix to
+#' read.
+#'
+#' The eigenvalues of \eqn{(H+S)^{-1}H} are
+#' \eqn{v^\top H v/(v^\top H v + v^\top S v)} for the eigenvectors \eqn{v} of
+#' the pencil, which lie in \eqn{[0, 1]} for a positive semidefinite
+#' \eqn{H}. A direction with \eqn{v^\top H v < 0} contributes a negative
+#' share, so the count of a term can fall below its true value, and the total
+#' can leave \eqn{[0, p]}. The observed information is tested for this by its
+#' Cholesky factor and, where that fails, by the smallest eigenvalue: the
+#' matrix is indefinite when that eigenvalue is below
+#' \eqn{-p\,\epsilon\,\lambda_{\max}}, the floor with which [solve_pd()] and
+#' [pd_logdet_dense()] separate a flat direction from rounding.
+#'
+#' @param object A [StatmodFit()].
+#' @param vcov_type A [vcov_method] object.
+#' @param spec,design The specification and the design of the fit.
+#'
+#' @return A list with `edf` (the table, in the shape of `fit@edf`), `info`
+#' (the information object that the table was read on, or `NULL` where the
+#' fit does not record it) and `note` (a string, empty where there is nothing
+#' to report).
+#'
+#' @seealso [statmod_edf()], [vcov_information()]
+#' @keywords internal
+summary_edf <- function(object, vcov_type, spec, design) {
+  out <- list(edf = object@edf, info = object@methods$edf_information,
+              note = character(0))
+  if (is.null(object@edf) || is.null(out$info)) return(out)
+  structural <- length(attr(design, "structural")) > 0L
+  if (!structural && !isTRUE(object@methods$edf_priced) &&
+      S7::prop_exists(vcov_type, "information")) {
+    want <- vcov_information(vcov_type, spec@distrib)
+    have <- out$info
+    differs <- !identical(info_expected(want), info_expected(have)) ||
+      (info_expected(want) &&
+         !identical(info_emethod(want), info_emethod(have)))
+    if (differs) {
+      lab <- rownames(coef_labels(spec, design))
+      alias <- stats::na.omit(match(object@aliased, lab))
+      e <- tryCatch(
+        statmod_edf(spec, object@coefficients, design, object@hyper,
+                    info_expected(want), info_emethod(want), alias),
+        error = function(err) NULL)
+      if (!is.null(e)) {
+        out$edf <- e
+        out$info <- want
+      }
+    }
+  }
+  penalized <- length(tryCatch(statmod_penalized(spec, design),
+                               error = function(e) list())) > 0L
+  if (!structural && penalized && !info_expected(out$info)) {
+    H <- tryCatch(as_dense(statmod_information_at(
+      spec, object@coefficients, design, expected = FALSE)),
+      error = function(e) NULL)
+    if (!is.null(H) && edf_info_indefinite(H)) {
+      out$note <- paste0(
+        "The observed information is indefinite at the estimate. A direction ",
+        "of negative\n  curvature contributes a negative share to the degrees ",
+        "of freedom (the eigenvalues\n  of (H+S)^-1 H are v'Hv/(v'Hv + v'Sv), ",
+        "negative where v'Hv < 0), so an edf may be\n  underestimated. ",
+        "bayesian_vcov(information = expected_info()) reads a positive ",
+        "semidefinite H.")
+    }
+  }
+  out
+}
+
+
+#' Whether an Information Matrix Is Indefinite
+#'
+#' @description
+#' Returns `TRUE` when the symmetric matrix `H` has an eigenvalue below
+#' \eqn{-p\,\epsilon\,\lambda_{\max}}, with \eqn{p} the dimension and
+#' \eqn{\epsilon} the machine epsilon. A matrix with a Cholesky factor is
+#' positive definite and is not decomposed.
+#'
+#' @param H A square numeric matrix.
+#'
+#' @return A single logical; `FALSE` where `H` has a non-finite entry.
+#'
+#' @keywords internal
+edf_info_indefinite <- function(H) {
+  if (!nrow(H) || !all(is.finite(H))) return(FALSE)
+  H <- (H + t(H)) / 2
+  if (!is.null(tryCatch(chol(H), error = function(e) NULL))) return(FALSE)
+  ev <- eigen(H, symmetric = TRUE, only.values = TRUE)$values
+  min(ev) < -nrow(H) * .Machine$double.eps * max(abs(ev))
+}
+
+
 #' @title The Variance Matrix of a Fit
 #' @name vcov.StatmodFit
 #' @description
@@ -2282,6 +2396,43 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'     marked as held.}
 #' }
 #'
+#' # The effective degrees of freedom
+#'
+#' The edf of a term is its share of \eqn{\mathrm{tr}[(H+S)^{-1}H]}, with
+#' \eqn{H} the information of the log-likelihood and \eqn{S} the second
+#' derivative of the penalty, read over the coefficients of every equation at
+#' once. The summary reads \eqn{H} on the information of `vcov_type`
+#' ([distributions7::default_information()] of the family where the
+#' `information` of the variance object is `NULL`), which is the matrix that
+#' the standard errors above the edf invert. A call with
+#' `vcov_type = bayesian_vcov(information = expected_info())` therefore prints
+#' the standard errors and the edf on the expected information. The count
+#' stored in `fit@edf` was read at fit time on the information of the outer
+#' criterion: the observed information by default under [reml()] and [ml()].
+#' With the defaults the two coincide, and the summary recomputes the count
+#' only where `vcov_type` names the other matrix.
+#'
+#' Three cases keep the count stored in the fit. Under [aic()] and [bic()] the
+#' count is part of the criterion that prices the fit, and it is read on the
+#' `information` of that criterion, so the summary leaves it as it is and the
+#' printed criterion stays reproducible from it. A model with a structural
+#' term is read on the joint vector of the coefficients and the term's own
+#' parameters, as before. A variance object without an `information` property
+#' has no matrix to read.
+#'
+#' The eigenvalues of \eqn{(H+S)^{-1}H} are
+#' \eqn{v^\top H v/(v^\top H v + v^\top S v)}, for the generalized eigenvectors
+#' \eqn{v}. They lie in \eqn{[0, 1]}, and the total in \eqn{[0, p]} with
+#' \eqn{p} the number of coefficients, when \eqn{H} is positive semidefinite.
+#' The observed information can be indefinite (a Student t at an outlier, for
+#' example). A direction with \eqn{v^\top H v < 0} then contributes a negative
+#' share, an edf can be underestimated, and the bounds above can fail. The
+#' summary adds a note when the observed information used for the count has an
+#' eigenvalue below \eqn{-p\,\epsilon\,\lambda_{\max}} (\eqn{\epsilon} the
+#' machine epsilon and \eqn{\lambda_{\max}} the largest eigenvalue), the floor
+#' with which the package separates a flat direction from rounding. The
+#' expected information is positive semidefinite and carries no such note.
+#'
 #' A hyperparameter is the first row of its block, since it governs
 #' every coefficient under it, and its name carries a mark in square brackets
 #' that gives the source of the value. A hyperparameter estimated by [reml()]
@@ -2404,7 +2555,9 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'   uncertainty of the hyperparameters into every standard error under it,
 #'   where `correct` carries the same uncertainty into the degrees of freedom;
 #'   the two are the same quantity read on two surfaces, and both can be used
-#'   in one call. The conventions are compared at [vcov_method].
+#'   in one call. The conventions are compared at [vcov_method]. The effective
+#'   degrees of freedom of the summary are read on this same information (see
+#'   the section on the degrees of freedom).
 #' @param correct Whether the degrees of freedom include the cost of
 #'   estimating the hyperparameters. The ordinary count treats them as known
 #'   although they were estimated from the same data, so a criterion built on
@@ -2467,6 +2620,11 @@ summary.StatmodFit <- function(object, level = 0.95,
                              readable = FALSE, ...))
   spec <- object@spec
   design <- statmod_design(spec)
+  # THE COUNT BESIDE A STANDARD ERROR IS READ ON THE SAME INFORMATION as the
+  # standard error: the table is recomputed here when the information of
+  # `vcov_type` is not the one that the fit read it on
+  sed <- summary_edf(object, vcov_type, spec, design)
+  object@edf <- sed$edf
   # A HELD BREAK-POINT says once why its position has no standard error
   held_terms <- unlist(lapply(names(spec@terms), function(p) {
     Filter(function(nm) length(tryCatch(
@@ -2566,9 +2724,11 @@ summary.StatmodFit <- function(object, level = 0.95,
   names(tables) <- spec@distrib@params
   # a covariance shared between terms is the property of none of them, and
   # summary_blocks() held its rows apart for that reason
-  cls <- tryCatch(summary_class_blocks(spec, design, tables, object@edf,
-                                       object@coefficients, object@hyper),
-                  error = function(e) list())
+  cls <- tryCatch(summary_class_blocks(
+    spec, design, tables, object@edf, object@coefficients, object@hyper,
+    expected = if (is.null(sed$info)) TRUE else info_expected(sed$info),
+    emethod = if (is.null(sed$info)) NULL else info_emethod(sed$info)),
+    error = function(e) list())
   # A LINE SAYING "REPORTED ABOVE" IS FALSE WHERE THE SECTION IS NOT THERE.
   # It cannot happen as the two are written -- every member of a shared class
   # reaches the block builder and exactly one of them carries the rows -- and
@@ -2597,6 +2757,7 @@ summary.StatmodFit <- function(object, level = 0.95,
             paste(object@aliased, collapse = ", "))
   } else character(0)
   notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, edge_msg,
+             sed$note,
              test_msg,
              tryCatch(class_notes(spec, design), error = function(e) character(0)))
   # WHERE THE PARAMETERS ENDED UP, for a fit that did not converge. It
@@ -4190,6 +4351,12 @@ class_notes <- function(spec, design) {
 #'   report what the class itself spends rather than what its members' terms
 #'   do.
 #' @param hyper The hyperparameters, or `NULL`.
+#' @param expected Whether the smoother of a class is read on the expected
+#'   information. It is the information on which the table `edf` was read, so
+#'   that the count of a class and the counts of its members are shares of the
+#'   same matrix.
+#' @param emethod The method that obtains the expected information, as for
+#'   [statmod_edf()].
 #'
 #' @return A list of block records in the shape that [print_block()] reads.
 #'   Each record carries its coordinates in `coords`. The list is empty where
@@ -4200,7 +4367,8 @@ class_notes <- function(spec, design) {
 #'
 #' @keywords internal
 summary_class_blocks <- function(spec, design, tables, edf = NULL,
-                                 coef = NULL, hyper = NULL) {
+                                 coef = NULL, hyper = NULL, expected = TRUE,
+                                 emethod = NULL) {
   # the model's smoother, built at most once and only where a class asks for
   # it: a summary of a model carrying none must not pay for a factorization
   smoother <- NULL
@@ -4212,8 +4380,7 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL,
     smoother <<- tryCatch({
       js <- joint_smoother_diag(spec, coef, design, hyper)
       if (!is.null(js) && !isTRUE(js$failed)) c(js$beta, js$zeta) else {
-        H <- statmod_information_at(spec, coef, design, TRUE,
-                                  NULL)
+        H <- statmod_information_at(spec, coef, design, expected, emethod)
         S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design,
                                               "hessian"))
         diag(solve_pd(as_dense(H + S), "the penalized information") %*%
