@@ -18,9 +18,12 @@ the namespace of \pkg{modelterms7}. It is the function that
 \code{\link[=makeActiveBinding]{makeActiveBinding()}} takes in \code{\link[=terms_first]{terms_first()}}.
 }
 \details{
-The function is created here and not inside \code{\link[=terms_first]{terms_first()}} so that its
-environment holds \code{name} and nothing else: a closure made in the body of
-\code{\link[=terms_first]{terms_first()}} would carry the environment that the caller passed.
+The function is built from an expression, with the environment of the base
+package, so that it holds nothing but the name. A closure written in the
+body of \code{\link[=terms_first]{terms_first()}} would carry the environment that the caller passed,
+and a closure written here would carry its source reference: a package
+installed with the source kept (\code{R_KEEP_PKG_SOURCE=yes}) serializes the
+source of the whole package with each such reference.
 }
 \seealso{
 \code{\link[=terms_first]{terms_first()}}
