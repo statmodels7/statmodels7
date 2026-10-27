@@ -162,6 +162,7 @@ reference:
   - add_bootstrap
   - statmod_bootstrap
   - StatmodBootstrap
+  - bootstrap_interval
 
 - title: Graphs of a fit
   desc: >

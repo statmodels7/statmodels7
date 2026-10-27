@@ -95,6 +95,7 @@ Collate:
     'bootstrap_engine.R'
     'bootstrap_cluster_random.R'
     'bootstrap_fit.R'
+    'bootstrap_interval.R'
     'breakpoint_test.R'
     'conflicts.R'
     'inference.R'

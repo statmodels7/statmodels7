@@ -1925,6 +1925,11 @@ warn_aliased <- function(alias) {
 #'   [lr_test()], [score_test()] and [gradient_test()] are inverted by
 #'   [statmod_invert()] and cost a few dozen restricted refits per interval.
 #'   The four are compared at [test_statistic].
+#' @param interval `NULL` (the default), which inverts `test`, or a
+#'   [bootstrap_interval] object, [percentile_interval()] or
+#'   [basic_interval()], whose limits are quantiles of the bootstrap
+#'   replicates stored in the fit. The standard error is then the bootstrap
+#'   one, and `vcov_type` and a `test` other than [wald_test()] are rejected.
 #' @param ... Passed to [vcov.StatmodFit()], which signals an error for any
 #'   argument that it does not take.
 #' @return A data frame with the parameter, the term, the coefficient, the
@@ -1947,7 +1952,12 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
                                vcov_type = bayesian_vcov(),
                                readable = TRUE,
                                test = wald_test(),
+                               interval = NULL,
                                ...) {
+  if (!is.null(interval)) {
+    return(confint_interval(object, parm, level, readable, test, interval,
+                            !missing(vcov_type), ...))
+  }
   vcov_type <- resolve_vcov_method(object, as_vcov_method(vcov_type))
   test <- as_test_statistic(test)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {

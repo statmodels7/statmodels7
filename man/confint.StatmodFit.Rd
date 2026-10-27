@@ -11,6 +11,7 @@
   vcov_type = bayesian_vcov(),
   readable = TRUE,
   test = wald_test(),
+  interval = NULL,
   ...
 )
 }
@@ -38,6 +39,12 @@ symmetric about the estimate, from the variance matrix and with no refit.
 \code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} and \code{\link[=gradient_test]{gradient_test()}} are inverted by
 \code{\link[=statmod_invert]{statmod_invert()}} and cost a few dozen restricted refits per interval.
 The four are compared at \link{test_statistic}.}
+
+\item{interval}{\code{NULL} (the default), which inverts \code{test}, or a
+\link{bootstrap_interval} object, \code{\link[=percentile_interval]{percentile_interval()}} or
+\code{\link[=basic_interval]{basic_interval()}}, whose limits are quantiles of the bootstrap
+replicates stored in the fit. The standard error is then the bootstrap
+one, and \code{vcov_type} and a \code{test} other than \code{\link[=wald_test]{wald_test()}} are rejected.}
 
 \item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which signals an error for any
 argument that it does not take.}
