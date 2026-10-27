@@ -89,8 +89,9 @@ they are not accepted, since the term fixes the order and the groups.
 
 The prior weights of \code{\link[=statmod]{statmod()}} multiply the log-likelihood contribution
 of an observation, and so its score; they are not otherwise interpreted.
-Models with a term whose block moves with its coefficients (the
-break-point terms and \code{\link[modelterms7:nl]{modelterms7::nl()}}) are rejected.
+A model with a term whose block moves with its coefficients is accepted when
+\code{\link[=hc0_sandwich]{hc0_sandwich()}} accepts it: the scores are those of the block read at the
+fit, and a frozen working linearization of a sharp step is rejected.
 }
 \examples{
 set.seed(1)

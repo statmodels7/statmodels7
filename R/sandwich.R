@@ -103,10 +103,18 @@ SandwichMethod <- S7::new_class(
 #' entirely. With no `cluster` the observations are treated as independent
 #' given the random effects.
 #'
-#' Models with a structural term ([modelterms7::gas()], [modelterms7::regime()]),
-#' with a term whose block moves with its coefficients (the break-point terms
-#' and [modelterms7::nl()]) are rejected. [hac_sandwich()] covers the
-#' structural terms.
+#' Models with a structural term ([modelterms7::gas()], [modelterms7::regime()])
+#' are rejected, and [hac_sandwich()] covers them. A term whose block moves with
+#' its coefficients ([modelterms7::seg()], [modelterms7::nl()] and the
+#' smoothed [modelterms7::jump()] and [modelterms7::jseg()]) is accepted: its
+#' block is the Jacobian of its contribution in the coefficients and the
+#' position of the break-point, read at the fit, so the score of the position
+#' is part of \eqn{u_i}. The position of a sharp [modelterms7::jump()] or
+#' [modelterms7::jseg()] is held by the fit, and its slot has no variance, as
+#' in the other conventions; a block that is still a frozen working
+#' linearization is rejected, because a step has no derivative in its
+#' position. A coordinate that a kinked penalty holds at zero has no variance
+#' either.
 #'
 #' The prior weights \eqn{w_i} of [statmod()] multiply the log-likelihood, and
 #' the argument `weights` says how the sandwich reads them. With
@@ -276,8 +284,8 @@ sandwich_cluster <- function(fit, design, sw) {
 #' Reject a Fit That the Sandwich Variance Does Not Cover
 #'
 #' @description
-#' Signals an error for a fit with a structural term, a term whose block moves
-#' with its coefficients.
+#' Signals an error for a fit with a structural term or with a sharp
+#' break-point term.
 #'
 #' @details
 #' Prior weights are accepted; see [hc0_sandwich()] for their meaning.
@@ -296,10 +304,11 @@ sandwich_check <- function(fit, design) {
          call. = FALSE)
   }
   rf <- attr(design, "refresh")
-  if (length(rf) > 0L) {
+  if (any(vapply(rf, function(r) isTRUE(r$frozen), logical(1)))) {
     stop(paste0("A sandwich variance is not available for a model with a ",
-                "term whose block moves with its coefficients (seg(), ",
-                "jump(), jseg() or nl()). It is rejected."), call. = FALSE)
+                "sharp break-point term (jump() or jseg()) whose position is ",
+                "not held: a step has no score in its position. It is ",
+                "rejected."), call. = FALSE)
   }
   invisible(NULL)
 }
@@ -332,6 +341,7 @@ sandwich_check <- function(fit, design) {
 sandwich_vcov <- function(fit, design, Vb, cols, sw, expected = FALSE,
                           emethod = NULL, lev_info = NULL) {
   spec <- fit@spec
+  design <- statmod_design_at(spec, fit@coefficients, design)
   n <- spec@n_obs
   id <- if (is.null(sw@cluster)) NULL else sandwich_cluster(fit, design, sw)
   edf <- fit@edf

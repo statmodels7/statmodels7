@@ -66,10 +66,18 @@ A cluster must contain every group of a \code{\link[modelterms7:random]{modelter
 entirely. With no \code{cluster} the observations are treated as independent
 given the random effects.
 
-Models with a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}),
-with a term whose block moves with its coefficients (the break-point terms
-and \code{\link[modelterms7:nl]{modelterms7::nl()}}) are rejected. \code{\link[=hac_sandwich]{hac_sandwich()}} covers the
-structural terms.
+Models with a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}})
+are rejected, and \code{\link[=hac_sandwich]{hac_sandwich()}} covers them. A term whose block moves with
+its coefficients (\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}} and the
+smoothed \code{\link[modelterms7:jump]{modelterms7::jump()}} and \code{\link[modelterms7:jseg]{modelterms7::jseg()}}) is accepted: its
+block is the Jacobian of its contribution in the coefficients and the
+position of the break-point, read at the fit, so the score of the position
+is part of \eqn{u_i}. The position of a sharp \code{\link[modelterms7:jump]{modelterms7::jump()}} or
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}} is held by the fit, and its slot has no variance, as
+in the other conventions; a block that is still a frozen working
+linearization is rejected, because a step has no derivative in its
+position. A coordinate that a kinked penalty holds at zero has no variance
+either.
 
 The prior weights \eqn{w_i} of \code{\link[=statmod]{statmod()}} multiply the log-likelihood, and
 the argument \code{weights} says how the sandwich reads them. With
