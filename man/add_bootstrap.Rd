@@ -64,10 +64,39 @@ the failures outnumber the successes after ten draws. Replacing a failed
 replicate conditions the bootstrap on success, so it understates the
 variability when failures are frequent.
 
-The refits use the \code{inner_information} of the fit. A fit with a structural
-term, a block that moves with its coefficients, a response that is not one
-number per observation, or (with \code{refit = "full"}) a \code{\link[=cv]{cv()}} criterion is
-rejected, and so is \code{case_resample()} beside a \code{\link[modelterms7:random]{modelterms7::random()}} term.
+The refits use the \code{inner_information} of the fit. A fit with a response that
+is not one number per observation, or (with \code{refit = "full"}) a \code{\link[=cv]{cv()}}
+criterion is rejected, and so is \code{case_resample()} beside a
+\code{\link[modelterms7:random]{modelterms7::random()}} term.
+
+A fit with a score-driven or a regime term (\code{\link[modelterms7:gas]{modelterms7::gas()}},
+\code{\link[modelterms7:regime]{modelterms7::regime()}}) takes \code{parametric_resample()} only. Each replicate
+is a new path of the series, drawn through \code{\link[modelterms7:term_simulate]{modelterms7::term_simulate()}}
+at the fitted coefficients and parameters of the term, so the recursion of
+the filter runs on the draws; it is not the fitted filtered path with new
+noise. A resample of rows or of groups breaks the recursion at every join, and
+\code{case_resample()} and \code{cluster_resample()} signal an error that names
+\code{parametric_resample()}. The effects of a \code{\link[modelterms7:random]{modelterms7::random()}} term keep
+their estimates in the draws. The replicates hold the free parameters of the
+term after the coefficients, on the unconstrained scale, in the order of
+\code{\link[=vcov]{vcov()}}. A replicate is kept when the Newton decrement of the refit over
+the coefficients and the term's parameters is below \code{\link[=mode_error_limit]{mode_error_limit()}}
+(a score-driven term), or when the refit is finite (a regime term).
+
+A fit with a break-point term (\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}},
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}}) or a nonlinear term (\code{\link[modelterms7:nl]{modelterms7::nl()}}) is refitted
+on every replicate from the break-points and coefficients of the fit, and the
+refit then runs the restart cycle of \code{\link[=statmod]{statmod()}} (bootstrap restarting with
+the budget \code{n_boot} of the terms, and the settling of the sharp
+break-points), because a refit that stopped at the local optimum nearest to
+the fit's positions would be another estimator. A position is a coefficient
+of the term, so its variance is that of the replicates. The slot of a sharp
+\code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, which the fit holds at a
+working value, stores the position of the break-point in the replicates.
+The generator of
+the restart cycle is seeded from the draw of the replicate, so the result
+does not depend on the number of workers. A replicate is kept when its
+coefficients are finite.
 }
 \examples{
 set.seed(1)

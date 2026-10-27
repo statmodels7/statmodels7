@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.211.0
+Version: 0.212.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Fits distributional regression models, and installs and attaches
@@ -30,7 +30,7 @@ Imports:
     linkfunctions7 (>= 0.5.0),
     Matrix (>= 1.6.2),
     methods,
-    modelterms7 (>= 0.109.0),
+    modelterms7 (>= 0.110.0),
     numericals7 (>= 0.21.0),
     optimizers7 (>= 0.16.0),
     parallel,
@@ -90,10 +90,14 @@ Collate:
     'report.R'
     'predict.R'
     'sandwich.R'
+    'sandwich_hac.R'
     'inference_objects.R'
     'bootstrap_objects.R'
     'bootstrap_engine.R'
+    'bootstrap_cluster_random.R'
     'bootstrap_fit.R'
+    'bootstrap_interval.R'
+    'bootstrap_structural.R'
     'breakpoint_test.R'
     'conflicts.R'
     'inference.R'
@@ -113,6 +117,7 @@ Collate:
     'joint_outer.R'
     'joint_outer_hessian.R'
     'kkt.R'
+    'leverage.R'
     'marginal.R'
     'order.R'
     'outer_context.R'
@@ -132,6 +137,7 @@ Collate:
     'predict_nested.R'
     'restricted.R'
     'rstatmod.R'
+    'sandwich_hc23.R'
     'start.R'
     'statmodels7-package.R'
     'threads.R'

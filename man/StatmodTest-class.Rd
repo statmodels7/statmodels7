@@ -15,7 +15,8 @@ StatmodTest(
   param = character(0),
   coefficient = character(0),
   mode_error = integer(0),
-  converged = logical(0)
+  converged = logical(0),
+  df_denom = Inf
 )
 }
 \arguments{
@@ -40,6 +41,11 @@ stopped, in log-likelihood units; \code{NA} for the Wald statistic.}
 
 \item{converged}{The inner optimizer's flag at the restricted refit;
 \code{NA} for the Wald statistic.}
+
+\item{df_denom}{The denominator degrees of freedom when the statistic is
+referred to an \eqn{F(1, \nu)} distribution, which is the case of a Wald
+statistic under the CR2 variance with a \eqn{t} reference; \code{Inf}
+otherwise, when the reference is the chi-squared distribution.}
 }
 \value{
 An object of class \code{StatmodTest}.

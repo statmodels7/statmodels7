@@ -33,7 +33,10 @@ NULL
 #' A resampled data set is represented by frequency weights, which multiply
 #' the weights of the fit. The design is not rebuilt, so the knots of a basis
 #' and the levels of a factor stay those of the fit, and a refit on the
-#' weights is the refit on the duplicated rows with the basis held.
+#' weights is the refit on the duplicated rows with the basis held. A cluster
+#' scheme beside a [modelterms7::random()] term is the exception: the design is
+#' rebuilt on the rows drawn, with the blueprints of the fit for every term
+#' other than the random-effect terms (see [cluster_resample()]).
 #'
 #' @param name A single string, the short name of the scheme.
 #'
@@ -184,9 +187,29 @@ case_resample <- function() CaseResample(name = "case")
 #' observations, so this is the fit to the duplicated groups with the design
 #' held.
 #'
-#' In this version a fit with a [modelterms7::random()] term is rejected. The
-#' coordinates of the individual random effects have no counterpart between
-#' replicates, because a group can be absent or appear twice.
+#' Beside a [modelterms7::random()] term the groups drawn more than once
+#' become new groups: each copy of a cluster has its own groups, with an
+#' effect of its own, as in Stata's `bootstrap, cluster() idcluster()`. A
+#' weight is not enough in this case, because the prior of the effects would
+#' count a group drawn twice once. The grouping variable of each random-effect
+#' term is relabeled in the replicate when every one of its groups lies in a
+#' single cluster (the groups of a term that is the cluster variable itself,
+#' or nested in it). A grouping variable that spans several clusters keeps its
+#' labels, and its effects are shared by the copies. The design is rebuilt on
+#' the rows drawn: the other terms are reapplied with
+#' [modelterms7::term_predict()], so a basis keeps the knots of the fit and a
+#' factor its contrasts, and the random-effect terms are built on the new
+#' groups with the hyperparameters of the fit.
+#'
+#' The individual effects of different replicates are effects of different
+#' groups, so no remapping between replicates exists. The replicates store the
+#' coordinates that every replicate has: the coefficients of the other terms,
+#' and with `refit = "full"` the hyperparameters, the variance components
+#' among them. The coordinates of the individual random effects are missing in
+#' the stored matrix, and their rows and columns in the variance are `NA`. A
+#' term that shares a covariance through a label, a smooth random effect
+#' ([modelterms7::RandomSmoothTerm()]) and a random effect inside the
+#' subformula of another term are rejected.
 #'
 #' @param cluster A one-sided formula with one variable, as in `~ id`.
 #' @param data A data frame with that variable and one row for each
@@ -206,6 +229,13 @@ case_resample <- function() CaseResample(name = "case")
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' fit <- add_bootstrap(fit, n = 30, resample = cluster_resample(~ g))
 #' statmod_bootstrap(fit)
+#'
+#' # beside a random intercept the groups drawn again are new groups
+#' fit_re <- statmod(y ~ x + random(~ 1 | g),
+#'                   distributions7::gaussian1_distrib(), dd)
+#' fit_re <- add_bootstrap(fit_re, n = 10, resample = cluster_resample(~ g))
+#' round(sqrt(diag(vcov(fit_re, vcov_type = bootstrap_vcov(
+#'   resample = cluster_resample(~ g)))))[1:2], 3)
 #' @export
 cluster_resample <- function(cluster, data = NULL) {
   if (!inherits(cluster, "formula") || length(cluster) != 2L ||
@@ -411,8 +441,9 @@ S7::method(print, BootstrapVcov) <- function(x, ...) {
 #'     `refit = "full"`, and `NULL` otherwise;}
 #'   \item{`n`, `resample`, `refit`}{the number of replicates, the
 #'     [resample_method] and the refit;}
-#'   \item{`random`}{how the random effects were treated: `"redrawn"` or
-#'     `"none"`;}
+#'   \item{`random`}{how the random effects were treated: `"redrawn"`,
+#'     `"regrouped"` (a cluster scheme that gave the groups drawn again new
+#'     levels, with the random-effect coordinates missing) or `"none"`;}
 #'   \item{`status`}{an integer for every draw of the stream up to the last
 #'     replicate kept: 0 for a replicate that was kept, 1 for an error, 2
 #'     for a mode error above [mode_error_limit()] and 3 for a coefficient
@@ -421,7 +452,15 @@ S7::method(print, BootstrapVcov) <- function(x, ...) {
 #'     stream and after the last draw that was kept, from which an extension
 #'     continues;}
 #'   \item{`fingerprint`}{the coefficients and hyperparameters of the fit that
-#'     the replicates belong to.}
+#'     the replicates belong to;}
+#'   \item{`raw`, `raw_cols`}{for the parametric scheme beside random effects,
+#'     a matrix with one column for each random-effect coordinate that holds
+#'     the coefficients as the replicates were refitted, \eqn{\hat b^*},
+#'     where `coefficients` holds \eqn{\hat b^* - b^* + \hat b}, and the
+#'     positions of those columns among the columns of `coefficients`. Both
+#'     are `NULL` otherwise, and for an entry stored by an older version.
+#'     [pred_bootstrap()] rebuilds the refitted coefficients from
+#'     `coefficients` and `raw` to reuse the entry.}
 #' }
 #'
 #' @return `coef()` on an entry returns the matrix of replicates, and
@@ -450,7 +489,9 @@ StatmodBootstrap <- S7::new_class("StatmodBootstrap",
     random = S7::class_character,
     status = S7::class_integer,
     seed = S7::class_list,
-    fingerprint = S7::class_numeric
+    fingerprint = S7::class_numeric,
+    raw = S7::class_any,
+    raw_cols = S7::class_any
   )
 )
 

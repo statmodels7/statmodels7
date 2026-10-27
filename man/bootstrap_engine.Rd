@@ -58,8 +58,12 @@ replicate as \eqn{\hat b^* - b^* + \hat b}.}
 \value{
 A list with \code{coefficients} (a matrix with a row for each replicate
 kept), \code{hyper} (a matrix, or \code{NULL}), \code{status} (an integer for every
-draw), \code{seed_start}, \code{seed_end}, \code{random} and \code{kept} (the refits, if a
-hook asked for them to be returned).
+draw), \code{seed_start}, \code{seed_end}, \code{random}, \code{raw} (the matrix of the
+random-effect coefficients of the replicates as refitted, without the
+adjustment of the random effects, for a parametric scheme with
+\code{adjust = TRUE} beside random effects, and \code{NULL} otherwise) and
+\code{raw_cols} (the positions of the columns of \code{raw} among the columns of
+\code{coefficients}).
 }
 \description{
 Draws resampled data sets from a fit, refits the model on each and returns

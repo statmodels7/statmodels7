@@ -41,10 +41,39 @@ NULL
 #' replicate conditions the bootstrap on success, so it understates the
 #' variability when failures are frequent.
 #'
-#' The refits use the `inner_information` of the fit. A fit with a structural
-#' term, a block that moves with its coefficients, a response that is not one
-#' number per observation, or (with `refit = "full"`) a [cv()] criterion is
-#' rejected, and so is `case_resample()` beside a [modelterms7::random()] term.
+#' The refits use the `inner_information` of the fit. A fit with a response that
+#' is not one number per observation, or (with `refit = "full"`) a [cv()]
+#' criterion is rejected, and so is `case_resample()` beside a
+#' [modelterms7::random()] term.
+#'
+#' A fit with a score-driven or a regime term ([modelterms7::gas()],
+#' [modelterms7::regime()]) takes `parametric_resample()` only. Each replicate
+#' is a new path of the series, drawn through [modelterms7::term_simulate()]
+#' at the fitted coefficients and parameters of the term, so the recursion of
+#' the filter runs on the draws; it is not the fitted filtered path with new
+#' noise. A resample of rows or of groups breaks the recursion at every join, and
+#' `case_resample()` and `cluster_resample()` signal an error that names
+#' `parametric_resample()`. The effects of a [modelterms7::random()] term keep
+#' their estimates in the draws. The replicates hold the free parameters of the
+#' term after the coefficients, on the unconstrained scale, in the order of
+#' [vcov()]. A replicate is kept when the Newton decrement of the refit over
+#' the coefficients and the term's parameters is below [mode_error_limit()]
+#' (a score-driven term), or when the refit is finite (a regime term).
+#'
+#' A fit with a break-point term ([modelterms7::seg()], [modelterms7::jump()],
+#' [modelterms7::jseg()]) or a nonlinear term ([modelterms7::nl()]) is refitted
+#' on every replicate from the break-points and coefficients of the fit, and the
+#' refit then runs the restart cycle of [statmod()] (bootstrap restarting with
+#' the budget `n_boot` of the terms, and the settling of the sharp
+#' break-points), because a refit that stopped at the local optimum nearest to
+#' the fit's positions would be another estimator. A position is a coefficient
+#' of the term, so its variance is that of the replicates. The slot of a sharp
+#' [modelterms7::jump()] or [modelterms7::jseg()], which the fit holds at a
+#' working value, stores the position of the break-point in the replicates.
+#' The generator of
+#' the restart cycle is seeded from the draw of the replicate, so the result
+#' does not depend on the number of workers. A replicate is kept when its
+#' coefficients are finite.
 #'
 #' @param fit A [StatmodFit()].
 #' @param n A single whole number, the total number of replicates wanted.
@@ -339,7 +368,13 @@ boot_fill <- function(fit, n, resample, refit, say = FALSE) {
     status = c(if (!is.null(old)) old@status, eng$status),
     seed = list(start = if (is.null(old)) eng$seed_start else old@seed$start,
                 end = eng$seed_end),
-    fingerprint = boot_fingerprint(fit))
+    fingerprint = boot_fingerprint(fit),
+    raw = if (is.null(old)) eng$raw else if (is.null(old@raw) ||
+                                              is.null(eng$raw)) NULL else
+      rbind(old@raw, eng$raw),
+    raw_cols = if (is.null(old)) eng$raw_cols else if (is.null(old@raw) ||
+                                                       is.null(eng$raw)) NULL else
+      old@raw_cols)
   assign(key, entry, envir = env)
   entry
 }
@@ -376,6 +411,11 @@ boot_vcov_matrix <- function(object, vt, readable, param) {
   spec <- object@spec
   design <- statmod_design(spec)
   nm <- rownames(coef_labels(spec, design))
+  if (identical(boot_mode(design), "structural")) {
+    out <- boot_vcov_structural(object, B, readable, spec, design, nm)
+    if (!is.null(param)) out <- select_parameter(out, param, spec)
+    return(out)
+  }
   B[, nm %in% object@aliased] <- NA_real_
   out <- if (isTRUE(readable)) {
     boot_readable_cov(object, spec, design, B)

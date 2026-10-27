@@ -4,7 +4,16 @@
 \alias{sandwich_vcov}
 \title{The Sandwich Variance of the Coefficients}
 \usage{
-sandwich_vcov(fit, design, Vb, cols, sw)
+sandwich_vcov(
+  fit,
+  design,
+  Vb,
+  cols,
+  sw,
+  expected = FALSE,
+  emethod = NULL,
+  lev_info = NULL
+)
 }
 \arguments{
 \item{fit}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -17,6 +26,11 @@ sandwich_vcov(fit, design, Vb, cols, sw)
 the coordinates that \code{Vb} covers.}
 
 \item{sw}{The \link{SandwichMethod} object.}
+
+\item{expected, emethod}{The information that the bread \code{Vb} was built from.}
+
+\item{lev_info}{The information of the leverage, from
+\code{\link[=leverage_information]{leverage_information()}}; \code{NULL} takes the one of the bread.}
 }
 \value{
 A symmetric matrix of the dimension of \code{Vb}.

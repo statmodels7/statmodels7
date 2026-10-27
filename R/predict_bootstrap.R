@@ -120,11 +120,17 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
     inf_var <<- inf_var || isTRUE(attr(cb, "infinite_variance"))
     comps <<- c(comps, cb)
   }
-  eng <- bootstrap_engine(object, n_boot, parametric_resample(), refit,
-                          aside = aside, replace = FALSE, validate = FALSE,
-                          hook = hook, batch = 1L, stream = FALSE,
-                          adjust = FALSE, check = FALSE)
-  failed <- sum(eng$status != 0L)
+  stored <- boot_stored_replicas(object, aside, refit, n_boot)
+  if (is.null(stored)) {
+    eng <- bootstrap_engine(object, n_boot, parametric_resample(), refit,
+                            aside = aside, replace = FALSE, validate = FALSE,
+                            hook = hook, batch = 1L, stream = FALSE,
+                            adjust = FALSE, check = FALSE)
+    failed <- sum(eng$status != 0L)
+  } else {
+    for (b in seq_along(stored)) hook(stored[[b]], b)
+    failed <- 0L
+  }
   if (!length(comps)) {
     stop("Every bootstrap replica failed to refit.", call. = FALSE)
   }
@@ -282,5 +288,6 @@ bootstrap_refit <- function(object, spec_b, refit, method, cfg, beta0) {
     res <- statmod_alternate(spec_b, design, blocks, hyper, method, beta0,
                              cfg$expected, cfg$emethod, cfg$maxit, cfg$tol, vb)
   }
-  list(coefficients = res$obj$split(res$par), hyper = hyper, design = design)
+  list(coefficients = res$obj$split(res$par), hyper = hyper, design = design,
+       res = res)
 }

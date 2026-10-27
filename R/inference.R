@@ -415,7 +415,9 @@ vcov.StatmodFit <- function(object,
   spec <- object@spec
   design <- statmod_design(spec)
   if (convention == "frequentist" && !is.null(vcov_type@sandwich)) {
-    sandwich_check(object, design)
+    if (S7::S7_inherits(vcov_type@sandwich, HacSandwich)) {
+      hac_check(object, design, vcov_type@sandwich)
+    } else sandwich_check(object, design)
   }
   coef <- object@coefficients
   lab <- coef_labels(spec, design)
@@ -530,9 +532,13 @@ vcov.StatmodFit <- function(object,
     # product is dense whatever H is, Vb being dense, so nothing is given up.
     frequentist = if (is.null(vcov_type@sandwich)) {
       as_dense(Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb)
+    } else if (S7::S7_inherits(vcov_type@sandwich, HacSandwich)) {
+      hac_vcov(object, design, as_dense(Vb), which(keep_full),
+               vcov_type@sandwich)
     } else {
       sandwich_vcov(object, design, as_dense(Vb), which(keep_full),
-                    vcov_type@sandwich)
+                    vcov_type@sandwich, expected, emethod,
+                    leverage_information(vcov_type, info))
     },
     unconditional = {
       # THE OTHER TWO ARE CONDITIONAL ON THE HYPERPARAMETERS, both read at
@@ -603,6 +609,9 @@ vcov.StatmodFit <- function(object,
     }
   }
   dimnames(out) <- list(rn, rn)
+  if (is.function(attr(V, "df_fn"))) {
+    attr(out, "df_fn") <- sandwich_df_by_name(attr(V, "df_fn"), rn[keep_full])
+  }
   if (isTRUE(readable)) {
     out <- readable_vcov(spec, design, object, out)
   } else if (nz) {
@@ -695,6 +704,23 @@ readable_vcov <- function(spec, design, fit, V) {
   out[, bad] <- NA_real_
   nm <- paste(rj$parameter, rj$name, sep = ":")
   dimnames(out) <- list(nm, nm)
+  # CR2: the degrees of freedom of a quantity are those of the contrast given
+  # by its row of the Jacobian, over the coordinates of the joint matrix
+  dfn <- attr(V, "df_fn")
+  if (is.function(dfn)) {
+    jn <- rownames(V)
+    attr(out, "df_fn") <- structure(function(nm_q) {
+      pos <- match(nm_q, nm)
+      res <- rep(NA_real_, length(nm_q))
+      ok <- !is.na(pos)
+      if (any(ok)) {
+        C <- t(J[pos[ok], , drop = FALSE])
+        rownames(C) <- jn
+        res[ok] <- dfn(contrast = C)
+      }
+      res
+    }, class = c("statmod_df_fn", "function"))
+  }
   out
 }
 
@@ -1925,6 +1951,11 @@ warn_aliased <- function(alias) {
 #'   [lr_test()], [score_test()] and [gradient_test()] are inverted by
 #'   [statmod_invert()] and cost a few dozen restricted refits per interval.
 #'   The four are compared at [test_statistic].
+#' @param interval `NULL` (the default), which inverts `test`, or a
+#'   [bootstrap_interval] object, [percentile_interval()] or
+#'   [basic_interval()], whose limits are quantiles of the bootstrap
+#'   replicates stored in the fit. The standard error is then the bootstrap
+#'   one, and `vcov_type` and a `test` other than [wald_test()] are rejected.
 #' @param ... Passed to [vcov.StatmodFit()], which signals an error for any
 #'   argument that it does not take.
 #' @return A data frame with the parameter, the term, the coefficient, the
@@ -1947,7 +1978,12 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
                                vcov_type = bayesian_vcov(),
                                readable = TRUE,
                                test = wald_test(),
+                               interval = NULL,
                                ...) {
+  if (!is.null(interval)) {
+    return(confint_interval(object, parm, level, readable, test, interval,
+                            !missing(vcov_type), ...))
+  }
   vcov_type <- resolve_vcov_method(object, as_vcov_method(vcov_type))
   test <- as_test_statistic(test)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
@@ -1978,8 +2014,13 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
     # no interval a scalar link expresses and rides the identity. Read on
     # the raw scale a positive quantity routinely gets a negative lower end.
     lo <- hi <- rep(NA_real_, length(est))
+    # a t reference where the sandwich carries degrees of freedom (CR2), for
+    # the contrast that each quantity's gradient defines
+    dfq <- wald_reference(V, rownames(V), se, level)
+    zq <- if (any(is.finite(dfq$df))) dfq$z else rep(z, length(est))
     for (i in seq_along(est)) {
       if (!is.finite(se[[i]])) next
+      z <- zq[[i]]
       g <- rj$scale[[i]]
       t0 <- linkfunctions7::linkfun(g, est[[i]])
       st <- se[[i]] * abs(linkfunctions7::dlinkfun(g, est[[i]]))
@@ -1996,6 +2037,9 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
       al <- rownames(out) %in% object@aliased
       if (any(al)) out$estimate[al] <- NA_real_
     }
+    if (any(is.finite(dfq$df))) {
+      attr(out, "df") <- stats::setNames(dfq$df, rownames(out))
+    }
     if (is.null(parm)) return(out)
     keep <- rownames(out) %in% parm | out$parameter %in% parm |
       out$term %in% parm | out$coefficient %in% parm
@@ -2007,7 +2051,9 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
                    paste(spec@distrib@params, collapse = ", ")),
            call. = FALSE)
     }
-    return(out[keep, , drop = FALSE])
+    out <- out[keep, , drop = FALSE]
+    if (!is.null(attr(out, "df"))) attr(out, "df") <- attr(out, "df")[keep]
+    return(out)
   }
   lab <- coef_labels(spec, design)
   est <- unlist(object@coefficients[spec@distrib@params], use.names = FALSE)
@@ -2045,8 +2091,17 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
     }
     out <- out[keep, , drop = FALSE]
   }
+  # a t reference where the sandwich carries degrees of freedom (CR2)
+  dfq <- wald_reference(V, rownames(out), out$se, level)
+  if (any(is.finite(dfq$df))) {
+    out$lower <- out$estimate - dfq$z * out$se
+    out$upper <- out$estimate + dfq$z * out$se
+  }
   if (test_restricted(test)) {
     out <- invert_rows(object, out, level, test, vcov_type)
+  }
+  if (any(is.finite(dfq$df))) {
+    attr(out, "df") <- stats::setNames(dfq$df, rownames(out))
   }
   out
 }
@@ -2656,7 +2711,7 @@ summary.StatmodFit <- function(object, level = 0.95,
       paste(unique(held_terms), collapse = ", ")))
   }
   ci$statistic <- ci$estimate / ci$se
-  ci$p_value <- 2 * stats::pnorm(-abs(ci$statistic))
+  ci$p_value <- wald_pvalue(ci$statistic, attr(ci, "df"))
   test_msg <- character(0)
   if (test_restricted(test)) {
     rs <- restricted_stat_rows(object, ci, test, vcov_type, spec, design)
@@ -2731,7 +2786,7 @@ summary.StatmodFit <- function(object, level = 0.95,
       if (length(edge_rows) == 1L) "sits" else "sit",
       if (length(edge_rows) == 1L) "it carries" else "they carry")
   }
-  strc <- tryCatch(statmod_structural_table(object, level),
+  strc <- tryCatch(statmod_structural_table(object, level, vcov_type),
                    error = function(e) NULL)
   tables <- lapply(spec@distrib@params, function(p)
     summary_blocks(object, spec, design, p, ci, level, V, strc, at_edge,
@@ -3624,6 +3679,20 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       se[bad] <- NA_real_
     }
     z <- stats::qnorm(1 - (1 - level) / 2)
+    # CR2: a t whose degrees of freedom belong to the contrast that the
+    # quantity's gradient defines in the coefficients of the block
+    dfq <- rep(Inf, length(se))
+    dfn <- if (is.null(V)) NULL else attr(V, "df_fn")
+    if (is.function(dfn) && all(key %in% rownames(V))) {
+      C <- matrix(0, nrow(V), length(se), dimnames = list(rownames(V), NULL))
+      C[key, ] <- t(rd$jacobian)
+      use <- is.finite(se)
+      if (any(use)) {
+        got <- dfn(contrast = C[, use, drop = FALSE])
+        dfq[use][!is.na(got)] <- got[!is.na(got)]
+      }
+    }
+    z <- stats::qt(1 - (1 - level) / 2, dfq)
     st <- rd$value / se
     # A break-point gets an estimate and an interval and NO test. The null
     # a z of value/se would report on is that the position is zero, which
@@ -3632,7 +3701,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     # nuisance parameter that vanishes, so the classical p-value is wrong
     # by a factor of three to five (Davies' problem). segmented prints the
     # estimate and the standard error alone for the same reason.
-    pv <- 2 * stats::pnorm(-abs(st))
+    pv <- wald_pvalue(st, if (any(is.finite(dfq))) dfq else NULL)
     # under a restricted test the statistic of a quantity that IS one of the
     # term's coefficients is that coefficient's restricted statistic; a
     # quantity that mixes coefficients has no restricted statistic, and the

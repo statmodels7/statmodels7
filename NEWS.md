@@ -1,3 +1,49 @@
+# statmodels7 0.212.0
+
+* `confint()` takes `interval = percentile_interval()` or
+  `basic_interval()`, bootstrap intervals from the replicates stored by
+  `add_bootstrap()` (1000 replicates by default when none are stored, with a
+  warning when a tail holds fewer than ten). With `readable = TRUE` each
+  quantity is computed on every replicate before the quantiles.
+
+* `pred_bootstrap()` reads a stored parametric bootstrap instead of
+  refitting, and extends it when it holds fewer replicates than requested.
+  The entry keeps the refitted random-effect coordinates (`raw`, with
+  `raw_cols`), so the reuse also covers a model with `random()` when the
+  prediction sets every random term aside.
+
+* `cluster_resample()` works on a fit with `random()` terms: groups drawn
+  more than once become new groups with their own effects, and the design is
+  rebuilt on the drawn rows with the blueprints of the fit. A grouping
+  crossed with the cluster keeps its labels. The individual random effects
+  have variance `NA`. A random term with a covariance label, a smooth random
+  effect or a random term inside a subformula is rejected.
+
+* `add_bootstrap()` covers `seg()`, `jump()`, `jseg()` and `nl()` (each
+  replicate refitted from the fit's positions, then the restart cycle) and,
+  under `parametric_resample()`, `gas()` and `regime()` (each replicate a new
+  path drawn with `term_simulate()`).
+
+* `statmod_leverage()` returns the diagonal block of the hat matrix of each
+  observation over the coefficients of all equations, with the expected
+  information unless an information is given. `hc2_sandwich()`,
+  `hc3_sandwich()` and `hc4_sandwich()` are leverage-corrected sandwiches;
+  with `cluster`, the first two are CR2 and CR3. With CR2, `confint()`,
+  `summary()` (readable rows included) and the Wald `statmod_test()` use a t
+  with Satterthwaite degrees of freedom per contrast, and `statmod_test()`
+  prints the statistic as F(1, df). `plot_influence()` reads the same
+  leverage.
+
+* `hac_sandwich()` gives a Newey-West sandwich for `gas()` and `regime()`
+  fits (Bartlett, Parzen or truncated kernel, bandwidth
+  floor(4 (T/100)^(2/9)) by default), with lags within groups for panels, and
+  for other fits ordered by `time` (and `cluster`). The per-observation
+  scores of `regime()` come from `modelterms7::term_scores()`.
+
+* `summary()` reads the variance of the selected `vcov_type` for the table
+  of a structural term's own parameters, for every convention; under
+  `bootstrap_vcov()` each quantity is evaluated on every replicate.
+
 # statmodels7 0.211.0
 
 * `plot()` and `autoplot()` draw a fit with ggplot2 and return the ggplot2

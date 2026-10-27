@@ -32,9 +32,29 @@ count \eqn{k}. Without random effects the likelihood is a sum over
 observations, so this is the fit to the duplicated groups with the design
 held.
 
-In this version a fit with a \code{\link[modelterms7:random]{modelterms7::random()}} term is rejected. The
-coordinates of the individual random effects have no counterpart between
-replicates, because a group can be absent or appear twice.
+Beside a \code{\link[modelterms7:random]{modelterms7::random()}} term the groups drawn more than once
+become new groups: each copy of a cluster has its own groups, with an
+effect of its own, as in Stata's \verb{bootstrap, cluster() idcluster()}. A
+weight is not enough in this case, because the prior of the effects would
+count a group drawn twice once. The grouping variable of each random-effect
+term is relabeled in the replicate when every one of its groups lies in a
+single cluster (the groups of a term that is the cluster variable itself,
+or nested in it). A grouping variable that spans several clusters keeps its
+labels, and its effects are shared by the copies. The design is rebuilt on
+the rows drawn: the other terms are reapplied with
+\code{\link[modelterms7:term_predict]{modelterms7::term_predict()}}, so a basis keeps the knots of the fit and a
+factor its contrasts, and the random-effect terms are built on the new
+groups with the hyperparameters of the fit.
+
+The individual effects of different replicates are effects of different
+groups, so no remapping between replicates exists. The replicates store the
+coordinates that every replicate has: the coefficients of the other terms,
+and with \code{refit = "full"} the hyperparameters, the variance components
+among them. The coordinates of the individual random effects are missing in
+the stored matrix, and their rows and columns in the variance are \code{NA}. A
+term that shares a covariance through a label, a smooth random effect
+(\code{\link[modelterms7:RandomSmoothTerm]{modelterms7::RandomSmoothTerm()}}) and a random effect inside the
+subformula of another term are rejected.
 }
 \examples{
 set.seed(1)
@@ -43,6 +63,13 @@ dd$y <- 1 + 2 * dd$x + rnorm(12)[dd$g] + rnorm(60, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 fit <- add_bootstrap(fit, n = 30, resample = cluster_resample(~ g))
 statmod_bootstrap(fit)
+
+# beside a random intercept the groups drawn again are new groups
+fit_re <- statmod(y ~ x + random(~ 1 | g),
+                  distributions7::gaussian1_distrib(), dd)
+fit_re <- add_bootstrap(fit_re, n = 10, resample = cluster_resample(~ g))
+round(sqrt(diag(vcov(fit_re, vcov_type = bootstrap_vcov(
+  resample = cluster_resample(~ g)))))[1:2], 3)
 }
 \seealso{
 \link{resample_method} for the comparison of the three schemes,

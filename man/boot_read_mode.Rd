@@ -4,7 +4,15 @@
 \alias{boot_read_mode}
 \title{How Far From Its Mode a Fit Is, and What It Does Not Identify}
 \usage{
-boot_read_mode(object, spec, design, cf, hy, cfg)
+boot_read_mode(
+  object,
+  spec,
+  design,
+  cf,
+  hy,
+  cfg,
+  pinned = object@methods$pinned
+)
 }
 \arguments{
 \item{object}{The \code{\link[=StatmodFit]{StatmodFit()}}, for its criterion and pinned coordinates.}
@@ -14,6 +22,9 @@ boot_read_mode(object, spec, design, cf, hy, cfg)
 \item{cf, hy}{The coefficients and hyperparameters.}
 
 \item{cfg}{The inner settings of the fit.}
+
+\item{pinned}{The pinned coordinates at the point read, in its own stacked
+positions; those of the fit by default.}
 }
 \value{
 A list with \code{me} (a number, \code{NA} if the point could not be read),

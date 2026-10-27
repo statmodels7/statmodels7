@@ -146,6 +146,9 @@ reference:
   - bayesian_vcov
   - frequentist_vcov
   - hc0_sandwich
+  - hc2_sandwich
+  - statmod_leverage
+  - hac_sandwich
   - unconditional_vcov
   - bootstrap_vcov
 
@@ -162,6 +165,7 @@ reference:
   - add_bootstrap
   - statmod_bootstrap
   - StatmodBootstrap
+  - bootstrap_interval
 
 - title: Graphs of a fit
   desc: >
