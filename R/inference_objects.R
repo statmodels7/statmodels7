@@ -434,7 +434,8 @@ as_test_statistic <- function(test, arg = "test") {
 #' [auto_info()] is not accepted, since the variance is defined on one named
 #' matrix. [summary.StatmodFit()] states the matrix whenever it is not the
 #' observed one, and a printed variance object states the information that it
-#' names. The choice is independent of
+#' names. The effective degrees of freedom that [summary.StatmodFit()] prints
+#' are read on the same matrix. The choice is independent of
 #' the information with which the fit was computed (`inner_information` of
 #' [statmod()]) and of the one of the outer criterion (the `information` of
 #' [reml()]). A model that carries a structural term is inverted on the

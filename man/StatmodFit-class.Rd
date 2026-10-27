@@ -46,7 +46,22 @@ single number. It is the conditional one.}
 
 \item{edf}{A data frame of effective degrees of freedom with the columns
 \code{parameter}, \code{term}, \code{coefficients} and \code{edf}, one row per term of each
-equation.}
+equation. The count of a term is its share of
+\eqn{\mathrm{tr}[(H+S)^{-1}H]}, with \eqn{H} the information of the
+log-likelihood and \eqn{S} the second derivative of the penalty, and it
+is read at fit time on one information matrix, which \code{methods} records as
+\code{edf_information}. That matrix is the \code{information} of \code{\link[=aic]{aic()}} or
+\code{\link[=bic]{bic()}} where either prices the fit (the count is part of the
+criterion), otherwise the \code{information} of \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}}
+(\code{\link[distributions7:observed_info]{distributions7::observed_info()}} by default), and the information of
+the inner fit (\code{inner_information} of \code{\link[=statmod]{statmod()}}, with \code{\link[=auto_info]{auto_info()}}
+settled against the family) only where the model has no outer criterion.
+For a positive semidefinite \eqn{H} the total lies in \eqn{[0, p]}, with
+\eqn{p} the number of coefficients, and the count of a term lies between
+0 and its number of coefficients. An indefinite observed information can
+give a negative share to a direction of negative curvature, and then
+these bounds can fail. \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reports the count on the
+information of its \code{vcov_type} and leaves \code{fit@edf} unchanged.}
 
 \item{fitted}{A named list of the fitted parameters, one vector per
 distribution parameter.}

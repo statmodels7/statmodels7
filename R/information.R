@@ -66,7 +66,10 @@ AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
 #'   \item{`information` of [reml()], [ml()], [aic()] and [bic()]}{The matrix
 #'     of the outer criterion: its determinant enters the Laplace
 #'     approximation of [reml()] and [ml()], and its trace gives the effective
-#'     degrees of freedom of [aic()] and [bic()]. The default is
+#'     degrees of freedom of [aic()] and [bic()]. The effective degrees of
+#'     freedom stored in the fitted model (`fit@edf`) are read on this matrix
+#'     whenever an outer criterion ran, and on the matrix of `inner_information`
+#'     only for a model without one. The default is
 #'     [distributions7::observed_info()].}
 #'   \item{`information` of [bayesian_vcov()], [frequentist_vcov()] and
 #'     [unconditional_vcov()]}{The matrix inverted for the standard errors.
@@ -74,7 +77,9 @@ AutoInfo <- S7::new_class("AutoInfo", parent = distributions7::Information,
 #'     fit: the observed information where the log-likelihood is twice
 #'     differentiable in every parameter of the family, and
 #'     [distributions7::expected_info()] otherwise (see "The default of the
-#'     variance objects" below).}
+#'     variance objects" below). [summary.StatmodFit()] reads the effective
+#'     degrees of freedom it prints on this matrix too, so that they are shares
+#'     of the same \eqn{H} as the standard errors beside them.}
 #' }
 #'
 #' @details

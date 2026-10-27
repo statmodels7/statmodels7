@@ -73,7 +73,13 @@ NULL
 #' reads the full penalized information, including the term's couplings with
 #' the other blocks. [statmod_edf()] reads each term's share from the diagonal
 #' block of the same full smoother matrix \eqn{(H+S)^{-1}H}, so the per-term
-#' numbers add up to \eqn{\tau}.
+#' numbers add up to \eqn{\tau}. The count stored in the fitted model
+#' (`fit@edf`) is read on the `information` of this criterion, so that it
+#' reproduces the \eqn{\tau} that the criterion charged, and
+#' [summary.StatmodFit()] keeps it whatever its `vcov_type` is. For a
+#' positive semidefinite \eqn{H} the total lies in \eqn{[0, p]}, with \eqn{p}
+#' the number of coefficients; an indefinite observed information can give a
+#' direction of negative curvature a negative share.
 #'
 #' Where a penalty has a kink the trace is restricted to the active
 #' coordinates, so for a lasso \eqn{\tau} is the number of surviving
