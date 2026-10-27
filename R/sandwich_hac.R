@@ -112,8 +112,9 @@ HacSandwich <- S7::new_class(
 #'
 #' The prior weights of [statmod()] multiply the log-likelihood contribution
 #' of an observation, and so its score; they are not otherwise interpreted.
-#' Models with a term whose block moves with its coefficients (the
-#' break-point terms and [modelterms7::nl()]) are rejected.
+#' A model with a term whose block moves with its coefficients is accepted when
+#' [hc0_sandwich()] accepts it: the scores are those of the block read at the
+#' fit, and a frozen working linearization of a sharp step is rejected.
 #'
 #' @param kernel `"bartlett"` (the default), `"parzen"` or `"truncated"`.
 #' @param bandwidth `NULL` (the default), which takes
@@ -171,8 +172,8 @@ S7::method(print, HacSandwich) <- function(x, ...) {
 #' Reject a Fit That the HAC Variance Does Not Cover
 #'
 #' @description
-#' Signals an error for a fit with a term whose block moves with its
-#' coefficients, and for a model with no structural term and no `time`.
+#' Signals an error for a fit with a sharp break-point term, and for a model
+#' with no structural term and no `time`.
 #'
 #' @param fit The [StatmodFit()].
 #' @param design The design of the fit.
@@ -182,10 +183,11 @@ S7::method(print, HacSandwich) <- function(x, ...) {
 #'
 #' @keywords internal
 hac_check <- function(fit, design, sw) {
-  if (length(attr(design, "refresh")) > 0L) {
-    stop(paste0("A HAC variance is not available for a model with a term ",
-                "whose block moves with its coefficients (seg(), jump(), ",
-                "jseg() or nl())."), call. = FALSE)
+  rf <- attr(design, "refresh")
+  if (any(vapply(rf, function(r) isTRUE(r$frozen), logical(1)))) {
+    stop(paste0("A HAC variance is not available for a model with a sharp ",
+                "break-point term (jump() or jseg()) whose position is not ",
+                "held: the position of a step has no score."), call. = FALSE)
   }
   structural <- length(attr(design, "structural")) > 0L
   if (structural && (!is.null(sw@time) || !is.null(sw@cluster))) {
@@ -229,6 +231,7 @@ hac_check <- function(fit, design, sw) {
 #'
 #' @keywords internal
 joint_scores <- function(spec, coef, design = statmod_design(spec)) {
+  design <- statmod_design_at(spec, coef, design)
   params <- spec@distrib@params
   n <- spec@n_obs
   w <- spec@weights

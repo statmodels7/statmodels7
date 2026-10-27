@@ -6,11 +6,16 @@
 \alias{hc4_sandwich}
 \title{Sandwich Variances with a Leverage Correction}
 \usage{
-hc2_sandwich(cluster = NULL, data = NULL, reference = c("t", "normal"))
+hc2_sandwich(
+  cluster = NULL,
+  data = NULL,
+  reference = c("t", "normal"),
+  weights = c("frequency", "sampling")
+)
 
-hc3_sandwich(cluster = NULL, data = NULL)
+hc3_sandwich(cluster = NULL, data = NULL, weights = c("frequency", "sampling"))
 
-hc4_sandwich()
+hc4_sandwich(weights = c("frequency", "sampling"))
 }
 \arguments{
 \item{cluster}{\code{NULL} (the default) or a one-sided formula with a single
@@ -22,10 +27,14 @@ variable, with one row for each observation of the fit.}
 \item{reference}{For \code{hc2_sandwich()} with a \code{cluster}: \code{"t"} (the default)
 or \code{"normal"}, the reference distribution of the Wald intervals and
 tests.}
+
+\item{weights}{\code{"frequency"} (the default) or \code{"sampling"}: whether the
+prior weights of the fit are frequencies or sampling weights, as at
+\code{\link[=hc0_sandwich]{hc0_sandwich()}}.}
 }
 \value{
 A \code{SandwichMethod} object with the properties \code{type} (\code{"HC2"},
-\code{"HC3"} or \code{"HC4"}), \code{cluster}, \code{data} and \code{reference}.
+\code{"HC3"} or \code{"HC4"}), \code{cluster}, \code{data}, \code{reference} and \code{weights}.
 }
 \description{
 Select the meat of the frequentist variance \eqn{V = V_b B V_b} with the
@@ -93,7 +102,9 @@ and the models that are rejected are treated as at \code{\link[=hc0_sandwich]{hc
 weights enter the leverage through \eqn{W_i}; without a cluster the leverage
 of one of the \eqn{w_i} copies of a row is \eqn{1/w_i} times that of the
 row, which is what the estimator uses, and with a cluster the copies of a
-row are corrected within the cluster.
+row are corrected within the cluster. With \code{weights = "sampling"} and no
+cluster the leverage is that of the row, not divided by \eqn{w_i}, and the
+mean leverage of HC4 is the mean over the rows with positive weight.
 
 \strong{Few clusters.} With CR2 and \code{reference = "t"} (the default),
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} and the Wald rows of \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} and

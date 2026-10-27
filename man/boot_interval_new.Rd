@@ -17,7 +17,7 @@ boot_interval_new(class, name, n, resample, refit)
 An object that inherits from \link{bootstrap_interval}.
 }
 \description{
-Checks the arguments of \code{\link[=percentile_interval]{percentile_interval()}} and \code{\link[=basic_interval]{basic_interval()}} and
-builds the object.
+Checks the arguments of \code{\link[=percentile_interval]{percentile_interval()}}, \code{\link[=basic_interval]{basic_interval()}} and
+\code{\link[=bca_interval]{bca_interval()}} and builds the object.
 }
 \keyword{internal}

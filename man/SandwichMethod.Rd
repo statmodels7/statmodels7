@@ -8,7 +8,8 @@ SandwichMethod(
   type = character(0),
   cluster = NULL,
   data = NULL,
-  reference = "normal"
+  reference = "normal",
+  weights = "frequency"
 )
 }
 \arguments{
@@ -18,9 +19,13 @@ SandwichMethod(
 \code{~ id}.}
 
 \item{data}{\code{NULL} or the data frame that holds the cluster variable.}
+
+\item{weights}{\code{"frequency"} or \code{"sampling"}, the reading of the prior
+weights.}
 }
 \value{
-An S7 object with the properties \code{type}, \code{cluster} and \code{data}.
+An S7 object with the properties \code{type}, \code{cluster}, \code{data} and
+\code{weights}.
 }
 \description{
 The class that \code{\link[=hc0_sandwich]{hc0_sandwich()}} and \code{\link[=hc1_sandwich]{hc1_sandwich()}} instantiate. It

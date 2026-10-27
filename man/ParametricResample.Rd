@@ -4,11 +4,14 @@
 \alias{ParametricResample}
 \alias{CaseResample}
 \alias{ClusterResample}
+\alias{BayesianResample}
 \title{S7 Classes for the Shipped Resampling Schemes}
 \usage{
 ParametricResample(name = character(0))
 
 CaseResample(name = character(0))
+
+BayesianResample(name = character(0))
 
 ClusterResample(name = character(0), cluster = NULL, data = NULL)
 }
@@ -26,9 +29,9 @@ An S7 object inheriting from \link{resample_method}, with the property
 \code{name}, and \code{cluster} and \code{data} for a cluster scheme.
 }
 \description{
-These are the classes that \code{\link[=parametric_resample]{parametric_resample()}}, \code{\link[=case_resample]{case_resample()}} and
-\code{\link[=cluster_resample]{cluster_resample()}} instantiate. Each inherits from \link{resample_method}. Use
-the constructors, which set the properties.
+These are the classes that \code{\link[=parametric_resample]{parametric_resample()}}, \code{\link[=case_resample]{case_resample()}},
+\code{\link[=cluster_resample]{cluster_resample()}} and \code{\link[=bayesian_resample]{bayesian_resample()}} instantiate. Each inherits
+from \link{resample_method}. Use the constructors, which set the properties.
 }
 \examples{
 class(case_resample())

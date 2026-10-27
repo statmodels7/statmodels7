@@ -1,7 +1,7 @@
 #' @include bootstrap_fit.R inference_objects.R
 NULL
 
-# Bootstrap intervals for confint(): the percentile and the basic interval of
+# Bootstrap intervals for confint(): the percentile, basic and BCa intervals of
 # the stored replicates, and the reuse of the stored replicates by the
 # predictive bootstrap of pred_bootstrap().
 
@@ -10,13 +10,14 @@ NULL
 #' @name bootstrap_interval
 #'
 #' @description
-#' Two intervals are read from the replicates that [add_bootstrap()] stores in
-#' a fit: the percentile interval and the basic interval. Each is an object
-#' built by [percentile_interval()] or [basic_interval()], and the object is
-#' passed as the argument `interval` of [confint.StatmodFit()].
+#' Three intervals are read from the replicates that [add_bootstrap()] stores
+#' in a fit: the percentile interval, the basic interval and the BCa interval.
+#' Each is an object built by [percentile_interval()], [basic_interval()] or
+#' [bca_interval()], and the object is passed as the argument `interval` of
+#' [confint.StatmodFit()].
 #'
-#' `bootstrap_interval` is the abstract parent of the two classes. It cannot be
-#' instantiated, and serves to test membership with `S7::S7_inherits()`.
+#' `bootstrap_interval` is the abstract parent of the three classes. It cannot
+#' be instantiated, and serves to test membership with `S7::S7_inherits()`.
 #'
 #' @details
 #' Write \eqn{\hat\theta} for an estimate, \eqn{\theta^*_{(\alpha)}} for the
@@ -29,6 +30,31 @@ NULL
 #' the reflection of the percentile interval about the estimate (Davison and
 #' Hinkley 1997, chapter 5). The quantiles are those of [stats::quantile()]
 #' with its default type.
+#'
+#' The BCa interval (bias-corrected and accelerated) takes the quantiles of
+#' the replicates at adjusted levels,
+#' \deqn{\Phi\!\left(z_0 + \frac{z_0 + z_{\alpha'}}{1 - a\,(z_0 + z_{\alpha'})}
+#'   \right), \quad \alpha' \in \{\alpha/2,\; 1 - \alpha/2\},}
+#' where \eqn{\Phi} is the standard normal distribution function and
+#' \eqn{z_{\alpha'}} its quantile. The bias correction
+#' \eqn{z_0 = \Phi^{-1}(\hat p)} uses the proportion \eqn{\hat p} of replicates
+#' below the estimate, with the replicates equal to it counted by halves. The
+#' acceleration is
+#' \deqn{a = \frac{\sum_i (\bar\theta_{(\cdot)} - \hat\theta_{(-i)})^3}
+#'   {6\,[\sum_i (\bar\theta_{(\cdot)} - \hat\theta_{(-i)})^2]^{3/2}},}
+#' with \eqn{\hat\theta_{(-i)}} the estimate of the fit refitted without
+#' observation \eqn{i} (the weight of the observation set to zero) and
+#' \eqn{\bar\theta_{(\cdot)}} the mean of these estimates (Efron 1987). With
+#' [cluster_resample()] the unit deleted is a cluster. The refits are made once
+#' and stored in the entry, one per observation or cluster, with the settings
+#' of the entry (`refit`), so that the first call of [confint.StatmodFit()]
+#' costs as many refits as there are units, and later calls read them. The
+#' interval is available for [case_resample()], [cluster_resample()] and
+#' [bayesian_resample()]. [parametric_resample()] is rejected, because the
+#' acceleration needs the influence of the observations of the data, and so is
+#' [cluster_resample()] beside a [modelterms7::random()] term. A coordinate
+#' whose estimate lies outside the range of its replicates, or whose
+#' adjusted level is undefined, has `NA` limits.
 #'
 #' The quantity is the one that [confint.StatmodFit()] reports. With
 #' `readable = TRUE` the readable quantities are computed on every replicate
@@ -52,24 +78,28 @@ NULL
 #' @param name A single string, the short name of the interval.
 #' @param label A single string, the name under which an object prints.
 #'
-#' @return `percentile_interval()` and `basic_interval()` return an object
-#'   that inherits from `bootstrap_interval`, with the properties `name`,
-#'   `label`, `n`, `resample` and `refit`. `bootstrap_interval` returns
-#'   nothing: its constructor signals an error.
+#' @return `percentile_interval()`, `basic_interval()` and `bca_interval()`
+#'   return an object that inherits from `bootstrap_interval`, with the
+#'   properties `name`, `label`, `n`, `resample` and `refit`.
+#'   `bootstrap_interval` returns nothing: its constructor signals an error.
 #'
 #' @references Davison, A. C. and Hinkley, D. V. (1997). *Bootstrap Methods and
 #'   Their Application*. Cambridge University Press.
+#'
+#'   Efron, B. (1987). Better bootstrap confidence intervals. *Journal of the
+#'   American Statistical Association*, 82(397), 171--185.
 #'
 #' @seealso [confint.StatmodFit()], [add_bootstrap()], [bootstrap_vcov()].
 #'
 #' @examples
 #' set.seed(1)
-#' dd <- data.frame(x = runif(60))
-#' dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
+#' dd <- data.frame(x = runif(40))
+#' dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' fit <- add_bootstrap(fit, n = 100, resample = case_resample())
-#' confint(fit, interval = percentile_interval(n = 100))
-#' confint(fit, interval = basic_interval(n = 100))
+#' fit <- add_bootstrap(fit, n = 60, resample = case_resample())
+#' confint(fit, interval = percentile_interval(n = 60))
+#' confint(fit, interval = basic_interval(n = 60))
+#' confint(fit, interval = bca_interval(n = 60))
 #' @export
 bootstrap_interval <- S7::new_class(
   "bootstrap_interval",
@@ -87,6 +117,9 @@ PercentileInterval <- S7::new_class("PercentileInterval",
 BasicInterval <- S7::new_class("BasicInterval", parent = bootstrap_interval)
 
 #' @rdname bootstrap_interval
+BcaInterval <- S7::new_class("BcaInterval", parent = bootstrap_interval)
+
+#' @rdname bootstrap_interval
 #' @export
 percentile_interval <- function(n = NULL, resample = NULL, refit = NULL) {
   boot_interval_new(PercentileInterval, "percentile", n, resample, refit)
@@ -98,11 +131,17 @@ basic_interval <- function(n = NULL, resample = NULL, refit = NULL) {
   boot_interval_new(BasicInterval, "basic", n, resample, refit)
 }
 
+#' @rdname bootstrap_interval
+#' @export
+bca_interval <- function(n = NULL, resample = NULL, refit = NULL) {
+  boot_interval_new(BcaInterval, "bca", n, resample, refit)
+}
+
 #' Build a Bootstrap Interval Object
 #'
 #' @description
-#' Checks the arguments of [percentile_interval()] and [basic_interval()] and
-#' builds the object.
+#' Checks the arguments of [percentile_interval()], [basic_interval()] and
+#' [bca_interval()] and builds the object.
 #'
 #' @param class The S7 class.
 #' @param name The short name of the interval.
@@ -153,7 +192,8 @@ S7::method(print, bootstrap_interval) <- function(x, ...) {
 as_boot_interval <- function(x) {
   if (S7::S7_inherits(x, bootstrap_interval)) return(x)
   stop("'interval' must be NULL or a bootstrap_interval object: ",
-       "percentile_interval() or basic_interval().", call. = FALSE)
+       "percentile_interval(), basic_interval() or bca_interval().",
+       call. = FALSE)
 }
 
 #' The Bootstrap Intervals of a Table of Coefficients
@@ -196,7 +236,10 @@ confint_interval <- function(object, parm, level, readable, test, interval,
     stop("'interval' and a test other than wald_test() cannot be combined: ",
          "both set the limits.", call. = FALSE)
   }
+  bca <- S7::S7_inherits(interval, BcaInterval)
+  if (bca) boot_bca_check(object, interval@resample)
   vt <- boot_interval_vcov(object, interval)
+  if (bca) boot_bca_check(object, vt@resample)
   tb <- confint.StatmodFit(object, parm = parm, level = level,
                            vcov_type = vt, readable = readable,
                            test = wald_test(), ...)
@@ -217,6 +260,11 @@ confint_interval <- function(object, parm, level, readable, test, interval,
             call. = FALSE)
   }
   basic <- S7::S7_inherits(interval, BasicInterval)
+  if (bca) {
+    JK <- boot_jackknife_get(object, vt, interval)
+    JQ <- if (isTRUE(readable)) boot_readable_values(object, spec, design, JK) else JK
+  }
+  extreme <- FALSE
   for (i in seq_len(nrow(tb))) {
     j <- match(rownames(tb)[[i]], colnames(Q))
     est <- tb$estimate[[i]]
@@ -224,10 +272,19 @@ confint_interval <- function(object, parm, level, readable, test, interval,
       tb$lower[[i]] <- tb$upper[[i]] <- NA_real_
       next
     }
-    q <- stats::quantile(Q[, j], c(alpha / 2, 1 - alpha / 2), names = FALSE)
+    q <- if (bca) {
+      lim <- boot_bca_limits(Q[, j], est, JQ[, j], alpha)
+      if (isTRUE(attr(lim, "extreme"))) extreme <- TRUE
+      lim
+    } else stats::quantile(Q[, j], c(alpha / 2, 1 - alpha / 2), names = FALSE)
     if (basic) q <- 2 * est - rev(q)
     tb$lower[[i]] <- q[[1L]]
     tb$upper[[i]] <- q[[2L]]
+  }
+  if (extreme) {
+    warning(paste0("The BCa levels of some coordinate fall in the first or ",
+                   "last replicate, so an extreme order statistic is a limit.",
+                   "\n  Use more replicates."), call. = FALSE)
   }
   tb
 }
@@ -251,10 +308,11 @@ confint_interval <- function(object, parm, level, readable, test, interval,
 boot_interval_vcov <- function(object, interval) {
   vt <- BootstrapVcov(name = "bootstrap", n = interval@n,
                       resample = interval@resample, refit = interval@refit)
-  if (is.null(vt@n) &&
-      !length(boot_match(boot_entries(object), vt@resample, vt@refit))) {
-    vt@n <- 1000L
-  }
+  none <- !length(boot_match(boot_entries(object), vt@resample, vt@refit))
+  if (is.null(vt@n) && none) vt@n <- 1000L
+  # the BCa interval needs a scheme that resamples the data
+  if (none && is.null(vt@resample) &&
+      S7::S7_inherits(interval, BcaInterval)) vt@resample <- case_resample()
   boot_resolve(object, vt)
 }
 

@@ -253,8 +253,10 @@ test_that("the HAC variance rejects what it cannot cover", {
   expect_error(vcov(fit, vcov_type = frequentist_vcov(
     sandwich = hac_sandwich())), "time = ~ t")
   fs <- statmod(y ~ seg(x), distributions7::gaussian1_distrib(), d)
-  expect_error(vcov(fs, vcov_type = frequentist_vcov(
-    sandwich = hac_sandwich(time = ~ t))), "moves with its coefficients")
+  # a term whose block moves is covered, see test-sandwich-refresh.R
+  Vs <- vcov(fs, vcov_type = frequentist_vcov(
+    sandwich = hac_sandwich(time = ~ t)), readable = FALSE)
+  expect_true(all(is.finite(diag(Vs))))
   dg <- sim_gas_hac(60, 0.3, 0.4, 0.7)
   fg <- statmod(y ~ x + gas(p = 1, q = 1, time = t) - 1,
                 distributions7::gaussian1_distrib(), dg)
