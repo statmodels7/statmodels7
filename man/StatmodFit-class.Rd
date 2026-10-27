@@ -20,7 +20,8 @@ StatmodFit(
   criterion = integer(0),
   history = list(),
   methods = list(),
-  call = NULL
+  call = NULL,
+  bootstrap = new.env(parent = emptyenv())
 )
 }
 \arguments{

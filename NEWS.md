@@ -1,3 +1,33 @@
+# statmodels7 (development version)
+
+* `frequentist_vcov()` takes `sandwich = hc0_sandwich()` or
+  `hc1_sandwich()`, each with an optional `cluster = ~ id` (CR0 and CR1).
+  The matrix is `V_b B V_b`, with `V_b` the inverse penalized information and
+  `B` the sum over observations, or over clusters, of the outer product of
+  the scores of the log-likelihood in the whole coefficient vector, random
+  effects included. The correction of HC1 and CR1 uses the effective degrees
+  of freedom of the model. The sandwich is rejected for a model with `gas()`,
+  `regime()`, a break-point term or `nl()`. Prior weights are frequency
+  weights. `vcov()`, `confint()`, `summary()`, `predict()` and the tests take it
+  through `vcov_type`; with `sandwich = NULL` the result is unchanged.
+
+* `bootstrap_vcov()` is a fourth variance convention for the argument
+  `vcov_type`: the covariance of the coefficients of refitted, resampled data
+  sets. `add_bootstrap(fit, n, resample, refit)` computes the replicates and
+  stores them in the fit, `statmod_bootstrap()` reads them, and `coef()` of an
+  entry is the matrix of replicates. The schemes are `parametric_resample()`,
+  `case_resample()` (frequency weights times the weights of the fit, the
+  design not rebuilt) and `cluster_resample(~ id)`. Draws are made in the
+  calling process from the session's random number stream and the refits go
+  to the workers of the fit, so a result does not depend on the number of
+  workers; a stored entry can be extended, and 500 replicates followed by 300
+  more equal 800 from the same seed. A replicate that fails (an error, a mode
+  error above `mode_error_limit()`, a coefficient that the weights leave
+  unidentified) is replaced. `summary()` prints the number of replicates, the
+  replaced ones, the Monte Carlo error and, for a kinked penalty, the
+  selection frequencies. `pred_bootstrap()` runs on the same engine and gives
+  the same replicas as before.
+
 # statmodels7 0.211.0
 
 * The choices of a method are S7 objects. `statmod()` takes
