@@ -296,8 +296,9 @@ parts_contribution <- function(fit, param, parts, newdata, vcov_type) {
 #' New Data for an Effect on the Response Scale
 #'
 #' @description
-#' Completes a grid with every variable of the model: those in `at` take the
-#' given values, and the others their median or first level in `data`.
+#' Completes a grid with every variable of the model, those of the terms and
+#' those of the offsets: the variables in `at` take the given values, and the
+#' others their median or first level in `data`.
 #'
 #' @param fit A [StatmodFit()].
 #' @param data The data frame of the fit.
@@ -309,9 +310,10 @@ parts_contribution <- function(fit, param, parts, newdata, vcov_type) {
 #' @keywords internal
 response_newdata <- function(fit, data, grid, at) {
   spec <- fit@spec
-  vars <- unique(unlist(lapply(names(spec@terms), function(p)
+  vars <- unique(c(unlist(lapply(names(spec@terms), function(p)
     unlist(lapply(names(spec@terms[[p]]), function(k)
-      term_variables(spec@terms[[p]][[k]], k))))))
+      term_variables(spec@terms[[p]][[k]], k))))),
+    offset_variables(spec, data)))
   bad <- setdiff(names(at), vars)
   if (length(bad)) {
     stop(sprintf("'at' names %s, which the model does not read.",
@@ -330,6 +332,30 @@ response_newdata <- function(fit, data, grid, at) {
       }
   }
   nd
+}
+
+
+#' Variables of the Offsets
+#'
+#' @description
+#' Returns the columns of `data` that the offsets written in the formula of
+#' the fit read.
+#'
+#' @details
+#' The offsets are re-evaluated on new data when the fit predicts, so a graph
+#' on the response scale needs a value for each of their variables.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param data The data frame of the fit.
+#'
+#' @return A character vector, possibly empty.
+#'
+#' @keywords internal
+offset_variables <- function(spec, data) {
+  eqs <- statmod_equations(spec@formula, spec@distrib@params)$equations
+  v <- unlist(lapply(eqs, function(e)
+    unlist(lapply(split_offsets(e)$offsets, all.vars))))
+  intersect(unique(v), names(data))
 }
 
 

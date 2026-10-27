@@ -713,6 +713,14 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
 #' estimates and run at the fitted hyperparameters, so the interval requires
 #' no outer search.
 #'
+#' The position of a break-point has a range: a value at or beyond the
+#' smallest or the largest observation of the variable leaves the term with no
+#' effect, so that every such value gives the same refit. [break_edges()]
+#' returns that range, and the search never leaves it. On a side where the
+#' statistic is still under its critical value when the search reaches the end
+#' of the range, the data do not bound the position, and the limit is
+#' `-Inf` or `Inf`.
+#'
 #' @param fit A [StatmodFit()].
 #' @param param,coefname Which coefficient, as in [statmod_restrict()].
 #' @param level The confidence level, a single number in (0, 1).
@@ -723,10 +731,11 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
 #' @param maxit How many widenings to try on each side before the search
 #'   stops.
 #'
-#' @return A numeric vector of two, `lower` and `upper`. An end that the
-#'   search could not bracket within `maxit` widenings, or at which the
-#'   statistic could not be evaluated, is `NA`; both ends are `NA` when the
-#'   standard error of the coefficient is not finite and positive.
+#' @return A numeric vector of two, `lower` and `upper`. A side of the
+#'   position of a break-point that the data do not bound is `-Inf` or `Inf`.
+#'   An end that the search could not bracket within `maxit` widenings, or at
+#'   which the statistic could not be evaluated, is `NA`; both ends are `NA`
+#'   when the standard error of the coefficient is not finite and positive.
 #'
 #' @seealso [statmod_stat_at()], the statistic that is inverted.
 #'
@@ -766,11 +775,17 @@ statmod_invert <- function(fit, param, coefname, level = 0.95,
     if (!isTRUE(is.finite(s))) return(NA_real_)
     s - q
   }
+  edges <- break_edges(spec, design, param, j)
   side <- function(dir) {
+    end <- if (dir < 0) edges[[1L]] else edges[[2L]]
     step <- sqrt(q) * se
     a <- bhat
     for (k in seq_len(as.integer(maxit))) {
       b <- bhat + dir * step
+      # the refit at the end of the range is the last one: beyond it the
+      # statistic does not change
+      last <- dir * (b - end) >= 0
+      if (last) b <- end
       v <- gap(b)
       if (is.na(v)) return(NA_real_)
       if (v > 0) {
@@ -779,12 +794,57 @@ statmod_invert <- function(fit, param, coefname, level = 0.95,
                       error = function(e) NA_real_)
         return(r)
       }
+      if (last) return(dir * Inf)
       a <- b
       step <- step * 1.6
     }
     NA_real_
   }
   c(lower = side(-1), upper = side(1))
+}
+
+
+#' The Range of a Break-Point Position
+#'
+#' @description
+#' Returns the smallest and the largest value that the position of a
+#' break-point can be held at before the term stops depending on it: the range
+#' of the variable the break-point is on.
+#'
+#' @details
+#' A position at or beyond the largest observation makes every hinge
+#' \eqn{(x - \psi)_+} and every step \eqn{1(x > \psi)} of the term zero, and a
+#' position at or below the smallest makes the hinge a line that the term's
+#' linear part absorbs. Either way the restricted refit is the same for every
+#' such value, so that an interval by inversion can stop at the end of the
+#' range. A coefficient that is not the position of a break-point of a
+#' [modelterms7::seg()] term, or a term whose positions are developed over
+#' covariates, has no range.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design Its design.
+#' @param param The distribution parameter of the coefficient.
+#' @param j The position of the coefficient in the parameter's equation.
+#'
+#' @return A numeric vector of two, `-Inf` and `Inf` where there is no range.
+#'
+#' @seealso [statmod_invert()], which stops its search there.
+#'
+#' @keywords internal
+break_edges <- function(spec, design, param, j) {
+  none <- c(-Inf, Inf)
+  blocks <- design[[param]]$blocks
+  nm <- names(blocks)[vapply(blocks, function(ix) j %in% ix, logical(1))]
+  if (length(nm) != 1L) return(none)
+  term <- spec@terms[[param]][[nm]]
+  if (!S7::S7_inherits(term, modelterms7::SegTerm) ||
+      !identical(term@kind, "seg") || length(term@subformulas)) {
+    return(none)
+  }
+  if (!grepl("psi[0-9]+$", design[[param]]$coef_names[[j]])) return(none)
+  xv <- term@blueprint$xv
+  if (!is.numeric(xv) || !length(xv) || !all(is.finite(xv))) return(none)
+  range(xv)
 }
 
 

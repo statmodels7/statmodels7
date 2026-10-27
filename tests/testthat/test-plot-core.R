@@ -63,6 +63,28 @@ test_that("the response scale is the fitted parameter", {
   expect_equal(d$fit, exp(b[[1]] + b[[2]] * d$x), tolerance = 1e-10)
 })
 
+test_that("the response scale of a model with an offset holds the offset variable", {
+  set.seed(7)
+  do <- data.frame(x = runif(120), n = sample(10:90, 120, TRUE))
+  do$y <- rpois(120, do$n * exp(-1 + 0.8 * do$x))
+  fo <- statmod(y ~ x + offset(log(n)), distributions7::poisson_distrib(), do)
+  b <- coef(fo, readable = FALSE)$mu
+  # the offset variable takes its median, as every other variable does
+  d <- autoplot(fo, term = "x", type = plot_effect(scale = "response"),
+                data = do)$layers[[2]]$data
+  expect_equal(d$fit, stats::median(do$n) * exp(b[[1]] + b[[2]] * d$x),
+               tolerance = 1e-10)
+  # and a value in `at` replaces it
+  d2 <- autoplot(fo, term = "x",
+                 type = plot_effect(scale = "response", at = list(n = 50)),
+                 data = do)$layers[[2]]$data
+  expect_equal(d2$fit, 50 * exp(b[[1]] + b[[2]] * d2$x), tolerance = 1e-10)
+  expect_error(autoplot(fo, term = "x",
+                        type = plot_effect(scale = "response",
+                                           at = list(m = 1)), data = do),
+               "does not read")
+})
+
 test_that("binned means are the means of the partial residuals", {
   d <- plot_data(plot_effect(binned = 5), fit@spec@terms$sigma$linpar, fit,
                  ctx = list(param = "sigma", name = "linpar", vars = "x",

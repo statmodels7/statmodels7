@@ -19,7 +19,8 @@ response_newdata(fit, data, grid, at)
 A data frame with the rows of \code{grid}.
 }
 \description{
-Completes a grid with every variable of the model: those in \code{at} take the
-given values, and the others their median or first level in \code{data}.
+Completes a grid with every variable of the model, those of the terms and
+those of the offsets: the variables in \code{at} take the given values, and the
+others their median or first level in \code{data}.
 }
 \keyword{internal}
