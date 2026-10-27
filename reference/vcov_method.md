@@ -85,10 +85,26 @@ information with which the fit was computed (`inner_information` of
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md))
 and of the one of the outer criterion (the `information` of
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)).
-A model that carries a structural term is inverted on the observed
-information whatever the object says. The three matrices are \$\$V_b =
-(H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}, \qquad V' = V_b + J
-V\_\theta J'.\$\$
+A model with a score-driven filter
+([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html))
+is inverted over the coefficients and the filter's own parameters
+together, on the observed information or, with
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html),
+on the expected information conditional on the past, \\\sum_t J_t^\top
+\mathcal{I}(\eta_t) J_t\\ with \\J_t\\ the Jacobian of the predictors at
+observation \\t\\ (see
+[`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)).
+Its `method` applies at the fitted predictors, so a family with no
+closed form is served as well: with
+[`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+the matrix is the sum of the outer products of the per-observation
+scores. A model with a term of the likelihood shape
+([`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html),
+a marginal break-point term) has no expected information: `NULL`
+resolves to the observed information there, and
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+is an error. The three matrices are \$\$V_b = (H + S)^{-1}, \qquad V_f =
+(H+S)^{-1} H (H+S)^{-1}, \qquad V' = V_b + J V\_\theta J'.\$\$
 
 - [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
   returns \\V_b\\, the posterior variance under the prior whose negative

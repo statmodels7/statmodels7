@@ -1710,6 +1710,9 @@ helper functions. Using the package does not require any of it.
 - [`joint_grad_parts()`](https://statmodels7.github.io/statmodels7/reference/joint_grad_parts.md)
   : The Direction-Free Quantities of the Joint Chain Term, Joint Filter
 
+- [`joint_inner_info()`](https://statmodels7.github.io/statmodels7/reference/joint_inner_info.md)
+  : The Information of the Joint Step Beside a Filter
+
 - [`joint_level_chart()`](https://statmodels7.github.io/statmodels7/reference/joint_level_chart.md)
   : The Level Chart of a Filter's Joint Fit
 
@@ -2563,8 +2566,7 @@ helper functions. Using the package does not require any of it.
 
 - [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
   [`statmod_full_information_impl()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
-  : The Observed Information Over the Coefficients and a Filter's
-  Parameters
+  : The Information Over the Coefficients and a Filter's Parameters
 
 - [`statmod_grid_size()`](https://statmodels7.github.io/statmodels7/reference/statmod_grid_size.md)
   : How Many Values a Path Visits for One Hyperparameter
@@ -2795,6 +2797,10 @@ helper functions. Using the package does not require any of it.
   : The Quantities of a Structural Term That Read a Coordinate at an
   Edge
 
+- [`structural_expected_check()`](https://statmodels7.github.io/statmodels7/reference/structural_expected_check.md)
+  : Reject the Expected Information Beside a Term of the Likelihood
+  Shape
+
 - [`structural_grad_parts()`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md)
   [`structural_grad_parts_impl()`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md)
   : The Direction-Free Quantities of the Joint Chain Term
@@ -2810,6 +2816,10 @@ helper functions. Using the package does not require any of it.
 
 - [`structural_multistarts()`](https://statmodels7.github.io/statmodels7/reference/structural_multistarts.md)
   : The Starting Points of a Structural Term
+
+- [`structural_outer_check()`](https://statmodels7.github.io/statmodels7/reference/structural_outer_check.md)
+  : Reject an Outer Criterion on the Expected Information Beside a
+  Structural Term
 
 - [`structural_outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/structural_outer_pieces.md)
   : The Penalty's Pieces on the Joint Vector

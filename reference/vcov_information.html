@@ -11,7 +11,7 @@ otherwise (a NULL property, or a convention that has no property)."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ otherwise (a <code>NULL</code> property, or a convention that has no property).<
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vcov_information</span><span class="op">(</span><span class="va">x</span>, <span class="va">distrib</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vcov_information</span><span class="op">(</span><span class="va">x</span>, <span class="va">distrib</span>, design <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,10 +62,23 @@ otherwise (a <code>NULL</code> property, or a convention that has no property).<
 <dt id="arg-distrib">distrib<a class="anchor" aria-label="anchor" href="#arg-distrib"></a></dt>
 <dd><p>The <a href="https://statmodels7.github.io/distributions7/reference/distrib.html" class="external-link">distributions7::distrib</a> of the fit.</p></dd>
 
+
+<dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
+<dd><p>The design of the fit, or <code>NULL</code> where it is not at hand.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object that inherits from <a href="https://statmodels7.github.io/distributions7/reference/Information.html" class="external-link">distributions7::Information</a>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Where <code>design</code> carries a structural term of the likelihood shape
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>, a marginal break-point term), the default is
+<code><a href="https://statmodels7.github.io/distributions7/reference/observed_info.html" class="external-link">distributions7::observed_info()</a></code> whatever the family, and a property that
+names <code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code> signals an error (see
+<code><a href="structural_expected_check.html">structural_expected_check()</a></code>): the likelihood of such a model is a mixture
+over latent components and has no expected information.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,14 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.213.0" id="statmodels7-02130">statmodels7 0.213.0<a class="anchor" aria-label="anchor" href="#statmodels7-02130"></a></h2>
+<ul><li><p>A model with a <code>gas()</code> term has an expected information: the one conditional on the past, <code>sum_t J_t' I(eta_t) J_t</code>, with <code>J_t</code> the Jacobian of the predictors of observation <code>t</code> in the coefficients and the filter’s own parameters. <code><a href="../reference/bayesian_vcov.html">bayesian_vcov()</a></code>, <code><a href="../reference/frequentist_vcov.html">frequentist_vcov()</a></code> and <code><a href="../reference/unconditional_vcov.html">unconditional_vcov()</a></code> invert it where their <code>information</code> is <code>expected_info()</code>, and the <code>method</code> of that object is applied at the fitted predictors, so a family with its density alone is served too (<code>expect_opg()</code> gives the sum of the outer products of the per-observation scores). The structural table and the effective degrees of freedom of <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> read the same matrix. A <code>NULL</code> information resolves by the family as before, so a family with a kink now has finite standard errors beside a filter.</p></li>
+<li><p><code>statmod(inner_information = expected_info())</code> fits the coefficients and a filter’s parameters by Fisher scoring on that matrix. <code><a href="../reference/auto_info.html">auto_info()</a></code> leaves the joint system on the observed information, as before.</p></li>
+<li><p>An outer criterion (<code><a href="../reference/reml.html">reml()</a></code>, <code><a href="../reference/reml.html">ml()</a></code>, <code><a href="../reference/aic.html">aic()</a></code>, <code><a href="../reference/aic.html">bic()</a></code>) whose information is <code>expected_info()</code> is an error for a model with a structural term, and <code><a href="../reference/auto_info.html">auto_info()</a></code> is settled as the observed information there.</p></li>
+<li><p>A model with <code>regime()</code> or a marginal break-point term has no expected information: <code>expected_info()</code> is an error as <code>inner_information</code>, as the information of an outer criterion and as the information of a variance object, and a <code>NULL</code> information resolves to the observed one.</p></li>
+<li><p>The error of <code>gas(scaling = )</code> on a family without a closed-form expected information names the three methods that supply it.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.212.0" id="statmodels7-02120">statmodels7 0.212.0<a class="anchor" aria-label="anchor" href="#statmodels7-02120"></a></h2>
 <ul><li><p><code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> takes <code>interval = percentile_interval()</code> or <code><a href="../reference/bootstrap_interval.html">basic_interval()</a></code>, bootstrap intervals from the replicates stored by <code><a href="../reference/add_bootstrap.html">add_bootstrap()</a></code> (1000 replicates by default when none are stored, with a warning when a tail holds fewer than ten). With <code>readable = TRUE</code> each quantity is computed on every replicate before the quantiles.</p></li>

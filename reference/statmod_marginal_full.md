@@ -7,7 +7,15 @@ block of design columns.
 ## Usage
 
 ``` r
-statmod_marginal_full(spec, design, coef, hyper, basis = NULL)
+statmod_marginal_full(
+  spec,
+  design,
+  coef,
+  hyper,
+  basis = NULL,
+  expected = FALSE,
+  emethod = NULL
+)
 ```
 
 ## Arguments

@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -144,8 +144,15 @@ expected information take a step that the observed one cannot (see
 <a href="information_objects.html">information_objects</a>). The fitted model records the settled object, and
 every later refit of the model (the folds of a cross-validation, the
 restricted fits of a test, the resampled fits of a bootstrap) reads the
-same one. A model with a structural term is fitted on the observed
-information whatever the object says. The outer criterion has its own
+same one. Beside a score-driven filter (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>) the
+coefficients and the filter's own parameters are fitted in one system,
+whose Hessian is the observed information, or the expected information
+conditional on the past where <code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code> is named
+here (Fisher scoring over that system); <code><a href="auto_info.html">auto_info()</a></code> leaves that system
+on the observed information. A model with a term of the likelihood shape
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>, a marginal break-point term) has no expected
+information, and <code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code> is an error there. The
+outer criterion has its own
 <code>information</code> (see <code><a href="reml.html">reml()</a></code>) and the standard errors have theirs (see
 <a href="vcov_method.html">vcov_method</a>); the three choices are independent.</p></dd>
 

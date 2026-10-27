@@ -48,9 +48,10 @@ unconditional_vcov(information = NULL)
     [distributions7::expected_derivative_methods](https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html)).
 
   [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
-  is not accepted. A model with a structural term is inverted on the
-  observed information whatever the object says. The choice does not
-  depend on how the fit was computed (`inner_information` of
+  is not accepted. For a model with a structural term, see
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md).
+  The choice does not depend on how the fit was computed
+  (`inner_information` of
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)).
   [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
   states the matrix when it is not the observed one, and a printed

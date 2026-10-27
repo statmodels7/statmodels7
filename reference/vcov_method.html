@@ -33,7 +33,7 @@ which is the covariance of refitted, resampled data sets, does not carry it."><m
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,8 +123,19 @@ names. The effective degrees of freedom that <code><a href="summary.StatmodFit.h
 are read on the same matrix. The choice is independent of
 the information with which the fit was computed (<code>inner_information</code> of
 <code><a href="statmod.html">statmod()</a></code>) and of the one of the outer criterion (the <code>information</code> of
-<code><a href="reml.html">reml()</a></code>). A model that carries a structural term is inverted on the
-observed information whatever the object says. The three matrices are
+<code><a href="reml.html">reml()</a></code>). A model with a score-driven filter
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>) is inverted over the coefficients and the filter's
+own parameters together, on the observed information or, with
+<code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code>, on the expected information conditional
+on the past, \(\sum_t J_t^\top \mathcal{I}(\eta_t) J_t\) with
+\(J_t\) the Jacobian of the predictors at observation \(t\) (see
+<code><a href="statmod_full_information.html">statmod_full_information()</a></code>). Its <code>method</code> applies at the fitted
+predictors, so a family with no closed form is served as well: with
+<code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code> the matrix is the sum of the outer products
+of the per-observation scores. A model with a term of the likelihood shape
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>, a marginal break-point term) has no expected
+information: <code>NULL</code> resolves to the observed information there, and
+<code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code> is an error. The three matrices are
 $$V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}, \qquad
   V' = V_b + J V_\theta J'.$$</p><ul><li><p><code><a href="bayesian_vcov.html">bayesian_vcov()</a></code> returns \(V_b\), the posterior variance under the
 prior whose negative logarithm is the penalty, conditional on the

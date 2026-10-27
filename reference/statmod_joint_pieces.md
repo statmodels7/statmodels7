@@ -11,7 +11,14 @@ reads the same ones at a fitted point.
 ## Usage
 
 ``` r
-statmod_joint_pieces(spec, design, obj, hyper, kinds = "filter")
+statmod_joint_pieces(
+  spec,
+  design,
+  obj,
+  hyper,
+  kinds = "filter",
+  information = distributions7::observed_info()
+)
 ```
 
 ## Arguments
@@ -27,6 +34,15 @@ statmod_joint_pieces(spec, design, obj, hyper, kinds = "filter")
   The kinds of structural unit from which to take the term: `"filter"`
   for the joint step, and `"loglik"` as well where a mixture over latent
   states is read at a fitted point.
+
+- information:
+
+  The information that `he` returns:
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+  (the default) or
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html),
+  for the expected information conditional on the past (see
+  [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)).
 
 ## Value
 

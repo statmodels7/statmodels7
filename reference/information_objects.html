@@ -85,7 +85,7 @@ of the same \(H\) as the standard errors beside them.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -279,9 +279,47 @@ and the closed-form expected information gives finite standard errors.
 <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> states the matrix whenever it is not the observed
 information, and a printed variance object states the information that it
 names.</p>
-<p>A model that carries a structural term (a score-driven filter or a mixture
-over states) is fitted and inverted on the observed information whatever
-the object says, because those terms have no expected information.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="models-with-a-structural-term">Models with a structural term<a class="anchor" aria-label="anchor" href="#models-with-a-structural-term"></a></h2>
+    <p>A model with a score-driven filter (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>) fits the
+coefficients and the filter's own parameters in one system and inverts the
+information over both. Writing \(J_t\) for the Jacobian of the predictors
+of observation \(t\) in that vector, the observed information is
+$$\sum_t J_t^\top \bigl(-\ell_{\eta\eta}(y_t;\eta_t)\bigr) J_t -
+  \sum_t \sum_k s_{t,k}\,
+  \frac{\partial^2 \eta_{t,k}}{\partial\theta\,\partial\theta^\top},$$
+with \(s_{t,k}\) the score in the predictor \(k\). The predictor
+\(\eta_t\) depends on the observations before \(t\), and the score at
+\(t\) has mean zero given them, so the expectation given the past drops
+the second sum and leaves the expected information conditional on the past,
+$$\mathcal{I}_{\rm cond} = \sum_t J_t^\top
+  \mathcal{I}_{\eta\eta}(\eta_t)\, J_t,$$
+which is positive semidefinite and needs the first derivative of the filter
+only. <code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code> selects this matrix:</p><ul><li><p>as <code>inner_information</code>, the joint system is fitted by Fisher scoring on
+it. Fisher scoring converges linearly near the mode, where the two
+matrices differ, so <code><a href="auto_info.html">auto_info()</a></code> leaves the system on the observed
+information;</p></li>
+<li><p>as the <code>information</code> of a variance object, it is the matrix inverted. Its
+<code>method</code> is applied at the fitted predictors, so a family with no closed
+form is served too, and with <code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code> the matrix is
+the sum of the outer products of the per-observation scores. In a
+correctly specified model the observed and the conditional information
+estimate the same limit, so the two give the same standard errors in
+large samples;</p></li>
+<li><p>as the <code>information</code> of <code><a href="reml.html">reml()</a></code>, <code><a href="reml.html">ml()</a></code>, <code><a href="aic.html">aic()</a></code> or <code><a href="aic.html">bic()</a></code>, it is an
+error, and <code><a href="auto_info.html">auto_info()</a></code> is settled as the observed information: the
+criterion and its exact derivatives are those of the observed information
+of the joint vector.</p></li>
+</ul><p>The scaling of a filter's score, <code>gas(scaling = )</code>, is part of the model
+and not a choice of matrix: it reads the expected information of the family
+in closed form at every step of the recursion (see <code><a href="check_filter_scaling.html">check_filter_scaling()</a></code>).</p>
+<p>A model with a term of the likelihood shape (<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>, a
+marginal break-point term) has a likelihood that is a mixture over latent
+components, and the expectation of its second derivatives has no closed
+form. The fit and the variance read the observed information, <code>NULL</code> in a
+variance object resolves to it, and <code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code> is an
+error in each of the three arguments.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

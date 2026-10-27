@@ -17,7 +17,7 @@ vcov_type."><meta property="og:image" content="https://statmodels7.github.io/sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,8 +82,8 @@ log-likelihood at the data;</p></li>
 <code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code>, <code><a href="https://statmodels7.github.io/distributions7/reference/expect_integrate.html" class="external-link">distributions7::expect_integrate()</a></code>
 and <code><a href="https://statmodels7.github.io/distributions7/reference/expect_mc.html" class="external-link">distributions7::expect_mc()</a></code> (see
 <a href="https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html" class="external-link">distributions7::expected_derivative_methods</a>).</p></li>
-</ul><p><code><a href="auto_info.html">auto_info()</a></code> is not accepted. A model with a structural term is inverted
-on the observed information whatever the object says. The choice does not
+</ul><p><code><a href="auto_info.html">auto_info()</a></code> is not accepted. For a model with a structural term, see
+<a href="vcov_method.html">vcov_method</a>. The choice does not
 depend on how the fit was computed (<code>inner_information</code> of <code><a href="statmod.html">statmod()</a></code>).
 <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> states the matrix when it is not the observed
 one, and a printed variance object states the information that it names.
@@ -121,9 +121,9 @@ the functions that take it.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;vcov&gt; bayesian</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fit</span>, vcov_type <span class="op">=</span> <span class="fu">bayesian_vcov</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                   mu:(Intercept)          mu:x sigma:(Intercept)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)      7.691473e-03 -1.161719e-02      1.055974e-18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu:x               -1.161719e-02  2.209835e-02     -2.501978e-18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept)   1.055974e-18 -2.501978e-18      6.410256e-03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)      7.691473e-03 -1.161719e-02      8.809850e-19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu:x               -1.161719e-02  2.209835e-02      3.360036e-18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept)   8.809850e-19  3.360036e-18      6.410256e-03</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, vcov_type <span class="op">=</span> <span class="fu">bayesian_vcov</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                   parameter   term coefficient  estimate         se      lower</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)           mu linpar (Intercept)  1.043291 0.08770104  0.8714004</span>

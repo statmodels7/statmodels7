@@ -11,7 +11,7 @@ every equation followed by the term's own free parameters."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,14 @@ every equation followed by the term's own free parameters.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">joint_smoother_diag</span><span class="op">(</span><span class="va">spec</span>, <span class="va">coef</span>, <span class="va">design</span>, <span class="va">hyper</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">joint_smoother_diag</span><span class="op">(</span></span>
+<span>  <span class="va">spec</span>,</span>
+<span>  <span class="va">coef</span>,</span>
+<span>  <span class="va">design</span>,</span>
+<span>  <span class="va">hyper</span>,</span>
+<span>  expected <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  emethod <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,6 +76,11 @@ every equation followed by the term's own free parameters.</p>
 
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
 <dd><p>The hyperparameters.</p></dd>
+
+
+<dt id="arg-expected-emethod">expected, emethod<a class="anchor" aria-label="anchor" href="#arg-expected-emethod"></a></dt>
+<dd><p>Whether the matrix is the expected information
+conditional on the past, and its <code>method</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -110,8 +122,9 @@ class); such a coordinate counts less than one.</p>
 predictor has no such joint determinant, because <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code>
 returns <code>NULL</code> for it, so the count falls back to the coefficient-only
 reading.</p>
-<p>The joint route reads the observed information, because a filter has no
-expected one: <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code> assembles from
+<p>The joint route reads the observed information by default, and the
+expected information conditional on the past with <code>expected = TRUE</code> (see
+<code><a href="statmod_full_information.html">statmod_full_information()</a></code>); <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code> assembles from
 <code><a href="https://statmodels7.github.io/modelterms7/reference/term_curvature.html" class="external-link">modelterms7::term_curvature()</a></code>, and the criterion of such a model already
 reads that same matrix. A model carrying no filter never reaches here and is
 untouched.</p>

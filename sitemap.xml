@@ -369,6 +369,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_filter_jacobian.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_filters_of.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_grad_parts.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/joint_inner_info.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_level_chart.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_objective.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_penalty_at.html</loc></url>
@@ -787,11 +788,13 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_display.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_dk_matrix.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_edge_rows.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_expected_check.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_joint_basis.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_memo.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_multistarts.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_outer_check.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_outer_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_penalized.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_penalty_block.html</loc></url>

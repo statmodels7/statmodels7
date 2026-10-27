@@ -13,7 +13,7 @@ estimate."><meta property="og:image" content="https://statmodels7.github.io/stat
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,10 +89,13 @@ the same \(H\).</p>
 <p>The table stored in the fit is kept in three cases: a criterion that prices
 the fit with the count (<code><a href="aic.html">aic()</a></code> or <code><a href="aic.html">bic()</a></code>) reads the count on its own
 information, and a summary that recomputed it would no longer reproduce that
-criterion; a model with a structural term reads the joint vector of the
-coefficients and the term's parameters, which has no expected information; and
-a variance convention without an <code>information</code> property has no matrix to
-read.</p>
+criterion; a model with a structural term of the likelihood shape
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>, a marginal break-point term), which has no
+expected information; and a variance convention without an <code>information</code>
+property has no matrix to read. A model with a score-driven filter reads the
+joint vector of the coefficients and the filter's parameters, on the
+observed information or on the expected information conditional on the
+past.</p>
 <p>The eigenvalues of \((H+S)^{-1}H\) are
 \(v^\top H v/(v^\top H v + v^\top S v)\) for the eigenvectors \(v\) of
 the pencil, which lie in \([0, 1]\) for a positive semidefinite

@@ -15,7 +15,8 @@ statmod_fit_joint(
   beta,
   hyper,
   optimizer = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  information = distributions7::observed_info()
 )
 ```
 
@@ -52,6 +53,17 @@ statmod_fit_joint(
 - verbose:
 
   Logical; report the run.
+
+- information:
+
+  The Hessian that the optimizer receives:
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+  (the default) or
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html),
+  for the expected information conditional on the past, with which
+  Newton's method is Fisher scoring over the joint vector.
+  [`joint_inner_info()`](https://statmodels7.github.io/statmodels7/reference/joint_inner_info.md)
+  determines it from the inner method.
 
 ## Value
 

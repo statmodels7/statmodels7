@@ -118,9 +118,21 @@ statmod(
   [information_objects](https://statmodels7.github.io/statmodels7/reference/information_objects.md)).
   The fitted model records the settled object, and every later refit of
   the model (the folds of a cross-validation, the restricted fits of a
-  test, the resampled fits of a bootstrap) reads the same one. A model
-  with a structural term is fitted on the observed information whatever
-  the object says. The outer criterion has its own `information` (see
+  test, the resampled fits of a bootstrap) reads the same one. Beside a
+  score-driven filter
+  ([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html))
+  the coefficients and the filter's own parameters are fitted in one
+  system, whose Hessian is the observed information, or the expected
+  information conditional on the past where
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+  is named here (Fisher scoring over that system);
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  leaves that system on the observed information. A model with a term of
+  the likelihood shape
+  ([`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html),
+  a marginal break-point term) has no expected information, and
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+  is an error there. The outer criterion has its own `information` (see
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md))
   and the standard errors have theirs (see
   [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md));

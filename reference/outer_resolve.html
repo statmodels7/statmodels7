@@ -15,7 +15,7 @@ distributions7::expected_info() object. Any other information is returned unchan
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ approximation that the <code><a href="auto_info.html">auto_info()</a></code> obj
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outer_resolve</span><span class="op">(</span><span class="va">method</span>, <span class="va">distrib</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outer_resolve</span><span class="op">(</span><span class="va">method</span>, <span class="va">distrib</span>, design <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -68,6 +68,10 @@ approximation that the <code><a href="auto_info.html">auto_info()</a></code> obj
 <dt id="arg-distrib">distrib<a class="anchor" aria-label="anchor" href="#arg-distrib"></a></dt>
 <dd><p>The response family.</p></dd>
 
+
+<dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
+<dd><p>The design, or <code>NULL</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -80,6 +84,9 @@ their observed information is not positive definite at an outlier, and
 the Laplace determinant built on it can fail there. The expected
 information is therefore used for these families, and the observed
 information for the others.</p>
+<p>For a model with a structural term the observed information is used for
+every family, since the criterion over the joint vector is written on it
+(see <code><a href="structural_outer_check.html">structural_outer_check()</a></code>).</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

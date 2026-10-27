@@ -1,5 +1,48 @@
 # Changelog
 
+## statmodels7 0.213.0
+
+- A model with a `gas()` term has an expected information: the one
+  conditional on the past, `sum_t J_t' I(eta_t) J_t`, with `J_t` the
+  Jacobian of the predictors of observation `t` in the coefficients and
+  the filter’s own parameters.
+  [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md),
+  [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  and
+  [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
+  invert it where their `information` is `expected_info()`, and the
+  `method` of that object is applied at the fitted predictors, so a
+  family with its density alone is served too (`expect_opg()` gives the
+  sum of the outer products of the per-observation scores). The
+  structural table and the effective degrees of freedom of
+  [`summary()`](https://rdrr.io/r/base/summary.html) read the same
+  matrix. A `NULL` information resolves by the family as before, so a
+  family with a kink now has finite standard errors beside a filter.
+
+- `statmod(inner_information = expected_info())` fits the coefficients
+  and a filter’s parameters by Fisher scoring on that matrix.
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  leaves the joint system on the observed information, as before.
+
+- An outer criterion
+  ([`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md))
+  whose information is `expected_info()` is an error for a model with a
+  structural term, and
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  is settled as the observed information there.
+
+- A model with `regime()` or a marginal break-point term has no expected
+  information: `expected_info()` is an error as `inner_information`, as
+  the information of an outer criterion and as the information of a
+  variance object, and a `NULL` information resolves to the observed
+  one.
+
+- The error of `gas(scaling = )` on a family without a closed-form
+  expected information names the three methods that supply it.
+
 ## statmodels7 0.212.0
 
 - [`confint()`](https://rdrr.io/r/stats/confint.html) takes

@@ -13,7 +13,7 @@ blocks."><meta property="og:image" content="https://statmodels7.github.io/statmo
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,8 @@ blocks.</p>
 <span>  <span class="va">beta</span>,</span>
 <span>  <span class="va">hyper</span>,</span>
 <span>  optimizer <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  information <span class="op">=</span> <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/observed_info.html" class="external-link">observed_info</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -93,6 +94,15 @@ Newton's method with the exact joint information.</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical; report the run.</p></dd>
+
+
+<dt id="arg-information">information<a class="anchor" aria-label="anchor" href="#arg-information"></a></dt>
+<dd><p>The Hessian that the optimizer receives:
+<code><a href="https://statmodels7.github.io/distributions7/reference/observed_info.html" class="external-link">distributions7::observed_info()</a></code> (the default) or
+<code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code>, for the expected information
+conditional on the past, with which Newton's method is Fisher scoring
+over the joint vector. <code><a href="joint_inner_info.html">joint_inner_info()</a></code> determines it from the inner
+method.</p></dd>
 
 </dl></div>
     <div class="section level2">

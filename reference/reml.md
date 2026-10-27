@@ -97,6 +97,18 @@ ml(information = observed_info(), marginal = NULL)
   [information_objects](https://statmodels7.github.io/statmodels7/reference/information_objects.md)
   compares the three objects.
 
+  For a model with a structural term
+  ([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
+  [`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html),
+  a marginal break-point term) the criterion reads the observed
+  information over the coefficients and the term's own parameters:
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  is settled as
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html),
+  and
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+  is an error.
+
 - marginal:
 
   Which distribution parameters have their unpenalized coefficients

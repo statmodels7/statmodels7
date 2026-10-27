@@ -7,7 +7,14 @@ every equation followed by the term's own free parameters.
 ## Usage
 
 ``` r
-joint_smoother_diag(spec, coef, design, hyper)
+joint_smoother_diag(
+  spec,
+  coef,
+  design,
+  hyper,
+  expected = FALSE,
+  emethod = NULL
+)
 ```
 
 ## Arguments
@@ -27,6 +34,11 @@ joint_smoother_diag(spec, coef, design, hyper)
 - hyper:
 
   The hyperparameters.
+
+- expected, emethod:
+
+  Whether the matrix is the expected information conditional on the
+  past, and its `method`.
 
 ## Value
 
@@ -73,8 +85,9 @@ predictor has no such joint determinant, because
 returns `NULL` for it, so the count falls back to the coefficient-only
 reading.
 
-The joint route reads the observed information, because a filter has no
-expected one:
+The joint route reads the observed information by default, and the
+expected information conditional on the past with `expected = TRUE` (see
+[`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md));
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
 assembles from
 [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html),

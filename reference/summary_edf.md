@@ -57,9 +57,13 @@ or
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md))
 reads the count on its own information, and a summary that recomputed it
 would no longer reproduce that criterion; a model with a structural term
-reads the joint vector of the coefficients and the term's parameters,
-which has no expected information; and a variance convention without an
-`information` property has no matrix to read.
+of the likelihood shape
+([`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html),
+a marginal break-point term), which has no expected information; and a
+variance convention without an `information` property has no matrix to
+read. A model with a score-driven filter reads the joint vector of the
+coefficients and the filter's parameters, on the observed information or
+on the expected information conditional on the past.
 
 The eigenvalues of \\(H+S)^{-1}H\\ are \\v^\top H v/(v^\top H v + v^\top
 S v)\\ for the eigenvectors \\v\\ of the pencil, which lie in \\\[0,

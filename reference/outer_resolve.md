@@ -15,7 +15,7 @@ object. Any other information is returned unchanged.
 ## Usage
 
 ``` r
-outer_resolve(method, distrib)
+outer_resolve(method, distrib, design = NULL)
 ```
 
 ## Arguments
@@ -29,6 +29,10 @@ outer_resolve(method, distrib)
 
   The response family.
 
+- design:
+
+  The design, or `NULL`.
+
 ## Value
 
 `method`, in which `hessian` is settled.
@@ -40,3 +44,8 @@ their observed information is not positive definite at an outlier, and
 the Laplace determinant built on it can fail there. The expected
 information is therefore used for these families, and the observed
 information for the others.
+
+For a model with a structural term the observed information is used for
+every family, since the criterion over the joint vector is written on it
+(see
+[`structural_outer_check()`](https://statmodels7.github.io/statmodels7/reference/structural_outer_check.md)).

@@ -15,7 +15,7 @@ finite differences of it."><meta property="og:image" content="https://statmodels
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.212.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.213.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,6 +76,24 @@ finite differences of it.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>NULL</code>, invisibly.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The information that scales the score is part of the model, and it is read
+in closed form at the predictor of every step of the recursion. A family
+that carries only its density has no closed form, and neither of the two
+substitutes defines the same model at a usable cost:</p><ul><li><p><code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code> reads the information at the data as the
+square of the score, \(s_t^2\), so the scaled score becomes
+\(s_t/|s_t|^{2d}\), that is \(1/s_t\) at \(d = 1\) and the sign of
+\(s_t\) at \(d = 1/2\), which is another model;</p></li>
+<li><p><code><a href="https://statmodels7.github.io/distributions7/reference/expect_integrate.html" class="external-link">distributions7::expect_integrate()</a></code> gives the information of the same
+model, but the recursion would evaluate one quadrature per step, and per
+derivative order, in sequence, since each step starts from the predictor
+of the step before.</p></li>
+</ul><p>A family supplies the closed form through methods for
+<code><a href="https://statmodels7.github.io/distributions7/reference/distrib_expected_hessian.html" class="external-link">distributions7::distrib_expected_hessian()</a></code>,
+<code><a href="https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html" class="external-link">distributions7::distrib_dexpected_hessian()</a></code> and
+<code><a href="https://statmodels7.github.io/distributions7/reference/distrib_d2expected_hessian.html" class="external-link">distributions7::distrib_d2expected_hessian()</a></code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

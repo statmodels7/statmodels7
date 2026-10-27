@@ -259,10 +259,65 @@ expected information gives finite standard errors.
 states the matrix whenever it is not the observed information, and a
 printed variance object states the information that it names.
 
-A model that carries a structural term (a score-driven filter or a
-mixture over states) is fitted and inverted on the observed information
-whatever the object says, because those terms have no expected
-information.
+## Models with a structural term
+
+A model with a score-driven filter
+([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html))
+fits the coefficients and the filter's own parameters in one system and
+inverts the information over both. Writing \\J_t\\ for the Jacobian of
+the predictors of observation \\t\\ in that vector, the observed
+information is \$\$\sum_t J_t^\top
+\bigl(-\ell\_{\eta\eta}(y_t;\eta_t)\bigr) J_t - \sum_t \sum_k s\_{t,k}\\
+\frac{\partial^2 \eta\_{t,k}}{\partial\theta\\\partial\theta^\top},\$\$
+with \\s\_{t,k}\\ the score in the predictor \\k\\. The predictor
+\\\eta_t\\ depends on the observations before \\t\\, and the score at
+\\t\\ has mean zero given them, so the expectation given the past drops
+the second sum and leaves the expected information conditional on the
+past, \$\$\mathcal{I}\_{\rm cond} = \sum_t J_t^\top
+\mathcal{I}\_{\eta\eta}(\eta_t)\\ J_t,\$\$ which is positive
+semidefinite and needs the first derivative of the filter only.
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+selects this matrix:
+
+- as `inner_information`, the joint system is fitted by Fisher scoring
+  on it. Fisher scoring converges linearly near the mode, where the two
+  matrices differ, so
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  leaves the system on the observed information;
+
+- as the `information` of a variance object, it is the matrix inverted.
+  Its `method` is applied at the fitted predictors, so a family with no
+  closed form is served too, and with
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  the matrix is the sum of the outer products of the per-observation
+  scores. In a correctly specified model the observed and the
+  conditional information estimate the same limit, so the two give the
+  same standard errors in large samples;
+
+- as the `information` of
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  it is an error, and
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  is settled as the observed information: the criterion and its exact
+  derivatives are those of the observed information of the joint vector.
+
+The scaling of a filter's score, `gas(scaling = )`, is part of the model
+and not a choice of matrix: it reads the expected information of the
+family in closed form at every step of the recursion (see
+[`check_filter_scaling()`](https://statmodels7.github.io/statmodels7/reference/check_filter_scaling.md)).
+
+A model with a term of the likelihood shape
+([`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html),
+a marginal break-point term) has a likelihood that is a mixture over
+latent components, and the expectation of its second derivatives has no
+closed form. The fit and the variance read the observed information,
+`NULL` in a variance object resolves to it, and
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+is an error in each of the three arguments.
 
 ## See also
 

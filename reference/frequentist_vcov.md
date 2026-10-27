@@ -46,9 +46,10 @@ frequentist_vcov(information = NULL, sandwich = NULL)
     [distributions7::expected_derivative_methods](https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html)).
 
   [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
-  is not accepted. A model with a structural term is inverted on the
-  observed information whatever the object says. The choice does not
-  depend on how the fit was computed (`inner_information` of
+  is not accepted. For a model with a structural term, see
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md).
+  The choice does not depend on how the fit was computed
+  (`inner_information` of
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)).
   [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
   states the matrix when it is not the observed one, and a printed
@@ -113,9 +114,9 @@ frequentist_vcov()
 #> <vcov> frequentist
 vcov(fit, vcov_type = frequentist_vcov())
 #>                   mu:(Intercept)          mu:x sigma:(Intercept)
-#> mu:(Intercept)      7.691473e-03 -1.161719e-02      1.055974e-18
-#> mu:x               -1.161719e-02  2.209835e-02     -2.501978e-18
-#> sigma:(Intercept)   1.055974e-18 -2.501978e-18      6.410256e-03
+#> mu:(Intercept)      7.691473e-03 -1.161719e-02      8.809850e-19
+#> mu:x               -1.161719e-02  2.209835e-02      3.360036e-18
+#> sigma:(Intercept)   8.809850e-19  3.360036e-18      6.410256e-03
 summary(fit, vcov_type = frequentist_vcov())
 #> A statmod fit
 #> 
@@ -140,9 +141,9 @@ summary(fit, vcov_type = frequentist_vcov())
 #> 95% intervals, frequentist variance
 #> conditional log-likelihood -29.891019    effective df 3.00
 #> cAIC 65.782    cBIC 72.928
-#> fitted in 101 ms
-#> inner   max |grad|/se 8.8e-16   min eigen 0.11
-#> outer   max |grad|/se 8.2e-15   min eigen 1
+#> fitted in 56 ms
+#> inner   max |grad|/se 5.3e-15   min eigen 0.11
+#> outer   max |grad|/se 9.4e-15   min eigen 1
 frequentist_vcov(information = distributions7::expected_info())
 #> <vcov> frequentist (expected information)
 frequentist_vcov(sandwich = hc1_sandwich())
