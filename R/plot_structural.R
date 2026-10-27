@@ -246,7 +246,9 @@ PlotBreakpoint <- S7::new_class("PlotBreakpoint", parent = term_plot,
 #' The interval of a break-point of a [modelterms7::seg()] term is
 #' `confint(fit, parm, test = test, readable = FALSE)` on its coefficient, so
 #' that `test = lr_test()` inverts the likelihood ratio test of the position
-#' and `test = wald_test()` gives the Wald interval. The position of a
+#' and `test = wald_test()` gives the Wald interval. A limit that the data do
+#' not bound is infinite, and the bar is drawn to the end of the range of the
+#' variable. The position of a
 #' [modelterms7::jump()] or [modelterms7::jseg()] term is read off other
 #' coefficients and has no coordinate to invert a test on; its interval is
 #' the set of positions, connected to the estimate, at which the profile
@@ -432,6 +434,11 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
       }
     }
     if (!type@profile) profile <- profile[0L, , drop = FALSE]
+    # a limit the data do not bound is infinite, and the bar is drawn to the
+    # edge of the variable's range
+    rng <- range(x@blueprint$xv)
+    breaks$from <- pmax(breaks$lower, rng[1L])
+    breaks$to <- pmin(breaks$upper, rng[2L])
     out <- list(curve = eff$curve, points = eff$points, breaks = breaks,
                 profile = profile, cutoff = cutoff)
     attr(out, "labels") <- list(title = sprintf("%s: %s", ctx$param,
@@ -472,11 +479,11 @@ S7::method(plot_layers, PlotBreakpoint) <- function(type, data, ...) {
     ggplot2::geom_vline(data = data$breaks,
                         mapping = ggplot2::aes(xintercept = .data$psi),
                         colour = "#b2182b", linetype = "dashed")))
-  has <- is.finite(data$breaks$lower) & is.finite(data$breaks$upper)
+  has <- is.finite(data$breaks$from) & is.finite(data$breaks$to)
   if (any(has)) {
     out <- c(out, list(ggplot2::geom_segment(
       data = data$breaks[has, , drop = FALSE],
-      mapping = ggplot2::aes(x = .data$lower, xend = .data$upper,
+      mapping = ggplot2::aes(x = .data$from, xend = .data$to,
                              y = .data$y, yend = .data$y),
       colour = "#b2182b", linewidth = 1.6)))
   }

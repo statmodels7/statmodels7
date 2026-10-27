@@ -1,3 +1,13 @@
+# statmodels7 (development version)
+
+* `confint(test = lr_test())`, `score_test()` and `gradient_test()` on the
+  position of a `seg()` break-point stop the search at the range of the
+  variable, where the refit no longer changes. A limit that the data do not
+  bound is `-Inf` or `Inf` where it was `NA` after up to 40 refits beyond the
+  data (52 refits for a second break-point with a weak slope, now 15), and
+  `plot_breakpoint()` draws that bar to the end of the range. `NA` is left to
+  a refit that fails.
+
 # statmodels7 0.213.0
 
 * A model with a `gas()` term has an expected information: the one

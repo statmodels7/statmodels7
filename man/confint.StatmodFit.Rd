@@ -38,6 +38,9 @@ the interval. \code{\link[=wald_test]{wald_test()}} (the default) gives the inte
 symmetric about the estimate, from the variance matrix and with no refit.
 \code{\link[=lr_test]{lr_test()}}, \code{\link[=score_test]{score_test()}} and \code{\link[=gradient_test]{gradient_test()}} are inverted by
 \code{\link[=statmod_invert]{statmod_invert()}} and cost a few dozen restricted refits per interval.
+For the position of a break-point of a \code{\link[modelterms7:seg]{modelterms7::seg()}} term, a
+limit that the data do not bound (the statistic is under its critical
+value at the end of the range of the variable) is \code{-Inf} or \code{Inf}.
 The four are compared at \link{test_statistic}.}
 
 \item{interval}{\code{NULL} (the default), which inverts \code{test}, or a

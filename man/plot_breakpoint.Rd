@@ -55,7 +55,9 @@ coefficients) and \eqn{V} the variance of the coefficients of the term.
 The interval of a break-point of a \code{\link[modelterms7:seg]{modelterms7::seg()}} term is
 \code{confint(fit, parm, test = test, readable = FALSE)} on its coefficient, so
 that \code{test = lr_test()} inverts the likelihood ratio test of the position
-and \code{test = wald_test()} gives the Wald interval. The position of a
+and \code{test = wald_test()} gives the Wald interval. A limit that the data do
+not bound is infinite, and the bar is drawn to the end of the range of the
+variable. The position of a
 \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} term is read off other
 coefficients and has no coordinate to invert a test on; its interval is
 the set of positions, connected to the estimate, at which the profile
