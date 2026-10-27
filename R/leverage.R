@@ -223,10 +223,10 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' \eqn{h_i = x_i'(X'X)^{-1}x_i} of [stats::hatvalues()]. For one equation
 #' of a larger model, the diagonal element \eqn{(a, a)} of the block is the
 #' leverage that [plot_influence()] computes for that equation, provided that
-#' `information` is [distributions7::expected_info()]. [plot_influence()]
-#' reads the Bayesian variance of [vcov.StatmodFit()], which for a coordinate
-#' that the marginal criterion estimates holds the curvature of that
-#' criterion and not \eqn{K^{-1}}, so the two differ at such coordinates.
+#' `information` is [distributions7::expected_info()]. Both read
+#' \eqn{K^{-1}} and not the Bayesian variance of [vcov.StatmodFit()], which
+#' for a coordinate that the marginal criterion estimates holds the
+#' curvature of that criterion.
 #'
 #' The matrix \eqn{W_i} is the expected information of the observation
 #' whatever `information` is, while \eqn{K} is built from `information`.

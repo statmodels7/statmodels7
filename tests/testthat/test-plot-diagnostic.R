@@ -249,3 +249,15 @@ test_that("arguments are checked and a multivariate family is not offered", {
     expect_error(m(plot_qq(), NULL, NULL, NULL), "multivariate")
   }
 })
+
+test_that("the leverage of plot_influence() is the one of statmod_leverage()", {
+  set.seed(21)
+  dl <- data.frame(x = runif(80))
+  dl$y <- 1 + dl$x + rnorm(80, sd = exp(-1 + dl$x))
+  fl <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dl)
+  lv <- statmod_leverage(fl, information = distributions7::expected_info())
+  for (p in c("mu", "sigma")) {
+    inf <- influence_deltas(fl, p, distributions7::expected_info())
+    expect_equal(inf$leverage, unname(lv$leverage[, p]), tolerance = 1e-10)
+  }
+})

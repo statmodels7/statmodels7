@@ -1119,8 +1119,23 @@ influence_deltas <- function(fit, param, information, adjust = TRUE) {
   des <- statmod_design(spec)[[param]]
   X <- as.matrix(des$X)
   nms <- paste0(param, ":", des$coef_names)
-  V <- vcov(fit, vcov_type = bayesian_vcov(information = information),
-            readable = FALSE)
+  vt <- bayesian_vcov(information = information)
+  V <- vcov(fit, vcov_type = vt, readable = FALSE)
+  design <- statmod_design(spec)
+  if (!length(attr(design, "structural")) && !length(attr(design, "refresh"))) {
+    # K^-1 itself, as statmod_leverage() reads it: the Bayesian variance holds
+    # the curvature of the marginal criterion for a coordinate that criterion
+    # estimates (a Gaussian scale under REML), which is not the projection
+    info <- vcov_information(vt, spec@distrib)
+    K <- statmod_information_at(spec, fit@coefficients, design,
+                                info_expected(info), info_emethod(info)) +
+      statmod_penalty_at(spec, fit@coefficients, fit@hyper, design, "hessian")
+    keep <- which(is.finite(diag(V)))
+    nm <- rownames(V)[keep]
+    V <- as_dense(solve_pd(as_dense(K)[keep, keep, drop = FALSE],
+                           "the penalized information", nm))
+    dimnames(V) <- list(nm, nm)
+  }
   ok <- nms %in% rownames(V)
   ok[ok] <- apply(V[nms[ok], nms[ok], drop = FALSE], 1, function(v)
     all(is.finite(v)))

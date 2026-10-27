@@ -56,10 +56,10 @@ information, the block of the mean equation is the scalar
 \eqn{h_i = x_i'(X'X)^{-1}x_i} of \code{\link[stats:influence.measures]{stats::hatvalues()}}. For one equation
 of a larger model, the diagonal element \eqn{(a, a)} of the block is the
 leverage that \code{\link[=plot_influence]{plot_influence()}} computes for that equation, provided that
-\code{information} is \code{\link[distributions7:expected_info]{distributions7::expected_info()}}. \code{\link[=plot_influence]{plot_influence()}}
-reads the Bayesian variance of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which for a coordinate
-that the marginal criterion estimates holds the curvature of that
-criterion and not \eqn{K^{-1}}, so the two differ at such coordinates.
+\code{information} is \code{\link[distributions7:expected_info]{distributions7::expected_info()}}. Both read
+\eqn{K^{-1}} and not the Bayesian variance of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, which
+for a coordinate that the marginal criterion estimates holds the
+curvature of that criterion.
 
 The matrix \eqn{W_i} is the expected information of the observation
 whatever \code{information} is, while \eqn{K} is built from \code{information}.
