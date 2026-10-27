@@ -98,6 +98,14 @@ test_that("densities integrate to one and masses sum to one", {
                   "ggplot")
   expect_s3_class(autoplot(fp, type = plot_density(at = ap, over = "x"),
                            data = dp), "ggplot")
+  # the label names the aesthetic that the graph maps, so that ggplot2 has no
+  # unknown label to report when it builds the graph
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_no_message(ggplot2::ggplot_build(
+    autoplot(fit, type = plot_density(at = at), data = dd)))
+  expect_no_message(ggplot2::ggplot_build(
+    autoplot(fp, type = plot_density(at = ap), data = dp)))
 })
 
 test_that("moments of a gaussian are mu and sigma squared", {

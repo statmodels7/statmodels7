@@ -1957,6 +1957,9 @@ warn_aliased <- function(alias) {
 #'   symmetric about the estimate, from the variance matrix and with no refit.
 #'   [lr_test()], [score_test()] and [gradient_test()] are inverted by
 #'   [statmod_invert()] and cost a few dozen restricted refits per interval.
+#'   For the position of a break-point of a [modelterms7::seg()] term, a
+#'   limit that the data do not bound (the statistic is under its critical
+#'   value at the end of the range of the variable) is `-Inf` or `Inf`.
 #'   The four are compared at [test_statistic].
 #' @param interval `NULL` (the default), which inverts `test`, or a
 #'   [bootstrap_interval] object, [percentile_interval()] or

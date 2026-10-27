@@ -15,8 +15,8 @@ sandwich_check(fit, design)
 \code{NULL}, invisibly.
 }
 \description{
-Signals an error for a fit with a structural term, a term whose block moves
-with its coefficients.
+Signals an error for a fit with a structural term or with a sharp
+break-point term.
 }
 \details{
 Prior weights are accepted; see \code{\link[=hc0_sandwich]{hc0_sandwich()}} for their meaning.

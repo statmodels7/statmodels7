@@ -623,8 +623,11 @@ density_data <- function(type, x, fit, ctx, discrete) {
   attr(out, "discrete") <- discrete
   attr(out, "over") <- type@over
   attr(out, "labels") <- if (is.null(type@over)) {
-    list(title = "fitted densities", x = "response", y = "density",
-         colour = "covariates", fill = "covariates")
+    # the discrete graph fills its bars and the continuous one colours its
+    # lines, and ggplot2 reports a label for an aesthetic that is not mapped
+    lab <- list(title = "fitted densities", x = "response", y = "density")
+    if (discrete) c(lab, list(fill = "covariates"))
+    else c(lab, list(colour = "covariates"))
   } else list(title = "fitted densities", x = type@over, y = "response")
   out
 }

@@ -31,10 +31,11 @@ Wald statistic reads.}
 stops.}
 }
 \value{
-A numeric vector of two, \code{lower} and \code{upper}. An end that the
-search could not bracket within \code{maxit} widenings, or at which the
-statistic could not be evaluated, is \code{NA}; both ends are \code{NA} when the
-standard error of the coefficient is not finite and positive.
+A numeric vector of two, \code{lower} and \code{upper}. A side of the
+position of a break-point that the data do not bound is \code{-Inf} or \code{Inf}.
+An end that the search could not bracket within \code{maxit} widenings, or at
+which the statistic could not be evaluated, is \code{NA}; both ends are \code{NA}
+when the standard error of the coefficient is not finite and positive.
 }
 \description{
 Returns the set of values that a test does not reject at \code{level}, found by
@@ -56,6 +57,14 @@ the crossing with \code{\link[stats:uniroot]{stats::uniroot()}} (Brent's method)
 Each evaluation is one restricted refit, warm-started at the unrestricted
 estimates and run at the fitted hyperparameters, so the interval requires
 no outer search.
+
+The position of a break-point has a range: a value at or beyond the
+smallest or the largest observation of the variable leaves the term with no
+effect, so that every such value gives the same refit. \code{\link[=break_edges]{break_edges()}}
+returns that range, and the search never leaves it. On a side where the
+statistic is still under its critical value when the search reaches the end
+of the range, the data do not bound the position, and the limit is
+\code{-Inf} or \code{Inf}.
 }
 \seealso{
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the statistic that is inverted.
