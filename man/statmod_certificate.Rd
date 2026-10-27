@@ -28,8 +28,11 @@ sitting at a boundary where no curvature can be read, and only there.}
 \value{
 A list with \code{state} (\code{"converged"}, \code{"boundary"},
 \code{"not converged"} or \code{"unknown"}), \code{decrement}, \code{gradient},
-\code{mode_error}, \code{curvature}, \code{boundary}, \code{boundary_key}, \code{ridge} and
-\code{reason}. \code{ridge} is a list with one named vector per flat direction of
+\code{mode_error}, \code{curvature}, \code{boundary}, \code{boundary_key}, \code{ridge}, \code{ascent}
+and \code{reason}. \code{ascent} is empty, or states that the curvature of the
+inner fit over the coefficients and the parameters of a structural term
+has a direction of ascent (\code{\link[=joint_reading]{joint_reading()}}), in which case the state is
+\code{"not converged"} and \code{mode_error} is \code{NA}. \code{ridge} is a list with one named vector per flat direction of
 the outer curvature, over the coordinates that move along it.
 The verdict uses \code{decrement}, and \code{gradient} is reported beside it.
 \code{curvature} is \code{"analytic"} when the decrement was read against an analytic
@@ -118,6 +121,16 @@ set to zero the score does not vanish but lies in the subdifferential, so
 that reading the score there would give a false mode error. A model that
 also carries a smooth penalty estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} has an outer
 gradient, which the certificate reads as usual.
+
+A model with a score-driven or latent-state term has its inner fit read
+over the coefficients and the term's own parameters together
+(\code{\link[=joint_reading]{joint_reading()}}). A coordinate whose curvature is flat at an edge is
+left out of the reading. If the curvature of the others has an eigenvalue
+below \eqn{-c\,\varepsilon\,\lambda_{\max}}, with \eqn{c} from
+\code{\link[=curvature_ascent_limit]{curvature_ascent_limit()}}, the point is not a maximum: the state is
+\code{"not converged"}, \code{ascent} gives the reason, and \code{mode_error} is \code{NA}. If
+the reading cannot be computed, \code{mode_error} is \code{NA} and a model with no
+outer gradient has the state \code{"unknown"}.
 
 A form whose criterion has no exact gradient (\code{\link[=outer_gradient_ok]{outer_gradient_ok()}} at
 order 1) has the criterion itself differenced by refits when it has at most

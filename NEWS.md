@@ -1,3 +1,30 @@
+# statmodels7 0.216.0
+
+* The certificate and the verdict of an alternation read the inner fit of a
+  model with a `gas()` or `regime()` term over the coefficients and the
+  term's parameters through `joint_reading()`. A coordinate whose curvature
+  is not positive is left out. A curvature with an eigenvalue below
+  `-1e3 * eps * lambda_max` (`curvature_ascent_limit()`) is a point that is
+  not a maximum: the certificate has the state `"not converged"` with the new
+  field `ascent`, and an alternation reads it as not settled. Before,
+  `deficient_coords()` on such a matrix dropped the term's parameters and the
+  decrement of the coefficients alone, 0.000453 at a log-likelihood 473 below
+  the maximum, gave `"converged"`. A joint reading that cannot be computed
+  gives `mode_error = NA` and the state `"unknown"`, where the reading of the
+  coefficients alone was used.
+
+* The joint gradient of a filter is missing (`NA`) where it cannot be
+  evaluated, and was zero. `newton()` read the zeros as a stationary point and
+  reported `converged = TRUE` at a log-likelihood 16734 below the maximum; it
+  now stops with `gradient not finite`.
+
+* The flag of a `gas()` fit reads the `stop_decrement` of `newton()` in
+  optimizers7: a run does not end as converged on a change of the parameters
+  or of the objective where the Hessian is not positive definite or the Newton
+  decrement exceeds that limit. The nine fits of the census of `gas()` models
+  that reported `converged = TRUE` away from a maximum (2.2 to 16733
+  log-likelihood units below it) report `FALSE`.
+
 # statmodels7 0.215.0
 
 * `bayesian_resample()` selects the Bayesian bootstrap. Each replicate gives

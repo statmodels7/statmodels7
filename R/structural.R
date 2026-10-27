@@ -1459,6 +1459,104 @@ filter_decrement <- function(spec, design, res, hyper) {
 }
 
 
+#' The Newton Decrement of a Joint Fit, With the Verdict on Its Curvature
+#'
+#' @description
+#' Reads, at a point, how far a joint objective over the coefficients and a
+#' structural term's parameters lies above its maximum, and whether the
+#' curvature there admits such a reading.
+#'
+#' @details
+#' The reading is the Newton decrement \eqn{\tfrac12 g^\top K^{-1} g} over the
+#' coordinates in `keep`, after three steps taken in this order.
+#'
+#' A coordinate whose diagonal of \eqn{K} is not positive is flat at an edge,
+#' with the sign set by rounding, and is left out. If no coordinate has a
+#' positive diagonal the curvature is not flat but negative, nothing is left
+#' to read, and `ascent` is `TRUE`.
+#'
+#' The remaining curvature is read for a direction of ascent. If its smallest
+#' eigenvalue is below \eqn{-c\,\varepsilon\,\lambda_{\max}}, with \eqn{c} from
+#' [curvature_ascent_limit()], the point is not a maximum, no decrement follows
+#' from an indefinite matrix, and `ascent` is `TRUE`. [deficient_coords()] is
+#' not consulted in that case, because on an indefinite matrix it can name the
+#' term's own parameters, and the decrement over the coordinates that remain
+#' is then smaller than the distance to the maximum.
+#'
+#' Otherwise the matrix is positive semidefinite up to rounding, the
+#' coordinates that [deficient_coords()] names are left out as aliased, and
+#' the decrement is computed over the others.
+#'
+#' @param g The gradient of the joint objective.
+#' @param K Its curvature, a matrix as long as `g`.
+#' @param keep The coordinates to read.
+#'
+#' @return A list with `decrement` (`NA` where it cannot be computed, and when
+#'   `ascent` is `TRUE`), `ascent` and `ratio`, the smallest eigenvalue's
+#'   magnitude in units of \eqn{\varepsilon\lambda_{\max}} (`NA` when there
+#'   is nothing to read).
+#'
+#' @seealso [curvature_ascent_limit()], [alternation_readings()],
+#'   [statmod_certificate()]
+#'
+#' @keywords internal
+joint_reading <- function(g, K, keep) {
+  out <- list(decrement = NA_real_, ascent = FALSE, ratio = NA_real_)
+  K <- tryCatch(as_dense(K), error = function(e) NULL)
+  if (is.null(K) || !is.matrix(K) || length(g) != nrow(K)) return(out)
+  K <- (K + t(K)) / 2
+  d <- diag(K)
+  if (!length(keep)) {
+    out$decrement <- 0
+    return(out)
+  }
+  ok <- is.finite(g[keep]) & is.finite(d[keep])
+  if (!any(ok)) return(out)
+  keep <- keep[ok]
+  eigs <- function(idx) {
+    A <- K[idx, idx, drop = FALSE]
+    if (!all(is.finite(A))) return(NULL)
+    tryCatch(eigen(A, symmetric = TRUE, only.values = TRUE)$values,
+             error = function(e) NULL)
+  }
+  # a curvature none of whose coordinates has a positive diagonal is not flat
+  # at an edge, it is negative: nothing is left to read, and the point is
+  # not a maximum (all six coordinates of an exploded filter had diagonals
+  # of -4e23 to -3e28, and leaving them all out read as a decrement of zero)
+  pos <- d[keep] > 0
+  if (!any(pos)) {
+    ev <- eigs(keep)
+    if (is.null(ev)) return(out)
+    out$ratio <- max(0, -min(ev)) / (.Machine$double.eps * max(abs(ev)))
+    out$ascent <- TRUE
+    return(out)
+  }
+  keep <- keep[pos]
+  ev <- eigs(keep)
+  if (is.null(ev)) return(out)
+  A <- K[keep, keep, drop = FALSE]
+  out$ratio <- max(0, -min(ev)) / (.Machine$double.eps * max(ev))
+  if (out$ratio > curvature_ascent_limit()) {
+    out$ascent <- TRUE
+    return(out)
+  }
+  dep <- tryCatch(deficient_coords(A), error = function(e) integer(0))
+  if (length(dep)) {
+    keep <- keep[-dep]
+    A <- A[-dep, -dep, drop = FALSE]
+  }
+  if (!length(keep)) {
+    out$decrement <- 0
+    return(out)
+  }
+  sol <- tryCatch(solve(A, g[keep]), error = function(e) NULL)
+  if (!is.null(sol) && all(is.finite(sol))) {
+    out$decrement <- 0.5 * sum(g[keep] * sol)
+  }
+  out
+}
+
+
 #' The Level Chart of a Filter's Joint Fit
 #'
 #' @description
@@ -1639,7 +1737,10 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
       }
       out
     }, error = function(e) NULL)
-    if (is.null(v) || !all(is.finite(v))) numeric(length(u)) else v
+    # a gradient that cannot be evaluated is returned as missing and not as
+    # zeros: zeros are a stationary point to crit_grad(), which declared a
+    # run converged at an objective of -16059, 16734 below the maximum
+    if (is.null(v) || !all(is.finite(v))) rep(NA_real_, length(u)) else v
   }
   he <- function(u) {
     b <- u[seq_len(nb)]
