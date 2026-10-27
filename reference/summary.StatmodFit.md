@@ -13,11 +13,9 @@ the numbers.
 summary(
   object,
   level = 0.95,
-  type = c("bayesian", "frequentist", "unconditional"),
-  expected = NULL,
-  approx = c("opg", "bartlett", "integrate", "mc"),
+  vcov_type = bayesian_vcov(),
   correct = FALSE,
-  test = c("wald", "lr", "score", "gradient"),
+  test = wald_test(),
   max_coef = NULL,
   ...
 )
@@ -34,30 +32,28 @@ summary(
 
   The confidence level.
 
-- type:
+- vcov_type:
 
-  Which variance matrix: passed to
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
-  The `"unconditional"` one carries the uncertainty of the
-  hyperparameters into every standard error under it, where `correct`
-  carries the same uncertainty into the degrees of freedom; the two are
-  the same quantity read on two surfaces, and both can be used in one
-  call.
-
-- expected:
-
-  The information from which the standard errors are computed, passed to
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
-  `NULL`, the default, takes the expected one where the fit inverted it
-  and the family writes it out, and the observed Hessian otherwise;
-  `TRUE` or `FALSE` selects one.
-
-- approx:
-
-  How the expected information is approximated for a family with no
-  closed form, passed to
+  A
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  object, the variance matrix, passed to
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md):
-  `"opg"` (the default), `"bartlett"`, `"integrate"` or `"mc"`.
+  [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+  (the default),
+  [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  or
+  [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md).
+  The information from which the standard errors are computed is an
+  argument of each of them
+  ([`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+  by default). The last carries the uncertainty of the hyperparameters
+  into every standard error under it, where `correct` carries the same
+  uncertainty into the degrees of freedom; the two are the same quantity
+  read on two surfaces, and both can be used in one call. The
+  conventions are compared at
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md).
+  The effective degrees of freedom of the summary are read on this same
+  information (see the section on the degrees of freedom).
 
 - correct:
 
@@ -72,10 +68,21 @@ summary(
 
 - test:
 
-  Which statistic the coefficient tables report: `"wald"`, the default,
-  or `"lr"`, `"score"` or `"gradient"`, each of which costs one
-  restricted refit per row. See
+  A
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+  object, the statistic that the coefficient tables report.
+  [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md)
+  (the default) reads the variance matrix and refits nothing.
+  [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md),
+  [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+  and
+  [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md)
+  cost one restricted refit per row and are reported as a signed root.
+  The four are compared at
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md);
+  see also
   [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md).
+  A character string is rejected with an error.
 
 - max_coef:
 
@@ -147,6 +154,51 @@ quantities of interest in themselves. The blocks are
   the term's own parameters (a filter's level, loadings and
   persistences, or the transition probabilities of a regime chain), with
   a level that an intercept holds marked as held.
+
+## The effective degrees of freedom
+
+The edf of a term is its share of \\\mathrm{tr}\[(H+S)^{-1}H\]\\, with
+\\H\\ the information of the log-likelihood and \\S\\ the second
+derivative of the penalty, read over the coefficients of every equation
+at once. The summary reads \\H\\ on the information of `vcov_type`
+([`distributions7::default_information()`](https://statmodels7.github.io/distributions7/reference/default_information.html)
+of the family where the `information` of the variance object is `NULL`),
+which is the matrix that the standard errors above the edf invert. A
+call with `vcov_type = bayesian_vcov(information = expected_info())`
+therefore prints the standard errors and the edf on the expected
+information. The count stored in `fit@edf` was read at fit time on the
+information of the outer criterion: the observed information by default
+under
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+and
+[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md).
+With the defaults the two coincide, and the summary recomputes the count
+only where `vcov_type` names the other matrix.
+
+Three cases keep the count stored in the fit. Under
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+and
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+the count is part of the criterion that prices the fit, and it is read
+on the `information` of that criterion, so the summary leaves it as it
+is and the printed criterion stays reproducible from it. A model with a
+structural term is read on the joint vector of the coefficients and the
+term's own parameters, as before. A variance object without an
+`information` property has no matrix to read.
+
+The eigenvalues of \\(H+S)^{-1}H\\ are \\v^\top H v/(v^\top H v + v^\top
+S v)\\, for the generalized eigenvectors \\v\\. They lie in \\\[0,
+1\]\\, and the total in \\\[0, p\]\\ with \\p\\ the number of
+coefficients, when \\H\\ is positive semidefinite. The observed
+information can be indefinite (a Student t at an outlier, for example).
+A direction with \\v^\top H v \< 0\\ then contributes a negative share,
+an edf can be underestimated, and the bounds above can fail. The summary
+adds a note when the observed information used for the count has an
+eigenvalue below \\-p\\\epsilon\\\lambda\_{\max}\\ (\\\epsilon\\ the
+machine epsilon and \\\lambda\_{\max}\\ the largest eigenvalue), the
+floor with which the package separates a flat direction from rounding.
+The expected information is positive semidefinite and carries no such
+note.
 
 A hyperparameter is the first row of its block, since it governs every
 coefficient under it, and its name carries a mark in square brackets
@@ -285,6 +337,8 @@ not change with the units of a coefficient.
 
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md),
+[test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md),
+[vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md),
 [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
 which computes the same four statistics for one coefficient against a
 value that need not be zero, and
@@ -309,8 +363,8 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 
 #> Parametric terms
 #>                estimate      se     z       p  lower upper
-#>   (Intercept)     1.063 0.07579 14.02 < 1e-16 0.9143 1.211
-#>   x               1.903  0.1313  14.5 < 1e-16  1.646  2.16
+#>   (Intercept)     1.063 0.07583 14.02 < 1e-16 0.9143 1.212
+#>   x               1.903  0.1313 14.49 < 1e-16  1.645  2.16
 #> 
 #> === sigma   [log link]
 #> 
@@ -322,7 +376,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.852571    effective df 4.00
 #> cAIC 119.705    cBIC 130.855
-#> fitted in 78 ms
-#> inner   max |grad|/se 1.9e-15   min eigen 0.12
-#> outer   max |grad|/se 1.6e-14   min eigen 0.13
+#> fitted in 117 ms
+#> inner   max |grad|/se 1.6e-15   min eigen 0.12
+#> outer   max |grad|/se 1.8e-14   min eigen 0.13
 ```

@@ -12,8 +12,8 @@ statmod_invert(
   param,
   coefname,
   level = 0.95,
-  test = "lr",
-  type = "bayesian",
+  test = lr_test(),
+  vcov_type = bayesian_vcov(),
   maxit = 40L
 )
 ```
@@ -36,12 +36,21 @@ statmod_invert(
 
 - test:
 
-  One of `"lr"`, `"score"`, `"gradient"`, `"wald"`.
+  The
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+  to invert:
+  [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md)
+  (the default),
+  [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md),
+  [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md)
+  or
+  [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md).
 
-- type:
+- vcov_type:
 
-  Which variance sets the starting bracket, and which the Wald statistic
-  reads.
+  The
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  that sets the starting bracket, and that the Wald statistic reads.
 
 - maxit:
 

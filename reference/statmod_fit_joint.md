@@ -1,8 +1,9 @@
-# Fit the Coefficients and a Filter's Parameters in One System
+# Fit the Coefficients and a Structural Term's Parameters in One System
 
 Minimizes the objective over the stacked coefficients of every equation
-and the free parameters of a structural term of the filter shape in one
-system, instead of alternating between the two blocks.
+and the free parameters of a structural term (of the filter shape or of
+the likelihood shape) in one system, instead of alternating between the
+two blocks.
 
 ## Usage
 
@@ -86,5 +87,4 @@ search steps back from that point instead of abandoning the run.
 ## See also
 
 [`statmod_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_structural.md),
-which fits only the term's parameters and which a term of the likelihood
-shape still uses.
+which fits only the term's parameters, with the coefficients held.

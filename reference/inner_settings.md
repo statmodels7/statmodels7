@@ -20,14 +20,16 @@ inner_settings(method, distrib = NULL)
 
   The distribution, read only to settle an
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-  left at `hessian = "auto"` through
+  left at
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  through
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md);
   such a method with no distribution is an error rather than a guess.
 
 ## Value
 
-A list of four: `expected` (a logical), `approx` (a string), `maxit` and
-`tol`.
+A list of four: `expected` (a logical), `emethod` (an object), `maxit`
+and `tol`.
 
 ## Details
 
@@ -42,7 +44,7 @@ documents `he` as that function's second derivative, which is the
 observed information; the expected information is a different matrix, so
 a Newton step on it would be Fisher scoring under another name. Where a
 family writes neither out, the expected information is also far more
-expensive to form than the observed one. `approx` is `"opg"` for such a
+expensive to form than the observed one. `emethod` is `NULL` for such a
 method, the default of
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
 itself; it is read only where `expected` is `TRUE`, so for an optimizer

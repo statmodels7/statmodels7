@@ -5,7 +5,7 @@ Returns the rows and columns of the named distribution parameters.
 ## Usage
 
 ``` r
-select_parameter(V, parameter, spec)
+select_parameter(V, param, spec)
 ```
 
 ## Arguments
@@ -14,7 +14,7 @@ select_parameter(V, parameter, spec)
 
   A variance matrix whose names are `parameter:name`.
 
-- parameter:
+- param:
 
   The distribution parameters to keep.
 

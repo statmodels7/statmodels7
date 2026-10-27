@@ -33,7 +33,9 @@ iwls_pieces(spec, design, coef, hyper, method)
 
   An
   [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
-  object, read for `decomposition`, `hessian` and `approx`.
+  object, read for `solver` and `hessian`, whose `method` (see
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html))
+  gives the method of the expected information.
 
 ## Value
 

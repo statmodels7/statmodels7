@@ -21,7 +21,7 @@ predict.StatmodFit(), summary.StatmodFit(), logLik.StatmodFit()."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,8 @@ one exists: <code><a href="coef.StatmodFit.html">coef.StatmodFit()</a></code>, <
 <span>  criterion <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  history <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  call <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  call <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  bootstrap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -121,7 +122,22 @@ single number. It is the conditional one.</p></dd>
 <dt id="arg-edf">edf<a class="anchor" aria-label="anchor" href="#arg-edf"></a></dt>
 <dd><p>A data frame of effective degrees of freedom with the columns
 <code>parameter</code>, <code>term</code>, <code>coefficients</code> and <code>edf</code>, one row per term of each
-equation.</p></dd>
+equation. The count of a term is its share of
+\(\mathrm{tr}[(H+S)^{-1}H]\), with \(H\) the information of the
+log-likelihood and \(S\) the second derivative of the penalty, and it
+is read at fit time on one information matrix, which <code>methods</code> records as
+<code>edf_information</code>. That matrix is the <code>information</code> of <code><a href="aic.html">aic()</a></code> or
+<code><a href="aic.html">bic()</a></code> where either prices the fit (the count is part of the
+criterion), otherwise the <code>information</code> of <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code>
+(<code><a href="https://statmodels7.github.io/distributions7/reference/observed_info.html" class="external-link">distributions7::observed_info()</a></code> by default), and the information of
+the inner fit (<code>inner_information</code> of <code><a href="statmod.html">statmod()</a></code>, with <code><a href="auto_info.html">auto_info()</a></code>
+settled against the family) only where the model has no outer criterion.
+For a positive semidefinite \(H\) the total lies in \([0, p]\), with
+\(p\) the number of coefficients, and the count of a term lies between
+0 and its number of coefficients. An indefinite observed information can
+give a negative share to a direction of negative curvature, and then
+these bounds can fail. <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> reports the count on the
+information of its <code>vcov_type</code> and leaves <code>fit@edf</code> unchanged.</p></dd>
 
 
 <dt id="arg-fitted">fitted<a class="anchor" aria-label="anchor" href="#arg-fitted"></a></dt>

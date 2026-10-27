@@ -18,15 +18,15 @@ its properties. The constructors
 [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
 and [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
-also match `hessian` and `rule` against their choices and check `k` and
-`marginal`.
+also check `information`, match `rule` against its choices and check `k`
+and `marginal`.
 
 ## Usage
 
 ``` r
 OuterMethod(
   kind = character(0),
-  hessian = character(0),
+  hessian = distributions7::Information(),
   k = integer(0),
   nfolds = integer(0),
   rule = character(0),
@@ -46,11 +46,19 @@ OuterMethod(
 
 - hessian:
 
-  `"auto"`, `"expected"` or `"observed"`. Which information enters the
-  Laplace determinant.
+  An object that inherits from
+  [distributions7::Information](https://statmodels7.github.io/distributions7/reference/Information.html):
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html),
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+  or
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md).
+  Which information enters the Laplace determinant.
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-  settles `"auto"` against the family through
+  settles
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  against the family through
   [`outer_resolve()`](https://statmodels7.github.io/statmodels7/reference/outer_resolve.md).
+  The constructors set it from their argument `information`.
 
 - k:
 
@@ -107,7 +115,7 @@ for where one is passed.
 ``` r
 reml()
 #> <REML>  observed information
-ml(hessian = "observed")
+ml(information = observed_info())
 #> <ML>  observed information
 aic()
 #> <AIC>  observed information

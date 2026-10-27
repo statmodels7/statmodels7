@@ -8,7 +8,7 @@ limits back, leaving the rest of the table as it was.
 ## Usage
 
 ``` r
-invert_rows(fit, out, level, test, type)
+invert_rows(fit, out, level, test, vcov_type)
 ```
 
 ## Arguments
@@ -30,11 +30,15 @@ invert_rows(fit, out, level, test, type)
 
 - test:
 
-  Which test to invert.
+  The
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+  to invert.
 
-- type:
+- vcov_type:
 
-  Which variance sets the starting bracket.
+  The
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  that sets the starting bracket.
 
 ## Value
 

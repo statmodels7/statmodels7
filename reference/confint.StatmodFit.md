@@ -12,9 +12,9 @@ confint(
   object,
   parm = NULL,
   level = 0.95,
-  type = c("bayesian", "frequentist", "unconditional"),
+  vcov_type = bayesian_vcov(),
   readable = TRUE,
-  test = c("wald", "lr", "score", "gradient"),
+  test = wald_test(),
   ...
 )
 ```
@@ -36,11 +36,19 @@ confint(
 
   The confidence level.
 
-- type:
+- vcov_type:
 
-  Passed to
+  A
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  object, passed to
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md):
-  `"bayesian"`, `"frequentist"` or `"unconditional"`.
+  [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+  (the default),
+  [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  or
+  [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md).
+  The conventions are compared at
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md).
 
 - readable:
 
@@ -48,19 +56,32 @@ confint(
   term's own parameters under the names of the literature) and not the
   raw coordinates. The value is passed to
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-  and must be `FALSE` for the three restricted tests.
+  and must be `FALSE` for a restricted test
+  ([`test_restricted()`](https://statmodels7.github.io/statmodels7/reference/test_restricted.md)).
 
 - test:
 
-  The test whose acceptance region is the interval: `"wald"`, the
-  default, or `"lr"`, `"score"` or `"gradient"`, which
+  A
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+  object, the test whose acceptance region is the interval.
+  [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md)
+  (the default) gives the interval that is symmetric about the estimate,
+  from the variance matrix and with no refit.
+  [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md),
+  [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+  and
+  [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md)
+  are inverted by
   [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md)
-  inverts.
+  and cost a few dozen restricted refits per interval. The four are
+  compared at
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md).
 
 - ...:
 
   Passed to
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
+  which signals an error for any argument that it does not take.
 
 ## Value
 
@@ -86,20 +107,23 @@ The variance comes from
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
 so the same three conventions apply, and a coefficient that a kinked
 penalty has set to zero has `NA` in place of an interval. For an
-interval around a penalized term, `type = "unconditional"` does not
-treat the smoothing parameter as known.
+interval around a penalized term, `vcov_type = unconditional_vcov()`
+does not treat the smoothing parameter as known.
 
 ## Inverting a test instead
 
-The argument `test` selects the statistic whose acceptance region is the
-interval. The Wald interval is the set of \\b\\ that the Wald statistic
-does not reject, and it is symmetric by construction: that statistic is
-a parabola in \\b\\, since the curvature is read once at \\\hat\beta\\.
-The other three read the likelihood at each \\b\\ in turn, so their
-intervals follow its shape and are not symmetric where it is not. Where
-the likelihood is nearly quadratic the four intervals agree; with a
-small sample and a skewed likelihood the likelihood-ratio and gradient
-intervals shift away from the Wald interval.
+The argument `test` takes a
+[test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+object (see there for the four statistics) and selects the statistic
+whose acceptance region is the interval. The Wald interval is the set of
+\\b\\ that the Wald statistic does not reject, and it is symmetric by
+construction: that statistic is a parabola in \\b\\, since the curvature
+is read once at \\\hat\beta\\. The other three read the likelihood at
+each \\b\\ in turn, so their intervals follow its shape and are not
+symmetric where it is not. Where the likelihood is nearly quadratic the
+four intervals agree; with a small sample and a skewed likelihood the
+likelihood-ratio and gradient intervals shift away from the Wald
+interval.
 
 Each of the three is found by
 [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md),
@@ -120,18 +144,26 @@ A coefficient under a penalty that is twice differentiable (a smooth's
 own coordinates, a ridge, a random effect) is inverted like any other,
 and the interval is the credible one that
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-gives for it under `type = "bayesian"`, conditional on the
+gives for it under `vcov_type = bayesian_vcov()`, conditional on the
 hyperparameters that the fit reached. See
 [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md).
 
-The three restricted tests (`"lr"`, `"score"` and `"gradient"`) need
-`readable = FALSE`, since a test is about one coefficient and a readable
-quantity is a function of several at once.
+The three restricted tests
+([`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md),
+[`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+and
+[`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md),
+the ones for which
+[`test_restricted()`](https://statmodels7.github.io/statmodels7/reference/test_restricted.md)
+is `TRUE`) need `readable = FALSE`, since a test is about one
+coefficient and a readable quantity is a function of several at once.
 
 ## See also
 
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
+[test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md),
+[vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md),
 [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
 which tests one coefficient against a value of its own, and
 [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md)
@@ -160,7 +192,7 @@ confint(fit, "sigma")
 #> sigma:(Intercept)     sigma linpar (Intercept) -1.032801 0.08006408 -1.189723
 #>                        upper
 #> sigma:(Intercept) -0.8758781
-confint(fit, "mu:x", test = "lr", readable = FALSE)
+confint(fit, parm = "mu:x", test = lr_test(), readable = FALSE)
 #>      parameter   term coefficient estimate        se    lower    upper
 #> mu:x        mu linpar           x 2.007856 0.1486552 1.716674 2.299038
 ```

@@ -6,7 +6,14 @@ statistic, the likelihood ratio, Rao's score or Terrell's gradient.
 ## Usage
 
 ``` r
-statmod_test(fit, param, coefname, value = 0, test = "wald", type = "bayesian")
+statmod_test(
+  fit,
+  param,
+  coefname,
+  value = 0,
+  test = wald_test(),
+  vcov_type = bayesian_vcov()
+)
 ```
 
 ## Arguments
@@ -29,12 +36,33 @@ statmod_test(fit, param, coefname, value = 0, test = "wald", type = "bayesian")
 
 - test:
 
-  One of `"wald"`, `"lr"`, `"score"`, `"gradient"`.
+  A
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+  object:
+  [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md)
+  (the default),
+  [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md),
+  [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+  or
+  [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md).
+  The first reads the unrestricted fit only; the other three cost one
+  restricted refit. The four are compared at
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md).
+  A character string is rejected with an error.
 
-- type:
+- vcov_type:
 
-  Which variance the Wald statistic reads, passed to
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+  A
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  object, the variance that the Wald statistic reads, passed to
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md):
+  [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+  (the default),
+  [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  or
+  [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md).
+  The conventions are compared at
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md).
 
 ## Value
 
@@ -67,6 +95,10 @@ the interval do not read the mode error.
 
 ## See also
 
+[test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+for the four statistics,
+[vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+for the variance conventions,
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 for the rows that can be held, against zero,
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
@@ -80,7 +112,7 @@ dd <- data.frame(x = rnorm(200))
 dd$y <- rpois(200, exp(0.3 + dd$x))
 fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
 ## the summary tests whether the slope is zero; this tests whether it is one
-statmod_test(fit, param = "mu", coefname = "x", value = 1, test = "lr")
+statmod_test(fit, param = "mu", coefname = "x", value = 1, test = lr_test())
 #> 
 #>  Likelihood-ratio test on a statmod fit
 #> 
@@ -88,7 +120,7 @@ statmod_test(fit, param = "mu", coefname = "x", value = 1, test = "lr")
 #> X-squared = 1.27,  df = 1,  p-value 0.2597
 #> alternative hypothesis: true x is not equal to 1
 #> estimate: 1.056
-statmod_test(fit, param = "mu", coefname = "x", value = 0, test = "lr")
+statmod_test(fit, param = "mu", coefname = "x", value = 0, test = lr_test())
 #> 
 #>  Likelihood-ratio test on a statmod fit
 #> 

@@ -9,7 +9,7 @@ estimated hyperparameters, as a matrix to be added to \(V_b\)."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,8 +98,8 @@ penalty.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The matrices that <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> returns for <code>type = "bayesian"</code> and
-<code>type = "frequentist"</code> are conditional on the hyperparameters: each is read
+    <p>The matrices that <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> returns for <code><a href="bayesian_vcov.html">bayesian_vcov()</a></code> and
+<code><a href="frequentist_vcov.html">frequentist_vcov()</a></code> are conditional on the hyperparameters: each is read
 at the value at which the outer search stopped, as though that value were
 known. The value was estimated from the same data, and the cost of that is
 $$V' = V_b + J V_\theta J', \qquad

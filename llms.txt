@@ -310,6 +310,35 @@ method, the criteria for the hyperparameters and the simulator.
 - [`print(`*`<StatmodSim>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSim.md)
   : Printing a Simulation
 
+## The information matrix and the solver
+
+The matrix that the inner fit inverts, that enters a Laplace determinant
+or that gives the standard errors is passed as an object: the observed
+Hessian and the expected (Fisher) information, both defined in
+distributions7, or a choice settled against the family. The
+factorization that solves each step is passed as an object too, with its
+numerical tolerances.
+
+- [`information_objects`](https://statmodels7.github.io/statmodels7/reference/information_objects.md)
+  : Information Matrices Available to a Fit
+- [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  : Information Chosen Against the Family
+- [`AutoInfo()`](https://statmodels7.github.io/statmodels7/reference/AutoInfo.md)
+  : S7 Class for the Information Chosen Against the Family
+- [`iwls_solvers`](https://statmodels7.github.io/statmodels7/reference/iwls_solvers.md)
+  : Solvers Available to a Scoring Step
+- [`solve_qr()`](https://statmodels7.github.io/statmodels7/reference/solve_qr.md)
+  : The QR Solver
+- [`solve_svd()`](https://statmodels7.github.io/statmodels7/reference/solve_svd.md)
+  : The SVD Solver
+- [`solve_chol()`](https://statmodels7.github.io/statmodels7/reference/solve_chol.md)
+  : The Cholesky Solver
+- [`IwlsSolver()`](https://statmodels7.github.io/statmodels7/reference/IwlsSolver.md)
+  [`SolveQR()`](https://statmodels7.github.io/statmodels7/reference/IwlsSolver.md)
+  [`SolveSVD()`](https://statmodels7.github.io/statmodels7/reference/IwlsSolver.md)
+  [`SolveChol()`](https://statmodels7.github.io/statmodels7/reference/IwlsSolver.md)
+  : S7 Classes for the Solver of a Scoring Step
+
 ## Where a fit begins
 
 A starting value given as a strategy and not as a vector of numbers, and
@@ -353,6 +382,37 @@ structural term, and a duration written in a readable unit.
 - [`format_duration()`](https://statmodels7.github.io/statmodels7/reference/format_duration.md)
   : Format a Duration in a Readable Unit
 
+## Intervals of a prediction
+
+The argument `interval` of
+[`predict()`](https://rdrr.io/r/stats/predict.html) takes an object that
+selects the uncertainty that the interval describes: the estimates
+alone, the estimates and the effects of a new group, or a new
+observation of the response. A prediction interval holds a second object
+that sets how the estimation uncertainty enters the predictive
+distribution.
+
+- [`predict_intervals`](https://statmodels7.github.io/statmodels7/reference/predict_intervals.md)
+  : Intervals of a Prediction
+- [`interval_type()`](https://statmodels7.github.io/statmodels7/reference/interval_type.md)
+  : S7 Class for the Interval of a Prediction
+- [`confidence_interval()`](https://statmodels7.github.io/statmodels7/reference/confidence_interval.md)
+  : The Confidence Interval of a Prediction
+- [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+  : The Interval of a New Group's Parameter
+- [`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md)
+  : The Interval of a New Observation
+- [`predictive_distributions`](https://statmodels7.github.io/statmodels7/reference/predictive_distributions.md)
+  : Predictive Distributions of a New Response
+- [`predictive_type()`](https://statmodels7.github.io/statmodels7/reference/predictive_type.md)
+  : S7 Class for the Predictive Distribution of a New Response
+- [`pred_averaged()`](https://statmodels7.github.io/statmodels7/reference/pred_averaged.md)
+  : Predictive Distribution Averaged Over the Estimates
+- [`pred_plugin()`](https://statmodels7.github.io/statmodels7/reference/pred_plugin.md)
+  : Plug-in Predictive Distribution
+- [`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md)
+  : Parametric Bootstrap Predictive Distribution
+
 ## Testing a coefficient
 
 One coefficient against one value, by Wald’s statistic, the likelihood
@@ -369,6 +429,188 @@ process over the positions of the break-point.
 - [`statmod_breakpoint_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_breakpoint_test.md)
   : Test That a Break-Point Exists
 
+## Test statistics
+
+The four statistics with which a coefficient is tested, as objects
+passed to the argument `test` of
+[`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
+[`summary()`](https://rdrr.io/r/base/summary.html) and
+[`confint()`](https://rdrr.io/r/stats/confint.html): Wald’s, the
+likelihood ratio, Rao’s score and Terrell’s gradient. The overview
+states the formula of each, what it needs and what it costs, and
+[`test_restricted()`](https://statmodels7.github.io/statmodels7/reference/test_restricted.md)
+tells whether a statistic refits the model under the restriction.
+
+- [`test_statistic()`](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+  : Statistics for Testing a Coefficient
+- [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md)
+  : Wald's Test of a Coefficient
+- [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md)
+  : Likelihood-Ratio Test of a Coefficient
+- [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+  : Rao's Score Test of a Coefficient
+- [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md)
+  : Terrell's Gradient Test of a Coefficient
+- [`test_restricted()`](https://statmodels7.github.io/statmodels7/reference/test_restricted.md)
+  : Whether a Test Refits the Model Under the Restriction
+
+## Variance conventions
+
+The three conventions for the variance matrix of the coefficients, as
+objects passed to the argument `type` of
+[`vcov()`](https://rdrr.io/r/stats/vcov.html),
+[`confint()`](https://rdrr.io/r/stats/confint.html),
+[`summary()`](https://rdrr.io/r/base/summary.html),
+[`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
+and [`predict()`](https://rdrr.io/r/stats/predict.html): the Bayesian
+variance, the frequentist sandwich, and the unconditional variance that
+adds the uncertainty of the hyperparameters.
+
+- [`vcov_method()`](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  : Variance Conventions of a Fit
+- [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+  : Bayesian Variance of a Fit
+- [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  : Frequentist Variance of a Fit
+- [`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md)
+  [`hc1_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md)
+  : Sandwich Variance of the Coefficients
+- [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
+  : Unconditional Variance of a Fit
+- [`bootstrap_vcov()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_vcov.md)
+  : Bootstrap Variance of a Fit
+
+## Bootstrap
+
+The bootstrap variance of the coefficients: the schemes that resample
+the data, the function that stores the refitted replicates in a fit, and
+the extractor that reads them.
+
+- [`resample_method()`](https://statmodels7.github.io/statmodels7/reference/resample_method.md)
+  : Resampling Schemes for the Bootstrap of a Fit
+- [`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md)
+  : Parametric Resampling
+- [`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
+  : Case Resampling
+- [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
+  : Cluster Resampling
+- [`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md)
+  : Compute and Store the Bootstrap Replicates of a Fit
+- [`statmod_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/statmod_bootstrap.md)
+  : Read the Stored Bootstrap of a Fit
+- [`StatmodBootstrap()`](https://statmodels7.github.io/statmodels7/reference/StatmodBootstrap.md)
+  : Stored Replicates of a Bootstrap
+
+## Graphs of a fit
+
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) and
+`autoplot()` draw one aspect of a fit as a ggplot2 object. The graph is
+selected by an object passed as `type`, and its data are computed by
+[`plot_data()`](https://statmodels7.github.io/statmodels7/reference/plot_data.md)
+and drawn by
+[`plot_layers()`](https://statmodels7.github.io/statmodels7/reference/plot_layers.md),
+the two generics through which a new graph is added. Without a type,
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
+diagnostic graphs of
+[`diagnostics()`](https://statmodels7.github.io/statmodels7/reference/diagnostics.md).
+
+- [`autoplot(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodFit.md)
+  [`plot(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodFit.md)
+  : Graphs of a Fitted Model
+- [`diagnostics()`](https://statmodels7.github.io/statmodels7/reference/diagnostics.md)
+  : Diagnostic Graphs of a Fitted Model
+- [`plot_type()`](https://statmodels7.github.io/statmodels7/reference/plot_type.md)
+  [`term_plot()`](https://statmodels7.github.io/statmodels7/reference/plot_type.md)
+  [`model_plot()`](https://statmodels7.github.io/statmodels7/reference/plot_type.md)
+  [`diagnostic_plot()`](https://statmodels7.github.io/statmodels7/reference/plot_type.md)
+  : Graphical Types for a Fitted Model
+- [`default_plot()`](https://statmodels7.github.io/statmodels7/reference/default_plot.md)
+  : The Default Graph of a Term
+- [`plot_data()`](https://statmodels7.github.io/statmodels7/reference/plot_data.md)
+  : The Data of a Graph
+- [`plot_layers()`](https://statmodels7.github.io/statmodels7/reference/plot_layers.md)
+  : The Layers of a Graph
+
+## Graphs of a term
+
+Graphs of one term of one equation, selected by `term`: its effect with
+the partial residuals, and the graphs that describe a smooth, a
+penalized block, a random effect or a structural term.
+
+- [`plot_effect()`](https://statmodels7.github.io/statmodels7/reference/plot_effect.md)
+  : Graph of the Effect of a Term
+- [`plot_derivative()`](https://statmodels7.github.io/statmodels7/reference/plot_derivative.md)
+  : Graph of the Derivative of a Smooth
+- [`plot_surface()`](https://statmodels7.github.io/statmodels7/reference/plot_surface.md)
+  : Graph of the Surface of a Smooth of Two Variables
+- [`plot_criterion()`](https://statmodels7.github.io/statmodels7/reference/plot_criterion.md)
+  : Graph of the Outer Criterion Against a Hyperparameter
+- [`plot_shrinkage()`](https://statmodels7.github.io/statmodels7/reference/plot_shrinkage.md)
+  : Graph of the Shrinkage of a Penalized Block
+- [`plot_path()`](https://statmodels7.github.io/statmodels7/reference/plot_path.md)
+  : Graph of the Coefficient Paths of a Penalized Block
+- [`plot_caterpillar()`](https://statmodels7.github.io/statmodels7/reference/plot_caterpillar.md)
+  : Graph of the Predicted Effects of a Random Effect
+- [`plot_prior()`](https://statmodels7.github.io/statmodels7/reference/plot_prior.md)
+  : Graph of the Prior of a Random Effect
+- [`plot_random_cov()`](https://statmodels7.github.io/statmodels7/reference/plot_random_cov.md)
+  : Graph of the Covariance of a Random Effect
+- [`plot_curves()`](https://statmodels7.github.io/statmodels7/reference/plot_curves.md)
+  : Graph of the Curves of a Random Smooth
+- [`plot_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/plot_breakpoint.md)
+  : Graph of the Break-Points of a Term
+- [`plot_filter()`](https://statmodels7.github.io/statmodels7/reference/plot_filter.md)
+  : Graph of a Filtered Parameter
+- [`plot_news_impact()`](https://statmodels7.github.io/statmodels7/reference/plot_news_impact.md)
+  : Graph of the News Impact of a Score-Driven Term
+- [`plot_states()`](https://statmodels7.github.io/statmodels7/reference/plot_states.md)
+  : Graph of the State Probabilities of a Regime Term
+- [`plot_regime_density()`](https://statmodels7.github.io/statmodels7/reference/plot_regime_density.md)
+  : Graph of the Density of the Response under Each Regime
+
+## Graphs of the fitted distribution
+
+Graphs of the whole fitted distribution as a function of the covariates,
+without a term: a parameter with its band, the conditional quantile
+curves, the density at chosen covariate values and the moments.
+
+- [`plot_param()`](https://statmodels7.github.io/statmodels7/reference/plot_param.md)
+  : Graph of a Fitted Parameter Against a Covariate
+- [`plot_quantiles()`](https://statmodels7.github.io/statmodels7/reference/plot_quantiles.md)
+  : Graph of the Conditional Quantiles Against a Covariate
+- [`plot_density()`](https://statmodels7.github.io/statmodels7/reference/plot_density.md)
+  : Graph of Fitted Densities at Chosen Covariate Values
+- [`plot_moments()`](https://statmodels7.github.io/statmodels7/reference/plot_moments.md)
+  : Graph of the Moments of the Fitted Distribution Against a Covariate
+
+## Diagnostic graphs
+
+Graphs of the fit against the data, selected without `term`: the
+quantile residuals in a quantile-quantile graph, a worm plot, a
+histogram of the probability integral transform and a calibration graph,
+the residuals against a quantity or in order, the scores and the
+influence of the observations, and a comparison with simulated
+responses.
+
+- [`plot_qq()`](https://statmodels7.github.io/statmodels7/reference/plot_qq.md)
+  : Quantile-Quantile Graph of the Residuals
+- [`plot_worm()`](https://statmodels7.github.io/statmodels7/reference/plot_worm.md)
+  : Worm Plot of the Residuals
+- [`plot_residuals()`](https://statmodels7.github.io/statmodels7/reference/plot_residuals.md)
+  : Graph of the Residuals against a Quantity
+- [`plot_pit()`](https://statmodels7.github.io/statmodels7/reference/plot_pit.md)
+  : Histogram of the Probability Integral Transform
+- [`plot_calibration()`](https://statmodels7.github.io/statmodels7/reference/plot_calibration.md)
+  : Calibration of the Predicted Quantiles
+- [`plot_score()`](https://statmodels7.github.io/statmodels7/reference/plot_score.md)
+  : Graph of the Scores of an Equation
+- [`plot_influence()`](https://statmodels7.github.io/statmodels7/reference/plot_influence.md)
+  : Graph of the Influence of the Observations on an Equation
+- [`plot_acf()`](https://statmodels7.github.io/statmodels7/reference/plot_acf.md)
+  : Autocorrelation of the Residuals
+- [`plot_ppc()`](https://statmodels7.github.io/statmodels7/reference/plot_ppc.md)
+  : Comparison of the Response with Simulated Responses
+
 ## Installing and updating
 
 The toolkit is not on CRAN, so the install path is GitHub and the
@@ -383,11 +625,103 @@ The machinery from which the exported functions are built: the classes
 behind a fit, the methods registered for the generics of stats, and the
 helper functions. Using the package does not require any of it.
 
+- [`BayesianVcov()`](https://statmodels7.github.io/statmodels7/reference/BayesianVcov.md)
+  [`FrequentistVcov()`](https://statmodels7.github.io/statmodels7/reference/BayesianVcov.md)
+  [`UnconditionalVcov()`](https://statmodels7.github.io/statmodels7/reference/BayesianVcov.md)
+  [`BootstrapVcov()`](https://statmodels7.github.io/statmodels7/reference/BayesianVcov.md)
+  : S7 Classes for the Shipped Variance Conventions
+
+- [`ConfidenceInterval()`](https://statmodels7.github.io/statmodels7/reference/ConfidenceInterval-class.md)
+  [`GroupInterval()`](https://statmodels7.github.io/statmodels7/reference/ConfidenceInterval-class.md)
+  [`PredictionInterval()`](https://statmodels7.github.io/statmodels7/reference/ConfidenceInterval-class.md)
+  [`PredAveraged()`](https://statmodels7.github.io/statmodels7/reference/ConfidenceInterval-class.md)
+  [`PredPlugin()`](https://statmodels7.github.io/statmodels7/reference/ConfidenceInterval-class.md)
+  [`PredBootstrap()`](https://statmodels7.github.io/statmodels7/reference/ConfidenceInterval-class.md)
+  : S7 Classes for the Shipped Intervals and Predictive Distributions
+
 - [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
   : The Iterated Weighted Least Squares Method
 
 - [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
   : How the Hyperparameters Are Estimated
+
+- [`ParametricResample()`](https://statmodels7.github.io/statmodels7/reference/ParametricResample.md)
+  [`CaseResample()`](https://statmodels7.github.io/statmodels7/reference/ParametricResample.md)
+  [`ClusterResample()`](https://statmodels7.github.io/statmodels7/reference/ParametricResample.md)
+  : S7 Classes for the Shipped Resampling Schemes
+
+- [`PlotAcf()`](https://statmodels7.github.io/statmodels7/reference/PlotAcf.md)
+  : S7 Class of the Autocorrelation Graph
+
+- [`PlotBreakpoint()`](https://statmodels7.github.io/statmodels7/reference/PlotBreakpoint.md)
+  : S7 Class of the Break-Point Graph
+
+- [`PlotCalibration()`](https://statmodels7.github.io/statmodels7/reference/PlotCalibration.md)
+  : S7 Class of the Calibration Graph
+
+- [`PlotCaterpillar()`](https://statmodels7.github.io/statmodels7/reference/PlotCaterpillar.md)
+  [`PlotPrior()`](https://statmodels7.github.io/statmodels7/reference/PlotCaterpillar.md)
+  [`PlotRandomCov()`](https://statmodels7.github.io/statmodels7/reference/PlotCaterpillar.md)
+  [`PlotCurves()`](https://statmodels7.github.io/statmodels7/reference/PlotCaterpillar.md)
+  : S7 Classes of the Graphs of a Random Effect
+
+- [`PlotCriterion()`](https://statmodels7.github.io/statmodels7/reference/PlotCriterion.md)
+  : S7 Class of the Criterion Graph
+
+- [`PlotDerivative()`](https://statmodels7.github.io/statmodels7/reference/PlotDerivative.md)
+  : S7 Class of the Derivative Graph
+
+- [`PlotEffect()`](https://statmodels7.github.io/statmodels7/reference/PlotEffect.md)
+  : S7 Class of the Effect Graph
+
+- [`PlotFilter()`](https://statmodels7.github.io/statmodels7/reference/PlotFilter.md)
+  : S7 Class of the Filter Graph
+
+- [`PlotInfluence()`](https://statmodels7.github.io/statmodels7/reference/PlotInfluence.md)
+  : S7 Class of the Influence Graph
+
+- [`PlotNewsImpact()`](https://statmodels7.github.io/statmodels7/reference/PlotNewsImpact.md)
+  : S7 Class of the News-Impact Graph
+
+- [`PlotParam()`](https://statmodels7.github.io/statmodels7/reference/PlotParam.md)
+  [`PlotQuantiles()`](https://statmodels7.github.io/statmodels7/reference/PlotParam.md)
+  [`PlotDensity()`](https://statmodels7.github.io/statmodels7/reference/PlotParam.md)
+  [`PlotMoments()`](https://statmodels7.github.io/statmodels7/reference/PlotParam.md)
+  : S7 Classes of the Graphs of the Fitted Distribution
+
+- [`PlotPit()`](https://statmodels7.github.io/statmodels7/reference/PlotPit.md)
+  : S7 Class of the PIT Histogram
+
+- [`PlotPpc()`](https://statmodels7.github.io/statmodels7/reference/PlotPpc.md)
+  : S7 Class of the Posterior Predictive Check
+
+- [`PlotQq()`](https://statmodels7.github.io/statmodels7/reference/PlotQq.md)
+  : S7 Class of the Quantile-Quantile Graph
+
+- [`PlotRegimeDensity()`](https://statmodels7.github.io/statmodels7/reference/PlotRegimeDensity.md)
+  : S7 Class of the Regime-Density Graph
+
+- [`PlotResiduals()`](https://statmodels7.github.io/statmodels7/reference/PlotResiduals.md)
+  : S7 Class of the Residual Graph
+
+- [`PlotScore()`](https://statmodels7.github.io/statmodels7/reference/PlotScore.md)
+  : S7 Class of the Score Graph
+
+- [`PlotShrinkage()`](https://statmodels7.github.io/statmodels7/reference/PlotShrinkage.md)
+  [`PlotPath()`](https://statmodels7.github.io/statmodels7/reference/PlotShrinkage.md)
+  : S7 Classes of the Shrinkage and Path Graphs
+
+- [`PlotStates()`](https://statmodels7.github.io/statmodels7/reference/PlotStates.md)
+  : S7 Class of the State-Probability Graph
+
+- [`PlotSurface()`](https://statmodels7.github.io/statmodels7/reference/PlotSurface.md)
+  : S7 Class of the Surface Graph
+
+- [`PlotWorm()`](https://statmodels7.github.io/statmodels7/reference/PlotWorm.md)
+  : S7 Class of the Worm Plot
+
+- [`SandwichMethod()`](https://statmodels7.github.io/statmodels7/reference/SandwichMethod.md)
+  : S7 Class for the Meat of a Sandwich Variance
 
 - [`StartIntercepts()`](https://statmodels7.github.io/statmodels7/reference/StartIntercepts-class.md)
   [`StartOrigin()`](https://statmodels7.github.io/statmodels7/reference/StartIntercepts-class.md)
@@ -395,6 +729,9 @@ helper functions. Using the package does not require any of it.
   [`StartSearch()`](https://statmodels7.github.io/statmodels7/reference/StartIntercepts-class.md)
   [`StartFrom()`](https://statmodels7.github.io/statmodels7/reference/StartIntercepts-class.md)
   : S7 Classes for the Shipped Strategies
+
+- [`StatmodBootstrap()`](https://statmodels7.github.io/statmodels7/reference/StatmodBootstrap.md)
+  : Stored Replicates of a Bootstrap
 
 - [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
   : A Fitted Model
@@ -407,6 +744,16 @@ helper functions. Using the package does not require any of it.
 
 - [`StatmodTest()`](https://statmodels7.github.io/statmodels7/reference/StatmodTest-class.md)
   : A Test of One Coefficient Against One Value
+
+- [`TermSum()`](https://statmodels7.github.io/statmodels7/reference/TermSum.md)
+  : A Sum of Terms Drawn as One Effect
+
+- [`WaldTest()`](https://statmodels7.github.io/statmodels7/reference/WaldTest.md)
+  [`RestrictedTest()`](https://statmodels7.github.io/statmodels7/reference/WaldTest.md)
+  [`LrTest()`](https://statmodels7.github.io/statmodels7/reference/WaldTest.md)
+  [`ScoreTest()`](https://statmodels7.github.io/statmodels7/reference/WaldTest.md)
+  [`GradientTest()`](https://statmodels7.github.io/statmodels7/reference/WaldTest.md)
+  : S7 Classes for the Shipped Test Statistics
 
 - [`active_rank()`](https://statmodels7.github.io/statmodels7/reference/active_rank.md)
   : The Rank of the Active Columns
@@ -430,11 +777,17 @@ helper functions. Using the package does not require any of it.
 - [`armijo_ok()`](https://statmodels7.github.io/statmodels7/reference/armijo_ok.md)
   : Armijo's Sufficient-Decrease Condition
 
+- [`as_resample_method()`](https://statmodels7.github.io/statmodels7/reference/as_resample_method.md)
+  : Check the Argument That Selects a Resampling Scheme
+
+- [`as_test_statistic()`](https://statmodels7.github.io/statmodels7/reference/as_test_statistic.md)
+  : Check the Argument That Selects a Test Statistic
+
+- [`as_vcov_method()`](https://statmodels7.github.io/statmodels7/reference/as_vcov_method.md)
+  : Check the Argument That Selects a Variance Convention
+
 - [`assemble_blocks()`](https://statmodels7.github.io/statmodels7/reference/assemble_blocks.md)
   : A Symmetric Matrix From Its Upper Blocks
-
-- [`assert_criterion_information()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.md)
-  : Expected-Information Criteria and the Scores' Outer Product
 
 - [`assert_criterion_order()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.md)
   : Derivative Orders Read by a Criterion
@@ -472,6 +825,62 @@ helper functions. Using the package does not require any of it.
 - [`blocks_at_kink()`](https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.md)
   : Record Where a Path Has Just Been
 
+- [`boot_body()`](https://statmodels7.github.io/statmodels7/reference/boot_body.md)
+  : The Function That Refits the Replicates of a Round
+
+- [`boot_cluster_ids()`](https://statmodels7.github.io/statmodels7/reference/boot_cluster_ids.md)
+  : The Groups of a Cluster Bootstrap
+
+- [`boot_env()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
+  [`boot_fingerprint()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
+  [`boot_entries()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
+  [`boot_match()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
+  : The Storage of the Bootstrap Entries of a Fit
+
+- [`boot_failures()`](https://statmodels7.github.io/statmodels7/reference/boot_failures.md)
+  : The Failures Recorded in a Bootstrap Entry
+
+- [`boot_fill()`](https://statmodels7.github.io/statmodels7/reference/boot_fill.md)
+  : Bring an Entry to a Number of Replicates
+
+- [`boot_key()`](https://statmodels7.github.io/statmodels7/reference/boot_key.md)
+  : The Key of an Entry in the Collection
+
+- [`boot_read_mode()`](https://statmodels7.github.io/statmodels7/reference/boot_read_mode.md)
+  : How Far From Its Mode a Fit Is, and What It Does Not Identify
+
+- [`boot_readable_cov()`](https://statmodels7.github.io/statmodels7/reference/boot_readable_cov.md)
+  : The Covariance of the Readable Quantities of the Replicates
+
+- [`boot_resolve()`](https://statmodels7.github.io/statmodels7/reference/boot_resolve.md)
+  : Resolve a Bootstrap Variance Against the Stored Entries
+
+- [`boot_strip()`](https://statmodels7.github.io/statmodels7/reference/boot_strip.md)
+  : The Scheme as It Is Stored
+
+- [`boot_summary_info()`](https://statmodels7.github.io/statmodels7/reference/boot_summary_info.md)
+  : What the Summary Reports About a Bootstrap Variance
+
+- [`boot_table()`](https://statmodels7.github.io/statmodels7/reference/boot_table.md)
+  [`boot_table_text()`](https://statmodels7.github.io/statmodels7/reference/boot_table.md)
+  [`boot_ambiguous()`](https://statmodels7.github.io/statmodels7/reference/boot_table.md)
+  : The Table of Bootstrap Entries
+
+- [`boot_validate()`](https://statmodels7.github.io/statmodels7/reference/boot_validate.md)
+  : The Status of One Refitted Replicate
+
+- [`boot_vcov_matrix()`](https://statmodels7.github.io/statmodels7/reference/boot_vcov_matrix.md)
+  : The Covariance of the Stored Replicates
+
+- [`bootstrap_check()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_check.md)
+  : Reject a Fit That the Bootstrap Does Not Handle
+
+- [`bootstrap_engine()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_engine.md)
+  : The Engine of the Bootstrap
+
+- [`bootstrap_plan()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_plan.md)
+  : The Draw of One Bootstrap Replicate
+
 - [`bootstrap_refit()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_refit.md)
   : Refit One Bootstrap Replica
 
@@ -487,6 +896,9 @@ helper functions. Using the package does not require any of it.
 - [`bp_test_locate()`](https://statmodels7.github.io/statmodels7/reference/bp_test_locate.md)
   : Where the Break-Point Term of a Fit Is
 
+- [`breakpoint_inset()`](https://statmodels7.github.io/statmodels7/reference/breakpoint_inset.md)
+  : The Profile Inset of the Break-Point Graph
+
 - [`certificate_core()`](https://statmodels7.github.io/statmodels7/reference/certificate_core.md)
   : The Certificate's Readings Before the Edge Check
 
@@ -499,11 +911,30 @@ helper functions. Using the package does not require any of it.
 - [`chart_homogeneity()`](https://statmodels7.github.io/statmodels7/reference/chart_homogeneity.md)
   : The Degree of Each Free Value of a Chart in the Scale of Its Matrix
 
+- [`check_at_list()`](https://statmodels7.github.io/statmodels7/reference/check_at_list.md)
+  : Check the Values of the Other Covariates
+
+- [`check_boot_n()`](https://statmodels7.github.io/statmodels7/reference/check_boot_n.md)
+  [`check_boot_refit()`](https://statmodels7.github.io/statmodels7/reference/check_boot_n.md)
+  : Check the Arguments of the Bootstrap
+
 - [`check_covariates()`](https://statmodels7.github.io/statmodels7/reference/check_covariates.md)
   : The Covariate Generators of a Simulation
 
+- [`check_dots()`](https://statmodels7.github.io/statmodels7/reference/check_dots.md)
+  : Reject an Argument That a Method Does Not Take
+
 - [`check_filter_scaling()`](https://statmodels7.github.io/statmodels7/reference/check_filter_scaling.md)
   : Check That a Family Supports a Scaled Score
+
+- [`check_info_method()`](https://statmodels7.github.io/statmodels7/reference/check_info_method.md)
+  : Check the Method Given to an Information Object
+
+- [`check_information()`](https://statmodels7.github.io/statmodels7/reference/check_information.md)
+  : Check That an Argument Is an Information Object
+
+- [`check_level_grid()`](https://statmodels7.github.io/statmodels7/reference/check_level_grid.md)
+  : Check a Level and a Number of Grid Points
 
 - [`check_marginal_arg()`](https://statmodels7.github.io/statmodels7/reference/check_marginal_arg.md)
   :
@@ -513,11 +944,29 @@ helper functions. Using the package does not require any of it.
 - [`check_offsets()`](https://statmodels7.github.io/statmodels7/reference/check_offsets.md)
   : Validate Offsets
 
+- [`check_over()`](https://statmodels7.github.io/statmodels7/reference/check_over.md)
+  : Check the Covariate of a Model Graph
+
+- [`check_plain_random()`](https://statmodels7.github.io/statmodels7/reference/check_plain_random.md)
+  : Reject a Random Smooth in a Graph of a Random Effect
+
+- [`check_plot_information()`](https://statmodels7.github.io/statmodels7/reference/check_plot_information.md)
+  : Check the Information Argument of a Graph
+
+- [`check_positive_number()`](https://statmodels7.github.io/statmodels7/reference/check_positive_number.md)
+  : Check a Single Positive Number
+
+- [`check_solver()`](https://statmodels7.github.io/statmodels7/reference/check_solver.md)
+  : Check That an Argument Is a Solver
+
 - [`check_trials()`](https://statmodels7.github.io/statmodels7/reference/check_trials.md)
   : Reject a Number of Trials That Cannot Follow These Rows
 
 - [`check_trials_known()`](https://statmodels7.github.io/statmodels7/reference/check_trials_known.md)
   : Reject a Quantity That Needs Trials That the Rows Lack
+
+- [`check_univariate()`](https://statmodels7.github.io/statmodels7/reference/check_univariate.md)
+  : Error for a Multivariate Family
 
 - [`check_weights()`](https://statmodels7.github.io/statmodels7/reference/check_weights.md)
   : Validate Prior Weights
@@ -640,17 +1089,32 @@ helper functions. Using the package does not require any of it.
 - [`criterion_differenced()`](https://statmodels7.github.io/statmodels7/reference/criterion_differenced.md)
   : The Outer Criterion Differenced by Refitting
 
+- [`criterion_evaluator()`](https://statmodels7.github.io/statmodels7/reference/criterion_evaluator.md)
+  : Evaluate the Outer Criterion at Given Hyperparameters
+
+- [`criterion_held_spec()`](https://statmodels7.github.io/statmodels7/reference/criterion_held_spec.md)
+  : The Specification with the Criterion's Coefficients Held
+
+- [`criterion_plot_data()`](https://statmodels7.github.io/statmodels7/reference/criterion_plot_data.md)
+  : The Data of a Criterion Graph
+
+- [`criterion_quadratic()`](https://statmodels7.github.io/statmodels7/reference/criterion_quadratic.md)
+  : The Quadratic Expansion of the Outer Criterion
+
 - [`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
   : What the Outer Criterion Can Resolve at This Fit
+
+- [`criterion_setup()`](https://statmodels7.github.io/statmodels7/reference/criterion_setup.md)
+  : The Hyperparameter of a Term for the Criterion Graph
 
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance of a Criterion
 
-- [`ctx_approx()`](https://statmodels7.github.io/statmodels7/reference/ctx_approx.md)
-  : The Approximation With Which a Context Was Built
-
 - [`ctx_deriv()`](https://statmodels7.github.io/statmodels7/reference/ctx_deriv.md)
   : A Higher Derivative of the Log-Density at the Context's Point
+
+- [`ctx_emethod()`](https://statmodels7.github.io/statmodels7/reference/ctx_emethod.md)
+  : The Method With Which a Context Was Built
 
 - [`ctx_information()`](https://statmodels7.github.io/statmodels7/reference/ctx_information.md)
   : The Information at the Context's Point
@@ -712,6 +1176,12 @@ helper functions. Using the package does not require any of it.
 - [`densify_small()`](https://statmodels7.github.io/statmodels7/reference/densify_small.md)
   : Store a Small Design as Base Matrices
 
+- [`density_data()`](https://statmodels7.github.io/statmodels7/reference/density_data.md)
+  : The Data of a Density Graph
+
+- [`density_rows()`](https://statmodels7.github.io/statmodels7/reference/density_rows.md)
+  : The Rows of a Density Graph
+
 - [`deriv3_key()`](https://statmodels7.github.io/statmodels7/reference/deriv3_key.md)
   : The Name of a Third-Derivative Component
 
@@ -724,6 +1194,9 @@ helper functions. Using the package does not require any of it.
 - [`design_count_exact()`](https://statmodels7.github.io/statmodels7/reference/design_count_exact.md)
   : Is the Count of the Active Coordinates Their Rank?
 
+- [`design_derivative()`](https://statmodels7.github.io/statmodels7/reference/design_derivative.md)
+  : Rows of the Derivative of a Block
+
 - [`design_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`as_dense()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`as_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
@@ -732,6 +1205,45 @@ helper functions. Using the package does not require any of it.
 
 - [`df.residual(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/df.residual.StatmodFit.md)
   : Residual Degrees of Freedom of a Fitted Model
+
+- [`diag_check_param()`](https://statmodels7.github.io/statmodels7/reference/diag_check_param.md)
+  : Check the Equation of a Diagnostic Graph
+
+- [`diag_check_seed()`](https://statmodels7.github.io/statmodels7/reference/diag_checks.md)
+  [`diag_check_count()`](https://statmodels7.github.io/statmodels7/reference/diag_checks.md)
+  [`diag_check_name()`](https://statmodels7.github.io/statmodels7/reference/diag_checks.md)
+  [`diag_check_level()`](https://statmodels7.github.io/statmodels7/reference/diag_checks.md)
+  : Checks of the Arguments of a Diagnostic Graph
+
+- [`diag_classes()`](https://statmodels7.github.io/statmodels7/reference/diag_classes.md)
+  : Classes of a Covariate with Equal Counts
+
+- [`diag_multivariate()`](https://statmodels7.github.io/statmodels7/reference/diag_multivariate.md)
+  : The Method of a Diagnostic Graph for a Multivariate Family
+
+- [`diag_order_band()`](https://statmodels7.github.io/statmodels7/reference/diag_order_band.md)
+  : Pointwise Band of the Normal Order Statistics
+
+- [`diag_qq_data()`](https://statmodels7.github.io/statmodels7/reference/diag_qq_data.md)
+  : The Data of a Quantile-Quantile or Worm Graph
+
+- [`diag_qq_layers()`](https://statmodels7.github.io/statmodels7/reference/diag_qq_layers.md)
+  : The Layers of a Quantile-Quantile or Worm Graph
+
+- [`diag_resid()`](https://statmodels7.github.io/statmodels7/reference/diag_resid.md)
+  : Quantile Residuals of a Response
+
+- [`diag_sim_resid()`](https://statmodels7.github.io/statmodels7/reference/diag_sim_resid.md)
+  : Quantile Residuals of Simulated Responses
+
+- [`diag_smooth()`](https://statmodels7.github.io/statmodels7/reference/diag_smooth.md)
+  : A Smoother of y on x
+
+- [`diag_top()`](https://statmodels7.github.io/statmodels7/reference/diag_top.md)
+  : The Largest Absolute Values
+
+- [`diag_with_seed()`](https://statmodels7.github.io/statmodels7/reference/diag_with_seed.md)
+  : Evaluate an Expression under a Seed
 
 - [`diagonal_sqrt()`](https://statmodels7.github.io/statmodels7/reference/diagonal_sqrt.md)
   : The Factor of a Diagonal Penalty
@@ -745,6 +1257,9 @@ helper functions. Using the package does not require any of it.
 - [`drop_common_prefix()`](https://statmodels7.github.io/statmodels7/reference/drop_common_prefix.md)
   : Drop the Prefix That a Set of Coefficient Names Share
 
+- [`edf_info_indefinite()`](https://statmodels7.github.io/statmodels7/reference/edf_info_indefinite.md)
+  : Whether an Information Matrix Is Indefinite
+
 - [`edge_probe_hyper()`](https://statmodels7.github.io/statmodels7/reference/edge_probe_hyper.md)
   : Probe the Hyperparameters at the Edge of Their Chart From Inside
 
@@ -753,6 +1268,12 @@ helper functions. Using the package does not require any of it.
 
 - [`edge_violations()`](https://statmodels7.github.io/statmodels7/reference/edge_violations.md)
   : Coordinates at the Edge of Their Chart That Point Inward
+
+- [`effect_data()`](https://statmodels7.github.io/statmodels7/reference/effect_data.md)
+  : The Data of an Effect Graph
+
+- [`effect_grid()`](https://statmodels7.github.io/statmodels7/reference/effect_grid.md)
+  : A Grid over the Variables of an Effect
 
 - [`effect_spread()`](https://statmodels7.github.io/statmodels7/reference/effect_spread.md)
   : The Predicted Random Effects of a Term, Summarized
@@ -769,14 +1290,14 @@ helper functions. Using the package does not require any of it.
 - [`expected_deriv_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.md)
   : Does the Family Supply the Expected Information's Derivative?
 
-- [`expected_is_opg()`](https://statmodels7.github.io/statmodels7/reference/expected_is_opg.md)
-  : Does the Family's Expected Information Depend on the Response?
-
 - [`family(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/family.StatmodFit.md)
   : The Distribution of a Fitted Model
 
 - [`filter_curvature()`](https://statmodels7.github.io/statmodels7/reference/filter_curvature.md)
   : A Filter's Second-Order Recursion at the Fitted Point
+
+- [`filter_data()`](https://statmodels7.github.io/statmodels7/reference/filter_data.md)
+  : The Data of a Filter Graph
 
 - [`filter_decrement()`](https://statmodels7.github.io/statmodels7/reference/filter_decrement.md)
   : How Far Above Its Mode a Filter Fit Stopped
@@ -795,9 +1316,6 @@ helper functions. Using the package does not require any of it.
 
 - [`find_term()`](https://statmodels7.github.io/statmodels7/reference/find_term.md)
   : A Term by Its Key in Any Equation
-
-- [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
-  : Which Information Matrix a Fit Reports
 
 - [`fit_marginal_context()`](https://statmodels7.github.io/statmodels7/reference/fit_marginal_context.md)
   : The Criterion That a Fit Maximized, Rebuilt From the Fit
@@ -852,7 +1370,7 @@ helper functions. Using the package does not require any of it.
 - [`gh_moments()`](https://statmodels7.github.io/statmodels7/reference/gh_moments.md)
   : The First Two Moments of h^-1(eta) Under a Mixture of Gaussians
 
-- [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+- [`group_interval_ends()`](https://statmodels7.github.io/statmodels7/reference/group_interval_ends.md)
   : The Interval and Standard Deviation of a New Group's Parameter
 
 - [`group_quantile_nodes()`](https://statmodels7.github.io/statmodels7/reference/group_quantile_nodes.md)
@@ -925,11 +1443,32 @@ helper functions. Using the package does not require any of it.
 - [`index_members()`](https://statmodels7.github.io/statmodels7/reference/index_members.md)
   : The Hyperparameters Behind Each Row of the Outer Index
 
+- [`influence_deltas()`](https://statmodels7.github.io/statmodels7/reference/influence_deltas.md)
+  : One-Step Deletion Quantities of an Equation
+
 - [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   : The Per-Observation Information Blocks
 
+- [`info_expected()`](https://statmodels7.github.io/statmodels7/reference/info_expected.md)
+  [`info_auto()`](https://statmodels7.github.io/statmodels7/reference/info_expected.md)
+  [`info_label()`](https://statmodels7.github.io/statmodels7/reference/info_expected.md)
+  [`info_emethod()`](https://statmodels7.github.io/statmodels7/reference/info_expected.md)
+  : Predicates on an Information Object
+
+- [`info_method_note()`](https://statmodels7.github.io/statmodels7/reference/info_method_note.md)
+  : The Method of an Information Object in Words
+
+- [`info_title()`](https://statmodels7.github.io/statmodels7/reference/info_title.md)
+  : The Words That Name an Information
+
 - [`information_subset()`](https://statmodels7.github.io/statmodels7/reference/information_subset.md)
   : The Information Over Some of the Coefficients
+
+- [`inner_bind()`](https://statmodels7.github.io/statmodels7/reference/inner_bind.md)
+  : Settle the Inner Information and Bind It to the Method
+
+- [`inner_info()`](https://statmodels7.github.io/statmodels7/reference/inner_info.md)
+  : The Information Bound to an Inner Method
 
 - [`inner_mode_error()`](https://statmodels7.github.io/statmodels7/reference/inner_mode_error.md)
   : How Far Above Its Mode the Inner Fit Stopped
@@ -946,6 +1485,9 @@ helper functions. Using the package does not require any of it.
 - [`intercept_start_from_data()`](https://statmodels7.github.io/statmodels7/reference/intercept_start_from_data.md)
   : Data-Based Intercepts of Families That Supply Them
 
+- [`interval_call()`](https://statmodels7.github.io/statmodels7/reference/interval_call.md)
+  : The Call That Names an Interval Kind
+
 - [`invert_rows()`](https://statmodels7.github.io/statmodels7/reference/invert_rows.md)
   : Replace a Table's Limits by an Inverted Test
 
@@ -959,8 +1501,10 @@ helper functions. Using the package does not require any of it.
   : Whether a Term Is the Equation's Parametric Block
 
 - [`iwls_decrement()`](https://statmodels7.github.io/statmodels7/reference/iwls_decrement.md)
-  [`iwls_decrement_limit()`](https://statmodels7.github.io/statmodels7/reference/iwls_decrement.md)
   : The Newton Decrement of a Scoring Step
+
+- [`iwls_definite_tol()`](https://statmodels7.github.io/statmodels7/reference/iwls_definite_tol.md)
+  : The Relative Level Under Which a Penalized Information Is Indefinite
 
 - [`iwls_escalate()`](https://statmodels7.github.io/statmodels7/reference/iwls_escalate.md)
   : Raise the Levenberg Damping
@@ -1004,13 +1548,6 @@ helper functions. Using the package does not require any of it.
 
 - [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
   : Solve One Weighted Least Squares Step
-
-- [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md)
-  : When a Run on the Expected Information Continues on the Observed One
-
-- [`iwls_switch_rate()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_rate.md)
-  : The Contraction Rate Above Which a Run Switches to the Observed
-  Information
 
 - [`iwls_tied()`](https://statmodels7.github.io/statmodels7/reference/iwls_tied.md)
   : The Scoring Fit on the Subspace That a Kink Leaves Free
@@ -1089,6 +1626,9 @@ helper functions. Using the package does not require any of it.
 - [`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md)
   : The Model's Smoother Over the Coefficients and a Filter's Parameters
 
+- [`kind_of()`](https://statmodels7.github.io/statmodels7/reference/kind_of.md)
+  : Kind of an Axis Variable
+
 - [`kink_by_power()`](https://statmodels7.github.io/statmodels7/reference/kink_by_power.md)
   : Invert the Size of the Kink Through a Power Law
 
@@ -1116,6 +1656,9 @@ helper functions. Using the package does not require any of it.
 - [`kinked_edf_diag()`](https://statmodels7.github.io/statmodels7/reference/kinked_edf_diag.md)
   : The Count of Each Coordinate Where a Block Has a Kink
 
+- [`kinked_path()`](https://statmodels7.github.io/statmodels7/reference/kinked_path.md)
+  : The Path of a Kinked Penalty by Refitting
+
 - [`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md)
   : Every Labeled Effect in a Term, Including Its Sub-Terms
 
@@ -1127,6 +1670,12 @@ helper functions. Using the package does not require any of it.
 
 - [`link_kind()`](https://statmodels7.github.io/statmodels7/reference/link_kind.md)
   : The Kind of Inverse Link, for the Moments of a New Group's Parameter
+
+- [`linpar_columns()`](https://statmodels7.github.io/statmodels7/reference/linpar_columns.md)
+  : The Columns of the Linear Part That Involve a Variable
+
+- [`linpar_partners()`](https://statmodels7.github.io/statmodels7/reference/linpar_partners.md)
+  : The Variables That Share a Linear Term with a Variable
 
 - [`location_ols_start()`](https://statmodels7.github.io/statmodels7/reference/location_ols_start.md)
   : A Least-Squares Start for a Location on the Identity Link
@@ -1184,6 +1733,25 @@ helper functions. Using the package does not require any of it.
 
 - [`model.matrix(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/model.matrix.StatmodFit.md)
   : The Design of One Equation
+
+- [`model_grid()`](https://statmodels7.github.io/statmodels7/reference/model_grid.md)
+  : New Data on a Grid of One Covariate
+
+- [`model_theta()`](https://statmodels7.github.io/statmodels7/reference/model_theta.md)
+  : Fitted Parameters on New Data
+
+- [`moving_effect_data()`](https://statmodels7.github.io/statmodels7/reference/moving_effect_data.md)
+  : The Data of the Effect of a Term with a Moving Block
+
+- [`moving_se()`](https://statmodels7.github.io/statmodels7/reference/moving_se.md)
+  : Standard Errors of a Linear Map of Coefficients with Missing
+  Variances
+
+- [`moving_term_vars()`](https://statmodels7.github.io/statmodels7/reference/moving_term_vars.md)
+  : The Variables That a Term with a Moving Block Reads
+
+- [`mvn_draws()`](https://statmodels7.github.io/statmodels7/reference/mvn_draws.md)
+  : Draws from a Multivariate Normal Distribution
 
 - [`nested_columns()`](https://statmodels7.github.io/statmodels7/reference/nested_columns.md)
   : The Coordinates of the Nested Random Effects Set Aside
@@ -1290,6 +1858,12 @@ helper functions. Using the package does not require any of it.
 - [`parametric_intercept()`](https://statmodels7.github.io/statmodels7/reference/parametric_intercept.md)
   : Where an Equation's Intercept Is
 
+- [`parts_contribution()`](https://statmodels7.github.io/statmodels7/reference/parts_contribution.md)
+  : The Contribution of Several Parts of an Equation
+
+- [`parts_contribution_values()`](https://statmodels7.github.io/statmodels7/reference/parts_contribution_values.md)
+  : The Contribution of a Smooth at Fitted Coefficients
+
 - [`path_block()`](https://statmodels7.github.io/statmodels7/reference/path_block.md)
   : The Block to Which a Path Row Belongs
 
@@ -1357,6 +1931,9 @@ helper functions. Using the package does not require any of it.
 - [`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)
   : A Square-Root Factor of the Penalty
 
+- [`penalty_system()`](https://statmodels7.github.io/statmodels7/reference/penalty_system.md)
+  : The Penalized System Around One Term
+
 - [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
   : A Penalty's Starting Hyperparameters
 
@@ -1369,11 +1946,23 @@ helper functions. Using the package does not require any of it.
 - [`pinned_coords()`](https://statmodels7.github.io/statmodels7/reference/pinned_coords.md)
   : The Coordinates Left Out of the Marginal Determinant
 
+- [`plot_assemble()`](https://statmodels7.github.io/statmodels7/reference/plot_assemble.md)
+  : Assemble a Graph from Its Data and Its Layers
+
+- [`plot_needs_data()`](https://statmodels7.github.io/statmodels7/reference/plot_needs_data.md)
+  : Check That a Graph Has Its Data
+
+- [`plot_time_env()`](https://statmodels7.github.io/statmodels7/reference/plot_time_env.md)
+  : The Environment in Which the Time of a Term Is Evaluated
+
 - [`pool_nested_random()`](https://statmodels7.github.io/statmodels7/reference/pool_nested_random.md)
   : A Term With Its Nested Random Effects Read in One Group's Columns
 
 - [`predict(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
   : Predict From a Fitted Model
+
+- [`predict_interval_spec()`](https://statmodels7.github.io/statmodels7/reference/predict_interval_spec.md)
+  : Check the Interval Argument of predict()
 
 - [`predict_moments()`](https://statmodels7.github.io/statmodels7/reference/predict_moments.md)
   : The Quantities That a Fit Can Predict
@@ -1402,6 +1991,12 @@ helper functions. Using the package does not require any of it.
 - [`predictor_target()`](https://statmodels7.github.io/statmodels7/reference/predictor_target.md)
   : The Response on the Scale of a Predictor
 
+- [`print(`*`<AutoInfo>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.AutoInfo.md)
+  : Print an Information Object Chosen Against the Family
+
+- [`print(`*`<IwlsSolver>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.IwlsSolver.md)
+  : Print a Solver
+
 - [`print(`*`<OuterMethod>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.OuterMethod.md)
   : Print an Outer Method
 
@@ -1414,8 +2009,21 @@ helper functions. Using the package does not require any of it.
 - [`print(`*`<StatmodTest>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodTest.md)
   : Print a Test
 
+- [`print.interval_type`](https://statmodels7.github.io/statmodels7/reference/print.interval_type.md)
+  [`print.predictive_type`](https://statmodels7.github.io/statmodels7/reference/print.interval_type.md)
+  : Print an Interval or a Predictive Distribution
+
+- [`print.resample_method`](https://statmodels7.github.io/statmodels7/reference/print.resample_method.md)
+  : Print a Resampling Scheme
+
 - [`print.start_strategy`](https://statmodels7.github.io/statmodels7/reference/print.start_strategy.md)
   : Print a Starting-Value Strategy
+
+- [`print.test_statistic`](https://statmodels7.github.io/statmodels7/reference/print.test_statistic.md)
+  : Print a Test Statistic
+
+- [`print.vcov_method`](https://statmodels7.github.io/statmodels7/reference/print.vcov_method.md)
+  : Print a Variance Convention
 
 - [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
   : Print One Block of a Model Summary
@@ -1444,9 +2052,21 @@ helper functions. Using the package does not require any of it.
 - [`prior_student()`](https://statmodels7.github.io/statmodels7/reference/prior_student.md)
   : The Scale Matrix and Degrees of Freedom of a Student t Prior
 
+- [`profile_interval()`](https://statmodels7.github.io/statmodels7/reference/profile_interval.md)
+  : The Interval of a Position from Its Profile
+
 - [`project_blocks()`](https://statmodels7.github.io/statmodels7/reference/project_blocks.md)
   : Project a Reference Fit's Predictor onto the Blocks That Did Not
   Match
+
+- [`quadratic_path()`](https://statmodels7.github.io/statmodels7/reference/quadratic_path.md)
+  : The Path of a Quadratic Penalty in Closed Form
+
+- [`quantiles_data()`](https://statmodels7.github.io/statmodels7/reference/quantiles_data.md)
+  : The Data of a Quantile Graph
+
+- [`random_block()`](https://statmodels7.github.io/statmodels7/reference/random_block.md)
+  : The Coefficients of a Random Term by Level
 
 - [`random_blocks()`](https://statmodels7.github.io/statmodels7/reference/random_blocks.md)
   : The Gaussian Prior of the Effects That a Prediction Sets Aside
@@ -1464,11 +2084,17 @@ helper functions. Using the package does not require any of it.
 - [`random_prior()`](https://statmodels7.github.io/statmodels7/reference/random_prior.md)
   : The Prior of One Random-Effect Term, for Integrating a New Group
 
+- [`random_prior_fit()`](https://statmodels7.github.io/statmodels7/reference/random_prior_fit.md)
+  : The Fitted Distribution of the Effects of a Random Term
+
 - [`random_prior_joint()`](https://statmodels7.github.io/statmodels7/reference/random_prior_joint.md)
   : One Group's Gaussian Prior From Several Penalties
 
 - [`random_within()`](https://statmodels7.github.io/statmodels7/reference/random_within.md)
   : The Within-Group Rows of a Random-Effect Term
+
+- [`raw_effects()`](https://statmodels7.github.io/statmodels7/reference/raw_effects.md)
+  : Unshrunk Estimates of the Effects of a Random Term
 
 - [`readable_coord_names()`](https://statmodels7.github.io/statmodels7/reference/readable_coord_names.md)
   : A Coordinate's Name in Place of Its Number
@@ -1509,9 +2135,18 @@ helper functions. Using the package does not require any of it.
 - [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md)
   : Does a Term Recompute Its Own Block?
 
+- [`regime_entry()`](https://statmodels7.github.io/statmodels7/reference/regime_entry.md)
+  : The Entry of the Evaluated Model for a Regime Term
+
+- [`regime_filtered()`](https://statmodels7.github.io/statmodels7/reference/regime_filtered.md)
+  : The Filtered State Probabilities of a Regime Term
+
 - [`regime_hessian_sum()`](https://statmodels7.github.io/statmodels7/reference/regime_hessian_sum.md)
   : The Second-Derivative Components of a Mixture, Averaged Over Its
   States
+
+- [`regime_parameters()`](https://statmodels7.github.io/statmodels7/reference/regime_parameters.md)
+  : The Parameters of a Regime Term
 
 - [`reject_duplicate_names()`](https://statmodels7.github.io/statmodels7/reference/reject_duplicate_names.md)
   : Reject Two Terms of One Equation That Name Their Coefficients Alike
@@ -1528,6 +2163,9 @@ helper functions. Using the package does not require any of it.
 - [`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
   : Reject a Term That the Fitting Scheme Does Not Cover
 
+- [`resample_label()`](https://statmodels7.github.io/statmodels7/reference/resample_label.md)
+  : The Words That Name a Resampling Scheme
+
 - [`residuals(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.md)
   : The Residuals of a Fitted Model
 
@@ -1535,10 +2173,22 @@ helper functions. Using the package does not require any of it.
   : The Resolution That the Search Is Given, Out of the Readings Taken
   So Far
 
+- [`resolve_emethod()`](https://statmodels7.github.io/statmodels7/reference/resolve_emethod.md)
+  : The Method That Obtains the Derivatives of the Expected Information
+
 - [`resolve_par_key()`](https://statmodels7.github.io/statmodels7/reference/resolve_par_key.md)
   :
 
   Resolve One Key of a Simulation's `par`
+
+- [`resolve_plot_term()`](https://statmodels7.github.io/statmodels7/reference/resolve_plot_term.md)
+  : Resolve the Term of a Graph
+
+- [`resolve_vcov_method()`](https://statmodels7.github.io/statmodels7/reference/resolve_vcov_method.md)
+  : Resolve the Variance Convention Once
+
+- [`response_newdata()`](https://statmodels7.github.io/statmodels7/reference/response_newdata.md)
+  : New Data for an Effect on the Response Scale
 
 - [`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md)
   : How Far Above Its Mode a Restricted Fit Stopped
@@ -1551,6 +2201,9 @@ helper functions. Using the package does not require any of it.
 
 - [`ridge_coef_rows()`](https://statmodels7.github.io/statmodels7/reference/ridge_coef_rows.md)
   : The Coefficients That Move Along a Ridge
+
+- [`row_labels()`](https://statmodels7.github.io/statmodels7/reference/row_labels.md)
+  : Labels of the Rows of a Density Graph
 
 - [`row_nonzeros()`](https://statmodels7.github.io/statmodels7/reference/row_nonzeros.md)
   : A Design's Nonzeros, Ordered by Row
@@ -1585,6 +2238,15 @@ helper functions. Using the package does not require any of it.
 - [`same_term_kind()`](https://statmodels7.github.io/statmodels7/reference/same_term_kind.md)
   : Whether Two Terms Are of the Same Kind
 
+- [`sandwich_check()`](https://statmodels7.github.io/statmodels7/reference/sandwich_check.md)
+  : Reject a Fit That the Sandwich Variance Does Not Cover
+
+- [`sandwich_cluster()`](https://statmodels7.github.io/statmodels7/reference/sandwich_cluster.md)
+  : The Cluster Index of a Sandwich Variance
+
+- [`sandwich_vcov()`](https://statmodels7.github.io/statmodels7/reference/sandwich_vcov.md)
+  : The Sandwich Variance of the Coefficients
+
 - [`se_answer()`](https://statmodels7.github.io/statmodels7/reference/se_answer.md)
   : The Shape in Which a Prediction With Its Uncertainty Is Returned
 
@@ -1597,6 +2259,9 @@ helper functions. Using the package does not require any of it.
 - [`seg_grid_start()`](https://statmodels7.github.io/statmodels7/reference/seg_grid_start.md)
   : Choose a Break-Point Term's Starting Positions on a Grid
 
+- [`select_emethod()`](https://statmodels7.github.io/statmodels7/reference/select_emethod.md)
+  : The Method That a Criterion Reads
+
 - [`select_parameter()`](https://statmodels7.github.io/statmodels7/reference/select_parameter.md)
   : One Equation's Submatrix of a Variance Matrix
 
@@ -1606,8 +2271,14 @@ helper functions. Using the package does not require any of it.
 - [`short_keys()`](https://statmodels7.github.io/statmodels7/reference/short_keys.md)
   : A Term Key Shortened for Display
 
+- [`shrinkage_data()`](https://statmodels7.github.io/statmodels7/reference/shrinkage_data.md)
+  : The Data of a Shrinkage Graph
+
 - [`sigma(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/sigma.StatmodFit.md)
   : The Standard Deviation Implied by a Fitted Model
+
+- [`significant_zones()`](https://statmodels7.github.io/statmodels7/reference/significant_zones.md)
+  : The Zones in Which a Band Excludes Zero
 
 - [`sim_groups()`](https://statmodels7.github.io/statmodels7/reference/sim_groups.md)
   : The Groups That a Printed Truth Collapses
@@ -1618,14 +2289,27 @@ helper functions. Using the package does not require any of it.
 - [`simulate(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/simulate.StatmodFit.md)
   : Draws from a Fitted Model
 
+- [`simultaneous_critical()`](https://statmodels7.github.io/statmodels7/reference/simultaneous_critical.md)
+  : The Critical Value of a Simultaneous Band
+
 - [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
   : Which Coefficients of a Smooth Are the Linear Part
+
+- [`smooth_variables()`](https://statmodels7.github.io/statmodels7/reference/smooth_variables.md)
+  : The Variables of a Smooth
 
 - [`smoothed_notes()`](https://statmodels7.github.io/statmodels7/reference/smoothed_notes.md)
   : The Notes That a Smoothed Break-Point Term Adds to a Summary
 
 - [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
   : Invert a Matrix That Ought to Be Positive Definite
+
+- [`solver_how()`](https://statmodels7.github.io/statmodels7/reference/solver_how.md)
+  : The Name of a Solver
+
+- [`solver_tol()`](https://statmodels7.github.io/statmodels7/reference/solver_tol.md)
+  [`solver_floor()`](https://statmodels7.github.io/statmodels7/reference/solver_tol.md)
+  : The Tolerances of a Solver
 
 - [`sparse_augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.md)
   : Solve a Scoring Step From a Sparse Square-Root Design
@@ -1722,7 +2406,8 @@ helper functions. Using the package does not require any of it.
   : Run the Structural Terms at the Current Parameters
 
 - [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)
-  : Fit the Coefficients and a Filter's Parameters in One System
+  : Fit the Coefficients and a Structural Term's Parameters in One
+  System
 
 - [`statmod_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_structural.md)
   : Fit the Structural Terms' Own Parameters
@@ -1916,7 +2601,6 @@ helper functions. Using the package does not require any of it.
 - [`terms(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_unavailable.md)
   [`model.frame(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_unavailable.md)
   [`anova(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_unavailable.md)
-  [`plot(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_unavailable.md)
   : Generics Not Available for a Fit
 
 - [`statmod_unit()`](https://statmodels7.github.io/statmodels7/reference/statmod_unit.md)
@@ -2020,6 +2704,9 @@ helper functions. Using the package does not require any of it.
 - [`summary_class_blocks()`](https://statmodels7.github.io/statmodels7/reference/summary_class_blocks.md)
   : The Covariance Blocks That a Summary Prints Ahead of the Equations
 
+- [`summary_edf()`](https://statmodels7.github.io/statmodels7/reference/summary_edf.md)
+  : The Degrees of Freedom That a Summary Reports
+
 - [`targets_written()`](https://statmodels7.github.io/statmodels7/reference/targets_written.md)
   :
 
@@ -2027,6 +2714,12 @@ helper functions. Using the package does not require any of it.
 
 - [`term_block_kind()`](https://statmodels7.github.io/statmodels7/reference/term_block_kind.md)
   : What Kind of Block a Term Reports As
+
+- [`term_coef_block()`](https://statmodels7.github.io/statmodels7/reference/term_coef_block.md)
+  : The Coefficients and Variance of Part of a Term
+
+- [`term_contribution()`](https://statmodels7.github.io/statmodels7/reference/term_contribution.md)
+  : The Contribution of Part of a Term and Its Standard Error
 
 - [`term_coord_labels()`](https://statmodels7.github.io/statmodels7/reference/term_coord_labels.md)
   : The Coordinates of a Term's Own Covariance
@@ -2042,6 +2735,9 @@ helper functions. Using the package does not require any of it.
 
 - [`term_tags_deep()`](https://statmodels7.github.io/statmodels7/reference/term_tags_deep.md)
   : The Covariance Labels That a Term Carries, Including Its Sub-Terms
+
+- [`term_variables()`](https://statmodels7.github.io/statmodels7/reference/term_variables.md)
+  : The Variables of a Term
 
 - [`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
   : Evaluate a Formula's Terms With modelterms7 in Front
@@ -2083,11 +2779,17 @@ helper functions. Using the package does not require any of it.
 - [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
   : Where a Penalized Unit's Coordinates Are in the Joint Vector
 
+- [`unit_of_term()`](https://statmodels7.github.io/statmodels7/reference/unit_of_term.md)
+  : Does a Penalized Unit Belong to a Term
+
 - [`unit_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_positions.md)
   : Where a Penalized Unit's Coordinates Are
 
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
   : The Message for an Unrecognized Prediction Target
+
+- [`unpenalized_estimates()`](https://statmodels7.github.io/statmodels7/reference/unpenalized_estimates.md)
+  : A Newton Step Without the Penalty of a Term
 
 - [`vanished_coords()`](https://statmodels7.github.io/statmodels7/reference/vanished_coords.md)
   : Coordinates Whose Design Column Has Vanished
@@ -2107,6 +2809,9 @@ helper functions. Using the package does not require any of it.
 - [`vcov(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
   : The Variance Matrix of a Fit
 
+- [`vcov_information()`](https://statmodels7.github.io/statmodels7/reference/vcov_information.md)
+  : The Information of a Variance Convention for a Family
+
 - [`verbosity()`](https://statmodels7.github.io/statmodels7/reference/verbosity.md)
   : Resolve the Verbosity Setting
 
@@ -2122,11 +2827,20 @@ helper functions. Using the package does not require any of it.
 - [`weights(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/weights.StatmodFit.md)
   : The Prior Weights of a Fitted Model
 
+- [`with_seed()`](https://statmodels7.github.io/statmodels7/reference/with_seed.md)
+  : Run an Expression Under a Seed
+
 - [`worker_map()`](https://statmodels7.github.io/statmodels7/reference/worker_map.md)
   : Run Independent Units, in This Process or Over Workers
 
 - [`working_exact()`](https://statmodels7.github.io/statmodels7/reference/working_exact.md)
   : Is the Working Profile of an Equation Its Objective?
+
+- [`working_parts()`](https://statmodels7.github.io/statmodels7/reference/working_parts.md)
+  : The Working Weights of an Equation
+
+- [`working_residuals()`](https://statmodels7.github.io/statmodels7/reference/working_residuals.md)
+  : The Working Residuals of an Equation
 
 - [`working_response_variance()`](https://statmodels7.github.io/statmodels7/reference/working_response_variance.md)
   : The Variance of Each Equation's Working Response

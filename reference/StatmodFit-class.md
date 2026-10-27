@@ -32,7 +32,8 @@ StatmodFit(
   criterion = integer(0),
   history = list(),
   methods = list(),
-  call = NULL
+  call = NULL,
+  bootstrap = new.env(parent = emptyenv())
 )
 ```
 
@@ -73,7 +74,34 @@ StatmodFit(
 
   A data frame of effective degrees of freedom with the columns
   `parameter`, `term`, `coefficients` and `edf`, one row per term of
-  each equation.
+  each equation. The count of a term is its share of
+  \\\mathrm{tr}\[(H+S)^{-1}H\]\\, with \\H\\ the information of the
+  log-likelihood and \\S\\ the second derivative of the penalty, and it
+  is read at fit time on one information matrix, which `methods` records
+  as `edf_information`. That matrix is the `information` of
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  where either prices the fit (the count is part of the criterion),
+  otherwise the `information` of
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  or
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  ([`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+  by default), and the information of the inner fit (`inner_information`
+  of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+  with
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  settled against the family) only where the model has no outer
+  criterion. For a positive semidefinite \\H\\ the total lies in \\\[0,
+  p\]\\, with \\p\\ the number of coefficients, and the count of a term
+  lies between 0 and its number of coefficients. An indefinite observed
+  information can give a negative share to a direction of negative
+  curvature, and then these bounds can fail.
+  [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+  reports the count on the information of its `vcov_type` and leaves
+  `fit@edf` unchanged.
 
 - fitted:
 

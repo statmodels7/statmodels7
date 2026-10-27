@@ -16,10 +16,8 @@ predict(
   se = FALSE,
   level = 0.95,
   random = "conditional",
-  interval = c("confidence", "group", "prediction"),
-  predictive = c("averaged", "plugin", "bootstrap"),
-  n_boot = 200L,
-  boot_refit = c("coefficients", "full"),
+  interval = confidence_interval(),
+  vcov_type = bayesian_vcov(),
   ...
 )
 ```
@@ -35,17 +33,19 @@ predict(
 
   What to predict: a parameter's name, optionally prefixed `"link:"`; a
   moment's name; `"parameter"` (the default) or `"link"`; or
-  `"response"`, which requires `interval = "prediction"` and is the only
-  value that this interval accepts. An unrecognized name signals an
-  error listing what is available.
+  `"response"`, which requires `interval = prediction_interval()` and is
+  the only value that this interval accepts. An unrecognized name
+  signals an error listing what is available.
 
 - newdata:
 
   A data frame, or `NULL` for the fitting data. It needs the variables
   of the equations that are read: where `what` names one parameter and
-  `interval` is `"confidence"`, the variables that only the other
-  equations use may be absent. It does not need the response, except
-  that a moment or a prediction interval of a binomial fitted with
+  `interval` is
+  [`confidence_interval()`](https://statmodels7.github.io/statmodels7/reference/confidence_interval.md),
+  the variables that only the other equations use may be absent. It does
+  not need the response, except that a moment or a prediction interval
+  of a binomial fitted with
   [`cbind()`](https://rdrr.io/r/base/cbind.html) reads the number of
   trials from it. For a model with a structural term, rows that all
   carry the response are read as a series of their own, and rows without
@@ -56,16 +56,21 @@ predict(
 
   `TRUE` to report the standard error and an interval as well. The
   default is `FALSE`. A moment has no standard error, and `se = TRUE`
-  with a moment signals an error. `interval = "group"` sets it to
-  `TRUE`, and `interval = "prediction"` does not read it, because its
-  result carries its own `se` column.
+  with a moment signals an error.
+  [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+  sets it to `TRUE`, and
+  [`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md)
+  does not read it, because its result carries its own `se` column.
 
 - level:
 
   The interval's level, `0.95` by default, a single number strictly
   between 0 and 1. It is read wherever an interval is returned: with
-  `se = TRUE`, with `interval = "group"` and with
-  `interval = "prediction"`, which gives its interval without `se`.
+  `se = TRUE`, with
+  [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+  and with
+  [`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md),
+  which gives its interval without `se`.
 
 - random:
 
@@ -82,38 +87,52 @@ predict(
 
 - interval:
 
-  `"confidence"` (the default), `"group"` or `"prediction"`. See the
-  section on intervals.
+  An interval object that selects the uncertainty that the interval
+  describes.
+  [`confidence_interval()`](https://statmodels7.github.io/statmodels7/reference/confidence_interval.md)
+  (the default) gives the interval of the parameter, the predictor or
+  the moment from the uncertainty of the estimates;
+  [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+  gives the interval of the parameter of a new group;
+  [`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md)
+  gives the interval of a new observation of the response, and takes the
+  predictive distribution as its argument
+  (`predictive = pred_averaged()`,
+  [`pred_plugin()`](https://statmodels7.github.io/statmodels7/reference/pred_plugin.md)
+  or
+  [`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md)).
+  A character string is rejected with an error. See
+  [predict_intervals](https://statmodels7.github.io/statmodels7/reference/predict_intervals.md)
+  and
+  [predictive_distributions](https://statmodels7.github.io/statmodels7/reference/predictive_distributions.md).
 
-- predictive:
+- vcov_type:
 
-  With `interval = "prediction"`, the quantities over which the family
-  is averaged: `"averaged"` (the default), `"plugin"` or `"bootstrap"`.
-  See the section on the predictive distribution.
-
-- n_boot:
-
-  The number of bootstrap replicas, `200` by default. It is read only
-  where `predictive = "bootstrap"`.
-
-- boot_refit:
-
-  `"coefficients"` (the default), refitting each replica at the fit's
-  hyperparameters, or `"full"`, choosing them again. It is read only
-  where `predictive = "bootstrap"`.
+  A
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  object that selects the variance convention of
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md):
+  [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+  (the default),
+  [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  or
+  [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md),
+  which also accounts for the estimated smoothing parameters. It is read
+  where `se` is `TRUE`, with
+  [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md),
+  and with
+  [`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md)
+  holding
+  [`pred_averaged()`](https://statmodels7.github.io/statmodels7/reference/pred_averaged.md),
+  and a value other than the default signals an error elsewhere. The
+  unconditional variance differs most from the others in a band around a
+  penalized term, since a smoothing parameter moves the fitted values.
+  The conventions are compared at
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md).
 
 - ...:
 
-  Only `type`, the variance type of
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md):
-  the Bayesian variance, the frequentist one or the unconditional one,
-  which also accounts for the estimated smoothing parameters. It is read
-  where `se` is `TRUE`, with `interval = "group"`, and with
-  `interval = "prediction"` and `predictive = "averaged"`, and it
-  signals an error elsewhere. Any other argument signals an error that
-  names it. The unconditional variance differs most from the others in a
-  band around a penalized term, since a smoothing parameter moves the
-  fitted values.
+  Not used. Any argument signals an error that names it.
 
 ## Value
 
@@ -127,10 +146,12 @@ With `se = TRUE`, a data frame with columns `fit`, `se`, `lower` and
 named list of such data frames, one per parameter. `se` is `NA` for an
 observation whose predictor reads a coefficient that has no variance.
 
-With `interval = "prediction"`, a data frame with columns `fit` (the
-predictive median), `se` (the predictive standard deviation, `NA` where
-it does not exist), `lower` and `upper`, all `NA` for a row whose
-predictor reads a coefficient that has no variance.
+With
+[`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md),
+a data frame with columns `fit` (the predictive median), `se` (the
+predictive standard deviation, `NA` where it does not exist), `lower`
+and `upper`, all `NA` for a row whose predictor reads a coefficient that
+has no variance.
 
 ## Quantities that can be predicted
 
@@ -163,7 +184,7 @@ predictor reads a coefficient that has no variance.
 
 - `"response"`:
 
-  the response itself, with `interval = "prediction"`, which it
+  the response itself, with `interval = prediction_interval()`, which it
   requires: its median and the ends of an interval in which a new
   observation falls. See the section on intervals.
 
@@ -188,9 +209,10 @@ the terms are evaluated and does not change how they are built. Offsets
 are evaluated again at the new rows.
 
 The new frame needs the variables of the equations that are read. Where
-`what` names one parameter and `interval` is `"confidence"`, the other
-equations are not read, and the variables that only they use may be
-absent from `newdata`. The response is not needed, except that a
+`what` names one parameter and `interval` is
+[`confidence_interval()`](https://statmodels7.github.io/statmodels7/reference/confidence_interval.md),
+the other equations are not read, and the variables that only they use
+may be absent from `newdata`. The response is not needed, except that a
 binomial fitted with [`cbind()`](https://rdrr.io/r/base/cbind.html)
 reads the number of trials from it for a moment or a prediction
 interval.
@@ -273,130 +295,42 @@ signals an error. A predictor (`"link"`) is the average of the
 predictors at the nodes. The standard error of a marginal parameter is
 the delta method of that average, whose gradient sums the design at each
 node, and its interval is the delta method's on the link scale carried
-through the link. `interval = "group"` and `"prediction"` are not
-available for such an effect, and a standard error is not available
-where an average is taken over effects of both kinds.
+through the link.
+[`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+and
+[`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md)
+are not available for such an effect, and a standard error is not
+available where an average is taken over effects of both kinds.
 
-## Three intervals
+## Intervals and predictive distributions
 
-The value of `interval` selects the uncertainty that the interval
-describes.
+The object given to `interval` selects the uncertainty that the interval
+describes:
+[`confidence_interval()`](https://statmodels7.github.io/statmodels7/reference/confidence_interval.md)
+the estimates alone,
+[`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+the estimates and the effects of a new group, and
+[`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md)
+a new observation of the response. The topic
+[predict_intervals](https://statmodels7.github.io/statmodels7/reference/predict_intervals.md)
+compares the three and gives the formulas. A prediction interval holds a
+predictive object that sets how the estimation uncertainty enters:
+[`pred_averaged()`](https://statmodels7.github.io/statmodels7/reference/pred_averaged.md)
+(the default),
+[`pred_plugin()`](https://statmodels7.github.io/statmodels7/reference/pred_plugin.md)
+or
+[`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md).
+The topic
+[predictive_distributions](https://statmodels7.github.io/statmodels7/reference/predictive_distributions.md)
+compares them and states what each costs.
 
-- `"confidence"`:
-
-  the default, with `se = TRUE`: only the uncertainty of the estimates.
-  For a term set aside by `random` it is the interval of the typical
-  group's value, and the value of a new group falls outside that
-  interval far more often than the level implies.
-
-- `"group"`:
-
-  the interval of a new group's parameter, with `random = "zero"` or
-  `"marginal"`. A new group's parameter is \\\theta^\* =
-  h^{-1}(\eta^\*)\\, with \\\eta^\*\\ the typical group's predictor plus
-  its estimation error plus \\z^\top b\\, the effects of a new group
-  drawn from the prior, in the parameter's own equation, so a random
-  effect on `sigma` widens the interval for `sigma`. Under Gaussian
-  priors the variance of \\\eta^\*\\ is \\se^2 + z^\top \Sigma_b z\\,
-  the standard error that glmmTMB reports at a new level on the link
-  scale. The interval's ends are quantiles of \\\eta^\*\\ carried
-  through the inverse link, which is monotone, so they are the quantiles
-  of \\\theta^\*\\ under any link; under a prior that is not Gaussian
-  they are the quantiles of the mixture of
-  [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md).
-  Where the interval of \\\eta^\*\\ leaves the domain of the link (a
-  square root link and a negative predictor), the ends are `NA` at that
-  row, with a warning. The standard error is the standard deviation of
-  \\\theta^\*\\, not the delta method, and is `NA` where it is not known
-  to exist (see
-  [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)).
-  The fit is the typical group's value under `random = "zero"` and the
-  population average under `"marginal"`. Implies `se = TRUE`.
-
-- `"prediction"`:
-
-  an interval for a new observation of the response, with
-  `what = "response"`. The family is averaged over the predictors of
-  every parameter, which are taken to be jointly Gaussian (correlated
-  across equations where a label ties them). The interval's ends are
-  quantiles of that average, and the fit is its median, which every
-  family has, so the family does not need a location parameter. `se` is
-  the standard deviation of the average, and is `NA` where the family's
-  variance does not exist. For a discrete family the ends are values of
-  the support, so the coverage is at least the level rather than equal
-  to it. Effects read `"conditional"` enter with their own estimates, so
-  this is also the interval of a new observation of a group that is
-  present in the fitting data. The quantities over which the average is
-  taken are set by `predictive`, described below.
-
-`interval = "group"` and `interval = "prediction"` are rejected for a
-multivariate family and for a model with a structural term. The
-structural term also rejects `random = "zero"` and
+[`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+and
+[`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md)
+are rejected for a multivariate family and for a model with a structural
+term. The structural term also rejects `random = "zero"` and
 `random = "marginal"`: its level is a recursion read at the predictor,
 so setting a random effect aside would move the recursion as well.
-
-## The predictive distribution
-
-A new observation varies for three reasons: the family itself, the
-effects of a new group where `random` sets them aside, and the error in
-the estimates. The first two are random in the model and always enter.
-The third enters according to `predictive`, for every parameter alike,
-whether the family has one parameter (a Poisson) or several, and whether
-or not a parameter has covariates.
-
-- `"averaged"`:
-
-  the default. The family is averaged over the predictors at the fit's
-  estimates with the covariance of the estimates from
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-  plus the covariance that the effects add. This is the normal
-  approximation to the parametric bootstrap predictive distribution of
-  Harris (1989): the estimates are averaged over their approximate
-  sampling distribution, centered at the fit. For a Gaussian with a
-  constant \\\sigma = e^{\gamma_0}\\, \\\hat\gamma_0\\ of variance
-  \\v\\, the variance of a new observation is \\\mathrm{se}\_0^2 +
-  z^\top\Sigma_b z + \hat\sigma^2 e^{2v}\\, where the last term is the
-  average of \\\hat\sigma^{\*2}\\ over that distribution.
-
-- `"plugin"`:
-
-  the family at the estimates, averaged only over the effects: the
-  estimative interval, which ignores the error in the estimates and so
-  covers less than the level in a small sample.
-
-- `"bootstrap"`:
-
-  the parametric bootstrap predictive distribution itself: `n_boot`
-  responses are simulated from the fit with the random effects drawn
-  afresh, each response is refitted, and the family at each refit is
-  averaged over the effects. `boot_refit = "coefficients"` refits at the
-  fit's hyperparameters; `"full"` chooses them again on every replica,
-  so their uncertainty enters too, at the cost of a whole fit each. It
-  is rejected for a model with a block that moves with its coefficients
-  ([`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
-  [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
-  [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html),
-  [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)),
-  for a response that is not one number per observation, and, with
-  `boot_refit = "full"`, for a cross-validated criterion. See
-  [`predictive_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/predictive_bootstrap.md).
-
-The interval for a new group (`interval = "group"`) is conditional on
-the covariance that the fit estimated, and so is the interval for a new
-observation, so the uncertainty of the hyperparameters is not
-propagated. The exception is `predictive = "bootstrap"` with
-`boot_refit = "full"`, where the hyperparameters are chosen again on
-every replica.
-
-Under a prior that is not Gaussian, both `interval = "group"` and
-`interval = "prediction"` read the quantiles of the prior: a Student t
-prior as a scale mixture of Gaussians; a single univariate prior of
-another family, where it is the only prior that is not Gaussian, on
-quantile nodes, which do not depend on the seed; and any other
-combination of priors by Monte Carlo, which does (see
-[`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md)).
-A term that shares a label with an effect read with its own estimate, or
-with one written inside a subformula, is rejected.
 
 A forecast's standard error, with `se = TRUE`, is only the uncertainty
 of the estimated parameters, carried by the delta method through the
@@ -447,12 +381,12 @@ all.equal(predict(fit, "variance"), predict(fit, "sigma")^2)
 # The result carries an interval as well.
 head(predict(fit, "mu", se = TRUE))
 #>        fit         se    lower    upper
-#> 1 1.598797 0.07204781 1.457586 1.740008
-#> 2 1.804267 0.05848939 1.689630 1.918904
-#> 3 2.191116 0.04332275 2.106204 2.276027
-#> 4 2.837415 0.06713927 2.705824 2.969005
-#> 5 1.475789 0.08102934 1.316975 1.634604
-#> 6 2.818493 0.06586368 2.689403 2.947584
+#> 1 1.598797 0.07213967 1.457406 1.740188
+#> 2 1.804267 0.05854267 1.689526 1.919009
+#> 3 2.191116 0.04332413 2.106202 2.276029
+#> 4 2.837415 0.06721771 2.705670 2.969159
+#> 5 1.475789 0.08114458 1.316749 1.634830
+#> 6 2.818493 0.06593854 2.689256 2.947730
 
 # Every parameter is returned at once, on either scale.
 str(predict(fit, "parameter"))
@@ -475,14 +409,16 @@ predict(fg, "mu", new, random = "marginal")
 
 # The calls return the interval of a new group's mean and of a new count
 # from it.
-predict(fg, "mu", new, random = "zero", interval = "group")
+predict(fg, what = "mu", newdata = new, random = "zero",
+        interval = group_interval())
 #>        fit        se     lower    upper
 #> 1 1.593882 0.9711082 0.5944571 4.273577
-predict(fg, "response", new, random = "zero", interval = "prediction",
-        predictive = "plugin")
+predict(fg, what = "response", newdata = new, random = "zero",
+        interval = prediction_interval(predictive = pred_plugin()))
 #>   fit       se lower upper
 #> 1   1 1.614653     0     6
-predict(fg, "response", new, random = "zero", interval = "prediction")
+predict(fg, what = "response", newdata = new, random = "zero",
+        interval = prediction_interval())
 #>   fit       se lower upper
 #> 1   1 1.658936     0     6
 

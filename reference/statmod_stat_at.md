@@ -12,8 +12,8 @@ statmod_stat_at(
   param,
   coefname,
   value = 0,
-  test = "wald",
-  type = "bayesian",
+  test = wald_test(),
+  vcov_type = bayesian_vcov(),
   mode_error = FALSE,
   objective0 = NULL
 )
@@ -37,11 +37,20 @@ statmod_stat_at(
 
 - test:
 
-  One of `"wald"`, `"lr"`, `"score"`, `"gradient"`.
+  A
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+  object:
+  [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md),
+  [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md),
+  [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+  or
+  [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md).
 
-- type:
+- vcov_type:
 
-  Which variance the Wald statistic reads, as
+  A
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  object, the variance that the Wald statistic reads, as
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
   takes it.
 
@@ -65,9 +74,11 @@ statmod_stat_at(
 
 ## Value
 
-A list with `test`, `statistic`, `df`, `p.value`, `converged` – `NA` for
-the Wald statistic and the restricted fit's flag for the other three –
-and `mode_error`, `NA` unless it is requested.
+A list with `test` (the
+[test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+object), `statistic`, `df`, `p.value`, `converged` – `NA` for the Wald
+statistic and the restricted fit's flag for the other three – and
+`mode_error`, `NA` unless it is requested.
 
 ## Details
 
@@ -97,13 +108,13 @@ The likelihood ratio is taken on \\\ell_p\\ and not on \\\ell\\.
 the difference of log-likelihoods can be negative. The other three
 statistics read the penalized objective as well: \\U\\ and \\K\\ are its
 gradient and its curvature, and the Wald variance is \\(H+S)^{-1}\\
-under `type = "bayesian"`.
+under `vcov_type = bayesian_vcov()`.
 
 For a shrunk coordinate this is the reading that
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-gives under `type = "bayesian"`: the penalty is a log-prior, so
-\\\ell_p\\ is a log posterior at the hyperparameters in force, and the
-interval by inversion is the set that the posterior does not reject,
+gives under `vcov_type = bayesian_vcov()`: the penalty is a log-prior,
+so \\\ell_p\\ is a log posterior at the hyperparameters in force, and
+the interval by inversion is the set that the posterior does not reject,
 conditional on them. The interpretation that the Wald interval on such a
 row carries therefore extends to the other three statistics. On a smooth
 the inverted interval and the Wald one agree to second order, and the

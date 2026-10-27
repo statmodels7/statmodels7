@@ -24,6 +24,7 @@ statmod(
   weights = NULL,
   offsets = NULL,
   inner_optimizer = iwls(),
+  inner_information = auto_info(),
   outer_criterion = reml(),
   sparse_criterion = bic(),
   outer_optimizer = NULL,
@@ -71,12 +72,59 @@ statmod(
 
   How the smooth block is fitted:
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-  or an optimizers7 optimizer. Beside a structural term of the filter
-  shape, the coefficients and the term's parameters are fitted in one
-  system, for which
+  (the default) or an optimizers7 optimizer. Beside a structural term of
+  the filter shape, the coefficients and the term's parameters are
+  fitted in one system, for which
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   stands for the system's own default optimizer and an optimizers7
   optimizer is used as given.
+
+- inner_information:
+
+  The matrix of second derivatives that the inner fit uses, an object
+  that inherits from
+  [distributions7::Information](https://statmodels7.github.io/distributions7/reference/Information.html):
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+  (the observed Hessian),
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+  (the Fisher information, whose `method` is `NULL` for the closed form
+  of the family or
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html),
+  or one of
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html),
+  [`distributions7::expect_integrate()`](https://statmodels7.github.io/distributions7/reference/expect_integrate.html)
+  and
+  [`distributions7::expect_mc()`](https://statmodels7.github.io/distributions7/reference/expect_mc.html);
+  see
+  [distributions7::expected_derivative_methods](https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html))
+  or
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  (the default), which is settled against the family. With
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  the matrix is inverted at each step (Newton for the observed
+  information, Fisher scoring for the expected one); with an optimizers7
+  optimizer it is the Hessian that the optimizer receives, so that
+  `inner_optimizer = optimizers7::newton()` with
+  `inner_information = distributions7::expected_info()` takes the
+  expected information. A named matrix is the only one that the inner
+  fit uses.
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  chooses the expected information where the family writes it exactly
+  and at an acceptable cost, and the observed information otherwise;
+  with
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  it also lets the run change matrix and lets the expected information
+  take a step that the observed one cannot (see
+  [information_objects](https://statmodels7.github.io/statmodels7/reference/information_objects.md)).
+  The fitted model records the settled object, and every later refit of
+  the model (the folds of a cross-validation, the restricted fits of a
+  test, the resampled fits of a bootstrap) reads the same one. A model
+  with a structural term is fitted on the observed information whatever
+  the object says. The outer criterion has its own `information` (see
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md))
+  and the standard errors have theirs (see
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md));
+  the three choices are independent.
 
 - outer_criterion:
 
@@ -184,9 +232,8 @@ statmod(
 
 - ...:
 
-  Not used. A named argument signals an error. `hyper` was removed from
-  `statmod()`: a hyperparameter is held in the term that carries the
-  penalty.
+  Not used. A named argument signals an error. A hyperparameter is held
+  in the term that carries the penalty.
 
 ## Value
 

@@ -26,11 +26,13 @@ StatmodSummary(
   converged = logical(0),
   elapsed = integer(0),
   level = integer(0),
-  type = character(0),
-  test = "wald",
+  vcov_type = vcov_method(),
+  test = wald_test(),
   max_coef = NULL,
   notes = character(0),
-  certificate = NULL
+  certificate = NULL,
+  information = NULL,
+  bootstrap = NULL
 )
 ```
 
@@ -102,7 +104,7 @@ StatmodSummary(
 
   The confidence level at which the intervals were built.
 
-- type:
+- vcov_type:
 
   Which variance convention was used.
 

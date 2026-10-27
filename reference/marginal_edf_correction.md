@@ -10,7 +10,7 @@ variance that the hyperparameters add to the block variance of
 ## Usage
 
 ``` r
-marginal_edf_correction(mc, coef, hyper, method, idx, expected, approx, zero)
+marginal_edf_correction(mc, coef, hyper, method, idx, expected, emethod, zero)
 ```
 
 ## Arguments
@@ -35,7 +35,7 @@ marginal_edf_correction(mc, coef, hyper, method, idx, expected, approx, zero)
 
   The hyperparameters' index.
 
-- expected, approx:
+- expected, emethod:
 
   Passed to
   [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md).

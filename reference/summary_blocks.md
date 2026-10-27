@@ -18,7 +18,7 @@ summary_blocks(
   V = NULL,
   st = NULL,
   at_edge = character(0),
-  test = "wald"
+  test = wald_test()
 )
 ```
 

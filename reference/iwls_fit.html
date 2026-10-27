@@ -11,7 +11,7 @@ coefficients and the history of the run."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,7 @@ coefficients and the history of the run.</p>
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>An <code><a href="Iwls-class.html">Iwls()</a></code> object, carrying the curvature, the
-decomposition, the budget and the stopping rule.</p></dd>
+solver, the budget and the stopping rule.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
@@ -158,7 +158,7 @@ pieces on the observed information. After <code>switch_after</code> iterations w
 convergence, or earlier when <code><a href="iwls_slow.html">iwls_slow()</a></code> reports a slow contraction of
 the score, it takes the place of <code>pieces_at</code>, and <code>pieces_at</code> that of
 <code>backup_at</code>. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method that <code><a href="iwls_resolve.html">iwls_resolve()</a></code>
-settled on the expected information from <code>"auto"</code>.</p></dd>
+settled on the expected information from <code><a href="auto_info.html">auto_info()</a></code>.</p></dd>
 
 
 <dt id="arg-switch-after">switch_after<a class="anchor" aria-label="anchor" href="#arg-switch-after"></a></dt>

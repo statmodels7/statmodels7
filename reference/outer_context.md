@@ -8,7 +8,7 @@ Hessian, their sum and its factorization.
 ## Usage
 
 ``` r
-outer_context(spec, design, coef, hyper, approx = "opg")
+outer_context(spec, design, coef, hyper, emethod = NULL)
 ```
 
 ## Arguments
@@ -30,9 +30,14 @@ outer_context(spec, design, coef, hyper, approx = "opg")
 
   The hyperparameters.
 
-- approx:
+- emethod:
 
-  The approximation for the expected information.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 ## Value
 

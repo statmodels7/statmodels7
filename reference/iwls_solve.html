@@ -9,7 +9,7 @@ requested decomposition."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,15 @@ requested decomposition.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_solve</span><span class="op">(</span><span class="va">pieces</span>, <span class="va">u</span>, <span class="va">how</span>, damp <span class="op">=</span> <span class="fl">0</span>, frozen <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_solve</span><span class="op">(</span></span>
+<span>  <span class="va">pieces</span>,</span>
+<span>  <span class="va">u</span>,</span>
+<span>  <span class="va">how</span>,</span>
+<span>  damp <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  frozen <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>  tol <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  floor <span class="op">=</span> <span class="fl">1e-08</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -76,6 +84,19 @@ number. <code>0</code>, the default, is the plain scoring step.</p></dd>
 integer vector. They are dropped from the system exactly as a
 coordinate whose curvature is not finite is, so the step is that of the
 problem reduced to the rest. The default is empty.</p></dd>
+
+
+<dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
+<dd><p>The tolerance of the factorization, as the solver carries it:
+the pivoted QR tolerance for <code>how = "qr"</code>, the relative cut of the
+singular values for <code>how = "svd"</code> (<code>NULL</code> for the default cut), and
+unused for <code>"chol"</code>. The default is <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-floor">floor<a class="anchor" aria-label="anchor" href="#arg-floor"></a></dt>
+<dd><p>The relative floor of the eigenvalues of an assembled matrix
+that is not positive definite, as <code><a href="pd_repair.html">pd_repair()</a></code> takes it. The default is
+<code>1e-8</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -151,7 +172,7 @@ tested again, and the test repeats until every column is finite.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="iwls_pieces.html">iwls_pieces()</a></code> for the input, <code><a href="iwls.html">iwls()</a></code> for the <code>decomposition</code>
+    <div class="dont-index"><p><code><a href="iwls_pieces.html">iwls_pieces()</a></code> for the input, <code><a href="iwls.html">iwls()</a></code> for the <code>solver</code>
 argument that this function serves.</p></div>
     </div>
 

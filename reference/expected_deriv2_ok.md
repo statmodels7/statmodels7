@@ -8,7 +8,7 @@ value.
 ## Usage
 
 ``` r
-expected_deriv2_ok(distrib)
+expected_deriv2_ok(distrib, emethod = NULL)
 ```
 
 ## Arguments

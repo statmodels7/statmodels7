@@ -62,11 +62,14 @@ function skipped no penalty.
 
 The matrices that
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-returns for `type = "bayesian"` and `type = "frequentist"` are
-conditional on the hyperparameters: each is read at the value at which
-the outer search stopped, as though that value were known. The value was
-estimated from the same data, and the cost of that is \$\$V' = V_b + J
-V\_\theta J', \qquad J = -(H + S)^{-1} \frac{\partial^2
+returns for
+[`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+and
+[`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+are conditional on the hyperparameters: each is read at the value at
+which the outer search stopped, as though that value were known. The
+value was estimated from the same data, and the cost of that is \$\$V' =
+V_b + J V\_\theta J', \qquad J = -(H + S)^{-1} \frac{\partial^2
 \rho}{\partial\beta \partial\theta},\$\$ the delta method applied to the
 map from the hyperparameter to the mode (Wood, Pya and Safken, 2016).
 The same quantity is contracted against the information by

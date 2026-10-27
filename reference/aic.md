@@ -17,9 +17,9 @@ frequencies). Both are minimized.
 ## Usage
 
 ``` r
-aic(k = 2, hessian = c("observed", "expected"))
+aic(k = 2, information = observed_info())
 
-bic(hessian = c("observed", "expected"))
+bic(information = observed_info())
 ```
 
 ## Arguments
@@ -33,28 +33,52 @@ bic(hessian = c("observed", "expected"))
   and is resolved to \\\log n\\ when the model is fitted, because the
   sample size is unknown until then.
 
-- hessian:
+- information:
 
-  The information on which the criterion is built, `"observed"` (the
-  default) or `"expected"`. The argument is matched with
-  [`match.arg()`](https://rdrr.io/r/base/match.arg.html). The exact
-  gradient is available on either wherever the family writes its
-  expected information out; the Hessian is exact on the observed one and
-  is not available on the expected one, where the search uses an
-  optimizer that needs only the gradient. A family that does not write
-  it out would read the outer product of its scores at the data under
-  the default `iwls(approx = "opg")`, and
-  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-  rejects `"expected"` there: see
-  [`assert_criterion_information()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.md).
+  The information on which the criterion is built, an object that
+  inherits from
+  [distributions7::Information](https://statmodels7.github.io/distributions7/reference/Information.html):
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+  (the default) or
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html),
+  whose `method` is `NULL` (the closed form of the family where it has
+  one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or one of
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html),
+  [`distributions7::expect_integrate()`](https://statmodels7.github.io/distributions7/reference/expect_integrate.html)
+  and
+  [`distributions7::expect_mc()`](https://statmodels7.github.io/distributions7/reference/expect_mc.html)
+  (see
+  [distributions7::expected_derivative_methods](https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html)).
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  is not admissible, since the effective degrees of freedom are the
+  trace on one named matrix, and signals an error. The exact gradient is
+  available on either matrix; the Hessian is exact on the observed one
+  and is not available on the expected one, where the search uses an
+  optimizer that needs only the gradient. On the expected information,
+  the `method` object defines the matrix and the derivative of it that
+  the gradient reads, as described for the `information` of
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md).
+  With `method = NULL` on a family without a closed form, the matrix is
+  the
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  estimate of the expected information, noisier than a computed
+  expectation and about 25 times cheaper (0.8 s against 25.3 s for
+  `method = expect_integrate(identity = "score")` on a density-only
+  family with n = 300); the computed expectation is selected with that
+  method.
+  [information_objects](https://statmodels7.github.io/statmodels7/reference/information_objects.md)
+  compares the objects.
 
 ## Value
 
 An
 [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-object with properties `kind` (`"aic"` or `"bic"`), `hessian` as
-supplied, `k` (the number given, or `NA_real_` for `bic()`), `marginal`
-(`NULL`), and the path settings `nfolds`, `rule` and `folds`, which only
+object with properties `kind` (`"aic"` or `"bic"`), `hessian` (the
+object given as `information`), `k` (the number given, or `NA_real_` for
+`bic()`), `marginal` (`NULL`), and the path settings `nfolds`, `rule`
+and `folds`, which only
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
 reads.
 
@@ -88,8 +112,9 @@ is computable because of the mode's own condition,
 \\\partial\ell/\partial\beta = \partial\rho/\partial\beta\\.
 
 The gradient is exact with either information. The Hessian is exact with
-`hessian = "observed"`, which is the default, and is not available with
-`"expected"`.
+`information = observed_info()`, which is the default, and is not
+available with
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html).
 
 ## Which effective degrees of freedom
 
@@ -99,7 +124,14 @@ couplings with the other blocks.
 [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
 reads each term's share from the diagonal block of the same full
 smoother matrix \\(H+S)^{-1}H\\, so the per-term numbers add up to
-\\\tau\\.
+\\\tau\\. The count stored in the fitted model (`fit@edf`) is read on
+the `information` of this criterion, so that it reproduces the \\\tau\\
+that the criterion charged, and
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+keeps it whatever its `vcov_type` is. For a positive semidefinite \\H\\
+the total lies in \\\[0, p\]\\, with \\p\\ the number of coefficients;
+an indefinite observed information can give a direction of negative
+curvature a negative share.
 
 Where a penalty has a kink the trace is restricted to the active
 coordinates, so for a lasso \\\tau\\ is the number of surviving

@@ -1,8 +1,7 @@
 # Generics Not Available for a Fit
 
-Three generics of stats and the generic
-[`base::plot()`](https://rdrr.io/r/base/plot.html) signal an error on a
-statmod fit, and each error names the function to use instead.
+Three generics of stats signal an error on a statmod fit, and each error
+names the function to use instead.
 
 ## Usage
 
@@ -15,9 +14,6 @@ model.frame(formula, ...)
 
 # S3 method for class 'StatmodFit'
 anova(object, ...)
-
-# S3 method for class 'StatmodFit'
-plot(x, ...)
 ```
 
 ## Arguments
@@ -62,13 +58,6 @@ from the same data has no null distribution against which to compare.
 of the effective degrees of freedom of its terms, which is not corrected
 for the estimation of the smoothing parameters;
 `summary(fit, correct = TRUE)` applies that correction.
-
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html) has no single
-picture to draw for a model with an equation per parameter, any number
-of terms and any number of covariates. The fitted curves come from
-[`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
-on a grid of new data, and the residuals from
-[`residuals.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.md).
 
 ## See also
 

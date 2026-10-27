@@ -18,7 +18,7 @@ statmod_marginal(
   coef,
   hyper,
   method,
-  approx = "opg",
+  emethod = NULL,
   basis = NULL,
   ctx = NULL
 )
@@ -48,9 +48,14 @@ statmod_marginal(
   An
   [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
-- approx:
+- emethod:
 
-  The approximation for the expected information.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 - basis:
 

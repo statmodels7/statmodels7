@@ -4,16 +4,12 @@
 coordinates, read from the step that
 [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
 takes: the decrease in the penalized log-likelihood that a full scoring
-step predicts. `iwls_decrement_limit()` is the value under which
-[`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)'s
-built-in rule reads the mode as located.
+step predicts.
 
 ## Usage
 
 ``` r
 iwls_decrement(pc, g, method, damp, frozen)
-
-iwls_decrement_limit()
 ```
 
 ## Arguments
@@ -42,14 +38,17 @@ iwls_decrement_limit()
 
 ## Value
 
-`iwls_decrement()` returns a number, `NA` where the solve fails.
-`iwls_decrement_limit()` returns a number.
+A number, `NA` where the solve fails.
 
 ## Details
 
 It is in log-likelihood units, so it does not depend on the scale of the
-response, where the score per observation does. The limit is
-\\10^{-6}\\, three orders under
+response, where the score per observation does.
+[`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)'s
+built-in rule reads the mode as located when it is at most the
+`decrement_limit` of
+[`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
+whose default \\10^{-6}\\ is three orders under
 [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md),
-which is the reading used by the outer search to determine whether a
-criterion is usable.
+the reading used by the outer search to determine whether a criterion is
+usable.

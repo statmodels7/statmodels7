@@ -15,7 +15,13 @@ loglik(object, par = NULL, data = NULL, ...)
 
 gradient(object, par = NULL, data = NULL, ...)
 
-hessian(object, par = NULL, data = NULL, expected = FALSE, ...)
+hessian(
+  object,
+  par = NULL,
+  data = NULL,
+  information = distributions7::observed_info(),
+  ...
+)
 ```
 
 ## Arguments
@@ -45,10 +51,23 @@ hessian(object, par = NULL, data = NULL, expected = FALSE, ...)
 
   Passed to methods. The shipped methods do not read it.
 
-- expected:
+- information:
 
-  `hessian()` only: `TRUE` for the expected information, `FALSE` (the
-  default) for the observed Hessian.
+  `hessian()` only: the matrix whose negative is returned, an object
+  that inherits from
+  [distributions7::Information](https://statmodels7.github.io/distributions7/reference/Information.html).
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+  (the default) gives the Hessian of the log-likelihood at the data, and
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+  gives minus the Fisher information, whose `method` selects how the
+  expectation is obtained.
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+  is not accepted. The default is
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html),
+  whatever the family, because the result is a Hessian and not a
+  variance; the variance objects resolve a `NULL` information by the
+  family (see
+  [information_objects](https://statmodels7.github.io/statmodels7/reference/information_objects.md)).
 
 ## Value
 
@@ -124,7 +143,7 @@ gradient(fit, par = list(mu = c(0, 0), sigma = 0))
 # component is minus the number of mu coefficients (here -2).
 gradient(fit)
 #> $mu
-#> [1] 1.953993e-14 6.217249e-15
+#> [1] 1.421085e-14 7.105427e-15
 #> 
 #> $sigma
 #> [1] -2

@@ -25,7 +25,7 @@ total of the weights, which are frequencies). Both are minimized."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,9 +69,9 @@ total of the weights, which are frequencies). Both are minimized.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">aic</span><span class="op">(</span>k <span class="op">=</span> <span class="fl">2</span>, hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"observed"</span>, <span class="st">"expected"</span><span class="op">)</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">aic</span><span class="op">(</span>k <span class="op">=</span> <span class="fl">2</span>, information <span class="op">=</span> <span class="fu">observed_info</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">bic</span><span class="op">(</span>hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"observed"</span>, <span class="st">"expected"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">bic</span><span class="op">(</span>information <span class="op">=</span> <span class="fu">observed_info</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -87,23 +87,34 @@ resolved to \(\log n\) when the model is fitted, because the sample
 size is unknown until then.</p></dd>
 
 
-<dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
-<dd><p>The information on which the criterion is built,
-<code>"observed"</code> (the default) or <code>"expected"</code>. The argument is matched with
-<code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>. The exact
-gradient is available on either wherever the family writes its expected
-information out; the Hessian is exact on the observed one and is not
+<dt id="arg-information">information<a class="anchor" aria-label="anchor" href="#arg-information"></a></dt>
+<dd><p>The information on which the criterion is built, an
+object that inherits from <a href="https://statmodels7.github.io/distributions7/reference/Information.html" class="external-link">distributions7::Information</a>: <code><a href="https://statmodels7.github.io/distributions7/reference/observed_info.html" class="external-link">distributions7::observed_info()</a></code> (the default)
+or <code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code>, whose <code>method</code> is <code>NULL</code> (the closed form of the
+family where it has one, and <code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code> otherwise) or
+one of <code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code>, <code><a href="https://statmodels7.github.io/distributions7/reference/expect_integrate.html" class="external-link">distributions7::expect_integrate()</a></code>
+and <code><a href="https://statmodels7.github.io/distributions7/reference/expect_mc.html" class="external-link">distributions7::expect_mc()</a></code> (see
+<a href="https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html" class="external-link">distributions7::expected_derivative_methods</a>). <code><a href="auto_info.html">auto_info()</a></code> is not
+admissible, since the effective degrees of freedom are the trace on one
+named matrix, and signals an error. The exact gradient is available on
+either matrix; the Hessian is exact on the observed one and is not
 available on the expected one, where the search uses an optimizer that
-needs only the gradient. A family that does not write it out would read the
-outer product of its scores at the data under the default
-<code>iwls(approx = "opg")</code>, and <code><a href="statmod.html">statmod()</a></code> rejects <code>"expected"</code> there: see
-<code><a href="assert_criterion_information.html">assert_criterion_information()</a></code>.</p></dd>
+needs only the gradient. On the expected information, the <code>method</code> object
+defines the matrix and the derivative of it that the gradient reads, as
+described for the <code>information</code> of <code><a href="reml.html">reml()</a></code>. With <code>method = NULL</code> on a
+family without a closed form, the matrix is the
+<code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code> estimate of the expected information,
+noisier than a computed expectation and about 25 times cheaper (0.8 s
+against 25.3 s for <code>method = expect_integrate(identity = "score")</code> on a
+density-only family with n = 300); the computed expectation is selected
+with that method. <a href="information_objects.html">information_objects</a> compares the objects.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code><a href="OuterMethod-class.html">OuterMethod()</a></code> object with properties <code>kind</code> (<code>"aic"</code> or
-<code>"bic"</code>), <code>hessian</code> as supplied, <code>k</code> (the number given, or <code>NA_real_</code>
+<code>"bic"</code>), <code>hessian</code> (the object given as <code>information</code>), <code>k</code> (the number
+given, or <code>NA_real_</code>
 for <code>bic()</code>), <code>marginal</code> (<code>NULL</code>), and the path settings <code>nfolds</code>, <code>rule</code>
 and <code>folds</code>, which only <code><a href="cv.html">cv()</a></code> reads.</p>
     </div>
@@ -130,8 +141,8 @@ carries \(d\hat\beta/d\theta\) from the first order. This is computable
 because of the mode's own condition,
 \(\partial\ell/\partial\beta = \partial\rho/\partial\beta\).</p>
 <p>The gradient is exact with either information. The Hessian is exact with
-<code>hessian = "observed"</code>, which is the default, and is not available with
-<code>"expected"</code>.</p>
+<code>information = observed_info()</code>, which is the default, and is not available
+with <code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="which-effective-degrees-of-freedom">Which effective degrees of freedom<a class="anchor" aria-label="anchor" href="#which-effective-degrees-of-freedom"></a></h2>
@@ -139,7 +150,13 @@ because of the mode's own condition,
 reads the full penalized information, including the term's couplings with
 the other blocks. <code><a href="statmod_edf.html">statmod_edf()</a></code> reads each term's share from the diagonal
 block of the same full smoother matrix \((H+S)^{-1}H\), so the per-term
-numbers add up to \(\tau\).</p>
+numbers add up to \(\tau\). The count stored in the fitted model
+(<code>fit@edf</code>) is read on the <code>information</code> of this criterion, so that it
+reproduces the \(\tau\) that the criterion charged, and
+<code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> keeps it whatever its <code>vcov_type</code> is. For a
+positive semidefinite \(H\) the total lies in \([0, p]\), with \(p\)
+the number of coefficients; an indefinite observed information can give a
+direction of negative curvature a negative share.</p>
 <p>Where a penalty has a kink the trace is restricted to the active
 coordinates, so for a lasso \(\tau\) is the number of surviving
 coefficients, the unbiased count of Zou, Hastie and Tibshirani (2007).</p>

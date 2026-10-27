@@ -10,7 +10,7 @@ any single parameter of that distribution.
 # S3 method for class 'StatmodFit'
 residuals(
   object,
-  type = c("quantile", "pearson", "response"),
+  residual_type = c("quantile", "pearson", "response"),
   seed = NULL,
   ...
 )
@@ -23,7 +23,7 @@ residuals(
   A
   [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
-- type:
+- residual_type:
 
   `"quantile"` (the default), `"pearson"` or `"response"`. The argument
   is matched with

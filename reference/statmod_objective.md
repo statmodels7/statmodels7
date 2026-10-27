@@ -12,7 +12,7 @@ statmod_objective(
   hyper,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = "opg"
+  emethod = NULL
 )
 ```
 
@@ -37,10 +37,14 @@ statmod_objective(
   `TRUE` for the expected information in `he`, `FALSE` for the observed
   one.
 
-- approx:
+- emethod:
 
-  How the expected information is approximated for a family with no
-  closed form.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 ## Value
 

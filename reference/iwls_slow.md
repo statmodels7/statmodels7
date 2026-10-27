@@ -27,4 +27,5 @@ A single logical.
 ## See also
 
 [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md),
-[`iwls_switch_rate()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_rate.md).
+[`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
+whose argument `switch_rate` supplies `rate`.

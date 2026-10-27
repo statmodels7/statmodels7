@@ -13,7 +13,7 @@ Schur complement of those coefficients."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@ Schur complement of those coefficients.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">marginal_vcov</span><span class="op">(</span><span class="va">object</span>, <span class="va">design</span>, <span class="va">A</span>, <span class="va">keep</span>, <span class="va">type</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">marginal_vcov</span><span class="op">(</span><span class="va">object</span>, <span class="va">design</span>, <span class="va">A</span>, <span class="va">keep</span>, <span class="va">convention</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,8 +75,9 @@ Schur complement of those coefficients.</p>
 coefficients.</p></dd>
 
 
-<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p><code>"bayesian"</code> or <code>"unconditional"</code>.</p></dd>
+<dt id="arg-convention">convention<a class="anchor" aria-label="anchor" href="#arg-convention"></a></dt>
+<dd><p>The <code>name</code> of a <a href="vcov_method.html">vcov_method</a> object, <code>"bayesian"</code> or
+<code>"unconditional"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -95,9 +96,9 @@ mode of the penalized likelihood at \(\gamma\), and
 $$\mathrm{Var}(\hat\beta) = K_{uu}^{-1} + B\,V_v B^\top,\qquad
   V_v = \big[-\nabla^2_{vv}\ell_M\big]^{-1},$$
 where \(K_{uu}^{-1}\) is padded with zeros on \(\gamma\) and \(B\)
-holds one direction per coordinate of \(v\). For <code>type = "bayesian"</code>
+holds one direction per coordinate of \(v\). For <code><a href="bayesian_vcov.html">bayesian_vcov()</a></code>
 \(v = \gamma\) and the hyperparameters are held; for
-<code>type = "unconditional"</code> \(v = (\eta, \gamma)\) and the hyperparameters'
+<code><a href="unconditional_vcov.html">unconditional_vcov()</a></code> \(v = (\eta, \gamma)\) and the hyperparameters'
 directions are \(-K_{uu}^{-1}\partial^2\rho/\partial u\,\partial\eta\).</p>
 <p>Replacing \(-\nabla^2_{\gamma\gamma}\ell_M\) by the Schur complement
 \(K_{\gamma\gamma} - K_{\gamma u}K_{uu}^{-1}K_{u\gamma}\) gives back

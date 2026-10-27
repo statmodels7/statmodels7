@@ -2,10 +2,11 @@
 
 Returns the components of the predictive mixture that
 [`predictive_response()`](https://statmodels7.github.io/statmodels7/reference/predictive_response.md)
-reads for `predictive = "bootstrap"`. There is one component per
-replica, which is the fit refitted on a response simulated from the
-fitted model and read at the rows predicted with no estimation
-uncertainty of its own.
+reads for
+[`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md).
+There is one component per replica, which is the fit refitted on a
+response simulated from the fitted model and read at the rows predicted
+with no estimation uncertainty of its own.
 
 ## Usage
 
@@ -33,7 +34,8 @@ predictive_bootstrap(object, spec, design, aside, n_boot, refit)
 
 - n_boot:
 
-  The number of replicas.
+  The number of replicas, from
+  [`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md).
 
 - refit:
 
@@ -89,10 +91,12 @@ Each replica gives the component \\(\hat\eta^\*\_b, C^\*\_b)\\: its
 predictors at the rows predicted and the covariance that the effects set
 aside add, at its own hyperparameters. The interval is the mixture's,
 which is the parametric bootstrap predictive distribution of Harris
-(1989); the default `predictive = "averaged"` is its normal
-approximation, in which the sampling distribution of the estimates is
-replaced by \\\mathrm{N}(\hat \beta, \widehat{V})\\. A replica whose
-refit fails is left out, and the warning reports how many were.
+(1989); the default
+[`pred_averaged()`](https://statmodels7.github.io/statmodels7/reference/pred_averaged.md)
+is its normal approximation, in which the sampling distribution of the
+estimates is replaced by \\\mathrm{N}(\hat \beta, \widehat{V})\\. A
+replica whose refit fails is left out, and the warning reports how many
+were.
 
 ## References
 
@@ -113,8 +117,9 @@ set.seed(2)
 dd <- data.frame(x = runif(30))
 dd$y <- 1 + dd$x + rnorm(30, sd = 0.5)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-predict(fit, "response", data.frame(x = 0.5), interval = "prediction",
-        predictive = "bootstrap", n_boot = 20)
+predict(fit, what = "response", newdata = data.frame(x = 0.5),
+        interval = prediction_interval(
+          predictive = pred_bootstrap(n = 20)))
 #>        fit        se     lower    upper
 #> 1 1.547902 0.5891418 0.3767825 2.695134
 ```

@@ -34,6 +34,7 @@ the covariates of the other equations need not be in `newdata`: on
 `accel ~ s(times) | sigma ~ z`, `predict(fit, what = "mu", newdata)`
 does not need `z`. Every equation is built where `what` is not the name
 of a parameter (`"parameter"`, `"link"`, `"link:<parameter>"` or a
-moment), where `interval` is not `"confidence"`, or where the model
-carries a structural term, whose recursion reads the predictors of every
-equation.
+moment), where `interval` is not
+[`confidence_interval()`](https://statmodels7.github.io/statmodels7/reference/confidence_interval.md),
+or where the model carries a structural term, whose recursion reads the
+predictors of every equation.

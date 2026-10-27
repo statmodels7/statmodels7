@@ -11,7 +11,7 @@ question than whether the Hessian exists."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +91,7 @@ In the first two cases the cost of the Hessian at each evaluation outweighs
 the saving in evaluations.</p>
 <p>The availability of the Hessian still governs the rest: it is supplied to an
 optimizer that the caller names, <code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> and
-<code>vcov(type = "unconditional")</code> read it, and it is recorded as
+<code>vcov(vcov_type = unconditional_vcov())</code> read it, and it is recorded as
 <code>exact_hessian</code>. Only the default direction is held back.</p>
 <p>The block width is read from the <code>block</code> property of the penalty where it
 has one; a penalty without that property is treated as univariate.</p>

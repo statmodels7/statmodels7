@@ -8,7 +8,7 @@ value, and the result is not inferred from the family's class.
 ## Usage
 
 ``` r
-expected_deriv_ok(distrib)
+expected_deriv_ok(distrib, emethod = NULL)
 ```
 
 ## Arguments

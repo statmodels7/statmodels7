@@ -6,7 +6,7 @@ likelihood in each of its coordinates, read at the given coefficients.
 ## Usage
 
 ``` r
-statmod_curv(spec, design, coef, expected, approx)
+statmod_curv(spec, design, coef, expected, emethod)
 ```
 
 ## Arguments
@@ -19,7 +19,7 @@ statmod_curv(spec, design, coef, expected, approx)
 
   The coefficients, split by parameter.
 
-- expected, approx:
+- expected, emethod:
 
   Which information.
 

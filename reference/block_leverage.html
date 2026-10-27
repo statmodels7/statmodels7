@@ -9,7 +9,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,12 +86,10 @@ so a contraction of a third or fourth derivative never has to be assembled
 as a \(p\times p\) matrix in order to be traced against \(M\).</p>
 <p>It is computed once per evaluation point and read by the gradient's
 contraction and by every pair of the Hessian.</p>
-<p>Where both blocks are sparse, the product of their densities is below
-\(10^{-3}\) and the number of pairs is below \(2 \times 10^{7}\), the
-diagonal is computed by <code><a href="leverage_pairs.html">leverage_pairs()</a></code> from the nonzeros of each row.
-The pair count bounds the work in absolute terms, which the density by
-itself does not. Otherwise the diagonal is read off the dense product that
-has the fewer columns.</p>
+<p>Where both blocks are sparse and the pairs of nonzeros in a row number
+fewer than a quarter of \(p_a p_b\), the diagonal is computed by
+<code><a href="leverage_pairs.html">leverage_pairs()</a></code> from the nonzeros of each row. Otherwise it is read off
+the dense product that has the fewer columns.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

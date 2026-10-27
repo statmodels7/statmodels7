@@ -11,7 +11,7 @@ p-value."><meta property="og:image" content="https://statmodels7.github.io/statm
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,8 +53,8 @@ p-value.</p>
 <span>  <span class="va">param</span>,</span>
 <span>  <span class="va">coefname</span>,</span>
 <span>  value <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  test <span class="op">=</span> <span class="st">"wald"</span>,</span>
-<span>  type <span class="op">=</span> <span class="st">"bayesian"</span>,</span>
+<span>  test <span class="op">=</span> <span class="fu"><a href="wald_test.html">wald_test</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  vcov_type <span class="op">=</span> <span class="fu"><a href="bayesian_vcov.html">bayesian_vcov</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  mode_error <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  objective0 <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -78,12 +78,13 @@ p-value.</p>
 
 
 <dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
-<dd><p>One of <code>"wald"</code>, <code>"lr"</code>, <code>"score"</code>, <code>"gradient"</code>.</p></dd>
+<dd><p>A <a href="test_statistic.html">test_statistic</a> object: <code><a href="wald_test.html">wald_test()</a></code>, <code><a href="lr_test.html">lr_test()</a></code>,
+<code><a href="score_test.html">score_test()</a></code> or <code><a href="gradient_test.html">gradient_test()</a></code>.</p></dd>
 
 
-<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Which variance the Wald statistic reads, as
-<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> takes it.</p></dd>
+<dt id="arg-vcov-type">vcov_type<a class="anchor" aria-label="anchor" href="#arg-vcov-type"></a></dt>
+<dd><p>A <a href="vcov_method.html">vcov_method</a> object, the variance that the Wald statistic
+reads, as <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> takes it.</p></dd>
 
 
 <dt id="arg-mode-error">mode_error<a class="anchor" aria-label="anchor" href="#arg-mode-error"></a></dt>
@@ -103,7 +104,8 @@ likelihood ratio many times on one fit. <code>NULL</code> computes it here.</p><
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>test</code>, <code>statistic</code>, <code>df</code>, <code>p.value</code>, <code>converged</code> –
+    <p>A list with <code>test</code> (the <a href="test_statistic.html">test_statistic</a> object), <code>statistic</code>, <code>df</code>,
+<code>p.value</code>, <code>converged</code> –
 <code>NA</code> for the Wald statistic and the restricted fit's flag for the other
 three – and <code>mode_error</code>, <code>NA</code> unless it is requested.</p>
     </div>
@@ -134,9 +136,9 @@ converged.</p>
 \(\ell(\hat\beta)\) and the difference of log-likelihoods can be
 negative. The other three statistics read the penalized objective as well:
 \(U\) and \(K\) are its gradient and its curvature, and the Wald
-variance is \((H+S)^{-1}\) under <code>type = "bayesian"</code>.</p>
+variance is \((H+S)^{-1}\) under <code>vcov_type = bayesian_vcov()</code>.</p>
 <p>For a shrunk coordinate this is the reading that <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> gives
-under <code>type = "bayesian"</code>: the penalty is a log-prior, so \(\ell_p\) is
+under <code>vcov_type = bayesian_vcov()</code>: the penalty is a log-prior, so \(\ell_p\) is
 a log posterior at the hyperparameters in force, and the interval by
 inversion is the set that the posterior does not reject, conditional on
 them. The interpretation that the Wald interval on such a row carries

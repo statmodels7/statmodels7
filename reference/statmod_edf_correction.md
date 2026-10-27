@@ -13,7 +13,7 @@ statmod_edf_correction(
   design,
   method,
   expected = TRUE,
-  approx = "opg",
+  emethod = NULL,
   pinned = NULL
 )
 ```
@@ -48,10 +48,14 @@ statmod_edf_correction(
   The caller passes the information that the fit used, so that
   \\V\_\beta\\, \\H\\ and the criterion's Hessian read one information.
 
-- approx:
+- emethod:
 
-  The approximation for the expected information. The argument is not
-  read where the model carries a filter.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 - pinned:
 
@@ -139,7 +143,7 @@ are both computed on the joint vector. The two matrices are those that
 and
 [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
 build, so that this function and the criterion use one assembly. The
-joint route reads the observed information, and `expected` and `approx`
+joint route reads the observed information, and `expected` and `emethod`
 do not reach it. A model with no structural term of the filter shape
 takes the coefficient route, because
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)

@@ -11,7 +11,7 @@ statmod_information_at(
   coef,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = "opg",
+  emethod = NULL,
   H = NULL,
   index = NULL
 )
@@ -37,11 +37,14 @@ statmod_information_at(
   `TRUE` for the expected information, `FALSE` for the negated observed
   Hessian.
 
-- approx:
+- emethod:
 
-  How the expected information is approximated for a family with no
-  closed form: `"opg"` (the default), `"bartlett"`, `"integrate"` or
-  `"mc"`.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 - H:
 
@@ -75,8 +78,9 @@ inverts and which is positive definite wherever the family is regular.
 `expected = FALSE` gives the negated observed Hessian, which far from
 the optimum may be indefinite.
 
-`approx` reaches distributions7 and is read only where the family has no
-closed expected information.
+`emethod` is the `method` of
+[`distributions7::distrib_expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_expected_hessian.html)
+and is read only when `expected` is `TRUE`.
 
 With `index` only the requested columns of each design enter a cross
 product, so that reading a few rows and columns does not require

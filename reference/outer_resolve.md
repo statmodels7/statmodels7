@@ -1,9 +1,16 @@
 # Settle a Marginal Criterion's Information Against the Family
 
-Replaces `hessian = "auto"` by the information that the criterion uses
-for `distrib`: `"expected"` for a Student t, a skew t or a Cauchy
-response, wrapped or not, and `"observed"` for every other family. Any
-other value is returned unchanged.
+Replaces
+[`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+by the information that the criterion uses for `distrib`:
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+for a Student t, a skew t or a Cauchy response, wrapped or not, and
+[`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+for every other family. The approximation that the
+[`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md)
+object carries passes to the
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+object. Any other information is returned unchanged.
 
 ## Usage
 

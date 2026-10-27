@@ -11,7 +11,7 @@ and the notes that qualify the numbers."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,11 +65,13 @@ and the notes that qualify the numbers.</p>
 <span>  converged <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  elapsed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  level <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
-<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
-<span>  test <span class="op">=</span> <span class="st">"wald"</span>,</span>
+<span>  vcov_type <span class="op">=</span> <span class="fu"><a href="vcov_method.html">vcov_method</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  test <span class="op">=</span> <span class="fu"><a href="wald_test.html">wald_test</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  max_coef <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  notes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
-<span>  certificate <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  certificate <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  information <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  bootstrap <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -142,7 +144,7 @@ correction for estimated hyperparameters where it was requested.</p></dd>
 <dd><p>The confidence level at which the intervals were built.</p></dd>
 
 
-<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
+<dt id="arg-vcov-type">vcov_type<a class="anchor" aria-label="anchor" href="#arg-vcov-type"></a></dt>
 <dd><p>Which variance convention was used.</p></dd>
 
 

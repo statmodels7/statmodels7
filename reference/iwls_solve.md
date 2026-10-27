@@ -6,7 +6,15 @@ requested decomposition.
 ## Usage
 
 ``` r
-iwls_solve(pieces, u, how, damp = 0, frozen = integer(0))
+iwls_solve(
+  pieces,
+  u,
+  how,
+  damp = 0,
+  frozen = integer(0),
+  tol = NULL,
+  floor = 1e-08
+)
 ```
 
 ## Arguments
@@ -36,6 +44,20 @@ iwls_solve(pieces, u, how, damp = 0, frozen = integer(0))
   vector. They are dropped from the system exactly as a coordinate whose
   curvature is not finite is, so the step is that of the problem reduced
   to the rest. The default is empty.
+
+- tol:
+
+  The tolerance of the factorization, as the solver carries it: the
+  pivoted QR tolerance for `how = "qr"`, the relative cut of the
+  singular values for `how = "svd"` (`NULL` for the default cut), and
+  unused for `"chol"`. The default is `NULL`.
+
+- floor:
+
+  The relative floor of the eigenvalues of an assembled matrix that is
+  not positive definite, as
+  [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
+  takes it. The default is `1e-8`.
 
 ## Value
 
@@ -125,4 +147,4 @@ column is finite.
 [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
 for the input,
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-for the `decomposition` argument that this function serves.
+for the `solver` argument that this function serves.

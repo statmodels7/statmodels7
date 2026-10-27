@@ -24,7 +24,10 @@ pieces_definite(pc, rel = 1e-08)
 
   The relative floor,
   [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)'s
-  own.
+  own by default;
+  [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
+  passes
+  [`iwls_definite_tol()`](https://statmodels7.github.io/statmodels7/reference/iwls_definite_tol.md).
 
 ## Value
 

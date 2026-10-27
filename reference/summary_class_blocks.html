@@ -13,7 +13,7 @@ which it belongs."><meta property="og:image" content="https://statmodels7.github
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,9 @@ which it belongs.</p>
 <span>  <span class="va">tables</span>,</span>
 <span>  edf <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  coef <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  hyper <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  hyper <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  expected <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  emethod <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -89,6 +91,18 @@ do.</p></dd>
 
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
 <dd><p>The hyperparameters, or <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-expected">expected<a class="anchor" aria-label="anchor" href="#arg-expected"></a></dt>
+<dd><p>Whether the smoother of a class is read on the expected
+information. It is the information on which the table <code>edf</code> was read, so
+that the count of a class and the counts of its members are shares of the
+same matrix.</p></dd>
+
+
+<dt id="arg-emethod">emethod<a class="anchor" aria-label="anchor" href="#arg-emethod"></a></dt>
+<dd><p>The method that obtains the expected information, as for
+<code><a href="statmod_edf.html">statmod_edf()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

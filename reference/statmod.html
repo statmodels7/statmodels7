@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,7 @@ scales are estimated from the data.</p>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  offsets <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  inner_optimizer <span class="op">=</span> <span class="fu"><a href="iwls.html">iwls</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  inner_information <span class="op">=</span> <span class="fu"><a href="auto_info.html">auto_info</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  outer_criterion <span class="op">=</span> <span class="fu"><a href="reml.html">reml</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  sparse_criterion <span class="op">=</span> <span class="fu"><a href="aic.html">bic</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  outer_optimizer <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -113,11 +114,40 @@ is added to the entry for the same parameter.</p></dd>
 
 
 <dt id="arg-inner-optimizer">inner_optimizer<a class="anchor" aria-label="anchor" href="#arg-inner-optimizer"></a></dt>
-<dd><p>How the smooth block is fitted: <code><a href="iwls.html">iwls()</a></code> or
-an <span class="pkg">optimizers7</span> optimizer. Beside a structural term of the filter
-shape, the coefficients and the term's parameters are fitted in one
-system, for which <code><a href="iwls.html">iwls()</a></code> stands for the system's own default optimizer
-and an <span class="pkg">optimizers7</span> optimizer is used as given.</p></dd>
+<dd><p>How the smooth block is fitted: <code><a href="iwls.html">iwls()</a></code> (the
+default) or an <span class="pkg">optimizers7</span> optimizer. Beside a structural term of
+the filter shape, the coefficients and the term's parameters are fitted in
+one system, for which <code><a href="iwls.html">iwls()</a></code> stands for the system's own default
+optimizer and an <span class="pkg">optimizers7</span> optimizer is used as given.</p></dd>
+
+
+<dt id="arg-inner-information">inner_information<a class="anchor" aria-label="anchor" href="#arg-inner-information"></a></dt>
+<dd><p>The matrix of second derivatives that the inner fit
+uses, an object that inherits from <a href="https://statmodels7.github.io/distributions7/reference/Information.html" class="external-link">distributions7::Information</a>:
+<code><a href="https://statmodels7.github.io/distributions7/reference/observed_info.html" class="external-link">distributions7::observed_info()</a></code> (the observed Hessian),
+<code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code> (the Fisher information, whose <code>method</code>
+is <code>NULL</code> for the closed form of the family or <code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code>,
+or one of <code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code>, <code><a href="https://statmodels7.github.io/distributions7/reference/expect_integrate.html" class="external-link">distributions7::expect_integrate()</a></code>
+and <code><a href="https://statmodels7.github.io/distributions7/reference/expect_mc.html" class="external-link">distributions7::expect_mc()</a></code>; see
+<a href="https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html" class="external-link">distributions7::expected_derivative_methods</a>) or <code><a href="auto_info.html">auto_info()</a></code> (the
+default), which is settled against the family. With <code><a href="iwls.html">iwls()</a></code> the matrix
+is inverted at each step (Newton for the observed information, Fisher
+scoring for the expected one); with an <span class="pkg">optimizers7</span> optimizer it is
+the Hessian that the optimizer receives, so that
+<code>inner_optimizer = optimizers7::newton()</code> with
+<code>inner_information = distributions7::expected_info()</code> takes the expected
+information. A named matrix is the only one that the inner fit uses.
+<code><a href="auto_info.html">auto_info()</a></code> chooses the expected information where the family writes it
+exactly and at an acceptable cost, and the observed information
+otherwise; with <code><a href="iwls.html">iwls()</a></code> it also lets the run change matrix and lets the
+expected information take a step that the observed one cannot (see
+<a href="information_objects.html">information_objects</a>). The fitted model records the settled object, and
+every later refit of the model (the folds of a cross-validation, the
+restricted fits of a test, the resampled fits of a bootstrap) reads the
+same one. A model with a structural term is fitted on the observed
+information whatever the object says. The outer criterion has its own
+<code>information</code> (see <code><a href="reml.html">reml()</a></code>) and the standard errors have theirs (see
+<a href="vcov_method.html">vcov_method</a>); the three choices are independent.</p></dd>
 
 
 <dt id="arg-outer-criterion">outer_criterion<a class="anchor" aria-label="anchor" href="#arg-outer-criterion"></a></dt>
@@ -202,9 +232,8 @@ triangular factor), and the results then agree to rounding.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Not used. A named argument signals an error. <code>hyper</code> was
-removed from <code>statmod()</code>: a hyperparameter is held in the term that
-carries the penalty.</p></dd>
+<dd><p>Not used. A named argument signals an error. A hyperparameter
+is held in the term that carries the penalty.</p></dd>
 
 </dl></div>
     <div class="section level2">

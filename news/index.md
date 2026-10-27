@@ -1,5 +1,197 @@
 # Changelog
 
+## statmodels7 0.211.0
+
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) and
+  `autoplot()` draw a fit with ggplot2 and return the ggplot2 object;
+  ggplot2 and patchwork are imported. The graph is an S7 object passed
+  as `type`, its data are computed by
+  [`plot_data()`](https://statmodels7.github.io/statmodels7/reference/plot_data.md),
+  which dispatches on the type and on the term or the family, and drawn
+  by
+  [`plot_layers()`](https://statmodels7.github.io/statmodels7/reference/plot_layers.md).
+  The graphs of a term (`term =`, `param =`) are
+  [`plot_effect()`](https://statmodels7.github.io/statmodels7/reference/plot_effect.md)
+  with partial residuals from the working response,
+  [`plot_derivative()`](https://statmodels7.github.io/statmodels7/reference/plot_derivative.md),
+  [`plot_surface()`](https://statmodels7.github.io/statmodels7/reference/plot_surface.md),
+  [`plot_criterion()`](https://statmodels7.github.io/statmodels7/reference/plot_criterion.md),
+  [`plot_shrinkage()`](https://statmodels7.github.io/statmodels7/reference/plot_shrinkage.md),
+  [`plot_path()`](https://statmodels7.github.io/statmodels7/reference/plot_path.md),
+  [`plot_caterpillar()`](https://statmodels7.github.io/statmodels7/reference/plot_caterpillar.md),
+  [`plot_prior()`](https://statmodels7.github.io/statmodels7/reference/plot_prior.md),
+  [`plot_random_cov()`](https://statmodels7.github.io/statmodels7/reference/plot_random_cov.md),
+  [`plot_curves()`](https://statmodels7.github.io/statmodels7/reference/plot_curves.md),
+  [`plot_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/plot_breakpoint.md),
+  [`plot_filter()`](https://statmodels7.github.io/statmodels7/reference/plot_filter.md),
+  [`plot_news_impact()`](https://statmodels7.github.io/statmodels7/reference/plot_news_impact.md),
+  [`plot_states()`](https://statmodels7.github.io/statmodels7/reference/plot_states.md)
+  and
+  [`plot_regime_density()`](https://statmodels7.github.io/statmodels7/reference/plot_regime_density.md);
+  those of the fitted distribution are
+  [`plot_param()`](https://statmodels7.github.io/statmodels7/reference/plot_param.md),
+  [`plot_quantiles()`](https://statmodels7.github.io/statmodels7/reference/plot_quantiles.md),
+  [`plot_density()`](https://statmodels7.github.io/statmodels7/reference/plot_density.md)
+  and
+  [`plot_moments()`](https://statmodels7.github.io/statmodels7/reference/plot_moments.md);
+  the diagnostic graphs are
+  [`plot_qq()`](https://statmodels7.github.io/statmodels7/reference/plot_qq.md),
+  [`plot_worm()`](https://statmodels7.github.io/statmodels7/reference/plot_worm.md),
+  [`plot_residuals()`](https://statmodels7.github.io/statmodels7/reference/plot_residuals.md),
+  [`plot_pit()`](https://statmodels7.github.io/statmodels7/reference/plot_pit.md),
+  [`plot_calibration()`](https://statmodels7.github.io/statmodels7/reference/plot_calibration.md),
+  [`plot_score()`](https://statmodels7.github.io/statmodels7/reference/plot_score.md),
+  [`plot_influence()`](https://statmodels7.github.io/statmodels7/reference/plot_influence.md),
+  [`plot_acf()`](https://statmodels7.github.io/statmodels7/reference/plot_acf.md)
+  and
+  [`plot_ppc()`](https://statmodels7.github.io/statmodels7/reference/plot_ppc.md).
+  `plot(fit)` without arguments draws
+  [`diagnostics()`](https://statmodels7.github.io/statmodels7/reference/diagnostics.md).
+  A fit does not keep its data, so a graph that reads the covariates
+  takes the fitting data as `data`.
+
+- [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  takes `sandwich = hc0_sandwich()` or
+  [`hc1_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md),
+  each with an optional `cluster = ~ id` (CR0 and CR1). The matrix is
+  `V_b B V_b`, with `V_b` the inverse penalized information and `B` the
+  sum over observations, or over clusters, of the outer product of the
+  scores of the log-likelihood in the whole coefficient vector, random
+  effects included. The correction of HC1 and CR1 uses the effective
+  degrees of freedom of the model. The sandwich is rejected for a model
+  with `gas()`, `regime()`, a break-point term or `nl()`. Prior weights
+  are frequency weights. [`vcov()`](https://rdrr.io/r/stats/vcov.html),
+  [`confint()`](https://rdrr.io/r/stats/confint.html),
+  [`summary()`](https://rdrr.io/r/base/summary.html),
+  [`predict()`](https://rdrr.io/r/stats/predict.html) and the tests take
+  it through `vcov_type`; with `sandwich = NULL` the result is
+  unchanged.
+
+- [`bootstrap_vcov()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_vcov.md)
+  is a fourth variance convention for the argument `vcov_type`: the
+  covariance of the coefficients of refitted, resampled data sets.
+  `add_bootstrap(fit, n, resample, refit)` computes the replicates and
+  stores them in the fit,
+  [`statmod_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/statmod_bootstrap.md)
+  reads them, and [`coef()`](https://rdrr.io/r/stats/coef.html) of an
+  entry is the matrix of replicates. The schemes are
+  [`parametric_resample()`](https://statmodels7.github.io/statmodels7/reference/parametric_resample.md),
+  [`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
+  (frequency weights times the weights of the fit, the design not
+  rebuilt) and `cluster_resample(~ id)`. Draws are made in the calling
+  process from the session’s random number stream and the refits go to
+  the workers of the fit, so a result does not depend on the number of
+  workers; a stored entry can be extended, and 500 replicates followed
+  by 300 more equal 800 from the same seed. A replicate that fails (an
+  error, a mode error above
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md),
+  a coefficient that the weights leave unidentified) is replaced.
+  [`summary()`](https://rdrr.io/r/base/summary.html) prints the number
+  of replicates, the replaced ones, the Monte Carlo error and, for a
+  kinked penalty, the selection frequencies.
+  [`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md)
+  runs on the same engine and gives the same replicas as before.
+
+- The choices of a method are S7 objects.
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  takes `inner_information = auto_info()` (the matrix of the inner fit,
+  which an optimizers7 optimizer such as `newton()` also receives);
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  takes `solver = solve_qr()`,
+  [`solve_svd()`](https://statmodels7.github.io/statmodels7/reference/solve_svd.md)
+  or
+  [`solve_chol()`](https://statmodels7.github.io/statmodels7/reference/solve_chol.md)
+  and the loop’s tolerances;
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  take `information = observed_info()` or `expected_info(method = )`. In
+  the outer criterion the matrix and every derivative of it read the
+  same method, so the exact outer gradient and Hessian are available on
+  a family without a closed-form expected information, where
+  `method = NULL` is the `expect_opg()` estimate.
+
+- The variance of the estimates is `vcov_type = bayesian_vcov()`,
+  [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  or
+  [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
+  (class `vcov_method`), each with `information = NULL`, resolved by
+  [`distributions7::default_information()`](https://statmodels7.github.io/distributions7/reference/default_information.html).
+  The argument `type` no longer exists:
+  [`residuals()`](https://rdrr.io/r/stats/residuals.html) takes
+  `residual_type` and [`logLik()`](https://rdrr.io/r/stats/logLik.html)
+  takes `loglik_type`. [`vcov()`](https://rdrr.io/r/stats/vcov.html)
+  takes `param`, and
+  [`hessian()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
+  takes `information`.
+
+- The test of
+  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
+  [`confint()`](https://rdrr.io/r/stats/confint.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html) is
+  [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md),
+  [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md),
+  [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+  or
+  [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md).
+
+- [`predict()`](https://rdrr.io/r/stats/predict.html) takes
+  `interval = confidence_interval()`,
+  [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)
+  or `prediction_interval(predictive = pred_averaged())`, with
+  [`pred_plugin()`](https://statmodels7.github.io/statmodels7/reference/pred_plugin.md)
+  and `pred_bootstrap(n, refit)`, and `vcov_type` as a named argument.
+
+- A method whose `...` is unused signals an error naming the argument.
+
+- The effective degrees of freedom stored in a fit read the information
+  of the outer criterion: that of
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  as before, that of
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  or
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  (observed by default), and the inner information only without an outer
+  criterion. [`summary()`](https://rdrr.io/r/base/summary.html) reports
+  them on the information of its `vcov_type`, the matrix of the standard
+  errors that it prints, except for a fit priced by
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and a model with a structural term, and notes when the observed
+  information read for them is indefinite.
+
+## statmodels7 0.210.1
+
+- The leverage diagonal of the outer derivatives takes the compiled
+  kernel over the nonzeros of each row whenever its work is below a
+  quarter of the dense route’s, in place of a product of densities below
+  1e-3 and fewer than 2e7 pairs. A smooth beside 200 random-effect
+  levels at n = 20000 now costs 3 ms per evaluation where it cost 36 ms
+  (524 ms against 3 ms at 1000 levels), with the same values to 2.5e-15.
+
+## statmodels7 0.210.0
+
+- A structural term of the likelihood shape (`regime()`, a marginal
+  `jump()`) is fitted by two routes from the same start, and the better
+  fit is kept by the rule that the multistarts use. The first route
+  solves the coefficients and the term’s own parameters in one system.
+  The second alternates between the two blocks and then solves the joint
+  system from the point that the alternation reached. On
+  [`MASS::geyser`](https://rdrr.io/pkg/MASS/man/geyser.html),
+  `waiting ~ regime(k = 2)` stopped 1.3e-3 below the maximum with the
+  convergence flag `FALSE`, and it now reaches -1099.6321, the value of
+  `waiting ~ 0 + regime(k = 2)`.
+- [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  reads the mode error over the coefficients and the free parameters of
+  a structural term together. It read the coefficients alone, so a fit
+  that stopped short in the term’s own parameters was certified
+  `converged` while its convergence flag was `FALSE`.
+
 ## statmodels7 0.209.1
 
 - A break-point that `jump()` holds at the minimum of its profile is
@@ -1069,12 +1261,9 @@ found were repaired. Requires modelterms7 0.98.0.
   then moved from 0.43769 to 0.43727 and 0.43683 as its step halved.
 - Fisher scoring settled on by `iwls(hessian = "auto")` continues on the
   observed information as soon as it contracts slowly, the last two
-  ratios of consecutive scores above
-  [`iwls_switch_rate()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_rate.md)
-  = 0.5, and at the latest after
-  [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md)
-  = 10 steps as before. A run started on `iwls(hessian = "expected")`
-  still never switches.
+  ratios of consecutive scores above `iwls_switch_rate()` = 0.5, and at
+  the latest after `iwls_switch_after()` = 10 steps as before. A run
+  started on `iwls(hessian = "expected")` still never switches.
 - The default budget of
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   is 1000 iterations, where it was 100.
@@ -1119,22 +1308,21 @@ found were repaired. Requires modelterms7 0.98.0.
 
 - `iwls(hessian = "auto")` settled on the expected information (a family
   whose expected information is exact) continues on the observed
-  information after
-  [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md)
-  = 10 scoring steps without convergence, the expected information
-  standing in where the observed one cannot step. Fisher scoring
-  converges only linearly near the mode where the two informations
-  differ, which they do whenever the dispersion has an equation of its
-  own. Measured on `ChickWeight`, a gaussian with smooths in the mean
-  and in sigma: the first inner fit needed 235 scoring steps, the budget
-  is 100, and the REML criterion was unavailable at its start; it now
-  converges in 0.8 s. With random intercepts on the chicks in both
-  equations the fit stopped, certificate `unknown`, at a REML criterion
-  of -2417.314 with the standard deviation of the intercepts at 0.028;
-  it now reaches -2416.533 and 0.685, glmmTMB’s 0.6846, in 9.6 s against
-  19.0. With smooths and random intercepts in both equations, 13.7 s
-  against 36.6 at the same point. A run that converges within ten steps
-  is unchanged bit for bit.
+  information after `iwls_switch_after()` = 10 scoring steps without
+  convergence, the expected information standing in where the observed
+  one cannot step. Fisher scoring converges only linearly near the mode
+  where the two informations differ, which they do whenever the
+  dispersion has an equation of its own. Measured on `ChickWeight`, a
+  gaussian with smooths in the mean and in sigma: the first inner fit
+  needed 235 scoring steps, the budget is 100, and the REML criterion
+  was unavailable at its start; it now converges in 0.8 s. With random
+  intercepts on the chicks in both equations the fit stopped,
+  certificate `unknown`, at a REML criterion of -2417.314 with the
+  standard deviation of the intercepts at 0.028; it now reaches
+  -2416.533 and 0.685, glmmTMB’s 0.6846, in 9.6 s against 19.0. With
+  smooths and random intercepts in both equations, 13.7 s against 36.6
+  at the same point. A run that converges within ten steps is unchanged
+  bit for bit.
 - `Iwls` gains the property `switch_after`;
   [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
   takes `switch_at` and `switch_after` and returns `switched`, the
@@ -2245,12 +2433,11 @@ choosing a model, each decided with the measurement beside it.
   and
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   with `hessian = "expected"` no longer applies to them:
-  [`expected_is_opg()`](https://statmodels7.github.io/statmodels7/reference/expected_is_opg.md)
-  answers `FALSE`, and a fit on that route carries an analytic
-  certificate. The rejection stays for a family that approximates its
-  expected information, which only a family written outside the toolkit
-  now does; the tests use one written for the purpose, borrowing pig1’s
-  mass and derivatives.
+  `expected_is_opg()` answers `FALSE`, and a fit on that route carries
+  an analytic certificate. The rejection stays for a family that
+  approximates its expected information, which only a family written
+  outside the toolkit now does; the tests use one written for the
+  purpose, borrowing pig1’s mass and derivatives.
 
 - `iwls(hessian = "auto")` stays on the observed information for the two
   families (Giovanni), reading
@@ -2324,18 +2511,16 @@ choosing a model, each decided with the measurement beside it.
   `reml(hessian = "observed")` as the remedy.
 
 - Whether a family is one of these is determined by a probe, not read
-  from a list:
-  [`expected_is_opg()`](https://statmodels7.github.io/statmodels7/reference/expected_is_opg.md)
-  evaluates the expected information at two responses and one parameter
-  value, which an expectation cannot tell apart. Over the 40 univariate
-  constructors it answers `TRUE` on exactly the six, and on the wrappers
-  that inherit it (`fixed(skewt_distrib(), nu = 6)`,
-  `zero_inflated(pig1_distrib())`); `truncated()`, which reports no
-  closed form either, returns a quadrature and is not caught. The
-  caller’s random stream is restored. An expectation asked for by name,
-  `iwls(approx = "bartlett")`, is not rejected: it is a genuine expected
-  information, at 66 to 1930 seconds per evaluation at 4000
-  observations.
+  from a list: `expected_is_opg()` evaluates the expected information at
+  two responses and one parameter value, which an expectation cannot
+  tell apart. Over the 40 univariate constructors it answers `TRUE` on
+  exactly the six, and on the wrappers that inherit it
+  (`fixed(skewt_distrib(), nu = 6)`, `zero_inflated(pig1_distrib())`);
+  `truncated()`, which reports no closed form either, returns a
+  quadrature and is not caught. The caller’s random stream is restored.
+  An expectation asked for by name, `iwls(approx = "bartlett")`, is not
+  rejected: it is a genuine expected information, at 66 to 1930 seconds
+  per evaluation at 4000 observations.
 
 - The observed route is exact on all six, which is what makes the
   rejection a redirection rather than a loss. At 4000 observations with
@@ -5956,9 +6141,8 @@ choosing a model, each decided with the measurement beside it.
   call `he` and are the control. `newton()` on the pig2 model goes from
   **183.95 s to 0.05 s**, and on a gaussian from 1.07 s to 0.38 s.
 
-- [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
-  follows it: an optimizers7 optimizer no longer counts as having
-  inverted the expected information, so
+- `fit_expected()` follows it: an optimizers7 optimizer no longer counts
+  as having inverted the expected information, so
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) reports the matrix the
   step used, which is the rule that function’s page already stated.
   Measured on the three families that write a closed expected
@@ -5980,9 +6164,8 @@ choosing a model, each decided with the measurement beside it.
   and any positive definite matrix reaching the same stationary point.
 
 - THE STEP AND THE REPORT NOW TAKE DIFFERENT MATRICES, deliberately.
-  [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
-  answers `TRUE` only where the fit inverted the expected information
-  AND the family writes it out, so
+  `fit_expected()` answers `TRUE` only where the fit inverted the
+  expected information AND the family writes it out, so
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) falls back to the
   observed Hessian where the step used an approximation. Measured on the
   same regression: standard errors 5.7 percent from those of the exact

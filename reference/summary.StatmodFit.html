@@ -13,7 +13,7 @@ of freedom, the information criteria and the notes that qualify the numbers."><m
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,11 +55,9 @@ of freedom, the information criteria and the notes that qualify the numbers.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bayesian"</span>, <span class="st">"frequentist"</span>, <span class="st">"unconditional"</span><span class="op">)</span>,</span>
-<span>  expected <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  approx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"opg"</span>, <span class="st">"bartlett"</span>, <span class="st">"integrate"</span>, <span class="st">"mc"</span><span class="op">)</span>,</span>
+<span>  vcov_type <span class="op">=</span> <span class="fu"><a href="bayesian_vcov.html">bayesian_vcov</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  correct <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"lr"</span>, <span class="st">"score"</span>, <span class="st">"gradient"</span><span class="op">)</span>,</span>
+<span>  test <span class="op">=</span> <span class="fu"><a href="wald_test.html">wald_test</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  max_coef <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -77,25 +75,18 @@ of freedom, the information criteria and the notes that qualify the numbers.</p>
 <dd><p>The confidence level.</p></dd>
 
 
-<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Which variance matrix: passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>. The
-<code>"unconditional"</code> one carries the uncertainty of the hyperparameters into
-every standard error under it, where <code>correct</code> carries the same
-uncertainty into the degrees of freedom; the two are the same quantity
-read on two surfaces, and both can be used in one call.</p></dd>
-
-
-<dt id="arg-expected">expected<a class="anchor" aria-label="anchor" href="#arg-expected"></a></dt>
-<dd><p>The information from which the standard errors are computed,
-passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>. <code>NULL</code>, the default, takes the expected
-one where the fit inverted it and the family writes it out, and the
-observed Hessian otherwise; <code>TRUE</code> or <code>FALSE</code> selects one.</p></dd>
-
-
-<dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
-<dd><p>How the expected information is approximated for a family
-with no closed form, passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>: <code>"opg"</code> (the
-default), <code>"bartlett"</code>, <code>"integrate"</code> or <code>"mc"</code>.</p></dd>
+<dt id="arg-vcov-type">vcov_type<a class="anchor" aria-label="anchor" href="#arg-vcov-type"></a></dt>
+<dd><p>A <a href="vcov_method.html">vcov_method</a> object, the variance matrix, passed to
+<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>: <code><a href="bayesian_vcov.html">bayesian_vcov()</a></code> (the default),
+<code><a href="frequentist_vcov.html">frequentist_vcov()</a></code> or <code><a href="unconditional_vcov.html">unconditional_vcov()</a></code>. The information from which
+the standard errors are computed is an argument of each of them
+(<code><a href="https://statmodels7.github.io/distributions7/reference/observed_info.html" class="external-link">distributions7::observed_info()</a></code> by default). The last carries the
+uncertainty of the hyperparameters into every standard error under it,
+where <code>correct</code> carries the same uncertainty into the degrees of freedom;
+the two are the same quantity read on two surfaces, and both can be used
+in one call. The conventions are compared at <a href="vcov_method.html">vcov_method</a>. The effective
+degrees of freedom of the summary are read on this same information (see
+the section on the degrees of freedom).</p></dd>
 
 
 <dt id="arg-correct">correct<a class="anchor" aria-label="anchor" href="#arg-correct"></a></dt>
@@ -108,9 +99,12 @@ hyperparameter was estimated by a marginal criterion.</p></dd>
 
 
 <dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
-<dd><p>Which statistic the coefficient tables report: <code>"wald"</code>, the
-default, or <code>"lr"</code>, <code>"score"</code> or <code>"gradient"</code>, each of which costs one
-restricted refit per row. See <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>.</p></dd>
+<dd><p>A <a href="test_statistic.html">test_statistic</a> object, the statistic that the coefficient
+tables report. <code><a href="wald_test.html">wald_test()</a></code> (the default) reads the variance matrix and
+refits nothing. <code><a href="lr_test.html">lr_test()</a></code>, <code><a href="score_test.html">score_test()</a></code> and <code><a href="gradient_test.html">gradient_test()</a></code> cost one
+restricted refit per row and are reported as a signed root. The four are
+compared at <a href="test_statistic.html">test_statistic</a>; see also <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>. A character
+string is rejected with an error.</p></dd>
 
 
 <dt id="arg-max-coef">max_coef<a class="anchor" aria-label="anchor" href="#arg-max-coef"></a></dt>
@@ -175,7 +169,42 @@ probabilities of a regime chain), with a level that an intercept holds
 marked as held.</p></dd>
 
 
-</dl><p>A hyperparameter is the first row of its block, since it governs
+</dl></div>
+    <div class="section level2">
+    <h2 id="the-effective-degrees-of-freedom">The effective degrees of freedom<a class="anchor" aria-label="anchor" href="#the-effective-degrees-of-freedom"></a></h2>
+    <p>The edf of a term is its share of \(\mathrm{tr}[(H+S)^{-1}H]\), with
+\(H\) the information of the log-likelihood and \(S\) the second
+derivative of the penalty, read over the coefficients of every equation at
+once. The summary reads \(H\) on the information of <code>vcov_type</code>
+(<code><a href="https://statmodels7.github.io/distributions7/reference/default_information.html" class="external-link">distributions7::default_information()</a></code> of the family where the
+<code>information</code> of the variance object is <code>NULL</code>), which is the matrix that
+the standard errors above the edf invert. A call with
+<code>vcov_type = bayesian_vcov(information = expected_info())</code> therefore prints
+the standard errors and the edf on the expected information. The count
+stored in <code>fit@edf</code> was read at fit time on the information of the outer
+criterion: the observed information by default under <code><a href="reml.html">reml()</a></code> and <code><a href="reml.html">ml()</a></code>.
+With the defaults the two coincide, and the summary recomputes the count
+only where <code>vcov_type</code> names the other matrix.</p>
+<p>Three cases keep the count stored in the fit. Under <code><a href="aic.html">aic()</a></code> and <code><a href="aic.html">bic()</a></code> the
+count is part of the criterion that prices the fit, and it is read on the
+<code>information</code> of that criterion, so the summary leaves it as it is and the
+printed criterion stays reproducible from it. A model with a structural
+term is read on the joint vector of the coefficients and the term's own
+parameters, as before. A variance object without an <code>information</code> property
+has no matrix to read.</p>
+<p>The eigenvalues of \((H+S)^{-1}H\) are
+\(v^\top H v/(v^\top H v + v^\top S v)\), for the generalized eigenvectors
+\(v\). They lie in \([0, 1]\), and the total in \([0, p]\) with
+\(p\) the number of coefficients, when \(H\) is positive semidefinite.
+The observed information can be indefinite (a Student t at an outlier, for
+example). A direction with \(v^\top H v &lt; 0\) then contributes a negative
+share, an edf can be underestimated, and the bounds above can fail. The
+summary adds a note when the observed information used for the count has an
+eigenvalue below \(-p\,\epsilon\,\lambda_{\max}\) (\(\epsilon\) the
+machine epsilon and \(\lambda_{\max}\) the largest eigenvalue), the floor
+with which the package separates a flat direction from rounding. The
+expected information is positive semidefinite and carries no such note.</p>
+<p>A hyperparameter is the first row of its block, since it governs
 every coefficient under it, and its name carries a mark in square brackets
 that gives the source of the value. A hyperparameter estimated by <code><a href="reml.html">reml()</a></code>
 or <code><a href="reml.html">ml()</a></code> maximizes a twice differentiable criterion, so it carries a
@@ -287,8 +316,8 @@ has no gradient, and there is no outer line.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>,
-<code><a href="statmod_test.html">statmod_test()</a></code>, which computes the same four statistics for one
+    <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>, <a href="test_statistic.html">test_statistic</a>,
+<a href="vcov_method.html">vcov_method</a>, <code><a href="statmod_test.html">statmod_test()</a></code>, which computes the same four statistics for one
 coefficient against a value that need not be zero, and
 <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code></p></div>
     </div>
@@ -311,8 +340,8 @@ coefficient against a value that need not be zero, and
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Parametric terms</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                estimate      se     z       p  lower upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   (Intercept)     1.063 0.07579 14.02 &lt; 1e-16 0.9143 1.211</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   x               1.903  0.1313  14.5 &lt; 1e-16  1.646  2.16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   (Intercept)     1.063 0.07583 14.02 &lt; 1e-16 0.9143 1.212</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   x               1.903  0.1313 14.49 &lt; 1e-16  1.645  2.16</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> === sigma   [log link]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -324,9 +353,9 @@ coefficient against a value that need not be zero, and
 <span class="r-out co"><span class="r-pr">#&gt;</span> 95% intervals, bayesian variance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> conditional log-likelihood -55.852571    effective df 4.00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cAIC 119.705    cBIC 130.855</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 78 ms</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> inner   max |grad|/se 1.9e-15   min eigen 0.12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> outer   max |grad|/se 1.6e-14   min eigen 0.13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 117 ms</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> inner   max |grad|/se 1.6e-15   min eigen 0.12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> outer   max |grad|/se 1.8e-14   min eigen 0.13</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

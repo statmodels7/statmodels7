@@ -42,7 +42,7 @@ iwls_fit(
 
   An
   [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
-  object, carrying the curvature, the decomposition, the budget and the
+  object, carrying the curvature, the solver, the budget and the
   stopping rule.
 
 - n:
@@ -135,7 +135,8 @@ iwls_fit(
   [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   passes one for a method that
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
-  settled on the expected information from `"auto"`.
+  settled on the expected information from
+  [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md).
 
 - switch_after:
 

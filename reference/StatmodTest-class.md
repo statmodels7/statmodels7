@@ -7,13 +7,13 @@ value: the statistic, its distribution, the p-value and what was tested.
 
 ``` r
 StatmodTest(
-  test = character(0),
+  test = test_statistic(),
   statistic = integer(0),
   df = integer(0),
   p.value = integer(0),
   estimate = integer(0),
   null_value = integer(0),
-  parameter = character(0),
+  param = character(0),
   coefficient = character(0),
   mode_error = integer(0),
   converged = logical(0)
@@ -24,7 +24,16 @@ StatmodTest(
 
 - test:
 
-  Which of the four statistics was computed.
+  The
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md)
+  object that was computed:
+  [`wald_test()`](https://statmodels7.github.io/statmodels7/reference/wald_test.md),
+  [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md),
+  [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+  or
+  [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md).
+  Its `label` is the name under which
+  [`print()`](https://rdrr.io/r/base/print.html) shows the statistic.
 
 - statistic:
 
@@ -46,7 +55,7 @@ StatmodTest(
 
   The value against which the coefficient was tested.
 
-- parameter, coefficient:
+- param, coefficient:
 
   Which coefficient of which equation.
 

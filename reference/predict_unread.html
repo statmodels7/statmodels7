@@ -13,7 +13,7 @@ one parameter."><meta property="og:image" content="https://statmodels7.github.io
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,7 @@ the covariates of the other equations need not be in <code>newdata</code>: on
 <code>accel ~ s(times) | sigma ~ z</code>, <code>predict(fit, what = "mu", newdata)</code> does
 not need <code>z</code>. Every equation is built where <code>what</code> is not the name of a
 parameter (<code>"parameter"</code>, <code>"link"</code>, <code>"link:&lt;parameter&gt;"</code> or a moment),
-where <code>interval</code> is not <code>"confidence"</code>, or where the model carries a
+where <code>interval</code> is not <code><a href="confidence_interval.html">confidence_interval()</a></code>, or where the model carries a
 structural term, whose recursion reads the predictors of every equation.</p>
     </div>
 

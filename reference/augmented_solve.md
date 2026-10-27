@@ -13,7 +13,7 @@ and not at \\\kappa^2\\, which the normal equations would give.
 ## Usage
 
 ``` r
-augmented_solve(R, C, u, how, threads = 1L)
+augmented_solve(R, C, u, how, threads = 1L, tol = NULL)
 ```
 
 ## Arguments
@@ -44,6 +44,15 @@ augmented_solve(R, C, u, how, threads = 1L)
 
   How many threads the triangular factor may use, a plain integer. With
   `1L` the threaded route is not used.
+
+- tol:
+
+  `NULL` for the defaults, or the tolerance of the decomposition: with
+  `how = "qr"`, the tolerance of the pivoted
+  [`qr()`](https://rdrr.io/r/base/qr.html), which is also the threshold
+  of the equilibrated diagonal for the threaded route (default `1e-7`);
+  with `how = "svd"`, the relative cut of the singular values (default
+  \\\max(\dim A)\\\epsilon\\).
 
 ## Value
 
@@ -105,10 +114,10 @@ difference between the penalty rows of its own block and an unpenalized
 block. Scaling each column to unit norm removes differences in column
 size from any source and leaves an exact collinearity exactly singular.
 
-The route is taken when the smallest equilibrated entry exceeds `1e-7`
-times the largest, the tolerance that `dqrdc2` uses, so a matrix that
-the pivoted route would call deficient is solved there and its rank is
-returned.
+The route is taken when the smallest equilibrated entry exceeds `tol`
+times the largest (`1e-7` by default, the tolerance that `dqrdc2` uses),
+so that a matrix that the pivoted route would call deficient is solved
+there and its rank is returned.
 
 ## See also
 

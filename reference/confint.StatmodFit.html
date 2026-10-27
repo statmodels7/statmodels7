@@ -11,7 +11,7 @@ test."><meta property="og:image" content="https://statmodels7.github.io/statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,9 +53,9 @@ test.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  parm <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bayesian"</span>, <span class="st">"frequentist"</span>, <span class="st">"unconditional"</span><span class="op">)</span>,</span>
+<span>  vcov_type <span class="op">=</span> <span class="fu"><a href="bayesian_vcov.html">bayesian_vcov</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  readable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"lr"</span>, <span class="st">"score"</span>, <span class="st">"gradient"</span><span class="op">)</span>,</span>
+<span>  test <span class="op">=</span> <span class="fu"><a href="wald_test.html">wald_test</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -78,26 +78,31 @@ them. With <code>readable = TRUE</code>, the name of a quantity is accepted as w
 <dd><p>The confidence level.</p></dd>
 
 
-<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>: <code>"bayesian"</code>, <code>"frequentist"</code>
-or <code>"unconditional"</code>.</p></dd>
+<dt id="arg-vcov-type">vcov_type<a class="anchor" aria-label="anchor" href="#arg-vcov-type"></a></dt>
+<dd><p>A <a href="vcov_method.html">vcov_method</a> object, passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>:
+<code><a href="bayesian_vcov.html">bayesian_vcov()</a></code> (the default), <code><a href="frequentist_vcov.html">frequentist_vcov()</a></code> or
+<code><a href="unconditional_vcov.html">unconditional_vcov()</a></code>. The conventions are compared at <a href="vcov_method.html">vcov_method</a>.</p></dd>
 
 
 <dt id="arg-readable">readable<a class="anchor" aria-label="anchor" href="#arg-readable"></a></dt>
 <dd><p>Whether to report the quantities in which the model is written
 (a term's own parameters under the names of the literature) and not the
 raw coordinates. The value is passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> and must be
-<code>FALSE</code> for the three restricted tests.</p></dd>
+<code>FALSE</code> for a restricted test (<code><a href="test_restricted.html">test_restricted()</a></code>).</p></dd>
 
 
 <dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
-<dd><p>The test whose acceptance region is the interval: <code>"wald"</code>, the
-default, or <code>"lr"</code>, <code>"score"</code> or <code>"gradient"</code>, which <code><a href="statmod_invert.html">statmod_invert()</a></code>
-inverts.</p></dd>
+<dd><p>A <a href="test_statistic.html">test_statistic</a> object, the test whose acceptance region is
+the interval. <code><a href="wald_test.html">wald_test()</a></code> (the default) gives the interval that is
+symmetric about the estimate, from the variance matrix and with no refit.
+<code><a href="lr_test.html">lr_test()</a></code>, <code><a href="score_test.html">score_test()</a></code> and <code><a href="gradient_test.html">gradient_test()</a></code> are inverted by
+<code><a href="statmod_invert.html">statmod_invert()</a></code> and cost a few dozen restricted refits per interval.
+The four are compared at <a href="test_statistic.html">test_statistic</a>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p></dd>
+<dd><p>Passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, which signals an error for any
+argument that it does not take.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -120,11 +125,13 @@ quantity and mapped back, so that interval is not symmetric.</p>
 <p>The variance comes from <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, so the same three
 conventions apply, and a coefficient that a kinked penalty has set to zero
 has <code>NA</code> in place of an interval. For an interval around a penalized term,
-<code>type = "unconditional"</code> does not treat the smoothing parameter as known.</p>
+<code>vcov_type = unconditional_vcov()</code> does not treat the smoothing parameter as
+known.</p>
     </div>
     <div class="section level2">
     <h2 id="inverting-a-test-instead">Inverting a test instead<a class="anchor" aria-label="anchor" href="#inverting-a-test-instead"></a></h2>
-    <p>The argument <code>test</code> selects the statistic whose acceptance region is the
+    <p>The argument <code>test</code> takes a <a href="test_statistic.html">test_statistic</a> object (see there for the four
+statistics) and selects the statistic whose acceptance region is the
 interval. The Wald interval is the set of \(b\) that the Wald statistic
 does not reject, and it is symmetric by construction: that statistic is a
 parabola in \(b\), since the curvature is read once at \(\hat\beta\). The
@@ -146,17 +153,19 @@ of the fit and do not depend on <code>test</code>.</p>
 <p>A coefficient under a penalty that is twice differentiable (a smooth's own
 coordinates, a ridge, a random effect) is inverted like any other, and the
 interval is the credible one that <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> gives for it under
-<code>type = "bayesian"</code>, conditional on the hyperparameters that the fit
+<code>vcov_type = bayesian_vcov()</code>, conditional on the hyperparameters that the fit
 reached. See <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>.</p>
-<p>The three restricted tests (<code>"lr"</code>, <code>"score"</code> and <code>"gradient"</code>) need
+<p>The three restricted tests (<code><a href="lr_test.html">lr_test()</a></code>, <code><a href="score_test.html">score_test()</a></code> and
+<code><a href="gradient_test.html">gradient_test()</a></code>, the ones for which <code><a href="test_restricted.html">test_restricted()</a></code> is <code>TRUE</code>) need
 <code>readable = FALSE</code>, since a test is about one coefficient and a readable
 quantity is a function of several at once.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>,
-<code><a href="statmod_test.html">statmod_test()</a></code>, which tests one coefficient against a value of its
-own, and <code><a href="statmod_invert.html">statmod_invert()</a></code> and <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>, the two internal
+    <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>, <a href="test_statistic.html">test_statistic</a>,
+<a href="vcov_method.html">vcov_method</a>, <code><a href="statmod_test.html">statmod_test()</a></code>, which tests one coefficient against a
+value of its own, and <code><a href="statmod_invert.html">statmod_invert()</a></code> and <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>, the two
+internal
 functions from which an inverted interval is built</p></div>
     </div>
 
@@ -180,7 +189,7 @@ functions from which an inverted interval is built</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept)     sigma linpar (Intercept) -1.032801 0.08006408 -1.189723</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept) -0.8758781</span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu:x"</span>, test <span class="op">=</span> <span class="st">"lr"</span>, readable <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, parm <span class="op">=</span> <span class="st">"mu:x"</span>, test <span class="op">=</span> <span class="fu"><a href="lr_test.html">lr_test</a></span><span class="op">(</span><span class="op">)</span>, readable <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      parameter   term coefficient estimate        se    lower    upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mu:x        mu linpar           x 2.007856 0.1486552 1.716674 2.299038</span>
 </code></pre></div>

@@ -7,15 +7,7 @@ distribution parameter's block at once.
 
 ``` r
 # S3 method for class 'StatmodFit'
-vcov(
-  object,
-  type = c("bayesian", "frequentist", "unconditional"),
-  expected = NULL,
-  approx = c("opg", "bartlett", "integrate", "mc"),
-  readable = TRUE,
-  parameter = NULL,
-  ...
-)
+vcov(object, vcov_type = bayesian_vcov(), readable = TRUE, param = NULL, ...)
 ```
 
 ## Arguments
@@ -25,26 +17,28 @@ vcov(
   A
   [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
-- type:
+- vcov_type:
 
-  `"bayesian"`, `"frequentist"` or `"unconditional"`. The first two are
-  conditional on the hyperparameters; the third carries their own
-  uncertainty as well.
-
-- expected:
-
-  Whether the expected information is used. Defaults to
-  [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md),
-  which selects the expected information where the fit inverted it and
-  the family writes it out, and the observed Hessian otherwise. A model
-  that carries a structural term always uses the observed information.
-
-- approx:
-
-  How the expected information is approximated for a family with no
-  closed form: `"opg"` (the default), `"bartlett"`, `"integrate"` or
-  `"mc"`. Read only when `expected` is `TRUE` and the family has no
-  closed form.
+  A
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  object, which selects the convention of the matrix and, inside the
+  object, the information \\H\\.
+  [`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+  (the default) returns \\V_b = (H+S)^{-1}\\, the posterior variance
+  conditional on the hyperparameters.
+  [`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+  returns the sandwich \\V_f = (H+S)^{-1}H(H+S)^{-1}\\, conditional on
+  the hyperparameters as well.
+  [`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
+  returns \\V' = V_b + J V\_\theta J'\\, which adds the uncertainty of
+  the hyperparameters. Each takes `information`, which is `NULL` by
+  default (the observed information, or the expected information for a
+  family with a kink in a parameter, resolved for each fit) and may be
+  [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+  or
+  [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html).
+  The conventions are compared at
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md).
 
 - readable:
 
@@ -54,14 +48,14 @@ vcov(
   example a persistence, and their variance is obtained by the delta
   method.
 
-- parameter:
+- param:
 
-  The distribution parameters whose rows and columns are kept. `NULL`
-  keeps all of them.
+  The distribution parameters whose rows and columns are kept, a
+  character vector of parameter names. `NULL` keeps all of them.
 
 - ...:
 
-  Unused.
+  Unused. Any argument signals an error.
 
 ## Value
 
@@ -69,9 +63,9 @@ A square matrix with dimnames `parameter:name`. By default it is over
 the quantities that the model reports, which include the own parameters
 of a structural term. With `readable = FALSE` it is over the
 coefficients of every equation, the free parameters of a structural term
-following those of its own equation. `parameter` restricts it to the
-rows and columns of the named equations. A coordinate that is held or
-not identified has `NA` in its row and column.
+following those of its own equation. `param` restricts it to the rows
+and columns of the named equations. A coordinate that is held or not
+identified has `NA` in its row and column.
 
 ## Details
 
@@ -90,10 +84,14 @@ or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 with the default `marginal = NULL`, in a model without a structural
 term, the unpenalized coefficients of every distribution parameter other
 than the first (for example the log standard deviation of a Gaussian)
-are estimated on the criterion, and `"bayesian"` and `"unconditional"`
-take the curvature of that criterion for them. These two types then
-differ from `"frequentist"` for those coefficients even without a
-penalty.
+are estimated on the criterion, and
+[`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+and
+[`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
+take the curvature of that criterion for them. These two conventions
+then differ from
+[`frequentist_vcov()`](https://statmodels7.github.io/statmodels7/reference/frequentist_vcov.md)
+for those coefficients even without a penalty.
 
 For a prior that is not Gaussian, \\V_b\\ is computed in the same way
 for every penalty that is twice differentiable at the mode. \\H + S\\ is
@@ -124,16 +122,18 @@ mode (Wood, Pya and Safken, 2016), and the matrix that mgcv returns as
 parameter is poorly determined, and it affects the penalized coordinates
 much more than the unpenalized ones. It requires the curvature of the
 outer criterion, which the two conditional matrices do not read, so
-`"unconditional"` is more expensive than the other two types.
+[`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
+is more expensive than the other two conventions.
 
 Where no hyperparameter was estimated by a differentiable criterion
 there is nothing to propagate, the correction is exactly zero and
-`"unconditional"` returns \\V_b\\ itself. Where a hyperparameter was
-estimated and the curvature of the criterion cannot be read at the
-fitted point, the conditional matrix is returned with a warning, so that
-the narrower matrix is not mistaken for the wider one. Where the
-curvature can be read for only some of the hyperparameters, the
-correction is a lower bound and a warning states it. See
+[`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
+returns \\V_b\\ itself. Where a hyperparameter was estimated and the
+curvature of the criterion cannot be read at the fitted point, the
+conditional matrix is returned with a warning, so that the narrower
+matrix is not mistaken for the wider one. Where the curvature can be
+read for only some of the hyperparameters, the correction is a lower
+bound and a warning states it. See
 [`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md).
 
 A coefficient that a kinked penalty has set to zero has `NA` in its row
@@ -150,23 +150,64 @@ the posterior variance under the corresponding prior, because a
 curvature read at the mode does not include the mass that the prior puts
 near zero.
 
-The argument `expected` selects the matrix used as \\H\\. Its default is
-the expected information where the fit inverted it and the family writes
-it out in closed form, and the observed Hessian otherwise
-([`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)).
-The two agree asymptotically and not in a sample: one is the information
-averaged over the model, and the other is the curvature of the
-likelihood at the data in hand. A model that carries a structural term
-is always inverted on the observed information, because a filter and a
-mixture over states do not have an expected information.
+The coefficients that the marginal criterion of
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+estimates take the curvature of that criterion in the Bayesian and the
+unconditional matrices, and the criterion reads the information of its
+own `information` argument. The `information` of `vcov_type` selects the
+matrix used as \\H\\ everywhere else, in the sandwich of the frequentist
+matrix and in the penalized block of the other two.
 
-Where the family has no closed form, `expected = TRUE` reaches an
-approximation, and `approx` selects it. `"opg"`, the default, is the
-outer product of the observed scores and costs one gradient;
-`"bartlett"` evaluates the expectation itself, a sum over the support
-for a discrete family and a quadrature for a continuous one, and is
-orders of magnitude more expensive. The expensive route is available and
-is not the default.
+The `information` of `vcov_type` selects the matrix used as \\H\\. Its
+default is `NULL`, which is resolved for each fit by the family of the
+fit with the rule of
+[`distributions7::vcov.distrib_fit()`](https://statmodels7.github.io/distributions7/reference/vcov.distrib_fit.html):
+the matrix is
+[`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html),
+the curvature of the likelihood at the data in hand, when the
+log-likelihood is twice differentiable in every parameter of the family
+(every
+[`distributions7::params_order()`](https://statmodels7.github.io/distributions7/reference/params_order.html)
+is at least 2), and
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+with `method = NULL`, for the whole matrix, otherwise. The choice does
+not depend on the information with which the fit was computed
+(`inner_information` of
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)).
+An object in `information` overrides the rule.
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+selects the Fisher information, the information averaged over the model.
+The two agree asymptotically and not in a sample. A model that carries a
+structural term is always inverted on the observed information, because
+a filter and a mixture over states do not have an expected information.
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+states the matrix when it is not the observed one.
+
+The observed information is singular where the second derivative of the
+log-likelihood in a coefficient is zero at the estimates, as for the
+location of a Laplace response. The family has a kink in that parameter,
+so the default `NULL` reads the expected information, which is finite
+there, and the variance is available. With
+`information = observed_info()` the rows and columns of the coordinates
+that it does not identify are missing, as described above for a flat
+direction.
+
+The `method` of
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+selects how the expected information is obtained. With `method = NULL`
+the closed form of the family is used where the family has one, and
+[`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html),
+the outer product of the observed scores, which costs one gradient,
+otherwise.
+[`distributions7::expect_integrate()`](https://statmodels7.github.io/distributions7/reference/expect_integrate.html)
+evaluates the expectation itself, a sum over the support for a discrete
+family and a quadrature for a continuous one, and is orders of magnitude
+more expensive;
+[`distributions7::expect_mc()`](https://statmodels7.github.io/distributions7/reference/expect_mc.html)
+simulates it.
+[distributions7::expected_derivative_methods](https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html)
+compares the three methods.
 
 ## References
 
@@ -176,6 +217,8 @@ Statistical Association*, 111(516), 1548–1563.
 
 ## See also
 
+[vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+for the three conventions side by side,
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md),
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
 [`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md),
@@ -197,8 +240,13 @@ sqrt(diag(vcov(fit)))
 ds <- data.frame(x = runif(200))
 ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
 fs <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
-vapply(c("frequentist", "bayesian", "unconditional"),
-       function(ty) sqrt(diag(vcov(fs, type = ty)))[["mu:s(x).z2"]], 0)
-#>   frequentist      bayesian unconditional 
-#>    0.06507969    0.06551107    0.06623606 
+vapply(list(frequentist_vcov(), bayesian_vcov(), unconditional_vcov()),
+       function(ty) sqrt(diag(vcov(fs, vcov_type = ty)))[["mu:s(x).z2"]], 0)
+#> [1] 0.06510115 0.06553290 0.06625519
+
+# the information is chosen inside the convention
+sqrt(diag(vcov(fit, vcov_type = bayesian_vcov(
+  information = distributions7::expected_info()))))
+#>    mu:(Intercept)              mu:x sigma:(Intercept) 
+#>        0.08770104        0.14865515        0.08006408 
 ```

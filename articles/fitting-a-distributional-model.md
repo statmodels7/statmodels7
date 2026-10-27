@@ -103,7 +103,7 @@ f3 <- statmod(y ~ s(z, bspline_smooth(k = 8)),
 f3@edf
 #>   parameter                        term coefficients      edf
 #> 1        mu                      linpar            1 1.000000
-#> 2        mu s(z, bspline_smooth(k = 8))            7 5.264483
+#> 2        mu s(z, bspline_smooth(k = 8))            7 5.263947
 #> 3     sigma                      linpar            1 1.000000
 ```
 
@@ -130,8 +130,8 @@ f4 <- statmod(y ~ s(z, bspline_smooth(k = 8)) + random(~ 1 | g),
 f4@edf
 #>   parameter                        term coefficients       edf
 #> 1        mu                      linpar            1  1.000000
-#> 2        mu s(z, bspline_smooth(k = 8))            7  6.083231
-#> 3        mu              random(~1 | g)           20 18.540240
+#> 2        mu s(z, bspline_smooth(k = 8))            7  6.081977
+#> 3        mu              random(~1 | g)           20 18.540158
 #> 4     sigma                      linpar            1  1.000000
 hyper(f4)
 #>   parameter                        term   name  estimate  held source   id
@@ -231,9 +231,9 @@ summary(f3)
 #> 
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.616546    effective df 7.26
-#> cAIC 739.762    cBIC 766.668
-#> fitted in 229 ms
-#> inner   max |grad|/se 1.3e-15   min eigen 1
+#> cAIC 739.761    cBIC 766.665
+#> fitted in 280 ms
+#> inner   max |grad|/se 3.7e-16   min eigen 1
 #> outer   max |grad|/se 2.1e-08   min eigen 0.99
 #> 1 note: print(summary(fit), notes = TRUE)
 ```
@@ -265,7 +265,7 @@ hyperparameters.
 cert <- statmod_certificate(f4)
 c(state = cert$state, mode_error = signif(cert$mode_error, digits = 3))
 #>       state  mode_error 
-#> "converged"  "6.77e-30"
+#> "converged"  "4.93e-30"
 ```
 
 `mode_error` is how far above its own penalized mode the inner fit
@@ -287,9 +287,9 @@ nd <- data.frame(z = c(-1, 0, 1),
                  g = factor(c(1, 2, 3), levels = levels(db$g)))
 predict(f4, newdata = nd, se = TRUE)$mu
 #>          fit        se      lower       upper
-#> 1 -0.2837629 0.1188419 -0.5166888 -0.05083693
-#> 2  1.8468308 0.1199200  1.6117920  2.08186963
-#> 3  2.4646126 0.1219466  2.2256016  2.70362367
+#> 1 -0.2837629 0.1188442 -0.5166933 -0.05083242
+#> 2  1.8468308 0.1199288  1.6117747  2.08188691
+#> 3  2.4646126 0.1219674  2.2255610  2.70366431
 ```
 
 Prediction reapplies each term’s blueprint instead of rebuilding it, so
@@ -303,7 +303,7 @@ The generics of `stats` apply to a fit:
 
 c(nobs = nobs(f4), df.residual = df.residual(f4))
 #>        nobs df.residual 
-#>    300.0000    273.3765
+#>    300.0000    273.3779
 length(sigma(f4))
 #> [1] 300
 ```

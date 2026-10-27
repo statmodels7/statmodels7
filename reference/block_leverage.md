@@ -47,13 +47,11 @@ traced against \\M\\.
 It is computed once per evaluation point and read by the gradient's
 contraction and by every pair of the Hessian.
 
-Where both blocks are sparse, the product of their densities is below
-\\10^{-3}\\ and the number of pairs is below \\2 \times 10^{7}\\, the
-diagonal is computed by
+Where both blocks are sparse and the pairs of nonzeros in a row number
+fewer than a quarter of \\p_a p_b\\, the diagonal is computed by
 [`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
-from the nonzeros of each row. The pair count bounds the work in
-absolute terms, which the density by itself does not. Otherwise the
-diagonal is read off the dense product that has the fewer columns.
+from the nonzeros of each row. Otherwise it is read off the dense
+product that has the fewer columns.
 
 ## See also
 

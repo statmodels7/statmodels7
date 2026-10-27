@@ -17,7 +17,7 @@ coord_fit(
   spec,
   design,
   expected,
-  approx,
+  emethod,
   maxit = 100L,
   tol = 1e-08,
   prev_kink = NULL
@@ -69,10 +69,14 @@ coord_fit(
   not positive at some observation, the expected information is used in
   its place.
 
-- approx:
+- emethod:
 
-  How the expected information is approximated for a family with no
-  closed form.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 - maxit:
 

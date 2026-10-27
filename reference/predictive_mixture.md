@@ -114,8 +114,8 @@ gg$y <- 1 + gg$x + 0.8 * rt(12, df = 3)[gg$g] + rnorm(60, sd = 0.4)
 tp <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0)
 fit <- statmod(y ~ x + random(~ 1 | g, distrib = tp),
                distributions7::gaussian1_distrib(), gg)
-predict(fit, "response", data.frame(x = 0, g = "new"), random = "zero",
-        interval = "prediction")
+predict(fit, what = "response", newdata = data.frame(x = 0, g = "new"),
+        random = "zero", interval = prediction_interval())
 #>        fit       se     lower    upper
-#> 1 1.435761 2.249694 -1.642905 4.514427
+#> 1 1.435795 2.249694 -1.642938 4.514396
 ```

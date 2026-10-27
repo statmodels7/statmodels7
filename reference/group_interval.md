@@ -1,100 +1,51 @@
-# The Interval and Standard Deviation of a New Group's Parameter
+# The Interval of a New Group's Parameter
 
-Returns, for `interval = "group"`, the ends of the interval and the
-standard deviation of a new group's parameter \\\theta^\* =
-h^{-1}(\eta^\*)\\, on the predictor's scale and on the parameter's. Here
-\\\eta^\* = \eta_0 + e + z^\top b\\, where \\e\\ is the estimation error
-of the fixed part and \\b\\ are the effects of a new group, drawn from
-the prior that the fit estimated.
+Selects the interval of the parameter of a new group, that is, the
+parameter at a level of a
+[`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
+term that is not in the fitting data. It adds the variation of the
+effects of a new group to the uncertainty of the estimates. It requires
+`random = "zero"` or `"marginal"` in
+[`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
+and implies `se = TRUE`.
 
 ## Usage
 
 ``` r
-group_interval(object, spec, design, aside, ep, su, level, ...)
+group_interval()
 ```
-
-## Arguments
-
-- object:
-
-  The
-  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
-
-- spec, design:
-
-  The specification and design at the rows predicted.
-
-- aside:
-
-  The rows of
-  [`random_modes()`](https://statmodels7.github.io/statmodels7/reference/random_modes.md)
-  that are not `"conditional"`.
-
-- ep:
-
-  The predictors at the fixed part, as
-  [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
-  returns them.
-
-- su:
-
-  The standard errors of
-  [`predict_se()`](https://statmodels7.github.io/statmodels7/reference/predict_se.md).
-
-- level:
-
-  The interval's level.
-
-- ...:
-
-  Passed to
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
 
 ## Value
 
-`su`, with `se_eta`, `eta_lower`, `eta_upper`, `se`, `lower` and `upper`
-replaced for every parameter that a new group's effects reach.
+An S7 object of class `GroupInterval`, inheriting from
+[`interval_type()`](https://statmodels7.github.io/statmodels7/reference/interval_type.md),
+with the one property `label`.
 
 ## Details
 
-Where the inverse link is monotone over the whole line, a quantile of
-\\\theta^\*\\ is the inverse link of the same quantile of \\\eta^\*\\,
-and the interval is exact. For a link whose predictor is restricted to a
-half line (square root, inverse, inverse square, power), the ends of the
-interval are `NA` at the rows where the interval of \\\eta^\*\\ leaves
-the link's domain, and a warning gives their number. Under Gaussian
-priors \\\eta^\*\\ is Gaussian with variance \\s^2 = \mathrm{se}\_0^2 +
-z^\top\Sigma_b z\\, and the ends are \\h^{-1}(\eta_0 \pm
-z\_{(1+\ell)/2}\\ s)\\. Under any other prior \\\eta^\*\\ is a mixture
-of Gaussians: a scale mixture over the nodes of
-[`gamma_nodes()`](https://statmodels7.github.io/statmodels7/reference/gamma_nodes.md)
-for one or two Student t priors, the prior's own quantiles for one
-univariate prior of another family
-([`group_quantile_nodes()`](https://statmodels7.github.io/statmodels7/reference/group_quantile_nodes.md)),
-and the Monte Carlo draws of
-[`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md)
-for anything else. Each end is found by bisection on the mixture's
-distribution function
-([`mixture_quantile()`](https://statmodels7.github.io/statmodels7/reference/mixture_quantile.md)).
+The ends are quantiles of the new group's predictor carried through the
+inverse link; the standard error is the standard deviation of the new
+group's parameter. See
+[predict_intervals](https://statmodels7.github.io/statmodels7/reference/predict_intervals.md)
+for the formulas and the restrictions.
 
-The standard deviation is that of \\\theta^\*\\ and not the delta
-method, which does not equal it under a nonlinear link. Under a Gaussian
-\\\eta^\*\\ it is \\s\\ for the identity link, \\e^{\eta_0 +
-s^2/2}\sqrt{e^{s^2} - 1}\\ for the log link and a 40-node Gauss-Hermite
-rule for any other link. It is reported only where it is known to exist:
+## See also
 
-- never where the predictor's domain is not the whole line (the square
-  root and inverse links), since a Gaussian \\\eta^\*\\ leaves it;
+[`confidence_interval()`](https://statmodels7.github.io/statmodels7/reference/confidence_interval.md),
+[`prediction_interval()`](https://statmodels7.github.io/statmodels7/reference/prediction_interval.md),
+[predict_intervals](https://statmodels7.github.io/statmodels7/reference/predict_intervals.md),
+[`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md).
 
-- always for an inverse link bounded on both sides (logit, probit,
-  cloglog, a bounded link), from the mixture's nodes;
+## Examples
 
-- for Gaussian priors under every other link;
-
-- under a prior that is not Gaussian and an unbounded link, only for the
-  identity link, where the variance is \\\mathrm{se}\_0^2 +
-  z^\top\mathrm{Var}(b)\\z\\: a Student t gives \\\Sigma\nu/(\nu - 2)\\,
-  `NA` for \\\nu \le 2\\, and a univariate prior of another family its
-  own variance. Under a log link a Student t has no moment generating
-  function, so \\E\[\theta^\*\]\\ is infinite, and the standard
-  deviation is `NA`.
+``` r
+set.seed(1)
+dd <- data.frame(g = factor(rep(1:8, each = 5)), x = runif(40))
+dd$y <- 1 + dd$x + rnorm(8, sd = 0.5)[dd$g] + rnorm(40, sd = 0.3)
+fit <- statmod(y ~ x + random(~ 1 | g), distributions7::gaussian1_distrib(),
+               dd)
+predict(fit, what = "mu", newdata = data.frame(x = 0.5, g = "new"),
+        random = "zero", interval = group_interval())
+#>        fit        se     lower   upper
+#> 1 1.470069 0.5548627 0.3825577 2.55758
+```

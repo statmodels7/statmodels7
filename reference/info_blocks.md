@@ -8,7 +8,7 @@ from which a scoring step is built, before any design enters.
 ## Usage
 
 ``` r
-info_blocks(spec, theta, expected = TRUE, approx = "opg", H = NULL)
+info_blocks(spec, theta, expected = TRUE, emethod = NULL, H = NULL)
 ```
 
 ## Arguments
@@ -29,13 +29,14 @@ info_blocks(spec, theta, expected = TRUE, approx = "opg", H = NULL)
   `TRUE` for the expected information, `FALSE` for the negated observed
   Hessian.
 
-- approx:
+- emethod:
 
-  How the expected information is approximated for a family that has no
-  closed form, passed through to distributions7: `"opg"` (the default),
-  `"bartlett"`, `"integrate"` or `"mc"`. It is ignored when `expected`
-  is `FALSE` or when the family computes its expected information
-  exactly.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 - H:
 

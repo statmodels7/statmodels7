@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -160,6 +160,71 @@
         </dt>
         <dd>Printing a Simulation</dd>
       </dl></div><div class="section level2">
+      <h2 id="the-information-matrix-and-the-solver">The information matrix and the solver<a class="anchor" aria-label="anchor" href="#the-information-matrix-and-the-solver"></a></h2>
+
+      <div class="section-desc"><p>The matrix that the inner fit inverts, that enters a Laplace determinant or that gives the standard errors is passed as an object: the observed Hessian and the expected (Fisher) information, both defined in distributions7, or a choice settled against the family. The factorization that solves each step is passed as an object too, with its numerical tolerances.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="information_objects.html">information_objects</a></code>
+
+        </dt>
+        <dd>Information Matrices Available to a Fit</dd>
+
+        <dt>
+
+          <code><a href="auto_info.html">auto_info()</a></code>
+
+        </dt>
+        <dd>Information Chosen Against the Family</dd>
+
+        <dt>
+
+          <code><a href="AutoInfo.html">AutoInfo()</a></code>
+
+        </dt>
+        <dd>S7 Class for the Information Chosen Against the Family</dd>
+
+        <dt>
+
+          <code><a href="iwls_solvers.html">iwls_solvers</a></code>
+
+        </dt>
+        <dd>Solvers Available to a Scoring Step</dd>
+
+        <dt>
+
+          <code><a href="solve_qr.html">solve_qr()</a></code>
+
+        </dt>
+        <dd>The QR Solver</dd>
+
+        <dt>
+
+          <code><a href="solve_svd.html">solve_svd()</a></code>
+
+        </dt>
+        <dd>The SVD Solver</dd>
+
+        <dt>
+
+          <code><a href="solve_chol.html">solve_chol()</a></code>
+
+        </dt>
+        <dd>The Cholesky Solver</dd>
+
+        <dt>
+
+          <code><a href="IwlsSolver.html">IwlsSolver()</a></code> <code><a href="IwlsSolver.html">SolveQR()</a></code> <code><a href="IwlsSolver.html">SolveSVD()</a></code> <code><a href="IwlsSolver.html">SolveChol()</a></code>
+
+        </dt>
+        <dd>S7 Classes for the Solver of a Scoring Step</dd>
+      </dl></div><div class="section level2">
       <h2 id="where-a-fit-begins">Where a fit begins<a class="anchor" aria-label="anchor" href="#where-a-fit-begins"></a></h2>
 
       <div class="section-desc"><p>A starting value given as a strategy and not as a vector of numbers, and evaluated once before the fit alternates. The default builds the start from intercept-only fits; the other strategies are procedures, from a random perturbation to a global search of the likelihood to the estimates of a model already fitted.</p></div>
@@ -262,6 +327,85 @@
         </dt>
         <dd>Format a Duration in a Readable Unit</dd>
       </dl></div><div class="section level2">
+      <h2 id="intervals-of-a-prediction">Intervals of a prediction<a class="anchor" aria-label="anchor" href="#intervals-of-a-prediction"></a></h2>
+
+      <div class="section-desc"><p>The argument <code>interval</code> of <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> takes an object that selects the uncertainty that the interval describes: the estimates alone, the estimates and the effects of a new group, or a new observation of the response. A prediction interval holds a second object that sets how the estimation uncertainty enters the predictive distribution.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="predict_intervals.html">predict_intervals</a></code>
+
+        </dt>
+        <dd>Intervals of a Prediction</dd>
+
+        <dt>
+
+          <code><a href="interval_type.html">interval_type()</a></code>
+
+        </dt>
+        <dd>S7 Class for the Interval of a Prediction</dd>
+
+        <dt>
+
+          <code><a href="confidence_interval.html">confidence_interval()</a></code>
+
+        </dt>
+        <dd>The Confidence Interval of a Prediction</dd>
+
+        <dt>
+
+          <code><a href="group_interval.html">group_interval()</a></code>
+
+        </dt>
+        <dd>The Interval of a New Group's Parameter</dd>
+
+        <dt>
+
+          <code><a href="prediction_interval.html">prediction_interval()</a></code>
+
+        </dt>
+        <dd>The Interval of a New Observation</dd>
+
+        <dt>
+
+          <code><a href="predictive_distributions.html">predictive_distributions</a></code>
+
+        </dt>
+        <dd>Predictive Distributions of a New Response</dd>
+
+        <dt>
+
+          <code><a href="predictive_type.html">predictive_type()</a></code>
+
+        </dt>
+        <dd>S7 Class for the Predictive Distribution of a New Response</dd>
+
+        <dt>
+
+          <code><a href="pred_averaged.html">pred_averaged()</a></code>
+
+        </dt>
+        <dd>Predictive Distribution Averaged Over the Estimates</dd>
+
+        <dt>
+
+          <code><a href="pred_plugin.html">pred_plugin()</a></code>
+
+        </dt>
+        <dd>Plug-in Predictive Distribution</dd>
+
+        <dt>
+
+          <code><a href="pred_bootstrap.html">pred_bootstrap()</a></code>
+
+        </dt>
+        <dd>Parametric Bootstrap Predictive Distribution</dd>
+      </dl></div><div class="section level2">
       <h2 id="testing-a-coefficient">Testing a coefficient<a class="anchor" aria-label="anchor" href="#testing-a-coefficient"></a></h2>
 
       <div class="section-desc"><p>One coefficient against one value, by Wald’s statistic, the likelihood ratio, Rao’s score or Terrell’s gradient. <code>summary(test =)</code> reports the same four for every row against zero, and <code>confint(test =)</code> inverts them; <code><a href="../reference/statmod_test.html">statmod_test()</a></code> also takes a null value other than zero. The test that a break-point exists is a separate function, which reads the supremum of a score process over the positions of the break-point.</p></div>
@@ -284,6 +428,440 @@
 
         </dt>
         <dd>Test That a Break-Point Exists</dd>
+      </dl></div><div class="section level2">
+      <h2 id="test-statistics">Test statistics<a class="anchor" aria-label="anchor" href="#test-statistics"></a></h2>
+
+      <div class="section-desc"><p>The four statistics with which a coefficient is tested, as objects passed to the argument <code>test</code> of <code><a href="../reference/statmod_test.html">statmod_test()</a></code>, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> and <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>: Wald’s, the likelihood ratio, Rao’s score and Terrell’s gradient. The overview states the formula of each, what it needs and what it costs, and <code><a href="../reference/test_restricted.html">test_restricted()</a></code> tells whether a statistic refits the model under the restriction.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="test_statistic.html">test_statistic()</a></code>
+
+        </dt>
+        <dd>Statistics for Testing a Coefficient</dd>
+
+        <dt>
+
+          <code><a href="wald_test.html">wald_test()</a></code>
+
+        </dt>
+        <dd>Wald's Test of a Coefficient</dd>
+
+        <dt>
+
+          <code><a href="lr_test.html">lr_test()</a></code>
+
+        </dt>
+        <dd>Likelihood-Ratio Test of a Coefficient</dd>
+
+        <dt>
+
+          <code><a href="score_test.html">score_test()</a></code>
+
+        </dt>
+        <dd>Rao's Score Test of a Coefficient</dd>
+
+        <dt>
+
+          <code><a href="gradient_test.html">gradient_test()</a></code>
+
+        </dt>
+        <dd>Terrell's Gradient Test of a Coefficient</dd>
+
+        <dt>
+
+          <code><a href="test_restricted.html">test_restricted()</a></code>
+
+        </dt>
+        <dd>Whether a Test Refits the Model Under the Restriction</dd>
+      </dl></div><div class="section level2">
+      <h2 id="variance-conventions">Variance conventions<a class="anchor" aria-label="anchor" href="#variance-conventions"></a></h2>
+
+      <div class="section-desc"><p>The three conventions for the variance matrix of the coefficients, as objects passed to the argument <code>type</code> of <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="../reference/statmod_test.html">statmod_test()</a></code> and <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>: the Bayesian variance, the frequentist sandwich, and the unconditional variance that adds the uncertainty of the hyperparameters.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="vcov_method.html">vcov_method()</a></code>
+
+        </dt>
+        <dd>Variance Conventions of a Fit</dd>
+
+        <dt>
+
+          <code><a href="bayesian_vcov.html">bayesian_vcov()</a></code>
+
+        </dt>
+        <dd>Bayesian Variance of a Fit</dd>
+
+        <dt>
+
+          <code><a href="frequentist_vcov.html">frequentist_vcov()</a></code>
+
+        </dt>
+        <dd>Frequentist Variance of a Fit</dd>
+
+        <dt>
+
+          <code><a href="hc0_sandwich.html">hc0_sandwich()</a></code> <code><a href="hc0_sandwich.html">hc1_sandwich()</a></code>
+
+        </dt>
+        <dd>Sandwich Variance of the Coefficients</dd>
+
+        <dt>
+
+          <code><a href="unconditional_vcov.html">unconditional_vcov()</a></code>
+
+        </dt>
+        <dd>Unconditional Variance of a Fit</dd>
+
+        <dt>
+
+          <code><a href="bootstrap_vcov.html">bootstrap_vcov()</a></code>
+
+        </dt>
+        <dd>Bootstrap Variance of a Fit</dd>
+      </dl></div><div class="section level2">
+      <h2 id="bootstrap">Bootstrap<a class="anchor" aria-label="anchor" href="#bootstrap"></a></h2>
+
+      <div class="section-desc"><p>The bootstrap variance of the coefficients: the schemes that resample the data, the function that stores the refitted replicates in a fit, and the extractor that reads them.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="resample_method.html">resample_method()</a></code>
+
+        </dt>
+        <dd>Resampling Schemes for the Bootstrap of a Fit</dd>
+
+        <dt>
+
+          <code><a href="parametric_resample.html">parametric_resample()</a></code>
+
+        </dt>
+        <dd>Parametric Resampling</dd>
+
+        <dt>
+
+          <code><a href="case_resample.html">case_resample()</a></code>
+
+        </dt>
+        <dd>Case Resampling</dd>
+
+        <dt>
+
+          <code><a href="cluster_resample.html">cluster_resample()</a></code>
+
+        </dt>
+        <dd>Cluster Resampling</dd>
+
+        <dt>
+
+          <code><a href="add_bootstrap.html">add_bootstrap()</a></code>
+
+        </dt>
+        <dd>Compute and Store the Bootstrap Replicates of a Fit</dd>
+
+        <dt>
+
+          <code><a href="statmod_bootstrap.html">statmod_bootstrap()</a></code>
+
+        </dt>
+        <dd>Read the Stored Bootstrap of a Fit</dd>
+
+        <dt>
+
+          <code><a href="StatmodBootstrap.html">StatmodBootstrap()</a></code>
+
+        </dt>
+        <dd>Stored Replicates of a Bootstrap</dd>
+      </dl></div><div class="section level2">
+      <h2 id="graphs-of-a-fit">Graphs of a fit<a class="anchor" aria-label="anchor" href="#graphs-of-a-fit"></a></h2>
+
+      <div class="section-desc"><p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> and <code>autoplot()</code> draw one aspect of a fit as a ggplot2 object. The graph is selected by an object passed as <code>type</code>, and its data are computed by <code><a href="../reference/plot_data.html">plot_data()</a></code> and drawn by <code><a href="../reference/plot_layers.html">plot_layers()</a></code>, the two generics through which a new graph is added. Without a type, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws the diagnostic graphs of <code><a href="../reference/diagnostics.html">diagnostics()</a></code>.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="autoplot.StatmodFit.html">autoplot(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="autoplot.StatmodFit.html">plot(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Graphs of a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="diagnostics.html">diagnostics()</a></code>
+
+        </dt>
+        <dd>Diagnostic Graphs of a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="plot_type.html">plot_type()</a></code> <code><a href="plot_type.html">term_plot()</a></code> <code><a href="plot_type.html">model_plot()</a></code> <code><a href="plot_type.html">diagnostic_plot()</a></code>
+
+        </dt>
+        <dd>Graphical Types for a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="default_plot.html">default_plot()</a></code>
+
+        </dt>
+        <dd>The Default Graph of a Term</dd>
+
+        <dt>
+
+          <code><a href="plot_data.html">plot_data()</a></code>
+
+        </dt>
+        <dd>The Data of a Graph</dd>
+
+        <dt>
+
+          <code><a href="plot_layers.html">plot_layers()</a></code>
+
+        </dt>
+        <dd>The Layers of a Graph</dd>
+      </dl></div><div class="section level2">
+      <h2 id="graphs-of-a-term">Graphs of a term<a class="anchor" aria-label="anchor" href="#graphs-of-a-term"></a></h2>
+
+      <div class="section-desc"><p>Graphs of one term of one equation, selected by <code>term</code>: its effect with the partial residuals, and the graphs that describe a smooth, a penalized block, a random effect or a structural term.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="plot_effect.html">plot_effect()</a></code>
+
+        </dt>
+        <dd>Graph of the Effect of a Term</dd>
+
+        <dt>
+
+          <code><a href="plot_derivative.html">plot_derivative()</a></code>
+
+        </dt>
+        <dd>Graph of the Derivative of a Smooth</dd>
+
+        <dt>
+
+          <code><a href="plot_surface.html">plot_surface()</a></code>
+
+        </dt>
+        <dd>Graph of the Surface of a Smooth of Two Variables</dd>
+
+        <dt>
+
+          <code><a href="plot_criterion.html">plot_criterion()</a></code>
+
+        </dt>
+        <dd>Graph of the Outer Criterion Against a Hyperparameter</dd>
+
+        <dt>
+
+          <code><a href="plot_shrinkage.html">plot_shrinkage()</a></code>
+
+        </dt>
+        <dd>Graph of the Shrinkage of a Penalized Block</dd>
+
+        <dt>
+
+          <code><a href="plot_path.html">plot_path()</a></code>
+
+        </dt>
+        <dd>Graph of the Coefficient Paths of a Penalized Block</dd>
+
+        <dt>
+
+          <code><a href="plot_caterpillar.html">plot_caterpillar()</a></code>
+
+        </dt>
+        <dd>Graph of the Predicted Effects of a Random Effect</dd>
+
+        <dt>
+
+          <code><a href="plot_prior.html">plot_prior()</a></code>
+
+        </dt>
+        <dd>Graph of the Prior of a Random Effect</dd>
+
+        <dt>
+
+          <code><a href="plot_random_cov.html">plot_random_cov()</a></code>
+
+        </dt>
+        <dd>Graph of the Covariance of a Random Effect</dd>
+
+        <dt>
+
+          <code><a href="plot_curves.html">plot_curves()</a></code>
+
+        </dt>
+        <dd>Graph of the Curves of a Random Smooth</dd>
+
+        <dt>
+
+          <code><a href="plot_breakpoint.html">plot_breakpoint()</a></code>
+
+        </dt>
+        <dd>Graph of the Break-Points of a Term</dd>
+
+        <dt>
+
+          <code><a href="plot_filter.html">plot_filter()</a></code>
+
+        </dt>
+        <dd>Graph of a Filtered Parameter</dd>
+
+        <dt>
+
+          <code><a href="plot_news_impact.html">plot_news_impact()</a></code>
+
+        </dt>
+        <dd>Graph of the News Impact of a Score-Driven Term</dd>
+
+        <dt>
+
+          <code><a href="plot_states.html">plot_states()</a></code>
+
+        </dt>
+        <dd>Graph of the State Probabilities of a Regime Term</dd>
+
+        <dt>
+
+          <code><a href="plot_regime_density.html">plot_regime_density()</a></code>
+
+        </dt>
+        <dd>Graph of the Density of the Response under Each Regime</dd>
+      </dl></div><div class="section level2">
+      <h2 id="graphs-of-the-fitted-distribution">Graphs of the fitted distribution<a class="anchor" aria-label="anchor" href="#graphs-of-the-fitted-distribution"></a></h2>
+
+      <div class="section-desc"><p>Graphs of the whole fitted distribution as a function of the covariates, without a term: a parameter with its band, the conditional quantile curves, the density at chosen covariate values and the moments.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="plot_param.html">plot_param()</a></code>
+
+        </dt>
+        <dd>Graph of a Fitted Parameter Against a Covariate</dd>
+
+        <dt>
+
+          <code><a href="plot_quantiles.html">plot_quantiles()</a></code>
+
+        </dt>
+        <dd>Graph of the Conditional Quantiles Against a Covariate</dd>
+
+        <dt>
+
+          <code><a href="plot_density.html">plot_density()</a></code>
+
+        </dt>
+        <dd>Graph of Fitted Densities at Chosen Covariate Values</dd>
+
+        <dt>
+
+          <code><a href="plot_moments.html">plot_moments()</a></code>
+
+        </dt>
+        <dd>Graph of the Moments of the Fitted Distribution Against a Covariate</dd>
+      </dl></div><div class="section level2">
+      <h2 id="diagnostic-graphs">Diagnostic graphs<a class="anchor" aria-label="anchor" href="#diagnostic-graphs"></a></h2>
+
+      <div class="section-desc"><p>Graphs of the fit against the data, selected without <code>term</code>: the quantile residuals in a quantile-quantile graph, a worm plot, a histogram of the probability integral transform and a calibration graph, the residuals against a quantity or in order, the scores and the influence of the observations, and a comparison with simulated responses.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="plot_qq.html">plot_qq()</a></code>
+
+        </dt>
+        <dd>Quantile-Quantile Graph of the Residuals</dd>
+
+        <dt>
+
+          <code><a href="plot_worm.html">plot_worm()</a></code>
+
+        </dt>
+        <dd>Worm Plot of the Residuals</dd>
+
+        <dt>
+
+          <code><a href="plot_residuals.html">plot_residuals()</a></code>
+
+        </dt>
+        <dd>Graph of the Residuals against a Quantity</dd>
+
+        <dt>
+
+          <code><a href="plot_pit.html">plot_pit()</a></code>
+
+        </dt>
+        <dd>Histogram of the Probability Integral Transform</dd>
+
+        <dt>
+
+          <code><a href="plot_calibration.html">plot_calibration()</a></code>
+
+        </dt>
+        <dd>Calibration of the Predicted Quantiles</dd>
+
+        <dt>
+
+          <code><a href="plot_score.html">plot_score()</a></code>
+
+        </dt>
+        <dd>Graph of the Scores of an Equation</dd>
+
+        <dt>
+
+          <code><a href="plot_influence.html">plot_influence()</a></code>
+
+        </dt>
+        <dd>Graph of the Influence of the Observations on an Equation</dd>
+
+        <dt>
+
+          <code><a href="plot_acf.html">plot_acf()</a></code>
+
+        </dt>
+        <dd>Autocorrelation of the Residuals</dd>
+
+        <dt>
+
+          <code><a href="plot_ppc.html">plot_ppc()</a></code>
+
+        </dt>
+        <dd>Comparison of the Response with Simulated Responses</dd>
       </dl></div><div class="section level2">
       <h2 id="installing-and-updating">Installing and updating<a class="anchor" aria-label="anchor" href="#installing-and-updating"></a></h2>
 
@@ -312,6 +890,20 @@
 
       <dl><dt>
 
+          <code><a href="BayesianVcov.html">BayesianVcov()</a></code> <code><a href="BayesianVcov.html">FrequentistVcov()</a></code> <code><a href="BayesianVcov.html">UnconditionalVcov()</a></code> <code><a href="BayesianVcov.html">BootstrapVcov()</a></code>
+
+        </dt>
+        <dd>S7 Classes for the Shipped Variance Conventions</dd>
+
+        <dt>
+
+          <code><a href="ConfidenceInterval-class.html">ConfidenceInterval()</a></code> <code><a href="ConfidenceInterval-class.html">GroupInterval()</a></code> <code><a href="ConfidenceInterval-class.html">PredictionInterval()</a></code> <code><a href="ConfidenceInterval-class.html">PredAveraged()</a></code> <code><a href="ConfidenceInterval-class.html">PredPlugin()</a></code> <code><a href="ConfidenceInterval-class.html">PredBootstrap()</a></code>
+
+        </dt>
+        <dd>S7 Classes for the Shipped Intervals and Predictive Distributions</dd>
+
+        <dt>
+
           <code><a href="Iwls-class.html">Iwls()</a></code>
 
         </dt>
@@ -326,10 +918,178 @@
 
         <dt>
 
+          <code><a href="ParametricResample.html">ParametricResample()</a></code> <code><a href="ParametricResample.html">CaseResample()</a></code> <code><a href="ParametricResample.html">ClusterResample()</a></code>
+
+        </dt>
+        <dd>S7 Classes for the Shipped Resampling Schemes</dd>
+
+        <dt>
+
+          <code><a href="PlotAcf.html">PlotAcf()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Autocorrelation Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotBreakpoint.html">PlotBreakpoint()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Break-Point Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotCalibration.html">PlotCalibration()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Calibration Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotCaterpillar.html">PlotCaterpillar()</a></code> <code><a href="PlotCaterpillar.html">PlotPrior()</a></code> <code><a href="PlotCaterpillar.html">PlotRandomCov()</a></code> <code><a href="PlotCaterpillar.html">PlotCurves()</a></code>
+
+        </dt>
+        <dd>S7 Classes of the Graphs of a Random Effect</dd>
+
+        <dt>
+
+          <code><a href="PlotCriterion.html">PlotCriterion()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Criterion Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotDerivative.html">PlotDerivative()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Derivative Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotEffect.html">PlotEffect()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Effect Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotFilter.html">PlotFilter()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Filter Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotInfluence.html">PlotInfluence()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Influence Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotNewsImpact.html">PlotNewsImpact()</a></code>
+
+        </dt>
+        <dd>S7 Class of the News-Impact Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotParam.html">PlotParam()</a></code> <code><a href="PlotParam.html">PlotQuantiles()</a></code> <code><a href="PlotParam.html">PlotDensity()</a></code> <code><a href="PlotParam.html">PlotMoments()</a></code>
+
+        </dt>
+        <dd>S7 Classes of the Graphs of the Fitted Distribution</dd>
+
+        <dt>
+
+          <code><a href="PlotPit.html">PlotPit()</a></code>
+
+        </dt>
+        <dd>S7 Class of the PIT Histogram</dd>
+
+        <dt>
+
+          <code><a href="PlotPpc.html">PlotPpc()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Posterior Predictive Check</dd>
+
+        <dt>
+
+          <code><a href="PlotQq.html">PlotQq()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Quantile-Quantile Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotRegimeDensity.html">PlotRegimeDensity()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Regime-Density Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotResiduals.html">PlotResiduals()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Residual Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotScore.html">PlotScore()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Score Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotShrinkage.html">PlotShrinkage()</a></code> <code><a href="PlotShrinkage.html">PlotPath()</a></code>
+
+        </dt>
+        <dd>S7 Classes of the Shrinkage and Path Graphs</dd>
+
+        <dt>
+
+          <code><a href="PlotStates.html">PlotStates()</a></code>
+
+        </dt>
+        <dd>S7 Class of the State-Probability Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotSurface.html">PlotSurface()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Surface Graph</dd>
+
+        <dt>
+
+          <code><a href="PlotWorm.html">PlotWorm()</a></code>
+
+        </dt>
+        <dd>S7 Class of the Worm Plot</dd>
+
+        <dt>
+
+          <code><a href="SandwichMethod.html">SandwichMethod()</a></code>
+
+        </dt>
+        <dd>S7 Class for the Meat of a Sandwich Variance</dd>
+
+        <dt>
+
           <code><a href="StartIntercepts-class.html">StartIntercepts()</a></code> <code><a href="StartIntercepts-class.html">StartOrigin()</a></code> <code><a href="StartIntercepts-class.html">StartRandom()</a></code> <code><a href="StartIntercepts-class.html">StartSearch()</a></code> <code><a href="StartIntercepts-class.html">StartFrom()</a></code>
 
         </dt>
         <dd>S7 Classes for the Shipped Strategies</dd>
+
+        <dt>
+
+          <code><a href="StatmodBootstrap.html">StatmodBootstrap()</a></code>
+
+        </dt>
+        <dd>Stored Replicates of a Bootstrap</dd>
 
         <dt>
 
@@ -358,6 +1118,20 @@
 
         </dt>
         <dd>A Test of One Coefficient Against One Value</dd>
+
+        <dt>
+
+          <code><a href="TermSum.html">TermSum()</a></code>
+
+        </dt>
+        <dd>A Sum of Terms Drawn as One Effect</dd>
+
+        <dt>
+
+          <code><a href="WaldTest.html">WaldTest()</a></code> <code><a href="WaldTest.html">RestrictedTest()</a></code> <code><a href="WaldTest.html">LrTest()</a></code> <code><a href="WaldTest.html">ScoreTest()</a></code> <code><a href="WaldTest.html">GradientTest()</a></code>
+
+        </dt>
+        <dd>S7 Classes for the Shipped Test Statistics</dd>
 
         <dt>
 
@@ -410,17 +1184,31 @@
 
         <dt>
 
+          <code><a href="as_resample_method.html">as_resample_method()</a></code>
+
+        </dt>
+        <dd>Check the Argument That Selects a Resampling Scheme</dd>
+
+        <dt>
+
+          <code><a href="as_test_statistic.html">as_test_statistic()</a></code>
+
+        </dt>
+        <dd>Check the Argument That Selects a Test Statistic</dd>
+
+        <dt>
+
+          <code><a href="as_vcov_method.html">as_vcov_method()</a></code>
+
+        </dt>
+        <dd>Check the Argument That Selects a Variance Convention</dd>
+
+        <dt>
+
           <code><a href="assemble_blocks.html">assemble_blocks()</a></code>
 
         </dt>
         <dd>A Symmetric Matrix From Its Upper Blocks</dd>
-
-        <dt>
-
-          <code><a href="assert_criterion_information.html">assert_criterion_information()</a></code>
-
-        </dt>
-        <dd>Expected-Information Criteria and the Scores' Outer Product</dd>
 
         <dt>
 
@@ -508,6 +1296,125 @@
 
         <dt>
 
+          <code><a href="boot_body.html">boot_body()</a></code>
+
+        </dt>
+        <dd>The Function That Refits the Replicates of a Round</dd>
+
+        <dt>
+
+          <code><a href="boot_cluster_ids.html">boot_cluster_ids()</a></code>
+
+        </dt>
+        <dd>The Groups of a Cluster Bootstrap</dd>
+
+        <dt>
+
+          <code><a href="boot_env.html">boot_env()</a></code> <code><a href="boot_env.html">boot_fingerprint()</a></code> <code><a href="boot_env.html">boot_entries()</a></code> <code><a href="boot_env.html">boot_match()</a></code>
+
+        </dt>
+        <dd>The Storage of the Bootstrap Entries of a Fit</dd>
+
+        <dt>
+
+          <code><a href="boot_failures.html">boot_failures()</a></code>
+
+        </dt>
+        <dd>The Failures Recorded in a Bootstrap Entry</dd>
+
+        <dt>
+
+          <code><a href="boot_fill.html">boot_fill()</a></code>
+
+        </dt>
+        <dd>Bring an Entry to a Number of Replicates</dd>
+
+        <dt>
+
+          <code><a href="boot_key.html">boot_key()</a></code>
+
+        </dt>
+        <dd>The Key of an Entry in the Collection</dd>
+
+        <dt>
+
+          <code><a href="boot_read_mode.html">boot_read_mode()</a></code>
+
+        </dt>
+        <dd>How Far From Its Mode a Fit Is, and What It Does Not Identify</dd>
+
+        <dt>
+
+          <code><a href="boot_readable_cov.html">boot_readable_cov()</a></code>
+
+        </dt>
+        <dd>The Covariance of the Readable Quantities of the Replicates</dd>
+
+        <dt>
+
+          <code><a href="boot_resolve.html">boot_resolve()</a></code>
+
+        </dt>
+        <dd>Resolve a Bootstrap Variance Against the Stored Entries</dd>
+
+        <dt>
+
+          <code><a href="boot_strip.html">boot_strip()</a></code>
+
+        </dt>
+        <dd>The Scheme as It Is Stored</dd>
+
+        <dt>
+
+          <code><a href="boot_summary_info.html">boot_summary_info()</a></code>
+
+        </dt>
+        <dd>What the Summary Reports About a Bootstrap Variance</dd>
+
+        <dt>
+
+          <code><a href="boot_table.html">boot_table()</a></code> <code><a href="boot_table.html">boot_table_text()</a></code> <code><a href="boot_table.html">boot_ambiguous()</a></code>
+
+        </dt>
+        <dd>The Table of Bootstrap Entries</dd>
+
+        <dt>
+
+          <code><a href="boot_validate.html">boot_validate()</a></code>
+
+        </dt>
+        <dd>The Status of One Refitted Replicate</dd>
+
+        <dt>
+
+          <code><a href="boot_vcov_matrix.html">boot_vcov_matrix()</a></code>
+
+        </dt>
+        <dd>The Covariance of the Stored Replicates</dd>
+
+        <dt>
+
+          <code><a href="bootstrap_check.html">bootstrap_check()</a></code>
+
+        </dt>
+        <dd>Reject a Fit That the Bootstrap Does Not Handle</dd>
+
+        <dt>
+
+          <code><a href="bootstrap_engine.html">bootstrap_engine()</a></code>
+
+        </dt>
+        <dd>The Engine of the Bootstrap</dd>
+
+        <dt>
+
+          <code><a href="bootstrap_plan.html">bootstrap_plan()</a></code>
+
+        </dt>
+        <dd>The Draw of One Bootstrap Replicate</dd>
+
+        <dt>
+
           <code><a href="bootstrap_refit.html">bootstrap_refit()</a></code>
 
         </dt>
@@ -543,6 +1450,13 @@
 
         <dt>
 
+          <code><a href="breakpoint_inset.html">breakpoint_inset()</a></code>
+
+        </dt>
+        <dd>The Profile Inset of the Break-Point Graph</dd>
+
+        <dt>
+
           <code><a href="certificate_core.html">certificate_core()</a></code>
 
         </dt>
@@ -571,6 +1485,20 @@
 
         <dt>
 
+          <code><a href="check_at_list.html">check_at_list()</a></code>
+
+        </dt>
+        <dd>Check the Values of the Other Covariates</dd>
+
+        <dt>
+
+          <code><a href="check_boot_n.html">check_boot_n()</a></code> <code><a href="check_boot_n.html">check_boot_refit()</a></code>
+
+        </dt>
+        <dd>Check the Arguments of the Bootstrap</dd>
+
+        <dt>
+
           <code><a href="check_covariates.html">check_covariates()</a></code>
 
         </dt>
@@ -578,10 +1506,38 @@
 
         <dt>
 
+          <code><a href="check_dots.html">check_dots()</a></code>
+
+        </dt>
+        <dd>Reject an Argument That a Method Does Not Take</dd>
+
+        <dt>
+
           <code><a href="check_filter_scaling.html">check_filter_scaling()</a></code>
 
         </dt>
         <dd>Check That a Family Supports a Scaled Score</dd>
+
+        <dt>
+
+          <code><a href="check_info_method.html">check_info_method()</a></code>
+
+        </dt>
+        <dd>Check the Method Given to an Information Object</dd>
+
+        <dt>
+
+          <code><a href="check_information.html">check_information()</a></code>
+
+        </dt>
+        <dd>Check That an Argument Is an Information Object</dd>
+
+        <dt>
+
+          <code><a href="check_level_grid.html">check_level_grid()</a></code>
+
+        </dt>
+        <dd>Check a Level and a Number of Grid Points</dd>
 
         <dt>
 
@@ -599,6 +1555,41 @@
 
         <dt>
 
+          <code><a href="check_over.html">check_over()</a></code>
+
+        </dt>
+        <dd>Check the Covariate of a Model Graph</dd>
+
+        <dt>
+
+          <code><a href="check_plain_random.html">check_plain_random()</a></code>
+
+        </dt>
+        <dd>Reject a Random Smooth in a Graph of a Random Effect</dd>
+
+        <dt>
+
+          <code><a href="check_plot_information.html">check_plot_information()</a></code>
+
+        </dt>
+        <dd>Check the Information Argument of a Graph</dd>
+
+        <dt>
+
+          <code><a href="check_positive_number.html">check_positive_number()</a></code>
+
+        </dt>
+        <dd>Check a Single Positive Number</dd>
+
+        <dt>
+
+          <code><a href="check_solver.html">check_solver()</a></code>
+
+        </dt>
+        <dd>Check That an Argument Is a Solver</dd>
+
+        <dt>
+
           <code><a href="check_trials.html">check_trials()</a></code>
 
         </dt>
@@ -610,6 +1601,13 @@
 
         </dt>
         <dd>Reject a Quantity That Needs Trials That the Rows Lack</dd>
+
+        <dt>
+
+          <code><a href="check_univariate.html">check_univariate()</a></code>
+
+        </dt>
+        <dd>Error for a Multivariate Family</dd>
 
         <dt>
 
@@ -879,10 +1877,45 @@
 
         <dt>
 
+          <code><a href="criterion_evaluator.html">criterion_evaluator()</a></code>
+
+        </dt>
+        <dd>Evaluate the Outer Criterion at Given Hyperparameters</dd>
+
+        <dt>
+
+          <code><a href="criterion_held_spec.html">criterion_held_spec()</a></code>
+
+        </dt>
+        <dd>The Specification with the Criterion's Coefficients Held</dd>
+
+        <dt>
+
+          <code><a href="criterion_plot_data.html">criterion_plot_data()</a></code>
+
+        </dt>
+        <dd>The Data of a Criterion Graph</dd>
+
+        <dt>
+
+          <code><a href="criterion_quadratic.html">criterion_quadratic()</a></code>
+
+        </dt>
+        <dd>The Quadratic Expansion of the Outer Criterion</dd>
+
+        <dt>
+
           <code><a href="criterion_resolution.html">criterion_resolution()</a></code>
 
         </dt>
         <dd>What the Outer Criterion Can Resolve at This Fit</dd>
+
+        <dt>
+
+          <code><a href="criterion_setup.html">criterion_setup()</a></code>
+
+        </dt>
+        <dd>The Hyperparameter of a Term for the Criterion Graph</dd>
 
         <dt>
 
@@ -893,17 +1926,17 @@
 
         <dt>
 
-          <code><a href="ctx_approx.html">ctx_approx()</a></code>
-
-        </dt>
-        <dd>The Approximation With Which a Context Was Built</dd>
-
-        <dt>
-
           <code><a href="ctx_deriv.html">ctx_deriv()</a></code>
 
         </dt>
         <dd>A Higher Derivative of the Log-Density at the Context's Point</dd>
+
+        <dt>
+
+          <code><a href="ctx_emethod.html">ctx_emethod()</a></code>
+
+        </dt>
+        <dd>The Method With Which a Context Was Built</dd>
 
         <dt>
 
@@ -1047,6 +2080,20 @@
 
         <dt>
 
+          <code><a href="density_data.html">density_data()</a></code>
+
+        </dt>
+        <dd>The Data of a Density Graph</dd>
+
+        <dt>
+
+          <code><a href="density_rows.html">density_rows()</a></code>
+
+        </dt>
+        <dd>The Rows of a Density Graph</dd>
+
+        <dt>
+
           <code><a href="deriv3_key.html">deriv3_key()</a></code>
 
         </dt>
@@ -1075,6 +2122,13 @@
 
         <dt>
 
+          <code><a href="design_derivative.html">design_derivative()</a></code>
+
+        </dt>
+        <dd>Rows of the Derivative of a Block</dd>
+
+        <dt>
+
           <code><a href="design_sparse.html">design_sparse()</a></code> <code><a href="design_sparse.html">as_dense()</a></code> <code><a href="design_sparse.html">as_sparse()</a></code> <code><a href="design_sparse.html">zero_information()</a></code>
 
         </dt>
@@ -1086,6 +2140,90 @@
 
         </dt>
         <dd>Residual Degrees of Freedom of a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="diag_check_param.html">diag_check_param()</a></code>
+
+        </dt>
+        <dd>Check the Equation of a Diagnostic Graph</dd>
+
+        <dt>
+
+          <code><a href="diag_checks.html">diag_check_seed()</a></code> <code><a href="diag_checks.html">diag_check_count()</a></code> <code><a href="diag_checks.html">diag_check_name()</a></code> <code><a href="diag_checks.html">diag_check_level()</a></code>
+
+        </dt>
+        <dd>Checks of the Arguments of a Diagnostic Graph</dd>
+
+        <dt>
+
+          <code><a href="diag_classes.html">diag_classes()</a></code>
+
+        </dt>
+        <dd>Classes of a Covariate with Equal Counts</dd>
+
+        <dt>
+
+          <code><a href="diag_multivariate.html">diag_multivariate()</a></code>
+
+        </dt>
+        <dd>The Method of a Diagnostic Graph for a Multivariate Family</dd>
+
+        <dt>
+
+          <code><a href="diag_order_band.html">diag_order_band()</a></code>
+
+        </dt>
+        <dd>Pointwise Band of the Normal Order Statistics</dd>
+
+        <dt>
+
+          <code><a href="diag_qq_data.html">diag_qq_data()</a></code>
+
+        </dt>
+        <dd>The Data of a Quantile-Quantile or Worm Graph</dd>
+
+        <dt>
+
+          <code><a href="diag_qq_layers.html">diag_qq_layers()</a></code>
+
+        </dt>
+        <dd>The Layers of a Quantile-Quantile or Worm Graph</dd>
+
+        <dt>
+
+          <code><a href="diag_resid.html">diag_resid()</a></code>
+
+        </dt>
+        <dd>Quantile Residuals of a Response</dd>
+
+        <dt>
+
+          <code><a href="diag_sim_resid.html">diag_sim_resid()</a></code>
+
+        </dt>
+        <dd>Quantile Residuals of Simulated Responses</dd>
+
+        <dt>
+
+          <code><a href="diag_smooth.html">diag_smooth()</a></code>
+
+        </dt>
+        <dd>A Smoother of y on x</dd>
+
+        <dt>
+
+          <code><a href="diag_top.html">diag_top()</a></code>
+
+        </dt>
+        <dd>The Largest Absolute Values</dd>
+
+        <dt>
+
+          <code><a href="diag_with_seed.html">diag_with_seed()</a></code>
+
+        </dt>
+        <dd>Evaluate an Expression under a Seed</dd>
 
         <dt>
 
@@ -1117,6 +2255,13 @@
 
         <dt>
 
+          <code><a href="edf_info_indefinite.html">edf_info_indefinite()</a></code>
+
+        </dt>
+        <dd>Whether an Information Matrix Is Indefinite</dd>
+
+        <dt>
+
           <code><a href="edge_probe_hyper.html">edge_probe_hyper()</a></code>
 
         </dt>
@@ -1135,6 +2280,20 @@
 
         </dt>
         <dd>Coordinates at the Edge of Their Chart That Point Inward</dd>
+
+        <dt>
+
+          <code><a href="effect_data.html">effect_data()</a></code>
+
+        </dt>
+        <dd>The Data of an Effect Graph</dd>
+
+        <dt>
+
+          <code><a href="effect_grid.html">effect_grid()</a></code>
+
+        </dt>
+        <dd>A Grid over the Variables of an Effect</dd>
 
         <dt>
 
@@ -1173,13 +2332,6 @@
 
         <dt>
 
-          <code><a href="expected_is_opg.html">expected_is_opg()</a></code>
-
-        </dt>
-        <dd>Does the Family's Expected Information Depend on the Response?</dd>
-
-        <dt>
-
           <code><a href="family.StatmodFit.html">family(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
@@ -1191,6 +2343,13 @@
 
         </dt>
         <dd>A Filter's Second-Order Recursion at the Fitted Point</dd>
+
+        <dt>
+
+          <code><a href="filter_data.html">filter_data()</a></code>
+
+        </dt>
+        <dd>The Data of a Filter Graph</dd>
 
         <dt>
 
@@ -1233,13 +2392,6 @@
 
         </dt>
         <dd>A Term by Its Key in Any Equation</dd>
-
-        <dt>
-
-          <code><a href="fit_expected.html">fit_expected()</a></code>
-
-        </dt>
-        <dd>Which Information Matrix a Fit Reports</dd>
 
         <dt>
 
@@ -1362,7 +2514,7 @@
 
         <dt>
 
-          <code><a href="group_interval.html">group_interval()</a></code>
+          <code><a href="group_interval_ends.html">group_interval_ends()</a></code>
 
         </dt>
         <dd>The Interval and Standard Deviation of a New Group's Parameter</dd>
@@ -1523,6 +2675,13 @@
 
         <dt>
 
+          <code><a href="influence_deltas.html">influence_deltas()</a></code>
+
+        </dt>
+        <dd>One-Step Deletion Quantities of an Equation</dd>
+
+        <dt>
+
           <code><a href="info_blocks.html">info_blocks()</a></code>
 
         </dt>
@@ -1530,10 +2689,45 @@
 
         <dt>
 
+          <code><a href="info_expected.html">info_expected()</a></code> <code><a href="info_expected.html">info_auto()</a></code> <code><a href="info_expected.html">info_label()</a></code> <code><a href="info_expected.html">info_emethod()</a></code>
+
+        </dt>
+        <dd>Predicates on an Information Object</dd>
+
+        <dt>
+
+          <code><a href="info_method_note.html">info_method_note()</a></code>
+
+        </dt>
+        <dd>The Method of an Information Object in Words</dd>
+
+        <dt>
+
+          <code><a href="info_title.html">info_title()</a></code>
+
+        </dt>
+        <dd>The Words That Name an Information</dd>
+
+        <dt>
+
           <code><a href="information_subset.html">information_subset()</a></code>
 
         </dt>
         <dd>The Information Over Some of the Coefficients</dd>
+
+        <dt>
+
+          <code><a href="inner_bind.html">inner_bind()</a></code>
+
+        </dt>
+        <dd>Settle the Inner Information and Bind It to the Method</dd>
+
+        <dt>
+
+          <code><a href="inner_info.html">inner_info()</a></code>
+
+        </dt>
+        <dd>The Information Bound to an Inner Method</dd>
 
         <dt>
 
@@ -1572,6 +2766,13 @@
 
         <dt>
 
+          <code><a href="interval_call.html">interval_call()</a></code>
+
+        </dt>
+        <dd>The Call That Names an Interval Kind</dd>
+
+        <dt>
+
           <code><a href="invert_rows.html">invert_rows()</a></code>
 
         </dt>
@@ -1600,10 +2801,17 @@
 
         <dt>
 
-          <code><a href="iwls_decrement.html">iwls_decrement()</a></code> <code><a href="iwls_decrement.html">iwls_decrement_limit()</a></code>
+          <code><a href="iwls_decrement.html">iwls_decrement()</a></code>
 
         </dt>
         <dd>The Newton Decrement of a Scoring Step</dd>
+
+        <dt>
+
+          <code><a href="iwls_definite_tol.html">iwls_definite_tol()</a></code>
+
+        </dt>
+        <dd>The Relative Level Under Which a Penalized Information Is Indefinite</dd>
 
         <dt>
 
@@ -1695,20 +2903,6 @@
 
         </dt>
         <dd>Solve One Weighted Least Squares Step</dd>
-
-        <dt>
-
-          <code><a href="iwls_switch_after.html">iwls_switch_after()</a></code>
-
-        </dt>
-        <dd>When a Run on the Expected Information Continues on the Observed One</dd>
-
-        <dt>
-
-          <code><a href="iwls_switch_rate.html">iwls_switch_rate()</a></code>
-
-        </dt>
-        <dd>The Contraction Rate Above Which a Run Switches to the Observed Information</dd>
 
         <dt>
 
@@ -1887,6 +3081,13 @@
 
         <dt>
 
+          <code><a href="kind_of.html">kind_of()</a></code>
+
+        </dt>
+        <dd>Kind of an Axis Variable</dd>
+
+        <dt>
+
           <code><a href="kink_by_power.html">kink_by_power()</a></code>
 
         </dt>
@@ -1950,6 +3151,13 @@
 
         <dt>
 
+          <code><a href="kinked_path.html">kinked_path()</a></code>
+
+        </dt>
+        <dd>The Path of a Kinked Penalty by Refitting</dd>
+
+        <dt>
+
           <code><a href="label_pieces.html">label_pieces()</a></code>
 
         </dt>
@@ -1975,6 +3183,20 @@
 
         </dt>
         <dd>The Kind of Inverse Link, for the Moments of a New Group's Parameter</dd>
+
+        <dt>
+
+          <code><a href="linpar_columns.html">linpar_columns()</a></code>
+
+        </dt>
+        <dd>The Columns of the Linear Part That Involve a Variable</dd>
+
+        <dt>
+
+          <code><a href="linpar_partners.html">linpar_partners()</a></code>
+
+        </dt>
+        <dd>The Variables That Share a Linear Term with a Variable</dd>
 
         <dt>
 
@@ -2094,6 +3316,48 @@
 
         </dt>
         <dd>The Design of One Equation</dd>
+
+        <dt>
+
+          <code><a href="model_grid.html">model_grid()</a></code>
+
+        </dt>
+        <dd>New Data on a Grid of One Covariate</dd>
+
+        <dt>
+
+          <code><a href="model_theta.html">model_theta()</a></code>
+
+        </dt>
+        <dd>Fitted Parameters on New Data</dd>
+
+        <dt>
+
+          <code><a href="moving_effect_data.html">moving_effect_data()</a></code>
+
+        </dt>
+        <dd>The Data of the Effect of a Term with a Moving Block</dd>
+
+        <dt>
+
+          <code><a href="moving_se.html">moving_se()</a></code>
+
+        </dt>
+        <dd>Standard Errors of a Linear Map of Coefficients with Missing Variances</dd>
+
+        <dt>
+
+          <code><a href="moving_term_vars.html">moving_term_vars()</a></code>
+
+        </dt>
+        <dd>The Variables That a Term with a Moving Block Reads</dd>
+
+        <dt>
+
+          <code><a href="mvn_draws.html">mvn_draws()</a></code>
+
+        </dt>
+        <dd>Draws from a Multivariate Normal Distribution</dd>
 
         <dt>
 
@@ -2328,6 +3592,20 @@
 
         <dt>
 
+          <code><a href="parts_contribution.html">parts_contribution()</a></code>
+
+        </dt>
+        <dd>The Contribution of Several Parts of an Equation</dd>
+
+        <dt>
+
+          <code><a href="parts_contribution_values.html">parts_contribution_values()</a></code>
+
+        </dt>
+        <dd>The Contribution of a Smooth at Fitted Coefficients</dd>
+
+        <dt>
+
           <code><a href="path_block.html">path_block()</a></code>
 
         </dt>
@@ -2482,6 +3760,13 @@
 
         <dt>
 
+          <code><a href="penalty_system.html">penalty_system()</a></code>
+
+        </dt>
+        <dd>The Penalized System Around One Term</dd>
+
+        <dt>
+
           <code><a href="penalty_theta_start.html">penalty_theta_start()</a></code>
 
         </dt>
@@ -2510,6 +3795,27 @@
 
         <dt>
 
+          <code><a href="plot_assemble.html">plot_assemble()</a></code>
+
+        </dt>
+        <dd>Assemble a Graph from Its Data and Its Layers</dd>
+
+        <dt>
+
+          <code><a href="plot_needs_data.html">plot_needs_data()</a></code>
+
+        </dt>
+        <dd>Check That a Graph Has Its Data</dd>
+
+        <dt>
+
+          <code><a href="plot_time_env.html">plot_time_env()</a></code>
+
+        </dt>
+        <dd>The Environment in Which the Time of a Term Is Evaluated</dd>
+
+        <dt>
+
           <code><a href="pool_nested_random.html">pool_nested_random()</a></code>
 
         </dt>
@@ -2521,6 +3827,13 @@
 
         </dt>
         <dd>Predict From a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="predict_interval_spec.html">predict_interval_spec()</a></code>
+
+        </dt>
+        <dd>Check the Interval Argument of predict()</dd>
 
         <dt>
 
@@ -2587,6 +3900,20 @@
 
         <dt>
 
+          <code><a href="print.AutoInfo.html">print(<i>&lt;AutoInfo&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print an Information Object Chosen Against the Family</dd>
+
+        <dt>
+
+          <code><a href="print.IwlsSolver.html">print(<i>&lt;IwlsSolver&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a Solver</dd>
+
+        <dt>
+
           <code><a href="print.OuterMethod.html">print(<i>&lt;OuterMethod&gt;</i>)</a></code>
 
         </dt>
@@ -2615,10 +3942,38 @@
 
         <dt>
 
+          <code><a href="print.interval_type.html">print.interval_type</a></code> <code><a href="print.interval_type.html">print.predictive_type</a></code>
+
+        </dt>
+        <dd>Print an Interval or a Predictive Distribution</dd>
+
+        <dt>
+
+          <code><a href="print.resample_method.html">print.resample_method</a></code>
+
+        </dt>
+        <dd>Print a Resampling Scheme</dd>
+
+        <dt>
+
           <code><a href="print.start_strategy.html">print.start_strategy</a></code>
 
         </dt>
         <dd>Print a Starting-Value Strategy</dd>
+
+        <dt>
+
+          <code><a href="print.test_statistic.html">print.test_statistic</a></code>
+
+        </dt>
+        <dd>Print a Test Statistic</dd>
+
+        <dt>
+
+          <code><a href="print.vcov_method.html">print.vcov_method</a></code>
+
+        </dt>
+        <dd>Print a Variance Convention</dd>
 
         <dt>
 
@@ -2685,10 +4040,38 @@
 
         <dt>
 
+          <code><a href="profile_interval.html">profile_interval()</a></code>
+
+        </dt>
+        <dd>The Interval of a Position from Its Profile</dd>
+
+        <dt>
+
           <code><a href="project_blocks.html">project_blocks()</a></code>
 
         </dt>
         <dd>Project a Reference Fit's Predictor onto the Blocks That Did Not Match</dd>
+
+        <dt>
+
+          <code><a href="quadratic_path.html">quadratic_path()</a></code>
+
+        </dt>
+        <dd>The Path of a Quadratic Penalty in Closed Form</dd>
+
+        <dt>
+
+          <code><a href="quantiles_data.html">quantiles_data()</a></code>
+
+        </dt>
+        <dd>The Data of a Quantile Graph</dd>
+
+        <dt>
+
+          <code><a href="random_block.html">random_block()</a></code>
+
+        </dt>
+        <dd>The Coefficients of a Random Term by Level</dd>
 
         <dt>
 
@@ -2727,6 +4110,13 @@
 
         <dt>
 
+          <code><a href="random_prior_fit.html">random_prior_fit()</a></code>
+
+        </dt>
+        <dd>The Fitted Distribution of the Effects of a Random Term</dd>
+
+        <dt>
+
           <code><a href="random_prior_joint.html">random_prior_joint()</a></code>
 
         </dt>
@@ -2738,6 +4128,13 @@
 
         </dt>
         <dd>The Within-Group Rows of a Random-Effect Term</dd>
+
+        <dt>
+
+          <code><a href="raw_effects.html">raw_effects()</a></code>
+
+        </dt>
+        <dd>Unshrunk Estimates of the Effects of a Random Term</dd>
 
         <dt>
 
@@ -2832,10 +4229,31 @@
 
         <dt>
 
+          <code><a href="regime_entry.html">regime_entry()</a></code>
+
+        </dt>
+        <dd>The Entry of the Evaluated Model for a Regime Term</dd>
+
+        <dt>
+
+          <code><a href="regime_filtered.html">regime_filtered()</a></code>
+
+        </dt>
+        <dd>The Filtered State Probabilities of a Regime Term</dd>
+
+        <dt>
+
           <code><a href="regime_hessian_sum.html">regime_hessian_sum()</a></code>
 
         </dt>
         <dd>The Second-Derivative Components of a Mixture, Averaged Over Its States</dd>
+
+        <dt>
+
+          <code><a href="regime_parameters.html">regime_parameters()</a></code>
+
+        </dt>
+        <dd>The Parameters of a Regime Term</dd>
 
         <dt>
 
@@ -2874,6 +4292,13 @@
 
         <dt>
 
+          <code><a href="resample_label.html">resample_label()</a></code>
+
+        </dt>
+        <dd>The Words That Name a Resampling Scheme</dd>
+
+        <dt>
+
           <code><a href="residuals.StatmodFit.html">residuals(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
@@ -2888,10 +4313,38 @@
 
         <dt>
 
+          <code><a href="resolve_emethod.html">resolve_emethod()</a></code>
+
+        </dt>
+        <dd>The Method That Obtains the Derivatives of the Expected Information</dd>
+
+        <dt>
+
           <code><a href="resolve_par_key.html">resolve_par_key()</a></code>
 
         </dt>
         <dd>Resolve One Key of a Simulation's <code>par</code></dd>
+
+        <dt>
+
+          <code><a href="resolve_plot_term.html">resolve_plot_term()</a></code>
+
+        </dt>
+        <dd>Resolve the Term of a Graph</dd>
+
+        <dt>
+
+          <code><a href="resolve_vcov_method.html">resolve_vcov_method()</a></code>
+
+        </dt>
+        <dd>Resolve the Variance Convention Once</dd>
+
+        <dt>
+
+          <code><a href="response_newdata.html">response_newdata()</a></code>
+
+        </dt>
+        <dd>New Data for an Effect on the Response Scale</dd>
 
         <dt>
 
@@ -2920,6 +4373,13 @@
 
         </dt>
         <dd>The Coefficients That Move Along a Ridge</dd>
+
+        <dt>
+
+          <code><a href="row_labels.html">row_labels()</a></code>
+
+        </dt>
+        <dd>Labels of the Rows of a Density Graph</dd>
 
         <dt>
 
@@ -3000,6 +4460,27 @@
 
         <dt>
 
+          <code><a href="sandwich_check.html">sandwich_check()</a></code>
+
+        </dt>
+        <dd>Reject a Fit That the Sandwich Variance Does Not Cover</dd>
+
+        <dt>
+
+          <code><a href="sandwich_cluster.html">sandwich_cluster()</a></code>
+
+        </dt>
+        <dd>The Cluster Index of a Sandwich Variance</dd>
+
+        <dt>
+
+          <code><a href="sandwich_vcov.html">sandwich_vcov()</a></code>
+
+        </dt>
+        <dd>The Sandwich Variance of the Coefficients</dd>
+
+        <dt>
+
           <code><a href="se_answer.html">se_answer()</a></code>
 
         </dt>
@@ -3028,6 +4509,13 @@
 
         <dt>
 
+          <code><a href="select_emethod.html">select_emethod()</a></code>
+
+        </dt>
+        <dd>The Method That a Criterion Reads</dd>
+
+        <dt>
+
           <code><a href="select_parameter.html">select_parameter()</a></code>
 
         </dt>
@@ -3049,10 +4537,24 @@
 
         <dt>
 
+          <code><a href="shrinkage_data.html">shrinkage_data()</a></code>
+
+        </dt>
+        <dd>The Data of a Shrinkage Graph</dd>
+
+        <dt>
+
           <code><a href="sigma.StatmodFit.html">sigma(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
         <dd>The Standard Deviation Implied by a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="significant_zones.html">significant_zones()</a></code>
+
+        </dt>
+        <dd>The Zones in Which a Band Excludes Zero</dd>
 
         <dt>
 
@@ -3077,10 +4579,24 @@
 
         <dt>
 
+          <code><a href="simultaneous_critical.html">simultaneous_critical()</a></code>
+
+        </dt>
+        <dd>The Critical Value of a Simultaneous Band</dd>
+
+        <dt>
+
           <code><a href="smooth_linear_cols.html">smooth_linear_cols()</a></code>
 
         </dt>
         <dd>Which Coefficients of a Smooth Are the Linear Part</dd>
+
+        <dt>
+
+          <code><a href="smooth_variables.html">smooth_variables()</a></code>
+
+        </dt>
+        <dd>The Variables of a Smooth</dd>
 
         <dt>
 
@@ -3095,6 +4611,20 @@
 
         </dt>
         <dd>Invert a Matrix That Ought to Be Positive Definite</dd>
+
+        <dt>
+
+          <code><a href="solver_how.html">solver_how()</a></code>
+
+        </dt>
+        <dd>The Name of a Solver</dd>
+
+        <dt>
+
+          <code><a href="solver_tol.html">solver_tol()</a></code> <code><a href="solver_tol.html">solver_floor()</a></code>
+
+        </dt>
+        <dd>The Tolerances of a Solver</dd>
 
         <dt>
 
@@ -3318,7 +4848,7 @@
           <code><a href="statmod_fit_joint.html">statmod_fit_joint()</a></code>
 
         </dt>
-        <dd>Fit the Coefficients and a Filter's Parameters in One System</dd>
+        <dd>Fit the Coefficients and a Structural Term's Parameters in One System</dd>
 
         <dt>
 
@@ -3742,7 +5272,7 @@
 
         <dt>
 
-          <code><a href="statmod_unavailable.html">terms(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_unavailable.html">model.frame(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_unavailable.html">anova(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_unavailable.html">plot(<i>&lt;StatmodFit&gt;</i>)</a></code>
+          <code><a href="statmod_unavailable.html">terms(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_unavailable.html">model.frame(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_unavailable.html">anova(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
         <dd>Generics Not Available for a Fit</dd>
@@ -3973,6 +5503,13 @@
 
         <dt>
 
+          <code><a href="summary_edf.html">summary_edf()</a></code>
+
+        </dt>
+        <dd>The Degrees of Freedom That a Summary Reports</dd>
+
+        <dt>
+
           <code><a href="targets_written.html">targets_written()</a></code>
 
         </dt>
@@ -3984,6 +5521,20 @@
 
         </dt>
         <dd>What Kind of Block a Term Reports As</dd>
+
+        <dt>
+
+          <code><a href="term_coef_block.html">term_coef_block()</a></code>
+
+        </dt>
+        <dd>The Coefficients and Variance of Part of a Term</dd>
+
+        <dt>
+
+          <code><a href="term_contribution.html">term_contribution()</a></code>
+
+        </dt>
+        <dd>The Contribution of Part of a Term and Its Standard Error</dd>
 
         <dt>
 
@@ -4019,6 +5570,13 @@
 
         </dt>
         <dd>The Covariance Labels That a Term Carries, Including Its Sub-Terms</dd>
+
+        <dt>
+
+          <code><a href="term_variables.html">term_variables()</a></code>
+
+        </dt>
+        <dd>The Variables of a Term</dd>
 
         <dt>
 
@@ -4113,6 +5671,13 @@
 
         <dt>
 
+          <code><a href="unit_of_term.html">unit_of_term()</a></code>
+
+        </dt>
+        <dd>Does a Penalized Unit Belong to a Term</dd>
+
+        <dt>
+
           <code><a href="unit_positions.html">unit_positions()</a></code>
 
         </dt>
@@ -4124,6 +5689,13 @@
 
         </dt>
         <dd>The Message for an Unrecognized Prediction Target</dd>
+
+        <dt>
+
+          <code><a href="unpenalized_estimates.html">unpenalized_estimates()</a></code>
+
+        </dt>
+        <dd>A Newton Step Without the Penalty of a Term</dd>
 
         <dt>
 
@@ -4169,6 +5741,13 @@
 
         <dt>
 
+          <code><a href="vcov_information.html">vcov_information()</a></code>
+
+        </dt>
+        <dd>The Information of a Variance Convention for a Family</dd>
+
+        <dt>
+
           <code><a href="verbosity.html">verbosity()</a></code>
 
         </dt>
@@ -4204,6 +5783,13 @@
 
         <dt>
 
+          <code><a href="with_seed.html">with_seed()</a></code>
+
+        </dt>
+        <dd>Run an Expression Under a Seed</dd>
+
+        <dt>
+
           <code><a href="worker_map.html">worker_map()</a></code>
 
         </dt>
@@ -4215,6 +5801,20 @@
 
         </dt>
         <dd>Is the Working Profile of an Equation Its Objective?</dd>
+
+        <dt>
+
+          <code><a href="working_parts.html">working_parts()</a></code>
+
+        </dt>
+        <dd>The Working Weights of an Equation</dd>
+
+        <dt>
+
+          <code><a href="working_residuals.html">working_residuals()</a></code>
+
+        </dt>
+        <dd>The Working Residuals of an Equation</dd>
 
         <dt>
 

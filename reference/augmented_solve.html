@@ -19,7 +19,7 @@ and not at \(\kappa^2\), which the normal equations would give."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ and not at \(\kappa^2\), which the normal equations would give.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">augmented_solve</span><span class="op">(</span><span class="va">R</span>, <span class="va">C</span>, <span class="va">u</span>, <span class="va">how</span>, threads <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">augmented_solve</span><span class="op">(</span><span class="va">R</span>, <span class="va">C</span>, <span class="va">u</span>, <span class="va">how</span>, threads <span class="op">=</span> <span class="fl">1L</span>, tol <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -90,6 +90,14 @@ model.</p></dd>
 <dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
 <dd><p>How many threads the triangular factor may use, a plain
 integer. With <code>1L</code> the threaded route is not used.</p></dd>
+
+
+<dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
+<dd><p><code>NULL</code> for the defaults, or the tolerance of the decomposition:
+with <code>how = "qr"</code>, the tolerance of the pivoted <code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code>, which is also the
+threshold of the equilibrated diagonal for the threaded route (default
+<code>1e-7</code>); with <code>how = "svd"</code>, the relative cut of the singular values
+(default \(\max(\dim A)\,\epsilon\)).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -141,10 +149,10 @@ columns differ in size, and a large smoothing parameter produces that
 difference between the penalty rows of its own block and an unpenalized
 block. Scaling each column to unit norm removes differences in column size
 from any source and leaves an exact collinearity exactly singular.</p>
-<p>The route is taken when the smallest equilibrated entry exceeds <code>1e-7</code>
-times the largest, the tolerance that <code>dqrdc2</code> uses, so a matrix that the
-pivoted route would call deficient is solved there and its rank is
-returned.</p>
+<p>The route is taken when the smallest equilibrated entry exceeds <code>tol</code>
+times the largest (<code>1e-7</code> by default, the tolerance that <code>dqrdc2</code> uses), so
+that a matrix that the pivoted route would call deficient is solved there
+and its rank is returned.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

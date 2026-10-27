@@ -14,7 +14,9 @@ summary_class_blocks(
   tables,
   edf = NULL,
   coef = NULL,
-  hyper = NULL
+  hyper = NULL,
+  expected = TRUE,
+  emethod = NULL
 )
 ```
 
@@ -45,6 +47,18 @@ summary_class_blocks(
 - hyper:
 
   The hyperparameters, or `NULL`.
+
+- expected:
+
+  Whether the smoother of a class is read on the expected information.
+  It is the information on which the table `edf` was read, so that the
+  count of a class and the counts of its members are shares of the same
+  matrix.
+
+- emethod:
+
+  The method that obtains the expected information, as for
+  [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md).
 
 ## Value
 

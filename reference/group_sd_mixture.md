@@ -32,4 +32,4 @@ group_sd_mixture(g, M, S, W, s)
 
 The standard deviation of \\h^{-1}(\eta^\*)\\, or `NA` where it is not
 known to exist. See
-[`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md).
+[`group_interval_ends()`](https://statmodels7.github.io/statmodels7/reference/group_interval_ends.md).

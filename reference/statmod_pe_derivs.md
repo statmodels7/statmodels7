@@ -14,7 +14,7 @@ statmod_pe_derivs(
   method,
   idx,
   order = 1L,
-  approx = "opg"
+  emethod = NULL
 )
 ```
 
@@ -50,11 +50,14 @@ statmod_pe_derivs(
 
   `1` for the gradient alone, `2` for both.
 
-- approx:
+- emethod:
 
-  How the expected information is approximated for a family with no
-  closed form. The argument is read only when `method@hessian` is
-  `"expected"`.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 ## Value
 

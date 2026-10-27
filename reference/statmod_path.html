@@ -11,7 +11,7 @@ the one-standard-error rule."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,7 @@ the one-standard-error rule.</p>
 <span>  <span class="va">method</span>,</span>
 <span>  <span class="va">optimizer</span>,</span>
 <span>  <span class="va">beta</span>,</span>
-<span>  <span class="va">approx</span>,</span>
+<span>  <span class="va">emethod</span>,</span>
 <span>  <span class="va">maxit</span>,</span>
 <span>  <span class="va">tol</span>,</span>
 <span>  <span class="va">vb</span>,</span>
@@ -104,8 +104,12 @@ the one-standard-error rule.</p>
 <dd><p>The starting coefficients.</p></dd>
 
 
-<dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
-<dd><p>The approximation for the expected information.</p></dd>
+<dt id="arg-emethod">emethod<a class="anchor" aria-label="anchor" href="#arg-emethod"></a></dt>
+<dd><p>The method that obtains the expected information: <code>NULL</code>
+(the closed form of the family where it has one, and
+<code><a href="https://statmodels7.github.io/distributions7/reference/expect_opg.html" class="external-link">distributions7::expect_opg()</a></code> otherwise) or an object that inherits from
+<a href="https://statmodels7.github.io/distributions7/reference/ExpectMethod.html" class="external-link">distributions7::ExpectMethod</a>. It is read only where the expected
+information is used.</p></dd>
 
 
 <dt id="arg-maxit-tol">maxit, tol<a class="anchor" aria-label="anchor" href="#arg-maxit-tol"></a></dt>

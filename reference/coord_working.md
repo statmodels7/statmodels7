@@ -7,7 +7,7 @@ locally represents the log-likelihood.
 ## Usage
 
 ``` r
-coord_working(spec, ep, coef, design, p, expected, approx)
+coord_working(spec, ep, coef, design, p, expected, emethod)
 ```
 
 ## Arguments
@@ -39,10 +39,14 @@ coord_working(spec, ep, coef, design, p, expected, approx)
 
   `TRUE` for the expected information, `FALSE` for the observed one.
 
-- approx:
+- emethod:
 
-  How the expected information is approximated for a family with no
-  closed form.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 ## Value
 

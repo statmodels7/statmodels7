@@ -41,7 +41,7 @@ bootstrap_refit(object, spec_b, refit, method, cfg, beta0)
 
 ## Value
 
-A list with `coefficients` and `hyper`.
+A list with `coefficients`, `hyper` and the `design` of the replica.
 
 ## Examples
 

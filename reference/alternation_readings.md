@@ -16,7 +16,7 @@ alternation_readings(
   beta,
   hyper,
   expected,
-  approx,
+  emethod,
   aliased = integer(0)
 )
 
@@ -27,7 +27,7 @@ alternation_settled(
   beta,
   hyper,
   expected,
-  approx,
+  emethod,
   aliased = integer(0)
 )
 ```
@@ -39,7 +39,7 @@ alternation_settled(
   The fit's specification, design, objective, stacked coefficients and
   hyperparameters.
 
-- expected, approx:
+- expected, emethod:
 
   Which information the fit uses.
 

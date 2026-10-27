@@ -19,7 +19,7 @@ statmod_settle_seg(
   inner_optimizer,
   res,
   expected,
-  approx,
+  emethod,
   maxit,
   tol,
   vb,
@@ -37,7 +37,7 @@ statmod_settle_seg(
 
   The design, carrying the terms in its state.
 
-- blocks, hyper, inner_optimizer, expected, approx, maxit, tol, vb:
+- blocks, hyper, inner_optimizer, expected, emethod, maxit, tol, vb:
 
   As
   [`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md).

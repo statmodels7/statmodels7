@@ -8,7 +8,7 @@ together with the p-value of that value.
 ## Usage
 
 ``` r
-restricted_stat_rows(fit, ci, test, type, spec, design)
+restricted_stat_rows(fit, ci, test, vcov_type, spec, design)
 ```
 
 ## Arguments
@@ -24,11 +24,18 @@ restricted_stat_rows(fit, ci, test, type, spec, design)
 
 - test:
 
-  Which statistic: `"lr"`, `"score"` or `"gradient"`.
+  A restricted
+  [test_statistic](https://statmodels7.github.io/statmodels7/reference/test_statistic.md):
+  [`lr_test()`](https://statmodels7.github.io/statmodels7/reference/lr_test.md),
+  [`score_test()`](https://statmodels7.github.io/statmodels7/reference/score_test.md)
+  or
+  [`gradient_test()`](https://statmodels7.github.io/statmodels7/reference/gradient_test.md).
 
-- type:
+- vcov_type:
 
-  Which variance the Wald bracket reads, passed on.
+  The
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  that the Wald bracket reads, passed on.
 
 - spec, design:
 

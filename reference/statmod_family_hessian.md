@@ -6,7 +6,7 @@ on the link scale at one value of the parameters.
 ## Usage
 
 ``` r
-statmod_family_hessian(spec, theta, expected = TRUE, approx = "opg")
+statmod_family_hessian(spec, theta, expected = TRUE, emethod = NULL)
 ```
 
 ## Arguments
@@ -24,11 +24,14 @@ statmod_family_hessian(spec, theta, expected = TRUE, approx = "opg")
 
   `TRUE` for the expected information, `FALSE` for the observed Hessian.
 
-- approx:
+- emethod:
 
-  The strategy that the expected information uses when the family has no
-  closed form, passed through to
-  [`distributions7::distrib_expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_expected_hessian.html).
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 ## Value
 

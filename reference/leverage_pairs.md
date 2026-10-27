@@ -43,9 +43,9 @@ compiled kernel `leverage_pairs_cpp()` reads the nonzeros of the two
 designs row by row and sums them without expanding the pairs, and each
 row is written by one thread.
 [`block_leverage()`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md)
-takes this route only where both blocks are sparse, the product of their
-densities is below \\10^{-3}\\ and the number of pairs is below \\2
-\times 10^{7}\\.
+takes this route where both blocks are sparse and the pairs of nonzeros
+in a row number fewer than a quarter of the products that the dense
+route forms.
 
 ## See also
 

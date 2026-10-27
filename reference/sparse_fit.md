@@ -25,7 +25,7 @@ sparse_fit(
   spec = NULL,
   design = NULL,
   expected = TRUE,
-  approx = "opg"
+  emethod = NULL
 )
 ```
 
@@ -82,11 +82,14 @@ sparse_fit(
   `TRUE` for the expected information in the working weights of the
   coordinate descent, `FALSE` for the observed one.
 
-- approx:
+- emethod:
 
-  How the expected information is approximated for a family with no
-  closed form, as in
-  [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md).
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 ## Value
 

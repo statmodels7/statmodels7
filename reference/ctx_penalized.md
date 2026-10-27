@@ -30,8 +30,8 @@ ctx_penalized(
 - expected:
 
   Whether \\H\\ is the expected information, as the criterion carries
-  under `reml(hessian = "expected")`, or the observed one. The two give
-  different matrices and keep separate cache entries.
+  under `reml(information = expected_info())`, or the observed one. The
+  two give different matrices and keep separate cache entries.
 
 - laplace:
 

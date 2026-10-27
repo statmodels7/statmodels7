@@ -9,7 +9,7 @@ criterion in place of the Schur complement of those coefficients.
 ## Usage
 
 ``` r
-marginal_vcov(object, design, A, keep, type)
+marginal_vcov(object, design, A, keep, convention)
 ```
 
 ## Arguments
@@ -31,9 +31,11 @@ marginal_vcov(object, design, A, keep, type)
 
   The kept coordinates, a logical vector over the stacked coefficients.
 
-- type:
+- convention:
 
-  `"bayesian"` or `"unconditional"`.
+  The `name` of a
+  [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
+  object, `"bayesian"` or `"unconditional"`.
 
 ## Value
 
@@ -51,9 +53,11 @@ With \\v\\ the outer vector, \$\$\mathrm{Var}(\hat\beta) =
 K\_{uu}^{-1} + B\\V_v B^\top,\qquad V_v =
 \big\[-\nabla^2\_{vv}\ell_M\big\]^{-1},\$\$ where \\K\_{uu}^{-1}\\ is
 padded with zeros on \\\gamma\\ and \\B\\ holds one direction per
-coordinate of \\v\\. For `type = "bayesian"` \\v = \gamma\\ and the
-hyperparameters are held; for `type = "unconditional"` \\v = (\eta,
-\gamma)\\ and the hyperparameters' directions are
+coordinate of \\v\\. For
+[`bayesian_vcov()`](https://statmodels7.github.io/statmodels7/reference/bayesian_vcov.md)
+\\v = \gamma\\ and the hyperparameters are held; for
+[`unconditional_vcov()`](https://statmodels7.github.io/statmodels7/reference/unconditional_vcov.md)
+\\v = (\eta, \gamma)\\ and the hyperparameters' directions are
 \\-K\_{uu}^{-1}\partial^2\rho/\partial u\\\partial\eta\\.
 
 Replacing \\-\nabla^2\_{\gamma\gamma}\ell_M\\ by the Schur complement

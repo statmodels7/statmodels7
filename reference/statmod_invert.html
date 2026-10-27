@@ -9,7 +9,7 @@ locating the two points where the statistic crosses its critical value."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,8 +50,8 @@ locating the two points where the statistic crosses its critical value.</p>
 <span>  <span class="va">param</span>,</span>
 <span>  <span class="va">coefname</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  test <span class="op">=</span> <span class="st">"lr"</span>,</span>
-<span>  type <span class="op">=</span> <span class="st">"bayesian"</span>,</span>
+<span>  test <span class="op">=</span> <span class="fu"><a href="lr_test.html">lr_test</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  vcov_type <span class="op">=</span> <span class="fu"><a href="bayesian_vcov.html">bayesian_vcov</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  maxit <span class="op">=</span> <span class="fl">40L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -73,12 +73,13 @@ locating the two points where the statistic crosses its critical value.</p>
 
 
 <dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
-<dd><p>One of <code>"lr"</code>, <code>"score"</code>, <code>"gradient"</code>, <code>"wald"</code>.</p></dd>
+<dd><p>The <a href="test_statistic.html">test_statistic</a> to invert: <code><a href="lr_test.html">lr_test()</a></code> (the default),
+<code><a href="score_test.html">score_test()</a></code>, <code><a href="gradient_test.html">gradient_test()</a></code> or <code><a href="wald_test.html">wald_test()</a></code>.</p></dd>
 
 
-<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Which variance sets the starting bracket, and which the Wald
-statistic reads.</p></dd>
+<dt id="arg-vcov-type">vcov_type<a class="anchor" aria-label="anchor" href="#arg-vcov-type"></a></dt>
+<dd><p>The <a href="vcov_method.html">vcov_method</a> that sets the starting bracket, and that the
+Wald statistic reads.</p></dd>
 
 
 <dt id="arg-maxit">maxit<a class="anchor" aria-label="anchor" href="#arg-maxit"></a></dt>

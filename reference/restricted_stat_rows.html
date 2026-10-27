@@ -13,7 +13,7 @@ together with the p-value of that value."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@ together with the p-value of that value.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">restricted_stat_rows</span><span class="op">(</span><span class="va">fit</span>, <span class="va">ci</span>, <span class="va">test</span>, <span class="va">type</span>, <span class="va">spec</span>, <span class="va">design</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">restricted_stat_rows</span><span class="op">(</span><span class="va">fit</span>, <span class="va">ci</span>, <span class="va">test</span>, <span class="va">vcov_type</span>, <span class="va">spec</span>, <span class="va">design</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,11 +67,12 @@ together with the p-value of that value.</p>
 
 
 <dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
-<dd><p>Which statistic: <code>"lr"</code>, <code>"score"</code> or <code>"gradient"</code>.</p></dd>
+<dd><p>A restricted <a href="test_statistic.html">test_statistic</a>: <code><a href="lr_test.html">lr_test()</a></code>, <code><a href="score_test.html">score_test()</a></code> or
+<code><a href="gradient_test.html">gradient_test()</a></code>.</p></dd>
 
 
-<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Which variance the Wald bracket reads, passed on.</p></dd>
+<dt id="arg-vcov-type">vcov_type<a class="anchor" aria-label="anchor" href="#arg-vcov-type"></a></dt>
+<dd><p>The <a href="vcov_method.html">vcov_method</a> that the Wald bracket reads, passed on.</p></dd>
 
 
 <dt id="arg-spec-design">spec, design<a class="anchor" aria-label="anchor" href="#arg-spec-design"></a></dt>

@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,7 +161,7 @@ data:</p>
 <span><span class="va">f3</span><span class="op">@</span><span class="va">edf</span></span>
 <span><span class="co">#&gt;   parameter                        term coefficients      edf</span></span>
 <span><span class="co">#&gt; 1        mu                      linpar            1 1.000000</span></span>
-<span><span class="co">#&gt; 2        mu s(z, bspline_smooth(k = 8))            7 5.264483</span></span>
+<span><span class="co">#&gt; 2        mu s(z, bspline_smooth(k = 8))            7 5.263947</span></span>
 <span><span class="co">#&gt; 3     sigma                      linpar            1 1.000000</span></span></code></pre></div>
 <p>The smooth has 7 coefficients and uses about 5.3 of them. This
 effective number of degrees of freedom is the one that a criterion
@@ -180,8 +180,8 @@ effects:</p>
 <span><span class="va">f4</span><span class="op">@</span><span class="va">edf</span></span>
 <span><span class="co">#&gt;   parameter                        term coefficients       edf</span></span>
 <span><span class="co">#&gt; 1        mu                      linpar            1  1.000000</span></span>
-<span><span class="co">#&gt; 2        mu s(z, bspline_smooth(k = 8))            7  6.083231</span></span>
-<span><span class="co">#&gt; 3        mu              random(~1 | g)           20 18.540240</span></span>
+<span><span class="co">#&gt; 2        mu s(z, bspline_smooth(k = 8))            7  6.081977</span></span>
+<span><span class="co">#&gt; 3        mu              random(~1 | g)           20 18.540158</span></span>
 <span><span class="co">#&gt; 4     sigma                      linpar            1  1.000000</span></span>
 <span><span class="fu"><a href="../reference/hyper.html">hyper</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   parameter                        term   name  estimate  held source   id</span></span>
@@ -265,9 +265,9 @@ example <code>lasso(x, lambda = 3)</code> or
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 95% intervals, bayesian variance</span></span>
 <span><span class="co">#&gt; conditional log-likelihood -362.616546    effective df 7.26</span></span>
-<span><span class="co">#&gt; cAIC 739.762    cBIC 766.668</span></span>
-<span><span class="co">#&gt; fitted in 229 ms</span></span>
-<span><span class="co">#&gt; inner   max |grad|/se 1.3e-15   min eigen 1</span></span>
+<span><span class="co">#&gt; cAIC 739.761    cBIC 766.665</span></span>
+<span><span class="co">#&gt; fitted in 280 ms</span></span>
+<span><span class="co">#&gt; inner   max |grad|/se 3.7e-16   min eigen 1</span></span>
 <span><span class="co">#&gt; outer   max |grad|/se 2.1e-08   min eigen 0.99</span></span>
 <span><span class="co">#&gt; 1 note: print(summary(fit), notes = TRUE)</span></span></code></pre></div>
 <p>The log-likelihood is the conditional one, read at the fitted
@@ -295,7 +295,7 @@ stationary point of the criterion in the hyperparameters.</p>
 <code class="sourceCode R"><span><span class="va">cert</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/statmod_certificate.html">statmod_certificate</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>state <span class="op">=</span> <span class="va">cert</span><span class="op">$</span><span class="va">state</span>, mode_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">cert</span><span class="op">$</span><span class="va">mode_error</span>, digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;       state  mode_error </span></span>
-<span><span class="co">#&gt; "converged"  "6.77e-30"</span></span></code></pre></div>
+<span><span class="co">#&gt; "converged"  "4.93e-30"</span></span></code></pre></div>
 <p><code>mode_error</code> is how far above its own penalized mode the
 inner fit stopped, in log-likelihood units, so one limit serves every
 model whatever its scale. The <code>state</code> is
@@ -315,9 +315,9 @@ standard error on request:</p>
 <span>                 g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">db</span><span class="op">$</span><span class="va">g</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">f4</span>, newdata <span class="op">=</span> <span class="va">nd</span>, se <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span></span>
 <span><span class="co">#&gt;          fit        se      lower       upper</span></span>
-<span><span class="co">#&gt; 1 -0.2837629 0.1188419 -0.5166888 -0.05083693</span></span>
-<span><span class="co">#&gt; 2  1.8468308 0.1199200  1.6117920  2.08186963</span></span>
-<span><span class="co">#&gt; 3  2.4646126 0.1219466  2.2256016  2.70362367</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 -0.2837629 0.1188442 -0.5166933 -0.05083242</span></span>
+<span><span class="co">#&gt; 2  1.8468308 0.1199288  1.6117747  2.08188691</span></span>
+<span><span class="co">#&gt; 3  2.4646126 0.1219674  2.2255610  2.70366431</span></span></code></pre></div>
 <p>Prediction reapplies each term’s blueprint instead of rebuilding it,
 so the knots of a smooth and the levels of a factor are those of the
 fitted model. As a consequence, predicting at rows that were used to fit
@@ -326,7 +326,7 @@ the model returns the fitted values there.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>nobs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span>, df.residual <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/df.residual.html" class="external-link">df.residual</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;        nobs df.residual </span></span>
-<span><span class="co">#&gt;    300.0000    273.3765</span></span>
+<span><span class="co">#&gt;    300.0000    273.3779</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 300</span></span></code></pre></div>
 <p><code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> returns the standard deviation of the response

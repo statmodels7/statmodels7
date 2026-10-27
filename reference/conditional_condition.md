@@ -1,8 +1,9 @@
 # The Condition Through Which an Unavailable Correction Warns
 
 Returns a classed warning, so a caller can catch the one raised when
-`vcov(type = "unconditional")` cannot read the hyperparameters' own
-uncertainty and returns the conditional variance instead.
+`vcov(vcov_type = unconditional_vcov())` cannot read the
+hyperparameters' own uncertainty and returns the conditional variance
+instead.
 
 ## Usage
 

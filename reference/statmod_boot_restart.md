@@ -17,7 +17,7 @@ statmod_boot_restart(
   inner_optimizer,
   res,
   expected,
-  approx,
+  emethod,
   maxit,
   tol,
   vb,
@@ -65,7 +65,7 @@ statmod_boot_restart(
   objective, and also when the design carries no state, or when the
   response is a matrix, is not numeric or has missing values.
 
-- expected, approx, maxit, tol:
+- expected, emethod, maxit, tol:
 
   Passed to
   [`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md)

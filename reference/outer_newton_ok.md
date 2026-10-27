@@ -61,8 +61,8 @@ evaluation outweighs the saving in evaluations.
 The availability of the Hessian still governs the rest: it is supplied
 to an optimizer that the caller names,
 [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
-and `vcov(type = "unconditional")` read it, and it is recorded as
-`exact_hessian`. Only the default direction is held back.
+and `vcov(vcov_type = unconditional_vcov())` read it, and it is recorded
+as `exact_hessian`. Only the default direction is held back.
 
 The block width is read from the `block` property of the penalty where
 it has one; a penalty without that property is treated as univariate.

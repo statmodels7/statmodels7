@@ -13,7 +13,7 @@ same quantity that block_leverage() otherwise reads off a dense
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,9 +85,9 @@ block, so the quadratic form is over a handful of entries, while the dense
 product computes \(p_a p_b\) of them per row to keep one. The compiled
 kernel <code>leverage_pairs_cpp()</code> reads the nonzeros of the two designs row by
 row and sums them without expanding the pairs, and each row is written by
-one thread. <code><a href="block_leverage.html">block_leverage()</a></code> takes this route only where both blocks are
-sparse, the product of their densities is below \(10^{-3}\) and the number
-of pairs is below \(2 \times 10^{7}\).</p>
+one thread. <code><a href="block_leverage.html">block_leverage()</a></code> takes this route where both blocks are
+sparse and the pairs of nonzeros in a row number fewer than a quarter of
+the products that the dense route forms.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

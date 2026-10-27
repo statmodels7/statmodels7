@@ -10,7 +10,7 @@ chosen by the caller.
 
 ``` r
 # S3 method for class 'StatmodFit'
-logLik(object, type = c("conditional", "marginal"), ...)
+logLik(object, loglik_type = c("conditional", "marginal"), ...)
 ```
 
 ## Arguments
@@ -20,7 +20,7 @@ logLik(object, type = c("conditional", "marginal"), ...)
   A
   [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
-- type:
+- loglik_type:
 
   `"conditional"` (the default) or `"marginal"`.
 
@@ -57,12 +57,12 @@ the two conventions (Vaida and Blanchard, 2005).
 
 ## When the marginal one is available
 
-`type = "marginal"` returns the value of the outer criterion at the fit.
-Its degrees of freedom count the parameters that the marginal model
-estimates: the coefficients that are not covered by any penalty, the
-dimension of the null space of each penalty without a kink (the straight
-line of a smooth), the hyperparameters that the outer search or a path
-estimated, and the free parameters of a structural term. A held
+`loglik_type = "marginal"` returns the value of the outer criterion at
+the fit. Its degrees of freedom count the parameters that the marginal
+model estimates: the coefficients that are not covered by any penalty,
+the dimension of the null space of each penalty without a kink (the
+straight line of a smooth), the hyperparameters that the outer search or
+a path estimated, and the free parameters of a structural term. A held
 hyperparameter is not counted, and a hyperparameter shared by several
 terms is counted once. The other coefficients of a penalized term are
 integrated out and are not counted.

@@ -15,41 +15,87 @@ the hyperparameters. Pass the result as `outer_criterion`.
 ## Usage
 
 ``` r
-reml(hessian = c("observed", "auto", "expected"), marginal = NULL)
+reml(information = observed_info(), marginal = NULL)
 
-ml(hessian = c("observed", "auto", "expected"), marginal = NULL)
+ml(information = observed_info(), marginal = NULL)
 ```
 
 ## Arguments
 
-- hessian:
+- information:
 
-  Which information enters the determinant: `"observed"` (the default),
-  the curvature of the log-likelihood at the data, which makes the
-  criterion the Laplace approximation, `"expected"`, the Fisher
-  information, a function of the parameters alone, or `"auto"`, which
-  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-  settles against the family through
-  [`outer_resolve()`](https://statmodels7.github.io/statmodels7/reference/outer_resolve.md):
-  the expected information for a Student t, a skew t or a Cauchy
-  response, whose observed information is not positive definite at an
-  outlier, and the observed information otherwise. The default is
-  `"observed"`; the expected information is used where the caller names
-  it, as for a Student t whose degrees of freedom are modeled. The
-  fitted model records the information used. The argument is matched
-  with [`match.arg()`](https://rdrr.io/r/base/match.arg.html). On the
-  expected route the outer gradient is exact wherever the family writes
-  its expected information out, as every shipped family does, and the
-  outer Hessian is exact wherever the family also supplies the
-  derivative of that information that the Hessian reads (every shipped
-  family except
+  The information that enters the determinant, an object that inherits
+  from
+  [distributions7::Information](https://statmodels7.github.io/distributions7/reference/Information.html):
+
+  - [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+    (the default): the curvature of the log-likelihood at the data,
+    which makes the criterion the Laplace approximation;
+
+  - [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html):
+    the Fisher information, a function of the parameters alone. Its
+    `method` selects how the expectation is obtained: `NULL` (the closed
+    form of the family where it has one, and
+    [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+    otherwise),
+    [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html),
+    [`distributions7::expect_integrate()`](https://statmodels7.github.io/distributions7/reference/expect_integrate.html)
+    or
+    [`distributions7::expect_mc()`](https://statmodels7.github.io/distributions7/reference/expect_mc.html)
+    (see
+    [distributions7::expected_derivative_methods](https://statmodels7.github.io/distributions7/reference/expected_derivative_methods.html));
+
+  - [`auto_info()`](https://statmodels7.github.io/statmodels7/reference/auto_info.md):
+    settled against the family by
+    [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+    through
+    [`outer_resolve()`](https://statmodels7.github.io/statmodels7/reference/outer_resolve.md),
+    as the expected information for a Student t, a skew t or a Cauchy
+    response, whose observed information is not positive definite at an
+    outlier, and as the observed information otherwise.
+
+  The expected information is used where the caller names it, as for a
+  Student t whose degrees of freedom are modeled. The fitted model
+  records the information used.
+
+  On the expected information, the `method` object defines the matrix
+  and every derivative of it that the exact outer gradient and Hessian
+  read, so that the derivatives are those of the criterion that is
+  evaluated. With the closed form of the family, the derivative is the
+  closed form of the derivative (every shipped family; the Hessian also
+  needs the second derivative of the information, which every shipped
+  family supplies except
   [`distributions7::enet_distrib()`](https://statmodels7.github.io/distributions7/reference/enet_distrib.html)).
-  A family that does not write its expected information out reads the
-  outer product of its scores at the data under the default
-  `iwls(approx = "opg")`, which is not an expectation, and
-  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-  rejects `"expected"` there: see
-  [`assert_criterion_information()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.md).
+  With
+  [`distributions7::expect_integrate()`](https://statmodels7.github.io/distributions7/reference/expect_integrate.html)
+  or
+  [`distributions7::expect_mc()`](https://statmodels7.github.io/distributions7/reference/expect_mc.html),
+  it is the derivative of the expectation, which moves the density as
+  well as the integrand. With
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html),
+  the matrix is the outer product of the scores at the data and the
+  derivative is its exact derivative at fixed data. A family without a
+  closed form reads
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  for the matrix and for the derivatives when `method` is `NULL`. The
+  outer product depends on the response, so the criterion built on it
+  has exact derivatives and is not the Laplace approximation of an
+  expectation. With `method = NULL` on a family without a closed form,
+  the matrix of the criterion is therefore an estimate of the expected
+  information, noisier than a computed expectation and about 25 times
+  cheaper: on a density-only family (n = 300, ten basis functions) a fit
+  took 0.8 s against 25.3 s for
+  `method = expect_integrate(identity = "score")`, with smoothing
+  parameters 12.57 and 13.00, against 13.02 for the observed
+  information. The computed expectation is selected with
+  `method = expect_integrate(identity = "score")`.
+  [`distributions7::expect_mc()`](https://statmodels7.github.io/distributions7/reference/expect_mc.html)
+  draws a new sample at each call of the matrix and of each derivative,
+  so that its derivative is that of the expectation and not of the
+  sampled matrix, and the outer search is noisy at the level of the
+  Monte Carlo error.
+  [information_objects](https://statmodels7.github.io/statmodels7/reference/information_objects.md)
+  compares the three objects.
 
 - marginal:
 
@@ -75,8 +121,9 @@ ml(hessian = c("observed", "auto", "expected"), marginal = NULL)
 
 An
 [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-object of kind `"reml"` or `"ml"`, whose `hessian` and `marginal` are as
-supplied and whose path settings are unused.
+object of kind `"reml"` or `"ml"`, whose `hessian` holds the object
+given as `information` and whose `marginal` is as supplied; its path
+settings are unused.
 
 ## The criterion
 
@@ -91,6 +138,24 @@ and for a quadratic penalty that constant carries the
 \\-\frac{r}{2}\log\lambda\\ and the log pseudo-determinant that a
 marginal criterion needs. Written out, the expression reproduces Wood's
 (2011) REML criterion term for term.
+
+## The effective degrees of freedom of the fit
+
+The effective degrees of freedom stored in the fitted model (`fit@edf`),
+the share of each term in \\\mathrm{tr}\[(H+S)^{-1}H\]\\, are read on
+the `information` of the criterion:
+[`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html)
+by default, or the
+[`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
+object with its `method`. The count is not part of the criterion here,
+but the standard errors of the same fit read the same default matrix, so
+the count and the standard errors of a summary agree.
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+recomputes the count when its `vcov_type` names the other matrix. For a
+positive semidefinite \\H\\ the total lies in \\\[0, p\]\\, with \\p\\
+the number of coefficients; an indefinite observed information can give
+a direction of negative curvature a negative share, and the summary then
+adds a note.
 
 ## What each one integrates
 
@@ -234,6 +299,8 @@ models. *Journal of the Royal Statistical Society, Series B*, 73(1),
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
 and [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
 for the prediction-error criteria,
+[information_objects](https://statmodels7.github.io/statmodels7/reference/information_objects.md)
+for the argument `information`,
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 for where these are passed,
 [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
@@ -264,10 +331,10 @@ c(reml = hyper(fit)$estimate, ml = hyper(fml)$estimate)
 #> 3.216730 3.205381 
 c(reml = sum(fit@edf$edf), ml = sum(fml@edf$edf))
 #>     reml       ml 
-#> 8.562273 8.574067 
+#> 8.555773 8.567577 
 
 # The marginal log-likelihood, which these criteria maximize, is only
 # available where one of them ran.
-logLik(fit, type = "marginal")
+logLik(fit, loglik_type = "marginal")
 #> 'log Lik.' -53.66395 (df=4)
 ```

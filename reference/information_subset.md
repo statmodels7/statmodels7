@@ -8,7 +8,7 @@ designs.
 ## Usage
 
 ``` r
-information_subset(spec, design, ev, expected, approx, H, index)
+information_subset(spec, design, ev, expected, emethod, H, index)
 ```
 
 ## Arguments
@@ -28,7 +28,7 @@ information_subset(spec, design, ev, expected, approx, H, index)
   [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
   returns at the coefficients.
 
-- expected, approx:
+- expected, emethod:
 
   As in
   [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md).

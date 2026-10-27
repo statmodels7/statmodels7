@@ -10,7 +10,7 @@ family at the parameters that these coefficients give.
 ## Usage
 
 ``` r
-bootstrap_simulator(object, spec0, design0, aside)
+bootstrap_simulator(object, spec0, design0, aside, keep = FALSE)
 ```
 
 ## Arguments
@@ -29,6 +29,12 @@ bootstrap_simulator(object, spec0, design0, aside)
   The rows of
   [`random_modes()`](https://statmodels7.github.io/statmodels7/reference/random_modes.md)
   whose effects are redrawn; the other effects keep their estimates.
+
+- keep:
+
+  `TRUE` makes the function return a list with the response `y` and the
+  coefficients `cf` that it was drawn from. The attribute `targets` of
+  the function lists the coordinates of the effects that it redraws.
 
 ## Value
 

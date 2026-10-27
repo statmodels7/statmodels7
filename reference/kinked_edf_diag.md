@@ -15,7 +15,7 @@ kinked_edf_diag(
   design,
   hyper,
   expected,
-  approx,
+  emethod,
   aliased = integer(0)
 )
 ```
@@ -27,7 +27,7 @@ kinked_edf_diag(
   The specification, the coefficients, the design and the
   hyperparameters.
 
-- expected, approx:
+- expected, emethod:
 
   Which information.
 

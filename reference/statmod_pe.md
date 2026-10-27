@@ -8,7 +8,7 @@ obtained by passing the mode.
 ## Usage
 
 ``` r
-statmod_pe(spec, design, coef, hyper, method, approx = "opg", active = NULL)
+statmod_pe(spec, design, coef, hyper, method, emethod = NULL, active = NULL)
 ```
 
 ## Arguments
@@ -36,11 +36,14 @@ statmod_pe(spec, design, coef, hyper, method, approx = "opg", active = NULL)
   [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
   of kind `"aic"` or `"bic"`, read for `hessian` and for \\\kappa\\.
 
-- approx:
+- emethod:
 
-  How the expected information is approximated for a family with no
-  closed form. The argument is read only when `method@hessian` is
-  `"expected"`.
+  The method that obtains the expected information: `NULL` (the closed
+  form of the family where it has one, and
+  [`distributions7::expect_opg()`](https://statmodels7.github.io/distributions7/reference/expect_opg.html)
+  otherwise) or an object that inherits from
+  [distributions7::ExpectMethod](https://statmodels7.github.io/distributions7/reference/ExpectMethod.html).
+  It is read only where the expected information is used.
 
 - active:
 

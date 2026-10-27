@@ -19,7 +19,7 @@ each observation for modelterms7::regime()."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.209.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.211.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,10 +108,10 @@ predictors and the model's log-density.</p>
 <span class="r-in"><span>               <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">statmod_latent</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   group psi     mean         sd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     1   1 4.839775 0.10668524</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     2   1 4.839775 0.10668524</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     3   1 4.839775 0.10668524</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4     4   1 5.087046 0.07171887</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     1   1 4.844183 0.10375046</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     2   1 4.844183 0.10375046</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3     3   1 4.844183 0.10375046</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     4   1 5.084651 0.06974612</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The smoothed probability of the second regime is read at a change of level.</span></span></span>
 <span class="r-in"><span><span class="va">dr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">60</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">30</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

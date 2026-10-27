@@ -63,10 +63,10 @@ fit <- statmod(y ~ jump(x, psi ~ random(~1 | id), marginal = TRUE),
                distributions7::gaussian1_distrib(), dd)
 statmod_latent(fit)
 #>   group psi     mean         sd
-#> 1     1   1 4.839775 0.10668524
-#> 2     2   1 4.839775 0.10668524
-#> 3     3   1 4.839775 0.10668524
-#> 4     4   1 5.087046 0.07171887
+#> 1     1   1 4.844183 0.10375046
+#> 2     2   1 4.844183 0.10375046
+#> 3     3   1 4.844183 0.10375046
+#> 4     4   1 5.084651 0.06974612
 
 # The smoothed probability of the second regime is read at a change of level.
 dr <- data.frame(t = 1:60, y = c(rnorm(30), rnorm(30, 3)))
