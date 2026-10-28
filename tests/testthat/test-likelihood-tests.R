@@ -387,15 +387,19 @@ test_that("confint(test =) inverts the test it names", {
   expect_error(confint(fit, "mu:x", test = lr_test()), "readable = FALSE")
 
   ## a row under a KINKED penalty keeps NA rather than falling back on the
-  ## Wald limits, and a request for nothing but such rows is refused
+  ## Wald limits, and a request for nothing but such rows returns them with
+  ## NA limits and a warning that gives the reason
   fl <- lasso_fit()
   nl <- statmod_design(fl@spec)$mu$coef_names
   tb <- confint(fl, test = lr_test(), readable = FALSE)
   kink <- rownames(tb) != "mu:(Intercept)"
   expect_true(all(is.na(tb$lower[kink])))
   expect_true(is.finite(tb$lower[!kink]))
-  expect_error(confint(fl, paste0("mu:", nl[[2L]]), test = lr_test(),
-                       readable = FALSE), "nothing to invert")
+  expect_warning(
+    cl <- confint(fl, paste0("mu:", nl[[2L]]), test = lr_test(),
+                  readable = FALSE), "nothing to invert")
+  expect_identical(rownames(cl), paste0("mu:", nl[[2L]]))
+  expect_true(all(is.na(c(cl$lower, cl$upper))))
 
   ## while a smooth's own coordinates are inverted like any other
   cs <- confint(smooth_fit(), "mu:s(z).lin", test = lr_test(),

@@ -1,3 +1,26 @@
+# statmodels7 0.220.0
+
+* A restricted refit that holds a coefficient of a `seg()` term with two or
+  more break-points keeps the free break-points at least two observations away
+  from the held one. Before, the relabeling of crossed break-points wrote the
+  held value onto the free break-point, the two sat at one position and the
+  alternation ran its whole budget of 1000 passes without converging (4006
+  scoring iterations, 157 s and a statistic of 118 for a likelihood ratio of
+  4.2 on a test case; 160 s and 40 refits for one side of the interval of a
+  case with a weak second break-point). The held position starts from the
+  position and the change of slope of each unrestricted break-point in turn
+  and the refit with the smaller objective is kept. `statmod_restrict()`
+  returns the coefficients in the order of the positions, with `[held]` after
+  the names of the held break-point.
+* The search for the limits of a break-point by inversion stays between the
+  fitted positions of the neighboring break-points, and a side that stays
+  under the critical value as far as a neighbor ends at its position. Next to
+  a neighbor the statistic is evaluated at points whose distance from the
+  neighbor grows by a factor of 1.3.
+* `confint(parm = , test = lr_test())` returns the requested rows with `NA`
+  limits and a warning when none of the coefficients can be held; it signaled
+  an error.
+
 # statmodels7 0.219.0
 
 * A fitted model stores the line search of its outer optimizer with the
