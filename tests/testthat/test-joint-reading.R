@@ -373,3 +373,36 @@ test_that("the certificate does not call a partial reading converged", {
   expect_true(is.na(cert$mode_error))
   expect_match(paste(cert$reason, collapse = " "), "lower bound")
 })
+
+test_that("bfgs() and lbfgs() from the start of b4 end as not converged", {
+  skip_on_cran()
+  skip_if_not("stop_decrement" %in% S7::prop_names(optimizers7::bfgs()))
+  base_start <- structural_zeta_start
+  start <- stalled$b4[[2L]]
+  spec <- statmod_spec(y ~ gas(p = 1, q = 1, time = t) |
+                         phi ~ gas(p = 1, q = 1, time = t),
+                       distributions7::beta1_distrib(), belt2)
+  design <- testthat::with_mocked_bindings(
+    statmod_design(spec),
+    structural_zeta_start = function(term, target = NULL) {
+      z <- base_start(term, target = target)
+      z[names(start)] <- start
+      z
+    })
+  hyper <- statmod_hyper_start(spec, design)
+  obj <- statmod_objective(spec, hyper, design, expected = FALSE)
+  beta <- statmod_start(spec, design, obj, NULL)
+  jp <- statmod_joint_pieces(spec, design, obj, hyper,
+                             kinds = c("filter", "loglik"))
+  u0 <- c(beta, jp$zeta())
+  # both stop at -171.5056 on crit_abs_par(), with a step of 8e-9 and a
+  # decrease of 0.02 still predicted at the new point
+  for (opt in list(optimizers7::bfgs(), optimizers7::lbfgs())) {
+    r <- optimizers7::minimize(opt, jp$fn, u0, gr = jp$gr)
+    expect_false(r@converged)
+    expect_match(r@message, "stop_decrement")
+  }
+  r <- optimizers7::minimize(optimizers7::bfgs(stop_decrement = Inf), jp$fn,
+                             u0, gr = jp$gr)
+  expect_true(r@converged)
+})
