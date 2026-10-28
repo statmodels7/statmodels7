@@ -358,3 +358,18 @@ test_that("the joint gradient is missing where it cannot be evaluated", {
   expect_true(all(is.na(g)))
   expect_true(is.na(joint_reading(g, diag(length(u)), seq_along(u))$decrement))
 })
+
+test_that("the certificate does not call a partial reading converged", {
+  skip_on_cran()
+  fit <- suppressWarnings(gas_fit("erupt_weib"))
+  expect_identical(statmod_certificate(fit)$state, "converged")
+  # the reading that the aliasing test leaves below the limit, from a curvature
+  # that names the term's parameters
+  cert <- testthat::with_mocked_bindings(
+    statmod_certificate(fit),
+    joint_reading = function(g, K, keep, own = integer(0))
+      list(decrement = NA_real_, ascent = FALSE, ratio = 0, partial = TRUE))
+  expect_identical(cert$state, "unknown")
+  expect_true(is.na(cert$mode_error))
+  expect_match(paste(cert$reason, collapse = " "), "lower bound")
+})
