@@ -994,8 +994,8 @@ regime_parameters <- function(r) {
   k <- tm@k
   psi <- unlist(r$psi)
   mu <- cumsum(c(psi[["level1"]], psi[paste0("gap", seq.int(2L, k))]))
-  P <- as.matrix(parameters7::param_value(tm@chain,
-                                          psi[tm@chain@free_names]))
+  P <- as.matrix(parameters7::param_value(tm@transition,
+                                          psi[tm@transition@free_names]))
   A <- diag(k) - P
   A[, k] <- 1
   delta <- as.numeric(solve(t(A), c(rep(0, k - 1L), 1)))
