@@ -83,6 +83,22 @@ any other: a smooth's linear column and its rotated coordinates, a ridge,
 a random effect. \code{\link[=statmod_stat_at]{statmod_stat_at()}} states the meaning of such a fit.
 }
 
+\section{Break-points}{
+A coefficient of a continuous \code{\link[modelterms7:seg]{modelterms7::seg()}} term with two or more
+break-points is held with the other break-points free, and the fit is the
+one of a break-point at the held value. A free break-point cannot reach the
+held one: it stays on one side of it with at least two observations
+between the two (\code{\link[modelterms7:seg_pin]{modelterms7::seg_pin()}}), because two break-points at
+one position make two columns equal and the changes of slope grow without
+bound in opposite directions. The held position stands for each of the
+break-points of the term in turn, taking the change of slope of that
+break-point while the others keep their positions and changes of slope, so
+that the free break-point starts on one side of the held position or on the
+other, and the refit with the smaller objective is kept. The coefficients
+of the result are in the order of the positions, and \verb{[held]} follows the
+names of the held break-point's coefficients (\code{\link[=pin_held_breakpoints]{pin_held_breakpoints()}}).
+}
+
 \seealso{
 \code{\link[=iwls_solve]{iwls_solve()}}, which drops the held coordinate from the system.
 }

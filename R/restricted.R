@@ -49,6 +49,22 @@
 #' any other: a smooth's linear column and its rotated coordinates, a ridge,
 #' a random effect. [statmod_stat_at()] states the meaning of such a fit.
 #'
+#' # Break-points
+#'
+#' A coefficient of a continuous [modelterms7::seg()] term with two or more
+#' break-points is held with the other break-points free, and the fit is the
+#' one of a break-point at the held value. A free break-point cannot reach the
+#' held one: it stays on one side of it with at least two observations
+#' between the two ([modelterms7::seg_pin()]), because two break-points at
+#' one position make two columns equal and the changes of slope grow without
+#' bound in opposite directions. The held position stands for each of the
+#' break-points of the term in turn, taking the change of slope of that
+#' break-point while the others keep their positions and changes of slope, so
+#' that the free break-point starts on one side of the held position or on the
+#' other, and the refit with the smaller objective is kept. The coefficients
+#' of the result are in the order of the positions, and `[held]` follows the
+#' names of the held break-point's coefficients ([pin_held_breakpoints()]).
+#'
 #' @param fit A [StatmodFit()].
 #' @param param The distribution parameter whose equation carries the
 #'   coefficient, a single string.
@@ -134,16 +150,36 @@ statmod_restrict <- function(fit, param, coefname, value) {
   hc <- spec0@held_coef
   hc[[param]] <- stats::setNames(as.numeric(value), coefname)
   spec <- S7::set_props(spec0, held_coef = hc)
-  design <- statmod_design(spec)
-  blocks <- statmod_blocks(spec, design)
   method <- fit@methods$smooth
   cfg <- inner_settings(method)
-  beta <- unlist(fit@coefficients[params], use.names = FALSE)
-  beta[at] <- as.numeric(value)
-
-  res <- statmod_alternate(spec, design, blocks, fit@hyper, method, beta,
-                           cfg$expected, cfg$emethod, cfg$maxit, cfg$tol,
-                           verbosity(0))
+  beta_fit <- unlist(fit@coefficients[params], use.names = FALSE)
+  beta0 <- beta_fit
+  beta0[at] <- as.numeric(value)
+  # ONE FIT FOR EACH BREAK-POINT THE HELD ONE CAN STAND FOR. The held
+  # position takes the change of slope of one of the unrestricted
+  # break-points and the free ones keep the rest, so that the free
+  # break-point starts on one side of the held one or on the other. The fit
+  # that ends with the smaller objective is kept.
+  run <- function(variant) {
+    design <- statmod_design(spec)
+    blocks <- statmod_blocks(spec, design)
+    pins <- pin_held_breakpoints(spec, design, beta0, from = beta_fit,
+                                 variant = variant)
+    res <- statmod_alternate(spec, design, blocks, fit@hyper, method,
+                             pins$beta, cfg$expected, cfg$emethod, cfg$maxit,
+                             cfg$tol, verbosity(0))
+    list(design = design, pins = pins, res = res)
+  }
+  best <- run(1L)
+  for (v in seq_len(best$pins$variants)[-1L]) {
+    other <- run(v)
+    if (is.finite(other$res$value) && other$res$value < best$res$value) {
+      best <- other
+    }
+  }
+  design <- best$design
+  pins <- best$pins
+  res <- best$res
   cf <- res$obj$split(res$par)
   # the objective is a MINIMAND -- the negative log-likelihood plus the
   # penalty -- so its gradient carries the opposite sign to the score
@@ -159,7 +195,7 @@ statmod_restrict <- function(fit, param, coefname, value) {
     if (is.null(hess)) hess <<- as_dense(res$obj$he(res$par))
     hess
   }
-  list(coefficients = cf,
+  list(coefficients = pins$present(cf),
        loglik = statmod_loglik_at(spec, cf, design),
        objective = res$value,
        score = sc,
@@ -169,6 +205,194 @@ statmod_restrict <- function(fit, param, coefname, value) {
        mode_error = function() restricted_mode_error(sc, info(), at),
        labels = rownames(coef_labels(spec, design)),
        converged = isTRUE(res$converged))
+}
+
+
+#' Keep the Free Break-Points Away From a Held One
+#'
+#' @description
+#' Prepares the break-point terms of a restricted fit in which a coefficient
+#' of a continuous [modelterms7::seg()] term with two or more break-points is
+#' held. The free break-points are confined to the side of the held position
+#' on which they start, with at least `min_obs` observations between them and
+#' it ([modelterms7::seg_pin()]), and the starting values of their positions
+#' are brought inside the interval. The position of a free break-point is kept
+#' inside its interval by an infinite objective outside it ([pin_infeasible()]).
+#'
+#' @details
+#' Two break-points at one position make two columns of the block equal. A
+#' free break-point that reaches the held one then has coefficients of the
+#' changes of slope that grow without bound in opposite directions, and the
+#' relabeling of crossed break-points of [modelterms7::term_refresh()] writes
+#' the held value onto the coefficients of the free one. A restricted fit of
+#' this kind was measured at 4006 scoring iterations, without converging, for
+#' a statistic that was not the likelihood ratio.
+#'
+#' The coefficients of such a term are returned in the order of the positions
+#' of the break-points, by `present()`, and the coefficient labeled as held
+#' carries `[held]` after its name.
+#'
+#' @param spec A [StatmodSpec()] with the coefficient held.
+#' @param design Its design, whose state holds the terms that a fit
+#'   refreshes. The terms in the state are replaced.
+#' @param beta The starting coefficients, stacked, with the held value in
+#'   place.
+#' @param from The coefficients of the unrestricted fit, stacked, from which
+#'   the starting pairs of position and change of slope are taken.
+#' @param min_obs The smallest number of observations between a free and a
+#'   held break-point.
+#' @param variant Which unrestricted break-point the held position stands
+#'   for, counted from the nearest to it: the held position takes the change
+#'   of slope of that break-point and the free ones keep the other pairs.
+#'
+#' @return A list with `beta`, the starting coefficients with the free
+#'   positions inside their intervals, `present`, a function of the
+#'   coefficient list of the restricted fit that returns it with the
+#'   break-points in order, and `variants`, the number of break-points that
+#'   the held position can stand for: the number of break-points of the term
+#'   when one position is held, and one otherwise. A model without such a
+#'   term is left unchanged.
+#'
+#' @seealso [statmod_restrict()], which calls it.
+#'
+#' @keywords internal
+pin_held_breakpoints <- function(spec, design, beta, from = beta,
+                                 min_obs = 2L, variant = 1L) {
+  out <- list(beta = beta, present = function(cf) cf, variants = 1L)
+  st <- attr(design, "state")
+  hc <- spec@held_coef
+  if (is.null(st) || !length(hc)) return(out)
+  params <- spec@distrib@params
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  entries <- list()
+  for (p in names(hc)) {
+    a <- match(p, params)
+    for (nm in names(st$terms[[p]])) {
+      tm <- st$terms[[p]][[nm]]
+      if (!S7::S7_inherits(tm, modelterms7::SegTerm) ||
+          !identical(tm@kind, "seg") || length(tm@subformulas) ||
+          tm@npsi < 2L) {
+        next
+      }
+      cols <- design[[p]]$blocks[[nm]]
+      cn <- design[[p]]$coef_names[cols]
+      hv <- hc[[p]][names(hc[[p]]) %in% cn]
+      if (!length(hv)) next
+      K <- tm@npsi
+      bp <- tm@blueprint
+      own <- tm@coef_names[match(names(hv), cn)]
+      at_of <- function(prefix) {
+        vapply(paste0(prefix, seq_len(K)), function(q) bp$index[[q]][1L],
+               integer(1))
+      }
+      psi_cols <- cols[at_of("psi")]
+      gam_cols <- cols[at_of("gamma")]
+      ix <- offs[[a]] + psi_cols
+      held_psi <- match(own, tm@coef_names[at_of("psi")])
+      held_gam <- match(own, tm@coef_names[at_of("gamma")])
+      held_values <- stats::setNames(as.numeric(hv), own)
+      # THE STARTING PAIRS. The held position takes the change of slope of
+      # one of the unrestricted break-points, the `variant`-th nearest to it,
+      # and the free positions keep the pairs that remain. Left as they were,
+      # the held position would carry the change of slope of another feature
+      # of the data, and the fit would start from a bad local optimum
+      # (measured, the objective at the end of the fit was 178 against 97 with
+      # the pairs matched).
+      if (all(is.na(held_gam))) {
+        gix <- offs[[a]] + gam_cols
+        lineage <- cbind(psi = from[ix], gamma = from[gix])
+        hslot <- held_psi[!is.na(held_psi)]
+        hpos <- as.numeric(hv)[!is.na(held_psi)]
+        free_k <- setdiff(seq_len(K), hslot)
+        left <- seq_len(K)
+        take <- integer(length(hslot))
+        for (j in seq_along(hslot)) {
+          ranked <- left[order(abs(lineage[left, "psi"] - hpos[j]))]
+          take[j] <- ranked[min(if (j == 1L) variant else 1L, length(ranked))]
+          left <- setdiff(left, take[j])
+        }
+        if (length(hslot) == 1L) out$variants <- K
+        out$beta[ix[hslot]] <- hpos
+        out$beta[gix[hslot]] <- lineage[take, "gamma"]
+        out$beta[ix[free_k]] <- lineage[left, "psi"]
+        out$beta[gix[free_k]] <- lineage[left, "gamma"]
+      }
+      start <- out$beta[ix]
+      pinned <- modelterms7::seg_pin(tm, held = held_values, start = start,
+                                     min_obs = min_obs)
+      free_k <- setdiff(seq_len(K), held_psi[!is.na(held_psi)])
+      st$terms[[p]][[nm]] <- pinned
+      lm <- modelterms7::seg_limits(pinned)
+      out$beta[ix] <- start
+      narrow <- integer(0)
+      for (k in free_k) {
+        if (lm[k, 1L] > bp$lim[1L] || lm[k, 2L] < bp$lim[2L]) {
+          m <- min(1e-3 * (bp$hi - bp$lo), 0.25 * (lm[k, 2L] - lm[k, 1L]))
+          out$beta[ix[k]] <- min(max(start[k], lm[k, 1L] + m), lm[k, 2L] - m)
+          narrow <- c(narrow, k)
+        }
+      }
+      # the position stays inside its interval during the fit: a step that
+      # takes the coefficient out of it is rejected by the objective
+      if (length(narrow)) {
+        st$pins <- c(st$pins, list(list(p = p, cols = psi_cols[narrow],
+                                        lo = lm[narrow, 1L],
+                                        hi = lm[narrow, 2L])))
+      }
+      held_slot <- seq_len(K) %in% c(held_psi, held_gam)
+      entries[[length(entries) + 1L]] <- list(
+        p = p, psi = psi_cols, gam = gam_cols, held = held_slot, lim = lm,
+        names = design[[p]]$coef_names)
+    }
+  }
+  if (!length(entries)) return(out)
+  out$present <- function(cf) {
+    for (e in entries) {
+      v <- cf[[e$p]]
+      # the positions that the fit used: a coefficient beyond its interval is
+      # read at the end of the interval
+      pos <- pmin(pmax(v[e$psi], e$lim[, 1L]), e$lim[, 2L])
+      o <- order(pos)
+      w <- v
+      w[e$gam] <- v[e$gam[o]]
+      w[e$psi] <- pos[o]
+      nms <- if (is.null(names(v))) e$names else names(v)
+      tag <- ifelse(e$held[o], " [held]", "")
+      nms[e$gam] <- paste0(e$names[e$gam], tag)
+      nms[e$psi] <- paste0(e$names[e$psi], tag)
+      names(w) <- nms
+      cf[[e$p]] <- w
+    }
+    cf
+  }
+  out
+}
+
+
+#' Whether a Free Break-Point Has Left Its Interval
+#'
+#' @description
+#' Reads the intervals that [pin_held_breakpoints()] recorded in the state of
+#' a design and returns `TRUE` when the position of a free break-point lies
+#' outside its interval at the coefficients `cf`. The objective is infinite
+#' there, so that a line search backtracks to the inside.
+#'
+#' @param design A design.
+#' @param cf The coefficient list, one vector for each parameter.
+#'
+#' @return A single logical, `FALSE` for a design with no recorded interval.
+#'
+#' @keywords internal
+pin_infeasible <- function(design, cf) {
+  st <- attr(design, "state")
+  pins <- if (is.null(st)) NULL else st$pins
+  if (is.null(pins)) return(FALSE)
+  for (e in pins) {
+    v <- cf[[e$p]][e$cols]
+    if (any(v < e$lo | v > e$hi)) return(TRUE)
+  }
+  FALSE
 }
 
 
@@ -721,6 +945,17 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
 #' of the range, the data do not bound the position, and the limit is
 #' `-Inf` or `Inf`.
 #'
+#' A term with two or more break-points restricts the search further. The
+#' search for a break-point stays between the fitted positions of the
+#' break-points next to it ([neighbor_positions()]), because a refit that
+#' holds one break-point is a fit with a break-point at that value and the
+#' other free, and beyond a neighbor the interval would become that of the
+#' neighbor. The statistic is not monotone next to a neighbor, so that side is
+#' evaluated at the points of the widening and at points whose distances from
+#' the neighbor grow by a factor of 1.3, and on a side where the statistic is
+#' still under its critical value at the neighbor's position, the limit is that
+#' position.
+#'
 #' @param fit A [StatmodFit()].
 #' @param param,coefname Which coefficient, as in [statmod_restrict()].
 #' @param level The confidence level, a single number in (0, 1).
@@ -732,7 +967,9 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
 #'   stops.
 #'
 #' @return A numeric vector of two, `lower` and `upper`. A side of the
-#'   position of a break-point that the data do not bound is `-Inf` or `Inf`.
+#'   position of a break-point that the data do not bound is `-Inf` or `Inf`,
+#'   and a side that stays under the critical value as far as the fitted
+#'   position of the next break-point is that position.
 #'   An end that the search could not bracket within `maxit` widenings, or at
 #'   which the statistic could not be evaluated, is `NA`; both ends are `NA`
 #'   when the standard error of the coefficient is not finite and positive.
@@ -776,8 +1013,51 @@ statmod_invert <- function(fit, param, coefname, level = 0.95,
     s - q
   }
   edges <- break_edges(spec, design, param, j)
+  edges_range <- edges
+  nb <- neighbor_positions(fit, spec, design, param, j)
+  stopped <- c(FALSE, FALSE)
+  if (is.finite(nb[[1L]]) && nb[[1L]] > edges[[1L]]) {
+    edges[[1L]] <- nb[[1L]]
+    stopped[[1L]] <- TRUE
+  }
+  if (is.finite(nb[[2L]]) && nb[[2L]] < edges[[2L]]) {
+    edges[[2L]] <- nb[[2L]]
+    stopped[[2L]] <- TRUE
+  }
+  # THE STATISTIC NEXT TO A NEIGHBOR IS NOT MONOTONE: a break-point held a
+  # few observations from another one fits worse than either of the two fits
+  # that hold one at the position of the other, so an interval above the
+  # critical value can lie between the estimate and the neighbor, and a
+  # bracket that widens by a fixed factor can jump over it. A side that ends
+  # at a neighbor is evaluated at the points of that widening and at points
+  # that grow their distance from the neighbor by a factor of 1.3, from the
+  # estimate outward, and the first crossing is located between the two points
+  # around it.
+  bounded <- function(dir, end) {
+    span <- abs(end - bhat)
+    d0 <- 0.005 * diff(edges_range)
+    far <- end - dir * d0 * 1.3^(0:60)
+    far <- far[dir * (far - bhat) > 0]
+    wide <- bhat + dir * sqrt(q) * se * 1.6^(0:60)
+    wide <- wide[dir * (wide - end) < 0]
+    pts <- sort(unique(c(wide, far, end)), decreasing = dir < 0)
+    pts <- pts[abs(pts - bhat) <= span]
+    a <- bhat
+    for (b in pts) {
+      v <- gap(b)
+      if (is.na(v)) return(NA_real_)
+      if (v > 0) {
+        return(tryCatch(stats::uniroot(gap, interval = sort(c(a, b)),
+                                       tol = 1e-7)$root,
+                        error = function(e) NA_real_))
+      }
+      a <- b
+    }
+    end
+  }
   side <- function(dir) {
     end <- if (dir < 0) edges[[1L]] else edges[[2L]]
+    if (stopped[[if (dir < 0) 1L else 2L]]) return(bounded(dir, end))
     step <- sqrt(q) * se
     a <- bhat
     for (k in seq_len(as.integer(maxit))) {
@@ -845,6 +1125,55 @@ break_edges <- function(spec, design, param, j) {
   xv <- term@blueprint$xv
   if (!is.numeric(xv) || !length(xv) || !all(is.finite(xv))) return(none)
   range(xv)
+}
+
+
+#' Fitted Positions of the Break-Points Next to One
+#'
+#' @description
+#' Returns the fitted positions of the break-points of the same term that lie
+#' immediately below and above the break-point whose position is the
+#' coefficient `j`, which bound the search for an interval by inversion.
+#'
+#' @details
+#' Only a position of a [modelterms7::seg()] term with two or more
+#' break-points and positions that carry no development has neighbors. A
+#' neighbor is a position strictly below or above the estimate, read at the
+#' confinement of the term.
+#'
+#' @param fit A [StatmodFit()].
+#' @param spec,design The specification and its design.
+#' @param param The distribution parameter of the coefficient.
+#' @param j The position of the coefficient in the parameter's equation.
+#'
+#' @return A numeric vector of two, the nearest position below and the
+#'   nearest above, `NA` where there is none.
+#'
+#' @seealso [statmod_invert()], which stops its search there, and
+#'   [break_edges()].
+#'
+#' @keywords internal
+neighbor_positions <- function(fit, spec, design, param, j) {
+  none <- c(NA_real_, NA_real_)
+  blocks <- design[[param]]$blocks
+  nm <- names(blocks)[vapply(blocks, function(ix) j %in% ix, logical(1))]
+  if (length(nm) != 1L) return(none)
+  term <- spec@terms[[param]][[nm]]
+  if (!S7::S7_inherits(term, modelterms7::SegTerm) ||
+      !identical(term@kind, "seg") || length(term@subformulas) ||
+      term@npsi < 2L) {
+    return(none)
+  }
+  bp <- term@blueprint
+  cols <- blocks[[nm]]
+  at <- cols[vapply(paste0("psi", seq_len(term@npsi)),
+                    function(q) bp$index[[q]][1L], integer(1))]
+  if (!j %in% at) return(none)
+  pos <- pmin(pmax(fit@coefficients[[param]][at], bp$lim[1L]), bp$lim[2L])
+  b <- pos[match(j, at)]
+  others <- pos[at != j]
+  c(if (any(others < b)) max(others[others < b]) else NA_real_,
+    if (any(others > b)) min(others[others > b]) else NA_real_)
 }
 
 
