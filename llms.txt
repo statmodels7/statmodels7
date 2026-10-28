@@ -2483,9 +2483,6 @@ helper functions. Using the package does not require any of it.
 - [`sigma(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/sigma.StatmodFit.md)
   : The Standard Deviation Implied by a Fitted Model
 
-- [`significant_zones()`](https://statmodels7.github.io/statmodels7/reference/significant_zones.md)
-  : The Zones in Which a Band Excludes Zero
-
 - [`sim_groups()`](https://statmodels7.github.io/statmodels7/reference/sim_groups.md)
   : The Groups That a Printed Truth Collapses
 

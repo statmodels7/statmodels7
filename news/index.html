@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.222.2" id="statmodels7-02222">statmodels7 0.222.2<a class="anchor" aria-label="anchor" href="#statmodels7-02222"></a></h2>
+<ul><li>
+<code><a href="../reference/plot_derivative.html">plot_derivative()</a></code> no longer shades the zones in which the band excludes zero, and <code><a href="../reference/plot_data.html">plot_data()</a></code> no longer returns them; the graph draws the derivative, its band and the line at zero.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.222.1" id="statmodels7-02221">statmodels7 0.222.1<a class="anchor" aria-label="anchor" href="#statmodels7-02221"></a></h2>
 <ul><li>Follows the renaming in numericals7 0.25.0, optimizers7 0.19.0, penalties7 0.34.0 and modelterms7 0.114.0: the curvature of a SCAD or MCP penalty is read from the property <code>curvature</code> (it was read from <code>curv</code>, which no longer exists, so the coordinate descent used a curvature of one); the matrices of an additive penalty from <code>matrices</code>; the Hessian is passed to <code>minimize()</code> as <code>hess</code> and the typical size to the optimizer as <code>typical_size</code>; <code><a href="../reference/plot_derivative.html">plot_derivative()</a></code> reads the element <code>half_width</code> of <code>fd_offsets()</code>; <code><a href="../reference/plot_regime_density.html">plot_regime_density()</a></code> reads the property <code>transition</code> of a regime term. Requires numericals7 0.25.0, optimizers7 0.19.0, penalties7 0.34.0 and modelterms7 0.114.0.</li>
