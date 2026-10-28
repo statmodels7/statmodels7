@@ -5633,7 +5633,7 @@ certificate_core <- function(fit, tol, flat, edge) {
           sz <- setdiff(seq_along(jp$ix), zk)
           if (is.null(kc)) {
             keep <- c(seq_along(sc), length(sc) + sz)
-            joint_reading(gj, Kj, keep)
+            joint_reading(gj, Kj, keep, own = length(sc) + seq_along(jp$ix))
           } else {
             nz <- length(jp$ix)
             Nk <- null_basis(kc, length(sc))
