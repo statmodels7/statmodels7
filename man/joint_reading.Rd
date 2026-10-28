@@ -4,7 +4,7 @@
 \alias{joint_reading}
 \title{The Newton Decrement of a Joint Fit, With the Verdict on Its Curvature}
 \usage{
-joint_reading(g, K, keep)
+joint_reading(g, K, keep, own = integer(0))
 }
 \arguments{
 \item{g}{The gradient of the joint objective.}
@@ -12,12 +12,16 @@ joint_reading(g, K, keep)
 \item{K}{Its curvature, a matrix as long as \code{g}.}
 
 \item{keep}{The coordinates to read.}
+
+\item{own}{The coordinates, among those of \code{g}, that are the structural
+term's own parameters.}
 }
 \value{
-A list with \code{decrement} (\code{NA} where it cannot be computed, and when
-\code{ascent} is \code{TRUE}), \code{ascent} and \code{ratio}, the smallest eigenvalue's
-magnitude in units of \eqn{\varepsilon\lambda_{\max}} (\code{NA} when there
-is nothing to read).
+A list with \code{decrement} (\code{NA} where it cannot be computed, when
+\code{ascent} is \code{TRUE}, and when \code{partial} is \code{TRUE} and the lower bound is
+below \code{\link[=mode_error_limit]{mode_error_limit()}}), \code{ascent}, \code{ratio}, the smallest
+eigenvalue's magnitude in units of \eqn{\varepsilon\lambda_{\max}} (\code{NA}
+when there is nothing to read), and \code{partial}.
 }
 \description{
 Reads, at a point, how far a joint objective over the coefficients and a
@@ -43,10 +47,23 @@ is then smaller than the distance to the maximum.
 
 Otherwise the matrix is positive semidefinite up to rounding, the
 coordinates that \code{\link[=deficient_coords]{deficient_coords()}} names are left out as aliased, and
-the decrement is computed over the others.
+the decrement is computed over the others. A negative decrement is not
+possible for a positive semidefinite matrix, so it is read as a direction
+of ascent.
+
+A column of the design that duplicates another is aliased, and its
+coordinate carries no information because the objective is flat along it.
+The same holds for no parameter of the term: the curvature of a filter
+that has exploded is numerically of rank one, and \code{\link[=deficient_coords]{deficient_coords()}}
+then names the term's own parameters, which the objective is not flat in.
+Where it names one of the coordinates in \code{own}, the decrement over the
+others is a lower bound of the decrement over all of them, so it can show
+that the point is not a maximum and cannot show that it is one: a value
+above \code{\link[=mode_error_limit]{mode_error_limit()}} is returned and a value below it is replaced by
+\code{NA}, with \code{partial} set to \code{TRUE}.
 }
 \seealso{
 \code{\link[=curvature_ascent_limit]{curvature_ascent_limit()}}, \code{\link[=alternation_readings]{alternation_readings()}},
-\code{\link[=statmod_certificate]{statmod_certificate()}}
+\code{\link[=statmod_certificate]{statmod_certificate()}}, \code{\link[=filter_decrement]{filter_decrement()}}
 }
 \keyword{internal}

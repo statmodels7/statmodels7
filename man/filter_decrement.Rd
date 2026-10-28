@@ -32,10 +32,13 @@ objective is flat to rounding, the flag at that point depends on the
 platform, and the decrement is many orders of magnitude above
 \code{\link[=mode_error_limit]{mode_error_limit()}}. The coefficients that the specification holds (those
 that the outer criterion estimates) are left out, because their score is
-not a residual of the inner fit. A gradient or a curvature that is not
-finite, or a curvature that cannot be solved, gives \code{Inf}.
+not a residual of the inner fit. The reading is \code{\link[=joint_reading]{joint_reading()}}, the one
+of the certificate and of the alternation: a coordinate that is flat at an
+edge is left out, and a curvature with a direction of ascent, a decrement
+that is only a lower bound below \code{\link[=mode_error_limit]{mode_error_limit()}}, and a gradient or a
+curvature that is not finite give \code{Inf}.
 }
 \seealso{
-\code{\link[=statmod_joint_pieces]{statmod_joint_pieces()}}, \code{\link[=mode_error_limit]{mode_error_limit()}}
+\code{\link[=joint_reading]{joint_reading()}}, \code{\link[=statmod_joint_pieces]{statmod_joint_pieces()}}, \code{\link[=mode_error_limit]{mode_error_limit()}}
 }
 \keyword{internal}
