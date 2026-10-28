@@ -1,3 +1,15 @@
+# statmodels7 0.219.0
+
+* A fitted model stores the line search of its outer optimizer with the
+  resolution of the criterion as a number. It stored a function that held the
+  frame of `outer_fit()`, with the design, the inner fit and the caches of the
+  derivatives, and every serialization of the fit (`saveRDS()` and the copy
+  sent to a worker) included that frame. With the package installed without
+  its source, a smooth of 2000 observations goes from 31.4 to 1.3 MB, a
+  `seg()` term from 6.9 to 0.7 MB and a `gas()` term with a random `omega`
+  from 104 to 1.7 MB. Coefficients, hyperparameters and iteration counts are
+  unchanged. An optimizer given by the caller is stored as given.
+
 # statmodels7 0.218.0
 
 * A `gas()` term written with `init = "static"` starts each group at the
