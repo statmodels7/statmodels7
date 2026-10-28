@@ -280,7 +280,7 @@ pin_held_breakpoints <- function(spec, design, beta, from = beta,
       hv <- hc[[p]][names(hc[[p]]) %in% cn]
       if (!length(hv)) next
       K <- tm@npsi
-      bp <- tm@blueprint
+      bp <- tm@build_info
       own <- tm@coef_names[match(names(hv), cn)]
       at_of <- function(prefix) {
         vapply(paste0(prefix, seq_len(K)), function(q) bp$index[[q]][1L],
@@ -1122,7 +1122,7 @@ break_edges <- function(spec, design, param, j) {
     return(none)
   }
   if (!grepl("psi[0-9]+$", design[[param]]$coef_names[[j]])) return(none)
-  xv <- term@blueprint$xv
+  xv <- term@build_info$xv
   if (!is.numeric(xv) || !length(xv) || !all(is.finite(xv))) return(none)
   range(xv)
 }
@@ -1164,7 +1164,7 @@ neighbor_positions <- function(fit, spec, design, param, j) {
       term@npsi < 2L) {
     return(none)
   }
-  bp <- term@blueprint
+  bp <- term@build_info
   cols <- blocks[[nm]]
   at <- cols[vapply(paste0("psi", seq_len(term@npsi)),
                     function(q) bp$index[[q]][1L], integer(1))]

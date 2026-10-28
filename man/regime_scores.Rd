@@ -28,7 +28,7 @@ The recursion is that of \code{\link[modelterms7:term_scores]{modelterms7::term_
 log-density and its score in the predictors of the distribution, the
 derivative of each predictor in the unknowns, and the columns of the
 term's own parameters. The groups run in the order of the term's
-blueprint. The sum of the rows, weighted, is the \code{gradient} of
+\code{build_info}. The sum of the rows, weighted, is the \code{gradient} of
 \code{\link[modelterms7:term_hessian]{modelterms7::term_hessian()}}. The columns of a level that the term holds
 are dropped.
 }

@@ -37,7 +37,7 @@ among the fitting rows is read the same way, so it needs no effect of its
 own.
 
 At the fitting rows the term reads the stored design of the developed
-parameter, \code{blueprint$Z}, whose columns for the sub-term become the
+parameter, \code{build_info$Z}, whose columns for the sub-term become the
 within-group rows (the sum of the group's columns, because a row is
 non-zero only in the columns of its own group). At new rows the term
 reapplies each sub-term through \code{\link[modelterms7:term_predict]{modelterms7::term_predict()}}, so the

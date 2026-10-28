@@ -199,7 +199,7 @@ boot_refit_breakpoint <- function(object, spec_b, refit, method, cfg, beta0) {
       stt <- attr(design, "state")
       for (i in seq_along(rf2)) {
         tm <- stt$terms[[rf2[[i]]$param]][[rf2[[i]]$term]]
-        if (isTRUE(tryCatch(tm@blueprint$held, error = function(e) FALSE))) {
+        if (isTRUE(tryCatch(tm@build_info$held, error = function(e) FALSE))) {
           rf2[[i]]$frozen <- FALSE
         }
       }

@@ -122,7 +122,7 @@ test_that("a frozen block on new data is read at its committed coefficients", {
   spec_nd <- statmod_respec(spec, dnew, need_response = FALSE)
   des <- statmod_design(spec_nd)
   tm <- attr(des, "state")$terms$mu[["jump(x, npsi = 1, psi = 6)"]]
-  bc <- as.numeric(tm@blueprint$coef)
+  bc <- as.numeric(tm@build_info$coef)
   c0 <- list(mu = c(0, bc))
   c1 <- list(mu = c(0, bc + c(0.5, 0)))
   a0 <- statmod_design_at(spec_nd, c0, des)$mu$adj

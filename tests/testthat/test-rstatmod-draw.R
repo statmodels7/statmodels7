@@ -230,8 +230,8 @@ test_that("a covariance class is drawn group by group, not shuffled", {
 seg_positions <- function(par, dd, spec) {
   tm <- modelterms7::term_build(spec, dd)
   cf <- par[grep("^seg[.]", names(par))]
-  p <- modelterms7::term_refresh(tm, as.numeric(cf))@blueprint$psi
-  list(psi = as.numeric(p), lim = tm@blueprint$lim, term = tm)
+  p <- modelterms7::term_refresh(tm, as.numeric(cf))@build_info$psi
+  list(psi = as.numeric(p), lim = tm@build_info$lim, term = tm)
 }
 
 test_that("a drawn break-point lands inside the covariate, per group", {
@@ -253,7 +253,7 @@ test_that("a drawn break-point lands inside the covariate, per group", {
   # the draw, the positions being clamped into it either way.
   set.seed(303)
   plain <- modelterms7::term_refresh(
-    got$term, stats::rnorm(modelterms7::term_npar(got$term)))@blueprint$psi
+    got$term, stats::rnorm(modelterms7::term_npar(got$term)))@build_info$psi
   expect_true(any(plain <= got$lim[1L] + 1e-9 | plain >= got$lim[2L] - 1e-9))
 })
 
@@ -325,6 +325,6 @@ test_that("a held scale on a break-point's prior wins over the term's width", {
   # that ignored the held value would fail this
   spec <- modelterms7::seg(
     x, psi ~ random(~ 1 | id, hyper = c(sigma = 0.30)), npsi = 1)
-  lim <- modelterms7::term_build(spec, dd)@blueprint$lim
+  lim <- modelterms7::term_build(spec, dd)@build_info$lim
   expect_lt((lim[2L] - lim[1L]) / (12 * sqrt(2)), 0.15)
 })

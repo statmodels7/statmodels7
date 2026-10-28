@@ -70,7 +70,7 @@ nested_random_terms <- function(spec) {
 #' own.
 #'
 #' At the fitting rows the term reads the stored design of the developed
-#' parameter, `blueprint$Z`, whose columns for the sub-term become the
+#' parameter, `build_info$Z`, whose columns for the sub-term become the
 #' within-group rows (the sum of the group's columns, because a row is
 #' non-zero only in the columns of its own group). At new rows the term
 #' reapplies each sub-term through [modelterms7::term_predict()], so the
@@ -85,7 +85,7 @@ nested_random_terms <- function(spec) {
 #'
 #' @keywords internal
 pool_nested_random <- function(tm, rows, coef) {
-  bp <- tm@blueprint
+  bp <- tm@build_info
   cmp <- modelterms7::term_components(tm)
   for (i in seq_len(nrow(rows))) {
     cn <- rows$comp[i]
@@ -105,15 +105,15 @@ pool_nested_random <- function(tm, rows, coef) {
       Zc[, pos] <- P
       bp$Z[[cn]] <- Zc
     }
-    sb <- sub@blueprint
+    sb <- sub@build_info
     v1 <- all.vars(sb$gexpr)[1L]
     sb$gexpr <- bquote(rep(.(as.character(sb$glevels[1L])),
                            length(.(as.name(v1)))))
-    sub@blueprint <- sb
+    sub@build_info <- sb
     bp$subs[[cn]][[s]] <- sub
   }
   bp$coef <- as.numeric(coef)
-  tm@blueprint <- bp
+  tm@build_info <- bp
   tm
 }
 
@@ -223,9 +223,9 @@ nested_design_at <- function(spec, design, coef, terms) {
     Xt <- if (is.null(spec@newdata)) {
       modelterms7::term_matrix(modelterms7::term_refresh(tm, b))
     } else {
-      bp <- tm@blueprint
+      bp <- tm@build_info
       bp$coef <- as.numeric(b)
-      tm@blueprint <- bp
+      tm@build_info <- bp
       modelterms7::term_predict(tm, newdata = spec@newdata)
     }
     X <- design[[p]]$X

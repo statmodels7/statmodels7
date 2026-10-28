@@ -48,7 +48,7 @@ NULL
 #' and the levels of a factor stay those of the fit, and a refit on the
 #' weights is the refit on the duplicated rows with the basis held. A cluster
 #' scheme beside a [modelterms7::random()] term is the exception: the design is
-#' rebuilt on the rows drawn, with the blueprints of the fit for every term
+#' rebuilt on the rows drawn, with the `build_info` lists of the fit for every term
 #' other than the random-effect terms (see [cluster_resample()]).
 #'
 #' @param name A single string, the short name of the scheme.
@@ -518,8 +518,10 @@ S7::method(print, BootstrapVcov) <- function(x, ...) {
 #'   \item{`seed`}{a list with the state of `.Random.seed` at the start of the
 #'     stream and after the last draw that was kept, from which an extension
 #'     continues;}
-#'   \item{`fingerprint`}{the coefficients and hyperparameters of the fit that
-#'     the replicates belong to;}
+#'   \item{`fit_estimates`}{the coefficients and hyperparameters of the fit
+#'     from which the replicates were drawn, in one vector. A copy of the fit
+#'     shares the storage of the entries, so the entries of a fit are those
+#'     whose `fit_estimates` are identical to its estimates;}
 #'   \item{`raw`, `raw_cols`}{for the parametric scheme beside random effects,
 #'     a matrix with one column for each random-effect coordinate that holds
 #'     the coefficients as the replicates were refitted, \eqn{\hat b^*},
@@ -527,7 +529,12 @@ S7::method(print, BootstrapVcov) <- function(x, ...) {
 #'     positions of those columns among the columns of `coefficients`. Both
 #'     are `NULL` otherwise, and for an entry stored by an older version.
 #'     [pred_bootstrap()] rebuilds the refitted coefficients from
-#'     `coefficients` and `raw` to reuse the entry.}
+#'     `coefficients` and `raw` to reuse the entry;}
+#'   \item{`jackknife`}{the refits with one unit left out (an observation, or
+#'     a cluster for a cluster scheme), a matrix with one row per unit and
+#'     the columns of `coefficients`. The BCa interval computes it the first
+#'     time it is requested and stores it here for its acceleration; it is
+#'     `NULL` until then, and it is kept when the entry is extended.}
 #' }
 #'
 #' @return `coef()` on an entry returns the matrix of replicates, and
@@ -556,7 +563,7 @@ StatmodBootstrap <- S7::new_class("StatmodBootstrap",
     random = S7::class_character,
     status = S7::class_integer,
     seed = S7::class_list,
-    fingerprint = S7::class_numeric,
+    fit_estimates = S7::class_numeric,
     raw = S7::class_any,
     raw_cols = S7::class_any,
     jackknife = S7::class_any

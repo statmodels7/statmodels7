@@ -8,7 +8,7 @@ ctx <- list(param = "mu", name = "s(x)", vars = "x", cols = NULL, data = dd)
 # the free column is (x - mean) / sd and the rest is the derivative of the
 # rotated basis
 analytic_rows <- function(tm, x, order, sdx) {
-  bp <- tm@blueprint$core$blueprint
+  bp <- tm@build_info$core$build_info
   B <- basis7::basis_deriv(bp$basis, x, order = order)
   cbind(if (order == 1) 1 / sdx else 0, B)
 }

@@ -15,7 +15,7 @@ boot_key(fit, resample, refit)
 A string.
 }
 \description{
-Combines the scheme, the refit and a summary of the fingerprint, so that a
+Combines the scheme, the refit and a summary of the fit's estimates, so that a
 copy of a fit with other estimates, which shares the environment, writes
 beside the entries of the original and not over them.
 }

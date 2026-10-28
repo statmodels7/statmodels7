@@ -18,7 +18,7 @@ bootstrap of \code{\link[=cluster_resample]{cluster_resample()}} cannot rebuild 
 }
 \details{
 A replicate rebuilds every random-effect term on its own groups, with the
-blueprint of the fit for the within-group design. A term that shares a
+\code{build_info} of the fit for the within-group design. A term that shares a
 covariance through a label, a smooth random effect
 (\code{\link[modelterms7:RandomSmoothTerm]{modelterms7::RandomSmoothTerm()}}) and a random effect inside the
 subformula of another term are not rebuilt in this version, and the fit is

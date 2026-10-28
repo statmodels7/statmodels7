@@ -193,7 +193,7 @@ nd <- data.frame(z = c(-1, 0, 1),
 predict(f4, newdata = nd, se = TRUE)$mu
 ```
 
-Prediction reapplies each term's blueprint instead of rebuilding it, so the
+Prediction reapplies each term's `build_info` instead of rebuilding it, so the
 knots of a smooth and the levels of a factor are those of the fitted model. As a
 consequence, predicting at rows that were used to fit the model returns the
 fitted values there.
@@ -213,7 +213,7 @@ the number of observations, so it is not an integer.
 Three generics signal an error, and each error message names the function to
 use instead.
 `terms()` fails because a fit has one set of terms per distribution parameter,
-`model.frame()` fails because a fit keeps the blueprint of each term and not the
+`model.frame()` fails because a fit keeps the `build_info` of each term and not the
 data, and `anova()` fails because a penalized fit whose hyperparameters were
 chosen from the same data has no null distribution against which to test.
 

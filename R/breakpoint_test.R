@@ -126,7 +126,7 @@ statmod_breakpoint_test <- function(fit, param = NULL, term = NULL, k = 10L,
   at_chg <- offs[[match(p, params)]] + match(chg, nms)
   at_pos <- offs[[match(p, params)]] + match(pos_name, nms)
   tm <- loc$term
-  bp <- tm@blueprint
+  bp <- tm@build_info
   sharp <- loc$sharp
   lim <- bp$lim
 
@@ -157,7 +157,7 @@ statmod_breakpoint_test <- function(fit, param = NULL, term = NULL, k = 10L,
     terms <- sp@terms
     if (sharp) {
       t0 <- terms[[p]][[loc$name]]
-      if (isTRUE(t0@blueprint$held)) t0 <- modelterms7::seg_hold(t0, FALSE)
+      if (isTRUE(t0@build_info$held)) t0 <- modelterms7::seg_hold(t0, FALSE)
       t1 <- modelterms7::seg_hold(modelterms7::seg_relocate(t0, q))
       terms[[p]][[loc$name]] <- t1
     } else {
@@ -297,7 +297,7 @@ bp_test_locate <- function(spec, param = NULL, term = NULL) {
       if (S7::S7_inherits(tm, modelterms7::SegTerm)) {
         add(p, nm, paste0(tm@label, "."), tm)
       } else if (S7::S7_inherits(tm, modelterms7::NlTerm)) {
-        subs <- tm@blueprint$subs
+        subs <- tm@build_info$subs
         for (a in names(subs)) for (st in subs[[a]]) {
           if (S7::S7_inherits(st, modelterms7::SegTerm)) {
             add(p, nm, paste0(tm@label, ".", a, ".", st@label, "."), st)
@@ -318,7 +318,7 @@ bp_test_locate <- function(spec, param = NULL, term = NULL) {
          "and 'term'.", call. = FALSE)
   }
   f <- found[[1L]]
-  bp <- f$term@blueprint
+  bp <- f$term@build_info
   if (bp$npsi != 1L) {
     stop("The test reads a term with one break-point (npsi = 1).",
          call. = FALSE)

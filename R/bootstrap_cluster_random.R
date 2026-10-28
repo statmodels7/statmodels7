@@ -9,7 +9,7 @@ NULL
 #'
 #' @details
 #' A replicate rebuilds every random-effect term on its own groups, with the
-#' blueprint of the fit for the within-group design. A term that shares a
+#' `build_info` of the fit for the within-group design. A term that shares a
 #' covariance through a label, a smooth random effect
 #' ([modelterms7::RandomSmoothTerm()]) and a random effect inside the
 #' subformula of another term are not rebuilt in this version, and the fit is
@@ -107,7 +107,7 @@ boot_cluster_random_plan <- function(object, resample, spec0, design0) {
     for (k in names(spec0@terms[[p]])) {
       tm <- spec0@terms[[p]][[k]]
       if (!S7::S7_inherits(tm, modelterms7::RandomTerm)) next
-      gv <- eval(tm@blueprint$gexpr, data, baseenv())
+      gv <- eval(tm@build_info$gexpr, data, baseenv())
       per <- tapply(gi, as.character(gv), function(z) length(unique(z)))
       rt[[length(rt) + 1L]] <- list(param = p, key = k, gv = gv,
                                     nested = all(per == 1L))

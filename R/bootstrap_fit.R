@@ -170,7 +170,7 @@ statmod_bootstrap <- function(fit, resample = NULL, refit = NULL) {
 #' @description
 #' `boot_env()` returns the environment in which a fit keeps its entries, or
 #' `NULL` for a fit that has none (an object saved before the property
-#' existed). `boot_fingerprint()` returns the numbers that identify the fit an
+#' existed). `boot_fit_estimates()` returns the numbers that identify the fit an
 #' entry belongs to, and `boot_entries()` the entries that belong to the fit,
 #' in alphabetical order of their keys.
 #'
@@ -187,7 +187,7 @@ boot_env <- function(fit) {
 
 #' @rdname boot_env
 #' @keywords internal
-boot_fingerprint <- function(fit) {
+boot_fit_estimates <- function(fit) {
   as.numeric(c(unlist(fit@coefficients, use.names = FALSE),
                unlist(fit@hyper, use.names = FALSE)))
 }
@@ -199,14 +199,14 @@ boot_entries <- function(fit) {
   if (is.null(env)) return(list())
   keys <- sort(ls(env, all.names = TRUE))
   ents <- mget(keys, envir = env)
-  fp <- boot_fingerprint(fit)
-  Filter(function(e) identical(e@fingerprint, fp), ents)
+  est <- boot_fit_estimates(fit)
+  Filter(function(e) identical(e@fit_estimates, est), ents)
 }
 
 #' The Key of an Entry in the Collection
 #'
 #' @description
-#' Combines the scheme, the refit and a summary of the fingerprint, so that a
+#' Combines the scheme, the refit and a summary of the fit's estimates, so that a
 #' copy of a fit with other estimates, which shares the environment, writes
 #' beside the entries of the original and not over them.
 #'
@@ -217,9 +217,9 @@ boot_entries <- function(fit) {
 #'
 #' @keywords internal
 boot_key <- function(fit, resample, refit) {
-  fp <- boot_fingerprint(fit)
-  paste(resample_label(resample), refit, length(fp),
-        sprintf("%.15g", sum(fp * cos(seq_along(fp)))), sep = "|")
+  est <- boot_fit_estimates(fit)
+  paste(resample_label(resample), refit, length(est),
+        sprintf("%.15g", sum(est * cos(seq_along(est)))), sep = "|")
 }
 
 #' @rdname boot_env
@@ -369,7 +369,7 @@ boot_fill <- function(fit, n, resample, refit, say = FALSE) {
     status = c(if (!is.null(old)) old@status, eng$status),
     seed = list(start = if (is.null(old)) eng$seed_start else old@seed$start,
                 end = eng$seed_end),
-    fingerprint = boot_fingerprint(fit),
+    fit_estimates = boot_fit_estimates(fit),
     raw = if (is.null(old)) eng$raw else if (is.null(old@raw) ||
                                               is.null(eng$raw)) NULL else
       rbind(old@raw, eng$raw),

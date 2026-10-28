@@ -258,7 +258,7 @@ S7::method(default_plot, modelterms7::RandomSmoothTerm) <- function(term, ...) {
 #'
 #' @keywords internal
 random_block <- function(fit, param, name, tm) {
-  bp <- tm@blueprint
+  bp <- tm@build_info
   des <- statmod_design(fit@spec)
   idx <- des[[param]]$blocks[[name]]
   glev <- bp$glevels
@@ -419,7 +419,7 @@ random_prior_fit <- function(fit, param, name, tm) {
                         "terms, and its prior is not drawn by itself."),
                  name), call. = FALSE)
   }
-  bp <- tm@blueprint
+  bp <- tm@build_info
   m <- length(bp$glevels)
   d <- length(fit@coefficients[[param]][
     statmod_design(fit@spec)[[param]]$blocks[[name]]]) / m
@@ -582,7 +582,7 @@ S7::method(plot_layers, PlotRandomCov) <- function(type, data, ...) {
 
 S7::method(plot_data, list(PlotCurves, modelterms7::RandomSmoothTerm)) <-
   function(type, x, fit, ctx, ...) {
-    bp <- x@blueprint
+    bp <- x@build_info
     gvars <- all.vars(bp$gexpr)
     if (!is.symbol(bp$gexpr)) {
       stop(sprintf(paste0("the grouping of the term '%s' is not a variable ",

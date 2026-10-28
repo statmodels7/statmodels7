@@ -56,7 +56,7 @@ moving_se <- function(X, V) {
 #' @keywords internal
 moving_term_vars <- function(tm, name) {
   if (S7::S7_inherits(tm, modelterms7::NlTerm)) {
-    return(names(tm@blueprint$data_vars))
+    return(names(tm@build_info$data_vars))
   }
   unique(c(all.vars(tm@var), term_variables(tm, name)))
 }
@@ -409,7 +409,7 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
       yn <- modelterms7::term_value(x) + wp$wr
       w <- fit@spec@weights * wp$w
       yn[!is.finite(yn)] <- 0
-      lim <- x@blueprint$lim
+      lim <- x@build_info$lim
       pieces <- lapply(seq_len(K), function(k) {
         g <- sort(unique(c(seq(lim[1L], lim[2L], length.out = type@n_profile),
                            psi[k])))
@@ -436,7 +436,7 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
     if (!type@profile) profile <- profile[0L, , drop = FALSE]
     # a limit the data do not bound is infinite, and the bar is drawn to the
     # edge of the variable's range
-    rng <- range(x@blueprint$xv)
+    rng <- range(x@build_info$xv)
     breaks$from <- pmax(breaks$lower, rng[1L])
     breaks$to <- pmin(breaks$upper, rng[2L])
     out <- list(curve = eff$curve, points = eff$points, breaks = breaks,
@@ -655,7 +655,7 @@ plot_filter <- function(level = 0.95, scale = "response", response = FALSE,
 #' with its band, by group, and the observed response.
 #'
 #' @param type A `PlotFilter` object.
-#' @param bp The blueprint of the term, or of its first component.
+#' @param bp The `build_info` of the term, or of its first component.
 #' @param params The equations whose paths are drawn.
 #' @param fit A [StatmodFit()].
 #' @param ctx The context described at [plot_data()].
@@ -732,7 +732,7 @@ filter_data <- function(type, bp, params, fit, ctx) {
 
 S7::method(plot_data, list(PlotFilter, modelterms7::GasTerm)) <-
   function(type, x, fit, ctx, ...) {
-    filter_data(type, x@blueprint, ctx$param, fit, ctx)
+    filter_data(type, x@build_info, ctx$param, fit, ctx)
   }
 
 S7::method(plot_data, list(PlotFilter, modelterms7::GasJoint)) <-
@@ -741,7 +741,7 @@ S7::method(plot_data, list(PlotFilter, modelterms7::GasJoint)) <-
     drv <- vapply(comp, function(t) S7::S7_inherits(t, modelterms7::GasDriver),
                   logical(1))
     params <- x@params[!drv[x@params]]
-    filter_data(type, comp[[params[1L]]]@blueprint, params, fit, ctx)
+    filter_data(type, comp[[params[1L]]]@build_info, params, fit, ctx)
   }
 
 
@@ -1022,14 +1022,14 @@ regime_filtered <- function(r) {
   tm <- r$tm
   rp <- regime_parameters(r)
   k <- tm@k
-  n <- tm@blueprint$n
+  n <- tm@build_info$n
   idx <- seq_len(n)
   LF <- vapply(seq_len(k), function(j)
     as.numeric(r$cb$logdens(r$eta_static + rp$mu[j], idx)), numeric(n))
   LF <- matrix(LF, n, k)
   prob <- matrix(NA_real_, n, k)
   ll <- numeric(n)
-  for (g in tm@blueprint$order) {
+  for (g in tm@build_info$order) {
     pred <- rp$delta
     for (t in g) {
       m <- max(LF[t, ])
@@ -1109,7 +1109,7 @@ S7::method(plot_data, list(PlotStates, modelterms7::RegimeTerm)) <-
   function(type, x, fit, ctx, ...) {
     r <- regime_entry(fit, ctx$name)
     tm <- r$tm
-    bp <- tm@blueprint
+    bp <- tm@build_info
     n <- bp$n
     k <- tm@k
     prob <- if (type@smoothed) {

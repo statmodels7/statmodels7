@@ -213,7 +213,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
             modelterms7::seg_polish(tm, yn, weights = nw$w * w)
           },
           random = {
-            lim <- tm@blueprint$lim
+            lim <- tm@build_info$lim
             modelterms7::seg_polish(
               modelterms7::seg_relocate(tm, stats::runif(tm@npsi, lim[1L],
                                                          lim[2L])), yn,
@@ -227,7 +227,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
         st$terms[[r$param]][[r$term]] <- cand
         cols <- design[[r$param]]$blocks[[r$term]]
         cf <- obj_split(par)
-        cf[[r$param]][cols] <- as.numeric(cand@blueprint$coef)
+        cf[[r$param]][cols] <- as.numeric(cand@build_info$coef)
         par <- obj_stack(cf)
       }
     }
@@ -370,7 +370,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
       tm <- modelterms7::seg_hold(terms[[r$param]][[r$term]])
       st$terms[[r$param]][[r$term]] <- tm
       cols <- design[[r$param]]$blocks[[r$term]]
-      cf[[r$param]][cols] <- as.numeric(tm@blueprint$coef)
+      cf[[r$param]][cols] <- as.numeric(tm@build_info$coef)
     }
     reset()
     obj_stack(cf)
@@ -453,9 +453,9 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
   for (r in sharp) {
     if (!can_polish || working_exact(spec, r$param)) next
     tm0 <- best_terms[[r$param]][[r$term]]
-    if (tm0@blueprint$developed) next
-    xv <- tm0@blueprint$xv
-    lim <- tm0@blueprint$lim
+    if (tm0@build_info$developed) next
+    xv <- tm0@build_info$xv
+    lim <- tm0@build_info$lim
     u <- sort(unique(xv))
     mid <- (u[-1L] + u[-length(u)]) / 2
     mid <- mid[mid > lim[1L] & mid < lim[2L]]
@@ -592,7 +592,7 @@ statmod_settle_seg <- function(spec, design, blocks, hyper, inner_optimizer,
   segs <- Filter(function(r) {
     tm <- st$terms[[r$param]][[r$term]]
     S7::S7_inherits(tm, modelterms7::SegTerm) && identical(tm@kind, "seg") &&
-      is.null(tm@spec$smoothed) && !isTRUE(tm@blueprint$developed) &&
+      is.null(tm@spec$smoothed) && !isTRUE(tm@build_info$developed) &&
       !isTRUE(tm@spec$marginal)
   }, rf)
   if (!length(segs)) return(none)
@@ -610,7 +610,7 @@ statmod_settle_seg <- function(spec, design, blocks, hyper, inner_optimizer,
       tm <- terms[[r$param]][[r$term]]
       st$terms[[r$param]][[r$term]] <- tm
       cols <- design[[r$param]]$blocks[[r$term]]
-      cf[[r$param]][cols] <- as.numeric(tm@blueprint$coef)
+      cf[[r$param]][cols] <- as.numeric(tm@build_info$coef)
     }
     reset()
     obj_stack(cf)

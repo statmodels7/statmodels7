@@ -12,7 +12,7 @@ dseg$y <- 1 + 0.5 * dseg$x + 2 * pmax(dseg$x - 6, 0) + stats::rnorm(n, sd = 0.3)
 # refresh the block, fit the working model, take the increment where the
 # block is a Jacobian and the coefficients where it is not
 seg_iterate <- function(built, y, iters = 60) {
-  b <- built@blueprint$coef
+  b <- built@build_info$coef
   cur <- built
   for (it in seq_len(iters)) {
     cur <- modelterms7::term_refresh(cur, b)

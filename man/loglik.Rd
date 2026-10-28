@@ -79,7 +79,7 @@ carrying one would hold the frame twice and would keep a stale copy after
 the data changed.
 
 The generics rebuild from the specification that the fit keeps whole,
-running each term's blueprint against \code{data} by the same path as
+running each term's \code{build_info} against \code{data} by the same path as
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}. A factor's levels, a spline's knots and a basis
 reparametrization are therefore reapplied to the new rows and not
 estimated again.

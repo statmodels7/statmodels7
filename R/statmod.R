@@ -796,7 +796,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
         stt <- attr(d2, "state")
         for (i in seq_along(rf2)) {
           tm <- stt$terms[[rf2[[i]]$param]][[rf2[[i]]$term]]
-          if (isTRUE(tryCatch(tm@blueprint$held, error = function(e) FALSE))) {
+          if (isTRUE(tryCatch(tm@build_info$held, error = function(e) FALSE))) {
             rf2[[i]]$frozen <- FALSE
           }
         }

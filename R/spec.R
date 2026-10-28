@@ -976,7 +976,7 @@ static_filter_restart <- function(tm, param, fit_s, newdata) {
   if (is.null(fit_s)) fit_s <- tm@init_source
   eta <- as.numeric(stats::predict(fit_s, what = paste0("link:", param),
                                    newdata = newdata))
-  first <- vapply(tm@blueprint$order, function(r) as.integer(r[[1L]]),
+  first <- vapply(tm@build_info$order, function(r) as.integer(r[[1L]]),
                   integer(1))
   v <- eta[first]
   if (!all(is.finite(v))) {
@@ -1194,7 +1194,7 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
   # is rebuilt on them, with the fitted parameters, so the recursion runs
   # over their times and groups from its own start, and every route then
   # reads them as it reads the fitting rows. Left with the fitting rows'
-  # blueprint, predict(newdata = <the fitting rows>) on a regime() model was
+  # `build_info`, predict(newdata = <the fitting rows>) on a regime() model was
   # rejected as a prediction past the series, and on a gas() model the
   # standard error read the intercept's row alone (46.5 at every year of the
   # Nile, where the fitted values carry 46.5, 34.7, 33.1, ...). Rows without

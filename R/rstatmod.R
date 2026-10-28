@@ -306,7 +306,7 @@ rstatmod <- function(formula, distrib, data = NULL, n = NULL, n_sim = 1,
   build <- function(dat) {
     # THE SPECIFICATION IS THE REAL ONE, built against a placeholder
     # response, so that the design, the offsets, the interpreter and every
-    # term's blueprint are the ones a fit would produce. What the
+    # term's `build_info` are the ones a fit would produce. What the
     # placeholder is used for is narrow: a break-point term whose starting
     # position the caller did not name chooses it on a least-squares profile
     # of the response, and that choice is a starting value the coefficients

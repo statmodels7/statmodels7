@@ -53,7 +53,7 @@ the weights of the fit. The design is not rebuilt, so the knots of a basis
 and the levels of a factor stay those of the fit, and a refit on the
 weights is the refit on the duplicated rows with the basis held. A cluster
 scheme beside a \code{\link[modelterms7:random]{modelterms7::random()}} term is the exception: the design is
-rebuilt on the rows drawn, with the blueprints of the fit for every term
+rebuilt on the rows drawn, with the \code{build_info} lists of the fit for every term
 other than the random-effect terms (see \code{\link[=cluster_resample]{cluster_resample()}}).
 }
 \examples{

@@ -157,7 +157,7 @@ marginal_coords <- function(spec, design, method) {
   st_terms <- attr(design, "state")$terms
   moving <- Filter(function(r) {
     tm <- tryCatch(st_terms[[r$param]][[r$term]], error = function(e) NULL)
-    !isTRUE(tryCatch(tm@blueprint$held, error = function(e) FALSE))
+    !isTRUE(tryCatch(tm@build_info$held, error = function(e) FALSE))
   }, attr(design, "refresh"))
   refresh <- vapply(moving, function(r) r$param, character(1))
   held <- term_held_stack(spec, design)

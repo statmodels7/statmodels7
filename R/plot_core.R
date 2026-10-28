@@ -455,7 +455,7 @@ term_variables <- function(tm, name) {
   # the call of nl() also names the term's own parameters; the variables of
   # the data are those among the ones the build recorded
   if (S7::S7_inherits(tm, modelterms7::NlTerm)) {
-    out <- intersect(out, names(tm@blueprint$data_vars))
+    out <- intersect(out, names(tm@build_info$data_vars))
   }
   setdiff(out, c("TRUE", "FALSE"))
 }

@@ -25,7 +25,7 @@ twopen <- function(x, label = "twopen") {
          # the halves carry the penalties, so there is none over the whole
          factory = function(k) NULL,
          X = NULL, coef_names = character(0),
-         blueprint = list(), penalty = NULL)
+         build_info = list(), penalty = NULL)
 }
 
 set.seed(4)

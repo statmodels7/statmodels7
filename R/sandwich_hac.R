@@ -303,7 +303,7 @@ joint_scores <- function(spec, coef, design = statmod_design(spec)) {
 #' log-density and its score in the predictors of the distribution, the
 #' derivative of each predictor in the unknowns, and the columns of the
 #' term's own parameters. The groups run in the order of the term's
-#' blueprint. The sum of the rows, weighted, is the `gradient` of
+#' `build_info`. The sum of the rows, weighted, is the `gradient` of
 #' [modelterms7::term_hessian()]. The columns of a level that the term holds
 #' are dropped.
 #'
@@ -373,7 +373,7 @@ regime_scores <- function(spec, coef, design, ev) {
 #' Returns the rows of each independent series, in the order of the series.
 #'
 #' @details
-#' A structural term gives them in its blueprint. For a model without one
+#' A structural term gives them in its `build_info`. For a model without one
 #' they are the rows of each level of `cluster`, ordered by `time`, with ties
 #' kept in the order of the data.
 #'
@@ -391,7 +391,7 @@ hac_series <- function(fit, design, sw) {
   if (length(su)) {
     ev <- statmod_eta(spec, design, fit@coefficients)
     tm <- c(ev$filters, ev$regimes)[[1L]]$tm
-    return(unname(lapply(tm@blueprint$order, as.integer)))
+    return(unname(lapply(tm@build_info$order, as.integer)))
   }
   data <- sw@data
   if (is.null(data)) {

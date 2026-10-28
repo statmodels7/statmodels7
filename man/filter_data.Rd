@@ -9,7 +9,7 @@ filter_data(type, bp, params, fit, ctx)
 \arguments{
 \item{type}{A \code{PlotFilter} object.}
 
-\item{bp}{The blueprint of the term, or of its first component.}
+\item{bp}{The \code{build_info} of the term, or of its first component.}
 
 \item{params}{The equations whose paths are drawn.}
 

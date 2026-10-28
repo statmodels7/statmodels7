@@ -4054,7 +4054,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       # value per column of the sub-design, so the compartment of the slot
       # that once carried it is not shown
       if (!is.null(rr) &&
-          isTRUE(tryCatch(term@blueprint$held, error = function(e) FALSE))) {
+          isTRUE(tryCatch(term@build_info$held, error = function(e) FALSE))) {
         dev <- dev[!grepl("^psi[0-9]+$",
                           vapply(dev, function(z) z$name, character(1)))]
       }
@@ -4597,7 +4597,7 @@ smoothed_notes <- function(spec, object) {
     for (nm in names(spec@terms[[p]])) {
       tm <- spec@terms[[p]][[nm]]
       if (!S7::S7_inherits(tm, modelterms7::SegTerm)) next
-      bp <- tryCatch(tm@blueprint, error = function(e) NULL)
+      bp <- tryCatch(tm@build_info, error = function(e) NULL)
       smx <- if (is.list(bp)) bp$smooth else NULL
       if (is.null(smx)) next
       sm <- smx$sm

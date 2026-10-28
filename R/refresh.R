@@ -190,7 +190,7 @@ statmod_design_at <- function(spec, coef, design) {
       # exactly, while a b-dependent adjustment would make eta constant
       # in these columns and flat to anything that moves them. On new data
       # the value is read at the same committed coefficients.
-      bc <- tryCatch(tm@blueprint$coef, error = function(e) NULL)
+      bc <- tryCatch(tm@build_info$coef, error = function(e) NULL)
       if (is.null(bc) || length(bc) != length(b)) bc <- b
       if (!is.null(nd)) {
         val <- as.numeric(modelterms7::term_value(tm, coef = bc, newdata = nd))
@@ -288,7 +288,7 @@ statmod_commit_refresh <- function(spec, coef, design, which = "all") {
     tm <- modelterms7::term_refresh(st$terms[[r$param]][[r$term]],
                                     coef[[r$param]][cols])
     st$terms[[r$param]][[r$term]] <- tm
-    bc <- tryCatch(tm@blueprint$coef, error = function(e) NULL)
+    bc <- tryCatch(tm@build_info$coef, error = function(e) NULL)
     if (!is.null(bc) && length(bc) == length(cols)) {
       coef[[r$param]][cols] <- as.numeric(bc)
     }

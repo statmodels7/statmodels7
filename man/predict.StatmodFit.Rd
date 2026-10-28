@@ -136,7 +136,7 @@ order.
 }
 
 \section{New data}{
-New data is passed through each term's blueprint, so a factor keeps the
+New data is passed through each term's \code{build_info}, so a factor keeps the
 levels and contrasts with which it was fitted, a spline its knots, and a
 basis its reparametrization. The new frame supplies the values at which the
 terms are evaluated and does not change how they are built. Offsets are

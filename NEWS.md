@@ -1,3 +1,11 @@
+# statmodels7 0.222.0
+
+* The property `fingerprint` of a `StatmodBootstrap` entry is renamed
+  `fit_estimates`: the coefficients and hyperparameters of the fit from
+  which the replicates were drawn. The documentation of the class describes
+  the property `jackknife`. Follows the renaming of `blueprint` to
+  `build_info` in modelterms7 0.113.0 and basis7 0.16.0.
+
 # statmodels7 0.221.0
 
 * `joint_reading()` takes the coordinates that are the parameters of the

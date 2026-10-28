@@ -144,7 +144,7 @@ test_that("a moment of a count model varies with the fitted mean", {
 })
 
 test_that("a level absent from the new data keeps its contrasts", {
-  # the blueprint is what makes this work: rebuilding from the new frame would
+  # the `build_info` is what makes this work: rebuilding from the new frame would
   # give a different design and silently different predictions
   sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2, -0.5, 0.8), sigma = log(0.4)))$data

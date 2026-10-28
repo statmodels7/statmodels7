@@ -2,14 +2,14 @@
 % Please edit documentation in R/bootstrap_fit.R
 \name{boot_env}
 \alias{boot_env}
-\alias{boot_fingerprint}
+\alias{boot_fit_estimates}
 \alias{boot_entries}
 \alias{boot_match}
 \title{The Storage of the Bootstrap Entries of a Fit}
 \usage{
 boot_env(fit)
 
-boot_fingerprint(fit)
+boot_fit_estimates(fit)
 
 boot_entries(fit)
 
@@ -29,7 +29,7 @@ The environment, a numeric vector, or a list of
 \description{
 \code{boot_env()} returns the environment in which a fit keeps its entries, or
 \code{NULL} for a fit that has none (an object saved before the property
-existed). \code{boot_fingerprint()} returns the numbers that identify the fit an
+existed). \code{boot_fit_estimates()} returns the numbers that identify the fit an
 entry belongs to, and \code{boot_entries()} the entries that belong to the fit,
 in alphabetical order of their keys.
 }

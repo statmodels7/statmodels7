@@ -20,7 +20,7 @@ A list of integer vectors of row numbers.
 Returns the rows of each independent series, in the order of the series.
 }
 \details{
-A structural term gives them in its blueprint. For a model without one
+A structural term gives them in its \code{build_info}. For a model without one
 they are the rows of each level of \code{cluster}, ordered by \code{time}, with ties
 kept in the order of the data.
 }
