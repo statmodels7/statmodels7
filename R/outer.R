@@ -2231,8 +2231,11 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
        # the optimizer that actually searched, which is the caller's where
        # one was given and otherwise the one chosen from what the criterion
        # can supply: a fit says what fitted it rather than leaving a reader
-       # to reconstruct the default
-       optimizer = optimizer,
+       # to reconstruct the default; the line search's resolution is stored as
+       # the number it ended on, since the function that reads it during the
+       # run holds this frame and the frame would travel with the fit
+       optimizer = freeze_resolution(optimizer, chose_optimizer,
+                                     state$resolution / 10),
        # the coefficients the criterion estimated, which a refit after the
        # search has to go on holding: see statmod()
        held_coef = if (ng) sp@held_coef else list(),
@@ -2336,6 +2339,49 @@ hyper_value <- function(hyper, idx, j) {
 vb_inner <- function(vb) {
   vb$blocks <- vb$blocks && vb$inner
   vb
+}
+
+
+#' The Outer Optimizer as the Fit Stores It
+#'
+#' @description
+#' Returns the optimizer of the outer search with the resolution of its line
+#' search stored as a number.
+#'
+#' @details
+#' [outer_fit()] gives the line search of the optimizer it chooses a function
+#' that returns the resolution of the criterion at the moment of each call, so
+#' that the line search follows the readings taken during the run. The
+#' function is created inside [outer_fit()], and its environment is the frame
+#' of that call, which holds the design, the inner fit and the caches of the
+#' derivatives. Stored in `methods$search`, the function takes the frame into
+#' every serialization of the fit. After the search no reading is taken, the
+#' function returns the same number at every call, and the optimizer is stored
+#' with that number. A value that is not finite is stored as zero, the
+#' resolution of a line search with none.
+#'
+#' An optimizer that the caller supplied is returned unchanged, and so is one
+#' whose line search has no function in `resolution`.
+#'
+#' @param optimizer The optimizer that ran the search.
+#' @param ours `TRUE` where [outer_fit()] chose the optimizer and set the
+#'   function, `FALSE` where the caller supplied it.
+#' @param value The resolution that the function returns at the end of the
+#'   search.
+#'
+#' @return The optimizer.
+#'
+#' @keywords internal
+freeze_resolution <- function(optimizer, ours, value) {
+  if (!ours || !("line_search" %in% S7::prop_names(optimizer))) {
+    return(optimizer)
+  }
+  ls <- optimizer@line_search
+  if (!is.function(ls@resolution)) return(optimizer)
+  S7::set_props(
+    optimizer,
+    line_search = S7::set_props(
+      ls, resolution = if (is.finite(value)) value else 0))
 }
 
 
