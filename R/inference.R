@@ -2128,9 +2128,8 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' A row that the restricted fit cannot hold keeps `NA` limits rather than the
 #' Wald limits that it carried on arrival, so that one column never carries two
 #' different intervals. [testable_coords()] determines which rows those are; if
-#' it names none of the rows of the table, the function signals an error, since
-#' a table that consists only of missing values is less informative than the
-#' reason.
+#' it names none of the rows of the table, the function signals a warning that
+#' gives the reason, and the limits of every row are `NA`.
 #'
 #' @param fit A [StatmodFit()].
 #' @param out The table that [confint.StatmodFit()] has built, already subset.
@@ -2147,12 +2146,13 @@ invert_rows <- function(fit, out, level, test, vcov_type) {
   ok <- names(testable_coords(fit))
   hit <- rownames(out) %in% ok
   if (!any(hit)) {
-    stop(sprintf(paste0("The requested coefficients cannot be held at a",
-                        " value, so test = %s_test() has\n  nothing to invert. A ",
-                        "coefficient under a kinked penalty, an aliased one",
-                        "\n  and every coefficient of a model carrying a ",
-                        "structural term are all outside it."), test@name),
-         call. = FALSE)
+    warning(sprintf(paste0("The requested coefficients cannot be held at a",
+                           " value, so test = %s_test() has\n  nothing to ",
+                           "invert and their limits are NA. A coefficient ",
+                           "under a kinked penalty, an aliased one\n  and ",
+                           "every coefficient of a model carrying a ",
+                           "structural term are all outside it."), test@name),
+            call. = FALSE)
   }
   out$lower <- rep(NA_real_, nrow(out))
   out$upper <- rep(NA_real_, nrow(out))

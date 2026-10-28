@@ -28,9 +28,8 @@ and writes the two limits back, leaving the rest of the table as it was.
 A row that the restricted fit cannot hold keeps \code{NA} limits rather than the
 Wald limits that it carried on arrival, so that one column never carries two
 different intervals. \code{\link[=testable_coords]{testable_coords()}} determines which rows those are; if
-it names none of the rows of the table, the function signals an error, since
-a table that consists only of missing values is less informative than the
-reason.
+it names none of the rows of the table, the function signals a warning that
+gives the reason, and the limits of every row are \code{NA}.
 }
 \seealso{
 \code{\link[=statmod_invert]{statmod_invert()}}, which does the search.

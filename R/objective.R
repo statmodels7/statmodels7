@@ -1663,6 +1663,7 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
     stack = stack,
     fn = function(v) {
       cf <- split(v)
+      if (pin_infeasible(design, cf)) return(Inf)
       -statmod_loglik_at(spec, cf, design) +
         statmod_penalty_at(spec, cf, hyper, design, "value")
     },
