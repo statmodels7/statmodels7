@@ -13,7 +13,7 @@ standard errors and intervals on request."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -207,7 +207,7 @@ order.</p>
     </div>
     <div class="section level2">
     <h2 id="new-data">New data<a class="anchor" aria-label="anchor" href="#new-data"></a></h2>
-    <p>New data is passed through each term's blueprint, so a factor keeps the
+    <p>New data is passed through each term's <code>build_info</code>, so a factor keeps the
 levels and contrasts with which it was fitted, a spline its knots, and a
 basis its reparametrization. The new frame supplies the values at which the
 terms are evaluated and does not change how they are built. Offsets are

@@ -9,7 +9,7 @@ bootstrap of cluster_resample() cannot rebuild on a resampled data set."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,7 @@ bootstrap of <code><a href="cluster_resample.html">cluster_resample()</a></code>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A replicate rebuilds every random-effect term on its own groups, with the
-blueprint of the fit for the within-group design. A term that shares a
+<code>build_info</code> of the fit for the within-group design. A term that shares a
 covariance through a label, a smooth random effect
 (<code><a href="https://statmodels7.github.io/modelterms7/reference/RandomSmoothTerm.html" class="external-link">modelterms7::RandomSmoothTerm()</a></code>) and a random effect inside the
 subformula of another term are not rebuilt in this version, and the fit is

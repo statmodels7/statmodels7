@@ -45,6 +45,6 @@ The recursion is that of
 which receives the log-density and its score in the predictors of the
 distribution, the derivative of each predictor in the unknowns, and the
 columns of the term's own parameters. The groups run in the order of the
-term's blueprint. The sum of the rows, weighted, is the `gradient` of
+term's `build_info`. The sum of the rows, weighted, is the `gradient` of
 [`modelterms7::term_hessian()`](https://statmodels7.github.io/modelterms7/reference/term_hessian.html).
 The columns of a level that the term holds are dropped.

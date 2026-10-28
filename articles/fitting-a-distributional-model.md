@@ -232,8 +232,8 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.616546    effective df 7.26
 #> cAIC 739.761    cBIC 766.665
-#> fitted in 276 ms
-#> inner   max |grad|/se 1.3e-15   min eigen 1
+#> fitted in 294 ms
+#> inner   max |grad|/se 3.7e-16   min eigen 1
 #> outer   max |grad|/se 2.1e-08   min eigen 0.99
 #> 1 note: print(summary(fit), notes = TRUE)
 ```
@@ -265,7 +265,7 @@ hyperparameters.
 cert <- statmod_certificate(f4)
 c(state = cert$state, mode_error = signif(cert$mode_error, digits = 3))
 #>       state  mode_error 
-#> "converged"  "6.77e-30"
+#> "converged"  "4.93e-30"
 ```
 
 `mode_error` is how far above its own penalized mode the inner fit
@@ -292,10 +292,10 @@ predict(f4, newdata = nd, se = TRUE)$mu
 #> 3  2.4646126 0.1219674  2.2255610  2.70366431
 ```
 
-Prediction reapplies each term’s blueprint instead of rebuilding it, so
-the knots of a smooth and the levels of a factor are those of the fitted
-model. As a consequence, predicting at rows that were used to fit the
-model returns the fitted values there.
+Prediction reapplies each term’s `build_info` instead of rebuilding it,
+so the knots of a smooth and the levels of a factor are those of the
+fitted model. As a consequence, predicting at rows that were used to fit
+the model returns the fitted values there.
 
 The generics of `stats` apply to a fit:
 
@@ -319,7 +319,7 @@ Three generics signal an error, and each error message names the
 function to use instead. [`terms()`](https://rdrr.io/r/stats/terms.html)
 fails because a fit has one set of terms per distribution parameter,
 [`model.frame()`](https://rdrr.io/r/stats/model.frame.html) fails
-because a fit keeps the blueprint of each term and not the data, and
+because a fit keeps the `build_info` of each term and not the data, and
 [`anova()`](https://rdrr.io/r/stats/anova.html) fails because a
 penalized fit whose hyperparameters were chosen from the same data has
 no null distribution against which to test.

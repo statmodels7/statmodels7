@@ -17,7 +17,7 @@ filter_data(type, bp, params, fit, ctx)
 
 - bp:
 
-  The blueprint of the term, or of its first component.
+  The `build_info` of the term, or of its first component.
 
 - params:
 

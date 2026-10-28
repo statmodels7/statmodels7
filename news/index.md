@@ -1,5 +1,28 @@
 # Changelog
 
+## statmodels7 0.222.1
+
+- Follows the renaming in numericals7 0.25.0, optimizers7 0.19.0,
+  penalties7 0.34.0 and modelterms7 0.114.0: the curvature of a SCAD or
+  MCP penalty is read from the property `curvature` (it was read from
+  `curv`, which no longer exists, so the coordinate descent used a
+  curvature of one); the matrices of an additive penalty from
+  `matrices`; the Hessian is passed to `minimize()` as `hess` and the
+  typical size to the optimizer as `typical_size`;
+  [`plot_derivative()`](https://statmodels7.github.io/statmodels7/reference/plot_derivative.md)
+  reads the element `half_width` of `fd_offsets()`;
+  [`plot_regime_density()`](https://statmodels7.github.io/statmodels7/reference/plot_regime_density.md)
+  reads the property `transition` of a regime term. Requires numericals7
+  0.25.0, optimizers7 0.19.0, penalties7 0.34.0 and modelterms7 0.114.0.
+
+## statmodels7 0.222.0
+
+- The property `fingerprint` of a `StatmodBootstrap` entry is renamed
+  `fit_estimates`: the coefficients and hyperparameters of the fit from
+  which the replicates were drawn. The documentation of the class
+  describes the property `jackknife`. Follows the renaming of
+  `blueprint` to `build_info` in modelterms7 0.113.0 and basis7 0.16.0.
+
 ## statmodels7 0.221.0
 
 - [`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md)

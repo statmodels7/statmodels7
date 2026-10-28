@@ -13,7 +13,7 @@ replicates."><meta property="og:image" content="https://statmodels7.github.io/st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ replicates.</p>
 <span>  random <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  status <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  fingerprint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>  fit_estimates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  raw <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  raw_cols <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  jackknife <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -103,9 +103,11 @@ that is not identified;</p></dd>
 stream and after the last draw that was kept, from which an extension
 continues;</p></dd>
 
-<dt><code>fingerprint</code></dt>
-<dd><p>the coefficients and hyperparameters of the fit that
-the replicates belong to;</p></dd>
+<dt><code>fit_estimates</code></dt>
+<dd><p>the coefficients and hyperparameters of the fit
+from which the replicates were drawn, in one vector. A copy of the fit
+shares the storage of the entries, so the entries of a fit are those
+whose <code>fit_estimates</code> are identical to its estimates;</p></dd>
 
 <dt><code>raw</code>, <code>raw_cols</code></dt>
 <dd><p>for the parametric scheme beside random effects,
@@ -115,7 +117,14 @@ where <code>coefficients</code> holds \(\hat b^* - b^* + \hat b\), and the
 positions of those columns among the columns of <code>coefficients</code>. Both
 are <code>NULL</code> otherwise, and for an entry stored by an older version.
 <code><a href="pred_bootstrap.html">pred_bootstrap()</a></code> rebuilds the refitted coefficients from
-<code>coefficients</code> and <code>raw</code> to reuse the entry.</p></dd>
+<code>coefficients</code> and <code>raw</code> to reuse the entry;</p></dd>
+
+<dt><code>jackknife</code></dt>
+<dd><p>the refits with one unit left out (an observation, or
+a cluster for a cluster scheme), a matrix with one row per unit and
+the columns of <code>coefficients</code>. The BCa interval computes it the first
+time it is requested and stores it here for its acceleration; it is
+<code>NULL</code> until then, and it is kept when the entry is extended.</p></dd>
 
 
 </dl></div>

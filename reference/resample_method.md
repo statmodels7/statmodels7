@@ -75,8 +75,8 @@ the weights is the refit on the duplicated rows with the basis held. A
 cluster scheme beside a
 [`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
 term is the exception: the design is rebuilt on the rows drawn, with the
-blueprints of the fit for every term other than the random-effect terms
-(see
+`build_info` lists of the fit for every term other than the
+random-effect terms (see
 [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)).
 
 ## See also

@@ -46,7 +46,7 @@ gives what it produced.
 [`model.frame()`](https://rdrr.io/r/stats/model.frame.html) would have
 to return the data frame used to fit the model, which a fit does not
 keep. A fit keeps the response, the weights, the offsets and each term's
-blueprint, so that a basis, a set of levels or a set of contrasts is
+`build_info`, so that a basis, a set of levels or a set of contrasts is
 reapplied to new data and not learned from it again.
 
 [`anova()`](https://rdrr.io/r/stats/anova.html) would have to compare

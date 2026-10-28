@@ -2,16 +2,16 @@
 
 `boot_env()` returns the environment in which a fit keeps its entries,
 or `NULL` for a fit that has none (an object saved before the property
-existed). `boot_fingerprint()` returns the numbers that identify the fit
-an entry belongs to, and `boot_entries()` the entries that belong to the
-fit, in alphabetical order of their keys.
+existed). `boot_fit_estimates()` returns the numbers that identify the
+fit an entry belongs to, and `boot_entries()` the entries that belong to
+the fit, in alphabetical order of their keys.
 
 ## Usage
 
 ``` r
 boot_env(fit)
 
-boot_fingerprint(fit)
+boot_fit_estimates(fit)
 
 boot_entries(fit)
 

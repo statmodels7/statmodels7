@@ -94,7 +94,7 @@ carrying one would hold the frame twice and would keep a stale copy
 after the data changed.
 
 The generics rebuild from the specification that the fit keeps whole,
-running each term's blueprint against `data` by the same path as
+running each term's `build_info` against `data` by the same path as
 [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md).
 A factor's levels, a spline's knots and a basis reparametrization are
 therefore reapplied to the new rows and not estimated again.
@@ -143,7 +143,7 @@ gradient(fit, par = list(mu = c(0, 0), sigma = 0))
 # component is minus the number of mu coefficients (here -2).
 gradient(fit)
 #> $mu
-#> [1] 1.953993e-14 6.217249e-15
+#> [1] 1.421085e-14 7.105427e-15
 #> 
 #> $sigma
 #> [1] -2

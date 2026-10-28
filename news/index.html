@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,14 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.222.1" id="statmodels7-02221">statmodels7 0.222.1<a class="anchor" aria-label="anchor" href="#statmodels7-02221"></a></h2>
+<ul><li>Follows the renaming in numericals7 0.25.0, optimizers7 0.19.0, penalties7 0.34.0 and modelterms7 0.114.0: the curvature of a SCAD or MCP penalty is read from the property <code>curvature</code> (it was read from <code>curv</code>, which no longer exists, so the coordinate descent used a curvature of one); the matrices of an additive penalty from <code>matrices</code>; the Hessian is passed to <code>minimize()</code> as <code>hess</code> and the typical size to the optimizer as <code>typical_size</code>; <code><a href="../reference/plot_derivative.html">plot_derivative()</a></code> reads the element <code>half_width</code> of <code>fd_offsets()</code>; <code><a href="../reference/plot_regime_density.html">plot_regime_density()</a></code> reads the property <code>transition</code> of a regime term. Requires numericals7 0.25.0, optimizers7 0.19.0, penalties7 0.34.0 and modelterms7 0.114.0.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.222.0" id="statmodels7-02220">statmodels7 0.222.0<a class="anchor" aria-label="anchor" href="#statmodels7-02220"></a></h2>
+<ul><li>The property <code>fingerprint</code> of a <code>StatmodBootstrap</code> entry is renamed <code>fit_estimates</code>: the coefficients and hyperparameters of the fit from which the replicates were drawn. The documentation of the class describes the property <code>jackknife</code>. Follows the renaming of <code>blueprint</code> to <code>build_info</code> in modelterms7 0.113.0 and basis7 0.16.0.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.221.0" id="statmodels7-02210">statmodels7 0.221.0<a class="anchor" aria-label="anchor" href="#statmodels7-02210"></a></h2>
 <ul><li><p><code><a href="../reference/joint_reading.html">joint_reading()</a></code> takes the coordinates that are the parameters of the structural term. When the test for aliased coordinates names one of them, as it does for a filter that has exploded and whose curvature is numerically of rank one, the decrement over the other coordinates is only a lower bound of the decrement over all of them. The certificate keeps it as <code>not converged</code> where it exceeds <code><a href="../reference/mode_error_limit.html">mode_error_limit()</a></code> and otherwise gives <code>unknown</code>. A negative decrement is read as a direction of ascent. A fit of the census whose curvature had one eigenvalue of 2e30 and the others at rounding level was <code>converged</code> at 3128 below the maximum, read over the intercept alone; it is now <code>unknown</code>. The reading of the 985 final points of the census changes at no fit whose flag is <code>TRUE</code>.</p></li>

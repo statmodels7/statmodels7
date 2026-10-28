@@ -17,7 +17,7 @@ coefficients and on the fitting data."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,7 +133,7 @@ evaluate the same model.</p>
 carrying one would hold the frame twice and would keep a stale copy after
 the data changed.</p>
 <p>The generics rebuild from the specification that the fit keeps whole,
-running each term's blueprint against <code>data</code> by the same path as
+running each term's <code>build_info</code> against <code>data</code> by the same path as
 <code><a href="predict.StatmodFit.html">predict.StatmodFit()</a></code>. A factor's levels, a spline's knots and a basis
 reparametrization are therefore reapplied to the new rows and not
 estimated again.</p>
@@ -179,7 +179,7 @@ degrees of freedom, <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></
 <span class="r-in"><span><span class="co"># component is minus the number of mu coefficients (here -2).</span></span></span>
 <span class="r-in"><span><span class="fu">gradient</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $mu</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.953993e-14 6.217249e-15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.421085e-14 7.105427e-15</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $sigma</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] -2</span>

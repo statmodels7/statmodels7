@@ -620,7 +620,7 @@ helper functions. Using the package does not require any of it.
   : The Names of the Coordinates of the Stored Replicates
 
 - [`boot_env()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
-  [`boot_fingerprint()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
+  [`boot_fit_estimates()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
   [`boot_entries()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
   [`boot_match()`](https://statmodels7.github.io/statmodels7/reference/boot_env.md)
   : The Storage of the Bootstrap Entries of a Fit

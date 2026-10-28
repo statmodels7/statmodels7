@@ -18,7 +18,7 @@ StatmodBootstrap(
   random = character(0),
   status = integer(0),
   seed = list(),
-  fingerprint = integer(0),
+  fit_estimates = integer(0),
   raw = NULL,
   raw_cols = NULL,
   jackknife = NULL
@@ -71,10 +71,12 @@ The properties are
   a list with the state of `.Random.seed` at the start of the stream and
   after the last draw that was kept, from which an extension continues;
 
-- `fingerprint`:
+- `fit_estimates`:
 
-  the coefficients and hyperparameters of the fit that the replicates
-  belong to;
+  the coefficients and hyperparameters of the fit from which the
+  replicates were drawn, in one vector. A copy of the fit shares the
+  storage of the entries, so the entries of a fit are those whose
+  `fit_estimates` are identical to its estimates;
 
 - `raw`, `raw_cols`:
 
@@ -86,7 +88,15 @@ The properties are
   otherwise, and for an entry stored by an older version.
   [`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md)
   rebuilds the refitted coefficients from `coefficients` and `raw` to
-  reuse the entry.
+  reuse the entry;
+
+- `jackknife`:
+
+  the refits with one unit left out (an observation, or a cluster for a
+  cluster scheme), a matrix with one row per unit and the columns of
+  `coefficients`. The BCa interval computes it the first time it is
+  requested and stores it here for its acceleration; it is `NULL` until
+  then, and it is kept when the entry is extended.
 
 ## See also
 

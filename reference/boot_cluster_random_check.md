@@ -25,8 +25,8 @@ boot_cluster_random_check(spec0)
 ## Details
 
 A replicate rebuilds every random-effect term on its own groups, with
-the blueprint of the fit for the within-group design. A term that shares
-a covariance through a label, a smooth random effect
+the `build_info` of the fit for the within-group design. A term that
+shares a covariance through a label, a smooth random effect
 ([`modelterms7::RandomSmoothTerm()`](https://statmodels7.github.io/modelterms7/reference/RandomSmoothTerm.html))
 and a random effect inside the subformula of another term are not
 rebuilt in this version, and the fit is rejected.

@@ -31,6 +31,6 @@ A list of integer vectors of row numbers.
 
 ## Details
 
-A structural term gives them in its blueprint. For a model without one
-they are the rows of each level of `cluster`, ordered by `time`, with
-ties kept in the order of the data.
+A structural term gives them in its `build_info`. For a model without
+one they are the rows of each level of `cluster`, ordered by `time`,
+with ties kept in the order of the data.
