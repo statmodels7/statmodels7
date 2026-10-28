@@ -127,9 +127,9 @@ the functions that take it.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;vcov&gt; frequentist</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fit</span>, vcov_type <span class="op">=</span> <span class="fu">frequentist_vcov</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                   mu:(Intercept)          mu:x sigma:(Intercept)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)      7.691473e-03 -1.161719e-02      8.809850e-19</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu:x               -1.161719e-02  2.209835e-02      3.360036e-18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept)   8.809850e-19  3.360036e-18      6.410256e-03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)      7.691473e-03 -1.161719e-02      1.055974e-18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu:x               -1.161719e-02  2.209835e-02     -2.501978e-18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept)   1.055974e-18 -2.501978e-18      6.410256e-03</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span>, vcov_type <span class="op">=</span> <span class="fu">frequentist_vcov</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> A statmod fit</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -154,9 +154,9 @@ the functions that take it.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 95% intervals, frequentist variance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> conditional log-likelihood -29.891019    effective df 3.00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cAIC 65.782    cBIC 72.928</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 74 ms</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> inner   max |grad|/se 5.3e-15   min eigen 0.11</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> outer   max |grad|/se 9.4e-15   min eigen 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 105 ms</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> inner   max |grad|/se 8.8e-16   min eigen 0.11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> outer   max |grad|/se 8.2e-15   min eigen 1</span>
 <span class="r-in"><span><span class="fu">frequentist_vcov</span><span class="op">(</span>information <span class="op">=</span> <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">expected_info</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;vcov&gt; frequentist (expected information)</span>
 <span class="r-in"><span><span class="fu">frequentist_vcov</span><span class="op">(</span>sandwich <span class="op">=</span> <span class="fu"><a href="hc0_sandwich.html">hc1_sandwich</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
