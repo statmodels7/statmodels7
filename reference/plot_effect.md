@@ -116,11 +116,11 @@ dd <- data.frame(x = runif(200), z = rnorm(200))
 dd$y <- sin(2 * pi * dd$x) + 0.5 * dd$z + rnorm(200, sd = exp(-1 + dd$x))
 fit <- statmod(y ~ z + s(x) | sigma ~ x, distributions7::gaussian1_distrib(),
                dd)
-ggplot2::autoplot(fit, term = "s(x)", type = plot_effect(), data = dd)
+ggplot2::autoplot(fit, term = "s(x)", plot_type = plot_effect(), data = dd)
 
 ggplot2::autoplot(fit, term = "x", param = "sigma",
-                  type = plot_effect(binned = 10), data = dd)
+                  plot_type = plot_effect(binned = 10), data = dd)
 
 ggplot2::autoplot(fit, term = "x", param = "sigma",
-                  type = plot_effect(scale = "response"), data = dd)
+                  plot_type = plot_effect(scale = "response"), data = dd)
 ```

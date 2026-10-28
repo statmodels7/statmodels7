@@ -51,8 +51,8 @@ the Wald limits that it carried on arrival, so that one column never
 carries two different intervals.
 [`testable_coords()`](https://statmodels7.github.io/statmodels7/reference/testable_coords.md)
 determines which rows those are; if it names none of the rows of the
-table, the function signals an error, since a table that consists only
-of missing values is less informative than the reason.
+table, the function signals a warning that gives the reason, and the
+limits of every row are `NA`.
 
 ## See also
 

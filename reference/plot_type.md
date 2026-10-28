@@ -7,9 +7,9 @@ A graph is drawn by
 [`autoplot.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodFit.md)
 (which returns it) or
 [`plot.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodFit.md)
-(which prints it), and the object passed as `type` decides which graph
-is drawn and with which options. Three abstract subclasses divide the
-types by what they read:
+(which prints it), and the object passed as `plot_type` decides which
+graph is drawn and with which options. Three abstract subclasses divide
+the types by what they read:
 
 - `term_plot`: one term of one equation, named by the argument `term`
   ([`plot_effect()`](https://statmodels7.github.io/statmodels7/reference/plot_effect.md),

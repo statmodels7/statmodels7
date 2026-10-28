@@ -9,7 +9,7 @@ locating the two points where the statistic crosses its critical value."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,7 +90,9 @@ stops.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A numeric vector of two, <code>lower</code> and <code>upper</code>. A side of the
-position of a break-point that the data do not bound is <code>-Inf</code> or <code>Inf</code>.
+position of a break-point that the data do not bound is <code>-Inf</code> or <code>Inf</code>,
+and a side that stays under the critical value as far as the fitted
+position of the next break-point is that position.
 An end that the search could not bracket within <code>maxit</code> widenings, or at
 which the statistic could not be evaluated, is <code>NA</code>; both ends are <code>NA</code>
 when the standard error of the coefficient is not finite and positive.</p>
@@ -118,6 +120,16 @@ returns that range, and the search never leaves it. On a side where the
 statistic is still under its critical value when the search reaches the end
 of the range, the data do not bound the position, and the limit is
 <code>-Inf</code> or <code>Inf</code>.</p>
+<p>A term with two or more break-points restricts the search further. The
+search for a break-point stays between the fitted positions of the
+break-points next to it (<code><a href="neighbor_positions.html">neighbor_positions()</a></code>), because a refit that
+holds one break-point is a fit with a break-point at that value and the
+other free, and beyond a neighbor the interval would become that of the
+neighbor. The statistic is not monotone next to a neighbor, so that side is
+evaluated at the points of the widening and at points whose distances from
+the neighbor grow by a factor of 1.3, and on a side where the statistic is
+still under its critical value at the neighbor's position, the limit is that
+position.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -1260,6 +1260,9 @@ helper functions. Using the package does not require any of it.
 - [`curv_centered()`](https://statmodels7.github.io/statmodels7/reference/curv_centered.md)
   : Whether a Kinked Block's Curvature Is Read Centered
 
+- [`curvature_ascent_limit()`](https://statmodels7.github.io/statmodels7/reference/curvature_ascent_limit.md)
+  : The Size of a Negative Eigenvalue That Is Not Rounding
+
 - [`cv_bind_inputs()`](https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.md)
   : Carry a Term's Matrix Input Onto a Subset of the Rows
 
@@ -1469,6 +1472,9 @@ helper functions. Using the package does not require any of it.
   [`link_slopes()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
   : Carry a Hyperparameter Derivative onto the Free Scale
 
+- [`freeze_resolution()`](https://statmodels7.github.io/statmodels7/reference/freeze_resolution.md)
+  : The Outer Optimizer as the Fit Stores It
+
 - [`frozen_block()`](https://statmodels7.github.io/statmodels7/reference/frozen_block.md)
   : Which Coefficients Belong to a Block That Is Not a Jacobian
 
@@ -1516,6 +1522,9 @@ helper functions. Using the package does not require any of it.
 
 - [`has_sharp_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/has_sharp_breakpoint.md)
   : Whether a Model Carries a Sharp Break-Point Term
+
+- [`has_static_start()`](https://statmodels7.github.io/statmodels7/reference/has_static_start.md)
+  : Whether a Term Carries a Statically Started Filter
 
 - [`heavy_variance()`](https://statmodels7.github.io/statmodels7/reference/heavy_variance.md)
   : The Variance Added to Each Predictor by Priors Other Than Gaussian
@@ -1752,6 +1761,10 @@ helper functions. Using the package does not require any of it.
   : A Covariance Class Split Between the Coefficients and a Filter's
   Parameters
 
+- [`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md)
+  : The Newton Decrement of a Joint Fit, With the Verdict on Its
+  Curvature
+
 - [`joint_row_family()`](https://statmodels7.github.io/statmodels7/reference/joint_row_family.md)
   : The Family at One Observation, in Every Predictor
 
@@ -1908,6 +1921,9 @@ helper functions. Using the package does not require any of it.
 
 - [`mvn_draws()`](https://statmodels7.github.io/statmodels7/reference/mvn_draws.md)
   : Draws from a Multivariate Normal Distribution
+
+- [`neighbor_positions()`](https://statmodels7.github.io/statmodels7/reference/neighbor_positions.md)
+  : Fitted Positions of the Break-Points Next to One
 
 - [`nested_columns()`](https://statmodels7.github.io/statmodels7/reference/nested_columns.md)
   : The Coordinates of the Nested Random Effects Set Aside
@@ -2102,6 +2118,12 @@ helper functions. Using the package does not require any of it.
 - [`pin_boundary()`](https://statmodels7.github.io/statmodels7/reference/pin_boundary.md)
   : Pin the Coordinates That a Boundary Has Frozen
 
+- [`pin_held_breakpoints()`](https://statmodels7.github.io/statmodels7/reference/pin_held_breakpoints.md)
+  : Keep the Free Break-Points Away From a Held One
+
+- [`pin_infeasible()`](https://statmodels7.github.io/statmodels7/reference/pin_infeasible.md)
+  : Whether a Free Break-Point Has Left Its Interval
+
 - [`pinned_coords()`](https://statmodels7.github.io/statmodels7/reference/pinned_coords.md)
   : The Coordinates Left Out of the Marginal Determinant
 
@@ -2113,6 +2135,9 @@ helper functions. Using the package does not require any of it.
 
 - [`plot_time_env()`](https://statmodels7.github.io/statmodels7/reference/plot_time_env.md)
   : The Environment in Which the Time of a Term Is Evaluated
+
+- [`plot_type_class()`](https://statmodels7.github.io/statmodels7/reference/plot_type_class.md)
+  : The Class of the Graph Types
 
 - [`pool_nested_random()`](https://statmodels7.github.io/statmodels7/reference/pool_nested_random.md)
   : A Term With Its Nested Random Effects Read in One Group's Columns
@@ -2536,6 +2561,16 @@ helper functions. Using the package does not require any of it.
 
 - [`start_strategy_class()`](https://statmodels7.github.io/statmodels7/reference/start_strategy_class.md)
   : The start_strategy Class Object
+
+- [`static_equation_rhs()`](https://statmodels7.github.io/statmodels7/reference/static_equation_rhs.md)
+  : The Right Side of an Equation Without Its Filters
+
+- [`static_filter_restart()`](https://statmodels7.github.io/statmodels7/reference/static_filter_restart.md)
+  : Set the Constants of a Statically Started Filter From Its Static
+  Model
+
+- [`static_filter_starts()`](https://statmodels7.github.io/statmodels7/reference/static_filter_starts.md)
+  : The Constant at Which a Statically Started Filter Begins
 
 - [`statmod_active()`](https://statmodels7.github.io/statmodels7/reference/statmod_active.md)
   : Which Coefficients Are Not Sitting at a Kink

@@ -45,10 +45,16 @@ the decrement is many orders of magnitude above
 [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md).
 The coefficients that the specification holds (those that the outer
 criterion estimates) are left out, because their score is not a residual
-of the inner fit. A gradient or a curvature that is not finite, or a
-curvature that cannot be solved, gives `Inf`.
+of the inner fit. The reading is
+[`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md),
+the one of the certificate and of the alternation: a coordinate that is
+flat at an edge is left out, and a curvature with a direction of ascent,
+a decrement that is only a lower bound below
+[`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md),
+and a gradient or a curvature that is not finite give `Inf`.
 
 ## See also
 
+[`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md),
 [`statmod_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/statmod_joint_pieces.md),
 [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)

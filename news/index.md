@@ -1,5 +1,149 @@
 # Changelog
 
+## statmodels7 0.221.0
+
+- [`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md)
+  takes the coordinates that are the parameters of the structural term.
+  When the test for aliased coordinates names one of them, as it does
+  for a filter that has exploded and whose curvature is numerically of
+  rank one, the decrement over the other coordinates is only a lower
+  bound of the decrement over all of them. The certificate keeps it as
+  `not converged` where it exceeds
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
+  and otherwise gives `unknown`. A negative decrement is read as a
+  direction of ascent. A fit of the census whose curvature had one
+  eigenvalue of 2e30 and the others at rounding level was `converged` at
+  3128 below the maximum, read over the intercept alone; it is now
+  `unknown`. The reading of the 985 final points of the census changes
+  at no fit whose flag is `TRUE`.
+
+- [`filter_decrement()`](https://statmodels7.github.io/statmodels7/reference/filter_decrement.md),
+  which decides whether
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  tries the second start of a filter and whether a bootstrap replicate
+  is kept, calls
+  [`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md).
+  It no longer returns the absolute value of a decrement read from an
+  indefinite curvature, and no longer returns `Inf` where a coordinate
+  is flat at an edge. Over the 910 calls of the census, the 5 maximums
+  at the boundary that returned `Inf` and refitted a second time now
+  return a value of at most 1e-6, and no other verdict changes.
+
+- `statmodels7` requires optimizers7 0.18.0, where `gd()`, `cg()`,
+  `bb()`, `bfgs()` and `lbfgs()` end as not converged on a stop on a
+  change at a point that is not a minimum.
+
+## statmodels7 0.220.0
+
+- A restricted refit that holds a coefficient of a `seg()` term with two
+  or more break-points keeps the free break-points at least two
+  observations away from the held one. Before, the relabeling of crossed
+  break-points wrote the held value onto the free break-point, the two
+  sat at one position and the alternation ran its whole budget of 1000
+  passes without converging (4006 scoring iterations, 157 s and a
+  statistic of 118 for a likelihood ratio of 4.2 on a test case; 160 s
+  and 40 refits for one side of the interval of a case with a weak
+  second break-point). The held position starts from the position and
+  the change of slope of each unrestricted break-point in turn and the
+  refit with the smaller objective is kept.
+  [`statmod_restrict()`](https://statmodels7.github.io/statmodels7/reference/statmod_restrict.md)
+  returns the coefficients in the order of the positions, with `[held]`
+  after the names of the held break-point.
+- The search for the limits of a break-point by inversion stays between
+  the fitted positions of the neighboring break-points, and a side that
+  stays under the critical value as far as a neighbor ends at its
+  position. Next to a neighbor the statistic is evaluated at points
+  whose distance from the neighbor grows by a factor of 1.3.
+- `confint(parm = , test = lr_test())` returns the requested rows with
+  `NA` limits and a warning when none of the coefficients can be held;
+  it signaled an error.
+
+## statmodels7 0.219.0
+
+- A fitted model stores the line search of its outer optimizer with the
+  resolution of the criterion as a number. It stored a function that
+  held the frame of
+  [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md),
+  with the design, the inner fit and the caches of the derivatives, and
+  every serialization of the fit
+  ([`saveRDS()`](https://rdrr.io/r/base/readRDS.html) and the copy sent
+  to a worker) included that frame. With the package installed without
+  its source, a smooth of 2000 observations goes from 31.4 to 1.3 MB, a
+  `seg()` term from 6.9 to 0.7 MB and a `gas()` term with a random
+  `omega` from 104 to 1.7 MB. Coefficients, hyperparameters and
+  iteration counts are unchanged. An optimizer given by the caller is
+  stored as given.
+
+## statmodels7 0.218.0
+
+- A `gas()` term written with `init = "static"` starts each group at the
+  predictor of the model without the term, read at the group’s first
+  row. That model is the formula with each `gas()` replaced by the
+  development of its level (the right side of an `omega ~` subformula)
+  or by an intercept, fitted once with the same family, data, weights
+  and offsets, and kept on the term, so that a prediction that rebuilds
+  the series on other rows reads its constants from the same model. On
+  the DAX returns of chapter 13 the log-scale gaussian filter then has
+  one maximum (-2614.40) where the start at the level has two (-2616.35
+  and -2591.37), and the GARCH(1, 1) one maximum (-2594.80) where the
+  start at the level has two (-2594.81 and -2572.65). The default stays
+  `init = "level"`.
+
+- The gradient of the objective adds the part of a filter’s reverse pass
+  that passes through a static start (`dstart`), and the derivatives of
+  a joint filter receive the static predictors from which that start is
+  read.
+
+- The second start of a joint filter scales each loading by the
+  information of its own parameter. It was the first start unchanged, so
+  a beta in both `mu` and `phi` on DriversKilled/drivers in Seatbelts
+  stopped unconverged at -7897.30; it now converges at 674.81.
+
+## statmodels7 0.217.0
+
+- The argument `type` of `autoplot()` and
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) is named
+  `plot_type`, and the argument `types` of
+  [`diagnostics()`](https://statmodels7.github.io/statmodels7/reference/diagnostics.md)
+  is named `plot_types`. The default group of
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) replaces the
+  quantile-quantile graph by
+  [`plot_ppc()`](https://statmodels7.github.io/statmodels7/reference/plot_ppc.md),
+  the observed density of the response with the densities of simulated
+  responses.
+
+## statmodels7 0.216.0
+
+- The certificate and the verdict of an alternation read the inner fit
+  of a model with a `gas()` or `regime()` term over the coefficients and
+  the term’s parameters through
+  [`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md).
+  A coordinate whose curvature is not positive is left out. A curvature
+  with an eigenvalue below `-1e3 * eps * lambda_max`
+  ([`curvature_ascent_limit()`](https://statmodels7.github.io/statmodels7/reference/curvature_ascent_limit.md))
+  is a point that is not a maximum: the certificate has the state
+  `"not converged"` with the new field `ascent`, and an alternation
+  reads it as not settled. Before,
+  [`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md)
+  on such a matrix dropped the term’s parameters and the decrement of
+  the coefficients alone, 0.000453 at a log-likelihood 473 below the
+  maximum, gave `"converged"`. A joint reading that cannot be computed
+  gives `mode_error = NA` and the state `"unknown"`, where the reading
+  of the coefficients alone was used.
+
+- The joint gradient of a filter is missing (`NA`) where it cannot be
+  evaluated, and was zero. `newton()` read the zeros as a stationary
+  point and reported `converged = TRUE` at a log-likelihood 16734 below
+  the maximum; it now stops with `gradient not finite`.
+
+- The flag of a `gas()` fit reads the `stop_decrement` of `newton()` in
+  optimizers7: a run does not end as converged on a change of the
+  parameters or of the objective where the Hessian is not positive
+  definite or the Newton decrement exceeds that limit. The nine fits of
+  the census of `gas()` models that reported `converged = TRUE` away
+  from a maximum (2.2 to 16733 log-likelihood units below it) report
+  `FALSE`.
+
 ## statmodels7 0.215.1
 
 - The bindings that give a formula the exports of modelterms7 are built

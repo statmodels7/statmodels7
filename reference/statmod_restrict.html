@@ -11,7 +11,7 @@ that attain it and the score there."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,6 +152,22 @@ recursion and not \(X\beta\), and the hold does not reach it.</p>
 <p>A coefficient under a penalty that is twice differentiable is held like
 any other: a smooth's linear column and its rotated coordinates, a ridge,
 a random effect. <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code> states the meaning of such a fit.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="break-points">Break-points<a class="anchor" aria-label="anchor" href="#break-points"></a></h2>
+    <p>A coefficient of a continuous <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code> term with two or more
+break-points is held with the other break-points free, and the fit is the
+one of a break-point at the held value. A free break-point cannot reach the
+held one: it stays on one side of it with at least two observations
+between the two (<code><a href="https://statmodels7.github.io/modelterms7/reference/seg_pin.html" class="external-link">modelterms7::seg_pin()</a></code>), because two break-points at
+one position make two columns equal and the changes of slope grow without
+bound in opposite directions. The held position stands for each of the
+break-points of the term in turn, taking the change of slope of that
+break-point while the others keep their positions and changes of slope, so
+that the free break-point starts on one side of the held position or on the
+other, and the refit with the smaller objective is kept. The coefficients
+of the result are in the order of the positions, and <code>[held]</code> follows the
+names of the held break-point's coefficients (<code><a href="pin_held_breakpoints.html">pin_held_breakpoints()</a></code>).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

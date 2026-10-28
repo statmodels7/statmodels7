@@ -17,7 +17,7 @@ dimensionless readings that summary.StatmodFit() prints.'><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,8 +94,11 @@ sitting at a boundary where no curvature can be read, and only there.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>state</code> (<code>"converged"</code>, <code>"boundary"</code>,
 <code>"not converged"</code> or <code>"unknown"</code>), <code>decrement</code>, <code>gradient</code>,
-<code>mode_error</code>, <code>curvature</code>, <code>boundary</code>, <code>boundary_key</code>, <code>ridge</code> and
-<code>reason</code>. <code>ridge</code> is a list with one named vector per flat direction of
+<code>mode_error</code>, <code>curvature</code>, <code>boundary</code>, <code>boundary_key</code>, <code>ridge</code>, <code>ascent</code>
+and <code>reason</code>. <code>ascent</code> is empty, or states that the curvature of the
+inner fit over the coefficients and the parameters of a structural term
+has a direction of ascent (<code><a href="joint_reading.html">joint_reading()</a></code>), in which case the state is
+<code>"not converged"</code> and <code>mode_error</code> is <code>NA</code>. <code>ridge</code> is a list with one named vector per flat direction of
 the outer curvature, over the coordinates that move along it.
 The verdict uses <code>decrement</code>, and <code>gradient</code> is reported beside it.
 <code>curvature</code> is <code>"analytic"</code> when the decrement was read against an analytic
@@ -172,6 +175,15 @@ set to zero the score does not vanish but lies in the subdifferential, so
 that reading the score there would give a false mode error. A model that
 also carries a smooth penalty estimated by <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> has an outer
 gradient, which the certificate reads as usual.</p>
+<p>A model with a score-driven or latent-state term has its inner fit read
+over the coefficients and the term's own parameters together
+(<code><a href="joint_reading.html">joint_reading()</a></code>). A coordinate whose curvature is flat at an edge is
+left out of the reading. If the curvature of the others has an eigenvalue
+below \(-c\,\varepsilon\,\lambda_{\max}\), with \(c\) from
+<code><a href="curvature_ascent_limit.html">curvature_ascent_limit()</a></code>, the point is not a maximum: the state is
+<code>"not converged"</code>, <code>ascent</code> gives the reason, and <code>mode_error</code> is <code>NA</code>. If
+the reading cannot be computed, <code>mode_error</code> is <code>NA</code> and a model with no
+outer gradient has the state <code>"unknown"</code>.</p>
 <p>A form whose criterion has no exact gradient (<code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code> at
 order 1) has the criterion itself differenced by refits when it has at most
 two hyperparameters and no coefficient estimated on the criterion (three

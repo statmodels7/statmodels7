@@ -3,13 +3,13 @@
 `autoplot()` returns a ggplot2 object that shows one aspect of a
 [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md),
 and [`plot()`](https://rdrr.io/r/graphics/plot.default.html) prints that
-object and returns it invisibly. The graph is chosen by `type`, an
+object and returns it invisibly. The graph is chosen by `plot_type`, an
 object inheriting from
 [plot_type](https://statmodels7.github.io/statmodels7/reference/plot_type.md):
 
 - with `term`, a graph of that term
   ([`plot_effect()`](https://statmodels7.github.io/statmodels7/reference/plot_effect.md)
-  when `type` is not given, or the term's
+  when `plot_type` is not given, or the term's
   [`default_plot()`](https://statmodels7.github.io/statmodels7/reference/default_plot.md));
 
 - with a
@@ -27,10 +27,10 @@ object inheriting from
 
 ``` r
 # S3 method for class 'StatmodFit'
-autoplot(object, term = NULL, param = NULL, type = NULL, data = NULL, ...)
+autoplot(object, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
 
 # S3 method for class 'StatmodFit'
-plot(x, term = NULL, param = NULL, type = NULL, data = NULL, ...)
+plot(x, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
 ```
 
 ## Arguments
@@ -48,7 +48,7 @@ plot(x, term = NULL, param = NULL, type = NULL, data = NULL, ...)
 
   The name of an equation (a parameter of the family), or `NULL`.
 
-- type:
+- plot_type:
 
   An object inheriting from
   [plot_type](https://statmodels7.github.io/statmodels7/reference/plot_type.md),
@@ -110,6 +110,6 @@ fit <- statmod(y ~ z + s(x), distributions7::gaussian1_distrib(), dd)
 p <- ggplot2::autoplot(fit, term = "s(x)", data = dd)
 p + ggplot2::labs(title = "The smooth of x")
 
-ggplot2::autoplot(fit, term = "z", type = plot_effect(residuals = FALSE),
+ggplot2::autoplot(fit, term = "z", plot_type = plot_effect(residuals = FALSE),
                   data = dd)
 ```

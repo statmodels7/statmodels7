@@ -87,5 +87,5 @@ dd <- data.frame(x = rnorm(120), id = factor(sample(1:12, 120, TRUE)))
 dd$y <- 1 + dd$x + rnorm(12)[dd$id] + rnorm(120, sd = 0.5)
 fit <- statmod(y ~ x + random(~ 1 | id), distributions7::gaussian1_distrib(),
                dd)
-ggplot2::autoplot(fit, term = "random(~1|id)", type = plot_caterpillar())
+ggplot2::autoplot(fit, term = "random(~1|id)", plot_type = plot_caterpillar())
 ```

@@ -97,10 +97,10 @@ set.seed(1)
 dd <- data.frame(x = runif(150))
 dd$y <- sin(2 * pi * dd$x) + rnorm(150, sd = 0.3)
 fit <- statmod(y ~ s(x), distributions7::gaussian1_distrib(), dd)
-ggplot2::autoplot(fit, term = "s(x)", type = plot_derivative(), data = dd)
+ggplot2::autoplot(fit, term = "s(x)", plot_type = plot_derivative(), data = dd)
 
 ggplot2::autoplot(fit, term = "s(x)",
-                  type = plot_derivative(order = 2, simultaneous = TRUE,
+                  plot_type = plot_derivative(order = 2, simultaneous = TRUE,
                                          n_sim = 2000, seed = 1),
                   data = dd)
 ```

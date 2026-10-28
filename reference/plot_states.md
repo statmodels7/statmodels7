@@ -55,5 +55,5 @@ fit <- statmod(y ~ regime(k = 2, time = t),
 ggplot2::autoplot(fit, term = "regime(k = 2, time = t)")
 
 ggplot2::autoplot(fit, term = "regime(k = 2, time = t)",
-                  type = plot_states(smoothed = FALSE))
+                  plot_type = plot_states(smoothed = FALSE))
 ```

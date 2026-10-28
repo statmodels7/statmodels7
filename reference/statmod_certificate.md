@@ -50,15 +50,20 @@ statmod_certificate(fit, tol = 0.01, flat = 0.002, edge = 8)
 
 A list with `state` (`"converged"`, `"boundary"`, `"not converged"` or
 `"unknown"`), `decrement`, `gradient`, `mode_error`, `curvature`,
-`boundary`, `boundary_key`, `ridge` and `reason`. `ridge` is a list with
-one named vector per flat direction of the outer curvature, over the
-coordinates that move along it. The verdict uses `decrement`, and
-`gradient` is reported beside it. `curvature` is `"analytic"` when the
-decrement was read against an analytic Hessian, `"differenced"` against
-one differenced from the exact gradient, `"differenced criterion"` when
-the criterion itself was differenced by refits, and `NA` when no
-curvature was read. `boundary_key` names the hyperparameters among the
-coordinates of `boundary`, in the key by which
+`boundary`, `boundary_key`, `ridge`, `ascent` and `reason`. `ascent` is
+empty, or states that the curvature of the inner fit over the
+coefficients and the parameters of a structural term has a direction of
+ascent
+([`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md)),
+in which case the state is `"not converged"` and `mode_error` is `NA`.
+`ridge` is a list with one named vector per flat direction of the outer
+curvature, over the coordinates that move along it. The verdict uses
+`decrement`, and `gradient` is reported beside it. `curvature` is
+`"analytic"` when the decrement was read against an analytic Hessian,
+`"differenced"` against one differenced from the exact gradient,
+`"differenced criterion"` when the criterion itself was differenced by
+refits, and `NA` when no curvature was read. `boundary_key` names the
+hyperparameters among the coordinates of `boundary`, in the key by which
 [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
 labels its rows;
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
@@ -155,6 +160,18 @@ penalty estimated by
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 has an outer gradient, which the certificate reads as usual.
+
+A model with a score-driven or latent-state term has its inner fit read
+over the coefficients and the term's own parameters together
+([`joint_reading()`](https://statmodels7.github.io/statmodels7/reference/joint_reading.md)).
+A coordinate whose curvature is flat at an edge is left out of the
+reading. If the curvature of the others has an eigenvalue below
+\\-c\\\varepsilon\\\lambda\_{\max}\\, with \\c\\ from
+[`curvature_ascent_limit()`](https://statmodels7.github.io/statmodels7/reference/curvature_ascent_limit.md),
+the point is not a maximum: the state is `"not converged"`, `ascent`
+gives the reason, and `mode_error` is `NA`. If the reading cannot be
+computed, `mode_error` is `NA` and a model with no outer gradient has
+the state `"unknown"`.
 
 A form whose criterion has no exact gradient
 ([`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)

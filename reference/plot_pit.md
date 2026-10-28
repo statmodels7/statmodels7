@@ -56,5 +56,5 @@ set.seed(1)
 dd <- data.frame(x = runif(150))
 dd$y <- rpois(150, exp(1 + dd$x))
 fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
-ggplot2::autoplot(fit, type = plot_pit(bins = 10, seed = 1))
+ggplot2::autoplot(fit, plot_type = plot_pit(bins = 10, seed = 1))
 ```

@@ -133,6 +133,26 @@ ridge, a random effect.
 [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md)
 states the meaning of such a fit.
 
+## Break-points
+
+A coefficient of a continuous
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
+term with two or more break-points is held with the other break-points
+free, and the fit is the one of a break-point at the held value. A free
+break-point cannot reach the held one: it stays on one side of it with
+at least two observations between the two
+([`modelterms7::seg_pin()`](https://statmodels7.github.io/modelterms7/reference/seg_pin.html)),
+because two break-points at one position make two columns equal and the
+changes of slope grow without bound in opposite directions. The held
+position stands for each of the break-points of the term in turn, taking
+the change of slope of that break-point while the others keep their
+positions and changes of slope, so that the free break-point starts on
+one side of the held position or on the other, and the refit with the
+smaller objective is kept. The coefficients of the result are in the
+order of the positions, and `[held]` follows the names of the held
+break-point's coefficients
+([`pin_held_breakpoints()`](https://statmodels7.github.io/statmodels7/reference/pin_held_breakpoints.md)).
+
 ## See also
 
 [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md),

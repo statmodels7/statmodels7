@@ -59,10 +59,12 @@ statmod_invert(
 ## Value
 
 A numeric vector of two, `lower` and `upper`. A side of the position of
-a break-point that the data do not bound is `-Inf` or `Inf`. An end that
-the search could not bracket within `maxit` widenings, or at which the
-statistic could not be evaluated, is `NA`; both ends are `NA` when the
-standard error of the coefficient is not finite and positive.
+a break-point that the data do not bound is `-Inf` or `Inf`, and a side
+that stays under the critical value as far as the fitted position of the
+next break-point is that position. An end that the search could not
+bracket within `maxit` widenings, or at which the statistic could not be
+evaluated, is `NA`; both ends are `NA` when the standard error of the
+coefficient is not finite and positive.
 
 ## Details
 
@@ -91,6 +93,18 @@ returns that range, and the search never leaves it. On a side where the
 statistic is still under its critical value when the search reaches the
 end of the range, the data do not bound the position, and the limit is
 `-Inf` or `Inf`.
+
+A term with two or more break-points restricts the search further. The
+search for a break-point stays between the fitted positions of the
+break-points next to it
+([`neighbor_positions()`](https://statmodels7.github.io/statmodels7/reference/neighbor_positions.md)),
+because a refit that holds one break-point is a fit with a break-point
+at that value and the other free, and beyond a neighbor the interval
+would become that of the neighbor. The statistic is not monotone next to
+a neighbor, so that side is evaluated at the points of the widening and
+at points whose distances from the neighbor grow by a factor of 1.3, and
+on a side where the statistic is still under its critical value at the
+neighbor's position, the limit is that position.
 
 ## See also
 

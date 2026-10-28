@@ -77,9 +77,9 @@ set.seed(1)
 dd <- data.frame(x1 = runif(200), x2 = runif(200))
 dd$y <- sin(2 * pi * dd$x1) * dd$x2 + rnorm(200, sd = 0.2)
 fit <- statmod(y ~ te(x1, x2), distributions7::gaussian1_distrib(), dd)
-ggplot2::autoplot(fit, term = "te(x1, x2)", type = plot_surface(n_grid = 30),
+ggplot2::autoplot(fit, term = "te(x1, x2)", plot_type = plot_surface(n_grid = 30),
                   data = dd)
 
 ggplot2::autoplot(fit, term = "te(x1, x2)",
-                  type = plot_surface(slices = c(0.2, 0.8)), data = dd)
+                  plot_type = plot_surface(slices = c(0.2, 0.8)), data = dd)
 ```

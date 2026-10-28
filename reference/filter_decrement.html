@@ -11,7 +11,7 @@ term, at the point that an inner fit returned."><meta property="og:image" conten
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.215.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.221.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,12 +85,15 @@ objective is flat to rounding, the flag at that point depends on the
 platform, and the decrement is many orders of magnitude above
 <code><a href="mode_error_limit.html">mode_error_limit()</a></code>. The coefficients that the specification holds (those
 that the outer criterion estimates) are left out, because their score is
-not a residual of the inner fit. A gradient or a curvature that is not
-finite, or a curvature that cannot be solved, gives <code>Inf</code>.</p>
+not a residual of the inner fit. The reading is <code><a href="joint_reading.html">joint_reading()</a></code>, the one
+of the certificate and of the alternation: a coordinate that is flat at an
+edge is left out, and a curvature with a direction of ascent, a decrement
+that is only a lower bound below <code><a href="mode_error_limit.html">mode_error_limit()</a></code>, and a gradient or a
+curvature that is not finite give <code>Inf</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_joint_pieces.html">statmod_joint_pieces()</a></code>, <code><a href="mode_error_limit.html">mode_error_limit()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="joint_reading.html">joint_reading()</a></code>, <code><a href="statmod_joint_pieces.html">statmod_joint_pieces()</a></code>, <code><a href="mode_error_limit.html">mode_error_limit()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

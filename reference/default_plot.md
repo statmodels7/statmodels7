@@ -4,7 +4,7 @@ Returns the
 [plot_type](https://statmodels7.github.io/statmodels7/reference/plot_type.md)
 object that
 [`autoplot.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodFit.md)
-uses for a term when `type` is not given. The method for
+uses for a term when `plot_type` is not given. The method for
 [modelterms7::model_term](https://statmodels7.github.io/modelterms7/reference/model_term.html)
 returns
 [`plot_effect()`](https://statmodels7.github.io/statmodels7/reference/plot_effect.md),

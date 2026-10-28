@@ -43,5 +43,5 @@ dd <- data.frame(x = rnorm(200), id = factor(sample(1:25, 200, TRUE)))
 dd$y <- 1 + dd$x + rnorm(25)[dd$id] + rnorm(200, sd = 0.5)
 fit <- statmod(y ~ x + random(~ 1 | id), distributions7::gaussian1_distrib(),
                dd)
-ggplot2::autoplot(fit, term = "random(~1|id)", type = plot_prior())
+ggplot2::autoplot(fit, term = "random(~1|id)", plot_type = plot_prior())
 ```

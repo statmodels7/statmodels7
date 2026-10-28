@@ -81,5 +81,5 @@ dd <- data.frame(t = seq_len(n), x = x, y = y)
 fit <- statmod(y ~ x + gas(p = 1, q = 1, time = t, scaling = 0.5),
                distributions7::poisson_distrib(), dd)
 ggplot2::autoplot(fit, term = "gas(p = 1, q = 1, time = t, scaling = 0.5)",
-                  type = plot_news_impact())
+                  plot_type = plot_news_impact())
 ```

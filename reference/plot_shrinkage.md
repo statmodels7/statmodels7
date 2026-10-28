@@ -82,5 +82,5 @@ dd$y <- 1 + dd$x1 + 0.5 * dd$x2 + rnorm(100)
 fit <- statmod(y ~ ridge(~ x1 + x2 + x3), distributions7::gaussian1_distrib(),
                dd)
 ggplot2::autoplot(fit, term = "ridge(~x1 + x2 + x3)",
-                  type = plot_shrinkage())
+                  plot_type = plot_shrinkage())
 ```

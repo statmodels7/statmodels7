@@ -3,9 +3,9 @@
 Draws a set of
 [diagnostic_plot](https://statmodels7.github.io/statmodels7/reference/plot_type.md)
 graphs of a fit and returns them as a named list of ggplot2 objects, or
-composed in one figure. The default set is the quantile-quantile graph
-of the quantile residuals
-([`plot_qq()`](https://statmodels7.github.io/statmodels7/reference/plot_qq.md)),
+composed in one figure. The default set is the observed density of the
+response with the densities of simulated responses
+([`plot_ppc()`](https://statmodels7.github.io/statmodels7/reference/plot_ppc.md)),
 the worm plot
 ([`plot_worm()`](https://statmodels7.github.io/statmodels7/reference/plot_worm.md)),
 the calibration of the predicted quantiles
@@ -19,7 +19,7 @@ location parameter.
 ## Usage
 
 ``` r
-diagnostics(fit, types = NULL, data = NULL, compose = FALSE)
+diagnostics(fit, plot_types = NULL, data = NULL, compose = FALSE)
 ```
 
 ## Arguments
@@ -29,7 +29,7 @@ diagnostics(fit, types = NULL, data = NULL, compose = FALSE)
   A
   [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
-- types:
+- plot_types:
 
   A list of objects inheriting from
   [diagnostic_plot](https://statmodels7.github.io/statmodels7/reference/plot_type.md),
@@ -63,6 +63,6 @@ dd$y <- 1 + dd$x + rnorm(150, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 d <- diagnostics(fit)
 names(d)
-#> [1] "qq"          "worm"        "calibration" "residuals"  
-diagnostics(fit, types = list(plot_qq(), plot_pit()), compose = TRUE)
+#> [1] "ppc"         "worm"        "calibration" "residuals"  
+diagnostics(fit, plot_types = list(plot_qq(), plot_pit()), compose = TRUE)
 ```

@@ -128,6 +128,6 @@ fit <- statmod(y ~ seg(x, npsi = 1), distributions7::gaussian1_distrib(), dd)
 ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd)
 
 ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd,
-                  type = plot_breakpoint(profile = FALSE,
+                  plot_type = plot_breakpoint(profile = FALSE,
                                          test = wald_test()))
 ```

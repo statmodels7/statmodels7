@@ -54,5 +54,5 @@ set.seed(1)
 dd <- data.frame(t = 1:150)
 dd$y <- as.numeric(arima.sim(list(ar = 0.5), n = 150))
 fit <- statmod(y ~ 1, distributions7::gaussian1_distrib(), dd)
-ggplot2::autoplot(fit, type = plot_acf(lag_max = 20))
+ggplot2::autoplot(fit, plot_type = plot_acf(lag_max = 20))
 ```
