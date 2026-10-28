@@ -952,8 +952,9 @@ statmod_test <- function(fit, param, coefname, value = 0, test = wald_test(),
 #' other free, and beyond a neighbor the interval would become that of the
 #' neighbor. The statistic is not monotone next to a neighbor, so that side is
 #' evaluated at the points of the widening and at points whose distances from
-#' the neighbor double, and on a side where the statistic is still under its
-#' critical value at the neighbor's position, the limit is that position.
+#' the neighbor grow by a factor of 1.3, and on a side where the statistic is
+#' still under its critical value at the neighbor's position, the limit is that
+#' position.
 #'
 #' @param fit A [StatmodFit()].
 #' @param param,coefname Which coefficient, as in [statmod_restrict()].
@@ -1029,12 +1030,13 @@ statmod_invert <- function(fit, param, coefname, level = 0.95,
   # critical value can lie between the estimate and the neighbor, and a
   # bracket that widens by a fixed factor can jump over it. A side that ends
   # at a neighbor is evaluated at the points of that widening and at points
-  # that double their distance from the neighbor, from the estimate outward,
-  # and the first crossing is located between the two points around it.
+  # that grow their distance from the neighbor by a factor of 1.3, from the
+  # estimate outward, and the first crossing is located between the two points
+  # around it.
   bounded <- function(dir, end) {
     span <- abs(end - bhat)
     d0 <- 0.005 * diff(edges_range)
-    far <- end - dir * d0 * 2^(0:60)
+    far <- end - dir * d0 * 1.3^(0:60)
     far <- far[dir * (far - bhat) > 0]
     wide <- bhat + dir * sqrt(q) * se * 1.6^(0:60)
     wide <- wide[dir * (wide - end) < 0]

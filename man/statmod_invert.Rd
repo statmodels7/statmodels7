@@ -75,8 +75,9 @@ holds one break-point is a fit with a break-point at that value and the
 other free, and beyond a neighbor the interval would become that of the
 neighbor. The statistic is not monotone next to a neighbor, so that side is
 evaluated at the points of the widening and at points whose distances from
-the neighbor double, and on a side where the statistic is still under its
-critical value at the neighbor's position, the limit is that position.
+the neighbor grow by a factor of 1.3, and on a side where the statistic is
+still under its critical value at the neighbor's position, the limit is that
+position.
 }
 \seealso{
 \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the statistic that is inverted.
