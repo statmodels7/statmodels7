@@ -1,3 +1,29 @@
+# statmodels7 0.221.0
+
+* `joint_reading()` takes the coordinates that are the parameters of the
+  structural term. When the test for aliased coordinates names one of them,
+  as it does for a filter that has exploded and whose curvature is
+  numerically of rank one, the decrement over the other coordinates is only a
+  lower bound of the decrement over all of them. The certificate keeps it as
+  `not converged` where it exceeds `mode_error_limit()` and otherwise gives
+  `unknown`. A negative decrement is read as a direction of ascent. A fit of
+  the census whose curvature had one eigenvalue of 2e30 and the others at
+  rounding level was `converged` at 3128 below the maximum, read over the
+  intercept alone; it is now `unknown`. The reading of the 985 final points
+  of the census changes at no fit whose flag is `TRUE`.
+
+* `filter_decrement()`, which decides whether `statmod()` tries the second
+  start of a filter and whether a bootstrap replicate is kept, calls
+  `joint_reading()`. It no longer returns the absolute value of a decrement
+  read from an indefinite curvature, and no longer returns `Inf` where a
+  coordinate is flat at an edge. Over the 910 calls of the census, the 5
+  maximums at the boundary that returned `Inf` and refitted a second time
+  now return a value of at most 1e-6, and no other verdict changes.
+
+* `statmodels7` requires optimizers7 0.18.0, where `gd()`, `cg()`, `bb()`,
+  `bfgs()` and `lbfgs()` end as not converged on a stop on a change at a
+  point that is not a minimum.
+
 # statmodels7 0.220.0
 
 * A restricted refit that holds a coefficient of a `seg()` term with two or

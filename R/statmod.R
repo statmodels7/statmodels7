@@ -1628,7 +1628,7 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
         stop("the gradient is unavailable")
       }
       list(g = g, K = as_dense(jp$he(u)), keep = c(which(!drop), jp$ix),
-           joint = TRUE)
+           own = jp$ix, joint = TRUE)
     } else {
       list(g = obj$gr(beta),
            K = statmod_penalized_at(spec, cf, design, hyper, expected, emethod),
@@ -1646,7 +1646,7 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
     # where deficient_coords() on it dropped the term's own parameters and
     # left the coefficients' decrement (0.000453 at a point 473 below the
     # maximum, with the term's parameters at 0.0187)
-    jr <- joint_reading(g, K, keep)
+    jr <- joint_reading(g, K, keep, own = pieces$own)
     out[["mode"]] <- if (jr$ascent) Inf else jr$decrement
   } else {
     # a free coordinate the information does not identify is left out, as an

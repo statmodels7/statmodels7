@@ -1429,8 +1429,11 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
 #' platform, and the decrement is many orders of magnitude above
 #' [mode_error_limit()]. The coefficients that the specification holds (those
 #' that the outer criterion estimates) are left out, because their score is
-#' not a residual of the inner fit. A gradient or a curvature that is not
-#' finite, or a curvature that cannot be solved, gives `Inf`.
+#' not a residual of the inner fit. The reading is [joint_reading()], the one
+#' of the certificate and of the alternation: a coordinate that is flat at an
+#' edge is left out, and a curvature with a direction of ascent, a decrement
+#' that is only a lower bound below [mode_error_limit()], and a gradient or a
+#' curvature that is not finite give `Inf`.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design Its design, whose structural state holds the filter's
@@ -1441,7 +1444,7 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
 #'
 #' @return A single non-negative number, or `Inf`.
 #'
-#' @seealso [statmod_joint_pieces()], [mode_error_limit()]
+#' @seealso [joint_reading()], [statmod_joint_pieces()], [mode_error_limit()]
 #'
 #' @keywords internal
 filter_decrement <- function(spec, design, res, hyper) {
@@ -1450,12 +1453,15 @@ filter_decrement <- function(spec, design, res, hyper) {
     jp <- statmod_joint_pieces(spec, design, res$obj, hyper)
     u <- c(res$par, jp$zeta())
     keep <- setdiff(seq_along(u), held_stack(spec, design))
-    g <- jp$gr(u)[keep]
-    H <- as.matrix(jp$he(u))[keep, keep, drop = FALSE]
-    if (!all(is.finite(g)) || !all(is.finite(H))) Inf else
-      0.5 * sum(g * solve(H, g))
+    g <- jp$gr(u)
+    H <- as.matrix(jp$he(u))
+    if (!all(is.finite(g[keep])) || !all(is.finite(H[keep, keep]))) Inf else {
+      jr <- joint_reading(g, H, keep,
+                          own = setdiff(seq_along(u), seq_along(res$par)))
+      if (isTRUE(jr$ascent)) Inf else jr$decrement
+    }
   }, error = function(e) Inf)
-  if (length(v) == 1L && is.finite(v)) abs(v) else Inf
+  if (length(v) == 1L && is.finite(v)) v else Inf
 }
 
 
@@ -1485,23 +1491,40 @@ filter_decrement <- function(spec, design, res, hyper) {
 #'
 #' Otherwise the matrix is positive semidefinite up to rounding, the
 #' coordinates that [deficient_coords()] names are left out as aliased, and
-#' the decrement is computed over the others.
+#' the decrement is computed over the others. A negative decrement is not
+#' possible for a positive semidefinite matrix, so it is read as a direction
+#' of ascent.
+#'
+#' A column of the design that duplicates another is aliased, and its
+#' coordinate carries no information because the objective is flat along it.
+#' The same holds for no parameter of the term: the curvature of a filter
+#' that has exploded is numerically of rank one, and [deficient_coords()]
+#' then names the term's own parameters, which the objective is not flat in.
+#' Where it names one of the coordinates in `own`, the decrement over the
+#' others is a lower bound of the decrement over all of them, so it can show
+#' that the point is not a maximum and cannot show that it is one: a value
+#' above [mode_error_limit()] is returned and a value below it is replaced by
+#' `NA`, with `partial` set to `TRUE`.
 #'
 #' @param g The gradient of the joint objective.
 #' @param K Its curvature, a matrix as long as `g`.
 #' @param keep The coordinates to read.
+#' @param own The coordinates, among those of `g`, that are the structural
+#'   term's own parameters.
 #'
-#' @return A list with `decrement` (`NA` where it cannot be computed, and when
-#'   `ascent` is `TRUE`), `ascent` and `ratio`, the smallest eigenvalue's
-#'   magnitude in units of \eqn{\varepsilon\lambda_{\max}} (`NA` when there
-#'   is nothing to read).
+#' @return A list with `decrement` (`NA` where it cannot be computed, when
+#'   `ascent` is `TRUE`, and when `partial` is `TRUE` and the lower bound is
+#'   below [mode_error_limit()]), `ascent`, `ratio`, the smallest
+#'   eigenvalue's magnitude in units of \eqn{\varepsilon\lambda_{\max}} (`NA`
+#'   when there is nothing to read), and `partial`.
 #'
 #' @seealso [curvature_ascent_limit()], [alternation_readings()],
-#'   [statmod_certificate()]
+#'   [statmod_certificate()], [filter_decrement()]
 #'
 #' @keywords internal
-joint_reading <- function(g, K, keep) {
-  out <- list(decrement = NA_real_, ascent = FALSE, ratio = NA_real_)
+joint_reading <- function(g, K, keep, own = integer(0)) {
+  out <- list(decrement = NA_real_, ascent = FALSE, ratio = NA_real_,
+              partial = FALSE)
   K <- tryCatch(as_dense(K), error = function(e) NULL)
   if (is.null(K) || !is.matrix(K) || length(g) != nrow(K)) return(out)
   K <- (K + t(K)) / 2
@@ -1542,16 +1565,22 @@ joint_reading <- function(g, K, keep) {
   }
   dep <- tryCatch(deficient_coords(A), error = function(e) integer(0))
   if (length(dep)) {
+    out$partial <- any(keep[dep] %in% own)
     keep <- keep[-dep]
     A <- A[-dep, -dep, drop = FALSE]
   }
   if (!length(keep)) {
-    out$decrement <- 0
+    out$decrement <- if (out$partial) NA_real_ else 0
     return(out)
   }
   sol <- tryCatch(solve(A, g[keep]), error = function(e) NULL)
   if (!is.null(sol) && all(is.finite(sol))) {
-    out$decrement <- 0.5 * sum(g[keep] * sol)
+    dec <- 0.5 * sum(g[keep] * sol)
+    if (dec < 0) {
+      out$ascent <- TRUE
+    } else if (!out$partial || dec > mode_error_limit()) {
+      out$decrement <- dec
+    }
   }
   out
 }

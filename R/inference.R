@@ -5633,7 +5633,7 @@ certificate_core <- function(fit, tol, flat, edge) {
           sz <- setdiff(seq_along(jp$ix), zk)
           if (is.null(kc)) {
             keep <- c(seq_along(sc), length(sc) + sz)
-            joint_reading(gj, Kj, keep)
+            joint_reading(gj, Kj, keep, own = length(sc) + seq_along(jp$ix))
           } else {
             nz <- length(jp$ix)
             Nk <- null_basis(kc, length(sc))
@@ -5652,9 +5652,14 @@ certificate_core <- function(fit, tol, flat, edge) {
         # decrement a subset of its coordinates gives
         if (is.null(mj) || (!isTRUE(mj$ascent) && !is.finite(mj$decrement))) {
           out$mode_error <- NA_real_
-          jnote <- paste0("the joint reading of the coefficients and the ",
-                          "parameters of the structural term could not be ",
-                          "computed")
+          jnote <- if (isTRUE(mj$partial)) {
+            paste0("the curvature of the inner fit has no information on the ",
+                   "parameters of the structural term, so the decrement over ",
+                   "the other coordinates is only a lower bound")
+          } else {
+            paste0("the joint reading of the coefficients and the ",
+                   "parameters of the structural term could not be computed")
+          }
         } else if (isTRUE(mj$ascent)) {
           out$mode_error <- NA_real_
           out$ascent <- sprintf(paste0(
