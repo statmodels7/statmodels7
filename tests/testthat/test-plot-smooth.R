@@ -77,14 +77,6 @@ test_that("the simultaneous critical value exceeds the pointwise one", {
   expect_equal(mean(m <= d$critical$used), 0.95, tolerance = 0.02)
 })
 
-test_that("the zones are the runs in which the band excludes zero", {
-  d <- plot_data(plot_derivative(), tm, fit, ctx)
-  sig <- d$curve$lower > 0 | d$curve$upper < 0
-  inside <- vapply(d$curve$x, function(v) any(v >= d$zones$xmin &
-                                                v <= d$zones$xmax), TRUE)
-  expect_identical(inside, sig)
-})
-
 test_that("a smooth with a by factor has a curve and a critical value per level", {
   f <- statmod(y ~ g + s(x, by = g), distributions7::gaussian1_distrib(), dd)
   nm <- grep("^s\\(x", names(f@spec@terms$mu), value = TRUE)

@@ -27,10 +27,7 @@ PlotDerivative <- S7::new_class("PlotDerivative", parent = term_plot,
 #'
 #' @description
 #' Selects the graph of the first or second derivative of the effect of a
-#' smooth of one numeric variable, with a confidence band. The zones of the
-#' variable in which the band excludes zero, that is, where the effect
-#' increases or decreases (first derivative) or is convex or concave (second
-#' derivative), are shaded.
+#' smooth of one numeric variable, with a confidence band.
 #'
 #' @details
 #' The effect of the smooth is \eqn{f(x) = X(x) b}, where \eqn{X(x)} is the
@@ -146,16 +143,12 @@ S7::method(plot_data, list(PlotDerivative, modelterms7::SmoothTerm)) <-
     curve <- data.frame(x = grid[[var]], fit = est, se = se,
                         lower = est - crit * se, upper = est + crit * se)
     if (!is.null(group)) curve$group <- grid[[group]]
-    curve$significant <- curve$lower > 0 | curve$upper < 0
-    zones <- do.call(rbind, lapply(groups, function(g)
-      significant_zones(curve$x[g], curve$significant[g])))
-    if (is.null(zones)) zones <- data.frame(xmin = numeric(0), xmax = numeric(0))
     critical <- data.frame(
       group = if (is.null(group)) "" else names(groups),
       pointwise = zp,
       used = vapply(groups, function(g) crit[g[1L]], numeric(1)),
       stringsAsFactors = FALSE)
-    out <- list(curve = curve, zones = zones, critical = critical)
+    out <- list(curve = curve, critical = critical)
     attr(out, "labels") <- list(
       title = sprintf("%s: %s, %s derivative", ctx$param,
                       if (is.null(ctx$title)) ctx$name else ctx$title,
@@ -307,39 +300,10 @@ simultaneous_critical <- function(D, se, draws, level) {
 }
 
 
-#' The Zones in Which a Band Excludes Zero
-#'
-#' @description
-#' Returns the maximal runs of consecutive grid points at which `flag` is
-#' `TRUE`, as intervals of the variable.
-#'
-#' @param x The grid, increasing.
-#' @param flag A logical vector as long as `x`.
-#'
-#' @return A data frame with `xmin` and `xmax`, one row for each run.
-#'
-#' @keywords internal
-significant_zones <- function(x, flag) {
-  r <- rle(as.vector(flag))
-  ends <- cumsum(r$lengths)
-  starts <- ends - r$lengths + 1L
-  keep <- r$values
-  data.frame(xmin = x[starts[keep]], xmax = x[ends[keep]])
-}
-
-
 S7::method(plot_layers, PlotDerivative) <- function(type, data, ...) {
   grouped <- "group" %in% names(data$curve)
-  out <- list()
-  if (nrow(data$zones)) {
-    out <- c(out, list(ggplot2::geom_rect(
-      data = data$zones,
-      mapping = ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax),
-      ymin = -Inf, ymax = Inf, fill = "#b2182b", alpha = 0.08,
-      inherit.aes = FALSE)))
-  }
-  out <- c(out, list(ggplot2::geom_hline(yintercept = 0, linetype = "dashed",
-                                         colour = "grey40")))
+  out <- list(ggplot2::geom_hline(yintercept = 0, linetype = "dashed",
+                                  colour = "grey40"))
   if (grouped) {
     out <- c(out, list(
       ggplot2::geom_ribbon(data = data$curve,

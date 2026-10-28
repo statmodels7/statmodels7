@@ -1,3 +1,9 @@
+# statmodels7 0.222.2
+
+* `plot_derivative()` no longer shades the zones in which the band excludes
+  zero, and `plot_data()` no longer returns them; the graph draws the
+  derivative, its band and the line at zero.
+
 # statmodels7 0.222.1
 
 * Follows the renaming in numericals7 0.25.0, optimizers7 0.19.0,

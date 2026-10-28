@@ -35,10 +35,7 @@ A \code{PlotDerivative} object, inheriting from \link{term_plot}.
 }
 \description{
 Selects the graph of the first or second derivative of the effect of a
-smooth of one numeric variable, with a confidence band. The zones of the
-variable in which the band excludes zero, that is, where the effect
-increases or decreases (first derivative) or is convex or concave (second
-derivative), are shaded.
+smooth of one numeric variable, with a confidence band.
 }
 \details{
 The effect of the smooth is \eqn{f(x) = X(x) b}, where \eqn{X(x)} is the
