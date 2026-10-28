@@ -1959,14 +1959,14 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
         se0[!is.finite(se0)] <- 1
         if (any(se0 > 1)) {
           optimizer <- S7::set_props(
-            optimizer, typical = c(rep(1, nh), pmax(1, se0)))
+            optimizer, typical_size = c(rep(1, nh), pmax(1, se0)))
         }
       }
     }
   }
 
   res <- if (exact2) {
-    mini(optimizer, eta0, gr = gr, he = he)
+    mini(optimizer, eta0, gr = gr, hess = he)
   } else if (exact) {
     mini(optimizer, eta0, gr = gr)
   } else {
@@ -1977,7 +1977,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     use_box <- TRUE
     res_box <- tryCatch(
       if (exact2) {
-        mini(optimizer, res@par, gr = gr, he = he)
+        mini(optimizer, res@par, gr = gr, hess = he)
       } else if (exact) {
         mini(optimizer, res@par, gr = gr)
       } else {
@@ -2115,7 +2115,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       is.finite(dec) && dec > mode_error_limit()
     }, error = function(e) FALSE))
     if (!rising) break
-    res2 <- tryCatch(mini(restart_opt, res@par, gr = gr, he = he),
+    res2 <- tryCatch(mini(restart_opt, res@par, gr = gr, hess = he),
                      error = function(e) NULL)
     if (is.null(res2) || !is.finite(res2@value) ||
         !(res2@value < res@value - mode_error_limit())) {
@@ -2161,7 +2161,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       }
       res2 <- tryCatch(
         if (exact2) {
-          mini(optimizer, pr, gr = gr, he = he)
+          mini(optimizer, pr, gr = gr, hess = he)
         } else if (exact) {
           mini(optimizer, pr, gr = gr)
         } else {

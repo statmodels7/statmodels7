@@ -213,7 +213,7 @@ smooth_variables <- function(tm) {
 #' @keywords internal
 design_derivative <- function(tm, grid, var, order, lo, hi) {
   off <- numericals7::fd_offsets(order, accuracy = 4L)
-  r <- off$reach
+  r <- off$half_width
   ks <- off$central
   h <- 0.05 * numericals7::fd_step(1, order, accuracy = 4L) * (hi - lo)
   x <- grid[[var]]

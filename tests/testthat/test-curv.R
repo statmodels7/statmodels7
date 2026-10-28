@@ -30,7 +30,7 @@ test_that("a gaussian mean's curvature is the centered sum of squares over the
     fit <- statmod(f, distributions7::gaussian1_distrib(), dc)
     pen <- curv_of_fit(fit, if (grepl("scad", deparse(f))) "scad" else "mcp")
     s <- fit@fitted$sigma[1L]
-    expect_equal(pen@curv, centered_ss(xc) / s^2, tolerance = 1e-8)
+    expect_equal(pen@curvature, centered_ss(xc) / s^2, tolerance = 1e-8)
   }
 })
 
@@ -40,7 +40,7 @@ test_that("under standardize the curvature is on the standardized scale", {
   pen <- curv_of_fit(fit, "scad")
   d <- as.numeric(Matrix::diag(pen@map))
   s <- fit@fitted$sigma[1L]
-  expect_equal(pen@curv, centered_ss(xc) / s^2 / d^2, tolerance = 1e-8)
+  expect_equal(pen@curvature, centered_ss(xc) / s^2 / d^2, tolerance = 1e-8)
 })
 
 test_that("columns far from centered fit, the curvature being centered", {
@@ -57,7 +57,7 @@ test_that("columns far from centered fit, the curvature being centered", {
     expect_true(fit@converged)
     pen <- curv_of_fit(fit, if (grepl("scad", deparse(f))) "scad" else "mcp")
     s <- fit@fitted$sigma[1L]
-    expect_equal(pen@curv, centered_ss(xr) / s^2, tolerance = 1e-8)
+    expect_equal(pen@curvature, centered_ss(xr) / s^2, tolerance = 1e-8)
   }
 })
 
@@ -81,7 +81,7 @@ test_that("a lasso and a ridge are not touched", {
     fit <- statmod(f, distributions7::gaussian1_distrib(), dc)
     fam <- if (grepl("lasso", deparse(f))) "lasso" else "ridge"
     pen <- curv_of_fit(fit, fam)
-    expect_false("curv" %in% S7::prop_names(pen))
+    expect_false("curvature" %in% S7::prop_names(pen))
   }
 })
 
@@ -129,11 +129,11 @@ test_that("a scaled table takes the curvature of the current step", {
   # c_j = v_j on the scale of u, so the scaled step is one and the step
   # condition holds for every admissible shape
   D <- Matrix::Diagonal(x = c(1, 2, 3, 4))
-  pen <- penalties7::scad_penalty(map = D, curv = c(9, 9, 9, 9))
+  pen <- penalties7::scad_penalty(map = D, curvature = c(9, 9, 9, 9))
   v <- c(5, 7, 11, 13)
   keep <- c(1L, 3L, 4L)
   tp <- coord_table_penalty(pen, keep, v)
-  expect_equal(tp@curv, v[keep] / c(1, 3, 4)^2)
+  expect_equal(tp@curvature, v[keep] / c(1, 3, 4)^2)
   tab <- penalties7::penalty_prox_spec(tp, list(lambda = 1, a = 2.05),
                                        1 / v[keep])
   expect_false(is.null(tab))
@@ -177,16 +177,16 @@ test_that("the fitted coefficients are a KKT point of the penalty at the fit's
   }
   act <- b != 0
   expect_true(any(act))
-  mid <- abs(b) > lam / pen@curv & abs(b) < a * lam / pen@curv
+  mid <- abs(b) > lam / pen@curvature & abs(b) < a * lam / pen@curvature
   expect_true(any(mid))
-  lj <- lam / pen@curv
-  expect_equal(g[act], pen@curv[act] * dscad(b[act], lj[act]) * sign(b[act]),
+  lj <- lam / pen@curvature
+  expect_equal(g[act], pen@curvature[act] * dscad(b[act], lj[act]) * sign(b[act]),
                tolerance = 1e-6)
   expect_true(all(abs(g[!act]) <= lam * (1 + 1e-6)))
 })
 
 test_that("the table's curvature is damped towards the current step's", {
-  pen <- penalties7::scad_penalty(n_coef = 3L, curv = c(4, 4, 4))
+  pen <- penalties7::scad_penalty(n_coef = 3L, curvature = c(4, 4, 4))
   tp <- coord_table_penalty(pen, 1:3, c(1, 4, 16), prev = c(4, 4, 4))
-  expect_equal(tp@curv, c(2, 4, 8))
+  expect_equal(tp@curvature, c(2, 4, 8))
 })

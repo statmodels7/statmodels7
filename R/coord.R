@@ -202,8 +202,8 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, emethod,
   # the curvature the previous table used, which a scaled SCAD or MCP damps
   # towards the current step's: see coord_table_penalty()
   pen0 <- block$penalty
-  c_prev <- if ("curv" %in% S7::prop_names(pen0) && length(pen0@curv)) {
-    pen0@curv
+  c_prev <- if ("curvature" %in% S7::prop_names(pen0) && length(pen0@curvature)) {
+    pen0@curvature
   }
   c_gap <- 0
   done <- FALSE
@@ -322,7 +322,7 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, emethod,
       # coordinate's scale, and a SCAD or MCP read a curvature 13 to 28 per
       # cent off, enough to fail the step condition. See coord_table_penalty().
       tp <- coord_table_penalty(block$penalty, keep, v, c_prev)
-      if (!is.null(c_prev) && length(tp@curv) == length(keep)) {
+      if (!is.null(c_prev) && length(tp@curvature) == length(keep)) {
         # how far the damped curvature still is from the current step's, in
         # log units: where the working problem has not moved -- a gaussian
         # mean at a held scale -- the damping still has to reach it before
@@ -332,8 +332,8 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, emethod,
         if (!is.null(pen0@map)) {
           tgt <- tgt / as.numeric(Matrix::diag(pen0@map))[keep]^2
         }
-        c_gap <- max(abs(log(tp@curv / tgt)))
-        c_prev[keep] <- tp@curv
+        c_gap <- max(abs(log(tp@curvature / tgt)))
+        c_prev[keep] <- tp@curvature
       }
       tab <- penalties7::penalty_prox_spec(tp, th, 1 / v[keep])
       if (is.null(tab)) return(NULL)
@@ -643,7 +643,7 @@ coord_table_penalty <- function(pen, keep, v, prev = NULL) {
   }
   q <- as.integer(pen@n_coef)
   sub <- !(length(keep) == q && all(keep == seq_len(q)))
-  scaled <- "curv" %in% S7::prop_names(pen) && length(pen@curv) > 0L
+  scaled <- "curvature" %in% S7::prop_names(pen) && length(pen@curvature) > 0L
   props <- list()
   if (sub) {
     props$n_coef <- length(keep)
@@ -655,8 +655,8 @@ coord_table_penalty <- function(pen, keep, v, prev = NULL) {
       cj <- cj / as.numeric(Matrix::diag(pen@map))[keep]^2
     }
     if (!is.null(prev)) cj <- sqrt(prev[keep] * cj)
-    if (all(is.finite(cj)) && all(cj > 0)) props$curv <- cj
-    else if (sub) props$curv <- pen@curv[keep]
+    if (all(is.finite(cj)) && all(cj > 0)) props$curvature <- cj
+    else if (sub) props$curvature <- pen@curvature[keep]
   }
   if (!length(props)) return(pen)
   do.call(S7::set_props, c(list(pen), props))

@@ -1392,13 +1392,13 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
   # a coefficient, converges at -637.40.
   lv <- joint_level_chart(spec, jp)
   if (is.null(lv)) {
-    res <- optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, he = jp$he)
+    res <- optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, hess = jp$he)
     par <- res@par
   } else {
     res <- optimizers7::minimize(
       optimizer, function(v) jp$fn(lv$to(v)), lv$from(u0),
       gr = function(v) lv$grad(v, jp$gr(lv$to(v))),
-      he = function(v) {
+      hess = function(v) {
         u <- lv$to(v)
         lv$hess(v, jp$gr(u), jp$he(u))
       })

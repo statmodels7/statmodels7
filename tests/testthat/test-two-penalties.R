@@ -23,7 +23,7 @@ twopen <- function(x, label = "twopen") {
   TwoPen(label = base@label, input = base@input,
          input_expr = base@input_expr,
          # the halves carry the penalties, so there is none over the whole
-         factory = function(k) NULL,
+         penalty_fun = function(k) NULL,
          X = NULL, coef_names = character(0),
          build_info = list(), penalty = NULL)
 }

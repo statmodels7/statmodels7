@@ -1,3 +1,16 @@
+# statmodels7 0.222.1
+
+* Follows the renaming in numericals7 0.25.0, optimizers7 0.19.0,
+  penalties7 0.34.0 and modelterms7 0.114.0: the curvature of a SCAD or MCP
+  penalty is read from the property `curvature` (it was read from `curv`,
+  which no longer exists, so the coordinate descent used a curvature of
+  one); the matrices of an additive penalty from `matrices`; the Hessian is
+  passed to `minimize()` as `hess` and the typical size to the optimizer as
+  `typical_size`; `plot_derivative()` reads the element `half_width` of
+  `fd_offsets()`; `plot_regime_density()` reads the property `transition` of
+  a regime term. Requires numericals7 0.25.0, optimizers7 0.19.0,
+  penalties7 0.34.0 and modelterms7 0.114.0.
+
 # statmodels7 0.222.0
 
 * The property `fingerprint` of a `StatmodBootstrap` entry is renamed

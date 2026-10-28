@@ -83,7 +83,7 @@ test_that("scad and mcp reach a point that satisfies the KKT conditions", {
     tn <- grep(sub("(x)", "(", cs$nm, fixed = TRUE),
                names(fit@spec@terms$mu), fixed = TRUE, value = TRUE)
     expect_length(tn, 1L)
-    cvj <- modelterms7::term_penalty(fit@spec@terms$mu[[tn]])@curv
+    cvj <- modelterms7::term_penalty(fit@spec@terms$mu[[tn]])@curvature
     expect_length(cvj, 20L)
     expect_lt(max(abs(g[nz] + cvj[nz] * cs$d(sl[nz], lam / cvj[nz],
                                             cs$th[[2L]]))), 1e-5)

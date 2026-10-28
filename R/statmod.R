@@ -1281,7 +1281,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
   # one where the scaling is the curvature there. See statmod_curv().
   curv_scaled <- any(vapply(blocks$sparse, function(bl) {
     pen <- bl$penalty
-    "curv" %in% S7::prop_names(pen) && length(pen@curv) > 0L
+    "curvature" %in% S7::prop_names(pen) && length(pen@curvature) > 0L
   }, logical(1)))
 
   for (pass in seq_len(as.integer(maxit))) {
@@ -1782,7 +1782,7 @@ statmod_curv <- function(spec, design, coef, expected, emethod) {
     }
     if (length(cj) != pen@n_coef || any(!is.finite(cj)) || any(cj <= 0)) next
     tm <- terms[[u$param]][[u$term]]
-    tm@penalty <- S7::set_props(pen, curv = cj)
+    tm@penalty <- S7::set_props(pen, curvature = cj)
     terms[[u$param]][[u$term]] <- tm
     wrote <- TRUE
   }
@@ -2248,7 +2248,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
   }
 
   # an optimizers7 method solves nothing by a pivot and names no coordinate
-  res <- optimizers7::minimize(method, fn, beta[idx], gr = gr, he = he)
+  res <- optimizers7::minimize(method, fn, beta[idx], gr = gr, hess = he)
   out <- beta
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,
