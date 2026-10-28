@@ -13,10 +13,14 @@ light_fit <- function(n = 300, seed = 3) {
 
 ser_mb <- function(x) length(serialize(x, NULL)) / 2^20
 
-# A package installed with its source kept (R_KEEP_PKG_SOURCE=yes, as on CI)
-# serializes the source of the whole package with any closure that carries a
-# source reference. The size of one function of the package is that baseline.
-src_mb <- function() ser_mb(statmodels7:::boot_light)
+# A package installed with its source kept (R_KEEP_PKG_SOURCE=yes, or a library
+# restored from a cache built that way) serializes the source of the whole
+# package with any closure that carries a source reference. The baseline is the
+# size of what a fit holds from other packages (the family with its links and
+# the smoother) and of one function of statmodels7.
+src_mb <- function() {
+  ser_mb(list(g1l, basis7::bspline_smooth(k = 10), statmodels7:::boot_light))
+}
 
 test_that("the evaluation environment of the formula serializes in a few kilobytes", {
   env <- statmodels7:::terms_first(globalenv())
