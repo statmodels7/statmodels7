@@ -33,7 +33,10 @@ jobs:
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      R_KEEP_PKG_SOURCE: yes
+      # R_KEEP_PKG_SOURCE is deliberately unset. With it set to yes, every
+      # warning a test emits carries the installed packages' sources in its
+      # call stack (100-240 MB each), the parallel test run's main process
+      # reached 8-10 GB and the 16 GB ubuntu runner was shut down.
 
     steps:
       - uses: actions/checkout@v6
