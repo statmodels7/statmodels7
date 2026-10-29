@@ -230,6 +230,8 @@ test_that("a point settled by the outer search is reported as converged", {
   skip_on_cran()
   # the model and the point where outer_fit() stops at the optimum with the
   # flag of its stopping rule FALSE and the decrement below the tolerance
+  # (measured: the criterion there equals, to 1e-6, that of the neighboring
+  # points whose flag is TRUE)
   set.seed(3)
   n <- 1000
   dd <- data.frame(z = runif(n), w = runif(n, 0, 10), x = runif(n))

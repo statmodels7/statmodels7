@@ -91,12 +91,10 @@ Newton decrement at the point is below the tolerance of
 \code{\link[=statmod_certificate]{statmod_certificate()}}, and in both cases the final inner fit converged.
 The second condition is needed because the line search of the outer
 optimizer can exhaust its backtracks at a point that is already the
-optimum, without recording that its stopping rule fired. Such a point was
-measured with the same criterion, to \eqn{10^{-6}}, as the neighboring
-points whose flag was \code{TRUE}. The row of the attribute \code{maximum} reports
-instead \code{fit@converged}, which is only the flag of the stopping rule. A
-refit that signals an error gives a row of \code{NA} with \code{converged = FALSE},
-and the function warns.
+optimum, without recording that its stopping rule fired. The row of the
+attribute \code{maximum} reports instead \code{fit@converged}, which is only the
+flag of the stopping rule. A refit that signals an error gives a row of
+\code{NA} with \code{converged = FALSE}, and the function warns.
 }
 
 \section{The coefficients to hold: \code{which}}{
