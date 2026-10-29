@@ -19,7 +19,7 @@ estimated by reml(), ml(), aic() or bic()."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.224.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -186,9 +186,9 @@ which covers both cases without a rule about families.</p>
 term's <code>n_lambda</code> for one kinked hyperparameter, and the product of its
 axes for several. The fits along a path are warm-started within each fold.</p>
 <p>The folds run over separate R processes when
-<code>statmod(threads = n_threads(workers = 4))</code> requests them. One seed is
-drawn per fold in the parent, so that the answer is identical at any worker
-count.</p>
+<code>statmod(cores = 4)</code> requests them. One seed is
+drawn per fold in the parent, so that the answer is identical at any
+number of processes.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

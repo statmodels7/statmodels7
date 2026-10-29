@@ -32,7 +32,7 @@ StatmodSpec(
   linpar = list(),
   held_coef = list(),
   threads = 1L,
-  workers = 1L
+  cores = 1L
 )
 ```
 
@@ -103,10 +103,12 @@ StatmodSpec(
 
   The number of threads, a single integer.
 
-- workers:
+- cores:
 
-  The number of worker processes for the independent fits of a
-  cross-validation, a single integer.
+  The number of separate R processes for the independent fits of a
+  cross-validation and of a kinked path's product grid, a single
+  integer. It is distinct from `threads`, the number of threads inside
+  one process.
 
 ## Value
 
@@ -118,8 +120,8 @@ implicit parametric block and is set by
 [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
 sets it. `structural` holds the parameters of a structural term where a
 fit has set them. `held_coef` holds coefficients held at a value, by
-name, empty by default. `threads` and `workers` hold the thread and
-worker counts that
+name, empty by default. `threads` and `cores` hold the thread and
+process counts that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 sets.
 

@@ -20,7 +20,8 @@ bootstrap_interval(
   label = character(0),
   n = NULL,
   resample = NULL,
-  refit = NULL
+  refit = NULL,
+  cores = 1L
 )
 
 PercentileInterval(
@@ -28,7 +29,8 @@ PercentileInterval(
   label = character(0),
   n = NULL,
   resample = NULL,
-  refit = NULL
+  refit = NULL,
+  cores = 1L
 )
 
 BasicInterval(
@@ -36,7 +38,8 @@ BasicInterval(
   label = character(0),
   n = NULL,
   resample = NULL,
-  refit = NULL
+  refit = NULL,
+  cores = 1L
 )
 
 BcaInterval(
@@ -44,14 +47,15 @@ BcaInterval(
   label = character(0),
   n = NULL,
   resample = NULL,
-  refit = NULL
+  refit = NULL,
+  cores = 1L
 )
 
-percentile_interval(n = NULL, resample = NULL, refit = NULL)
+percentile_interval(n = NULL, resample = NULL, refit = NULL, cores = 1)
 
-basic_interval(n = NULL, resample = NULL, refit = NULL)
+basic_interval(n = NULL, resample = NULL, refit = NULL, cores = 1)
 
-bca_interval(n = NULL, resample = NULL, refit = NULL)
+bca_interval(n = NULL, resample = NULL, refit = NULL, cores = 1)
 ```
 
 ## Arguments
@@ -78,12 +82,20 @@ bca_interval(n = NULL, resample = NULL, refit = NULL)
 
   `"coefficients"`, `"full"` or `NULL`.
 
+- cores:
+
+  The number of separate R processes over which replicates and jackknife
+  refits that have to be computed at the call are distributed, a single
+  whole number (default `1`). It is distinct from the `threads` of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+  which counts threads inside one process.
+
 ## Value
 
 `percentile_interval()`, `basic_interval()` and `bca_interval()` return
 an object that inherits from `bootstrap_interval`, with the properties
-`name`, `label`, `n`, `resample` and `refit`. `bootstrap_interval`
-returns nothing: its constructor signals an error.
+`name`, `label`, `n`, `resample`, `refit` and `cores`.
+`bootstrap_interval` returns nothing: its constructor signals an error.
 
 ## Details
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.224.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -479,6 +479,43 @@
 
         </dt>
         <dd>Whether a Test Refits the Model Under the Restriction</dd>
+      </dl></div><div class="section level2">
+      <h2 id="profile-likelihood">Profile likelihood<a class="anchor" aria-label="anchor" href="#profile-likelihood"></a></h2>
+
+      <div class="section-desc"><p>The penalized log-likelihood maximized over every coefficient but one or several that are held on a grid, returned as a data frame together with the value of the outer criterion where one ran. The grid of values is given by <code><a href="../reference/profile_range.html">profile_range()</a></code> or by the caller, and <code><a href="../reference/profile_grid.html">profile_grid()</a></code> selects the exact method, one refit for each point.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="statmod_profile.html">statmod_profile()</a></code>
+
+        </dt>
+        <dd>The Profile Likelihood of Coefficients</dd>
+
+        <dt>
+
+          <code><a href="profile_range.html">profile_range()</a></code> <code><a href="profile_range.html">ProfileRange()</a></code>
+
+        </dt>
+        <dd>Values of a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_method.html">profile_method()</a></code>
+
+        </dt>
+        <dd>Methods of Profiling</dd>
+
+        <dt>
+
+          <code><a href="profile_grid.html">ProfileGrid()</a></code> <code><a href="profile_grid.html">profile_grid()</a></code>
+
+        </dt>
+        <dd>Profile by Refitting on a Grid</dd>
       </dl></div><div class="section level2">
       <h2 id="variance-conventions">Variance conventions<a class="anchor" aria-label="anchor" href="#variance-conventions"></a></h2>
 
@@ -1727,6 +1764,13 @@
 
         </dt>
         <dd>Check the Arguments of the Bootstrap</dd>
+
+        <dt>
+
+          <code><a href="check_cores.html">check_cores()</a></code>
+
+        </dt>
+        <dd>Check the Number of Processes</dd>
 
         <dt>
 
@@ -4460,10 +4504,87 @@
 
         <dt>
 
+          <code><a href="profile_assemble.html">profile_assemble()</a></code>
+
+        </dt>
+        <dd>Assemble the Table of a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_chains.html">profile_chains()</a></code>
+
+        </dt>
+        <dd>The Chains of Points That a Start Visits</dd>
+
+        <dt>
+
+          <code><a href="profile_compute.html">profile_compute()</a></code>
+
+        </dt>
+        <dd>Compute a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_context.html">profile_context()</a></code>
+
+        </dt>
+        <dd>The Context of a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_failed.html">profile_failed()</a></code>
+
+        </dt>
+        <dd>A Failed Point of a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_hold.html">profile_hold()</a></code>
+
+        </dt>
+        <dd>A Specification With Named Coefficients Held</dd>
+
+        <dt>
+
           <code><a href="profile_interval.html">profile_interval()</a></code>
 
         </dt>
         <dd>The Interval of a Position from Its Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_map.html">profile_map()</a></code>
+
+        </dt>
+        <dd>Run Independent Units of a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_point.html">profile_point()</a></code>
+
+        </dt>
+        <dd>One Refit of a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_prune.html">profile_prune()</a></code>
+
+        </dt>
+        <dd>Drop the Combinations With Unordered Break-Points</dd>
+
+        <dt>
+
+          <code><a href="profile_psi_groups.html">profile_psi_groups()</a></code>
+
+        </dt>
+        <dd>The Positions of One Break-Point Term Among the Held Coefficients</dd>
+
+        <dt>
+
+          <code><a href="profile_values.html">profile_values()</a></code>
+
+        </dt>
+        <dd>The Values of a Profile for Each Coefficient</dd>
 
         <dt>
 

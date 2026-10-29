@@ -13,7 +13,8 @@ add_bootstrap(
   fit,
   n = 200L,
   resample = parametric_resample(),
-  refit = c("coefficients", "full")
+  refit = c("coefficients", "full"),
+  cores = 1
 )
 ```
 
@@ -46,6 +47,15 @@ add_bootstrap(
   hyperparameters of the fit, and `"full"` selects the hyperparameters
   again on every replicate.
 
+- cores:
+
+  The number of separate R processes over which the refits are
+  distributed, a single whole number (default `1`, no process besides
+  this one). It is distinct from the `threads` of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+  which counts threads inside one process; a refit that runs in a
+  separate process is sequential.
+
 ## Value
 
 `fit`, invisibly.
@@ -71,15 +81,13 @@ uses). Repeating a call does not change the result.
 
 The draws come from the random number stream of the session, one
 replicate after another in the calling process, and the refits are
-distributed over the `workers` of the fit (see
-[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md))
-with the number of workers that the fit carries. The result therefore
-depends on the state of `.Random.seed` at the call, and not on the
-number of workers. The state at the start of the stream and after the
-last replicate kept is stored in the entry, and an extension continues
-from the second: 500 replicates and then 300 more equal the 800
-replicates of a single call from the same seed. After the call
-`.Random.seed` is the state after the last replicate kept.
+distributed over `cores` separate R processes. The result therefore
+depends on the state of `.Random.seed` at the call, and not on `cores`.
+The state at the start of the stream and after the last replicate kept
+is stored in the entry, and an extension continues from the second: 500
+replicates and then 300 more equal the 800 replicates of a single call
+from the same seed. After the call `.Random.seed` is the state after the
+last replicate kept.
 
 A replicate that fails (an error in the refit, a mode error above
 [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md),
@@ -148,8 +156,7 @@ or
 which the fit holds at a working value, stores the position of the
 break-point in the replicates. The generator of the restart cycle is
 seeded from the draw of the replicate, so the result does not depend on
-the number of workers. A replicate is kept when its coefficients are
-finite.
+`cores`. A replicate is kept when its coefficients are finite.
 
 ## See also
 

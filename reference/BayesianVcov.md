@@ -18,7 +18,13 @@ FrequentistVcov(name = character(0), information = NULL, sandwich = NULL)
 
 UnconditionalVcov(name = character(0), information = NULL)
 
-BootstrapVcov(name = character(0), n = NULL, resample = NULL, refit = NULL)
+BootstrapVcov(
+  name = character(0),
+  n = NULL,
+  resample = NULL,
+  refit = NULL,
+  cores = 1L
+)
 ```
 
 ## Arguments

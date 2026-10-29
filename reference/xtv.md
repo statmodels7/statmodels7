@@ -40,8 +40,8 @@ wxsq(X, w, threads = 1L)
 - threads:
 
   The thread count, a plain integer as
-  [`numericals7::thread_count()`](https://statmodels7.github.io/numericals7/reference/thread_count.html)
-  returns it. `1L` takes the sequential route unconditionally.
+  [`numericals7::local_threads()`](https://statmodels7.github.io/numericals7/reference/local_threads.html)
+  validates it. `1L` takes the sequential route unconditionally.
 
 - w:
 

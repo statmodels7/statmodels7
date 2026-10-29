@@ -31,7 +31,8 @@ statmod(
   start = NULL,
   linpar_control = linpar_options(),
   verbose = 0,
-  threads = numericals7::n_threads(),
+  threads = 1,
+  cores = 1,
   ...
 )
 ```
@@ -217,30 +218,35 @@ statmod(
 
 - threads:
 
-  How many threads the fit may use, as
-  [`numericals7::n_threads()`](https://statmodels7.github.io/numericals7/reference/n_threads.html)
-  constructs it. The default, `n_threads(1)`, is sequential and takes
-  the sequential code path. A larger count is passed to the compiled
-  per-observation kernels of the family and to the dense assembly
-  products; below a kernel's internal size threshold the computation
-  stays sequential whatever the count, and a sparse design keeps its
-  Matrix route. The object's `workers` fans the units that are
-  independent by construction out over separate R processes: the folds
-  of a cross-validation, and the combinations of a kinked path's product
-  grid, each of which restarts its warm chain from the sweep's own
-  starting coefficients. Each unit fits sequentially, so the two levels
-  never nest. The points within one chain stay sequential, because a
-  point fitted from a cold start costs more than one warm-started from
-  the previous point, and splitting a chain would slow the
-  single-process default or make the result depend on the count. For any
-  two counts above one the result is identical bit for bit: every
-  parallel region decomposes its work over the elements of its output
-  and never splits a reduction, and the folds are seeded per fold and
-  collected in fold order. Between the default and a count above one the
-  route can change where the work is large (the BLAS crossproduct
-  against the compiled one, and the pivoted
+  How many threads the fit may use inside this R process, a single whole
+  number (see
+  [`numericals7::local_threads()`](https://statmodels7.github.io/numericals7/reference/local_threads.html)).
+  The default, `1`, is sequential and takes the sequential code path. A
+  larger count is passed to the compiled per-observation kernels of the
+  family and to the dense assembly products; below a kernel's internal
+  size threshold the computation stays sequential whatever the count,
+  and a sparse design keeps its Matrix route. Between the default and a
+  count above one the route can change where the work is large (the BLAS
+  crossproduct against the compiled one, and the pivoted
   [`qr()`](https://rdrr.io/r/base/qr.html) against the compiled
-  triangular factor), and the results then agree to rounding.
+  triangular factor), and the results then agree to rounding. `threads`
+  counts threads that share memory in one process; the number of
+  separate R processes is `cores`.
+
+- cores:
+
+  The number of separate R processes, a single whole number (default
+  `1`, no process besides this one). The units that are independent by
+  construction are fanned out over them: the folds of a
+  cross-validation, and the combinations of a kinked path's product
+  grid, each of which restarts its warm chain from the sweep's own
+  starting coefficients. Each unit fits sequentially, so `threads` and
+  `cores` never nest. The points within one chain stay sequential,
+  because a point fitted from a cold start costs more than one
+  warm-started from the previous point, and splitting a chain would slow
+  the single-process default or make the result depend on the count. For
+  any two values of `cores` the result is identical bit for bit: the
+  folds are seeded per fold and collected in fold order.
 
 - ...:
 

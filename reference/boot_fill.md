@@ -7,7 +7,7 @@ result.
 ## Usage
 
 ``` r
-boot_fill(fit, n, resample, refit, say = FALSE)
+boot_fill(fit, n, resample, refit, say = FALSE, cores = 1L)
 ```
 
 ## Arguments

@@ -158,10 +158,9 @@ term's `n_lambda` for one kinked hyperparameter, and the product of its
 axes for several. The fits along a path are warm-started within each
 fold.
 
-The folds run over separate R processes when
-`statmod(threads = n_threads(workers = 4))` requests them. One seed is
-drawn per fold in the parent, so that the answer is identical at any
-worker count.
+The folds run over separate R processes when `statmod(cores = 4)`
+requests them. One seed is drawn per fold in the parent, so that the
+answer is identical at any number of processes.
 
 ## References
 

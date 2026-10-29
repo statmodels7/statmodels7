@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.224.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,7 +74,8 @@ scales are estimated from the data.</p>
 <span>  start <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  linpar_control <span class="op">=</span> <span class="fu"><a href="linpar_options.html">linpar_options</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  threads <span class="op">=</span> <span class="fu">numericals7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/numericals7/reference/n_threads.html" class="external-link">n_threads</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  threads <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  cores <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -214,28 +215,33 @@ The argument and the function are named differently on purpose, as
 
 
 <dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
-<dd><p>How many threads the fit may use, as
-<code><a href="https://statmodels7.github.io/numericals7/reference/n_threads.html" class="external-link">numericals7::n_threads()</a></code> constructs it. The default,
-<code>n_threads(1)</code>, is sequential and takes the sequential code path. A
-larger count is passed to the compiled per-observation kernels of the
-family and to the dense assembly products; below a kernel's internal
-size threshold the computation stays sequential whatever the count,
-and a sparse design keeps its <span class="pkg">Matrix</span> route. The object's <code>workers</code>
-fans the units that are independent by construction out over separate R
-processes: the folds of a cross-validation, and the combinations of a
-kinked path's product grid, each of which restarts its warm chain from
-the sweep's own starting coefficients. Each unit fits sequentially, so
-the two levels never nest. The points within one chain stay sequential,
-because a point fitted from a cold start costs more than one
-warm-started from the previous point, and splitting a chain would slow
-the single-process default or make the result depend on the count. For
-any two counts above one the result is identical bit for bit: every
-parallel region decomposes its work over the elements of its output and
-never splits a reduction, and the folds are seeded per fold and
-collected in fold order. Between the default and a count above one the
-route can change where the work is large (the BLAS crossproduct against
-the compiled one, and the pivoted <code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code> against the compiled
-triangular factor), and the results then agree to rounding.</p></dd>
+<dd><p>How many threads the fit may use inside this R process, a
+single whole number (see <code><a href="https://statmodels7.github.io/numericals7/reference/local_threads.html" class="external-link">numericals7::local_threads()</a></code>). The default,
+<code>1</code>, is sequential and takes the sequential code path. A larger count is
+passed to the compiled per-observation kernels of the family and to the
+dense assembly products; below a kernel's internal size threshold the
+computation stays sequential whatever the count, and a sparse design
+keeps its <span class="pkg">Matrix</span> route. Between the default and a count above one
+the route can change where the work is large (the BLAS crossproduct
+against the compiled one, and the pivoted <code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code> against the compiled
+triangular factor), and the results then agree to rounding. <code>threads</code>
+counts threads that share memory in one process; the number of separate
+R processes is <code>cores</code>.</p></dd>
+
+
+<dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>
+<dd><p>The number of separate R processes, a single whole number
+(default <code>1</code>, no process besides this one). The units that are
+independent by construction are fanned out over them: the folds of a
+cross-validation, and the combinations of a kinked path's product grid,
+each of which restarts its warm chain from the sweep's own starting
+coefficients. Each unit fits sequentially, so <code>threads</code> and <code>cores</code> never
+nest. The points within one chain stay sequential, because a point fitted
+from a cold start costs more than one warm-started from the previous
+point, and splitting a chain would slow the single-process default or
+make the result depend on the count. For any two values of <code>cores</code> the
+result is identical bit for bit: the folds are seeded per fold and
+collected in fold order.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

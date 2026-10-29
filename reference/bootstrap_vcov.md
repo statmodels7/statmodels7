@@ -9,7 +9,7 @@ stores in the fit.
 ## Usage
 
 ``` r
-bootstrap_vcov(n = NULL, resample = NULL, refit = NULL)
+bootstrap_vcov(n = NULL, resample = NULL, refit = NULL, cores = 1)
 ```
 
 ## Arguments
@@ -28,12 +28,21 @@ bootstrap_vcov(n = NULL, resample = NULL, refit = NULL)
 
   `"coefficients"`, `"full"` or `NULL`.
 
+- cores:
+
+  The number of separate R processes over which replicates that have to
+  be computed at the call are refitted, a single whole number (default
+  `1`). It is distinct from the `threads` of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+  which counts threads inside one process. The values of the replicates
+  do not depend on it.
+
 ## Value
 
 A `BootstrapVcov` object, inheriting from
 [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md),
 with the property `name` equal to `"bootstrap"` and the properties `n`,
-`resample` and `refit`.
+`resample`, `refit` and `cores`.
 
 ## Details
 

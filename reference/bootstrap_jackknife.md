@@ -6,7 +6,7 @@ zero, and returns the coefficients of the refits.
 ## Usage
 
 ``` r
-bootstrap_jackknife(object, resample, refit)
+bootstrap_jackknife(object, resample, refit, cores = 1L)
 ```
 
 ## Arguments
@@ -25,6 +25,10 @@ bootstrap_jackknife(object, resample, refit)
 - refit:
 
   `"coefficients"` or `"full"`.
+
+- cores:
+
+  The number of separate R processes for the refits.
 
 ## Value
 

@@ -10,7 +10,7 @@ and builds the object.
 ## Usage
 
 ``` r
-boot_interval_new(class, name, n, resample, refit)
+boot_interval_new(class, name, n, resample, refit, cores = 1)
 ```
 
 ## Arguments
@@ -23,7 +23,7 @@ boot_interval_new(class, name, n, resample, refit)
 
   The short name of the interval.
 
-- n, resample, refit:
+- n, resample, refit, cores:
 
   As in
   [`bootstrap_vcov()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_vcov.md).

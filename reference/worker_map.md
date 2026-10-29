@@ -1,25 +1,26 @@
 # Run Independent Units, in This Process or Over Workers
 
 Applies a body to each of `n` independent units (a cross-validation
-fold, a combination of a path's product grid) over the worker processes
-that the specification requests (`spec@workers`, from
-[`n_threads(workers =)`](https://statmodels7.github.io/numericals7/reference/n_threads.html))
-and in this process otherwise. Results come back in unit order whatever
-the number of workers, which makes the answer independent of the count:
-the units share nothing, so the same bodies run either way.
+fold, a combination of a path's product grid, a bootstrap replicate)
+over `cores` separate R processes, and in this process when `cores`
+is 1. Results come back in unit order whatever the number of processes,
+which makes the answer independent of the count: the units share
+nothing, so the same bodies run either way.
 
 ## Usage
 
 ``` r
-worker_map(spec, n, body, what = "folds")
+worker_map(cores, n, body, what = "folds")
 ```
 
 ## Arguments
 
-- spec:
+- cores:
 
-  A
-  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  The number of separate R processes, a single whole number (see
+  [`check_cores()`](https://statmodels7.github.io/statmodels7/reference/check_cores.md)).
+  It is distinct from the `threads` of a fit, which counts threads
+  inside one process. At most `n` processes are opened.
 
 - n:
 

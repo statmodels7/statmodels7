@@ -1,5 +1,65 @@
 # Changelog
 
+## statmodels7 0.224.0
+
+- New
+  [`statmod_profile()`](https://statmodels7.github.io/statmodels7/reference/statmod_profile.md):
+  the profile likelihood of one or several coefficients on a grid, as a
+  data frame with the columns `profile_loglik`, `profile_penalty` and
+  `profile_pen_loglik` of the inner criterion, the column
+  `outer_criterion` of the outer one, and `converged`. The values are
+  given by
+  [`profile_range()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
+  (a number of standard errors about the estimate) or as vectors, and
+  [`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md)
+  selects the exact method, which refits the model at every point from
+  the fit, from the neighboring point or from both. The hyperparameters
+  are held at the values of the fit or searched again at every point
+  (`hyper`), and the coefficients that
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  estimate are estimated by the criterion at every point. The points can
+  be distributed over worker processes (`cores`). The positions of one
+  `seg()` term that are held together are kept in increasing order. A
+  coefficient under a lasso, SCAD or MCP penalty and a model with a
+  structural term are rejected for now.
+- [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)
+  leaves out the coefficients that the specification holds by name, so a
+  held coefficient is not one of the coordinates that the outer
+  criterion estimates.
+
+## statmodels7 0.223.0
+
+- [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  has the argument `cores`, the number of separate R processes (default
+  1), in place of the worker count that `numericals7::n_threads()`
+  carried. `threads` is a whole number and counts threads inside one
+  process. The folds of
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  and the combinations of a kinked path’s product grid run over `cores`
+  processes.
+- [`add_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/add_bootstrap.md),
+  [`bootstrap_vcov()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_vcov.md)
+  and the interval constructors
+  [`percentile_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md),
+  [`basic_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  and
+  [`bca_interval()`](https://statmodels7.github.io/statmodels7/reference/bootstrap_interval.md)
+  have the argument `cores`, which distributes the refits (and the
+  jackknife refits of the BCa interval) over separate processes. The
+  refits of a
+  [`pred_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/pred_bootstrap.md)
+  draw one replicate at a time and stay in the calling process.
+- The property `workers` of `StatmodSpec` is `cores`. The internal
+  [`worker_map()`](https://statmodels7.github.io/statmodels7/reference/worker_map.md)
+  takes the number of processes as its first argument,
+  `worker_map(cores, n, body, what)`, and reads nothing from a fit.
+- The argument `threads` of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  is a whole number; the object of `n_threads()`, removed in numericals7
+  0.26.0, is no longer accepted.
+
 ## statmodels7 0.222.2
 
 - [`plot_derivative()`](https://statmodels7.github.io/statmodels7/reference/plot_derivative.md)
@@ -7506,10 +7566,9 @@ choosing a model, each decided with the measurement beside it.
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
   gained 1.06x, and now gains 1.91x at an identical answer. Where the
   folds themselves run in worker processes each one still fits on a
-  single thread, the two levels of
-  [`numericals7::n_threads()`](https://statmodels7.github.io/numericals7/reference/n_threads.html)
-  not nesting; the same rule is applied to the runs of a product grid,
-  which reach `fit_at()` through a specification of their own.
+  single thread, the two levels of `numericals7::n_threads()` not
+  nesting; the same rule is applied to the runs of a product grid, which
+  reach `fit_at()` through a specification of their own.
 
 - `sm7::par_for()` takes the shape `distributions7`’s `d7::par_for()`
   settled on: the worker’s loop is noinline and the sequential branch

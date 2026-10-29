@@ -131,6 +131,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/chart_homogeneity.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_at_list.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_boot_n.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/check_cores.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_covariates.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_dots.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_filter_scaling.html</loc></url>
@@ -581,7 +582,21 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/prior_mc.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/prior_parts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/prior_student.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_assemble.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_chains.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_compute.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_context.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_failed.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_grid.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_hold.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/profile_interval.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_map.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_method.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_point.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_prune.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_psi_groups.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_range.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/profile_values.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/project_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/psd_roots.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/quadratic_path.html</loc></url>
@@ -761,6 +776,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_penalty_dbeta.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_penalty_keys.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_penalty_second.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_profile.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_refresh_stalled.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_refreshable.html</loc></url>

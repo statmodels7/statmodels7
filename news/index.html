@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.222.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.224.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,21 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.224.0" id="statmodels7-02240">statmodels7 0.224.0<a class="anchor" aria-label="anchor" href="#statmodels7-02240"></a></h2>
+<ul><li>New <code><a href="../reference/statmod_profile.html">statmod_profile()</a></code>: the profile likelihood of one or several coefficients on a grid, as a data frame with the columns <code>profile_loglik</code>, <code>profile_penalty</code> and <code>profile_pen_loglik</code> of the inner criterion, the column <code>outer_criterion</code> of the outer one, and <code>converged</code>. The values are given by <code><a href="../reference/profile_range.html">profile_range()</a></code> (a number of standard errors about the estimate) or as vectors, and <code><a href="../reference/profile_grid.html">profile_grid()</a></code> selects the exact method, which refits the model at every point from the fit, from the neighboring point or from both. The hyperparameters are held at the values of the fit or searched again at every point (<code>hyper</code>), and the coefficients that <code><a href="../reference/reml.html">reml()</a></code> and <code><a href="../reference/reml.html">ml()</a></code> estimate are estimated by the criterion at every point. The points can be distributed over worker processes (<code>cores</code>). The positions of one <code>seg()</code> term that are held together are kept in increasing order. A coefficient under a lasso, SCAD or MCP penalty and a model with a structural term are rejected for now.</li>
+<li>
+<code><a href="../reference/marginal_coords.html">marginal_coords()</a></code> leaves out the coefficients that the specification holds by name, so a held coefficient is not one of the coordinates that the outer criterion estimates.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.223.0" id="statmodels7-02230">statmodels7 0.223.0<a class="anchor" aria-label="anchor" href="#statmodels7-02230"></a></h2>
+<ul><li>
+<code><a href="../reference/statmod.html">statmod()</a></code> has the argument <code>cores</code>, the number of separate R processes (default 1), in place of the worker count that <code>numericals7::n_threads()</code> carried. <code>threads</code> is a whole number and counts threads inside one process. The folds of <code><a href="../reference/cv.html">cv()</a></code> and the combinations of a kinked path’s product grid run over <code>cores</code> processes.</li>
+<li>
+<code><a href="../reference/add_bootstrap.html">add_bootstrap()</a></code>, <code><a href="../reference/bootstrap_vcov.html">bootstrap_vcov()</a></code> and the interval constructors <code><a href="../reference/bootstrap_interval.html">percentile_interval()</a></code>, <code><a href="../reference/bootstrap_interval.html">basic_interval()</a></code> and <code><a href="../reference/bootstrap_interval.html">bca_interval()</a></code> have the argument <code>cores</code>, which distributes the refits (and the jackknife refits of the BCa interval) over separate processes. The refits of a <code><a href="../reference/pred_bootstrap.html">pred_bootstrap()</a></code> draw one replicate at a time and stay in the calling process.</li>
+<li>The property <code>workers</code> of <code>StatmodSpec</code> is <code>cores</code>. The internal <code><a href="../reference/worker_map.html">worker_map()</a></code> takes the number of processes as its first argument, <code>worker_map(cores, n, body, what)</code>, and reads nothing from a fit.</li>
+<li>The argument <code>threads</code> of <code><a href="../reference/statmod.html">statmod()</a></code> is a whole number; the object of <code>n_threads()</code>, removed in numericals7 0.26.0, is no longer accepted.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.222.2" id="statmodels7-02222">statmodels7 0.222.2<a class="anchor" aria-label="anchor" href="#statmodels7-02222"></a></h2>
 <ul><li>
@@ -1568,7 +1583,7 @@ the fit                    ERROR      converged</code></pre>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.78.0" id="statmodels7-0780">statmodels7 0.78.0<a class="anchor" aria-label="anchor" href="#statmodels7-0780"></a></h2>
-<ul><li><p>A cross-validation fold fits with the thread count <code>statmod(threads =)</code> was given. A fold’s specification is built by <code><a href="../reference/statmod_spec.html">statmod_spec()</a></code>, which makes a fresh one, so the count did not travel with it as it does through <code><a href="../reference/statmod_respec.html">statmod_respec()</a></code>, and every fold fell back to the class default of 1: measured on a lasso over a gamma response at 20000 observations, <code><a href="../reference/aic.html">bic()</a></code> gained 1.85x from eight threads while <code><a href="../reference/cv.html">cv()</a></code> gained 1.06x, and now gains 1.91x at an identical answer. Where the folds themselves run in worker processes each one still fits on a single thread, the two levels of <code><a href="https://statmodels7.github.io/numericals7/reference/n_threads.html" class="external-link">numericals7::n_threads()</a></code> not nesting; the same rule is applied to the runs of a product grid, which reach <code>fit_at()</code> through a specification of their own.</p></li>
+<ul><li><p>A cross-validation fold fits with the thread count <code>statmod(threads =)</code> was given. A fold’s specification is built by <code><a href="../reference/statmod_spec.html">statmod_spec()</a></code>, which makes a fresh one, so the count did not travel with it as it does through <code><a href="../reference/statmod_respec.html">statmod_respec()</a></code>, and every fold fell back to the class default of 1: measured on a lasso over a gamma response at 20000 observations, <code><a href="../reference/aic.html">bic()</a></code> gained 1.85x from eight threads while <code><a href="../reference/cv.html">cv()</a></code> gained 1.06x, and now gains 1.91x at an identical answer. Where the folds themselves run in worker processes each one still fits on a single thread, the two levels of <code>numericals7::n_threads()</code> not nesting; the same rule is applied to the runs of a product grid, which reach <code>fit_at()</code> through a specification of their own.</p></li>
 <li><p><code>sm7::par_for()</code> takes the shape <code>distributions7</code>’s <code>d7::par_for()</code> settled on: the worker’s loop is noinline and the sequential branch runs through the worker, so both branches execute one compiled copy rather than two the compiler may optimize apart, and the worker installs the calling thread’s floating-point environment. Nothing in these kernels calls an Rmath routine, so the second buys no correctness today; what both buy is that the bit-identity the twins assert holds by construction rather than by the optimizer’s leave.</p></li>
 <li><p><code>threads</code> is passed to <code>parallelFor()</code> instead of being left to <code>RCPP_PARALLEL_NUM_THREADS</code>, so a kernel called outside a fit honors the count it is given rather than using every core the machine has.</p></li>
 </ul></div>

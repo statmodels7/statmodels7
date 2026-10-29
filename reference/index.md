@@ -197,6 +197,28 @@ tells whether a statistic refits the model under the restriction.
 - [`test_restricted()`](https://statmodels7.github.io/statmodels7/reference/test_restricted.md)
   : Whether a Test Refits the Model Under the Restriction
 
+## Profile likelihood
+
+The penalized log-likelihood maximized over every coefficient but one or
+several that are held on a grid, returned as a data frame together with
+the value of the outer criterion where one ran. The grid of values is
+given by
+[`profile_range()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
+or by the caller, and
+[`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md)
+selects the exact method, one refit for each point.
+
+- [`statmod_profile()`](https://statmodels7.github.io/statmodels7/reference/statmod_profile.md)
+  : The Profile Likelihood of Coefficients
+- [`profile_range()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
+  [`ProfileRange()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
+  : Values of a Profile
+- [`profile_method()`](https://statmodels7.github.io/statmodels7/reference/profile_method.md)
+  : Methods of Profiling
+- [`ProfileGrid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md)
+  [`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md)
+  : Profile by Refitting on a Grid
+
 ## Variance conventions
 
 The three conventions for the variance matrix of the coefficients, as
@@ -765,6 +787,9 @@ helper functions. Using the package does not require any of it.
 - [`check_boot_n()`](https://statmodels7.github.io/statmodels7/reference/check_boot_n.md)
   [`check_boot_refit()`](https://statmodels7.github.io/statmodels7/reference/check_boot_n.md)
   : Check the Arguments of the Bootstrap
+
+- [`check_cores()`](https://statmodels7.github.io/statmodels7/reference/check_cores.md)
+  : Check the Number of Processes
 
 - [`check_covariates()`](https://statmodels7.github.io/statmodels7/reference/check_covariates.md)
   : The Covariate Generators of a Simulation
@@ -1982,8 +2007,41 @@ helper functions. Using the package does not require any of it.
 - [`prior_student()`](https://statmodels7.github.io/statmodels7/reference/prior_student.md)
   : The Scale Matrix and Degrees of Freedom of a Student t Prior
 
+- [`profile_assemble()`](https://statmodels7.github.io/statmodels7/reference/profile_assemble.md)
+  : Assemble the Table of a Profile
+
+- [`profile_chains()`](https://statmodels7.github.io/statmodels7/reference/profile_chains.md)
+  : The Chains of Points That a Start Visits
+
+- [`profile_compute()`](https://statmodels7.github.io/statmodels7/reference/profile_compute.md)
+  : Compute a Profile
+
+- [`profile_context()`](https://statmodels7.github.io/statmodels7/reference/profile_context.md)
+  : The Context of a Profile
+
+- [`profile_failed()`](https://statmodels7.github.io/statmodels7/reference/profile_failed.md)
+  : A Failed Point of a Profile
+
+- [`profile_hold()`](https://statmodels7.github.io/statmodels7/reference/profile_hold.md)
+  : A Specification With Named Coefficients Held
+
 - [`profile_interval()`](https://statmodels7.github.io/statmodels7/reference/profile_interval.md)
   : The Interval of a Position from Its Profile
+
+- [`profile_map()`](https://statmodels7.github.io/statmodels7/reference/profile_map.md)
+  : Run Independent Units of a Profile
+
+- [`profile_point()`](https://statmodels7.github.io/statmodels7/reference/profile_point.md)
+  : One Refit of a Profile
+
+- [`profile_prune()`](https://statmodels7.github.io/statmodels7/reference/profile_prune.md)
+  : Drop the Combinations With Unordered Break-Points
+
+- [`profile_psi_groups()`](https://statmodels7.github.io/statmodels7/reference/profile_psi_groups.md)
+  : The Positions of One Break-Point Term Among the Held Coefficients
+
+- [`profile_values()`](https://statmodels7.github.io/statmodels7/reference/profile_values.md)
+  : The Values of a Profile for Each Coefficient
 
 - [`project_blocks()`](https://statmodels7.github.io/statmodels7/reference/project_blocks.md)
   : Project a Reference Fit's Predictor onto the Blocks That Did Not

@@ -36,4 +36,4 @@ weights and the units, which is what a worker process receives. The
 weights of the rows of the unit are set to zero. For a model with a
 block that moves with its coefficients the draw carries the position as
 its seed, so that the restarts of the refit do not depend on the number
-of workers.
+of processes.

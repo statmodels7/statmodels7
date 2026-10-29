@@ -24,7 +24,8 @@ bootstrap_engine(
   batch = NULL,
   stream = TRUE,
   adjust = TRUE,
-  check = TRUE
+  check = TRUE,
+  cores = 1L
 )
 ```
 
@@ -95,6 +96,11 @@ bootstrap_engine(
 
   `TRUE` rejects the fits that the bootstrap does not handle.
 
+- cores:
+
+  The number of separate R processes for the refits, a single whole
+  number. `1` runs them in this process.
+
 ## Value
 
 A list with `coefficients` (a matrix with a row for each replicate
@@ -111,14 +117,14 @@ adjustment of the random effects, for a parametric scheme with
 The draws are made in the calling process, one replicate after another
 from the random number stream, and the refits go to
 [`worker_map()`](https://statmodels7.github.io/statmodels7/reference/worker_map.md)
-with the number of workers that the fit carries. A replicate is
-therefore a function of its position in the stream and not of the number
-of workers, and the first `n` replicates of a stream are those of a run
-of `n`. The state of `.Random.seed` after the last replicate that was
-kept is returned, so that a later call continues the stream: 500
-replicates followed by 300 more are the 800 replicates of one run from
-the same seed. A refit does not draw from the stream of the calling
-process: the seed is saved before it and restored after it.
+over `cores` separate R processes. A replicate is therefore a function
+of its position in the stream and not of the number of processes, and
+the first `n` replicates of a stream are those of a run of `n`. The
+state of `.Random.seed` after the last replicate that was kept is
+returned, so that a later call continues the stream: 500 replicates
+followed by 300 more are the 800 replicates of one run from the same
+seed. A refit does not draw from the stream of the calling process: the
+seed is saved before it and restored after it.
 
 A replicate fails when the refit signals an error (status 1), when the
 mode error of the refit exceeds
