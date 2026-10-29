@@ -211,3 +211,34 @@ test_that("a seg() position held next to an observation refits from its neighbou
   pd <- statmod_profile(f, "mu:seg.psi1", values = profile_range(width = 2, n = 5))
   expect_gt(sum(pd@points[["mu:seg.psi1"]] %in% u), 0L)
 })
+
+test_that("under reml() each point reaches the criterion's own optimum of the dispersion", {
+  d <- bp_data()
+  f <- statmod(y ~ seg(w), distributions7::gaussian1_distrib(), d)
+  ctx <- profile_context(f, "mu:seg.psi1", "held")
+  # the REML criterion with the position and the dispersion both held
+  crit_at <- function(psi, s) {
+    sp <- profile_spec(ctx, psi)
+    hc <- sp@held_coef
+    hc$sigma <- c("(Intercept)" = s)
+    sp <- S7::set_props(sp, held_coef = hc)
+    dd <- statmod_design(sp)
+    b <- ctx$beta_fit
+    b[ctx$at] <- psi
+    b[length(b)] <- s
+    rr <- statmod_alternate(sp, dd, statmod_blocks(sp, dd), ctx$hyper0, ctx$inner,
+                            b, ctx$cfg$expected, ctx$cfg$emethod, ctx$cfg$maxit,
+                            ctx$cfg$tol, verbosity(0))
+    statmod_marginal(sp, dd, rr$obj$split(rr$par), ctx$hyper0, ctx$outer,
+                     basis = integrated_basis(sp, dd, ctx$outer@kind))$value
+  }
+  # the point next to the estimate stopped at the dispersion of the fit,
+  # 0.0008 REML units below its optimum
+  v <- ctx$estimate + c(-0.0025, 0.0005, 0.0035)
+  p <- statmod_profile(f, "mu:seg.psi1", values = list(v))
+  s0 <- utils::tail(ctx$beta_fit, 1L)
+  ref <- vapply(v, function(psi) optimize(function(s) crit_at(psi, s),
+                                          s0 + c(-0.04, 0.04), maximum = TRUE,
+                                          tol = 1e-8)$objective, 1)
+  expect_equal(p@points$outer_criterion, ref, tolerance = 1e-7)
+})

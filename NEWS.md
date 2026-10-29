@@ -34,6 +34,11 @@
   the term being measured only from the second. From a warm start the fit
   ended as not converged, and 2 of 27 points of a profile of a `seg()`
   position were missing.
+* The outer search no longer reads the score of a held coefficient as an
+  error of the inner mode. That score turned the resolution of a profile
+  point next to the estimate into 0.0875, which stopped the search for the
+  dispersion under `reml()` at its start (0.0008 REML units below the
+  optimum), and made the points beside it refuse the resolution rule.
 
 # statmodels7 0.227.0
 
