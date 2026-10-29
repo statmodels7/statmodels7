@@ -72,13 +72,14 @@ ProfileTaylor <- S7::new_class(
 #' Coordinates that the outer criterion estimates (the unpenalized
 #' coefficients of the parameters other than the first under [reml()] or
 #' [ml()]) are re-estimated by the criterion at every point of the exact
-#' method. Their tangent is computed from the nested problem: the refit of
-#' [profile_grid()] at two values on either side of the estimate gives, by a
-#' central difference, the derivative of all coefficients with respect to each
-#' held one, and this tangent is applied from every previous point. The first
+#' method. They are followed through the nested problem: the held
+#' coefficients and those coordinates are criterion coordinates together, the
+#' exact Hessian of the criterion over them gives the derivative of the
+#' estimated coordinates with respect to the held ones, and the other
+#' coefficients are the penalized mode at the predicted coordinates. The first
 #' step starts from the refit with the held coefficients at the estimate,
 #' which differs from the fit where the criterion does not integrate the held
-#' coefficients. In that case only `order = 1` is available.
+#' coefficients.
 #'
 #' The method requires `hyper = "held"` and a model whose coefficients are
 #' smooth functions of the held ones: the terms [modelterms7::linpar()],
@@ -141,9 +142,11 @@ profile_continuation <- function(order = 1, maxit = Inf) {
 #' coefficients, the penalized log-likelihood of every row is a lower bound
 #' of the profile. The column `converged` is `NA`.
 #'
-#' Coordinates that the outer criterion estimates are handled as in
-#' [profile_continuation()], by a tangent from the nested problem, and the
-#' order is then limited to 2. The lower bound does not hold in that case,
+#' Coordinates that the outer criterion estimates are developed as in
+#' [profile_continuation()], from the derivatives of the criterion in those
+#' coordinates, and the coefficients that are neither held nor estimated by the
+#' criterion are then the penalized mode at the predicted coordinates (one
+#' inner fit for each point). The lower bound does not hold in that case,
 #' because the exact method maximizes the criterion and not the penalized
 #' log-likelihood over those coordinates.
 #'
@@ -332,34 +335,154 @@ profile_ray <- function(S, delta, order) {
 }
 
 
-#' The Jacobian of the Coefficients With Respect to the Held Ones, From the
-#' Nested Problem
+#' The Nested Problem at a Point
 #'
 #' @description
-#' Differentiates by a central difference the refits of [profile_point()] at
-#' two values of each held coefficient, a tenth of a standard error on either
-#' side of the estimate. The refits re-estimate the coordinates that the outer
-#' criterion estimates, so the result is the tangent of the nested problem.
+#' Prepares what the expansion of the coordinates that the outer criterion
+#' estimates needs at a point of the profile: the held coefficients and those
+#' coordinates as one set of criterion coordinates, the exact Hessian of the
+#' criterion over that set, and the functions that solve the inner problem and
+#' read the exact gradient of the criterion at given values.
+#'
+#' @details
+#' With the held coefficients \eqn{\theta} and the coordinates \eqn{\gamma}
+#' that the criterion estimates, the criterion \eqn{V(\gamma, \theta)} is
+#' evaluated at the penalized mode of the other coefficients, and none of the
+#' two sets enters its determinant. Both sets are therefore criterion
+#' coordinates of [statmod_marginal_hess()], whose result over
+#' \eqn{(\gamma, \theta)} holds the blocks \eqn{V_{\gamma\gamma}} and
+#' \eqn{V_{\gamma\theta}}. The derivative of the estimated coordinates is
+#' \eqn{d\gamma/d\theta = -V_{\gamma\gamma}^{-1} V_{\gamma\theta}}.
 #'
 #' @param ctx The context of the call.
-#' @param S The list that [profile_setup()] returns at the estimate.
+#' @param pt A point, as [profile_point()] returns it, with the held values
+#'   in `val`.
 #'
-#' @return A matrix with one row per coefficient and one column per held one.
+#' @return A list, or `NULL` where the Hessian of the criterion is not
+#'   available.
 #'
 #' @keywords internal
-profile_nested_jacobian <- function(ctx, S) {
+profile_nested_state <- function(ctx, pt) {
+  spec_t <- profile_hold(ctx$spec, ctx$param, ctx$coefname, pt$val)
+  design <- statmod_design(spec_t)
+  blocks <- statmod_blocks(spec_t, design)
+  meth <- ctx$outer
+  gam0 <- if (outer_minimize(meth)) marginal_coords(spec_t, design, NULL) else
+    marginal_coords(spec_t, design, meth)
+  gam1 <- list(where = c(gam0$where, ctx$at),
+               param = c(gam0$param, ctx$param),
+               name = c(gam0$name, ctx$coefname))
+  ng <- length(gam0$where)
   k <- length(ctx$at)
-  J <- matrix(0, length(S$b0), k)
-  for (m in seq_len(k)) {
-    eps <- 0.1 * S$se[m]
-    up <- dn <- ctx$estimate
-    up[m] <- up[m] + eps
-    dn[m] <- dn[m] - eps
-    zp <- profile_point(ctx, up)
-    zm <- profile_point(ctx, dn)
-    J[, m] <- (zp$par - zm$par) / (2 * eps)
+  idx <- outer_hyper_index(spec_t, blocks)
+  idx0 <- idx[0, , drop = FALSE]
+  attr(idx0, "links") <- attr(idx, "links")[0]
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  split <- function(b) {
+    stats::setNames(lapply(seq_along(npar), function(a)
+      b[offs[a] + seq_len(npar[a])]), ctx$params)
   }
-  J
+  at_values <- function(g, th, start) {
+    spec_h <- statmod_hold(profile_hold(ctx$spec, ctx$param, ctx$coefname, th),
+                           gam0, g)
+    b0 <- start
+    b0[gam0$where] <- g
+    b0[ctx$at] <- th
+    list(spec = spec_h, start = b0)
+  }
+  # the penalized mode of the other coefficients with both sets held
+  mode <- function(g, th, start) {
+    h <- at_values(g, th, start)
+    d <- statmod_design(h$spec)
+    res <- statmod_alternate(h$spec, d, statmod_blocks(h$spec, d), pt$hyper,
+                             ctx$inner, h$start, ctx$cfg$expected,
+                             ctx$cfg$emethod, ctx$cfg$maxit, ctx$cfg$tol,
+                             verbosity(0))
+    res$par
+  }
+  # the exact gradient and Hessian of the criterion at a mode
+  derivs <- function(g, th, b, hessian) {
+    h <- at_values(g, th, b)
+    d <- statmod_design(h$spec)
+    basis <- integrated_basis(h$spec, d, meth@kind, gamma = TRUE)
+    cf <- split(b)
+    oc <- outer_context(h$spec, d, cf, pt$hyper, NULL)
+    if (hessian) {
+      statmod_marginal_hess(h$spec, d, cf, pt$hyper, meth, idx0, basis,
+                            ctx = oc, gam = gam1)
+    } else {
+      statmod_marginal_grad(h$spec, d, cf, pt$hyper, meth, idx0, basis,
+                            ctx = oc, gam = gam1)
+    }
+  }
+  V <- derivs(pt$par[gam0$where], pt$val, pt$par, TRUE)
+  if (is.null(V) || !all(is.finite(V))) return(NULL)
+  list(gam = gam0$where, ng = ng, k = k, par = pt$par, val = pt$val,
+       hyper = pt$hyper, Vgg = V[seq_len(ng), seq_len(ng), drop = FALSE],
+       Vgt = V[seq_len(ng), ng + seq_len(k), drop = FALSE],
+       mode = mode, derivs = derivs)
+}
+
+
+#' The Coefficients That the Nested Expansion Predicts at a Step
+#'
+#' @description
+#' Develops the coordinates that the criterion estimates as a polynomial in
+#' the step of the held coefficients, and returns the coefficients of the
+#' model at its end: those coordinates at the polynomial, the held ones at the
+#' step, and the others at their penalized mode.
+#'
+#' @details
+#' The coefficient of degree 1 is \eqn{-V_{\gamma\gamma}^{-1} V_{\gamma\theta}
+#' \delta}. For a higher degree \eqn{j}, the exact gradient of the criterion in
+#' the estimated coordinates is evaluated along the step, at the penalized mode
+#' of the other coefficients, with the coordinates at the polynomial of lower
+#' degree. Its \eqn{j}-th derivative at the origin is taken by one central
+#' stencil of numericals7, and the coefficient of degree \eqn{j} is minus
+#' \eqn{V_{\gamma\gamma}^{-1}} times that derivative.
+#'
+#' @param ctx The context of the call.
+#' @param N The list that [profile_nested_state()] returns.
+#' @param delta The step of the held coefficients.
+#' @param order One more than the degree of the polynomial.
+#' @param se The standard errors of the held coefficients.
+#'
+#' @return The stacked coefficients.
+#'
+#' @keywords internal
+profile_nested_predict <- function(ctx, N, delta, order, se) {
+  g0 <- N$par[N$gam]
+  th0 <- N$val
+  nrm <- max(abs(delta) / se)
+  if (!is.finite(nrm) || nrm <= 0) return(N$par)
+  coefs <- list(-solve(N$Vgg, N$Vgt %*% delta))
+  poly <- function(s) {
+    g <- g0
+    fact <- 1
+    for (j in seq_along(coefs)) {
+      fact <- fact * j
+      g <- g + as.numeric(coefs[[j]]) * s^j / fact
+    }
+    g
+  }
+  h <- 0.1 / nrm
+  start <- N$par
+  for (j in seq_len(max(order - 1L, 1L))[-1L]) {
+    m <- ceiling(j / 2) + 2L
+    off <- -m:m
+    w <- numericals7::fd_weights(off, j)
+    d <- 0
+    for (i in seq_along(off)) {
+      s <- off[i] * h
+      th <- th0 + s * delta
+      g <- poly(s)
+      b <- N$mode(g, th, start)
+      d <- d + w[i] * N$derivs(g, th, b, FALSE)[seq_len(N$ng)]
+    }
+    coefs[[j]] <- -solve(N$Vgg, d / h^j)
+  }
+  N$mode(poly(1), th0 + delta, start)
 }
 
 
@@ -389,23 +512,29 @@ profile_exact <- function(ctx, S, b, val) {
 S7::method(profile_compute, ProfileTaylor) <- function(method, ctx, grid, cores) {
   profile_approx_check(ctx, "profile_taylor()")
   nested <- ctx$ng > 0L
-  if (nested && method@order > 2L) {
-    stop("profile_taylor() with order above 2 does not handle coordinates ",
-         "that the outer criterion estimates. Use order = 2 or profile_grid().",
-         call. = FALSE)
-  }
   S <- profile_setup(ctx, ctx$beta_fit)
   # the expansion of a nested problem starts at the refit with the held
   # coefficients at the estimate: with the criterion estimating the other
   # coordinates, that refit is not the fit
-  base <- if (nested) profile_point(ctx, ctx$estimate)
-  J <- if (nested) profile_nested_jacobian(ctx, S)
+  N <- NULL
+  if (nested) {
+    base <- profile_point(ctx, ctx$estimate)
+    base$val <- ctx$estimate
+    N <- profile_nested_state(ctx, base)
+    if (is.null(N)) {
+      stop("The Hessian of the criterion is not available at the estimate. ",
+           "Use profile_grid().", call. = FALSE)
+    }
+  }
   vals <- as.matrix(grid)
   lapply(seq_len(nrow(vals)), function(r) {
     tryCatch({
       delta <- vals[r, ] - ctx$estimate
-      b <- if (nested) base$par + as.numeric(J %*% delta) else
+      b <- if (nested) {
+        profile_nested_predict(ctx, N, delta, method@order, S$se)
+      } else {
         profile_ray(S, delta, method@order)
+      }
       profile_exact(ctx, S, b, vals[r, ])
     }, error = function(e) profile_failed(ctx, conditionMessage(e)))
   })
@@ -422,19 +551,24 @@ S7::method(profile_compute, ProfileTaylor) <- function(method, ctx, grid, cores)
 #' @param method The [profile_continuation()] object.
 #' @param prev The previous point, with the held values in `val`.
 #' @param val The held values to reach.
-#' @param J The nested Jacobian, or `NULL`.
+#' @param nested Whether the criterion estimates coordinates of the model.
 #' @param depth The number of halvings so far.
 #'
 #' @return The point at `val`, with `val` in it.
 #'
 #' @keywords internal
-profile_cont_step <- function(ctx, method, prev, val, J, depth = 0L) {
+profile_cont_step <- function(ctx, method, prev, val, nested, depth = 0L) {
   delta <- val - prev$val
-  pred <- if (is.null(J)) {
-    profile_ray(profile_setup(ctx, prev$par), delta, method@order + 1L)
-  } else {
-    prev$par + as.numeric(J %*% delta)
-  }
+  pred <- tryCatch({
+    S <- profile_setup(ctx, prev$par)
+    if (nested) {
+      N <- profile_nested_state(ctx, prev)
+      if (is.null(N)) prev$par else
+        profile_nested_predict(ctx, N, delta, method@order + 1L, S$se)
+    } else {
+      profile_ray(S, delta, method@order + 1L)
+    }
+  }, error = function(e) prev$par)
   pred[ctx$at] <- val
   pt <- tryCatch(
     profile_point(ctx, val, list(par = pred, hyper = prev$hyper),
@@ -444,9 +578,9 @@ profile_cont_step <- function(ctx, method, prev, val, J, depth = 0L) {
     (is.infinite(method@maxit) && !isTRUE(pt$converged))
   if (bad && depth < 8L) {
     mid <- prev$val + delta / 2
-    pm <- profile_cont_step(ctx, method, prev, mid, J, depth + 1L)
+    pm <- profile_cont_step(ctx, method, prev, mid, nested, depth + 1L)
     if (!is.null(pm$error)) return(pm)
-    return(profile_cont_step(ctx, method, pm, val, J, depth + 1L))
+    return(profile_cont_step(ctx, method, pm, val, nested, depth + 1L))
   }
   pt$val <- val
   pt
@@ -459,17 +593,10 @@ profile_cont_step <- function(ctx, method, prev, val, J, depth = 0L) {
 S7::method(profile_compute, ProfileContinuation) <- function(method, ctx, grid, cores) {
   profile_approx_check(ctx, "profile_continuation()")
   nested <- ctx$ng > 0L
-  if (nested && method@order > 1L) {
-    stop("profile_continuation() with order = 2 does not handle coordinates ",
-         "that the outer criterion estimates. Use order = 1 or profile_grid().",
-         call. = FALSE)
-  }
   base <- list(par = ctx$beta_fit, hyper = ctx$hyper0, val = ctx$estimate)
-  J <- NULL
   if (nested) {
     base <- profile_point(ctx, ctx$estimate)
     base$val <- ctx$estimate
-    J <- profile_nested_jacobian(ctx, profile_setup(ctx, ctx$beta_fit))
   }
   chains <- profile_chains(ctx, grid, "neighbor")
   if (cores > 1L) ctx$spec <- S7::set_props(ctx$spec, threads = 1L)
@@ -479,7 +606,7 @@ S7::method(profile_compute, ProfileContinuation) <- function(method, ctx, grid, 
     prev <- base
     out <- vector("list", length(ch$rows))
     for (m in seq_along(ch$rows)) {
-      pt <- profile_cont_step(ctx, method, prev, vals[ch$rows[m], ], J)
+      pt <- profile_cont_step(ctx, method, prev, vals[ch$rows[m], ], nested)
       out[[m]] <- pt
       if (!is.null(pt$error)) break
       prev <- pt

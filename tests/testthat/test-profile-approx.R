@@ -110,7 +110,7 @@ test_that("a nonlinear term, whose block moves, is followed", {
   expect_true(all(diff(e) < 0))
 })
 
-test_that("coordinates that reml estimates follow the tangent of the nested problem", {
+test_that("coordinates that reml estimates follow the nested problem", {
   set.seed(1)
   dd <- data.frame(x = runif(150), z = runif(150))
   dd$y <- 1 + 2 * dd$x + stats::rnorm(150, sd = exp(-0.9 - 0.2 * dd$z))
@@ -118,21 +118,36 @@ test_that("coordinates that reml estimates follow the tangent of the nested prob
   expect_identical(fit@methods$outer@kind, "reml")
   v <- profile_range(width = 2, n = 5)
   g <- statmod_profile(fit, "mu:x", v)
-  c1 <- statmod_profile(fit, "mu:x", v, method = profile_continuation())
-  expect_equal(c1$profile_loglik, g$profile_loglik, tolerance = 1e-6)
-  expect_equal(c1$outer_criterion, g$outer_criterion, tolerance = 1e-6)
-  # the expansion near the estimate is the profile of the criterion, not the
-  # joint mode of the likelihood
-  vn <- profile_range(width = 0.3, n = 3)
-  gn <- statmod_profile(fit, "mu:x", vn)
-  tn <- statmod_profile(fit, "mu:x", vn, method = profile_taylor())
-  wide <- err(statmod_profile(fit, "mu:x", v, method = profile_taylor()), g)
-  expect_lt(err(tn, gn), 1e-3)
-  expect_lt(err(tn, gn), wide / 5)
-  expect_error(statmod_profile(fit, "mu:x", v, method = profile_taylor(order = 3)),
-               "profile_grid")
-  expect_error(statmod_profile(fit, "mu:x", v, method = profile_continuation(order = 2)),
-               "profile_grid")
+  for (o in 1:2) {
+    c1 <- statmod_profile(fit, "mu:x", v, method = profile_continuation(order = o))
+    expect_equal(c1$profile_loglik, g$profile_loglik, tolerance = 1e-6)
+    expect_equal(c1$outer_criterion, g$outer_criterion, tolerance = 1e-6)
+  }
+  e <- vapply(2:5, function(o) {
+    err(statmod_profile(fit, "mu:x", v, method = profile_taylor(order = o)), g)
+  }, numeric(1))
+  expect_true(all(diff(e) < 0))
+  expect_lt(e[4], 1e-4)
+})
+
+test_that("the exact derivative of the nested problem agrees with the refits", {
+  set.seed(1)
+  dd <- data.frame(x = runif(150), z = runif(150))
+  dd$y <- 1 + 2 * dd$x + stats::rnorm(150, sd = exp(-0.9 - 0.2 * dd$z))
+  fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd)
+  ctx <- profile_context(fit, "mu:x", "held")
+  base <- profile_point(ctx, ctx$estimate)
+  base$val <- ctx$estimate
+  N <- profile_nested_state(ctx, base)
+  se <- profile_setup(ctx, base$par)$se
+  # the central difference of the refits at two values, the reference that
+  # shares no arithmetic with the Hessian of the criterion
+  eps <- 0.1 * se
+  zp <- profile_point(ctx, ctx$estimate + eps)
+  zm <- profile_point(ctx, ctx$estimate - eps)
+  fd <- (zp$par[N$gam] - zm$par[N$gam]) / (2 * eps)
+  exact <- as.numeric(-solve(N$Vgg, N$Vgt))
+  expect_equal(exact, fd, tolerance = 1e-3)
 })
 
 test_that("a halved step reaches the same point", {

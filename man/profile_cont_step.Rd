@@ -4,7 +4,7 @@
 \alias{profile_cont_step}
 \title{One Step of a Continuation}
 \usage{
-profile_cont_step(ctx, method, prev, val, J, depth = 0L)
+profile_cont_step(ctx, method, prev, val, nested, depth = 0L)
 }
 \arguments{
 \item{ctx}{The context of the call.}
@@ -15,7 +15,7 @@ profile_cont_step(ctx, method, prev, val, J, depth = 0L)
 
 \item{val}{The held values to reach.}
 
-\item{J}{The nested Jacobian, or \code{NULL}.}
+\item{nested}{Whether the criterion estimates coordinates of the model.}
 
 \item{depth}{The number of halvings so far.}
 }

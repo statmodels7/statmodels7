@@ -9,7 +9,8 @@
   refit: it develops the coefficients that are not held to the order given
   and computes the log-likelihood and the penalty exactly at the predicted
   coefficients. Coordinates that `reml()` or `ml()` estimate are followed
-  through the tangent of the nested problem. Both require `hyper = "held"`
+  through the nested problem, from the exact Hessian of the criterion over
+  those coordinates and the held ones, at every order. Both require `hyper = "held"`
   and reject kinked penalties, break-point terms without smoothing and
   structural terms. The column `converged` is `NA` for the expansion.
 

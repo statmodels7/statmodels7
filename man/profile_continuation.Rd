@@ -58,13 +58,14 @@ part of the output.
 Coordinates that the outer criterion estimates (the unpenalized
 coefficients of the parameters other than the first under \code{\link[=reml]{reml()}} or
 \code{\link[=ml]{ml()}}) are re-estimated by the criterion at every point of the exact
-method. Their tangent is computed from the nested problem: the refit of
-\code{\link[=profile_grid]{profile_grid()}} at two values on either side of the estimate gives, by a
-central difference, the derivative of all coefficients with respect to each
-held one, and this tangent is applied from every previous point. The first
+method. They are followed through the nested problem: the held
+coefficients and those coordinates are criterion coordinates together, the
+exact Hessian of the criterion over them gives the derivative of the
+estimated coordinates with respect to the held ones, and the other
+coefficients are the penalized mode at the predicted coordinates. The first
 step starts from the refit with the held coefficients at the estimate,
 which differs from the fit where the criterion does not integrate the held
-coefficients. In that case only \code{order = 1} is available.
+coefficients.
 
 The method requires \code{hyper = "held"} and a model whose coefficients are
 smooth functions of the held ones: the terms \code{\link[modelterms7:linpar]{modelterms7::linpar()}},
