@@ -17,9 +17,10 @@ profile_context(fit, which, hyper)
 A list.
 }
 \description{
-Resolves the labels of \code{which} against the fit, rejects the coefficients
+Resolves the labels of \code{which} against the fit, rejects the quantities
 that cannot be held, and collects what every refit of the profile reads:
 the specification, the stacked estimates, the positions of the held
-coefficients, the settings of the inner fit and the outer criterion.
+coefficients, the hyperparameters held, the settings of the inner fit and
+the outer criterion.
 }
 \keyword{internal}

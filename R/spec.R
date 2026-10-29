@@ -496,6 +496,10 @@ assemble_blocks <- function(blocks, sparse) {
 #' @param held_coef A named list, one entry per distribution parameter, of
 #'   coefficients held at a value, each a named numeric vector keyed by
 #'   coefficient name. The list is empty by default.
+#' @param held_hyper A named list keyed by distribution parameter, then by
+#'   the key of a term, of hyperparameters held at a value, each a named
+#'   numeric vector on the scale of the hyperparameter. The list is empty by
+#'   default.
 #' @param threads The number of threads, a single integer.
 #' @param cores The number of separate R processes for the independent fits of
 #'   a cross-validation and of a kinked path's product grid, a single integer.
@@ -508,7 +512,8 @@ assemble_blocks <- function(blocks, sparse) {
 #'   that a respecification reads, `NULL` until [statmod_respec()] sets it.
 #'   `structural` holds the parameters of a structural term where a fit has
 #'   set them. `held_coef` holds coefficients held at a value, by name, empty
-#'   by default. `threads` and `cores` hold the thread and process counts
+#'   by default. `held_hyper` holds hyperparameters at a value, by term and
+#'   name, empty by default. `threads` and `cores` hold the thread and process counts
 #'   that [statmod()] sets.
 #'
 #' @seealso [statmod_spec()], the constructor to use,
@@ -556,6 +561,13 @@ StatmodSpec <- S7::new_class("StatmodSpec",
     # hold is how all three are computed without rewriting the formula,
     # which would rebuild every term and move a basis's knots.
     held_coef = S7::new_property(S7::class_list, default = quote(list())),
+    # HYPERPARAMETERS HELD AT A VALUE, keyed as the fit's own store is: the
+    # distribution parameter, then the key of the term, then a numeric vector
+    # named by hyperparameter, on the scale of the parameter. statmod_penalty_keys()
+    # merges it into the values that a term holds, which is where every reader
+    # of a held hyperparameter looks, so a hyperparameter is held without
+    # rebuilding the term that carries it.
+    held_hyper = S7::new_property(S7::class_list, default = quote(list())),
     # the thread count statmod(threads =) was given, carried here because
     # the specification is what every consumer of the assembly already
     # holds. The default keeps every other constructor -- a respec, a fold

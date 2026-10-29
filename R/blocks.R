@@ -746,13 +746,18 @@ statmod_penalty_keys <- function(spec) {
       ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
       if (!length(ent)) next
       for (e in ent) {
+        key <- statmod_entry_key(nm, ent, e)
+        # a hyperparameter held on the specification joins what the term holds
+        hh <- spec@held_hyper[[p]][[key]]
+        fx <- if (is.null(e$fixed)) list() else e$fixed
+        for (h in names(hh)) fx[[h]] <- as.numeric(hh[[h]])
         out[[length(out) + 1L]] <- list(
-          param = p, term = nm, key = statmod_entry_key(nm, ent, e),
+          param = p, term = nm, key = key,
           within = e$index, penalty = e$penalty,
           # what the TERM holds and how finely it wants each swept: the
           # entry carries both, so a penalty reached through a sub-term of
           # a structural one carries them too
-          fixed = if (is.null(e$fixed)) list() else e$fixed,
+          fixed = fx,
           n_values = if (is.null(e$n_values)) list() else e$n_values,
           values = if (is.null(e$values)) list() else e$values,
           min_ratio = if (is.null(e$min_ratio)) numeric(0) else

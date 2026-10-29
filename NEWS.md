@@ -1,3 +1,15 @@
+# statmodels7 0.226.0
+
+* `statmod_profile()` accepts hyperparameters in `which`, alone or with
+  coefficients, named by the key of `fit@hyper` with slashes
+  (`"mu/s(z)/lambda"`). The values are on the scale of the link and
+  `profile_range()` has a new argument `fallback` for the grid where the
+  standard error of the hyperparameter is not available. The profile is then
+  the column `outer_criterion`. A hyperparameter is held on the specification
+  through the new property `held_hyper` of `StatmodSpec`, merged into the
+  values that a term holds, without rebuilding the terms. The grid is the only
+  method that holds a hyperparameter.
+
 # statmodels7 0.225.0
 
 * New `profile_continuation()` and `profile_taylor()`, approximate methods of

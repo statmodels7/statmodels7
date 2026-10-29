@@ -16,8 +16,9 @@ statmod_profile(
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{which}{A character vector of unique labels \code{"parameter:coefficient"},
-of one equation or of several.}
+\item{which}{A character vector of unique labels \code{"parameter:coefficient"}
+of coefficients and \code{"parameter/term/name"} of hyperparameters, of one
+equation or of several.}
 
 \item{values}{Either one \code{\link[=profile_range]{profile_range()}}, which applies to every
 coefficient of \code{which}, or a list. The named elements of a list carry
@@ -138,6 +139,40 @@ parameter of a nonlinear term, the positions of the break-points and the
 parameters of a covariance structure. Values on another scale must be
 mapped to it by the caller. A monotone map relabels the grid and leaves the
 columns of the profile unchanged.
+}
+
+\section{A hyperparameter as an object of the profile}{
+\code{which} may name hyperparameters, alone or with coefficients. A
+hyperparameter is named by the key that \code{fit@hyper} uses, the distribution
+parameter, the key of the term and the name of the hyperparameter, joined
+by slashes: \code{"mu/s(z)/lambda"} is the smoothing parameter of \code{s(z)} in the
+equation of \code{mu}. The names are the entries of \code{fit@hyper}, and the
+coordinates of the outer search are printed under the same keys. Only a
+hyperparameter that the outer criterion \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} estimates can be
+held. A hyperparameter that a path chooses for a kinked penalty, one that
+the term holds at a value, and a covariance class are not held yet.
+
+The values of a hyperparameter are on the scale of its link, for example
+\eqn{\log\lambda}, and \code{\link[=profile_range]{profile_range()}} places them from the standard
+error of the exact Hessian of the outer criterion, or from its \code{fallback}
+where that standard error is not available.
+
+When \code{which} contains a hyperparameter, the profile is the column
+\code{outer_criterion}: the value of the outer criterion of the model with every
+quantity of \code{which} held, the other coefficients at the penalized mode, the
+coordinates that the criterion estimates estimated by it and, with
+\code{hyper = "refit"}, the other hyperparameters estimated by the outer search.
+The columns \code{profile_loglik}, \code{profile_penalty} and \code{profile_pen_loglik}
+then report the inner criterion at the point reached, and are not the
+profile. When \code{which} contains only coefficients the profile is
+\code{profile_pen_loglik}, as described above. A hyperparameter is held on the
+specification, through the property \code{held_hyper} of \code{\link[=StatmodSpec]{StatmodSpec()}}, and
+the terms are not rebuilt.
+
+Under \code{\link[=reml]{reml()}}, holding an unpenalized coefficient changes the space of
+the fixed effects over which the criterion integrates, so that the
+difference of the criterion between two values of that coefficient is not
+a likelihood ratio in the usual sense. With \code{\link[=ml]{ml()}} it is.
 }
 
 \section{The hyperparameters, and the coefficients of the criterion}{

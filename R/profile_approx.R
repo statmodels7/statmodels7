@@ -195,6 +195,10 @@ profile_approx_check <- function(ctx, method) {
     stop(sprintf("%s requires hyper = \"held\". %s", method, hint),
          call. = FALSE)
   }
+  if (length(ctx$hidx)) {
+    stop(sprintf(paste0("%s does not hold hyperparameters yet. %s"), method,
+                 hint), call. = FALSE)
+  }
   spec <- ctx$spec
   design <- statmod_design(spec)
   if (length(kinked_coords(spec, design))) {

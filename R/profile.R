@@ -27,6 +27,16 @@ NULL
 #' convention that `vcov()` uses by default. The grid is symmetric about the
 #' estimate, and it contains the estimate itself when `n` is odd.
 #'
+#' For a hyperparameter the grid is placed on the scale of its link (for
+#' example \eqn{\log\lambda}), at the estimate plus and minus `width`
+#' standard errors, with the standard error from the exact Hessian of the
+#' outer criterion, the one that `summary()` reads. Where that standard error
+#' is not available, or the estimate lies outside the interval below, because
+#' the hyperparameter is at an edge of its range or the criterion is flat in
+#' its direction, the grid is the estimate, cut to that interval, plus and
+#' minus `fallback`. The values are cut to the interval from -8 to 8 of the
+#' scale of the link, which [statmod_certificate()] reads as the interior.
+#'
 #' The scale is the unconstrained one. A coefficient of a linear predictor
 #' lives there, and so do the parameters of a nonlinear term, the positions
 #' of the break-points and the parameters of a covariance structure; the
@@ -35,9 +45,12 @@ NULL
 #' @param width A single positive number: the half-width of the grid in
 #'   standard errors.
 #' @param n A single integer, at least 2: the number of values.
+#' @param fallback A single positive number: the half-width of the grid of a
+#'   hyperparameter on the scale of its link, used where its standard error is
+#'   not available.
 #'
-#' @return An object of class `ProfileRange`, with the properties `width` and
-#'   `n`.
+#' @return An object of class `ProfileRange`, with the properties `width`, `n`
+#'   and `fallback`.
 #'
 #' @seealso [statmod_profile()], which takes it in its argument `values`.
 #'
@@ -45,16 +58,22 @@ NULL
 #' profile_range()
 #' profile_range(width = 2, n = 9)
 #' @export
-profile_range <- function(width = 3, n = 21) {
-  ProfileRange(width = width, n = as.integer(n))
+profile_range <- function(width = 3, n = 21, fallback = 3) {
+  ProfileRange(width = width, n = as.integer(n), fallback = fallback)
 }
 
 #' @rdname profile_range
 #' @aliases ProfileRange
 ProfileRange <- S7::new_class(
   "ProfileRange",
-  properties = list(width = S7::class_numeric, n = S7::class_integer),
+  properties = list(width = S7::class_numeric, n = S7::class_integer,
+                    fallback = S7::new_property(S7::class_numeric,
+                                                default = 3)),
   validator = function(self) {
+    if (length(self@fallback) != 1L || !is.finite(self@fallback) ||
+        self@fallback <= 0) {
+      return("'fallback' must be a single positive number.")
+    }
     if (length(self@width) != 1L || !is.finite(self@width) || self@width <= 0) {
       return("'width' must be a single positive number.")
     }
@@ -266,6 +285,40 @@ profile_compute <- S7::new_generic(
 #' mapped to it by the caller. A monotone map relabels the grid and leaves the
 #' columns of the profile unchanged.
 #'
+#' # A hyperparameter as an object of the profile
+#'
+#' `which` may name hyperparameters, alone or with coefficients. A
+#' hyperparameter is named by the key that `fit@hyper` uses, the distribution
+#' parameter, the key of the term and the name of the hyperparameter, joined
+#' by slashes: `"mu/s(z)/lambda"` is the smoothing parameter of `s(z)` in the
+#' equation of `mu`. The names are the entries of `fit@hyper`, and the
+#' coordinates of the outer search are printed under the same keys. Only a
+#' hyperparameter that the outer criterion [reml()] or [ml()] estimates can be
+#' held. A hyperparameter that a path chooses for a kinked penalty, one that
+#' the term holds at a value, and a covariance class are not held yet.
+#'
+#' The values of a hyperparameter are on the scale of its link, for example
+#' \eqn{\log\lambda}, and [profile_range()] places them from the standard
+#' error of the exact Hessian of the outer criterion, or from its `fallback`
+#' where that standard error is not available.
+#'
+#' When `which` contains a hyperparameter, the profile is the column
+#' `outer_criterion`: the value of the outer criterion of the model with every
+#' quantity of `which` held, the other coefficients at the penalized mode, the
+#' coordinates that the criterion estimates estimated by it and, with
+#' `hyper = "refit"`, the other hyperparameters estimated by the outer search.
+#' The columns `profile_loglik`, `profile_penalty` and `profile_pen_loglik`
+#' then report the inner criterion at the point reached, and are not the
+#' profile. When `which` contains only coefficients the profile is
+#' `profile_pen_loglik`, as described above. A hyperparameter is held on the
+#' specification, through the property `held_hyper` of [StatmodSpec()], and
+#' the terms are not rebuilt.
+#'
+#' Under [reml()], holding an unpenalized coefficient changes the space of
+#' the fixed effects over which the criterion integrates, so that the
+#' difference of the criterion between two values of that coefficient is not
+#' a likelihood ratio in the usual sense. With [ml()] it is.
+#'
 #' # The hyperparameters, and the coefficients of the criterion
 #'
 #' With `hyper = "held"` the hyperparameters (the smoothing parameters and the
@@ -293,8 +346,9 @@ profile_compute <- S7::new_generic(
 #' profile and signals an error.
 #'
 #' @param fit A [StatmodFit()].
-#' @param which A character vector of unique labels `"parameter:coefficient"`,
-#'   of one equation or of several.
+#' @param which A character vector of unique labels `"parameter:coefficient"`
+#'   of coefficients and `"parameter/term/name"` of hyperparameters, of one
+#'   equation or of several.
 #' @param values Either one [profile_range()], which applies to every
 #'   coefficient of `which`, or a list. The named elements of a list carry
 #'   names of `which` and are numeric vectors (the values, on the scale
@@ -371,13 +425,129 @@ statmod_profile <- function(fit, which,
 }
 
 
+#' The Hyperparameters That the Outer Criterion Estimates
+#'
+#' @description
+#' Lists the hyperparameters of a fit that [statmod_profile()] can hold, one
+#' row for each coordinate of the outer search, with the address that `which`
+#' uses, the estimate on the scale of the hyperparameter and on the scale of
+#' its link.
+#'
+#' @param fit A [StatmodFit()].
+#' @param spec The specification of the fit.
+#' @param blocks Its blocks.
+#'
+#' @return A data frame with the columns `key`, `parameter`, `term`, `name`,
+#'   `estimate` and `eta`, and the attributes `links` and `members`, those of
+#'   the outer index. It has no rows where the fit has no outer criterion or
+#'   estimates no hyperparameter.
+#'
+#' @keywords internal
+profile_hyper_table <- function(fit, spec, blocks) {
+  idx <- outer_hyper_index(spec, blocks)
+  none <- !nrow(idx) || is.null(fit@methods$outer)
+  if (none) {
+    return(structure(data.frame(key = character(0), parameter = character(0),
+                                term = character(0), name = character(0),
+                                estimate = numeric(0), eta = numeric(0),
+                                stringsAsFactors = FALSE),
+                     links = list(), members = index_members(idx)[0, ]))
+  }
+  est <- vapply(seq_len(nrow(idx)), function(j) hyper_value(fit@hyper, idx, j),
+                numeric(1))
+  structure(data.frame(key = paste(idx$parameter, idx$term, idx$name, sep = "/"),
+                       parameter = idx$parameter, term = idx$term,
+                       name = idx$name, estimate = est,
+                       eta = hyper_to_eta(fit@hyper, idx),
+                       stringsAsFactors = FALSE),
+            links = attr(idx, "links"), members = index_members(idx))
+}
+
+
+#' Hold Hyperparameters on a Specification
+#'
+#' @description
+#' Writes the hyperparameters of the rows `hyp` of the table of
+#' [profile_hyper_table()], at the values `eta` on the scale of their links,
+#' into `held_hyper` of the specification, under the key of every member of a
+#' shared hyperparameter.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param hyp The rows of the table, a data frame with the attributes of
+#'   [profile_hyper_table()] and a column `row`, the row of the full table.
+#' @param eta The values on the scale of the links, one for each row of `hyp`.
+#'
+#' @return `spec`, with `held_hyper` set.
+#'
+#' @keywords internal
+profile_hold_hyper <- function(spec, hyp, eta) {
+  hh <- spec@held_hyper
+  links <- attr(hyp, "links")
+  mem <- attr(hyp, "members")
+  for (i in seq_len(nrow(hyp))) {
+    v <- linkfunctions7::linkinv(links[[hyp$row[i]]], eta[[i]])
+    for (m in which(mem$row == hyp$row[i])) {
+      old <- hh[[mem$parameter[m]]][[mem$term[m]]]
+      old[[mem$name[m]]] <- v
+      hh[[mem$parameter[m]]][[mem$term[m]]] <- old
+    }
+  }
+  S7::set_props(spec, held_hyper = hh)
+}
+
+
+#' The Hyperparameter Store With Held Values Written In
+#'
+#' @param ctx The context of the call.
+#' @param val The held values, one for each label of `which`.
+#' @param hyper The store to write into.
+#'
+#' @return `hyper`, with the held hyperparameters at their values.
+#'
+#' @keywords internal
+profile_hyper_at <- function(ctx, val, hyper) {
+  hyp <- ctx$hyp
+  mem <- attr(hyp, "members")
+  links <- attr(hyp, "links")
+  for (i in seq_len(nrow(hyp))) {
+    v <- linkfunctions7::linkinv(links[[hyp$row[i]]], val[ctx$hidx[i]])
+    for (m in which(mem$row == hyp$row[i])) {
+      hyper[[mem$parameter[m]]][[mem$term[m]]][[mem$name[m]]] <- v
+    }
+  }
+  hyper
+}
+
+
+#' The Specification With the Labelled Quantities Held
+#'
+#' @param ctx The context of the call.
+#' @param val The held values, one for each label of `which`.
+#' @param spec The specification to hold them on.
+#'
+#' @return `spec`, with the coefficients in `held_coef` and the
+#'   hyperparameters in `held_hyper`.
+#'
+#' @keywords internal
+profile_spec <- function(ctx, val, spec = ctx$spec) {
+  if (length(ctx$cidx)) {
+    spec <- profile_hold(spec, ctx$param, ctx$coefname, val[ctx$cidx])
+  }
+  if (length(ctx$hidx)) {
+    spec <- profile_hold_hyper(spec, ctx$hyp, val[ctx$hidx])
+  }
+  spec
+}
+
+
 #' The Context of a Profile
 #'
 #' @description
-#' Resolves the labels of `which` against the fit, rejects the coefficients
+#' Resolves the labels of `which` against the fit, rejects the quantities
 #' that cannot be held, and collects what every refit of the profile reads:
 #' the specification, the stacked estimates, the positions of the held
-#' coefficients, the settings of the inner fit and the outer criterion.
+#' coefficients, the hyperparameters held, the settings of the inner fit and
+#' the outer criterion.
 #'
 #' @param fit A [StatmodFit()].
 #' @param which The labels.
@@ -388,8 +558,8 @@ statmod_profile <- function(fit, which,
 #' @keywords internal
 profile_context <- function(fit, which, hyper) {
   if (!is.character(which) || !length(which) || anyNA(which)) {
-    stop("'which' must be a character vector of labels \"parameter:coefficient\".",
-         call. = FALSE)
+    stop("'which' must be a character vector of labels \"parameter:coefficient\" ",
+         "or \"parameter/term/name\".", call. = FALSE)
   }
   if (anyDuplicated(which)) {
     stop("'which' must not repeat a label: ",
@@ -407,18 +577,43 @@ profile_context <- function(fit, which, hyper) {
          call. = FALSE)
   }
   lab <- coef_labels(spec, design)
-  bad <- setdiff(which, rownames(lab))
+  blocks <- statmod_blocks(spec, design)
+  htab <- profile_hyper_table(fit, spec, blocks)
+  htab$row <- seq_len(nrow(htab))
+  is_h <- which %in% htab$key
+  bad <- setdiff(which[!is_h], rownames(lab))
   if (length(bad)) {
-    stop(sprintf("Not a coefficient of this fit: %s.\n  The labels are %s%s.",
+    stop(sprintf(paste0("Not a coefficient or a hyperparameter of this fit: ",
+                        "%s.\n  The coefficients are %s%s.\n  The ",
+                        "hyperparameters are %s."),
                  paste(sprintf("'%s'", bad), collapse = ", "),
                  paste(utils::head(rownames(lab), 12L), collapse = ", "),
-                 if (nrow(lab) > 12L) ", ..." else ""), call. = FALSE)
+                 if (nrow(lab) > 12L) ", ..." else "",
+                 if (nrow(htab)) paste(htab$key, collapse = ", ") else "none"),
+         call. = FALSE)
+  }
+  cidx <- which(!is_h)
+  hidx <- which(is_h)
+  hyp <- htab[match(which[hidx], htab$key), , drop = FALSE]
+  attr(hyp, "links") <- attr(htab, "links")
+  attr(hyp, "members") <- attr(htab, "members")
+  if (length(hidx)) {
+    if (is.null(fit@methods$outer)) {
+      stop("A hyperparameter is profiled through the outer criterion, and ",
+           "this fit has none.", call. = FALSE)
+    }
+    if (!fit@methods$outer@kind %in% c("ml", "reml")) {
+      stop("A hyperparameter is profiled through a marginal criterion, ",
+           "reml() or ml(), and this fit has ", fit@methods$outer@kind, "().",
+           call. = FALSE)
+    }
   }
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
-  param <- lab[which, "parameter"]
-  coefname <- lab[which, "coefficient"]
-  at <- vapply(seq_along(which), function(i) {
+  cw <- which[cidx]
+  param <- lab[cw, "parameter"]
+  coefname <- lab[cw, "coefficient"]
+  at <- vapply(seq_along(cw), function(i) {
     offs[[match(param[i], params)]] +
       match(coefname[i], design[[param[i]]]$coef_names)
   }, numeric(1))
@@ -427,7 +622,7 @@ profile_context <- function(fit, which, hyper) {
     stop(sprintf(paste0("%s aliased, so it has no estimate to profile:\n  ",
                         "its column is a combination of the others and the ",
                         "fit left it out."),
-                 paste(sprintf("'%s' is", which[isal]), collapse = ", ")),
+                 paste(sprintf("'%s' is", cw[isal]), collapse = ", ")),
          call. = FALSE)
   }
   kc <- kinked_coords(spec, design)
@@ -437,13 +632,12 @@ profile_context <- function(fit, which, hyper) {
                         "supported yet: that block is fitted by a coordinate ",
                         "descent, which\n  cannot leave one coordinate at a ",
                         "held value."),
-                 paste(sprintf("'%s' is", which[at %in% kc]), collapse = ", ")),
+                 paste(sprintf("'%s' is", cw[at %in% kc]), collapse = ", ")),
          call. = FALSE)
   }
   method <- fit@methods$smooth
   cfg <- inner_settings(method)
   outer <- fit@methods$outer
-  blocks <- statmod_blocks(spec, design)
   hyper0 <- fit@hyper
   if (identical(hyper, "refit") && !is.null(fit@methods$sparse_criterion) &&
       nrow(path_rows(spec, blocks, hyper0))) {
@@ -452,11 +646,15 @@ profile_context <- function(fit, which, hyper) {
          "every point. Use hyper = \"held\".", call. = FALSE)
   }
   beta_fit <- unlist(fit@coefficients[params], use.names = FALSE)
+  estimate <- numeric(length(which))
+  estimate[cidx] <- beta_fit[at]
+  estimate[hidx] <- hyp$eta
   # which search each point runs. The coordinates the criterion estimates are
-  # read with the profiled coefficients held, so a profiled coefficient is not
+  # read with the held quantities fixed, so a profiled coefficient is not
   # among them
-  hold0 <- stats::setNames(as.list(beta_fit[at]), which)
   spec_at <- profile_hold(spec, param, coefname, beta_fit[at])
+  if (length(hidx)) spec_at <- profile_hold_hyper(spec_at, hyp, hyp$eta)
+  blocks_at <- statmod_blocks(spec_at, design)
   gam <- if (is.null(outer)) NULL else if (outer_minimize(outer)) {
     marginal_coords(spec_at, design, NULL)
   } else {
@@ -464,10 +662,12 @@ profile_context <- function(fit, which, hyper) {
   }
   ng <- length(gam$where)
   nh <- if (is.null(outer) || identical(hyper, "held")) 0L else
-    nrow(outer_hyper_index(spec_at, blocks))
-  psi <- profile_psi_groups(spec, design, param, coefname)
-  list(fit = fit, spec = spec, params = params, psi = psi, which = which, param = param,
-       coefname = coefname, at = at, estimate = beta_fit[at],
+    nrow(outer_hyper_index(spec_at, blocks_at))
+  psi <- lapply(profile_psi_groups(spec, design, param, coefname),
+                function(i) cidx[i])
+  list(fit = fit, spec = spec, params = params, psi = psi, which = which,
+       cidx = cidx, hidx = hidx, hyp = hyp, param = param,
+       coefname = coefname, at = at, estimate = estimate,
        beta_fit = beta_fit, hyper = hyper, hyper0 = hyper0, inner = method,
        cfg = cfg, outer = outer,
        emethod = if (is.null(outer)) cfg$emethod else
@@ -614,10 +814,19 @@ profile_values <- function(ctx, values) {
   }
   if (is.null(default)) default <- profile_range()
   se <- NULL
+  seh <- NULL
   out <- list()
   for (i in seq_along(which)) {
     v <- if (!is.null(given[[which[i]]])) given[[which[i]]] else default
-    if (S7::S7_inherits(v, ProfileRange)) {
+    if (S7::S7_inherits(v, ProfileRange) && i %in% ctx$hidx) {
+      if (is.null(seh)) seh <- profile_hyper_se(ctx)
+      s <- seh[[match(i, ctx$hidx)]]
+      est <- ctx$estimate[i]
+      edge <- is.na(s) || !is.finite(s) || s <= 0 || abs(est) > 8
+      half <- if (edge) v@fallback else s * v@width
+      v <- pmin(pmax(min(max(est, -8), 8) +
+                       half * seq(-1, 1, length.out = v@n), -8), 8)
+    } else if (S7::S7_inherits(v, ProfileRange)) {
       if (is.null(se)) {
         se <- sqrt(diag(stats::vcov(ctx$fit)))
       }
@@ -637,6 +846,30 @@ profile_values <- function(ctx, values) {
     out[[which[i]]] <- sort(unique(as.numeric(v)))
   }
   out
+}
+
+
+#' The Standard Errors of the Held Hyperparameters on the Scale of Their Links
+#'
+#' @param ctx The context of the call.
+#'
+#' @return A numeric vector with one element for each held hyperparameter, `NA`
+#'   where the standard error is not available.
+#'
+#' @keywords internal
+profile_hyper_se <- function(ctx) {
+  fit <- ctx$fit
+  spec <- fit@spec
+  V <- tryCatch(
+    statmod_hyper_vcov(spec, statmod_design(spec), fit@coefficients, fit@hyper,
+                       fit@methods$outer, inner = fit@methods$smooth,
+                       pinned = fit@methods$pinned),
+    error = function(e) NULL)
+  if (is.null(V)) return(rep(NA_real_, nrow(ctx$hyp)))
+  k <- paste(ctx$hyp$parameter, ctx$hyp$term, ctx$hyp$name, sep = "\r")
+  d <- diag(V)
+  out <- unname(d[match(k, rownames(V))])
+  sqrt(ifelse(is.finite(out) & out > 0, out, NA_real_))
 }
 
 
@@ -684,13 +917,14 @@ profile_map <- function(ctx, cores, n, body) {
 #'
 #' @keywords internal
 profile_point <- function(ctx, val, start = NULL, maxit = Inf) {
-  spec <- profile_hold(ctx$spec, ctx$param, ctx$coefname, val)
+  spec <- profile_spec(ctx, val)
   cfg <- ctx$cfg
   if (is.finite(maxit)) cfg$maxit <- as.integer(maxit)
   beta_fit <- ctx$beta_fit
   beta0 <- if (is.null(start)) beta_fit else start$par
-  beta0[ctx$at] <- val
+  beta0[ctx$at] <- val[ctx$cidx]
   hyper0 <- if (is.null(start)) ctx$hyper0 else start$hyper
+  hyper0 <- profile_hyper_at(ctx, val, hyper0)
   run <- function(variant) {
     design <- statmod_design(spec)
     blocks <- statmod_blocks(spec, design)
@@ -716,11 +950,20 @@ profile_point <- function(ctx, val, start = NULL, maxit = Inf) {
   }
   res <- best$res
   cf <- res$obj$split(res$par)
+  crit <- if (ctx$use_outer) as.numeric(res$criterion) else NA_real_
+  # a hyperparameter held with nothing left for the criterion to estimate:
+  # the criterion is read at the penalized mode
+  if (!ctx$use_outer && length(ctx$hidx)) {
+    m <- statmod_marginal(spec, best$design, cf, hyper0, ctx$outer,
+                          basis = integrated_basis(spec, best$design,
+                                                   ctx$outer@kind))
+    crit <- if (is.null(m)) NA_real_ else m$value
+  }
   list(par = res$par,
        hyper = if (ctx$use_outer && !is.null(res$hyper)) res$hyper else hyper0,
        objective = res$value,
        loglik = statmod_loglik_at(spec, cf, best$design),
-       criterion = if (ctx$use_outer) as.numeric(res$criterion) else NA_real_,
+       criterion = crit,
        converged = isTRUE(res$converged) || isTRUE(res$settled))
 }
 
@@ -858,7 +1101,8 @@ profile_assemble <- function(ctx, grid, pts, method) {
   mx <- cbind(as.data.frame(as.list(stats::setNames(ctx$estimate, ctx$which)),
                             check.names = FALSE),
               one(fit@loglik, fit@objective,
-                  if (ctx$use_outer && length(fit@criterion)) fit@criterion[[1L]]
+                  if ((ctx$use_outer || length(ctx$hidx)) && length(fit@criterion))
+                    fit@criterion[[1L]]
                   else NA_real_, isTRUE(fit@converged)))
   names(mx) <- names(out)
   attr(out, "maximum") <- mx

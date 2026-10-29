@@ -19,6 +19,7 @@ StatmodSpec(
   structural = list(),
   linpar = list(),
   held_coef = list(),
+  held_hyper = list(),
   threads = 1L,
   cores = 1L
 )
@@ -59,6 +60,11 @@ keyed by the term; empty until a fit sets them.}
 coefficients held at a value, each a named numeric vector keyed by
 coefficient name. The list is empty by default.}
 
+\item{held_hyper}{A named list keyed by distribution parameter, then by
+the key of a term, of hyperparameters held at a value, each a named
+numeric vector on the scale of the hyperparameter. The list is empty by
+default.}
+
 \item{threads}{The number of threads, a single integer.}
 
 \item{cores}{The number of separate R processes for the independent fits of
@@ -73,7 +79,8 @@ holds the rows
 that a respecification reads, \code{NULL} until \code{\link[=statmod_respec]{statmod_respec()}} sets it.
 \code{structural} holds the parameters of a structural term where a fit has
 set them. \code{held_coef} holds coefficients held at a value, by name, empty
-by default. \code{threads} and \code{cores} hold the thread and process counts
+by default. \code{held_hyper} holds hyperparameters at a value, by term and
+name, empty by default. \code{threads} and \code{cores} hold the thread and process counts
 that \code{\link[=statmod]{statmod()}} sets.
 }
 \description{
