@@ -136,8 +136,9 @@ profile_continuation <- function(order = 1, maxit = Inf) {
 #' That derivative is taken by one central stencil of numericals7 on the
 #' analytic gradient. The polynomial has degree `order - 1`, so that `order`
 #' is the highest order of the derivatives of the objective that the
-#' expansion uses. The Hessian is the analytic one, or, for a model with
-#' nonlinear or smoothed break-point terms, the difference of the gradient.
+#' expansion uses. The Hessian is the observed information of the fit, with,
+#' for a model with nonlinear or smoothed break-point terms, the term of the
+#' block that moves with its coefficients.
 #' With the log-likelihood and the penalty computed exactly at the predicted
 #' coefficients, the penalized log-likelihood of every row is a lower bound
 #' of the profile. The column `converged` is `NA`.
@@ -218,27 +219,6 @@ profile_approx_check <- function(ctx, method) {
 }
 
 
-#' The Hessian of an Objective by Differences of Its Gradient
-#'
-#' @param gr The gradient, a function of the stacked coefficients.
-#' @param b The coefficients.
-#'
-#' @return A symmetric matrix.
-#'
-#' @keywords internal
-profile_fd_hessian <- function(gr, b) {
-  p <- length(b)
-  H <- matrix(0, p, p)
-  for (j in seq_len(p)) {
-    h <- 1e-5 * max(1, abs(b[j]))
-    e <- numeric(p)
-    e[j] <- h
-    H[, j] <- (gr(b + e) - gr(b - e)) / (2 * h)
-  }
-  (H + t(H)) / 2
-}
-
-
 #' The Objective, Its Hessian and the Scale of the Held Coefficients at a Point
 #'
 #' @description
@@ -261,9 +241,20 @@ profile_setup <- function(ctx, b0) {
   p <- length(b0)
   alias <- which(rownames(lab) %in% ctx$fit@aliased)
   free <- setdiff(seq_len(p), c(ctx$at, alias))
-  refresh <- length(attr(design, "refresh")) > 0L
-  H <- if (refresh) profile_fd_hessian(obj$gr, b0) else
-    (function(h) (h + t(h)) / 2)(as.matrix(obj$he(b0)))
+  H <- as.matrix(obj$he(b0))
+  # a block that moves with its coefficients adds the score times the
+  # derivative of the block to the scoring pieces
+  rf <- attr(design, "refresh")
+  if (length(rf)) {
+    if (any(vapply(rf, function(r) isTRUE(r$frozen), logical(1)))) {
+      stop("A working linearization without a derivative (a sharp jump() or ",
+           "jseg()) has no Hessian here. Use profile_grid().", call. = FALSE)
+    }
+    npar <- vapply(ctx$params, function(q) design[[q]]$npar, integer(1))
+    H <- H + mode_curvature(spec, design, obj$split(b0), ctx$params, npar,
+                            cumsum(npar) - npar, sum(npar))
+  }
+  H <- (H + t(H)) / 2
   fac <- tryCatch(chol(H[free, free, drop = FALSE]), error = function(e) NULL)
   if (is.null(fac)) {
     stop("The Hessian of the coefficients that are not held is not positive ",

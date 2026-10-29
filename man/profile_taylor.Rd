@@ -39,8 +39,9 @@ segment, of the gradient evaluated at the polynomial of the lower orders.
 That derivative is taken by one central stencil of numericals7 on the
 analytic gradient. The polynomial has degree \code{order - 1}, so that \code{order}
 is the highest order of the derivatives of the objective that the
-expansion uses. The Hessian is the analytic one, or, for a model with
-nonlinear or smoothed break-point terms, the difference of the gradient.
+expansion uses. The Hessian is the observed information of the fit, with,
+for a model with nonlinear or smoothed break-point terms, the term of the
+block that moves with its coefficients.
 With the log-likelihood and the penalty computed exactly at the predicted
 coefficients, the penalized log-likelihood of every row is a lower bound
 of the profile. The column \code{converged} is \code{NA}.

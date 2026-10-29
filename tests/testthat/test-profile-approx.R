@@ -220,3 +220,30 @@ test_that("the constructors validate their arguments", {
   expect_s3_class(S7::S7_class(profile_taylor()), "S7_class")
   expect_true(S7::S7_inherits(profile_continuation(), profile_method))
 })
+
+test_that("the Hessian of a moving block is the difference of the gradient", {
+  set.seed(2)
+  dd <- data.frame(x = rep(seq(0.25, 4, length.out = 8), 25),
+                   z = rep(runif(25), each = 8))
+  dd$y <- 50 * exp(-exp(log(0.6) + 0.5 * dd$z) * dd$x) + stats::rnorm(200)
+  fit <- statmod(
+    y ~ 0 + modelterms7::nl(~ a * exp(-r * x), r ~ 1 + z,
+      links = list(a = linkfunctions7::log_link(),
+                   r = linkfunctions7::log_link()),
+      start = list(a = 40, r = 1)),
+    distrib = distributions7::gaussian1_distrib(
+      link_mu = linkfunctions7::identity_link()),
+    data = dd, outer_criterion = NULL)
+  ctx <- profile_context(fit, "mu:nl.r.z", "held")
+  S <- profile_setup(ctx, ctx$beta_fit)
+  b <- ctx$beta_fit
+  # the reference: central differences of the analytic gradient
+  fd <- vapply(seq_along(b), function(j) {
+    h <- 1e-5 * max(1, abs(b[j]))
+    e <- numeric(length(b))
+    e[j] <- h
+    (S$obj$gr(b + e) - S$obj$gr(b - e)) / (2 * h)
+  }, numeric(length(b)))
+  fd <- (fd + t(fd)) / 2
+  expect_lt(max(abs(S$H - fd)) / max(abs(fd)), 1e-7)
+})
