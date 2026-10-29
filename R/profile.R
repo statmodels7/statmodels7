@@ -210,8 +210,12 @@ profile_compute <- S7::new_generic("profile_compute", "method")
 #' coefficient.
 #'
 #' The column `converged` is the flag of the refit, `TRUE` when the stopping
-#' rules of the fit fired; where an outer search ran, the flag also requires
-#' that the search stopped by its own rules. A refit that signals an error
+#' rules of the fit fired. Where an outer search ran, the flag is also `TRUE`
+#' when the search ended at a point whose decrement passes the check of
+#' [statmod_certificate()], because the line search of the outer optimizer can
+#' stop at the optimum without recording that its own rules fired; a point
+#' of that kind was measured with the same criterion, to \eqn{10^{-6}}, as
+#' its neighbors that did. A refit that signals an error
 #' gives a row of `NA` with `converged = FALSE`, and the function warns.
 #'
 #' # The coefficients to hold: `which`
@@ -709,7 +713,7 @@ profile_point <- function(ctx, val, start = NULL) {
        objective = res$value,
        loglik = statmod_loglik_at(spec, cf, best$design),
        criterion = if (ctx$use_outer) as.numeric(res$criterion) else NA_real_,
-       converged = isTRUE(res$converged))
+       converged = isTRUE(res$converged) || isTRUE(res$settled))
 }
 
 

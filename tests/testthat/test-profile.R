@@ -209,6 +209,23 @@ test_that("the positions of one break-point term stay ordered", {
     "increasing order")
 })
 
+test_that("two held positions reproduce lm() with the positions fixed", {
+  set.seed(5)
+  dd <- data.frame(w = runif(300, 0, 10))
+  dd$y <- 0.5 * dd$w + 1.2 * pmax(dd$w - 3, 0) - 1.6 * pmax(dd$w - 7, 0) +
+    stats::rnorm(300, sd = 0.5)
+  fit <- statmod(y ~ seg(w, npsi = 2), distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = NULL)
+  prof <- statmod_profile(
+    fit, c("mu:seg.psi1", "mu:seg.psi2"),
+    values = list("mu:seg.psi1" = c(2.8, 3.2), "mu:seg.psi2" = c(6.7, 7.3)))
+  ref <- apply(prof[1:2], 1L, function(p) {
+    as.numeric(stats::logLik(
+      stats::lm(y ~ w + pmax(w - p[1L], 0) + pmax(w - p[2L], 0), dd)))
+  })
+  expect_equal(prof$profile_loglik, unname(ref), tolerance = 1e-9)
+})
+
 test_that("a model with a structural term is rejected", {
   skip_on_cran()
   set.seed(7)
