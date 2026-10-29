@@ -379,28 +379,30 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   [stats::glm.control()] are.
 #' @param verbose A level from 0 to 3, or a named logical vector with any of
 #'   `outer`, `blocks`, `inner` and `optimizer`.
-#' @param threads How many threads the fit may use, as
-#'   [numericals7::n_threads()] constructs it. The default,
-#'   `n_threads(1)`, is sequential and takes the sequential code path. A
-#'   larger count is passed to the compiled per-observation kernels of the
-#'   family and to the dense assembly products; below a kernel's internal
-#'   size threshold the computation stays sequential whatever the count,
-#'   and a sparse design keeps its \pkg{Matrix} route. The object's `workers`
-#'   fans the units that are independent by construction out over separate R
-#'   processes: the folds of a cross-validation, and the combinations of a
-#'   kinked path's product grid, each of which restarts its warm chain from
-#'   the sweep's own starting coefficients. Each unit fits sequentially, so
-#'   the two levels never nest. The points within one chain stay sequential,
-#'   because a point fitted from a cold start costs more than one
-#'   warm-started from the previous point, and splitting a chain would slow
-#'   the single-process default or make the result depend on the count. For
-#'   any two counts above one the result is identical bit for bit: every
-#'   parallel region decomposes its work over the elements of its output and
-#'   never splits a reduction, and the folds are seeded per fold and
-#'   collected in fold order. Between the default and a count above one the
-#'   route can change where the work is large (the BLAS crossproduct against
-#'   the compiled one, and the pivoted `qr()` against the compiled
-#'   triangular factor), and the results then agree to rounding.
+#' @param threads How many threads the fit may use inside this R process, a
+#'   single whole number (see [numericals7::local_threads()]). The default,
+#'   `1`, is sequential and takes the sequential code path. A larger count is
+#'   passed to the compiled per-observation kernels of the family and to the
+#'   dense assembly products; below a kernel's internal size threshold the
+#'   computation stays sequential whatever the count, and a sparse design
+#'   keeps its \pkg{Matrix} route. Between the default and a count above one
+#'   the route can change where the work is large (the BLAS crossproduct
+#'   against the compiled one, and the pivoted `qr()` against the compiled
+#'   triangular factor), and the results then agree to rounding. `threads`
+#'   counts threads that share memory in one process; the number of separate
+#'   R processes is `cores`.
+#' @param cores The number of separate R processes, a single whole number
+#'   (default `1`, no process besides this one). The units that are
+#'   independent by construction are fanned out over them: the folds of a
+#'   cross-validation, and the combinations of a kinked path's product grid,
+#'   each of which restarts its warm chain from the sweep's own starting
+#'   coefficients. Each unit fits sequentially, so `threads` and `cores` never
+#'   nest. The points within one chain stay sequential, because a point fitted
+#'   from a cold start costs more than one warm-started from the previous
+#'   point, and splitting a chain would slow the single-process default or
+#'   make the result depend on the count. For any two values of `cores` the
+#'   result is identical bit for bit: the folds are seeded per fold and
+#'   collected in fold order.
 #' @param ... Not used. A named argument signals an error. A hyperparameter
 #'   is held in the term that carries the penalty.
 #'
@@ -441,7 +443,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     # argument's own promise and R reports "promise already
                     # under evaluation"
                     start = NULL, linpar_control = linpar_options(),
-                    verbose = 0, threads = numericals7::n_threads(), ...) {
+                    verbose = 0, threads = 1, cores = 1, ...) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
   # THE PRIOR WEIGHTS ARE LOOKED UP IN `data` FIRST, then where statmod() was
@@ -453,10 +455,10 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # The count is validated once and travels DOWN on the specification; the
   # process-level RcppParallel setting is sized here and restored when this
   # frame exits, so a fit never leaves it moved for the code that runs
-  # after it. At the default n_threads(1) neither call touches anything and
+  # after it. At the default threads = 1 the call touches nothing and
   # every kernel takes exactly the sequential path.
-  n_thr <- numericals7::thread_count(threads)
-  numericals7::local_threads(threads)
+  n_thr <- numericals7::local_threads(threads)
+  n_cores <- check_cores(cores)
   asked <- !missing(outer_criterion)
   asked_sparse <- !missing(sparse_criterion)
   vb <- verbosity(verbose)
@@ -478,7 +480,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   spec <- statmod_spec(formula, distrib, data, weights, offsets,
                        linpar = linpar_control)
   spec@threads <- n_thr
-  spec@workers <- numericals7::worker_count(threads)
+  spec@cores <- n_cores
   design <- statmod_design(spec)
   # a marginal criterion left at auto_info() is settled against the family
   # and the structural terms here, as an iwls() left at "auto" is below

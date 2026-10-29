@@ -999,7 +999,7 @@ cv_curve <- function(spec, data, inner_optimizer, hypers,
   m <- length(hypers)
   # One seed per fold, drawn HERE: a fold's fit is then a deterministic
   # function of the fold whether it runs in this process or in a worker,
-  # which is what lets the result be independent of `workers` bit for bit
+  # which is what lets the result be independent of `cores` bit for bit
   # even where a family's starting values draw at random. The caller's own
   # stream is put back afterwards, so a fold cannot shift what the session
   # draws next.
@@ -1045,11 +1045,11 @@ cv_curve <- function(spec, data, inner_optimizer, hypers,
     # whatever statmod(threads =) asked for. Measured on a lasso over a
     # gamma response, bic() gained 1.85x from eight threads where cv()
     # gained 1.06x. The two levels still do not nest -- where the folds
-    # themselves run in worker PROCESSES each one fits on one thread, which
-    # is what numericals7::n_threads() documents -- so the count is passed
+    # themselves run in separate PROCESSES each one fits on one thread, which
+    # is what local_threads() documents -- so the count is passed
     # on only when this process is running them.
     if (!is.character(ts)) {
-      ts@threads <- if (spec@workers > 1L) 1L else spec@threads
+      ts@threads <- if (spec@cores > 1L) 1L else spec@threads
     }
     if (is.character(ts)) {
       # a fold that cannot be rebuilt is a configuration error and not a
@@ -1098,7 +1098,7 @@ cv_curve <- function(spec, data, inner_optimizer, hypers,
     }
     list(dev = dev_f, err = NULL)
   }
-  rows <- worker_map(spec, nf, one_fold)
+  rows <- worker_map(spec@cores, nf, one_fold)
   dev <- do.call(rbind, lapply(rows, `[[`, "dev"))
   errs <- unlist(lapply(rows, `[[`, "err"))
   err <- if (length(errs)) errs[[1L]] else NULL
@@ -1114,12 +1114,11 @@ cv_curve <- function(spec, data, inner_optimizer, hypers,
 #'
 #' @description
 #' Applies a body to each of `n` independent units (a cross-validation fold,
-#' a combination of a path's product grid) over the worker processes that
-#' the specification requests (`spec@workers`, from
-#' [`n_threads(workers =)`][numericals7::n_threads]) and in this process
-#' otherwise. Results come back in unit order whatever the number of
-#' workers, which makes the answer independent of the count: the units
-#' share nothing, so the same bodies run either way.
+#' a combination of a path's product grid, a bootstrap replicate) over
+#' `cores` separate R processes, and in this process when `cores` is 1.
+#' Results come back in unit order whatever the number of processes, which
+#' makes the answer independent of the count: the units share nothing, so the
+#' same bodies run either way.
 #'
 #' @details
 #' The units are independent by construction (a fold is a complete refit
@@ -1134,7 +1133,9 @@ cv_curve <- function(spec, data, inner_optimizer, hypers,
 #' therefore sequential by construction: the two levels of parallelism do
 #' not nest.
 #'
-#' @param spec A [StatmodSpec()].
+#' @param cores The number of separate R processes, a single whole number
+#'   (see [check_cores()]). It is distinct from the `threads` of a fit, which
+#'   counts threads inside one process. At most `n` processes are opened.
 #' @param n How many units.
 #' @param body The unit's body, a function of the unit index.
 #' @param what The unit's name, for the warnings.
@@ -1144,8 +1145,8 @@ cv_curve <- function(spec, data, inner_optimizer, hypers,
 #' @seealso [cv_curve()], [statmod_path()]
 #'
 #' @keywords internal
-worker_map <- function(spec, n, body, what = "folds") {
-  workers <- min(spec@workers, n)
+worker_map <- function(cores, n, body, what = "folds") {
+  workers <- min(check_cores(cores), n)
   sequential <- function() lapply(seq_len(n), body)
   if (workers <= 1L) return(sequential())
   if (isNamespaceLoaded("statmodels7") &&
@@ -1169,6 +1170,33 @@ worker_map <- function(spec, n, body, what = "folds") {
     return(sequential())
   }
   parallel::parLapply(cl, seq_len(n), body)
+}
+
+
+#' Check the Number of Processes
+#'
+#' @description
+#' Returns `cores` as an integer if it is a single whole number of at least 1,
+#' and signals an error otherwise. `cores` is the number of separate R
+#' processes over which a function distributes independent fits; it is not the
+#' `threads` of a fit, which counts threads that share memory inside one
+#' process.
+#'
+#' @param cores The value of a `cores` argument.
+#'
+#' @return A single integer, at least 1.
+#'
+#' @examples
+#' statmodels7:::check_cores(2)
+#' try(statmodels7:::check_cores(0))
+#'
+#' @keywords internal
+check_cores <- function(cores) {
+  if (!is.numeric(cores) || length(cores) != 1L || !is.finite(cores) ||
+      cores < 1 || cores != round(cores)) {
+    stop("'cores' must be a single whole number, at least 1.", call. = FALSE)
+  }
+  as.integer(cores)
 }
 
 
@@ -1320,7 +1348,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # `sp` is the specification a fit runs under, and it is an argument
   # because one caller needs a different one: a run dispatched to a worker
   # PROCESS must fit on a single thread, the two levels of
-  # numericals7::n_threads() not nesting, while every other call here runs
+  # threads and cores not nesting, while every other call here runs
   # in this process and uses the count the caller asked for.
   fit_at <- function(hy, warm, bk = blocks, sp = spec, final = FALSE) {
     if (nested || (final && gam_final)) {
@@ -1600,7 +1628,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
           # thread; where worker_map() keeps them here they use the count
           # the caller asked for
           run_spec <- spec
-          if (spec@workers > 1L) run_spec@threads <- 1L
+          if (spec@cores > 1L) run_spec@threads <- 1L
           one_run <- function(ri) {
             idxs <- runs[[ri]]
             warm <- beta
@@ -1619,7 +1647,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
             }
             out
           }
-          got <- worker_map(spec, length(runs), one_run,
+          got <- worker_map(spec@cores, length(runs), one_run,
                             what = "path combinations")
           value <- rep(NA_real_, length(hys))
           for (ri in seq_along(runs)) value[runs[[ri]]] <- got[[ri]]
@@ -1961,9 +1989,9 @@ path_top_shared <- function(obj, beta, blocks, row, hyper, b) {
 #' axes for several. The fits along a path are warm-started within each fold.
 #'
 #' The folds run over separate R processes when
-#' `statmod(threads = n_threads(workers = 4))` requests them. One seed is
-#' drawn per fold in the parent, so that the answer is identical at any worker
-#' count.
+#' `statmod(cores = 4)` requests them. One seed is
+#' drawn per fold in the parent, so that the answer is identical at any
+#' number of processes.
 #'
 #' @param nfolds How many folds, a single number of at least 2. The default
 #'   is `10`. It is ignored when `folds` is given.

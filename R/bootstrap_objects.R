@@ -371,7 +371,8 @@ as_resample_method <- function(x) {
 #' @keywords internal
 BootstrapVcov <- S7::new_class("BootstrapVcov", parent = vcov_method,
   properties = list(n = S7::class_any, resample = S7::class_any,
-                    refit = S7::class_any))
+                    refit = S7::class_any,
+                    cores = S7::new_property(S7::class_integer, default = 1L)))
 
 #' @title Bootstrap Variance of a Fit
 #'
@@ -423,10 +424,15 @@ BootstrapVcov <- S7::new_class("BootstrapVcov", parent = vcov_method,
 #' @param n A single whole number, the total number of replicates, or `NULL`.
 #' @param resample A [resample_method] object, or `NULL`.
 #' @param refit `"coefficients"`, `"full"` or `NULL`.
+#' @param cores The number of separate R processes over which replicates that
+#'   have to be computed at the call are refitted, a single whole number
+#'   (default `1`). It is distinct from the `threads` of [statmod()], which
+#'   counts threads inside one process. The values of the replicates do not
+#'   depend on it.
 #'
 #' @return A `BootstrapVcov` object, inheriting from [vcov_method], with the
-#'   property `name` equal to `"bootstrap"` and the properties `n`, `resample`
-#'   and `refit`.
+#'   property `name` equal to `"bootstrap"` and the properties `n`, `resample`,
+#'   `refit` and `cores`.
 #'
 #' @seealso [add_bootstrap()], which computes and stores the replicates,
 #'   [statmod_bootstrap()], which reads them, and [vcov_method].
@@ -441,11 +447,13 @@ BootstrapVcov <- S7::new_class("BootstrapVcov", parent = vcov_method,
 #' sqrt(diag(vcov(fit, vcov_type = bootstrap_vcov())))
 #' sqrt(diag(vcov(fit)))
 #' @export
-bootstrap_vcov <- function(n = NULL, resample = NULL, refit = NULL) {
+bootstrap_vcov <- function(n = NULL, resample = NULL, refit = NULL,
+                           cores = 1) {
   if (!is.null(n)) n <- check_boot_n(n)
   if (!is.null(resample)) resample <- as_resample_method(resample)
   if (!is.null(refit)) refit <- check_boot_refit(refit)
-  BootstrapVcov(name = "bootstrap", n = n, resample = resample, refit = refit)
+  BootstrapVcov(name = "bootstrap", n = n, resample = resample, refit = refit,
+                cores = check_cores(cores))
 }
 
 #' Check the Arguments of the Bootstrap

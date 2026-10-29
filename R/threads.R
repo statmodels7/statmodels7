@@ -56,7 +56,7 @@
 #'   of any sign is accepted; the function does not assume that the working
 #'   weights are positive.
 #' @param threads The thread count, a plain integer as
-#'   [numericals7::thread_count()] returns it. `1L`, the default, takes the
+#'   [numericals7::local_threads()] validates it. `1L`, the default, takes the
 #'   sequential route unconditionally.
 #'
 #' @return A `pa x pb` numeric matrix, with the column names of `A` and `B`
@@ -126,7 +126,7 @@ wcrossprod <- function(A, w, B, threads = 1L) {
 #' @param w Per-observation weights, length `n`. Only `wxsq()` reads it, and
 #'   it multiplies the squared entry.
 #' @param threads The thread count, a plain integer as
-#'   [numericals7::thread_count()] returns it. `1L` takes the sequential
+#'   [numericals7::local_threads()] validates it. `1L` takes the sequential
 #'   route unconditionally.
 #'
 #' @return An unnamed numeric vector of length `ncol(X)`: for `xtv()` the
@@ -194,7 +194,7 @@ wxsq <- function(X, w, threads = 1L) {
 #'   of the working weights. A sparse `A` takes the \pkg{Matrix} route and
 #'   returns whatever `crossprod()` gives for it.
 #' @param threads The thread count, a plain integer as
-#'   [numericals7::thread_count()] returns it. `1L` takes the sequential
+#'   [numericals7::local_threads()] validates it. `1L` takes the sequential
 #'   route unconditionally.
 #'
 #' @return A `p x p` symmetric numeric matrix, with the column names of `A`

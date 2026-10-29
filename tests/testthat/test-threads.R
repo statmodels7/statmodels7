@@ -69,7 +69,7 @@ test_that("a whole fit does not depend on threads", {
   d$X <- X
   f1 <- statmod(y ~ lasso(X), distributions7::gaussian1_distrib(), d)
   f2 <- statmod(y ~ lasso(X), distributions7::gaussian1_distrib(), d,
-                threads = numericals7::n_threads(2))
+                threads = 2)
   expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)
   expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
                tolerance = 1e-8)
@@ -84,15 +84,15 @@ test_that("a fit through the family's parallel kernels agrees too", {
   dd$y <- rgamma(n, shape = 1 / 0.3, scale = mu * 0.3)
   f1 <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gamma1_distrib(), dd)
   f2 <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gamma1_distrib(), dd,
-                threads = numericals7::n_threads(2))
+                threads = 2)
   expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)
   expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
                tolerance = 1e-8)
 })
 
-test_that("a cross-validated fit does not depend on workers, bit for bit", {
-  skip_on_cran()   # spawns worker processes; the sequential twin is covered
-  # workers run the same sequential bodies whatever the count, so this twin
+test_that("a cross-validated fit does not depend on cores, bit for bit", {
+  skip_on_cran()   # spawns separate processes; the sequential twin is covered
+  # separate processes run the same sequential bodies whatever the count, so this twin
   # IS identical()
   set.seed(5)
   n <- 300; p <- 12
@@ -106,14 +106,14 @@ test_that("a cross-validated fit does not depend on workers, bit for bit", {
   set.seed(42)
   f2 <- statmod(y ~ lasso(X, n_lambda = 6), distributions7::gaussian1_distrib(),
                 d, sparse_criterion = cv(nfolds = 3),
-                threads = numericals7::n_threads(1, workers = 2))
+                cores = 2)
   expect_identical(f1@coefficients, f2@coefficients)
   expect_identical(as.numeric(logLik(f1)), as.numeric(logLik(f2)))
   expect_identical(f1@hyper, f2@hyper)
 })
 
-test_that("a product-grid path does not depend on workers, bit for bit", {
-  skip_on_cran()   # spawns worker processes; the sequential twin is covered
+test_that("a product-grid path does not depend on cores, bit for bit", {
+  skip_on_cran()   # spawns separate processes; the sequential twin is covered
   # the combinations of the product are the independent unit: each restarts
   # its warm chain from the sweep's starting coefficients, so the same
   # bodies run whatever the count -- scad's grid is n_lambda x n_a runs
@@ -129,23 +129,37 @@ test_that("a product-grid path does not depend on workers, bit for bit", {
   f2 <- statmod(y ~ scad(X, a = NULL, n_lambda = 6, n_a = 3),
                 distributions7::gaussian1_distrib(), d,
                 sparse_criterion = bic(),
-                threads = numericals7::n_threads(1, workers = 2))
+                cores = 2)
   expect_identical(f1@coefficients, f2@coefficients)
   expect_identical(f1@hyper, f2@hyper)
   expect_identical(f1@criterion, f2@criterion)
 })
 
-test_that("threads must be the n_threads() object, and the setting is restored", {
+test_that("threads and cores must be whole numbers, and the setting is restored", {
   d <- data.frame(x = rnorm(60))
   d$y <- 1 + d$x + rnorm(60)
   expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(), d,
-                       threads = 4),
-               "n_threads")
+                       threads = 0), "'threads'")
+  expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(), d,
+                       cores = 0), "'cores'")
+  expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(), d,
+                       cores = "2"), "'cores'")
   old <- Sys.getenv("RCPP_PARALLEL_NUM_THREADS", unset = NA_character_)
   invisible(statmod(y ~ x, distributions7::gaussian1_distrib(), d,
-                    threads = numericals7::n_threads(2)))
+                    threads = 2))
   expect_identical(Sys.getenv("RCPP_PARALLEL_NUM_THREADS",
                               unset = NA_character_), old)
+})
+
+test_that("cores is stored on the specification and worker_map() takes it", {
+  d <- data.frame(x = rnorm(60))
+  d$y <- 1 + d$x + rnorm(60)
+  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), d, cores = 3)
+  expect_identical(fit@spec@cores, 3L)
+  expect_identical(statmod(y ~ x, distributions7::gaussian1_distrib(),
+                           d)@spec@cores, 1L)
+  expect_identical(worker_map(1, 3, function(i) i * 2), list(2, 4, 6))
+  expect_error(worker_map(0, 3, identity), "'cores'")
 })
 
 # A fold's fit is built by statmod_spec(), which makes a FRESH
@@ -169,17 +183,17 @@ test_that("a cross-validated fit uses the thread count it was given", {
                 d, sparse_criterion = cv(nfolds = 3))
   f2 <- statmod(y ~ lasso(X, n_lambda = 5), distributions7::gaussian1_distrib(),
                 d, sparse_criterion = cv(nfolds = 3),
-                threads = numericals7::n_threads(2))
+                threads = 2)
   expect_identical(f1@coefficients, f2@coefficients)
   expect_identical(as.numeric(logLik(f1)), as.numeric(logLik(f2)))
 
   # what the fold is handed, read where it is set: the count in this
-  # process, and 1 where the folds go to worker processes of their own
+  # process, and 1 where the folds go to processes of their own
   spec <- f2@spec
   expect_identical(spec@threads, 2L)
-  fold_threads <- function(sp) if (sp@workers > 1L) 1L else sp@threads
+  fold_threads <- function(sp) if (sp@cores > 1L) 1L else sp@threads
   expect_identical(fold_threads(spec), 2L)
-  spec@workers <- 4L
+  spec@cores <- 4L
   expect_identical(fold_threads(spec), 1L)
 })
 
@@ -223,7 +237,7 @@ test_that("a dense penalized fit does not depend on the thread count", {
   d <- data.frame(x = x, y = 1 + sin(x) + rnorm(n, 0, 0.4))
   f1 <- statmod(y ~ s(x, bspline_smooth(k = 30)), distributions7::gaussian1_distrib(), d)
   f2 <- statmod(y ~ s(x, bspline_smooth(k = 30)), distributions7::gaussian1_distrib(), d,
-                threads = numericals7::n_threads(2))
+                threads = 2)
   expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)
   expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
                tolerance = 1e-8)
@@ -308,7 +322,7 @@ test_that("a fit through the leverage kernel does not depend on threads", {
                 distributions7::gaussian1_distrib(), d)
   f2 <- statmod(y ~ s(x, bspline_smooth(k = 10)) + random(~1 | g),
                 distributions7::gaussian1_distrib(), d,
-                threads = numericals7::n_threads(2))
+                threads = 2)
   expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)
   expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
                tolerance = 1e-8)

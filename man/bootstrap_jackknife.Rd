@@ -4,7 +4,7 @@
 \alias{bootstrap_jackknife}
 \title{The Refits Without One Observation or One Cluster}
 \usage{
-bootstrap_jackknife(object, resample, refit)
+bootstrap_jackknife(object, resample, refit, cores = 1L)
 }
 \arguments{
 \item{object}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -12,6 +12,8 @@ bootstrap_jackknife(object, resample, refit)
 \item{resample}{The \link{resample_method} of the entry.}
 
 \item{refit}{\code{"coefficients"} or \code{"full"}.}
+
+\item{cores}{The number of separate R processes for the refits.}
 }
 \value{
 A matrix with a row for each unit and a column for each coordinate

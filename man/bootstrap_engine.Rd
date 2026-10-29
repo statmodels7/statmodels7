@@ -17,7 +17,8 @@ bootstrap_engine(
   batch = NULL,
   stream = TRUE,
   adjust = TRUE,
-  check = TRUE
+  check = TRUE,
+  cores = 1L
 )
 }
 \arguments{
@@ -54,6 +55,9 @@ session as described above.}
 replicate as \eqn{\hat b^* - b^* + \hat b}.}
 
 \item{check}{\code{TRUE} rejects the fits that the bootstrap does not handle.}
+
+\item{cores}{The number of separate R processes for the refits, a single
+whole number. \code{1} runs them in this process.}
 }
 \value{
 A list with \code{coefficients} (a matrix with a row for each replicate
@@ -72,9 +76,9 @@ the coefficients of the replicates that were kept. It is the engine that
 }
 \details{
 The draws are made in the calling process, one replicate after another from
-the random number stream, and the refits go to \code{\link[=worker_map]{worker_map()}} with the
-number of workers that the fit carries. A replicate is therefore a function
-of its position in the stream and not of the number of workers, and the
+the random number stream, and the refits go to \code{\link[=worker_map]{worker_map()}} over
+\code{cores} separate R processes. A replicate is therefore a function
+of its position in the stream and not of the number of processes, and the
 first \code{n} replicates of a stream are those of a run of \code{n}. The state of
 \code{.Random.seed} after the last replicate that was kept is returned, so that a
 later call continues the stream: 500 replicates followed by 300 more are the

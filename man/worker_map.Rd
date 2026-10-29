@@ -4,10 +4,12 @@
 \alias{worker_map}
 \title{Run Independent Units, in This Process or Over Workers}
 \usage{
-worker_map(spec, n, body, what = "folds")
+worker_map(cores, n, body, what = "folds")
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{cores}{The number of separate R processes, a single whole number
+(see \code{\link[=check_cores]{check_cores()}}). It is distinct from the \code{threads} of a fit, which
+counts threads inside one process. At most \code{n} processes are opened.}
 
 \item{n}{How many units.}
 
@@ -20,12 +22,11 @@ A list of the bodies' results, in unit order.
 }
 \description{
 Applies a body to each of \code{n} independent units (a cross-validation fold,
-a combination of a path's product grid) over the worker processes that
-the specification requests (\code{spec@workers}, from
-\code{\link[numericals7:n_threads]{n_threads(workers =)}}) and in this process
-otherwise. Results come back in unit order whatever the number of
-workers, which makes the answer independent of the count: the units
-share nothing, so the same bodies run either way.
+a combination of a path's product grid, a bootstrap replicate) over
+\code{cores} separate R processes, and in this process when \code{cores} is 1.
+Results come back in unit order whatever the number of processes, which
+makes the answer independent of the count: the units share nothing, so the
+same bodies run either way.
 }
 \details{
 The units are independent by construction (a fold is a complete refit

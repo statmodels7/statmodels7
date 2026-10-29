@@ -82,7 +82,7 @@ boot_plan_structural <- function(object, resample, spec0, design0) {
 #' from the generator. The refit of a replicate may run in a worker process,
 #' so it is seeded from the replicate's own draw and not from the state of
 #' whichever process runs it. The result then depends on the stream of the
-#' session and not on the number of workers.
+#' session and not on the number of processes.
 #'
 #' @param draw The function from [bootstrap_plan()].
 #' @param design0 The design of the fit.

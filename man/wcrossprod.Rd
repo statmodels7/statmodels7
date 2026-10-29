@@ -16,7 +16,7 @@ of any sign is accepted; the function does not assume that the working
 weights are positive.}
 
 \item{threads}{The thread count, a plain integer as
-\code{\link[numericals7:thread_count]{numericals7::thread_count()}} returns it. \code{1L}, the default, takes the
+\code{\link[numericals7:local_threads]{numericals7::local_threads()}} validates it. \code{1L}, the default, takes the
 sequential route unconditionally.}
 }
 \value{

@@ -1,3 +1,22 @@
+# statmodels7 0.223.0
+
+* `statmod()` has the argument `cores`, the number of separate R processes
+  (default 1), in place of the worker count that `numericals7::n_threads()`
+  carried. `threads` is a whole number and counts threads inside one
+  process. The folds of `cv()` and the combinations of a kinked path's
+  product grid run over `cores` processes.
+* `add_bootstrap()`, `bootstrap_vcov()` and the interval constructors
+  `percentile_interval()`, `basic_interval()` and `bca_interval()` have
+  the argument `cores`, which distributes the refits (and the jackknife refits
+  of the BCa interval) over separate processes. The refits of a
+  `pred_bootstrap()` draw one replicate at a time and stay in the calling
+  process.
+* The property `workers` of `StatmodSpec` is `cores`. The internal
+  `worker_map()` takes the number of processes as its first argument,
+  `worker_map(cores, n, body, what)`, and reads nothing from a fit.
+* The argument `threads` of `statmod()` is a whole number; the object of
+  `n_threads()`, removed in numericals7 0.26.0, is no longer accepted.
+
 # statmodels7 0.222.2
 
 * `plot_derivative()` no longer shades the zones in which the band excludes

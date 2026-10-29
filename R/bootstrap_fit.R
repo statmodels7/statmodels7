@@ -25,9 +25,8 @@ NULL
 #'
 #' The draws come from the random number stream of the session, one replicate
 #' after another in the calling process, and the refits are distributed over
-#' the `workers` of the fit (see [statmod()]) with the number of workers that
-#' the fit carries. The result therefore depends on the state of
-#' `.Random.seed` at the call, and not on the number of workers. The state at
+#' `cores` separate R processes. The result therefore depends on the state of
+#' `.Random.seed` at the call, and not on `cores`. The state at
 #' the start of the stream and after the last replicate kept is stored in the
 #' entry, and an extension continues from the second: 500 replicates and then
 #' 300 more equal the 800 replicates of a single call from the same seed.
@@ -72,7 +71,7 @@ NULL
 #' working value, stores the position of the break-point in the replicates.
 #' The generator of
 #' the restart cycle is seeded from the draw of the replicate, so the result
-#' does not depend on the number of workers. A replicate is kept when its
+#' does not depend on `cores`. A replicate is kept when its
 #' coefficients are finite.
 #'
 #' @param fit A [StatmodFit()].
@@ -83,6 +82,11 @@ NULL
 #' @param refit `"coefficients"` (the default) re-estimates the coefficients at
 #'   the hyperparameters of the fit, and `"full"` selects the hyperparameters
 #'   again on every replicate.
+#' @param cores The number of separate R processes over which the refits are
+#'   distributed, a single whole number (default `1`, no process besides this
+#'   one). It is distinct from the `threads` of [statmod()], which counts
+#'   threads inside one process; a refit that runs in a separate process is
+#'   sequential.
 #'
 #' @return `fit`, invisibly.
 #'
@@ -102,14 +106,15 @@ NULL
 #' statmod_bootstrap(fit)
 #' @export
 add_bootstrap <- function(fit, n = 200L, resample = parametric_resample(),
-                          refit = c("coefficients", "full")) {
+                          refit = c("coefficients", "full"), cores = 1) {
   if (!S7::S7_inherits(fit, StatmodFit)) {
     stop("'fit' must be a statmod fit.", call. = FALSE)
   }
   n <- check_boot_n(n)
+  cores <- check_cores(cores)
   resample <- as_resample_method(resample)
   refit <- check_boot_refit(match.arg(refit))
-  boot_fill(fit, n, resample, refit)
+  boot_fill(fit, n, resample, refit, cores = cores)
   invisible(fit)
 }
 
@@ -314,9 +319,9 @@ boot_resolve <- function(fit, vt) {
     refit <- if (is.null(vt@refit)) "coefficients" else vt@refit
     n <- if (is.null(vt@n)) 200L else vt@n
   }
-  boot_fill(fit, n, resample, refit, say = TRUE)
+  boot_fill(fit, n, resample, refit, say = TRUE, cores = vt@cores)
   BootstrapVcov(name = "bootstrap", n = as.integer(n), resample = resample,
-                refit = refit)
+                refit = refit, cores = vt@cores)
 }
 
 #' Bring an Entry to a Number of Replicates
@@ -339,7 +344,7 @@ boot_resolve <- function(fit, vt) {
 #' @return The entry.
 #'
 #' @keywords internal
-boot_fill <- function(fit, n, resample, refit, say = FALSE) {
+boot_fill <- function(fit, n, resample, refit, say = FALSE, cores = 1L) {
   env <- boot_env(fit)
   if (is.null(env)) {
     stop(paste0("This fit has no place to store a bootstrap: it was created ",
@@ -352,7 +357,8 @@ boot_fill <- function(fit, n, resample, refit, say = FALSE) {
   m <- if (is.null(old)) 0L else old@n
   if (m >= n) return(old)
   eng <- bootstrap_engine(fit, n - m, resample, refit,
-                          seed = if (is.null(old)) NULL else old@seed$end)
+                          seed = if (is.null(old)) NULL else old@seed$end,
+                          cores = cores)
   nw <- nrow(eng$coefficients)
   if (say) {
     message(sprintf(paste0("bootstrap: computed %d replicates (%s, refit %s",

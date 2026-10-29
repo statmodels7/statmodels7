@@ -4,7 +4,7 @@
 \alias{boot_fill}
 \title{Bring an Entry to a Number of Replicates}
 \usage{
-boot_fill(fit, n, resample, refit, say = FALSE)
+boot_fill(fit, n, resample, refit, say = FALSE, cores = 1L)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}

@@ -10,9 +10,9 @@ NULL
 #'
 #' @details
 #' The draws are made in the calling process, one replicate after another from
-#' the random number stream, and the refits go to [worker_map()] with the
-#' number of workers that the fit carries. A replicate is therefore a function
-#' of its position in the stream and not of the number of workers, and the
+#' the random number stream, and the refits go to [worker_map()] over
+#' `cores` separate R processes. A replicate is therefore a function
+#' of its position in the stream and not of the number of processes, and the
 #' first `n` replicates of a stream are those of a run of `n`. The state of
 #' `.Random.seed` after the last replicate that was kept is returned, so that a
 #' later call continues the stream: 500 replicates followed by 300 more are the
@@ -50,6 +50,8 @@ NULL
 #' @param adjust `TRUE` stores a random-effect coordinate of a parametric
 #'   replicate as \eqn{\hat b^* - b^* + \hat b}.
 #' @param check `TRUE` rejects the fits that the bootstrap does not handle.
+#' @param cores The number of separate R processes for the refits, a single
+#'   whole number. `1` runs them in this process.
 #'
 #' @return A list with `coefficients` (a matrix with a row for each replicate
 #'   kept), `hyper` (a matrix, or `NULL`), `status` (an integer for every
@@ -75,7 +77,7 @@ NULL
 bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
                              aside = NULL, replace = TRUE, validate = TRUE,
                              hook = NULL, batch = NULL, stream = TRUE,
-                             adjust = TRUE, check = TRUE) {
+                             adjust = TRUE, check = TRUE, cores = 1L) {
   spec0 <- object@spec
   design0 <- statmod_design(spec0)
   if (check) bootstrap_check(object, resample, refit, spec0, design0)
@@ -122,7 +124,7 @@ bootstrap_engine <- function(object, n, resample, refit, seed = NULL,
     body <- boot_body(object, spec0, draw, refit, method, cfg, beta0, plans,
                       ref, validate, isolate = stream,
                       keep_fit = !is.null(hook))
-    res <- worker_map(spec0, k, body, what = "bootstrap replicas")
+    res <- worker_map(cores, k, body, what = "bootstrap replicas")
     for (j in seq_len(k)) {
       st <- res[[j]]$status
       status <- c(status, st)

@@ -75,12 +75,16 @@ NULL
 #' @param n A single whole number, the total number of replicates, or `NULL`.
 #' @param resample A [resample_method] object, or `NULL`.
 #' @param refit `"coefficients"`, `"full"` or `NULL`.
+#' @param cores The number of separate R processes over which replicates and
+#'   jackknife refits that have to be computed at the call are distributed, a
+#'   single whole number (default `1`). It is distinct from the `threads` of
+#'   [statmod()], which counts threads inside one process.
 #' @param name A single string, the short name of the interval.
 #' @param label A single string, the name under which an object prints.
 #'
 #' @return `percentile_interval()`, `basic_interval()` and `bca_interval()`
 #'   return an object that inherits from `bootstrap_interval`, with the
-#'   properties `name`, `label`, `n`, `resample` and `refit`.
+#'   properties `name`, `label`, `n`, `resample`, `refit` and `cores`.
 #'   `bootstrap_interval` returns nothing: its constructor signals an error.
 #'
 #' @references Davison, A. C. and Hinkley, D. V. (1997). *Bootstrap Methods and
@@ -105,7 +109,8 @@ bootstrap_interval <- S7::new_class(
   "bootstrap_interval",
   properties = list(name = S7::class_character, label = S7::class_character,
                     n = S7::class_any, resample = S7::class_any,
-                    refit = S7::class_any),
+                    refit = S7::class_any,
+                    cores = S7::new_property(S7::class_integer, default = 1L)),
   abstract = TRUE
 )
 
@@ -121,20 +126,23 @@ BcaInterval <- S7::new_class("BcaInterval", parent = bootstrap_interval)
 
 #' @rdname bootstrap_interval
 #' @export
-percentile_interval <- function(n = NULL, resample = NULL, refit = NULL) {
-  boot_interval_new(PercentileInterval, "percentile", n, resample, refit)
+percentile_interval <- function(n = NULL, resample = NULL, refit = NULL,
+                                cores = 1) {
+  boot_interval_new(PercentileInterval, "percentile", n, resample, refit, cores)
 }
 
 #' @rdname bootstrap_interval
 #' @export
-basic_interval <- function(n = NULL, resample = NULL, refit = NULL) {
-  boot_interval_new(BasicInterval, "basic", n, resample, refit)
+basic_interval <- function(n = NULL, resample = NULL, refit = NULL,
+                           cores = 1) {
+  boot_interval_new(BasicInterval, "basic", n, resample, refit, cores)
 }
 
 #' @rdname bootstrap_interval
 #' @export
-bca_interval <- function(n = NULL, resample = NULL, refit = NULL) {
-  boot_interval_new(BcaInterval, "bca", n, resample, refit)
+bca_interval <- function(n = NULL, resample = NULL, refit = NULL,
+                         cores = 1) {
+  boot_interval_new(BcaInterval, "bca", n, resample, refit, cores)
 }
 
 #' Build a Bootstrap Interval Object
@@ -145,17 +153,17 @@ bca_interval <- function(n = NULL, resample = NULL, refit = NULL) {
 #'
 #' @param class The S7 class.
 #' @param name The short name of the interval.
-#' @param n,resample,refit As in [bootstrap_vcov()].
+#' @param n,resample,refit,cores As in [bootstrap_vcov()].
 #'
 #' @return An object that inherits from [bootstrap_interval].
 #'
 #' @keywords internal
-boot_interval_new <- function(class, name, n, resample, refit) {
+boot_interval_new <- function(class, name, n, resample, refit, cores = 1) {
   if (!is.null(n)) n <- check_boot_n(n)
   if (!is.null(resample)) resample <- as_resample_method(resample)
   if (!is.null(refit)) refit <- check_boot_refit(refit)
   class(name = name, label = paste0(name, " bootstrap interval"), n = n,
-        resample = resample, refit = refit)
+        resample = resample, refit = refit, cores = check_cores(cores))
 }
 
 #' @title Print a Bootstrap Interval
@@ -307,7 +315,8 @@ confint_interval <- function(object, parm, level, readable, test, interval,
 #' @keywords internal
 boot_interval_vcov <- function(object, interval) {
   vt <- BootstrapVcov(name = "bootstrap", n = interval@n,
-                      resample = interval@resample, refit = interval@refit)
+                      resample = interval@resample, refit = interval@refit,
+                      cores = interval@cores)
   none <- !length(boot_match(boot_entries(object), vt@resample, vt@refit))
   if (is.null(vt@n) && none) vt@n <- 1000L
   # the BCa interval needs a scheme that resamples the data

@@ -143,15 +143,16 @@ test_that("the draws are reproducible, extendable and independent of the batch",
   expect_identical(coef(statmod_bootstrap(p1)), coef(statmod_bootstrap(p2)))
 })
 
-test_that("the replicates do not depend on the number of workers", {
+test_that("the replicates do not depend on cores", {
   skip_if(exists(".__DEVTOOLS__", asNamespace("statmodels7")),
           "worker_map() is sequential under pkgload")
   hf <- het_fit(80, 3)
   run <- function(w) {
-    fit <- statmod(y ~ x, g1, hf$data, threads = numericals7::n_threads(workers = w))
+    fit <- statmod(y ~ x, g1, hf$data)
     set.seed(8)
     coef(statmod_bootstrap(add_bootstrap(fit, n = 24,
-                                         resample = case_resample())))
+                                         resample = case_resample(),
+                                         cores = w)))
   }
   expect_identical(run(1L), run(3L))
 })
@@ -400,4 +401,16 @@ test_that("predictive_bootstrap is the loop it replaced, to the bit", {
     attr(got, "infinite_variance") <- NULL
     expect_identical(got, ref, label = rf)
   }
+})
+
+test_that("cores of the bootstrap objects is validated and kept", {
+  expect_identical(bootstrap_vcov()@cores, 1L)
+  expect_identical(bootstrap_vcov(cores = 2)@cores, 2L)
+  expect_identical(bca_interval(cores = 3)@cores, 3L)
+  expect_identical(percentile_interval(cores = 2)@cores, 2L)
+  expect_identical(basic_interval()@cores, 1L)
+  expect_error(bootstrap_vcov(cores = 0), "'cores'")
+  expect_error(bca_interval(cores = 1.5), "'cores'")
+  fit <- statmod(y ~ x, g1, het_fit(40, 2)$data)
+  expect_error(add_bootstrap(fit, n = 4, cores = "a"), "'cores'")
 })

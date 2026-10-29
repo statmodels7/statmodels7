@@ -20,7 +20,7 @@ StatmodSpec(
   linpar = list(),
   held_coef = list(),
   threads = 1L,
-  workers = 1L
+  cores = 1L
 )
 }
 \arguments{
@@ -61,8 +61,9 @@ coefficient name. The list is empty by default.}
 
 \item{threads}{The number of threads, a single integer.}
 
-\item{workers}{The number of worker processes for the independent fits of
-a cross-validation, a single integer.}
+\item{cores}{The number of separate R processes for the independent fits of
+a cross-validation and of a kinked path's product grid, a single integer.
+It is distinct from \code{threads}, the number of threads inside one process.}
 }
 \value{
 An object of class \code{StatmodSpec} with one property per argument
@@ -72,7 +73,7 @@ holds the rows
 that a respecification reads, \code{NULL} until \code{\link[=statmod_respec]{statmod_respec()}} sets it.
 \code{structural} holds the parameters of a structural term where a fit has
 set them. \code{held_coef} holds coefficients held at a value, by name, empty
-by default. \code{threads} and \code{workers} hold the thread and worker counts
+by default. \code{threads} and \code{cores} hold the thread and process counts
 that \code{\link[=statmod]{statmod()}} sets.
 }
 \description{

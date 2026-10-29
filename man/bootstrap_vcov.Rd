@@ -4,7 +4,7 @@
 \alias{bootstrap_vcov}
 \title{Bootstrap Variance of a Fit}
 \usage{
-bootstrap_vcov(n = NULL, resample = NULL, refit = NULL)
+bootstrap_vcov(n = NULL, resample = NULL, refit = NULL, cores = 1)
 }
 \arguments{
 \item{n}{A single whole number, the total number of replicates, or \code{NULL}.}
@@ -12,11 +12,17 @@ bootstrap_vcov(n = NULL, resample = NULL, refit = NULL)
 \item{resample}{A \link{resample_method} object, or \code{NULL}.}
 
 \item{refit}{\code{"coefficients"}, \code{"full"} or \code{NULL}.}
+
+\item{cores}{The number of separate R processes over which replicates that
+have to be computed at the call are refitted, a single whole number
+(default \code{1}). It is distinct from the \code{threads} of \code{\link[=statmod]{statmod()}}, which
+counts threads inside one process. The values of the replicates do not
+depend on it.}
 }
 \value{
 A \code{BootstrapVcov} object, inheriting from \link{vcov_method}, with the
-property \code{name} equal to \code{"bootstrap"} and the properties \code{n}, \code{resample}
-and \code{refit}.
+property \code{name} equal to \code{"bootstrap"} and the properties \code{n}, \code{resample},
+\code{refit} and \code{cores}.
 }
 \description{
 Selects the variance that is the covariance of the coefficients of

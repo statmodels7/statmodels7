@@ -8,7 +8,8 @@ add_bootstrap(
   fit,
   n = 200L,
   resample = parametric_resample(),
-  refit = c("coefficients", "full")
+  refit = c("coefficients", "full"),
+  cores = 1
 )
 }
 \arguments{
@@ -23,6 +24,12 @@ default), \code{\link[=case_resample]{case_resample()}}, \code{\link[=cluster_re
 \item{refit}{\code{"coefficients"} (the default) re-estimates the coefficients at
 the hyperparameters of the fit, and \code{"full"} selects the hyperparameters
 again on every replicate.}
+
+\item{cores}{The number of separate R processes over which the refits are
+distributed, a single whole number (default \code{1}, no process besides this
+one). It is distinct from the \code{threads} of \code{\link[=statmod]{statmod()}}, which counts
+threads inside one process; a refit that runs in a separate process is
+sequential.}
 }
 \value{
 \code{fit}, invisibly.
@@ -49,9 +56,8 @@ the \eqn{m} stored (the first \eqn{n} are the ones that
 
 The draws come from the random number stream of the session, one replicate
 after another in the calling process, and the refits are distributed over
-the \code{workers} of the fit (see \code{\link[=statmod]{statmod()}}) with the number of workers that
-the fit carries. The result therefore depends on the state of
-\code{.Random.seed} at the call, and not on the number of workers. The state at
+\code{cores} separate R processes. The result therefore depends on the state of
+\code{.Random.seed} at the call, and not on \code{cores}. The state at
 the start of the stream and after the last replicate kept is stored in the
 entry, and an extension continues from the second: 500 replicates and then
 300 more equal the 800 replicates of a single call from the same seed.
@@ -96,7 +102,7 @@ of the term, so its variance is that of the replicates. The slot of a sharp
 working value, stores the position of the break-point in the replicates.
 The generator of
 the restart cycle is seeded from the draw of the replicate, so the result
-does not depend on the number of workers. A replicate is kept when its
+does not depend on \code{cores}. A replicate is kept when its
 coefficients are finite.
 }
 \examples{

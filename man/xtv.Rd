@@ -16,7 +16,7 @@ wxsq(X, w, threads = 1L)
 Only \code{xtv()} reads it.}
 
 \item{threads}{The thread count, a plain integer as
-\code{\link[numericals7:thread_count]{numericals7::thread_count()}} returns it. \code{1L} takes the sequential
+\code{\link[numericals7:local_threads]{numericals7::local_threads()}} validates it. \code{1L} takes the sequential
 route unconditionally.}
 
 \item{w}{Per-observation weights, length \code{n}. Only \code{wxsq()} reads it, and

@@ -4,14 +4,14 @@
 \alias{boot_interval_new}
 \title{Build a Bootstrap Interval Object}
 \usage{
-boot_interval_new(class, name, n, resample, refit)
+boot_interval_new(class, name, n, resample, refit, cores = 1)
 }
 \arguments{
 \item{class}{The S7 class.}
 
 \item{name}{The short name of the interval.}
 
-\item{n, resample, refit}{As in \code{\link[=bootstrap_vcov]{bootstrap_vcov()}}.}
+\item{n, resample, refit, cores}{As in \code{\link[=bootstrap_vcov]{bootstrap_vcov()}}.}
 }
 \value{
 An object that inherits from \link{bootstrap_interval}.

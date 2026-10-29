@@ -15,7 +15,8 @@ bootstrap_interval(
   label = character(0),
   n = NULL,
   resample = NULL,
-  refit = NULL
+  refit = NULL,
+  cores = 1L
 )
 
 PercentileInterval(
@@ -23,7 +24,8 @@ PercentileInterval(
   label = character(0),
   n = NULL,
   resample = NULL,
-  refit = NULL
+  refit = NULL,
+  cores = 1L
 )
 
 BasicInterval(
@@ -31,7 +33,8 @@ BasicInterval(
   label = character(0),
   n = NULL,
   resample = NULL,
-  refit = NULL
+  refit = NULL,
+  cores = 1L
 )
 
 BcaInterval(
@@ -39,14 +42,15 @@ BcaInterval(
   label = character(0),
   n = NULL,
   resample = NULL,
-  refit = NULL
+  refit = NULL,
+  cores = 1L
 )
 
-percentile_interval(n = NULL, resample = NULL, refit = NULL)
+percentile_interval(n = NULL, resample = NULL, refit = NULL, cores = 1)
 
-basic_interval(n = NULL, resample = NULL, refit = NULL)
+basic_interval(n = NULL, resample = NULL, refit = NULL, cores = 1)
 
-bca_interval(n = NULL, resample = NULL, refit = NULL)
+bca_interval(n = NULL, resample = NULL, refit = NULL, cores = 1)
 }
 \arguments{
 \item{name}{A single string, the short name of the interval.}
@@ -58,11 +62,16 @@ bca_interval(n = NULL, resample = NULL, refit = NULL)
 \item{resample}{A \link{resample_method} object, or \code{NULL}.}
 
 \item{refit}{\code{"coefficients"}, \code{"full"} or \code{NULL}.}
+
+\item{cores}{The number of separate R processes over which replicates and
+jackknife refits that have to be computed at the call are distributed, a
+single whole number (default \code{1}). It is distinct from the \code{threads} of
+\code{\link[=statmod]{statmod()}}, which counts threads inside one process.}
 }
 \value{
 \code{percentile_interval()}, \code{basic_interval()} and \code{bca_interval()}
 return an object that inherits from \code{bootstrap_interval}, with the
-properties \code{name}, \code{label}, \code{n}, \code{resample} and \code{refit}.
+properties \code{name}, \code{label}, \code{n}, \code{resample}, \code{refit} and \code{cores}.
 \code{bootstrap_interval} returns nothing: its constructor signals an error.
 }
 \description{

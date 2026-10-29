@@ -497,8 +497,9 @@ assemble_blocks <- function(blocks, sparse) {
 #'   coefficients held at a value, each a named numeric vector keyed by
 #'   coefficient name. The list is empty by default.
 #' @param threads The number of threads, a single integer.
-#' @param workers The number of worker processes for the independent fits of
-#'   a cross-validation, a single integer.
+#' @param cores The number of separate R processes for the independent fits of
+#'   a cross-validation and of a kinked path's product grid, a single integer.
+#'   It is distinct from `threads`, the number of threads inside one process.
 #'
 #' @return An object of class `StatmodSpec` with one property per argument
 #'   above and the properties described next. `linpar` holds the options of
@@ -507,7 +508,7 @@ assemble_blocks <- function(blocks, sparse) {
 #'   that a respecification reads, `NULL` until [statmod_respec()] sets it.
 #'   `structural` holds the parameters of a structural term where a fit has
 #'   set them. `held_coef` holds coefficients held at a value, by name, empty
-#'   by default. `threads` and `workers` hold the thread and worker counts
+#'   by default. `threads` and `cores` hold the thread and process counts
 #'   that [statmod()] sets.
 #'
 #' @seealso [statmod_spec()], the constructor to use,
@@ -560,11 +561,11 @@ StatmodSpec <- S7::new_class("StatmodSpec",
     # holds. The default keeps every other constructor -- a respec, a fold
     # of cv() -- on the sequential path.
     threads = S7::new_property(S7::class_integer, default = 1L),
-    # the worker-process count for the independent fits of a
-    # cross-validation's folds. A fold's own spec is built fresh and takes
-    # the defaults, which is what keeps the two levels from nesting: a fit
-    # inside a worker is sequential by construction.
-    workers = S7::new_property(S7::class_integer, default = 1L)
+    # the process count for the independent fits of a cross-validation's
+    # folds. A fold's own spec is built fresh and takes the defaults, which
+    # is what keeps the two levels from nesting: a fit inside a separate
+    # process is sequential by construction.
+    cores = S7::new_property(S7::class_integer, default = 1L)
   )
 )
 

@@ -100,7 +100,7 @@ boot_bca_limits <- function(q, est, jk, alpha) {
 #' and the units, which is what a worker process receives. The weights of the
 #' rows of the unit are set to zero. For a model with a block that moves with
 #' its coefficients the draw carries the position as its seed, so that the
-#' restarts of the refit do not depend on the number of workers.
+#' restarts of the refit do not depend on the number of processes.
 #'
 #' @param w0 The prior weights of the fit.
 #' @param units A list with the rows of each unit.
@@ -138,12 +138,13 @@ jackknife_plan <- function(w0, units, refresh) {
 #' @param object The [StatmodFit()].
 #' @param resample The [resample_method] of the entry.
 #' @param refit `"coefficients"` or `"full"`.
+#' @param cores The number of separate R processes for the refits.
 #'
 #' @return A matrix with a row for each unit and a column for each coordinate
 #'   of the replicates of the entry, with the attribute `failed`.
 #'
 #' @keywords internal
-bootstrap_jackknife <- function(object, resample, refit) {
+bootstrap_jackknife <- function(object, resample, refit, cores = 1L) {
   spec0 <- object@spec
   design0 <- statmod_design(spec0)
   bootstrap_check(object, resample, refit, spec0, design0)
@@ -168,7 +169,7 @@ bootstrap_jackknife <- function(object, resample, refit) {
   plans <- jackknife_plan(w0, units, identical(boot_mode(design0), "refresh"))
   body <- boot_body(light, spec0, draw, refit, method, cfg, beta0, plans, ref,
                     TRUE, TRUE, FALSE)
-  res <- worker_map(spec0, length(units), body, what = "jackknife refits")
+  res <- worker_map(cores, length(units), body, what = "jackknife refits")
   p <- length(beta0)
   J <- matrix(NA_real_, length(units), p)
   for (i in seq_along(units)) {
@@ -212,7 +213,7 @@ boot_jackknife_get <- function(object, vt, interval) {
       S7::S7_inherits(interval@resample, ClusterResample)) {
     rs@data <- interval@resample@data
   }
-  J <- bootstrap_jackknife(object, rs, ent@refit)
+  J <- bootstrap_jackknife(object, rs, ent@refit, cores = vt@cores)
   message(sprintf(paste0("bootstrap: computed %d refits without one %s ",
                          "(%s, refit %s)."), nrow(J),
                   if (S7::S7_inherits(rs, ClusterResample)) "cluster" else
