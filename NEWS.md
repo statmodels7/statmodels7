@@ -1,3 +1,23 @@
+# statmodels7 0.224.0
+
+* New `statmod_profile()`: the profile likelihood of one or several
+  coefficients on a grid, as a data frame with the columns `profile_loglik`,
+  `profile_penalty` and `profile_pen_loglik` of the inner criterion, the
+  column `outer_criterion` of the outer one, and `converged`. The values are
+  given by `profile_range()` (a number of standard errors about the estimate)
+  or as vectors, and `profile_grid()` selects the exact method, which refits
+  the model at every point from the fit, from the neighboring point or from
+  both. The hyperparameters are held at the values of the fit or searched
+  again at every point (`hyper`), and the coefficients that `reml()` and
+  `ml()` estimate are estimated by the criterion at every point. The points
+  can be distributed over worker processes (`cores`). The positions of one
+  `seg()` term that are held together are kept in increasing order. A
+  coefficient under a lasso, SCAD or MCP penalty and a model with a
+  structural term are rejected for now.
+* `marginal_coords()` leaves out the coefficients that the specification holds
+  by name, so a held coefficient is not one of the coordinates that the
+  outer criterion estimates.
+
 # statmodels7 0.223.0
 
 * `statmod()` has the argument `cores`, the number of separate R processes
