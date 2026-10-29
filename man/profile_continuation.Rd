@@ -58,22 +58,29 @@ part of the output.
 Coordinates that the outer criterion estimates (the unpenalized
 coefficients of the parameters other than the first under \code{\link[=reml]{reml()}} or
 \code{\link[=ml]{ml()}}) are re-estimated by the criterion at every point of the exact
-method. They are followed through the nested problem: the held
-coefficients and those coordinates are criterion coordinates together, the
+method, and with \code{hyper = "refit"} so are the hyperparameters that \code{which}
+does not name. They are followed through the nested problem: the held
+quantities (the coefficients and the hyperparameters of \code{which}) and the
+ones that the criterion estimates are criterion coordinates together, the
 exact Hessian of the criterion over them gives the derivative of the
-estimated coordinates with respect to the held ones, and the other
-coefficients are the penalized mode at the predicted coordinates. The first
-step starts from the refit with the held coefficients at the estimate,
-which differs from the fit where the criterion does not integrate the held
+estimated quantities with respect to the held ones, and the other
+coefficients are the penalized mode at the predicted values. The first step
+starts from the refit with the held quantities at the estimate, which
+differs from the fit where the criterion does not integrate the held
 coefficients.
 
-The method requires \code{hyper = "held"} and a model whose coefficients are
-smooth functions of the held ones: the terms \code{\link[modelterms7:linpar]{modelterms7::linpar()}},
-\code{\link[modelterms7:s]{modelterms7::s()}}, \code{\link[modelterms7:te]{modelterms7::te()}}, \code{\link[modelterms7:random]{modelterms7::random()}},
-\code{\link[modelterms7:ridge]{modelterms7::ridge()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}} and the smoothed forms of
-\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}} and \code{\link[modelterms7:jseg]{modelterms7::jseg()}}.
-A model with a break-point term that is not smoothed, a kinked penalty or
-a structural term is rejected with a pointer to \code{\link[=profile_grid]{profile_grid()}}.
+A hyperparameter in \code{which} is held on the grid of its link scale, and the
+profile is then the column \code{outer_criterion}, evaluated exactly at the
+predicted point. Where nothing else is estimated by the criterion, the
+predicted point is the penalized mode at the held values.
+
+The method requires a model whose coefficients are smooth functions of the
+held quantities: the terms \code{\link[modelterms7:linpar]{modelterms7::linpar()}}, \code{\link[modelterms7:s]{modelterms7::s()}},
+\code{\link[modelterms7:te]{modelterms7::te()}}, \code{\link[modelterms7:random]{modelterms7::random()}}, \code{\link[modelterms7:ridge]{modelterms7::ridge()}},
+\code{\link[modelterms7:nl]{modelterms7::nl()}} and the smoothed forms of \code{\link[modelterms7:seg]{modelterms7::seg()}},
+\code{\link[modelterms7:jump]{modelterms7::jump()}} and \code{\link[modelterms7:jseg]{modelterms7::jseg()}}. A model with a
+break-point term that is not smoothed, a kinked penalty or a structural
+term is rejected with a pointer to \code{\link[=profile_grid]{profile_grid()}}.
 }
 \examples{
 profile_continuation()

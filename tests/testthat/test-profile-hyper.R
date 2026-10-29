@@ -141,12 +141,46 @@ test_that("the errors name what cannot be held", {
   fit <- statmod(y ~ s(z) + x, fam, dd)
   expect_error(statmod_profile(fit, "mu/s(w)/lambda"),
                "mu/s\\(z\\)/lambda")
-  expect_error(statmod_profile(fit, "mu/s(z)/lambda",
-                               method = profile_taylor()), "profile_grid")
-  expect_error(statmod_profile(fit, "mu/s(z)/lambda",
-                               method = profile_continuation()),
-               "profile_grid")
   nofit <- statmod(y ~ s(z) + x, fam, dd, outer_criterion = NULL)
   expect_error(statmod_profile(nofit, "mu/s(z)/lambda"), "Not a coefficient")
   expect_error(profile_range(fallback = 0), "fallback")
+})
+
+test_that("the approximate methods hold a hyperparameter", {
+  dd <- hyper_data()
+  fam <- distributions7::poisson_distrib()
+  fit <- statmod(y ~ s(z) + s(w) + x, fam, dd)
+  key <- "mu/s(z)/lambda"
+  v <- profile_range(width = 2, n = 5)
+  # the others held: nothing is unknown, and the criterion is exact
+  g <- statmod_profile(fit, key, v, hyper = "held")
+  for (m in list(profile_continuation(), profile_taylor(order = 2))) {
+    a <- statmod_profile(fit, key, v, hyper = "held", method = m)
+    expect_equal(a$outer_criterion, g$outer_criterion, tolerance = 1e-9)
+  }
+  # the others searched again: the continuation follows the grid and the
+  # expansion approaches it as the order grows
+  gr <- statmod_profile(fit, key, v, hyper = "refit")
+  cc <- statmod_profile(fit, key, v, hyper = "refit",
+                        method = profile_continuation(order = 2))
+  expect_equal(cc$outer_criterion, gr$outer_criterion, tolerance = 1e-9)
+  e <- vapply(c(2, 3, 5), function(o) {
+    t <- statmod_profile(fit, key, v, hyper = "refit",
+                         method = profile_taylor(order = o))
+    expect_true(all(is.na(t$converged)))
+    max(abs(t$outer_criterion - gr$outer_criterion))
+  }, numeric(1))
+  expect_true(all(diff(e) < 0))
+  expect_lt(e[3L], 1e-5)
+  # with a coefficient beside it
+  b <- coef(fit)$mu[["x"]]
+  vals <- stats::setNames(list(c(0.5, 1.5), c(b - 0.1, b + 0.1)),
+                          c(key, "mu:x"))
+  gm <- statmod_profile(fit, c(key, "mu:x"), vals, hyper = "refit")
+  cm <- statmod_profile(fit, c(key, "mu:x"), vals, hyper = "refit",
+                        method = profile_continuation())
+  expect_equal(cm$outer_criterion, gm$outer_criterion, tolerance = 1e-9)
+  tm <- statmod_profile(fit, c(key, "mu:x"), vals, hyper = "refit",
+                        method = profile_taylor(order = 3))
+  expect_lt(max(abs(tm$outer_criterion - gm$outer_criterion)), 5e-3)
 })

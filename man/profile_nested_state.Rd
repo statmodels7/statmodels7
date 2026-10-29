@@ -17,20 +17,22 @@ A list, or \code{NULL} where the Hessian of the criterion is not
 available.
 }
 \description{
-Prepares what the expansion of the coordinates that the outer criterion
-estimates needs at a point of the profile: the held coefficients and those
-coordinates as one set of criterion coordinates, the exact Hessian of the
-criterion over that set, and the functions that solve the inner problem and
-read the exact gradient of the criterion at given values.
+Prepares what the expansion of the quantities that the outer criterion
+estimates needs at a point of the profile. The held quantities are the
+coefficients and the hyperparameters of \code{which}; the unknown ones are the
+coefficients that the criterion estimates and, with \code{hyper = "refit"}, the
+other hyperparameters. Both sets are coordinates of the criterion, and the
+function holds the exact Hessian of the criterion over them, with the
+functions that solve the inner problem and read the exact gradient of the
+criterion at given values.
 }
 \details{
-With the held coefficients \eqn{\theta} and the coordinates \eqn{\gamma}
-that the criterion estimates, the criterion \eqn{V(\gamma, \theta)} is
-evaluated at the penalized mode of the other coefficients, and none of the
-two sets enters its determinant. Both sets are therefore criterion
-coordinates of \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}, whose result over
-\eqn{(\gamma, \theta)} holds the blocks \eqn{V_{\gamma\gamma}} and
-\eqn{V_{\gamma\theta}}. The derivative of the estimated coordinates is
-\eqn{d\gamma/d\theta = -V_{\gamma\gamma}^{-1} V_{\gamma\theta}}.
+With the held quantities \eqn{h} and the unknown ones \eqn{u}, the
+criterion \eqn{V(u, h)} is evaluated at the penalized mode of the other
+coefficients, and none of the coefficient coordinates enters its
+determinant. The result of \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} over all of them holds
+the blocks \eqn{V_{uu}} and \eqn{V_{uh}}, and the derivative of the unknown
+quantities is \eqn{du/dh = -V_{uu}^{-1} V_{uh}}. The hyperparameters are on
+the scale of their links, the scale of the grid.
 }
 \keyword{internal}

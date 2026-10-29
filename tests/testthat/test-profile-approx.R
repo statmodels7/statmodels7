@@ -146,7 +146,7 @@ test_that("the exact derivative of the nested problem agrees with the refits", {
   zp <- profile_point(ctx, ctx$estimate + eps)
   zm <- profile_point(ctx, ctx$estimate - eps)
   fd <- (zp$par[N$gam] - zm$par[N$gam]) / (2 * eps)
-  exact <- as.numeric(-solve(N$Vgg, N$Vgt))
+  exact <- as.numeric(-solve(N$Vuu, N$Vuk))
   expect_equal(exact, fd, tolerance = 1e-3)
 })
 
@@ -177,10 +177,6 @@ test_that("a halved step reaches the same point", {
 
 test_that("models without smooth coefficients are rejected with a pointer to the grid", {
   p <- poisson_approx()
-  expect_error(statmod_profile(p$fit, "mu:x1", method = profile_taylor(),
-                               hyper = "refit"), "profile_grid")
-  expect_error(statmod_profile(p$fit, "mu:x1", method = profile_continuation(),
-                               hyper = "refit"), "profile_grid")
   set.seed(7)
   dd <- data.frame(x1 = rnorm(80), x2 = rnorm(80), x3 = rnorm(80))
   dd$y <- 1 + dd$x1 + stats::rnorm(80)

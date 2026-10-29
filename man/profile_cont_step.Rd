@@ -4,7 +4,7 @@
 \alias{profile_cont_step}
 \title{One Step of a Continuation}
 \usage{
-profile_cont_step(ctx, method, prev, val, nested, depth = 0L)
+profile_cont_step(ctx, method, prev, val, nested, se, depth = 0L)
 }
 \arguments{
 \item{ctx}{The context of the call.}
@@ -15,7 +15,9 @@ profile_cont_step(ctx, method, prev, val, nested, depth = 0L)
 
 \item{val}{The held values to reach.}
 
-\item{nested}{Whether the criterion estimates coordinates of the model.}
+\item{nested}{Whether the profile follows the nested problem.}
+
+\item{se}{The scale of each label of \code{which}, for the nested problem.}
 
 \item{depth}{The number of halvings so far.}
 }

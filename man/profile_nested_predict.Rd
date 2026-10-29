@@ -4,35 +4,36 @@
 \alias{profile_nested_predict}
 \title{The Coefficients That the Nested Expansion Predicts at a Step}
 \usage{
-profile_nested_predict(ctx, N, delta, order, se)
+profile_nested_predict(N, delta, order, se)
 }
 \arguments{
-\item{ctx}{The context of the call.}
-
 \item{N}{The list that \code{\link[=profile_nested_state]{profile_nested_state()}} returns.}
 
-\item{delta}{The step of the held coefficients.}
+\item{delta}{The step of the held values, one number for each label of
+\code{which}.}
 
 \item{order}{One more than the degree of the polynomial.}
 
-\item{se}{The standard errors of the held coefficients.}
+\item{se}{The scale of each label of \code{which}.}
 }
 \value{
-The stacked coefficients.
+A list with \code{par}, \code{hyper}, \code{spec} and \code{design}.
 }
 \description{
-Develops the coordinates that the criterion estimates as a polynomial in
-the step of the held coefficients, and returns the coefficients of the
-model at its end: those coordinates at the polynomial, the held ones at the
-step, and the others at their penalized mode.
+Develops the unknown quantities of the nested problem as a polynomial in
+the step of the held ones, and returns the point at its end: the
+coefficients at their penalized mode, the hyperparameters, and the
+specification that holds the coefficients that the criterion does not
+integrate.
 }
 \details{
-The coefficient of degree 1 is \eqn{-V_{\gamma\gamma}^{-1} V_{\gamma\theta}
-\delta}. For a higher degree \eqn{j}, the exact gradient of the criterion in
-the estimated coordinates is evaluated along the step, at the penalized mode
-of the other coefficients, with the coordinates at the polynomial of lower
+The coefficient of degree 1 is \eqn{-V_{uu}^{-1} V_{uh}\delta}. For a
+higher degree \eqn{j}, the exact gradient of the criterion in the unknown
+quantities is evaluated along the step, at the penalized mode of the other
+coefficients, with the unknown quantities at the polynomial of lower
 degree. Its \eqn{j}-th derivative at the origin is taken by one central
 stencil of numericals7, and the coefficient of degree \eqn{j} is minus
-\eqn{V_{\gamma\gamma}^{-1}} times that derivative.
+\eqn{V_{uu}^{-1}} times that derivative. Where nothing is unknown the
+point is the penalized mode at the held values.
 }
 \keyword{internal}

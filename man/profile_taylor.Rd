@@ -46,13 +46,16 @@ With the log-likelihood and the penalty computed exactly at the predicted
 coefficients, the penalized log-likelihood of every row is a lower bound
 of the profile. The column \code{converged} is \code{NA}.
 
-Coordinates that the outer criterion estimates are developed as in
+Quantities that the outer criterion estimates (coordinates, and
+hyperparameters with \code{hyper = "refit"}) are developed as in
 \code{\link[=profile_continuation]{profile_continuation()}}, from the derivatives of the criterion in those
-coordinates, and the coefficients that are neither held nor estimated by the
-criterion are then the penalized mode at the predicted coordinates (one
-inner fit for each point). The lower bound does not hold in that case,
-because the exact method maximizes the criterion and not the penalized
-log-likelihood over those coordinates.
+quantities, and the coefficients that are neither held nor estimated by the
+criterion are then the penalized mode at the predicted values (one inner fit
+for each point). The lower bound does not hold in that case, because the
+exact method maximizes the criterion and not the penalized log-likelihood
+over those quantities. A hyperparameter in \code{which} is held at the values of
+its grid on the scale of its link, and the column \code{outer_criterion} is the
+profile.
 
 The requirements on the model are those of \code{\link[=profile_continuation]{profile_continuation()}}.
 }

@@ -666,7 +666,7 @@ profile_context <- function(fit, which, hyper) {
   psi <- lapply(profile_psi_groups(spec, design, param, coefname),
                 function(i) cidx[i])
   list(fit = fit, spec = spec, params = params, psi = psi, which = which,
-       cidx = cidx, hidx = hidx, hyp = hyp, param = param,
+       cidx = cidx, hidx = hidx, hyp = hyp, htab = htab, param = param,
        coefname = coefname, at = at, estimate = estimate,
        beta_fit = beta_fit, hyper = hyper, hyper0 = hyper0, inner = method,
        cfg = cfg, outer = outer,

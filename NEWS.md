@@ -7,8 +7,11 @@
   standard error of the hyperparameter is not available. The profile is then
   the column `outer_criterion`. A hyperparameter is held on the specification
   through the new property `held_hyper` of `StatmodSpec`, merged into the
-  values that a term holds, without rebuilding the terms. The grid is the only
-  method that holds a hyperparameter.
+  values that a term holds, without rebuilding the terms. `profile_continuation()`
+  and `profile_taylor()` hold hyperparameters through the nested problem, from
+  the exact Hessian of the outer criterion, and follow the quantities that
+  the criterion estimates, including the other hyperparameters with
+  `hyper = "refit"`.
 
 # statmodels7 0.225.0
 
