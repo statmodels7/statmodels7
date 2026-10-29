@@ -17,7 +17,7 @@ vcov_type."><meta property="og:image" content="https://statmodels7.github.io/sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.224.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.225.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -121,9 +121,9 @@ the functions that take it.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;vcov&gt; bayesian</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fit</span>, vcov_type <span class="op">=</span> <span class="fu">bayesian_vcov</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                   mu:(Intercept)          mu:x sigma:(Intercept)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)      7.691473e-03 -1.161719e-02      1.055974e-18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu:x               -1.161719e-02  2.209835e-02     -2.501978e-18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept)   1.055974e-18 -2.501978e-18      6.410256e-03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)      7.691473e-03 -1.161719e-02      8.809850e-19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu:x               -1.161719e-02  2.209835e-02      3.360036e-18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept)   8.809850e-19  3.360036e-18      6.410256e-03</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, vcov_type <span class="op">=</span> <span class="fu">bayesian_vcov</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                   parameter   term coefficient  estimate         se      lower</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mu:(Intercept)           mu linpar (Intercept)  1.043291 0.08770104  0.8714004</span>

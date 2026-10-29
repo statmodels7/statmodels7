@@ -52,7 +52,10 @@ statmod_profile(
 
   A
   [profile_method](https://statmodels7.github.io/statmodels7/reference/profile_method.md):
-  [`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md).
+  [`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md),
+  [`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md)
+  or
+  [`profile_taylor()`](https://statmodels7.github.io/statmodels7/reference/profile_taylor.md).
 
 - hyper:
 

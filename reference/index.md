@@ -206,7 +206,11 @@ given by
 [`profile_range()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
 or by the caller, and
 [`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md)
-selects the exact method, one refit for each point.
+selects the exact method, one refit for each point;
+[`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md)
+and
+[`profile_taylor()`](https://statmodels7.github.io/statmodels7/reference/profile_taylor.md)
+approximate it for smooth coefficients.
 
 - [`statmod_profile()`](https://statmodels7.github.io/statmodels7/reference/statmod_profile.md)
   : The Profile Likelihood of Coefficients
@@ -218,6 +222,12 @@ selects the exact method, one refit for each point.
 - [`ProfileGrid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md)
   [`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md)
   : Profile by Refitting on a Grid
+- [`ProfileContinuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md)
+  [`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md)
+  : Profile by Continuation
+- [`ProfileTaylor()`](https://statmodels7.github.io/statmodels7/reference/profile_taylor.md)
+  [`profile_taylor()`](https://statmodels7.github.io/statmodels7/reference/profile_taylor.md)
+  : Profile by Local Expansion
 
 ## Variance conventions
 
@@ -2007,6 +2017,9 @@ helper functions. Using the package does not require any of it.
 - [`prior_student()`](https://statmodels7.github.io/statmodels7/reference/prior_student.md)
   : The Scale Matrix and Degrees of Freedom of a Student t Prior
 
+- [`profile_approx_check()`](https://statmodels7.github.io/statmodels7/reference/profile_approx_check.md)
+  : Check That a Profile Can Be Approximated
+
 - [`profile_assemble()`](https://statmodels7.github.io/statmodels7/reference/profile_assemble.md)
   : Assemble the Table of a Profile
 
@@ -2016,8 +2029,14 @@ helper functions. Using the package does not require any of it.
 - [`profile_compute()`](https://statmodels7.github.io/statmodels7/reference/profile_compute.md)
   : Compute a Profile
 
+- [`profile_cont_step()`](https://statmodels7.github.io/statmodels7/reference/profile_cont_step.md)
+  : One Step of a Continuation
+
 - [`profile_context()`](https://statmodels7.github.io/statmodels7/reference/profile_context.md)
   : The Context of a Profile
+
+- [`profile_exact()`](https://statmodels7.github.io/statmodels7/reference/profile_exact.md)
+  : The Exact Penalized Log-Likelihood at Predicted Coefficients
 
 - [`profile_failed()`](https://statmodels7.github.io/statmodels7/reference/profile_failed.md)
   : A Failed Point of a Profile
@@ -2031,6 +2050,12 @@ helper functions. Using the package does not require any of it.
 - [`profile_map()`](https://statmodels7.github.io/statmodels7/reference/profile_map.md)
   : Run Independent Units of a Profile
 
+- [`profile_nested_predict()`](https://statmodels7.github.io/statmodels7/reference/profile_nested_predict.md)
+  : The Coefficients That the Nested Expansion Predicts at a Step
+
+- [`profile_nested_state()`](https://statmodels7.github.io/statmodels7/reference/profile_nested_state.md)
+  : The Nested Problem at a Point
+
 - [`profile_point()`](https://statmodels7.github.io/statmodels7/reference/profile_point.md)
   : One Refit of a Profile
 
@@ -2039,6 +2064,13 @@ helper functions. Using the package does not require any of it.
 
 - [`profile_psi_groups()`](https://statmodels7.github.io/statmodels7/reference/profile_psi_groups.md)
   : The Positions of One Break-Point Term Among the Held Coefficients
+
+- [`profile_ray()`](https://statmodels7.github.io/statmodels7/reference/profile_ray.md)
+  : The Coefficients That a Polynomial of the Trace Predicts at a Point
+
+- [`profile_setup()`](https://statmodels7.github.io/statmodels7/reference/profile_setup.md)
+  : The Objective, Its Hessian and the Scale of the Held Coefficients at
+  a Point
 
 - [`profile_values()`](https://statmodels7.github.io/statmodels7/reference/profile_values.md)
   : The Values of a Profile for Each Coefficient

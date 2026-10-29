@@ -1,5 +1,31 @@
 # Changelog
 
+## statmodels7 0.225.0
+
+- New
+  [`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md)
+  and
+  [`profile_taylor()`](https://statmodels7.github.io/statmodels7/reference/profile_taylor.md),
+  approximate methods of
+  [`statmod_profile()`](https://statmodels7.github.io/statmodels7/reference/statmod_profile.md)
+  for coefficients that are smooth functions of the held ones. The
+  continuation predicts each point from the previous one by the tangent
+  of the refitted coefficients (and, with `order = 2`, their curvature)
+  and corrects it by the refit, which `maxit` can truncate; with
+  `maxit = Inf` it gives the rows of
+  [`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md).
+  The expansion does not refit: it develops the coefficients that are
+  not held to the order given and computes the log-likelihood and the
+  penalty exactly at the predicted coefficients. Coordinates that
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  or
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  estimate are followed through the nested problem, from the exact
+  Hessian of the criterion over those coordinates and the held ones, at
+  every order. Both require `hyper = "held"` and reject kinked
+  penalties, break-point terms without smoothing and structural terms.
+  The column `converged` is `NA` for the expansion.
+
 ## statmodels7 0.224.0
 
 - New

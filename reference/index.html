@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.224.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.225.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -482,7 +482,7 @@
       </dl></div><div class="section level2">
       <h2 id="profile-likelihood">Profile likelihood<a class="anchor" aria-label="anchor" href="#profile-likelihood"></a></h2>
 
-      <div class="section-desc"><p>The penalized log-likelihood maximized over every coefficient but one or several that are held on a grid, returned as a data frame together with the value of the outer criterion where one ran. The grid of values is given by <code><a href="../reference/profile_range.html">profile_range()</a></code> or by the caller, and <code><a href="../reference/profile_grid.html">profile_grid()</a></code> selects the exact method, one refit for each point.</p></div>
+      <div class="section-desc"><p>The penalized log-likelihood maximized over every coefficient but one or several that are held on a grid, returned as a data frame together with the value of the outer criterion where one ran. The grid of values is given by <code><a href="../reference/profile_range.html">profile_range()</a></code> or by the caller, and <code><a href="../reference/profile_grid.html">profile_grid()</a></code> selects the exact method, one refit for each point; <code><a href="../reference/profile_continuation.html">profile_continuation()</a></code> and <code><a href="../reference/profile_taylor.html">profile_taylor()</a></code> approximate it for smooth coefficients.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -516,6 +516,20 @@
 
         </dt>
         <dd>Profile by Refitting on a Grid</dd>
+
+        <dt>
+
+          <code><a href="profile_continuation.html">ProfileContinuation()</a></code> <code><a href="profile_continuation.html">profile_continuation()</a></code>
+
+        </dt>
+        <dd>Profile by Continuation</dd>
+
+        <dt>
+
+          <code><a href="profile_taylor.html">ProfileTaylor()</a></code> <code><a href="profile_taylor.html">profile_taylor()</a></code>
+
+        </dt>
+        <dd>Profile by Local Expansion</dd>
       </dl></div><div class="section level2">
       <h2 id="variance-conventions">Variance conventions<a class="anchor" aria-label="anchor" href="#variance-conventions"></a></h2>
 
@@ -4504,6 +4518,13 @@
 
         <dt>
 
+          <code><a href="profile_approx_check.html">profile_approx_check()</a></code>
+
+        </dt>
+        <dd>Check That a Profile Can Be Approximated</dd>
+
+        <dt>
+
           <code><a href="profile_assemble.html">profile_assemble()</a></code>
 
         </dt>
@@ -4525,10 +4546,24 @@
 
         <dt>
 
+          <code><a href="profile_cont_step.html">profile_cont_step()</a></code>
+
+        </dt>
+        <dd>One Step of a Continuation</dd>
+
+        <dt>
+
           <code><a href="profile_context.html">profile_context()</a></code>
 
         </dt>
         <dd>The Context of a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_exact.html">profile_exact()</a></code>
+
+        </dt>
+        <dd>The Exact Penalized Log-Likelihood at Predicted Coefficients</dd>
 
         <dt>
 
@@ -4560,6 +4595,20 @@
 
         <dt>
 
+          <code><a href="profile_nested_predict.html">profile_nested_predict()</a></code>
+
+        </dt>
+        <dd>The Coefficients That the Nested Expansion Predicts at a Step</dd>
+
+        <dt>
+
+          <code><a href="profile_nested_state.html">profile_nested_state()</a></code>
+
+        </dt>
+        <dd>The Nested Problem at a Point</dd>
+
+        <dt>
+
           <code><a href="profile_point.html">profile_point()</a></code>
 
         </dt>
@@ -4578,6 +4627,20 @@
 
         </dt>
         <dd>The Positions of One Break-Point Term Among the Held Coefficients</dd>
+
+        <dt>
+
+          <code><a href="profile_ray.html">profile_ray()</a></code>
+
+        </dt>
+        <dd>The Coefficients That a Polynomial of the Trace Predicts at a Point</dd>
+
+        <dt>
+
+          <code><a href="profile_setup.html">profile_setup()</a></code>
+
+        </dt>
+        <dd>The Objective, Its Hessian and the Scale of the Held Coefficients at a Point</dd>
 
         <dt>
 

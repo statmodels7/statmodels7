@@ -10,7 +10,7 @@ over the hyperparameters, with the held coefficients excluded from it.
 ## Usage
 
 ``` r
-profile_point(ctx, val, start = NULL)
+profile_point(ctx, val, start = NULL, maxit = Inf)
 ```
 
 ## Arguments

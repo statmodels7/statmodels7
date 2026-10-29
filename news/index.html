@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.224.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.225.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.225.0" id="statmodels7-02250">statmodels7 0.225.0<a class="anchor" aria-label="anchor" href="#statmodels7-02250"></a></h2>
+<ul><li>New <code><a href="../reference/profile_continuation.html">profile_continuation()</a></code> and <code><a href="../reference/profile_taylor.html">profile_taylor()</a></code>, approximate methods of <code><a href="../reference/statmod_profile.html">statmod_profile()</a></code> for coefficients that are smooth functions of the held ones. The continuation predicts each point from the previous one by the tangent of the refitted coefficients (and, with <code>order = 2</code>, their curvature) and corrects it by the refit, which <code>maxit</code> can truncate; with <code>maxit = Inf</code> it gives the rows of <code><a href="../reference/profile_grid.html">profile_grid()</a></code>. The expansion does not refit: it develops the coefficients that are not held to the order given and computes the log-likelihood and the penalty exactly at the predicted coefficients. Coordinates that <code><a href="../reference/reml.html">reml()</a></code> or <code><a href="../reference/reml.html">ml()</a></code> estimate are followed through the nested problem, from the exact Hessian of the criterion over those coordinates and the held ones, at every order. Both require <code>hyper = "held"</code> and reject kinked penalties, break-point terms without smoothing and structural terms. The column <code>converged</code> is <code>NA</code> for the expansion.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.224.0" id="statmodels7-02240">statmodels7 0.224.0<a class="anchor" aria-label="anchor" href="#statmodels7-02240"></a></h2>
 <ul><li>New <code><a href="../reference/statmod_profile.html">statmod_profile()</a></code>: the profile likelihood of one or several coefficients on a grid, as a data frame with the columns <code>profile_loglik</code>, <code>profile_penalty</code> and <code>profile_pen_loglik</code> of the inner criterion, the column <code>outer_criterion</code> of the outer one, and <code>converged</code>. The values are given by <code><a href="../reference/profile_range.html">profile_range()</a></code> (a number of standard errors about the estimate) or as vectors, and <code><a href="../reference/profile_grid.html">profile_grid()</a></code> selects the exact method, which refits the model at every point from the fit, from the neighboring point or from both. The hyperparameters are held at the values of the fit or searched again at every point (<code>hyper</code>), and the coefficients that <code><a href="../reference/reml.html">reml()</a></code> and <code><a href="../reference/reml.html">ml()</a></code> estimate are estimated by the criterion at every point. The points can be distributed over worker processes (<code>cores</code>). The positions of one <code>seg()</code> term that are held together are kept in increasing order. A coefficient under a lasso, SCAD or MCP penalty and a model with a structural term are rejected for now.</li>
