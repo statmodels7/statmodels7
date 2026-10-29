@@ -46,7 +46,7 @@ documentable <- function() {
                    "predict", "fitted", "residuals", "nobs", "formula",
                    "family", "weights", "df.residual", "sigma",
                    "model.matrix", "terms", "model.frame", "anova",
-                   "autoplot"))
+                   "autoplot", "as.data.frame"))
   nms <- grep("^_statmodels7_", nms, invert = TRUE, value = TRUE)
   keep <- vapply(nms, function(n) {
     o <- get(n, envir = ns)

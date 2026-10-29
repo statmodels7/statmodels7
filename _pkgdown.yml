@@ -136,14 +136,16 @@ reference:
 
 - title: Profile likelihood
   desc: >
-    The penalized log-likelihood maximized over every coefficient but one or
-    several that are held on a grid, returned as a data frame together with
-    the value of the outer criterion where one ran. The grid of values is
-    given by `profile_range()` or by the caller, and `profile_grid()` selects
-    the exact method, one refit for each point; `profile_continuation()` and
-    `profile_taylor()` approximate it for smooth coefficients.
+    The penalized log-likelihood, or the outer criterion, maximized over
+    every quantity but one or several that are held on a grid, returned as a
+    `StatmodProfile` object with its intervals (`confint()`) and its graphs.
+    The grid of values is given by `profile_range()` or by the caller, and
+    `profile_grid()` selects the exact method, one refit for each point;
+    `profile_continuation()` and `profile_taylor()` approximate it for smooth
+    coefficients.
   contents:
   - statmod_profile
+  - autoplot.StatmodProfile
   - profile_range
   - profile_method
   - profile_grid

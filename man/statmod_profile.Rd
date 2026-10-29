@@ -10,6 +10,7 @@ statmod_profile(
   values = profile_range(width = 3, n = 21),
   method = profile_grid(),
   hyper = c("held", "refit"),
+  joint = TRUE,
   cores = 1
 )
 }
@@ -37,6 +38,10 @@ or \code{\link[=profile_taylor]{profile_taylor()}}.}
 \item{hyper}{\code{"held"} or \code{"refit"}: whether the hyperparameters stay at the
 values of the fit or are searched again at every point.}
 
+\item{joint}{Whether the labels of \code{which} are held together (\code{TRUE}, the
+profile of their vector) or each by itself with the others free
+(\code{FALSE}).}
+
 \item{cores}{The number of separate R processes over which the refits are
 distributed, a single whole number (default \code{1}, no process besides this
 one). It is distinct from the \code{threads} of \code{\link[=statmod]{statmod()}}, which counts
@@ -44,25 +49,37 @@ threads inside one process; a refit that runs in a separate process is
 sequential. Under \code{pkgload} the run stays sequential.}
 }
 \value{
-A data frame (\code{check.names = FALSE}) with one column for each
-coefficient of \code{which}, named by its label, then \code{profile_loglik},
-\code{profile_penalty}, \code{profile_pen_loglik}, \code{outer_criterion} and
-\code{converged}. Its attributes are \code{maximum}, a one-row data frame with the
-same columns at the unrestricted fit (the numbers of the fit itself,
-which under \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} can lie slightly below the nearest rows
-of the table, because at a row the criterion does not integrate the held
-coefficients), \code{method}, the \link{profile_method}
-object, \code{hyper}, and \code{criterion}, the outer criterion object of the fit
-(\code{NULL} if it has none). The hyperparameters and the other coefficients
-of each point are not returned.
+A \link{StatmodProfile} object. Its table \code{points} (\code{check.names = FALSE}) has, with \code{joint = TRUE}, one column for each label of \code{which},
+named by the label, and with \code{joint = FALSE} the columns \code{profiled_label}
+and \code{value}, then \code{profile_loglik}, \code{profile_penalty},
+\code{profile_pen_loglik}, \code{outer_criterion} and \code{converged}.
+\code{unrestricted_point} has the same columns at the unrestricted fit (the
+numbers of the fit itself, which under \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} can lie
+slightly below the nearest rows of the table, because at a row the
+criterion does not integrate the held coefficients). \code{profile_column}
+names, for each label, the column that is its profile, and
+\code{is_likelihood_ratio} states, for each label, whether twice the drop of
+that column is a likelihood ratio. The hyperparameters and the other
+coefficients of each point are not returned.
 }
 \description{
 Returns, for each combination of values of one or several coefficients, the
 maximum of the penalized log-likelihood over all the other coefficients
-when those are held at the values. The result is a data frame, one row per
-combination, which serves a plot, an interval or a diagnostic; the
-function computes none of those.
+when those are held at the values. The result is a \link{StatmodProfile}
+object, whose table \code{points} has one row per combination, and on which
+\code{\link[=confint.StatmodProfile]{confint.StatmodProfile()}} computes the intervals and
+\code{\link[=autoplot.StatmodProfile]{autoplot.StatmodProfile()}} draws the profile.
 }
+\section{Joint and separate profiles}{
+With \code{joint = TRUE} the labels of \code{which} are held together, at every
+combination of their values, and the table is the profile of the vector
+of the labels. With \code{joint = FALSE} each label is profiled by itself,
+with the other labels of \code{which} free like every other coefficient, and
+the table stacks the one-dimensional profiles, with the columns
+\code{profiled_label} and \code{value} in place of one column per label. The two
+coincide for a single label.
+}
+
 \section{What the columns report}{
 The columns \code{profile_loglik}, \code{profile_penalty} and \code{profile_pen_loglik}
 belong to the INNER criterion, the penalized log-likelihood of the
@@ -224,12 +241,19 @@ prof <- statmod_profile(fit, which = "mu:x",
 prof
 
 # the log-likelihood falls by z^2 / 2 at z standard errors
-attr(prof, "maximum")
+prof@unrestricted_point
+confint(prof)
 
 # two coefficients, with values chosen by the caller for the second
 statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
                 values = list("mu:x" = profile_range(width = 1, n = 3),
                               "mu:(Intercept)" = c(0.8, 1, 1.2)))
+
+# the same two, each profiled with the other free
+sep <- statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
+                       values = profile_range(width = 3, n = 7),
+                       joint = FALSE)
+confint(sep, type = "simultaneous")
 }
 \seealso{
 \code{\link[=profile_grid]{profile_grid()}}, \code{\link[=profile_range]{profile_range()}}, \code{\link[=statmod_test]{statmod_test()}} for the

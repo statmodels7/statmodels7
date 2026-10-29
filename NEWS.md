@@ -1,3 +1,24 @@
+# statmodels7 0.228.0
+
+* `statmod_profile()` returns a `StatmodProfile` object in place of a data
+  frame with attributes. Its properties are `points` (the table),
+  `profiled_labels`, `profiled_quantities`, `profile_column`,
+  `unrestricted_point` (formerly the attribute `maximum`), `profile_method`,
+  `hyper_handling`, `outer_method`, `is_likelihood_ratio` and `joint`, and
+  `as.data.frame()` returns the table.
+* `statmod_profile(joint = FALSE)` profiles each label of `which` by itself,
+  with the other labels free; the table then has the columns
+  `profiled_label` and `value`.
+* Each label has a kind (coefficient, penalized coefficient, break-point
+  position, hyperparameter, hyperparameter chosen by a path), and
+  `autoplot()` and `plot()` draw each kind with its own graph. A joint
+  profile of two labels is drawn as contours, and one of three or more as one
+  panel for each pair.
+* `confint()` of a profile inverts it on the signed root of twice the drop,
+  with `type = "marginal"` (one degree of freedom) or `"simultaneous"` (the
+  projection of the joint region, with as many degrees of freedom as
+  labels). It signals an error where the drop is not a likelihood ratio.
+
 # statmodels7 0.227.0
 
 * `statmod_profile()` profiles the hyperparameter of a kinked penalty that a path

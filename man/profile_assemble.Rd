@@ -16,12 +16,12 @@ profile_assemble(ctx, grid, pts, method)
 \item{method}{The profile method.}
 }
 \value{
-The data frame.
+A list with \code{points}, the data frame, and \code{unrestricted_point}, the
+row of the fit.
 }
 \description{
 Converts the points returned by \code{\link[=profile_compute]{profile_compute()}} into the data frame of
-\code{\link[=statmod_profile]{statmod_profile()}}, with the row of the unrestricted fit as the attribute
-\code{maximum}.
+\code{\link[=statmod_profile]{statmod_profile()}}, and the row of the unrestricted fit.
 }
 \details{
 The objective of a point is the negative of the penalized log-likelihood,

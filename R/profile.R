@@ -201,11 +201,22 @@ profile_compute <- S7::new_generic(
 #' @description
 #' Returns, for each combination of values of one or several coefficients, the
 #' maximum of the penalized log-likelihood over all the other coefficients
-#' when those are held at the values. The result is a data frame, one row per
-#' combination, which serves a plot, an interval or a diagnostic; the
-#' function computes none of those.
+#' when those are held at the values. The result is a [StatmodProfile]
+#' object, whose table `points` has one row per combination, and on which
+#' [confint.StatmodProfile()] computes the intervals and
+#' [autoplot.StatmodProfile()] draws the profile.
 #'
 #' @details
+#' # Joint and separate profiles
+#'
+#' With `joint = TRUE` the labels of `which` are held together, at every
+#' combination of their values, and the table is the profile of the vector
+#' of the labels. With `joint = FALSE` each label is profiled by itself,
+#' with the other labels of `which` free like every other coefficient, and
+#' the table stacks the one-dimensional profiles, with the columns
+#' `profiled_label` and `value` in place of one column per label. The two
+#' coincide for a single label.
+#'
 #' # What the columns report
 #'
 #' The columns `profile_loglik`, `profile_penalty` and `profile_pen_loglik`
@@ -380,17 +391,23 @@ profile_compute <- S7::new_generic(
 #'   threads inside one process; a refit that runs in a separate process is
 #'   sequential. Under `pkgload` the run stays sequential.
 #'
-#' @return A data frame (`check.names = FALSE`) with one column for each
-#'   coefficient of `which`, named by its label, then `profile_loglik`,
-#'   `profile_penalty`, `profile_pen_loglik`, `outer_criterion` and
-#'   `converged`. Its attributes are `maximum`, a one-row data frame with the
-#'   same columns at the unrestricted fit (the numbers of the fit itself,
-#'   which under [reml()] or [ml()] can lie slightly below the nearest rows
-#'   of the table, because at a row the criterion does not integrate the held
-#'   coefficients), `method`, the [profile_method]
-#'   object, `hyper`, and `criterion`, the outer criterion object of the fit
-#'   (`NULL` if it has none). The hyperparameters and the other coefficients
-#'   of each point are not returned.
+#' @param joint Whether the labels of `which` are held together (`TRUE`, the
+#'   profile of their vector) or each by itself with the others free
+#'   (`FALSE`).
+#'
+#' @return A [StatmodProfile] object. Its table `points` (`check.names =
+#'   FALSE`) has, with `joint = TRUE`, one column for each label of `which`,
+#'   named by the label, and with `joint = FALSE` the columns `profiled_label`
+#'   and `value`, then `profile_loglik`, `profile_penalty`,
+#'   `profile_pen_loglik`, `outer_criterion` and `converged`.
+#'   `unrestricted_point` has the same columns at the unrestricted fit (the
+#'   numbers of the fit itself, which under [reml()] or [ml()] can lie
+#'   slightly below the nearest rows of the table, because at a row the
+#'   criterion does not integrate the held coefficients). `profile_column`
+#'   names, for each label, the column that is its profile, and
+#'   `is_likelihood_ratio` states, for each label, whether twice the drop of
+#'   that column is a likelihood ratio. The hyperparameters and the other
+#'   coefficients of each point are not returned.
 #'
 #' @seealso [profile_grid()], [profile_range()], [statmod_test()] for the
 #'   likelihood ratio at one value.
@@ -407,17 +424,25 @@ profile_compute <- S7::new_generic(
 #' prof
 #'
 #' # the log-likelihood falls by z^2 / 2 at z standard errors
-#' attr(prof, "maximum")
+#' prof@unrestricted_point
+#' confint(prof)
 #'
 #' # two coefficients, with values chosen by the caller for the second
 #' statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
 #'                 values = list("mu:x" = profile_range(width = 1, n = 3),
 #'                               "mu:(Intercept)" = c(0.8, 1, 1.2)))
+#'
+#' # the same two, each profiled with the other free
+#' sep <- statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
+#'                        values = profile_range(width = 3, n = 7),
+#'                        joint = FALSE)
+#' confint(sep, type = "simultaneous")
 #' @export
 statmod_profile <- function(fit, which,
                             values = profile_range(width = 3, n = 21),
                             method = profile_grid(),
-                            hyper = c("held", "refit"), cores = 1) {
+                            hyper = c("held", "refit"), joint = TRUE,
+                            cores = 1) {
   if (!S7::S7_inherits(fit, StatmodFit)) {
     stop("'fit' must be a StatmodFit.", call. = FALSE)
   }
@@ -426,13 +451,85 @@ statmod_profile <- function(fit, which,
     stop("'method' must be a profile method, as profile_grid() returns.",
          call. = FALSE)
   }
+  if (!is.logical(joint) || length(joint) != 1L || is.na(joint)) {
+    stop("'joint' must be TRUE or FALSE.", call. = FALSE)
+  }
   cores <- check_cores(cores)
-  ctx <- profile_context(fit, which, hyper)
-  vals <- profile_values(ctx, values)
-  grid <- profile_prune(ctx, expand.grid(vals, KEEP.OUT.ATTRS = FALSE,
-                                         stringsAsFactors = FALSE))
-  pts <- profile_compute(method, ctx, grid, cores)
-  profile_assemble(ctx, grid, pts, method)
+  run <- function(w, vls) {
+    ctx <- profile_context(fit, w, hyper)
+    vals <- profile_values(ctx, vls)
+    grid <- profile_prune(ctx, expand.grid(vals, KEEP.OUT.ATTRS = FALSE,
+                                           stringsAsFactors = FALSE))
+    pts <- profile_compute(method, ctx, grid, cores)
+    out <- profile_assemble(ctx, grid, pts, method)
+    out$quantities <- profile_quantities(ctx)
+    out$column <- if (length(ctx$sidx)) "outer_criterion" else "profile_pen_loglik"
+    out$lr <- profile_is_lr(ctx, out$quantities, out$column)
+    out
+  }
+  if (joint || length(which) == 1L) {
+    r <- run(which, values)
+    k <- length(which)
+    return(StatmodProfile(
+      points = r$points, profiled_labels = which,
+      profiled_quantities = r$quantities,
+      profile_column = stats::setNames(rep(r$column, k), which),
+      unrestricted_point = r$unrestricted_point, profile_method = method,
+      hyper_handling = hyper, outer_method = fit@methods$outer,
+      is_likelihood_ratio = stats::setNames(rep(r$lr, k), which),
+      joint = TRUE))
+  }
+  # the labels must all exist before the first refit, so that a typo in the
+  # last one does not cost the profiles of the others
+  profile_context(fit, which, hyper)
+  if (is.list(values) && !S7::S7_inherits(values, ProfileRange)) {
+    extra <- setdiff(names(values)[names(values) != ""], which)
+    if (length(extra)) {
+      stop("'values' names ", paste(sprintf("'%s'", extra), collapse = ", "),
+           ", which is not in 'which'.", call. = FALSE)
+    }
+  }
+  rs <- lapply(which, function(w) run(w, profile_values_for(values, w)))
+  relabel <- function(d, w) {
+    cbind(data.frame(profiled_label = rep(w, nrow(d)), value = d[[w]],
+                     stringsAsFactors = FALSE),
+          d[, setdiff(names(d), w), drop = FALSE])
+  }
+  pts <- do.call(rbind, Map(function(r, w) relabel(r$points, w), rs, which))
+  ups <- do.call(rbind, Map(function(r, w) relabel(r$unrestricted_point, w),
+                            rs, which))
+  rownames(pts) <- NULL
+  rownames(ups) <- NULL
+  StatmodProfile(
+    points = pts, profiled_labels = which,
+    profiled_quantities = stats::setNames(
+      lapply(seq_along(which), function(i) rs[[i]]$quantities[[1L]]), which),
+    profile_column = stats::setNames(vapply(rs, function(r) r$column, ""), which),
+    unrestricted_point = ups, profile_method = method, hyper_handling = hyper,
+    outer_method = fit@methods$outer,
+    is_likelihood_ratio = stats::setNames(vapply(rs, function(r) r$lr, TRUE), which),
+    joint = FALSE)
+}
+
+
+#' The Argument values for a Subset of the Labels
+#'
+#' @description
+#' Keeps, of a list `values` of [statmod_profile()], the elements that name a
+#' label of `which` and the element without a name, so that a list written
+#' for every label serves a profile of some of them.
+#'
+#' @param values The argument `values`.
+#' @param which The labels of the profile.
+#'
+#' @return `values`, possibly shortened.
+#'
+#' @keywords internal
+profile_values_for <- function(values, which) {
+  if (!is.list(values) || S7::S7_inherits(values, ProfileRange)) return(values)
+  nms <- names(values)
+  if (is.null(nms)) return(values)
+  values[nms == "" | nms %in% which]
 }
 
 
@@ -1141,8 +1238,7 @@ S7::method(profile_compute, ProfileGrid) <- function(method, ctx, grid, cores) {
 #'
 #' @description
 #' Converts the points returned by [profile_compute()] into the data frame of
-#' [statmod_profile()], with the row of the unrestricted fit as the attribute
-#' `maximum`.
+#' [statmod_profile()], and the row of the unrestricted fit.
 #'
 #' @details
 #' The objective of a point is the negative of the penalized log-likelihood,
@@ -1155,7 +1251,8 @@ S7::method(profile_compute, ProfileGrid) <- function(method, ctx, grid, cores) {
 #' @param pts The points.
 #' @param method The profile method.
 #'
-#' @return The data frame.
+#' @return A list with `points`, the data frame, and `unrestricted_point`, the
+#'   row of the fit.
 #'
 #' @keywords internal
 profile_assemble <- function(ctx, grid, pts, method) {
@@ -1185,9 +1282,5 @@ profile_assemble <- function(ctx, grid, pts, method) {
                     fit@criterion[[1L]]
                   else NA_real_, isTRUE(fit@converged)))
   names(mx) <- names(out)
-  attr(out, "maximum") <- mx
-  attr(out, "method") <- method
-  attr(out, "hyper") <- ctx$hyper
-  attr(out, "criterion") <- ctx$outer
-  out
+  list(points = out, unrestricted_point = mx)
 }

@@ -11,7 +11,7 @@ poisson_approx <- function() {
        glm = stats::glm(y ~ x1 + x2, stats::poisson, dd))
 }
 
-err <- function(a, b) max(abs(a$profile_loglik - b$profile_loglik))
+err <- function(a, b) max(abs(a@points$profile_loglik - b@points$profile_loglik))
 
 test_that("continuation to convergence gives the rows of the grid", {
   p <- poisson_approx()
@@ -19,16 +19,16 @@ test_that("continuation to convergence gives the rows of the grid", {
   g <- statmod_profile(p$fit, "mu:x1", v)
   for (o in 1:2) {
     c1 <- statmod_profile(p$fit, "mu:x1", v, method = profile_continuation(order = o))
-    expect_equal(c1$profile_loglik, g$profile_loglik, tolerance = 1e-9)
-    expect_equal(c1$profile_pen_loglik, g$profile_pen_loglik, tolerance = 1e-9)
-    expect_true(all(c1$converged))
+    expect_equal(c1@points$profile_loglik, g@points$profile_loglik, tolerance = 1e-9)
+    expect_equal(c1@points$profile_pen_loglik, g@points$profile_pen_loglik, tolerance = 1e-9)
+    expect_true(all(c1@points$converged))
   }
-  expect_identical(attr(c1, "method")@name, "continuation")
+  expect_identical(c1@profile_method@name, "continuation")
   # two held coefficients
   v2 <- list("mu:x1" = c(0.3, 0.5, 0.7), "mu:x2" = c(-0.6, -0.3))
   g2 <- statmod_profile(p$fit, c("mu:x1", "mu:x2"), v2)
   c2 <- statmod_profile(p$fit, c("mu:x1", "mu:x2"), v2, method = profile_continuation())
-  expect_equal(c2$profile_loglik, g2$profile_loglik, tolerance = 1e-9)
+  expect_equal(c2@points$profile_loglik, g2@points$profile_loglik, tolerance = 1e-9)
 })
 
 test_that("a truncated corrector is a lower bound of the grid", {
@@ -37,7 +37,7 @@ test_that("a truncated corrector is a lower bound of the grid", {
   g <- statmod_profile(p$fit, "mu:x1", v)
   c1 <- statmod_profile(p$fit, "mu:x1", v,
                         method = profile_continuation(order = 1, maxit = 1))
-  expect_true(all(c1$profile_pen_loglik <= g$profile_pen_loglik + 1e-9))
+  expect_true(all(c1@points$profile_pen_loglik <= g@points$profile_pen_loglik + 1e-9))
   expect_lt(err(c1, g), 1e-6)
 })
 
@@ -47,9 +47,9 @@ test_that("the expansion approaches the grid as the order grows", {
   g <- statmod_profile(p$fit, "mu:x1", v)
   e <- vapply(2:5, function(o) {
     t <- statmod_profile(p$fit, "mu:x1", v, method = profile_taylor(order = o))
-    expect_true(all(t$profile_pen_loglik <= g$profile_pen_loglik + 1e-9))
-    expect_true(all(is.na(t$converged)))
-    expect_true(all(is.na(t$outer_criterion)))
+    expect_true(all(t@points$profile_pen_loglik <= g@points$profile_pen_loglik + 1e-9))
+    expect_true(all(is.na(t@points$converged)))
+    expect_true(all(is.na(t@points$outer_criterion)))
     err(t, g)
   }, numeric(1))
   expect_true(all(diff(e) < 0))
@@ -64,8 +64,8 @@ test_that("order 2 agrees with the quadratic profile near the estimate", {
   t <- statmod_profile(p$fit, "mu:x1", list(b), method = profile_taylor(order = 2))
   ref <- as.numeric(stats::logLik(p$glm)) - (b - b0)^2 / (2 * se^2)
   # the first neglected term is cubic in the step
-  expect_equal(t$profile_loglik, ref, tolerance = 5e-4)
-  expect_gt(max(abs(t$profile_loglik - ref)), 0)
+  expect_equal(t@points$profile_loglik, ref, tolerance = 5e-4)
+  expect_gt(max(abs(t@points$profile_loglik - ref)), 0)
 })
 
 test_that("a penalized smooth is followed by both methods", {
@@ -75,13 +75,13 @@ test_that("a penalized smooth is followed by both methods", {
   fit <- statmod(y ~ s(z) + x, distributions7::poisson_distrib(), dd)
   v <- profile_range(width = 2, n = 5)
   g <- statmod_profile(fit, "mu:x", v)
-  expect_equal(statmod_profile(fit, "mu:x", v, method = profile_continuation())$profile_loglik,
-               g$profile_loglik, tolerance = 1e-9)
+  expect_equal(statmod_profile(fit, "mu:x", v, method = profile_continuation())@points$profile_loglik,
+               g@points$profile_loglik, tolerance = 1e-9)
   t <- statmod_profile(fit, "mu:x", v, method = profile_taylor(order = 4))
   expect_lt(err(t, g), 1e-5)
-  expect_true(all(t$profile_pen_loglik <= g$profile_pen_loglik + 1e-9))
+  expect_true(all(t@points$profile_pen_loglik <= g@points$profile_pen_loglik + 1e-9))
   # the penalty column is that of the exact point
-  expect_equal(t$profile_penalty, -(-t$profile_pen_loglik + t$profile_loglik))
+  expect_equal(t@points$profile_penalty, -(-t@points$profile_pen_loglik + t@points$profile_loglik))
 })
 
 test_that("a nonlinear term, whose block moves, is followed", {
@@ -100,11 +100,11 @@ test_that("a nonlinear term, whose block moves, is followed", {
   v <- profile_range(width = 2, n = 5)
   g <- statmod_profile(fit, "mu:nl.r.z", v)
   expect_equal(statmod_profile(fit, "mu:nl.r.z", v,
-                               method = profile_continuation(order = 2))$profile_loglik,
-               g$profile_loglik, tolerance = 1e-9)
+                               method = profile_continuation(order = 2))@points$profile_loglik,
+               g@points$profile_loglik, tolerance = 1e-9)
   e <- vapply(c(2, 3, 5), function(o) {
     t <- statmod_profile(fit, "mu:nl.r.z", v, method = profile_taylor(order = o))
-    expect_true(all(t$profile_pen_loglik <= g$profile_pen_loglik + 1e-9))
+    expect_true(all(t@points$profile_pen_loglik <= g@points$profile_pen_loglik + 1e-9))
     err(t, g)
   }, numeric(1))
   expect_true(all(diff(e) < 0))
@@ -120,8 +120,8 @@ test_that("coordinates that reml estimates follow the nested problem", {
   g <- statmod_profile(fit, "mu:x", v)
   for (o in 1:2) {
     c1 <- statmod_profile(fit, "mu:x", v, method = profile_continuation(order = o))
-    expect_equal(c1$profile_loglik, g$profile_loglik, tolerance = 1e-6)
-    expect_equal(c1$outer_criterion, g$outer_criterion, tolerance = 1e-6)
+    expect_equal(c1@points$profile_loglik, g@points$profile_loglik, tolerance = 1e-6)
+    expect_equal(c1@points$outer_criterion, g@points$outer_criterion, tolerance = 1e-6)
   }
   e <- vapply(2:5, function(o) {
     err(statmod_profile(fit, "mu:x", v, method = profile_taylor(order = o)), g)
@@ -169,10 +169,10 @@ test_that("a halved step reaches the same point", {
     })
   c1 <- statmod_profile(p$fit, "mu:x1", v, method = profile_continuation())
   expect_true(calls$failed)
-  expect_identical(nrow(c1), 3L)
-  expect_equal(c1$profile_loglik, g$profile_loglik, tolerance = 1e-9)
+  expect_identical(nrow(c1@points), 3L)
+  expect_equal(c1@points$profile_loglik, g@points$profile_loglik, tolerance = 1e-9)
   # the rows are the requested values only
-  expect_equal(c1[["mu:x1"]], g[["mu:x1"]])
+  expect_equal(c1@points[["mu:x1"]], g@points[["mu:x1"]])
 })
 
 test_that("models without smooth coefficients are rejected with a pointer to the grid", {
@@ -205,7 +205,7 @@ test_that("a smoothed break-point term is accepted", {
   t <- statmod_profile(fs, "mu:(Intercept)", v, method = profile_taylor(order = 3))
   expect_lt(err(t, g), 1e-4)
   c1 <- statmod_profile(fs, "mu:(Intercept)", v, method = profile_continuation())
-  expect_equal(c1$profile_loglik, g$profile_loglik, tolerance = 1e-8)
+  expect_equal(c1@points$profile_loglik, g@points$profile_loglik, tolerance = 1e-8)
 })
 
 test_that("the constructors validate their arguments", {

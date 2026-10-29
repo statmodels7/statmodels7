@@ -24,23 +24,23 @@ test_that("one held hyperparameter gives the criterion of a refit from the formu
   key <- "mu/s(z)/lambda"
   v <- profile_range(width = 2, n = 5)
   g <- statmod_profile(fit, key, v)
-  expect_identical(names(g)[1L], key)
-  ref <- vapply(g[[key]], function(e) {
+  expect_identical(names(g@points)[1L], key)
+  ref <- vapply(g@points[[key]], function(e) {
     f <- statmod(y ~ s(z, hyper = c(lambda = exp(e))) + x, fam, dd)
     crit_at(f, fit@methods$outer)
   }, numeric(1))
-  expect_equal(g$outer_criterion, ref, tolerance = 1e-9)
+  expect_equal(g@points$outer_criterion, ref, tolerance = 1e-9)
   # the grid is on the scale of the link, and holds the estimate
   est <- log(fit@hyper$mu[["s(z)"]][["lambda"]])
-  expect_equal(g[[key]][3L], est)
+  expect_equal(g@points[[key]][3L], est)
   # at the estimate the criterion is the fit's
-  expect_equal(g$outer_criterion[3L], fit@criterion[[1L]], tolerance = 1e-9)
-  expect_equal(attr(g, "maximum")$outer_criterion, fit@criterion[[1L]])
-  expect_equal(attr(g, "maximum")[[key]], est)
+  expect_equal(g@points$outer_criterion[3L], fit@criterion[[1L]], tolerance = 1e-9)
+  expect_equal(g@unrestricted_point$outer_criterion, fit@criterion[[1L]])
+  expect_equal(g@unrestricted_point[[key]], est)
   # one hyperparameter: held and refit coincide
   r <- statmod_profile(fit, key, v, hyper = "refit")
-  expect_equal(r$outer_criterion, g$outer_criterion, tolerance = 1e-9)
-  expect_true(all(g$converged))
+  expect_equal(r@points$outer_criterion, g@points$outer_criterion, tolerance = 1e-9)
+  expect_true(all(g@points$converged))
 })
 
 test_that("the other hyperparameters are held or searched again", {
@@ -52,19 +52,19 @@ test_that("the other hyperparameters are held or searched again", {
   ph <- statmod_profile(fit, key, v, hyper = "held")
   pr <- statmod_profile(fit, key, v, hyper = "refit")
   lw <- fit@hyper$mu[["s(w)"]][["lambda"]]
-  refh <- vapply(ph[[key]], function(e) {
+  refh <- vapply(ph@points[[key]], function(e) {
     f <- statmod(y ~ s(z, hyper = c(lambda = exp(e))) +
                    s(w, hyper = c(lambda = lw)) + x, fam, dd)
     crit_at(f, fit@methods$outer)
   }, numeric(1))
-  expect_equal(ph$outer_criterion, refh, tolerance = 1e-9)
-  refr <- vapply(pr[[key]], function(e) {
+  expect_equal(ph@points$outer_criterion, refh, tolerance = 1e-9)
+  refr <- vapply(pr@points[[key]], function(e) {
     f <- statmod(y ~ s(z, hyper = c(lambda = exp(e))) + s(w) + x, fam, dd)
     as.numeric(f@criterion[[1L]])
   }, numeric(1))
-  expect_equal(pr$outer_criterion, refr, tolerance = 1e-9)
+  expect_equal(pr@points$outer_criterion, refr, tolerance = 1e-9)
   # searching the others again cannot lower the criterion
-  expect_true(all(pr$outer_criterion >= ph$outer_criterion - 1e-9))
+  expect_true(all(pr@points$outer_criterion >= ph@points$outer_criterion - 1e-9))
 })
 
 test_that("a hyperparameter and a coefficient together", {
@@ -75,27 +75,27 @@ test_that("a hyperparameter and a coefficient together", {
   b <- coef(fit)$mu[["x"]]
   vals <- stats::setNames(list(c(0.5, 1.5), c(b - 0.1, b + 0.1)), c(key, "mu:x"))
   pm <- statmod_profile(fit, c(key, "mu:x"), vals, hyper = "refit")
-  expect_identical(nrow(pm), 4L)
+  expect_identical(nrow(pm@points), 4L)
   # the reference carries the coefficient as an offset
-  ref <- apply(pm[, 1:2], 1L, function(r) {
+  ref <- apply(pm@points[, 1:2], 1L, function(r) {
     d2 <- dd
     d2$off <- unname(r[2L]) * d2$x
     f <- statmod(y ~ s(z, hyper = c(lambda = exp(unname(r[1L])))) + s(w) +
                    offset(off), fam, d2)
     as.numeric(f@criterion[[1L]])
   })
-  expect_equal(pm$outer_criterion, unname(ref), tolerance = 1e-9)
+  expect_equal(pm@points$outer_criterion, unname(ref), tolerance = 1e-9)
   # with the other hyperparameter held at its value
   lw <- fit@hyper$mu[["s(w)"]][["lambda"]]
   ph <- statmod_profile(fit, c(key, "mu:x"), vals, hyper = "held")
-  refh <- apply(ph[, 1:2], 1L, function(r) {
+  refh <- apply(ph@points[, 1:2], 1L, function(r) {
     d2 <- dd
     d2$off <- unname(r[2L]) * d2$x
     f <- statmod(y ~ s(z, hyper = c(lambda = exp(unname(r[1L])))) +
                    s(w, hyper = c(lambda = lw)) + offset(off), fam, d2)
     crit_at(f, fit@methods$outer)
   })
-  expect_equal(ph$outer_criterion, unname(refh), tolerance = 1e-9)
+  expect_equal(ph@points$outer_criterion, unname(refh), tolerance = 1e-9)
 })
 
 test_that("a hyperparameter at the edge takes the grid of the fallback", {
@@ -106,16 +106,16 @@ test_that("a hyperparameter at the edge takes the grid of the fallback", {
   key <- "mu/s(z)/lambda"
   expect_gt(log(fit@hyper$mu[["s(z)"]][["lambda"]]), 8)
   g <- statmod_profile(fit, key, profile_range(width = 2, n = 5, fallback = 3))
-  expect_equal(g[[key]], c(5, 6.5, 8))
-  expect_true(all(is.finite(g$outer_criterion)))
+  expect_equal(g@points[[key]], c(5, 6.5, 8))
+  expect_true(all(is.finite(g@points$outer_criterion)))
   # a hyperparameter inside the interval takes the standard error
   set.seed(3)
   d2 <- data.frame(z = runif(250), x = rnorm(250))
   d2$y <- rpois(250, exp(1 + sin(2 * pi * d2$z) + 0.4 * d2$x))
   f2 <- statmod(y ~ s(z) + x, distributions7::poisson_distrib(), d2)
   g2 <- statmod_profile(f2, key, profile_range(width = 1, n = 3))
-  expect_gt(diff(range(g2[[key]])), 0)
-  expect_lt(diff(range(g2[[key]])), 4)
+  expect_gt(diff(range(g2@points[[key]])), 0)
+  expect_lt(diff(range(g2@points[[key]])), 4)
 })
 
 test_that("a hold on the specification reaches every reader of the index", {
@@ -156,19 +156,19 @@ test_that("the approximate methods hold a hyperparameter", {
   g <- statmod_profile(fit, key, v, hyper = "held")
   for (m in list(profile_continuation(), profile_taylor(order = 2))) {
     a <- statmod_profile(fit, key, v, hyper = "held", method = m)
-    expect_equal(a$outer_criterion, g$outer_criterion, tolerance = 1e-9)
+    expect_equal(a@points$outer_criterion, g@points$outer_criterion, tolerance = 1e-9)
   }
   # the others searched again: the continuation follows the grid and the
   # expansion approaches it as the order grows
   gr <- statmod_profile(fit, key, v, hyper = "refit")
   cc <- statmod_profile(fit, key, v, hyper = "refit",
                         method = profile_continuation(order = 2))
-  expect_equal(cc$outer_criterion, gr$outer_criterion, tolerance = 1e-9)
+  expect_equal(cc@points$outer_criterion, gr@points$outer_criterion, tolerance = 1e-9)
   e <- vapply(c(2, 3, 5), function(o) {
     t <- statmod_profile(fit, key, v, hyper = "refit",
                          method = profile_taylor(order = o))
-    expect_true(all(is.na(t$converged)))
-    max(abs(t$outer_criterion - gr$outer_criterion))
+    expect_true(all(is.na(t@points$converged)))
+    max(abs(t@points$outer_criterion - gr@points$outer_criterion))
   }, numeric(1))
   expect_true(all(diff(e) < 0))
   expect_lt(e[3L], 1e-5)
@@ -179,10 +179,10 @@ test_that("the approximate methods hold a hyperparameter", {
   gm <- statmod_profile(fit, c(key, "mu:x"), vals, hyper = "refit")
   cm <- statmod_profile(fit, c(key, "mu:x"), vals, hyper = "refit",
                         method = profile_continuation())
-  expect_equal(cm$outer_criterion, gm$outer_criterion, tolerance = 1e-9)
+  expect_equal(cm@points$outer_criterion, gm@points$outer_criterion, tolerance = 1e-9)
   tm <- statmod_profile(fit, c(key, "mu:x"), vals, hyper = "refit",
                         method = profile_taylor(order = 3))
-  expect_lt(max(abs(tm$outer_criterion - gm$outer_criterion)), 5e-3)
+  expect_lt(max(abs(tm@points$outer_criterion - gm@points$outer_criterion)), 5e-3)
 })
 
 test_that("the hyperparameter of a kinked penalty is profiled by the grid", {
@@ -200,14 +200,14 @@ test_that("the hyperparameter of a kinked penalty is profiled by the grid", {
   # a grid wide enough for the lasso to move the coefficients
   v <- c(-4, 4, 6, 7)
   g <- statmod_profile(fit, key, list(v))
-  expect_true(all(is.na(g$outer_criterion)))
-  ref <- vapply(g[[key]], function(e) {
+  expect_true(all(is.na(g@points$outer_criterion)))
+  ref <- vapply(g@points[[key]], function(e) {
     r <- statmod(y ~ lasso(x1 + x2 + x3 + x4, lambda = exp(e)), fam, dd)
     c(r@loglik, -r@objective)
   }, numeric(2))
-  expect_equal(g$profile_loglik, ref[1L, ], tolerance = 1e-5)
-  expect_equal(g$profile_pen_loglik, ref[2L, ], tolerance = 1e-5)
-  expect_gt(diff(range(g$profile_loglik)), 1)
+  expect_equal(g@points$profile_loglik, ref[1L, ], tolerance = 1e-5)
+  expect_equal(g@points$profile_pen_loglik, ref[2L, ], tolerance = 1e-5)
+  expect_gt(diff(range(g@points$profile_loglik)), 1)
   # the approximate methods name the key and the reason
   for (m in list(profile_continuation(), profile_taylor())) {
     expect_error(statmod_profile(fit, key, list(v), method = m), "kink")
