@@ -28,7 +28,8 @@ statmod_profile(
 
 - which:
 
-  A character vector of unique labels `"parameter:coefficient"`, of one
+  A character vector of unique labels `"parameter:coefficient"` of
+  coefficients and `"parameter/term/name"` of hyperparameters, of one
   equation or of several.
 
 - values:
@@ -177,6 +178,64 @@ of a parameter of a nonlinear term, the positions of the break-points
 and the parameters of a covariance structure. Values on another scale
 must be mapped to it by the caller. A monotone map relabels the grid and
 leaves the columns of the profile unchanged.
+
+## A hyperparameter as an object of the profile
+
+`which` may name hyperparameters, alone or with coefficients. A
+hyperparameter is named by the key that `fit@hyper` uses, the
+distribution parameter, the key of the term and the name of the
+hyperparameter, joined by slashes: `"mu/s(z)/lambda"` is the smoothing
+parameter of `s(z)` in the equation of `mu`. The names are the entries
+of `fit@hyper`, and the coordinates of the outer search are printed
+under the same keys. A hyperparameter that the outer criterion
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+estimates can be held, and so can each coordinate of a covariance class
+(for example `"mu/u | g/sigma_log_sd1"`) and the hyperparameter of a
+kinked penalty that a path chooses (the `lambda` of a lasso). A
+hyperparameter that the call of a term holds at a value is not estimated
+by the fit and has no profile, and the function signals an error that
+names it.
+
+The hyperparameter of a kinked penalty is profiled by the grid only,
+because the penalized mode is a piecewise smooth function of it.
+[`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md)
+and
+[`profile_taylor()`](https://statmodels7.github.io/statmodels7/reference/profile_taylor.md)
+signal an error that names the key. It has no coordinate in the outer
+criterion, so `outer_criterion` is missing unless `which` also contains
+a hyperparameter of the outer criterion, and the profile is
+`profile_pen_loglik`, which includes the penalty at the value held.
+
+The values of a hyperparameter are on the scale of its link, for example
+\\\log\lambda\\, and
+[`profile_range()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
+places them from the standard error of the exact Hessian of the outer
+criterion, or from its `fallback` where that standard error is not
+available.
+
+When `which` contains a hyperparameter, the profile is the column
+`outer_criterion`: the value of the outer criterion of the model with
+every quantity of `which` held, the other coefficients at the penalized
+mode, the coordinates that the criterion estimates estimated by it and,
+with `hyper = "refit"`, the other hyperparameters estimated by the outer
+search. The columns `profile_loglik`, `profile_penalty` and
+`profile_pen_loglik` then report the inner criterion at the point
+reached, and are not the profile. When `which` contains only
+coefficients the profile is `profile_pen_loglik`, as described above. A
+hyperparameter is held on the specification, through the property
+`held_hyper` of
+[`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md),
+and the terms are not rebuilt.
+
+Under
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+holding an unpenalized coefficient changes the space of the fixed
+effects over which the criterion integrates, so that the difference of
+the criterion between two values of that coefficient is not a likelihood
+ratio in the usual sense. With
+[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md) it
+is.
 
 ## The hyperparameters, and the coefficients of the criterion
 

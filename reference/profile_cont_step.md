@@ -7,7 +7,7 @@ returned.
 ## Usage
 
 ``` r
-profile_cont_step(ctx, method, prev, val, nested, depth = 0L)
+profile_cont_step(ctx, method, prev, val, nested, se, depth = 0L)
 ```
 
 ## Arguments
@@ -32,7 +32,11 @@ profile_cont_step(ctx, method, prev, val, nested, depth = 0L)
 
 - nested:
 
-  Whether the criterion estimates coordinates of the model.
+  Whether the profile follows the nested problem.
+
+- se:
+
+  The scale of each label of `which`, for the nested problem.
 
 - depth:
 

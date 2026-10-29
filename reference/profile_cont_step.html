@@ -9,7 +9,7 @@ A failed corrector halves the step through a point that is not returned."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.225.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.227.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ A failed corrector halves the step through a point that is not returned.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">profile_cont_step</span><span class="op">(</span><span class="va">ctx</span>, <span class="va">method</span>, <span class="va">prev</span>, <span class="va">val</span>, <span class="va">nested</span>, depth <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">profile_cont_step</span><span class="op">(</span><span class="va">ctx</span>, <span class="va">method</span>, <span class="va">prev</span>, <span class="va">val</span>, <span class="va">nested</span>, <span class="va">se</span>, depth <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,7 +69,11 @@ A failed corrector halves the step through a point that is not returned.</p>
 
 
 <dt id="arg-nested">nested<a class="anchor" aria-label="anchor" href="#arg-nested"></a></dt>
-<dd><p>Whether the criterion estimates coordinates of the model.</p></dd>
+<dd><p>Whether the profile follows the nested problem.</p></dd>
+
+
+<dt id="arg-se">se<a class="anchor" aria-label="anchor" href="#arg-se"></a></dt>
+<dd><p>The scale of each label of <code>which</code>, for the nested problem.</p></dd>
 
 
 <dt id="arg-depth">depth<a class="anchor" aria-label="anchor" href="#arg-depth"></a></dt>

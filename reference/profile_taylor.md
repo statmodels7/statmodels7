@@ -54,14 +54,17 @@ and the penalty computed exactly at the predicted coefficients, the
 penalized log-likelihood of every row is a lower bound of the profile.
 The column `converged` is `NA`.
 
-Coordinates that the outer criterion estimates are developed as in
+Quantities that the outer criterion estimates (coordinates, and
+hyperparameters with `hyper = "refit"`) are developed as in
 [`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md),
-from the derivatives of the criterion in those coordinates, and the
+from the derivatives of the criterion in those quantities, and the
 coefficients that are neither held nor estimated by the criterion are
-then the penalized mode at the predicted coordinates (one inner fit for
-each point). The lower bound does not hold in that case, because the
-exact method maximizes the criterion and not the penalized
-log-likelihood over those coordinates.
+then the penalized mode at the predicted values (one inner fit for each
+point). The lower bound does not hold in that case, because the exact
+method maximizes the criterion and not the penalized log-likelihood over
+those quantities. A hyperparameter in `which` is held at the values of
+its grid on the scale of its link, and the column `outer_criterion` is
+the profile.
 
 The requirements on the model are those of
 [`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md).

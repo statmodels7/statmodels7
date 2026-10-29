@@ -15,7 +15,7 @@ coefficients fixed."><meta property="og:image" content="https://statmodels7.gith
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.225.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.227.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,21 +110,27 @@ part of the output.</p>
 <p>Coordinates that the outer criterion estimates (the unpenalized
 coefficients of the parameters other than the first under <code><a href="reml.html">reml()</a></code> or
 <code><a href="reml.html">ml()</a></code>) are re-estimated by the criterion at every point of the exact
-method. They are followed through the nested problem: the held
-coefficients and those coordinates are criterion coordinates together, the
+method, and with <code>hyper = "refit"</code> so are the hyperparameters that <code>which</code>
+does not name. They are followed through the nested problem: the held
+quantities (the coefficients and the hyperparameters of <code>which</code>) and the
+ones that the criterion estimates are criterion coordinates together, the
 exact Hessian of the criterion over them gives the derivative of the
-estimated coordinates with respect to the held ones, and the other
-coefficients are the penalized mode at the predicted coordinates. The first
-step starts from the refit with the held coefficients at the estimate,
-which differs from the fit where the criterion does not integrate the held
+estimated quantities with respect to the held ones, and the other
+coefficients are the penalized mode at the predicted values. The first step
+starts from the refit with the held quantities at the estimate, which
+differs from the fit where the criterion does not integrate the held
 coefficients.</p>
-<p>The method requires <code>hyper = "held"</code> and a model whose coefficients are
-smooth functions of the held ones: the terms <code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">modelterms7::linpar()</a></code>,
-<code><a href="https://statmodels7.github.io/modelterms7/reference/s.html" class="external-link">modelterms7::s()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/te.html" class="external-link">modelterms7::te()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code>,
-<code><a href="https://statmodels7.github.io/modelterms7/reference/ridge.html" class="external-link">modelterms7::ridge()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> and the smoothed forms of
-<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> and <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>.
-A model with a break-point term that is not smoothed, a kinked penalty or
-a structural term is rejected with a pointer to <code><a href="profile_grid.html">profile_grid()</a></code>.</p>
+<p>A hyperparameter in <code>which</code> is held on the grid of its link scale, and the
+profile is then the column <code>outer_criterion</code>, evaluated exactly at the
+predicted point. Where nothing else is estimated by the criterion, the
+predicted point is the penalized mode at the held values.</p>
+<p>The method requires a model whose coefficients are smooth functions of the
+held quantities: the terms <code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">modelterms7::linpar()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/s.html" class="external-link">modelterms7::s()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/te.html" class="external-link">modelterms7::te()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/ridge.html" class="external-link">modelterms7::ridge()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> and the smoothed forms of <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> and <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>. A model with a
+break-point term that is not smoothed, a kinked penalty or a structural
+term is rejected with a pointer to <code><a href="profile_grid.html">profile_grid()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

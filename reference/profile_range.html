@@ -13,7 +13,7 @@ coefficient in the linear predictor."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.225.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.227.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,9 +51,9 @@ coefficient in the linear predictor.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">profile_range</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">3</span>, n <span class="op">=</span> <span class="fl">21</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">profile_range</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">3</span>, n <span class="op">=</span> <span class="fl">21</span>, fallback <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">ProfileRange</span><span class="op">(</span>width <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">ProfileRange</span><span class="op">(</span>width <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>, fallback <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -68,17 +68,32 @@ standard errors.</p></dd>
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
 <dd><p>A single integer, at least 2: the number of values.</p></dd>
 
+
+<dt id="arg-fallback">fallback<a class="anchor" aria-label="anchor" href="#arg-fallback"></a></dt>
+<dd><p>A single positive number: the half-width of the grid of a
+hyperparameter on the scale of its link, used where its standard error is
+not available.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>ProfileRange</code>, with the properties <code>width</code> and
-<code>n</code>.</p>
+    <p>An object of class <code>ProfileRange</code>, with the properties <code>width</code>, <code>n</code>
+and <code>fallback</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The standard error is the one of <code>vcov(fit)</code>, so it follows the variance
 convention that <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> uses by default. The grid is symmetric about the
 estimate, and it contains the estimate itself when <code>n</code> is odd.</p>
+<p>For a hyperparameter the grid is placed on the scale of its link (for
+example \(\log\lambda\)), at the estimate plus and minus <code>width</code>
+standard errors, with the standard error from the exact Hessian of the
+outer criterion, the one that <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> reads. Where that standard error
+is not available, or the estimate lies outside the interval below, because
+the hyperparameter is at an edge of its range or the criterion is flat in
+its direction, the grid is the estimate, cut to that interval, plus and
+minus <code>fallback</code>. The values are cut to the interval from -8 to 8 of the
+scale of the link, which <code><a href="statmod_certificate.html">statmod_certificate()</a></code> reads as the interior.</p>
 <p>The scale is the unconstrained one. A coefficient of a linear predictor
 lives there, and so do the parameters of a nonlinear term, the positions
 of the break-points and the parameters of a covariance structure; the
@@ -93,12 +108,14 @@ scale of the coefficients is described at <code><a href="statmod_profile.html">s
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">profile_range</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;statmodels7::ProfileRange&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ width: num 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ n    : int 21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  @ width   : num 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  @ n       : int 21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  @ fallback: num 3</span>
 <span class="r-in"><span><span class="fu">profile_range</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">2</span>, n <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;statmodels7::ProfileRange&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ width: num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ n    : int 9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  @ width   : num 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  @ n       : int 9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  @ fallback: num 3</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

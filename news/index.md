@@ -1,5 +1,42 @@
 # Changelog
 
+## statmodels7 0.227.0
+
+- [`statmod_profile()`](https://statmodels7.github.io/statmodels7/reference/statmod_profile.md)
+  profiles the hyperparameter of a kinked penalty that a path chooses
+  (the `lambda` of a lasso) by the grid only. It has no coordinate in
+  the outer criterion, so `outer_criterion` is missing and the profile
+  is `profile_pen_loglik`.
+  [`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md)
+  and
+  [`profile_taylor()`](https://statmodels7.github.io/statmodels7/reference/profile_taylor.md)
+  signal an error that names the key. A hyperparameter that the call of
+  a term holds at a value has no profile, and the error names the key
+  and the value.
+- A coordinate of a covariance class (`"mu/u | g/sigma_log_sd1"`) is
+  held by `held_hyper` like any other hyperparameter. With
+  `hyper = "refit"` the coordinate was estimated again at every point.
+
+## statmodels7 0.226.0
+
+- [`statmod_profile()`](https://statmodels7.github.io/statmodels7/reference/statmod_profile.md)
+  accepts hyperparameters in `which`, alone or with coefficients, named
+  by the key of `fit@hyper` with slashes (`"mu/s(z)/lambda"`). The
+  values are on the scale of the link and
+  [`profile_range()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
+  has a new argument `fallback` for the grid where the standard error of
+  the hyperparameter is not available. The profile is then the column
+  `outer_criterion`. A hyperparameter is held on the specification
+  through the new property `held_hyper` of `StatmodSpec`, merged into
+  the values that a term holds, without rebuilding the terms.
+  [`profile_continuation()`](https://statmodels7.github.io/statmodels7/reference/profile_continuation.md)
+  and
+  [`profile_taylor()`](https://statmodels7.github.io/statmodels7/reference/profile_taylor.md)
+  hold hyperparameters through the nested problem, from the exact
+  Hessian of the outer criterion, and follow the quantities that the
+  criterion estimates, including the other hyperparameters with
+  `hyper = "refit"`.
+
 ## statmodels7 0.225.0
 
 - New

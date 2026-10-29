@@ -2038,17 +2038,42 @@ helper functions. Using the package does not require any of it.
 - [`profile_exact()`](https://statmodels7.github.io/statmodels7/reference/profile_exact.md)
   : The Exact Penalized Log-Likelihood at Predicted Coefficients
 
+- [`profile_exact_nested()`](https://statmodels7.github.io/statmodels7/reference/profile_exact_nested.md)
+  : The Exact Quantities of a Point Predicted by the Nested Expansion
+
 - [`profile_failed()`](https://statmodels7.github.io/statmodels7/reference/profile_failed.md)
   : A Failed Point of a Profile
 
+- [`profile_held_keys()`](https://statmodels7.github.io/statmodels7/reference/profile_held_keys.md)
+  : The Hyperparameters That the Terms Hold
+
 - [`profile_hold()`](https://statmodels7.github.io/statmodels7/reference/profile_hold.md)
   : A Specification With Named Coefficients Held
+
+- [`profile_hold_hyper()`](https://statmodels7.github.io/statmodels7/reference/profile_hold_hyper.md)
+  : Hold Hyperparameters on a Specification
+
+- [`profile_hyper_at()`](https://statmodels7.github.io/statmodels7/reference/profile_hyper_at.md)
+  : The Hyperparameter Store With Held Values Written In
+
+- [`profile_hyper_rows()`](https://statmodels7.github.io/statmodels7/reference/profile_hyper_rows.md)
+  : A Subtable of the Hyperparameters, With Its Attributes
+
+- [`profile_hyper_se()`](https://statmodels7.github.io/statmodels7/reference/profile_hyper_se.md)
+  : The Standard Errors of the Held Hyperparameters on the Scale of
+  Their Links
+
+- [`profile_hyper_table()`](https://statmodels7.github.io/statmodels7/reference/profile_hyper_table.md)
+  : The Hyperparameters That the Outer Criterion Estimates
 
 - [`profile_interval()`](https://statmodels7.github.io/statmodels7/reference/profile_interval.md)
   : The Interval of a Position from Its Profile
 
 - [`profile_map()`](https://statmodels7.github.io/statmodels7/reference/profile_map.md)
   : Run Independent Units of a Profile
+
+- [`profile_nested_needed()`](https://statmodels7.github.io/statmodels7/reference/profile_nested_needed.md)
+  : Whether a Profile Follows the Nested Problem
 
 - [`profile_nested_predict()`](https://statmodels7.github.io/statmodels7/reference/profile_nested_predict.md)
   : The Coefficients That the Nested Expansion Predicts at a Step
@@ -2068,9 +2093,15 @@ helper functions. Using the package does not require any of it.
 - [`profile_ray()`](https://statmodels7.github.io/statmodels7/reference/profile_ray.md)
   : The Coefficients That a Polynomial of the Trace Predicts at a Point
 
+- [`profile_scales()`](https://statmodels7.github.io/statmodels7/reference/profile_scales.md)
+  : The Scale of Each Label of a Profile
+
 - [`profile_setup()`](https://statmodels7.github.io/statmodels7/reference/profile_setup.md)
   : The Objective, Its Hessian and the Scale of the Held Coefficients at
   a Point
+
+- [`profile_spec()`](https://statmodels7.github.io/statmodels7/reference/profile_spec.md)
+  : The Specification With the Labelled Quantities Held
 
 - [`profile_values()`](https://statmodels7.github.io/statmodels7/reference/profile_values.md)
   : The Values of a Profile for Each Coefficient

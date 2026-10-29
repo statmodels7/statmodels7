@@ -31,6 +31,7 @@ StatmodSpec(
   structural = list(),
   linpar = list(),
   held_coef = list(),
+  held_hyper = list(),
   threads = 1L,
   cores = 1L
 )
@@ -99,6 +100,12 @@ StatmodSpec(
   held at a value, each a named numeric vector keyed by coefficient
   name. The list is empty by default.
 
+- held_hyper:
+
+  A named list keyed by distribution parameter, then by the key of a
+  term, of hyperparameters held at a value, each a named numeric vector
+  on the scale of the hyperparameter. The list is empty by default.
+
 - threads:
 
   The number of threads, a single integer.
@@ -120,8 +127,9 @@ implicit parametric block and is set by
 [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
 sets it. `structural` holds the parameters of a structural term where a
 fit has set them. `held_coef` holds coefficients held at a value, by
-name, empty by default. `threads` and `cores` hold the thread and
-process counts that
+name, empty by default. `held_hyper` holds hyperparameters at a value,
+by term and name, empty by default. `threads` and `cores` hold the
+thread and process counts that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 sets.
 

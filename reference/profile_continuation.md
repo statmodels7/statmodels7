@@ -72,18 +72,25 @@ coefficients of the parameters other than the first under
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 or
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md))
-are re-estimated by the criterion at every point of the exact method.
-They are followed through the nested problem: the held coefficients and
-those coordinates are criterion coordinates together, the exact Hessian
-of the criterion over them gives the derivative of the estimated
-coordinates with respect to the held ones, and the other coefficients
-are the penalized mode at the predicted coordinates. The first step
-starts from the refit with the held coefficients at the estimate, which
-differs from the fit where the criterion does not integrate the held
-coefficients.
+are re-estimated by the criterion at every point of the exact method,
+and with `hyper = "refit"` so are the hyperparameters that `which` does
+not name. They are followed through the nested problem: the held
+quantities (the coefficients and the hyperparameters of `which`) and the
+ones that the criterion estimates are criterion coordinates together,
+the exact Hessian of the criterion over them gives the derivative of the
+estimated quantities with respect to the held ones, and the other
+coefficients are the penalized mode at the predicted values. The first
+step starts from the refit with the held quantities at the estimate,
+which differs from the fit where the criterion does not integrate the
+held coefficients.
 
-The method requires `hyper = "held"` and a model whose coefficients are
-smooth functions of the held ones: the terms
+A hyperparameter in `which` is held on the grid of its link scale, and
+the profile is then the column `outer_criterion`, evaluated exactly at
+the predicted point. Where nothing else is estimated by the criterion,
+the predicted point is the penalized mode at the held values.
+
+The method requires a model whose coefficients are smooth functions of
+the held quantities: the terms
 [`modelterms7::linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html),
 [`modelterms7::s()`](https://statmodels7.github.io/modelterms7/reference/s.html),
 [`modelterms7::te()`](https://statmodels7.github.io/modelterms7/reference/te.html),

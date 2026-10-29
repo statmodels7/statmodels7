@@ -15,7 +15,7 @@ function computes none of those."><meta property="og:image" content="https://sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.225.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.227.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,8 +73,9 @@ function computes none of those.</p>
 
 
 <dt id="arg-which">which<a class="anchor" aria-label="anchor" href="#arg-which"></a></dt>
-<dd><p>A character vector of unique labels <code>"parameter:coefficient"</code>,
-of one equation or of several.</p></dd>
+<dd><p>A character vector of unique labels <code>"parameter:coefficient"</code>
+of coefficients and <code>"parameter/term/name"</code> of hyperparameters, of one
+equation or of several.</p></dd>
 
 
 <dt id="arg-values">values<a class="anchor" aria-label="anchor" href="#arg-values"></a></dt>
@@ -194,6 +195,47 @@ parameter of a nonlinear term, the positions of the break-points and the
 parameters of a covariance structure. Values on another scale must be
 mapped to it by the caller. A monotone map relabels the grid and leaves the
 columns of the profile unchanged.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="a-hyperparameter-as-an-object-of-the-profile">A hyperparameter as an object of the profile<a class="anchor" aria-label="anchor" href="#a-hyperparameter-as-an-object-of-the-profile"></a></h2>
+    <p><code>which</code> may name hyperparameters, alone or with coefficients. A
+hyperparameter is named by the key that <code>fit@hyper</code> uses, the distribution
+parameter, the key of the term and the name of the hyperparameter, joined
+by slashes: <code>"mu/s(z)/lambda"</code> is the smoothing parameter of <code>s(z)</code> in the
+equation of <code>mu</code>. The names are the entries of <code>fit@hyper</code>, and the
+coordinates of the outer search are printed under the same keys. A
+hyperparameter that the outer criterion <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> estimates can be
+held, and so can each coordinate of a covariance class (for example
+<code>"mu/u | g/sigma_log_sd1"</code>) and the hyperparameter of a kinked penalty that
+a path chooses (the <code>lambda</code> of a lasso). A hyperparameter that the call of
+a term holds at a value is not estimated by the fit and has no profile, and
+the function signals an error that names it.</p>
+<p>The hyperparameter of a kinked penalty is profiled by the grid only,
+because the penalized mode is a piecewise smooth function of it.
+<code><a href="profile_continuation.html">profile_continuation()</a></code> and <code><a href="profile_taylor.html">profile_taylor()</a></code> signal an error that names
+the key. It has no coordinate in the outer criterion, so <code>outer_criterion</code>
+is missing unless <code>which</code> also contains a hyperparameter of the outer
+criterion, and the profile is <code>profile_pen_loglik</code>, which includes the
+penalty at the value held.</p>
+<p>The values of a hyperparameter are on the scale of its link, for example
+\(\log\lambda\), and <code><a href="profile_range.html">profile_range()</a></code> places them from the standard
+error of the exact Hessian of the outer criterion, or from its <code>fallback</code>
+where that standard error is not available.</p>
+<p>When <code>which</code> contains a hyperparameter, the profile is the column
+<code>outer_criterion</code>: the value of the outer criterion of the model with every
+quantity of <code>which</code> held, the other coefficients at the penalized mode, the
+coordinates that the criterion estimates estimated by it and, with
+<code>hyper = "refit"</code>, the other hyperparameters estimated by the outer search.
+The columns <code>profile_loglik</code>, <code>profile_penalty</code> and <code>profile_pen_loglik</code>
+then report the inner criterion at the point reached, and are not the
+profile. When <code>which</code> contains only coefficients the profile is
+<code>profile_pen_loglik</code>, as described above. A hyperparameter is held on the
+specification, through the property <code>held_hyper</code> of <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>, and
+the terms are not rebuilt.</p>
+<p>Under <code><a href="reml.html">reml()</a></code>, holding an unpenalized coefficient changes the space of
+the fixed effects over which the criterion integrates, so that the
+difference of the criterion between two values of that coefficient is not
+a likelihood ratio in the usual sense. With <code><a href="reml.html">ml()</a></code> it is.</p>
     </div>
     <div class="section level2">
     <h2 id="the-hyperparameters-and-the-coefficients-of-the-criterion">The hyperparameters, and the coefficients of the criterion<a class="anchor" aria-label="anchor" href="#the-hyperparameters-and-the-coefficients-of-the-criterion"></a></h2>
