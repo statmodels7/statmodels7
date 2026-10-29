@@ -46,7 +46,22 @@ ProfiledPathHyperparameter(
   label = character(0),
   estimate = integer(0),
   standard_error = integer(0),
-  link = NULL
+  link = NULL,
+  criterion_name = character(0),
+  path_record = (function (.data = list(), row.names = NULL) 
+ {
+     if
+    (is.null(row.names)) {
+         list2DF(.data)
+     }
+     else {
+         out <-
+    list2DF(.data, length(row.names))
+         attr(out, "row.names") <- row.names
+      
+      out
+     }
+ })()
 )
 }
 \arguments{
@@ -64,6 +79,13 @@ between two consecutive values of the covariate, which is the case of
 the position of a sharp \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}.}
 
 \item{link}{The link of a hyperparameter, a \link[linkfunctions7:link]{linkfunctions7::link} object.}
+
+\item{criterion_name}{The name of the criterion that chose the
+hyperparameter of a path (\code{"BIC"}, \code{"AIC"} or \code{"CV"}).}
+
+\item{path_record}{The points that the path scored, a data frame with the
+columns \code{value} (on the scale of the link), \code{criterion} and \code{se} (the
+standard error of a cross-validated criterion, \code{NA} otherwise).}
 }
 \value{
 An object of the class.

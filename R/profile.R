@@ -463,7 +463,14 @@ statmod_profile <- function(fit, which,
     pts <- profile_compute(method, ctx, grid, cores)
     out <- profile_assemble(ctx, grid, pts, method)
     out$quantities <- profile_quantities(ctx)
-    out$column <- if (length(ctx$sidx)) "outer_criterion" else "profile_pen_loglik"
+    out$column <- if (length(ctx$sidx)) {
+      "outer_criterion"
+    } else if (length(ctx$hidx) == length(w) && !is.null(ctx$path_method) &&
+               ctx$path_method@kind %in% c("aic", "bic")) {
+      "path_criterion"
+    } else {
+      "profile_pen_loglik"
+    }
     out$lr <- profile_is_lr(ctx, out$quantities, out$column)
     out
   }
@@ -864,8 +871,10 @@ profile_context <- function(fit, which, hyper) {
     nrow(outer_hyper_index(spec_at, blocks_at))
   psi <- lapply(profile_psi_groups(spec, design, param, coefname),
                 function(i) cidx[i])
+  path_method <- if (any(hyp$path)) fit@methods$sparse_criterion else NULL
   list(fit = fit, spec = spec, params = params, psi = psi, which = which,
        cidx = cidx, hidx = hidx, sidx = sidx, hyp = hyp, htab = htab,
+       path_method = path_method,
        xidx = xidx, xpos = xpos, bps = bps,
        param = param,
        coefname = coefname, at = at, estimate = estimate,
@@ -1172,11 +1181,13 @@ profile_point <- function(ctx, val, start = NULL, maxit = Inf) {
                                                    ctx$outer@kind))
     crit <- if (is.null(m)) NA_real_ else m$value
   }
+  hy <- if (ctx$use_outer && !is.null(res$hyper)) res$hyper else hyper0
   list(par = res$par,
-       hyper = if (ctx$use_outer && !is.null(res$hyper)) res$hyper else hyper0,
+       hyper = hy,
        objective = res$value,
        loglik = statmod_loglik_at(spec, cf, best$design),
        criterion = crit,
+       path = profile_path_value(ctx, spec, best$design, res$par, cf, hy),
        converged = isTRUE(res$converged) || isTRUE(res$settled))
 }
 
@@ -1304,6 +1315,12 @@ profile_assemble <- function(ctx, grid, pts, method) {
                                 isTRUE(p$converged), logical(1))))
   names(out) <- c(names(grid), "profile_loglik", "profile_penalty",
                   "profile_pen_loglik", "outer_criterion", "converged")
+  if (!is.null(ctx$path_method)) {
+    out$path_criterion <- vapply(pts, function(p) {
+      v <- p$path
+      if (is.null(v)) NA_real_ else as.numeric(v)
+    }, numeric(1))
+  }
   failed <- Filter(Negate(is.null), lapply(pts, `[[`, "error"))
   if (length(failed)) {
     warning(sprintf(paste0("%d of %d refits signaled an error and are ",
@@ -1317,6 +1334,12 @@ profile_assemble <- function(ctx, grid, pts, method) {
                   if ((ctx$use_outer || length(ctx$sidx)) && length(fit@criterion))
                     fit@criterion[[1L]]
                   else NA_real_, isTRUE(fit@converged)))
+  if (!is.null(ctx$path_method)) {
+    sp <- fit@spec
+    ds <- statmod_design(sp)
+    mx$path_criterion <- profile_path_value(ctx, sp, ds, ctx$beta_fit,
+                                            fit@coefficients, fit@hyper)
+  }
   names(mx) <- names(out)
   list(points = out, unrestricted_point = mx)
 }
@@ -1423,3 +1446,35 @@ profile_hold_position <- function(spec, param, term, k, value) {
   S7::set_props(spec, terms = terms)
 }
 
+
+
+#' The Criterion of a Path at One Point of a Profile
+#'
+#' @description
+#' Scores the refit at one point of a profile with the criterion that chose
+#' the hyperparameter of a kinked penalty along its path, [aic()] or
+#' [bic()], as the path scores each of its points: the curvature of a scaled
+#' SCAD or MCP is read at the coefficients of the point, and the degrees of
+#' freedom are counted on the active coordinates.
+#'
+#' @param ctx The context of the call.
+#' @param spec,design The specification of the point and its design.
+#' @param par,cf The stacked coefficients of the refit and their list.
+#' @param hyper The hyperparameters of the point.
+#'
+#' @return A single number, `NA` where the profile holds no hyperparameter of
+#'   a path, where the path's criterion is [cv()], or where the criterion
+#'   cannot be read.
+#'
+#' @keywords internal
+profile_path_value <- function(ctx, spec, design, par, cf, hyper) {
+  m <- ctx$path_method
+  if (is.null(m) || !m@kind %in% c("aic", "bic")) return(NA_real_)
+  sp <- tryCatch(statmod_curv(spec, design, cf, ctx$cfg$expected,
+                              ctx$cfg$emethod), error = function(e) NULL)
+  if (is.null(sp)) sp <- spec
+  act <- statmod_active(sp, statmod_blocks(sp, design), par, hyper)
+  r <- tryCatch(statmod_pe(sp, design, cf, hyper, m, ctx$cfg$emethod, act),
+                error = function(e) NULL)
+  if (is.null(r) || !is.finite(r$value)) NA_real_ else r$value
+}

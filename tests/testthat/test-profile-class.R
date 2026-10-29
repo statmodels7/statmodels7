@@ -242,3 +242,34 @@ test_that("under reml() each point reaches the criterion's own optimum of the di
                                           tol = 1e-8)$objective, 1)
   expect_equal(p@points$outer_criterion, ref, tolerance = 1e-7)
 })
+
+test_that("the lambda of a path is profiled on the path's own criterion", {
+  set.seed(7)
+  n <- 150
+  X <- matrix(rnorm(n * 6), n, 6, dimnames = list(NULL, paste0("x", 1:6)))
+  dl <- data.frame(X, y = X[, 1] - 0.5 * X[, 2] + rnorm(n))
+  fam <- distributions7::gaussian1_distrib()
+  fb <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4 + x5 + x6), fam, dl)
+  key <- paste0("mu/", names(fb@hyper$mu)[1L], "/lambda")
+  h <- fb@history$outer
+  # the path's own values away from its top, where the active set is settled
+  keep <- h$value < 0.5 * max(h$value)
+  p <- statmod_profile(fb, key, values = list(log(h$value[keep])))
+  expect_identical(unname(p@profile_column), "path_criterion")
+  expect_false(p@is_likelihood_ratio[[1L]])
+  got <- p@points$path_criterion[match(log(h$value[keep]), p@points[[key]])]
+  expect_equal(got, h$criterion[keep], tolerance = 1e-5)
+  expect_equal(p@unrestricted_point$path_criterion, fb@criterion[[1L]], tolerance = 1e-8)
+  q <- p@profiled_quantities[[1L]]
+  expect_identical(q@criterion_name, "BIC")
+  expect_identical(nrow(q@path_record), nrow(h))
+  g <- autoplot(p)
+  expect_identical(g$labels$y, "BIC")
+  set.seed(11)
+  fc <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4 + x5 + x6), fam, dl,
+                sparse_criterion = cv(nfolds = 5))
+  pc <- statmod_profile(fc, key, values = profile_range(n = 3))
+  expect_true(all(is.na(pc@points$path_criterion)))
+  expect_true(any(is.finite(pc@profiled_quantities[[1L]]@path_record$se)))
+  expect_identical(autoplot(pc)$labels$y, "cross-validated criterion")
+})

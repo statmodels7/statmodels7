@@ -39,9 +39,12 @@ kind of the label:
 covariate, at which the profile can have a kink;}
 \item{a hyperparameter}{the value on the scale of its link, with the
 natural scale on a second axis;}
-\item{the hyperparameter of a path}{the log-likelihood without the
-penalty, since the penalized log-likelihood includes the normalizing
-constant of the prior, which grows with the hyperparameter.}
+\item{the hyperparameter of a path}{the criterion that chose it, \code{\link[=bic]{bic()}}
+or \code{\link[=aic]{aic()}}, computed at each point (the column \code{path_criterion}), with
+the points that the path scored as open circles. A hyperparameter
+chosen by \code{\link[=cv]{cv()}} is drawn from the path's record, the cross-validated
+criterion with its standard error, which is not recomputed at the
+points of the profile.}
 }
 
 Labels profiled one at a time (\code{joint = FALSE}) give one panel each. A

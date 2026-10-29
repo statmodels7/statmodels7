@@ -28,6 +28,11 @@
 #'   between two consecutive values of the covariate, which is the case of
 #'   the position of a sharp [modelterms7::jump()] or [modelterms7::jseg()].
 #' @param link The link of a hyperparameter, a [linkfunctions7::link] object.
+#' @param criterion_name The name of the criterion that chose the
+#'   hyperparameter of a path (`"BIC"`, `"AIC"` or `"CV"`).
+#' @param path_record The points that the path scored, a data frame with the
+#'   columns `value` (on the scale of the link), `criterion` and `se` (the
+#'   standard error of a cross-validated criterion, `NA` otherwise).
 #'
 #' @return An object of the class.
 #'
@@ -62,7 +67,9 @@ ProfiledHyperparameter <- S7::new_class("ProfiledHyperparameter",
 #' @rdname profiled_quantity
 ProfiledPathHyperparameter <- S7::new_class("ProfiledPathHyperparameter",
   parent = profiled_quantity,
-  properties = list(link = S7::class_any))
+  properties = list(link = S7::class_any,
+                    criterion_name = S7::class_character,
+                    path_record = S7::class_data.frame))
 
 
 #' The Profile Likelihood Returned by statmod_profile()
@@ -161,9 +168,17 @@ profile_quantities <- function(ctx) {
     est <- ctx$estimate[i]
     if (i %in% ctx$hidx) {
       r <- ctx$hyp[match(i, ctx$hidx), , drop = FALSE]
-      cls <- if (isTRUE(r$path)) ProfiledPathHyperparameter else ProfiledHyperparameter
-      out[[lab]] <- cls(label = lab, estimate = est, standard_error = NA_real_,
-                        link = links[[r$row]])
+      link <- links[[r$row]]
+      out[[lab]] <- if (isTRUE(r$path)) {
+        ProfiledPathHyperparameter(
+          label = lab, estimate = est, standard_error = NA_real_, link = link,
+          criterion_name = if (is.null(ctx$path_method)) "" else
+            toupper(ctx$path_method@kind),
+          path_record = profile_path_record(fit, r, link))
+      } else {
+        ProfiledHyperparameter(label = lab, estimate = est,
+                               standard_error = NA_real_, link = link)
+      }
       next
     }
     if (i %in% ctx$xidx) {
@@ -483,9 +498,12 @@ S7::method(confint, StatmodProfile) <- confint.StatmodProfile
 #'     covariate, at which the profile can have a kink;}
 #'   \item{a hyperparameter}{the value on the scale of its link, with the
 #'     natural scale on a second axis;}
-#'   \item{the hyperparameter of a path}{the log-likelihood without the
-#'     penalty, since the penalized log-likelihood includes the normalizing
-#'     constant of the prior, which grows with the hyperparameter.}
+#'   \item{the hyperparameter of a path}{the criterion that chose it, [bic()]
+#'     or [aic()], computed at each point (the column `path_criterion`), with
+#'     the points that the path scored as open circles. A hyperparameter
+#'     chosen by [cv()] is drawn from the path's record, the cross-validated
+#'     criterion with its standard error, which is not recomputed at the
+#'     points of the profile.}
 #' }
 #'
 #' Labels profiled one at a time (`joint = FALSE`) give one panel each. A
@@ -678,6 +696,34 @@ S7::method(profile_panel, ProfiledHyperparameter) <- function(q, x) {
 }
 
 S7::method(profile_panel, ProfiledPathHyperparameter) <- function(q, x) {
+  rec <- q@path_record
+  col <- x@profile_column[[q@label]]
+  ax <- profile_axis(q)
+  if (identical(col, "path_criterion")) {
+    p <- profile_base(q, x, cutoff = FALSE)$plot
+    if (nrow(rec)) {
+      p <- p + ggplot2::geom_point(data = rec, ggplot2::aes(x = .data$value,
+                                                            y = .data$criterion),
+                                   inherit.aes = FALSE, shape = 1,
+                                   colour = "grey30")
+    }
+    return(p + ggplot2::labs(y = q@criterion_name))
+  }
+  if (nrow(rec) && any(is.finite(rec$se))) {
+    # a cross-validated criterion is not recomputed at the points of the
+    # profile: the graph is the path's own record, with its standard errors
+    return(ggplot2::ggplot(rec, ggplot2::aes(x = .data$value, y = .data$criterion)) +
+      ggplot2::theme_bw() +
+      ggplot2::geom_vline(xintercept = q@estimate, colour = "#b2182b",
+                          linetype = "dashed", linewidth = 0.3) +
+      ggplot2::geom_errorbar(ggplot2::aes(ymin = .data$criterion - .data$se,
+                                          ymax = .data$criterion + .data$se),
+                             colour = "grey60", width = 0) +
+      ggplot2::geom_line(colour = "#1f5fa8") +
+      ggplot2::geom_point(colour = "#1f5fa8", size = 1) +
+      ggplot2::labs(title = ax$title, x = ax$x,
+                    y = "cross-validated criterion"))
+  }
   profile_base(q, x, column = "profile_loglik", cutoff = FALSE)$plot
 }
 
@@ -791,4 +837,32 @@ profile_step_limits <- function(d, covariate, cut) {
     if (j < length(u)) u[j + 1L] else NA_real_
   }
   c(lo, hi)
+}
+
+
+#' The Points That a Path Scored
+#'
+#' @param fit A [StatmodFit()].
+#' @param r The row of the hyperparameter in the table of
+#'   [profile_hyper_table()].
+#' @param link The link of the hyperparameter.
+#'
+#' @return A data frame with the columns `value`, on the scale of the link,
+#'   `criterion` and `se`, sorted by `value`; it has no rows where the fit
+#'   kept no record of the path.
+#'
+#' @keywords internal
+profile_path_record <- function(fit, r, link) {
+  h <- fit@history$outer
+  empty <- data.frame(value = numeric(0), criterion = numeric(0), se = numeric(0))
+  if (is.null(h) || !all(c("parameter", "term", "name", "value", "criterion") %in% names(h))) {
+    return(empty)
+  }
+  h <- h[h$parameter == r$parameter & h$term == r$term & h$name == r$name &
+           is.finite(h$criterion), , drop = FALSE]
+  if (!nrow(h)) return(empty)
+  out <- data.frame(value = linkfunctions7::linkfun(link, h$value),
+                    criterion = h$criterion,
+                    se = if (is.null(h$se)) NA_real_ else h$se)
+  out[order(out$value), , drop = FALSE]
 }

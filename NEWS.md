@@ -34,6 +34,11 @@
   the term being measured only from the second. From a warm start the fit
   ended as not converged, and 2 of 27 points of a profile of a `seg()`
   position were missing.
+* The profile of the hyperparameter of a kinked penalty chosen by a path
+  under `aic()` or `bic()` is the path's criterion, computed at each point
+  as the path computes it (the column `path_criterion`); `autoplot()` draws
+  it with the points that the path scored. Under `cv()` the graph is the
+  path's record of the cross-validated criterion with its standard errors.
 * The outer search no longer reads the score of a held coefficient as an
   error of the inner mode. That score turned the resolution of a profile
   point next to the estimate into 0.0875, which stopped the search for the
