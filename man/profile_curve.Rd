@@ -4,17 +4,19 @@
 \alias{profile_curve}
 \title{The One-Dimensional Profile of One Label}
 \usage{
-profile_curve(x, label)
+profile_curve(x, label, column = x@profile_column[[label]])
 }
 \arguments{
 \item{x}{A \link{StatmodProfile} object.}
 
 \item{label}{The label.}
+
+\item{column}{The column of \code{points} that is the profile.}
 }
 \value{
 A data frame with the columns \code{value}, \code{profile}, \code{converged} and
-\code{drop}, twice the drop of the profile from its maximum, sorted by
-\code{value}. Its attribute \code{maximum} is the maximum.
+\code{drop}, the likelihood ratio statistic \eqn{2(\hat\ell - \ell_p)}, sorted
+by \code{value}. Its attribute \code{maximum} is \eqn{\hat\ell}.
 }
 \description{
 Returns the profile of one label as a function of its value alone. With

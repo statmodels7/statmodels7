@@ -58,8 +58,8 @@ numbers of the fit itself, which under \code{\link[=reml]{reml()}} or \code{\lin
 slightly below the nearest rows of the table, because at a row the
 criterion does not integrate the held coefficients). \code{profile_column}
 names, for each label, the column that is its profile, and
-\code{is_likelihood_ratio} states, for each label, whether twice the drop of
-that column is a likelihood ratio. The hyperparameters and the other
+\code{is_likelihood_ratio} states, for each label, whether that column gives
+a likelihood ratio statistic. The hyperparameters and the other
 coefficients of each point are not returned.
 }
 \description{

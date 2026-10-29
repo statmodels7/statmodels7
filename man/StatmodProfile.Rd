@@ -64,8 +64,8 @@ character vector named by the labels.}
 
 \item{outer_method}{The outer criterion object of the fit, or \code{NULL}.}
 
-\item{is_likelihood_ratio}{Whether twice the drop of the profile of each
-label from its maximum is a likelihood ratio statistic, a logical vector
+\item{is_likelihood_ratio}{Whether the profile of each label gives a
+likelihood ratio statistic, so that confint() inverts it, a logical vector
 named by the labels.}
 
 \item{joint}{Whether the labels were held jointly.}

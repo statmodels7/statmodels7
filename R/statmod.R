@@ -1465,6 +1465,15 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       converged <- isTRUE(smooth_ok) && isTRUE(struct_ok)
       break
     }
+    # A term that recomputes its own block measures its step as the change
+    # between two consecutive read-offs, so after the first pass that step
+    # is missing and the term cannot report itself settled. From a warm start
+    # (a profile, a restricted fit, a bootstrap from the estimates) the first
+    # pass can already move the objective by less than the tolerance; it is
+    # then followed by a second pass instead of ending as not converged.
+    # Measured on a profile of a seg() position started from the point next
+    # to it: 2 of 27 points ended with the criterion unavailable.
+    if (rel < tol && has_refresh && pass == 1L && !isTRUE(terms_ok)) next
     if (rel < tol) {
       # With a term that recomputes its own block the verdict is the
       # objective's and that term's own, not the inner score's: where the

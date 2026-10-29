@@ -112,8 +112,8 @@ test_that("confint() rejects a profile whose drop is not a likelihood ratio", {
                                      "mu:x" = c(0.35, 0.4)))
   expect_false(any(p@is_likelihood_ratio))
   expect_identical(unname(p@profile_column), rep("outer_criterion", 2))
-  expect_error(confint(p), "not a likelihood ratio")
-  expect_output(print(p), "not a likelihood ratio")
+  expect_error(confint(p), "does not give a likelihood ratio")
+  expect_output(print(p), "no likelihood ratio")
 })
 
 test_that("each kind of label is drawn by its own graph", {
@@ -125,10 +125,12 @@ test_that("each kind of label is drawn by its own graph", {
   one <- statmod_profile(fit, "mu:x", values = profile_range(width = 1, n = 3))
   g1 <- autoplot(one)
   expect_s3_class(g1, "ggplot")
-  expect_identical(g1$labels$subtitle, "coefficient")
+  expect_identical(g1$labels$y, "penalized log-likelihood")
+  expect_identical(g1$labels$title, "mu: x")
   gh <- autoplot(statmod_profile(fit, "mu/s(z)/lambda",
                                  values = profile_range(width = 1, n = 3)))
-  expect_identical(gh$labels$subtitle, "hyperparameter")
+  expect_identical(gh$labels$y, "REML criterion")
+  expect_identical(gh$labels$x, "log lambda")
   set.seed(5)
   w <- runif(120, 0, 10)
   db <- data.frame(w = w, y = 1 + 0.8 * pmax(w - 4, 0) + rnorm(120))
@@ -137,7 +139,7 @@ test_that("each kind of label is drawn by its own graph", {
   expect_true(S7::S7_inherits(pb@profiled_quantities[[1L]], ProfiledBreakpoint))
   expect_length(pb@profiled_quantities[[1L]]@covariate_values, 120L)
   gb <- autoplot(pb)
-  expect_identical(gb$labels$subtitle, "break-point position")
+  expect_identical(gb$labels$y, "log-likelihood")
   expect_true(any(vapply(gb$layers, function(l) inherits(l$geom, "GeomRug"), TRUE)))
 })
 
@@ -153,4 +155,59 @@ test_that("a joint profile is drawn as contours, one panel for each pair", {
   g3 <- autoplot(j3)
   expect_s3_class(g3, "patchwork")
   expect_length(g3$patches$plots, 2L)
+})
+
+bp_data <- function() {
+  set.seed(5)
+  n <- 300
+  w <- round(runif(n, 0, 10), 3)
+  d <- data.frame(w = w)
+  d$y <- 1 + 0.2 * w + 1.2 * pmax(w - 4, 0) + rnorm(n, sd = 0.8)
+  d$yj <- 1 + 0.2 * w + 1.5 * (w > 4) + rnorm(n, sd = 0.8)
+  d$ys <- 1 + 0.2 * w + 1.2 * (w > 4) + 0.8 * pmax(w - 4, 0) + rnorm(n, sd = 0.8)
+  d
+}
+
+test_that("the position of a sharp jump() or jseg() is held by moving the term", {
+  d <- bp_data()
+  fam <- distributions7::gaussian1_distrib()
+  fj <- statmod(yj ~ w + jump(w), fam, d, outer_criterion = NULL)
+  expect_error(statmod_profile(fj, "mu:jump.g1"), "Hold the position itself, 'mu:jump.psi1'")
+  p <- statmod_profile(fj, "mu:jump.psi1", values = profile_range(n = 7))
+  q <- p@profiled_quantities[[1L]]
+  expect_true(S7::S7_inherits(q, ProfiledBreakpoint))
+  expect_true(q@piecewise_constant)
+  v <- p@points[["mu:jump.psi1"]]
+  u <- sort(unique(d$w))
+  # the default values are midpoints between consecutive observations
+  expect_true(all(abs(v - (u[findInterval(v, u)] + u[findInterval(v, u) + 1L]) / 2) < 1e-12))
+  ref <- vapply(v, function(q) as.numeric(logLik(stats::lm(yj ~ w + I(w > q), d))), 1)
+  expect_equal(p@points$profile_loglik, ref, tolerance = 1e-9)
+  ci <- confint(p)
+  expect_true(all(c(ci$lower, ci$upper) %in% u))
+  expect_s3_class(autoplot(p), "ggplot")
+  fs <- statmod(ys ~ jseg(w), fam, d, outer_criterion = NULL)
+  ps <- statmod_profile(fs, "mu:jseg.psi1", values = profile_range(n = 5))
+  vs <- ps@points[["mu:jseg.psi1"]]
+  refs <- vapply(vs, function(q)
+    as.numeric(logLik(stats::lm(ys ~ w + I(w > q) + pmax(w - q, 0), d))), 1)
+  expect_equal(ps@points$profile_loglik, refs, tolerance = 1e-9)
+})
+
+test_that("a seg() position held next to an observation refits from its neighbour", {
+  d <- bp_data()
+  f <- statmod(y ~ seg(w), distributions7::gaussian1_distrib(), d, outer_criterion = ml())
+  est <- coef(f)$mu[["seg.psi1"]]
+  u <- sort(unique(d$w))
+  i <- findInterval(est, u)
+  v <- sort(unique(c(seq(u[i - 1L], u[i + 2L], length.out = 25), u[(i - 1L):(i + 2L)])))
+  p <- statmod_profile(f, "mu:seg.psi1", values = list(v))
+  expect_false(anyNA(p@points$profile_loglik))
+  expect_true(all(p@points$converged))
+  ref <- vapply(v, function(q)
+    as.numeric(logLik(stats::lm(y ~ w + pmax(w - q, 0), d), REML = FALSE)), 1)
+  expect_equal(p@points$profile_loglik, ref, tolerance = 1e-9)
+  # the default values include the observations inside the window
+  pd <- statmod_profile(f, "mu:seg.psi1", values = profile_range(width = 2, n = 5))
+  expect_gt(sum(pd@points[["mu:seg.psi1"]] %in% u), 0L)
 })

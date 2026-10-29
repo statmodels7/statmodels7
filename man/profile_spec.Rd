@@ -14,8 +14,9 @@ profile_spec(ctx, val, spec = ctx$spec)
 \item{spec}{The specification to hold them on.}
 }
 \value{
-\code{spec}, with the coefficients in \code{held_coef} and the
-hyperparameters in \code{held_hyper}.
+\code{spec}, with the coefficients in \code{held_coef}, the
+hyperparameters in \code{held_hyper} and the sharp break-point terms moved
+and held.
 }
 \description{
 The Specification With the Labelled Quantities Held

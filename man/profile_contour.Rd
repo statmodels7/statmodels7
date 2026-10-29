@@ -15,7 +15,7 @@ profile_contour(x, a, b)
 A ggplot2 object.
 }
 \description{
-Draws the contours of twice the drop of a joint profile over two of its
-labels, the profile over any other label being the maximum over its grid.
+Draws the contours of a joint profile over two of its labels, the profile
+over any other label being the maximum over its grid.
 }
 \keyword{internal}

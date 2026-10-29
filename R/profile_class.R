@@ -24,6 +24,9 @@
 #' @param standard_error The standard error of the estimate on that scale,
 #'   `NA` where it is not available.
 #' @param covariate_values The values of the covariate of a break-point.
+#' @param piecewise_constant Whether the profile of a break-point is constant
+#'   between two consecutive values of the covariate, which is the case of
+#'   the position of a sharp [modelterms7::jump()] or [modelterms7::jseg()].
 #' @param link The link of a hyperparameter, a [linkfunctions7::link] object.
 #'
 #' @return An object of the class.
@@ -48,7 +51,8 @@ ProfiledPenalizedCoefficient <- S7::new_class("ProfiledPenalizedCoefficient",
 #' @rdname profiled_quantity
 ProfiledBreakpoint <- S7::new_class("ProfiledBreakpoint",
   parent = profiled_quantity,
-  properties = list(covariate_values = S7::class_numeric))
+  properties = list(covariate_values = S7::class_numeric,
+                    piecewise_constant = S7::class_logical))
 
 #' @rdname profiled_quantity
 ProfiledHyperparameter <- S7::new_class("ProfiledHyperparameter",
@@ -89,8 +93,8 @@ ProfiledPathHyperparameter <- S7::new_class("ProfiledPathHyperparameter",
 #' @param hyper_handling `"held"` or `"refit"`, the argument `hyper` of
 #'   [statmod_profile()].
 #' @param outer_method The outer criterion object of the fit, or `NULL`.
-#' @param is_likelihood_ratio Whether twice the drop of the profile of each
-#'   label from its maximum is a likelihood ratio statistic, a logical vector
+#' @param is_likelihood_ratio Whether the profile of each label gives a
+#'   likelihood ratio statistic, so that confint() inverts it, a logical vector
 #'   named by the labels.
 #' @param joint Whether the labels were held jointly.
 #'
@@ -141,32 +145,12 @@ profile_quantities <- function(ctx) {
   fit <- ctx$fit
   spec <- ctx$spec
   design <- statmod_design(spec)
-  params <- ctx$params
-  npar <- vapply(design, function(d) d$npar, integer(1))
-  offs <- cumsum(npar) - npar
   pen <- integer(0)
   for (u in statmod_penalized(spec, design)) {
     if (isTRUE(u$structural)) next
     pen <- c(pen, as.integer(u$index), as.integer(u$beta_index))
   }
-  bpos <- integer(0)
-  bxv <- list()
-  st <- attr(design, "state")
-  for (p in names(st$terms)) {
-    for (nm in names(st$terms[[p]])) {
-      tm <- st$terms[[p]][[nm]]
-      if (!S7::S7_inherits(tm, modelterms7::SegTerm)) next
-      bp <- tm@build_info
-      cols <- design[[p]]$blocks[[nm]]
-      for (q in paste0("psi", seq_len(tm@npsi))) {
-        ix <- bp$index[[q]]
-        if (length(ix) != 1L) next
-        pos <- offs[[match(p, params)]] + cols[ix]
-        bpos <- c(bpos, pos)
-        bxv[[as.character(pos)]] <- as.numeric(bp$xv)
-      }
-    }
-  }
+  bps <- ctx$bps
   se <- if (length(ctx$cidx)) {
     tryCatch(sqrt(diag(stats::vcov(fit))), error = function(e) NULL)
   }
@@ -182,12 +166,22 @@ profile_quantities <- function(ctx) {
                         link = links[[r$row]])
       next
     }
+    if (i %in% ctx$xidx) {
+      r <- ctx$xpos[match(i, ctx$xidx), ]
+      out[[lab]] <- ProfiledBreakpoint(label = lab, estimate = est,
+                                       standard_error = NA_real_,
+                                       covariate_values = r$covariate[[1L]],
+                                       piecewise_constant = TRUE)
+      next
+    }
     pos <- ctx$at[match(i, ctx$cidx)]
     s <- if (is.null(se)) NA_real_ else unname(se[lab])
     if (!length(s) || !is.finite(s)) s <- NA_real_
-    out[[lab]] <- if (pos %in% bpos) {
+    r <- bps[bps$at == pos & !bps$sharp, , drop = FALSE]
+    out[[lab]] <- if (nrow(r)) {
       ProfiledBreakpoint(label = lab, estimate = est, standard_error = s,
-                         covariate_values = bxv[[as.character(pos)]])
+                         covariate_values = r$covariate[[1L]],
+                         piecewise_constant = FALSE)
     } else if (pos %in% pen) {
       ProfiledPenalizedCoefficient(label = lab, estimate = est, standard_error = s)
     } else {
@@ -241,7 +235,7 @@ S7::method(print, StatmodProfile) <- function(x, ...) {
   nc <- sum(!pts$converged, na.rm = TRUE)
   cat(sprintf("%d points, %d not converged\n", nrow(pts), nc))
   if (!all(x@is_likelihood_ratio)) {
-    cat("twice the drop is not a likelihood ratio for ",
+    cat("no likelihood ratio, and no interval, for ",
         paste(names(x@is_likelihood_ratio)[!x@is_likelihood_ratio],
               collapse = ", "), "\n", sep = "")
   }
@@ -284,14 +278,15 @@ S7::method(as.data.frame, StatmodProfile) <- function(x, ...) {
 #'
 #' @param x A [StatmodProfile] object.
 #' @param label The label.
+#' @param column The column of `points` that is the profile.
 #'
 #' @return A data frame with the columns `value`, `profile`, `converged` and
-#'   `drop`, twice the drop of the profile from its maximum, sorted by
-#'   `value`. Its attribute `maximum` is the maximum.
+#'   `drop`, the likelihood ratio statistic \eqn{2(\hat\ell - \ell_p)}, sorted
+#'   by `value`. Its attribute `maximum` is \eqn{\hat\ell}.
 #'
 #' @keywords internal
-profile_curve <- function(x, label) {
-  col <- x@profile_column[[label]]
+profile_curve <- function(x, label, column = x@profile_column[[label]]) {
+  col <- column
   pts <- x@points
   q <- x@profiled_quantities[[label]]
   if (x@joint) {
@@ -326,33 +321,42 @@ profile_curve <- function(x, label) {
 #' Profile Likelihood Intervals
 #'
 #' @description
-#' Inverts the profile of each label: the limits are the values at which twice
-#' the drop of the profile from its maximum equals the quantile of a
-#' chi-squared distribution.
+#' Inverts the profile of each label. Writing \eqn{\hat\ell} for the maximum
+#' of the criterion and \eqn{\ell_p(\theta)} for the profile at the value
+#' \eqn{\theta}, the interval is the set of values at which the likelihood
+#' ratio statistic \eqn{2\{\hat\ell - \ell_p(\theta)\}} does not exceed the
+#' quantile of a chi-squared distribution.
 #'
 #' @details
-#' The limits are found on the signed root
-#' \eqn{r(\theta) = \mathrm{sign}(\theta - \hat\theta)\sqrt{2\Delta(\theta)}},
-#' interpolated by a cubic spline through the points of the profile, which
-#' is nearly linear in \eqn{\theta} where the profile is nearly quadratic.
-#' A limit outside the values of the profile is `NA`, and the function warns.
+#' Between two points of the profile the limit is found by a cubic spline
+#' through the square root of the statistic, taken with the sign of
+#' \eqn{\theta - \hat\theta}, which is close to linear in \eqn{\theta} where
+#' the profile is close to quadratic. A limit outside the values of the
+#' profile is `NA`, and the function warns.
 #'
 #' With `type = "marginal"` the quantile has one degree of freedom, and each
 #' interval covers its label with probability `level`. With
 #' `type = "simultaneous"` it has \eqn{k} degrees of freedom, \eqn{k} being
 #' the number of labels of the profile. Each interval is then the projection
-#' of the joint region \eqn{\{2\Delta \le \chi^2_{k}(\mathrm{level})\}} on
-#' its label, because the one-dimensional profile of a label is the minimum
-#' of \eqn{2\Delta} over the other labels, and the \eqn{k} intervals cover
-#' the labels jointly with probability at least `level`.
+#' on its label of the joint region in which the statistic of the \eqn{k}
+#' labels does not exceed \eqn{\chi^2_k(\mathrm{level})}, because the profile
+#' of one label is the maximum of the criterion over the other labels, and
+#' the \eqn{k} intervals cover the labels jointly with probability at least
+#' `level`.
+#'
+#' The profile of the position of a sharp [modelterms7::jump()] or
+#' [modelterms7::jseg()] is constant between two consecutive values of the
+#' covariate. Its interval runs from the value of the covariate below the
+#' first interval of values in which the statistic does not exceed the
+#' quantile to the value above the last one.
 #'
 #' The one-dimensional profile of a label is exact when the labels are
 #' profiled one at a time (`joint = FALSE` in [statmod_profile()]). In a
 #' joint profile it is the maximum over the grid of the other labels, so its
 #' accuracy is limited by the spacing of that grid.
 #'
-#' The function signals an error when twice the drop is not a likelihood
-#' ratio (the property `is_likelihood_ratio`): for the hyperparameter of a
+#' The function signals an error when the profile does not give a likelihood
+#' ratio statistic (the property `is_likelihood_ratio`): for the hyperparameter of a
 #' kinked penalty that a path chooses, and for a coefficient without a
 #' penalty held under [reml()], where [ml()] gives the likelihood ratio.
 #'
@@ -395,10 +399,10 @@ confint.StatmodProfile <- function(object, parm = NULL, level = 0.95,
   }
   notlr <- parm[!object@is_likelihood_ratio[parm]]
   if (length(notlr)) {
-    stop(paste0("Twice the drop of the profile of ",
+    stop(paste0("The profile of ",
                 paste(sprintf("'%s'", notlr), collapse = ", "),
-                " is not a likelihood ratio, so it gives no interval.\n  ",
-                "That is the case for the ",
+                " does not give a likelihood ratio statistic, so it gives no ",
+                "interval.\n  That is the case for the ",
                 "hyperparameter of a kinked penalty that a path chooses, and ",
                 "for a\n  coefficient without a penalty held under reml(); ",
                 "with ml() the drop is a likelihood ratio."),
@@ -411,6 +415,12 @@ confint.StatmodProfile <- function(object, parm = NULL, level = 0.95,
   for (lab in parm) {
     q <- object@profiled_quantities[[lab]]
     d <- profile_curve(object, lab)
+    if (S7::S7_inherits(q, ProfiledBreakpoint) && isTRUE(q@piecewise_constant)) {
+      lim <- profile_step_limits(d, q@covariate_values, cut^2)
+      if (anyNA(lim)) outside <- c(outside, lab)
+      out[lab, ] <- c(q@estimate, lim)
+      next
+    }
     r <- sign(d$value - q@estimate) * sqrt(d$drop)
     lim <- c(NA_real_, NA_real_)
     if (nrow(d) >= 2L) {
@@ -427,7 +437,7 @@ confint.StatmodProfile <- function(object, parm = NULL, level = 0.95,
           b <- d$value[j]
           g <- function(t) s * f(t) - cut
           # the spline can overshoot between two points; the linear
-          # interpolation of the signed root is used where it does
+          # interpolation of the signed square root is used where it does
           if (g(a) * g(b) < 0) {
             stats::uniroot(g, sort(c(a, b)), tol = 1e-10)$root
           } else {
@@ -454,36 +464,38 @@ S7::method(confint, StatmodProfile) <- confint.StatmodProfile
 #' Graphs of a Profile
 #'
 #' @description
-#' Draws the profile. A profile of one label is drawn by the graph of its
-#' kind:
+#' Draws the profile: the criterion of each point against the value held.
+#' The vertical axis is the criterion that the profile maximizes, the
+#' log-likelihood, the penalized log-likelihood, or the criterion [reml()] or
+#' [ml()] when a hyperparameter is held, and the column of `points` that it
+#' reads is the property `profile_column`.
+#'
+#' @details
+#' A profile of one label is drawn as a line through its points, with a
+#' dashed vertical line at the estimate and, where the drop of the profile
+#' is a likelihood ratio, a dotted horizontal line at the maximum minus
+#' \eqn{\chi^2_1(0.95)/2}: the values above it form the interval of
+#' [confint.StatmodProfile()] at level 0.95. The graph then depends on the
+#' kind of the label:
 #' \describe{
-#'   \item{a coefficient, with or without a penalty}{the signed root
-#'     \eqn{r = \mathrm{sign}(\theta - \hat\theta)\sqrt{2\Delta}} against the
-#'     value, with horizontal lines at the normal quantiles of 0.95 and 0.99
-#'     and the dashed line of the Wald statistic
-#'     \eqn{(\theta - \hat\theta)/\mathrm{se}}, which the signed root follows
-#'     where the profile is quadratic;}
-#'   \item{the position of a break-point}{twice the drop \eqn{2\Delta}
-#'     against the position, with the chi-squared quantiles of 0.95 and 0.99
-#'     and a rug of the values of the covariate, at which the profile can
-#'     have a kink;}
-#'   \item{a hyperparameter of [reml()] or [ml()]}{\eqn{2\Delta} of the outer
-#'     criterion against the value on the scale of its link, with the
-#'     chi-squared quantiles and a second axis on the natural scale;}
-#'   \item{the hyperparameter of a path}{the column `profile_pen_loglik`
-#'     against the value on the scale of its link, with a vertical line at
-#'     the value that the path chose and no quantiles, the drop not being a
-#'     likelihood ratio.}
+#'   \item{a coefficient}{the value on the horizontal axis;}
+#'   \item{the position of a break-point}{a rug of the values of the
+#'     covariate, at which the profile can have a kink;}
+#'   \item{a hyperparameter}{the value on the scale of its link, with the
+#'     natural scale on a second axis;}
+#'   \item{the hyperparameter of a path}{the log-likelihood without the
+#'     penalty, since the penalized log-likelihood includes the normalizing
+#'     constant of the prior, which grows with the hyperparameter.}
 #' }
 #'
 #' Labels profiled one at a time (`joint = FALSE`) give one panel each. A
-#' joint profile of two labels is drawn as the contours of \eqn{2\Delta} at
-#' the chi-squared quantiles with two degrees of freedom of 0.95 and 0.99,
-#' and a joint profile of three labels or more as one such panel for
-#' each pair, where the profile over the other labels is the maximum over
-#' their grid. Where the drop is not a likelihood ratio the quantile lines
-#' are left out and the contours are drawn at regular levels. Points whose
-#' refit did not converge are marked by a cross.
+#' joint profile of two labels is drawn as the contours of the criterion at
+#' the maximum minus \eqn{\chi^2_2(\mathrm{level})/2} for the levels 0.5,
+#' 0.8, 0.9, 0.95 and 0.99, and a joint profile of three labels or more as one such panel for
+#' each pair, where the criterion over the other labels is the maximum over
+#' their grid. Where the drop is not a likelihood ratio the contours are
+#' drawn at regular levels. Points whose refit did not converge are marked by
+#' a cross.
 #'
 #' @param object,x A [StatmodProfile] object.
 #' @param ... Unused.
@@ -531,6 +543,51 @@ S7::method(autoplot, StatmodProfile) <- autoplot.StatmodProfile
 S7::method(plot, StatmodProfile) <- plot.StatmodProfile
 
 
+#' The Name of the Criterion of a Profile
+#'
+#' @param x A [StatmodProfile] object.
+#' @param label A label of the profile.
+#' @param column The column of `points` that is drawn.
+#'
+#' @return A string for the axis of a graph.
+#'
+#' @keywords internal
+profile_criterion_name <- function(x, label, column = x@profile_column[[label]]) {
+  if (identical(column, "outer_criterion")) {
+    return(sprintf("%s criterion", toupper(x@outer_method@kind)))
+  }
+  if (identical(column, "profile_loglik")) return("log-likelihood")
+  pen <- x@points$profile_penalty
+  if (!x@joint) pen <- pen[x@points$profiled_label == label]
+  if (any(is.finite(pen) & pen != 0)) "penalized log-likelihood" else "log-likelihood"
+}
+
+
+#' The Title and the Axis of a Profiled Quantity
+#'
+#' @param q A [profiled_quantity] object.
+#'
+#' @return A list with `title`, the label written as "parameter: name", and
+#'   `x`, the name of the quantity on the horizontal axis.
+#'
+#' @keywords internal
+profile_axis <- function(q) {
+  lab <- q@label
+  if (grepl("/", lab, fixed = TRUE)) {
+    parts <- strsplit(lab, "/", fixed = TRUE)[[1L]]
+    name <- parts[length(parts)]
+    link <- tryCatch(q@link@link_name, error = function(e) "")
+    return(list(title = sprintf("%s: %s %s", parts[1L],
+                                paste(parts[-c(1L, length(parts))], collapse = "/"),
+                                name),
+                x = trimws(paste(if (!identical(link, "identity")) link, name))))
+  }
+  i <- regexpr(":", lab, fixed = TRUE)
+  list(title = paste0(substr(lab, 1L, i - 1L), ": ", substr(lab, i + 1L, nchar(lab))),
+       x = substr(lab, i + 1L, nchar(lab)))
+}
+
+
 #' The Panel of One Profiled Quantity
 #'
 #' @description
@@ -545,101 +602,91 @@ S7::method(plot, StatmodProfile) <- plot.StatmodProfile
 #' @keywords internal
 profile_panel <- S7::new_generic("profile_panel", "q", function(q, x) S7::S7_dispatch())
 
-#' The Marks of the Points That Did Not Converge
+
+#' The Common Layers of a Profile Panel
 #'
-#' @param d The data frame of a panel, with the columns `value`, `y` and
-#'   `converged`.
+#' @param q A [profiled_quantity] object.
+#' @param x The [StatmodProfile] object.
+#' @param column The column of `points` that is drawn.
+#' @param cutoff Whether to draw the line of the interval at level 0.95.
+#' @param steps Whether the profile is constant between two consecutive
+#'   values of the covariate, and is drawn as one segment over each interval.
 #'
-#' @return A ggplot2 layer of crosses, or `NULL` when every point converged.
+#' @return A list with `plot`, a ggplot2 object with the line, the points,
+#'   the estimate and the cutoff, and `data`, the data frame drawn.
 #'
 #' @keywords internal
-profile_marks <- function(d) {
+profile_base <- function(q, x, column = x@profile_column[[q@label]],
+                         cutoff = x@is_likelihood_ratio[[q@label]],
+                         steps = FALSE) {
+  d <- profile_curve(x, q@label, column = column)
+  ax <- profile_axis(q)
+  p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$value, y = .data$profile)) +
+    ggplot2::theme_bw()
+  if (cutoff) {
+    p <- p + ggplot2::geom_hline(
+      yintercept = attr(d, "maximum") - stats::qchisq(0.95, 1) / 2,
+      colour = "#b2182b", linetype = "dotted")
+  }
+  p <- p + ggplot2::geom_vline(xintercept = q@estimate, colour = "#b2182b",
+                               linetype = "dashed", linewidth = 0.3)
+  if (steps) {
+    # constant between two consecutive values of the covariate: one segment
+    # over the interval that holds each value of the grid
+    u <- sort(unique(q@covariate_values))
+    j <- findInterval(d$value, u)
+    ok <- j >= 1L & j < length(u)
+    seg <- data.frame(x0 = u[j[ok]], x1 = u[j[ok] + 1L], y = d$profile[ok])
+    p <- p + ggplot2::geom_segment(
+      data = seg, ggplot2::aes(x = .data$x0, xend = .data$x1, y = .data$y,
+                               yend = .data$y),
+      inherit.aes = FALSE, colour = "#1f5fa8")
+  } else {
+    p <- p + ggplot2::geom_line(colour = "#1f5fa8") +
+      ggplot2::geom_point(colour = "#1f5fa8", size = 1)
+  }
   bad <- d[!d$converged, , drop = FALSE]
-  if (!nrow(bad)) return(NULL)
-  ggplot2::geom_point(data = bad, ggplot2::aes(x = .data$value, y = .data$y),
-                      shape = 4, size = 3, colour = "firebrick")
+  if (nrow(bad)) {
+    p <- p + ggplot2::geom_point(data = bad, shape = 4, size = 3,
+                                 colour = "#b2182b")
+  }
+  p <- p + ggplot2::labs(title = ax$title, x = ax$x,
+                         y = profile_criterion_name(x, q@label, column))
+  list(plot = p, data = d)
 }
 
 S7::method(profile_panel, profiled_quantity) <- function(q, x) {
-  d <- profile_curve(x, q@label)
-  d$y <- sign(d$value - q@estimate) * sqrt(d$drop)
-  lr <- x@is_likelihood_ratio[[q@label]]
-  z <- stats::qnorm(c(0.975, 0.995))
-  p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$value, y = .data$y)) +
-    ggplot2::geom_line() + ggplot2::geom_point(size = 1)
-  if (lr) {
-    p <- p + ggplot2::geom_hline(yintercept = c(-z, z), linetype = "dotted",
-                                 colour = "grey40")
-  }
-  if (is.finite(q@standard_error)) {
-    p <- p + ggplot2::geom_abline(intercept = -q@estimate / q@standard_error,
-                                  slope = 1 / q@standard_error,
-                                  linetype = "dashed", colour = "steelblue")
-  }
-  p + profile_marks(d) +
-    ggplot2::geom_vline(xintercept = q@estimate, colour = "grey60") +
-    ggplot2::labs(x = q@label, y = "signed root of twice the drop",
-                  title = q@label, subtitle = profile_kind_name(q))
+  profile_base(q, x)$plot
 }
 
 S7::method(profile_panel, ProfiledBreakpoint) <- function(q, x) {
-  d <- profile_curve(x, q@label)
-  d$y <- d$drop
+  b <- profile_base(q, x, steps = isTRUE(q@piecewise_constant))
+  d <- b$data
   rug <- data.frame(value = q@covariate_values)
   rug <- rug[rug$value >= min(d$value) & rug$value <= max(d$value), , drop = FALSE]
-  p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$value, y = .data$y)) +
-    ggplot2::geom_line() + ggplot2::geom_point(size = 1) +
-    ggplot2::geom_rug(data = rug, ggplot2::aes(x = .data$value),
-                      inherit.aes = FALSE, sides = "b", alpha = 0.5)
-  if (x@is_likelihood_ratio[[q@label]]) {
-    p <- p + ggplot2::geom_hline(yintercept = stats::qchisq(c(0.95, 0.99), 1),
-                                 linetype = "dotted", colour = "grey40")
-  }
-  p + profile_marks(d) +
-    ggplot2::geom_vline(xintercept = q@estimate, colour = "grey60") +
-    ggplot2::labs(x = q@label, y = "twice the drop of the profile",
-                  title = q@label, subtitle = profile_kind_name(q))
+  b$plot + ggplot2::geom_rug(data = rug, ggplot2::aes(x = .data$value),
+                             inherit.aes = FALSE, sides = "b", alpha = 0.4)
 }
 
 S7::method(profile_panel, ProfiledHyperparameter) <- function(q, x) {
-  d <- profile_curve(x, q@label)
-  d$y <- d$drop
   link <- q@link
-  p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$value, y = .data$y)) +
-    ggplot2::geom_line() + ggplot2::geom_point(size = 1)
-  if (x@is_likelihood_ratio[[q@label]]) {
-    p <- p + ggplot2::geom_hline(yintercept = stats::qchisq(c(0.95, 0.99), 1),
-                                 linetype = "dotted", colour = "grey40")
-  }
-  p + profile_marks(d) +
-    ggplot2::geom_vline(xintercept = q@estimate, colour = "grey60") +
+  name <- sub(".*/", "", q@label)
+  profile_base(q, x)$plot +
     ggplot2::scale_x_continuous(
       sec.axis = ggplot2::sec_axis(
-        transform = function(t) linkfunctions7::linkinv(link, t),
-        name = "natural scale")) +
-    ggplot2::labs(x = paste0(q@label, " (scale of the link)"),
-                  y = "twice the drop of the outer criterion",
-                  title = q@label, subtitle = profile_kind_name(q))
+        transform = function(t) linkfunctions7::linkinv(link, t), name = name))
 }
 
 S7::method(profile_panel, ProfiledPathHyperparameter) <- function(q, x) {
-  d <- profile_curve(x, q@label)
-  d$y <- d$profile
-  p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$value, y = .data$y)) +
-    ggplot2::geom_line() + ggplot2::geom_point(size = 1)
-  p + profile_marks(d) +
-    ggplot2::geom_vline(xintercept = q@estimate, colour = "grey60") +
-    ggplot2::labs(x = paste0(q@label, " (scale of the link)"),
-                  y = x@profile_column[[q@label]], title = q@label,
-                  subtitle = profile_kind_name(q))
+  profile_base(q, x, column = "profile_loglik", cutoff = FALSE)$plot
 }
 
 
 #' The Contours of a Joint Profile Over Two Labels
 #'
 #' @description
-#' Draws the contours of twice the drop of a joint profile over two of its
-#' labels, the profile over any other label being the maximum over its grid.
+#' Draws the contours of a joint profile over two of its labels, the profile
+#' over any other label being the maximum over its grid.
 #'
 #' @param x A [StatmodProfile] object with `joint = TRUE`.
 #' @param a,b The two labels.
@@ -657,22 +704,91 @@ profile_contour <- function(x, a, b) {
   cv <- stats::aggregate(converged ~ a + b, data = d, FUN = all)
   d <- merge(agg, cv, by = c("a", "b"))
   mx <- max(c(x@unrestricted_point[[col]][1L], d$profile), na.rm = TRUE)
-  d$drop <- pmax(2 * (mx - d$profile), 0)
+  bad <- d[!d$converged, , drop = FALSE]
+  d <- profile_refine(d)
   qa <- x@profiled_quantities[[a]]
   qb <- x@profiled_quantities[[b]]
-  brk <- if (x@is_likelihood_ratio[[a]]) stats::qchisq(c(0.95, 0.99), 2) else NULL
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$a, y = .data$b)) +
-    (if (is.null(brk)) ggplot2::geom_contour(ggplot2::aes(z = .data$drop),
-                                             colour = "black")
-     else ggplot2::geom_contour(ggplot2::aes(z = .data$drop), breaks = brk,
-                                colour = "black")) +
+    ggplot2::theme_bw()
+  if (x@is_likelihood_ratio[[a]]) {
+    cover <- c(0.99, 0.95, 0.9, 0.8, 0.5)
+    brk <- mx - stats::qchisq(cover, 2) / 2
+    p <- p + ggplot2::geom_contour(
+      ggplot2::aes(z = .data$profile, colour = ggplot2::after_stat(factor(.data$level))),
+      breaks = brk) +
+      ggplot2::scale_colour_manual(
+        values = grDevices::colorRampPalette(c("#0b2f5e", "#9ecae1"))(length(cover)),
+        labels = format(cover), name = "coverage")
+  } else {
+    p <- p + ggplot2::geom_contour(ggplot2::aes(z = .data$profile), bins = 12,
+                                   colour = "#1f5fa8")
+  }
+  p <- p +
     ggplot2::geom_point(data = data.frame(a = qa@estimate, b = qb@estimate),
-                        shape = 3, size = 3)
-  bad <- d[!d$converged, , drop = FALSE]
+                        shape = 3, size = 3, colour = "#b2182b")
   if (nrow(bad)) {
     p <- p + ggplot2::geom_point(data = bad, shape = 4, size = 3,
-                                 colour = "firebrick")
+                                 colour = "#b2182b")
   }
-  p + ggplot2::labs(x = a, y = b,
-                    title = sprintf("Twice the drop over %s and %s", a, b))
+  p + ggplot2::labs(x = profile_axis(qa)$title, y = profile_axis(qb)$title,
+                    title = sprintf("profile of the %s", profile_criterion_name(x, a)))
+}
+
+
+#' A Profile Over Two Labels on a Finer Grid
+#'
+#' @description
+#' Interpolates the criterion of a profile over two labels, given on a
+#' complete rectangular grid, to a grid of 60 by 60 values by cubic splines
+#' along each axis in turn, so that its contours are smooth curves and not
+#' the polygons of the coarse grid. A grid that is not complete, or that has
+#' fewer than four values of a label, is returned as it is.
+#'
+#' @param d A data frame with the columns `a`, `b` and `profile`.
+#'
+#' @return A data frame with the same columns.
+#'
+#' @keywords internal
+profile_refine <- function(d) {
+  ua <- sort(unique(d$a))
+  ub <- sort(unique(d$b))
+  if (length(ua) < 4L || length(ub) < 4L || nrow(d) != length(ua) * length(ub)) {
+    return(d[, c("a", "b", "profile")])
+  }
+  z <- matrix(NA_real_, length(ua), length(ub))
+  z[cbind(match(d$a, ua), match(d$b, ub))] <- d$profile
+  ga <- seq(ua[1L], ua[length(ua)], length.out = 60L)
+  gb <- seq(ub[1L], ub[length(ub)], length.out = 60L)
+  za <- apply(z, 2L, function(col) stats::spline(ua, col, xout = ga, method = "natural")$y)
+  zz <- t(apply(za, 1L, function(row) stats::spline(ub, row, xout = gb, method = "natural")$y))
+  data.frame(a = rep(ga, times = length(gb)), b = rep(gb, each = length(ga)),
+             profile = as.vector(zz))
+}
+
+
+#' The Interval of a Profile That Is Constant Between Observations
+#'
+#' @param d The profile, as [profile_curve()] returns it.
+#' @param covariate The values of the covariate.
+#' @param cut The quantile that the statistic must not exceed.
+#'
+#' @return The two limits: the value of the covariate below the first
+#'   interval in which the statistic does not exceed `cut`, and the value
+#'   above the last one. A limit is `NA` where that interval is the first or
+#'   the last of the profile, the region possibly extending beyond it.
+#'
+#' @keywords internal
+profile_step_limits <- function(d, covariate, cut) {
+  u <- sort(unique(covariate))
+  acc <- which(d$drop <= cut)
+  if (!length(acc)) return(c(NA_real_, NA_real_))
+  lo <- if (min(acc) == 1L) NA_real_ else {
+    j <- findInterval(d$value[min(acc)], u)
+    if (j >= 1L) u[j] else NA_real_
+  }
+  hi <- if (max(acc) == nrow(d)) NA_real_ else {
+    j <- findInterval(d$value[max(acc)], u)
+    if (j < length(u)) u[j + 1L] else NA_real_
+  }
+  c(lo, hi)
 }

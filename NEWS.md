@@ -10,14 +10,30 @@
   with the other labels free; the table then has the columns
   `profiled_label` and `value`.
 * Each label has a kind (coefficient, penalized coefficient, break-point
-  position, hyperparameter, hyperparameter chosen by a path), and
-  `autoplot()` and `plot()` draw each kind with its own graph. A joint
-  profile of two labels is drawn as contours, and one of three or more as one
-  panel for each pair.
-* `confint()` of a profile inverts it on the signed root of twice the drop,
-  with `type = "marginal"` (one degree of freedom) or `"simultaneous"` (the
-  projection of the joint region, with as many degrees of freedom as
-  labels). It signals an error where the drop is not a likelihood ratio.
+  position, hyperparameter, hyperparameter chosen by a path). `autoplot()`
+  and `plot()` draw the criterion of the profile (the log-likelihood, the
+  penalized log-likelihood, or the REML or ML criterion) against the value
+  held, with the details of each kind. A joint profile of two labels is
+  drawn as contours, and one of three or more as one panel for each pair.
+* `confint()` of a profile gives the values at which the likelihood ratio
+  statistic does not exceed a chi-squared quantile, with `type =
+  "marginal"` (one degree of freedom) or `"simultaneous"` (the projection
+  of the joint region, with as many degrees of freedom as labels). It
+  signals an error where the profile gives no likelihood ratio statistic.
+* The position of a sharp `jump()` or `jseg()` is profiled under the label
+  that `coef()` prints (`"mu:jump.psi1"`), by moving the term to each value
+  and holding it there. Its profile is constant between consecutive values
+  of the covariate, and the default values are the midpoints between them
+  nearest to the estimate. Holding the auxiliary coefficient `g1`, which the
+  fit reads the position from, left the profile constant at the
+  log-likelihood of the fit; it now signals an error that names the label of
+  the position. The default values of the position of a sharp `seg()` add
+  the values of the covariate inside the window.
+* A fit with a term that recomputes its own block runs a second pass when
+  the first one moves the objective by less than the tolerance, the step of
+  the term being measured only from the second. From a warm start the fit
+  ended as not converged, and 2 of 27 points of a profile of a `seg()`
+  position were missing.
 
 # statmodels7 0.227.0
 

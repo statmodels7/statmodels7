@@ -20,36 +20,38 @@ several panels; \code{plot()} returns the same object invisibly, after
 printing it.
 }
 \description{
-Draws the profile. A profile of one label is drawn by the graph of its
-kind:
+Draws the profile: the criterion of each point against the value held.
+The vertical axis is the criterion that the profile maximizes, the
+log-likelihood, the penalized log-likelihood, or the criterion \code{\link[=reml]{reml()}} or
+\code{\link[=ml]{ml()}} when a hyperparameter is held, and the column of \code{points} that it
+reads is the property \code{profile_column}.
+}
+\details{
+A profile of one label is drawn as a line through its points, with a
+dashed vertical line at the estimate and, where the drop of the profile
+is a likelihood ratio, a dotted horizontal line at the maximum minus
+\eqn{\chi^2_1(0.95)/2}: the values above it form the interval of
+\code{\link[=confint.StatmodProfile]{confint.StatmodProfile()}} at level 0.95. The graph then depends on the
+kind of the label:
 \describe{
-\item{a coefficient, with or without a penalty}{the signed root
-\eqn{r = \mathrm{sign}(\theta - \hat\theta)\sqrt{2\Delta}} against the
-value, with horizontal lines at the normal quantiles of 0.95 and 0.99
-and the dashed line of the Wald statistic
-\eqn{(\theta - \hat\theta)/\mathrm{se}}, which the signed root follows
-where the profile is quadratic;}
-\item{the position of a break-point}{twice the drop \eqn{2\Delta}
-against the position, with the chi-squared quantiles of 0.95 and 0.99
-and a rug of the values of the covariate, at which the profile can
-have a kink;}
-\item{a hyperparameter of \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}}}{\eqn{2\Delta} of the outer
-criterion against the value on the scale of its link, with the
-chi-squared quantiles and a second axis on the natural scale;}
-\item{the hyperparameter of a path}{the column \code{profile_pen_loglik}
-against the value on the scale of its link, with a vertical line at
-the value that the path chose and no quantiles, the drop not being a
-likelihood ratio.}
+\item{a coefficient}{the value on the horizontal axis;}
+\item{the position of a break-point}{a rug of the values of the
+covariate, at which the profile can have a kink;}
+\item{a hyperparameter}{the value on the scale of its link, with the
+natural scale on a second axis;}
+\item{the hyperparameter of a path}{the log-likelihood without the
+penalty, since the penalized log-likelihood includes the normalizing
+constant of the prior, which grows with the hyperparameter.}
 }
 
 Labels profiled one at a time (\code{joint = FALSE}) give one panel each. A
-joint profile of two labels is drawn as the contours of \eqn{2\Delta} at
-the chi-squared quantiles with two degrees of freedom of 0.95 and 0.99,
-and a joint profile of three labels or more as one such panel for
-each pair, where the profile over the other labels is the maximum over
-their grid. Where the drop is not a likelihood ratio the quantile lines
-are left out and the contours are drawn at regular levels. Points whose
-refit did not converge are marked by a cross.
+joint profile of two labels is drawn as the contours of the criterion at
+the maximum minus \eqn{\chi^2_2(\mathrm{level})/2} for the levels 0.5,
+0.8, 0.9, 0.95 and 0.99, and a joint profile of three labels or more as one such panel for
+each pair, where the criterion over the other labels is the maximum over
+their grid. Where the drop is not a likelihood ratio the contours are
+drawn at regular levels. Points whose refit did not converge are marked by
+a cross.
 }
 \examples{
 set.seed(1)

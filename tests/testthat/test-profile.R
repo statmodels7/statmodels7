@@ -222,8 +222,13 @@ test_that("the positions of one break-point term stay ordered", {
   expect_true(all(prof@points[["mu:seg.psi1"]] < prof@points[["mu:seg.psi2"]]))
   expect_identical(nrow(prof@points), 7L)
   expect_true(all(is.finite(prof@points$profile_loglik)))
+  # the default values of a position add the observations inside the window
   one <- statmod_profile(fit, "mu:seg.psi1", profile_range(width = 1, n = 3))
-  expect_identical(which.max(one@points$profile_loglik), 2L)
+  v <- one@points[["mu:seg.psi1"]]
+  expect_gt(length(v), 3L)
+  expect_lt(abs(v[which.max(one@points$profile_loglik)] -
+                  one@profiled_quantities[[1L]]@estimate),
+            diff(range(v)) / 4)
   expect_error(
     statmod_profile(fit, c("mu:seg.psi1", "mu:seg.psi2"),
                     list("mu:seg.psi1" = 8, "mu:seg.psi2" = 2)),

@@ -31,7 +31,8 @@ ProfiledBreakpoint(
   label = character(0),
   estimate = integer(0),
   standard_error = integer(0),
-  covariate_values = integer(0)
+  covariate_values = integer(0),
+  piecewise_constant = logical(0)
 )
 
 ProfiledHyperparameter(
@@ -57,6 +58,10 @@ ProfiledPathHyperparameter(
 \code{NA} where it is not available.}
 
 \item{covariate_values}{The values of the covariate of a break-point.}
+
+\item{piecewise_constant}{Whether the profile of a break-point is constant
+between two consecutive values of the covariate, which is the case of
+the position of a sharp \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}.}
 
 \item{link}{The link of a hyperparameter, a \link[linkfunctions7:link]{linkfunctions7::link} object.}
 }

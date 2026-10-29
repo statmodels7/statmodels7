@@ -29,33 +29,42 @@ A data frame with one row for each label, named by it, and the
 columns \code{estimate}, \code{lower} and \code{upper}, on the scale of the profile.
 }
 \description{
-Inverts the profile of each label: the limits are the values at which twice
-the drop of the profile from its maximum equals the quantile of a
-chi-squared distribution.
+Inverts the profile of each label. Writing \eqn{\hat\ell} for the maximum
+of the criterion and \eqn{\ell_p(\theta)} for the profile at the value
+\eqn{\theta}, the interval is the set of values at which the likelihood
+ratio statistic \eqn{2\{\hat\ell - \ell_p(\theta)\}} does not exceed the
+quantile of a chi-squared distribution.
 }
 \details{
-The limits are found on the signed root
-\eqn{r(\theta) = \mathrm{sign}(\theta - \hat\theta)\sqrt{2\Delta(\theta)}},
-interpolated by a cubic spline through the points of the profile, which
-is nearly linear in \eqn{\theta} where the profile is nearly quadratic.
-A limit outside the values of the profile is \code{NA}, and the function warns.
+Between two points of the profile the limit is found by a cubic spline
+through the square root of the statistic, taken with the sign of
+\eqn{\theta - \hat\theta}, which is close to linear in \eqn{\theta} where
+the profile is close to quadratic. A limit outside the values of the
+profile is \code{NA}, and the function warns.
 
 With \code{type = "marginal"} the quantile has one degree of freedom, and each
 interval covers its label with probability \code{level}. With
 \code{type = "simultaneous"} it has \eqn{k} degrees of freedom, \eqn{k} being
 the number of labels of the profile. Each interval is then the projection
-of the joint region \eqn{\{2\Delta \le \chi^2_{k}(\mathrm{level})\}} on
-its label, because the one-dimensional profile of a label is the minimum
-of \eqn{2\Delta} over the other labels, and the \eqn{k} intervals cover
-the labels jointly with probability at least \code{level}.
+on its label of the joint region in which the statistic of the \eqn{k}
+labels does not exceed \eqn{\chi^2_k(\mathrm{level})}, because the profile
+of one label is the maximum of the criterion over the other labels, and
+the \eqn{k} intervals cover the labels jointly with probability at least
+\code{level}.
+
+The profile of the position of a sharp \code{\link[modelterms7:jump]{modelterms7::jump()}} or
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}} is constant between two consecutive values of the
+covariate. Its interval runs from the value of the covariate below the
+first interval of values in which the statistic does not exceed the
+quantile to the value above the last one.
 
 The one-dimensional profile of a label is exact when the labels are
 profiled one at a time (\code{joint = FALSE} in \code{\link[=statmod_profile]{statmod_profile()}}). In a
 joint profile it is the maximum over the grid of the other labels, so its
 accuracy is limited by the spacing of that grid.
 
-The function signals an error when twice the drop is not a likelihood
-ratio (the property \code{is_likelihood_ratio}): for the hyperparameter of a
+The function signals an error when the profile does not give a likelihood
+ratio statistic (the property \code{is_likelihood_ratio}): for the hyperparameter of a
 kinked penalty that a path chooses, and for a coefficient without a
 penalty held under \code{\link[=reml]{reml()}}, where \code{\link[=ml]{ml()}} gives the likelihood ratio.
 }
