@@ -203,6 +203,15 @@ profile_approx_check <- function(ctx, method) {
   hint <- "Use profile_grid()."
   spec <- ctx$spec
   design <- statmod_design(spec)
+  pth <- ctx$hyp$key[ctx$hyp$path]
+  if (length(pth)) {
+    stop(sprintf(paste0("%s cannot follow %s. The penalty of that ",
+                        "hyperparameter has a kink, so the penalized mode ",
+                        "is a piecewise smooth function of it and the ",
+                        "expansion has no derivative at the corners. %s"),
+                 method, paste(sprintf("'%s'", pth), collapse = ", "), hint),
+         call. = FALSE)
+  }
   if (length(kinked_coords(spec, design))) {
     stop(sprintf(paste0("%s needs coefficients that are smooth functions of ",
                         "the held ones, and the model has a kinked penalty. ",
@@ -383,7 +392,7 @@ profile_nested_state <- function(ctx, pt) {
   spec_t <- profile_hold(ctx$spec, ctx$param, ctx$coefname,
                          pt$val[ctx$cidx])
   if (identical(ctx$hyper, "held")) {
-    oth <- setdiff(seq_len(nrow(htab)), ctx$hyp$row)
+    oth <- setdiff(which(!htab$path), ctx$hyp$row)
     if (length(oth)) {
       eta0 <- vapply(oth, function(r) {
         linkfunctions7::linkfun(links[[r]],
@@ -642,7 +651,7 @@ profile_exact <- function(ctx, S, b, val) {
 #'
 #' @keywords internal
 profile_nested_needed <- function(ctx) {
-  isTRUE(ctx$use_outer) || length(ctx$hidx) > 0L
+  isTRUE(ctx$use_outer) || length(ctx$sidx) > 0L
 }
 
 

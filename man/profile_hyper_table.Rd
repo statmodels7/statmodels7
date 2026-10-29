@@ -15,14 +15,19 @@ profile_hyper_table(fit, spec, blocks)
 }
 \value{
 A data frame with the columns \code{key}, \code{parameter}, \code{term}, \code{name},
-\code{estimate} and \code{eta}, and the attributes \code{links} and \code{members}, those of
-the outer index. It has no rows where the fit has no outer criterion or
-estimates no hyperparameter.
+\code{estimate}, \code{eta} and \code{path}, and the attributes \code{links} and \code{members},
+those of the outer index extended by the path's rows. It has no rows where
+the fit estimates no hyperparameter.
 }
 \description{
 Lists the hyperparameters of a fit that \code{\link[=statmod_profile]{statmod_profile()}} can hold, one
 row for each coordinate of the outer search, with the address that \code{which}
 uses, the estimate on the scale of the hyperparameter and on the scale of
 its link.
+}
+\details{
+The hyperparameters of a kinked penalty that a path selects follow those of
+the outer search, with \code{path} \code{TRUE}. They have no coordinate in the outer
+criterion, so \code{\link[=statmod_profile]{statmod_profile()}} reads them through the grid only.
 }
 \keyword{internal}

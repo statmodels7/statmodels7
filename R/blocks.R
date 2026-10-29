@@ -777,6 +777,10 @@ statmod_penalty_keys <- function(spec) {
   # keyed by and is a convention rather than a fact; `params` carries all of
   # them, and a reader reporting to a user reads that one.
   for (cl in statmod_classes(spec@terms)) {
+    p1 <- cl$pieces[[1L]]$param
+    hc <- spec@held_hyper[[p1]][[cl$key]]
+    fxc <- list()
+    for (h in names(hc)) fxc[[h]] <- as.numeric(hc[[h]])
     out[[length(out) + 1L]] <- list(
       # `term` says which of the design's structural terms the class is
       # addressed in, which is what every structural consumer looks its zeta
@@ -785,7 +789,7 @@ statmod_penalty_keys <- function(spec) {
       param = cl$pieces[[1L]]$param,
       term = if (cl$structural) cl$sterm else cl$key, key = cl$key,
       within = NULL, penalty = cl$penalty,
-      fixed = list(), n_values = list(), values = list(),
+      fixed = fxc, n_values = list(), values = list(),
       min_ratio = numeric(0), search = character(0), ids = character(0),
       class = cl,
       params = vapply(cl$pieces, function(z) z$param, ""))

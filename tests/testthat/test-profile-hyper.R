@@ -184,3 +184,67 @@ test_that("the approximate methods hold a hyperparameter", {
                         method = profile_taylor(order = 3))
   expect_lt(max(abs(tm$outer_criterion - gm$outer_criterion)), 5e-3)
 })
+
+test_that("the hyperparameter of a kinked penalty is profiled by the grid", {
+  set.seed(1)
+  n <- 200
+  dd <- data.frame(x1 = rnorm(n), x2 = rnorm(n), x3 = rnorm(n), x4 = rnorm(n))
+  dd$y <- 1 + 0.8 * dd$x1 + 0.3 * dd$x2 + rnorm(n, sd = 0.5)
+  fam <- distributions7::gaussian1_distrib()
+  fit <- statmod(y ~ lasso(x1 + x2 + x3 + x4), fam, dd)
+  key <- "mu/lasso(x1 + x2 + x3 + x4)/lambda"
+  design <- statmod_design(fit@spec)
+  tab <- profile_hyper_table(fit, fit@spec, statmod_blocks(fit@spec, design))
+  expect_identical(tab$key, key)
+  expect_true(tab$path)
+  # a grid wide enough for the lasso to move the coefficients
+  v <- c(-4, 4, 6, 7)
+  g <- statmod_profile(fit, key, list(v))
+  expect_true(all(is.na(g$outer_criterion)))
+  ref <- vapply(g[[key]], function(e) {
+    r <- statmod(y ~ lasso(x1 + x2 + x3 + x4, lambda = exp(e)), fam, dd)
+    c(r@loglik, -r@objective)
+  }, numeric(2))
+  expect_equal(g$profile_loglik, ref[1L, ], tolerance = 1e-5)
+  expect_equal(g$profile_pen_loglik, ref[2L, ], tolerance = 1e-5)
+  expect_gt(diff(range(g$profile_loglik)), 1)
+  # the approximate methods name the key and the reason
+  for (m in list(profile_continuation(), profile_taylor())) {
+    expect_error(statmod_profile(fit, key, list(v), method = m), "kink")
+    expect_error(statmod_profile(fit, key, list(v), method = m), "lasso[(]x1")
+  }
+})
+
+test_that("a hyperparameter that the term holds has no profile", {
+  dd <- hyper_data()
+  fam <- distributions7::poisson_distrib()
+  fit <- statmod(y ~ s(z, hyper = c(lambda = 2)) + x, fam, dd)
+  key <- "mu/s(z, hyper = c(lambda = 2))/lambda"
+  expect_error(statmod_profile(fit, key), "holds at 2")
+  expect_error(statmod_profile(fit, key), "lambda = 2[)][)]/lambda")
+})
+
+test_that("a coordinate of a covariance class is held with the others searched", {
+  set.seed(4)
+  n <- 300
+  g <- factor(rep(1:30, each = 10))
+  dd <- data.frame(x = rnorm(n), g = g)
+  u <- rnorm(30)
+  dd$y <- 1 + 0.5 * dd$x + u[g] + rnorm(n, sd = exp(0.2 * u[g]))
+  fit <- statmod(y ~ x + random(~ 1 | u | g) | sigma ~ random(~ 1 | u | g),
+                 distributions7::gaussian1_distrib(), dd)
+  key <- "mu/u | g/sigma_log_sd1"
+  ctx <- profile_context(fit, key, "refit")
+  # the class unit carries the value held on the specification
+  sp <- profile_hold_hyper(ctx$spec, ctx$hyp, 1)
+  cl <- Filter(function(u) !is.null(u$class), statmod_penalty_keys(sp))
+  expect_equal(cl[[1L]]$fixed$sigma_log_sd1, 1)
+  val <- ctx$estimate + 1
+  pr <- profile_point(ctx, val)
+  expect_equal(pr$hyper$mu[["u | g"]][["sigma_log_sd1"]], val)
+  ph <- profile_point(profile_context(fit, key, "held"), val)
+  expect_gte(pr$criterion, ph$criterion - 1e-8)
+  # at the estimate the profile reaches the criterion of the fit
+  p0 <- profile_point(ctx, ctx$estimate)
+  expect_equal(p0$criterion, as.numeric(fit@criterion[[1L]]), tolerance = 1e-5)
+})

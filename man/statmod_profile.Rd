@@ -147,10 +147,21 @@ hyperparameter is named by the key that \code{fit@hyper} uses, the distribution
 parameter, the key of the term and the name of the hyperparameter, joined
 by slashes: \code{"mu/s(z)/lambda"} is the smoothing parameter of \code{s(z)} in the
 equation of \code{mu}. The names are the entries of \code{fit@hyper}, and the
-coordinates of the outer search are printed under the same keys. Only a
+coordinates of the outer search are printed under the same keys. A
 hyperparameter that the outer criterion \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} estimates can be
-held. A hyperparameter that a path chooses for a kinked penalty, one that
-the term holds at a value, and a covariance class are not held yet.
+held, and so can each coordinate of a covariance class (for example
+\code{"mu/u | g/sigma_log_sd1"}) and the hyperparameter of a kinked penalty that
+a path chooses (the \code{lambda} of a lasso). A hyperparameter that the call of
+a term holds at a value is not estimated by the fit and has no profile, and
+the function signals an error that names it.
+
+The hyperparameter of a kinked penalty is profiled by the grid only,
+because the penalized mode is a piecewise smooth function of it.
+\code{\link[=profile_continuation]{profile_continuation()}} and \code{\link[=profile_taylor]{profile_taylor()}} signal an error that names
+the key. It has no coordinate in the outer criterion, so \code{outer_criterion}
+is missing unless \code{which} also contains a hyperparameter of the outer
+criterion, and the profile is \code{profile_pen_loglik}, which includes the
+penalty at the value held.
 
 The values of a hyperparameter are on the scale of its link, for example
 \eqn{\log\lambda}, and \code{\link[=profile_range]{profile_range()}} places them from the standard

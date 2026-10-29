@@ -1,3 +1,15 @@
+# statmodels7 0.227.0
+
+* `statmod_profile()` profiles the hyperparameter of a kinked penalty that a path
+  chooses (the `lambda` of a lasso) by the grid only. It has no coordinate in
+  the outer criterion, so `outer_criterion` is missing and the profile is
+  `profile_pen_loglik`. `profile_continuation()` and `profile_taylor()` signal
+  an error that names the key. A hyperparameter that the call of a term holds
+  at a value has no profile, and the error names the key and the value.
+* A coordinate of a covariance class (`"mu/u | g/sigma_log_sd1"`) is held by
+  `held_hyper` like any other hyperparameter. With `hyper = "refit"` the
+  coordinate was estimated again at every point.
+
 # statmodels7 0.226.0
 
 * `statmod_profile()` accepts hyperparameters in `which`, alone or with
