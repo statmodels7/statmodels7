@@ -571,6 +571,9 @@ S7::method(plot, StatmodProfile) <- plot.StatmodProfile
 #'
 #' @keywords internal
 profile_criterion_name <- function(x, label, column = x@profile_column[[label]]) {
+  if (identical(column, "path_criterion")) {
+    return(x@profiled_quantities[[label]]@criterion_name)
+  }
   if (identical(column, "outer_criterion")) {
     return(sprintf("%s criterion", toupper(x@outer_method@kind)))
   }
@@ -623,31 +626,44 @@ profile_panel <- S7::new_generic("profile_panel", "q", function(q, x) S7::S7_dis
 
 #' The Common Layers of a Profile Panel
 #'
+#' @description
+#' Draws the profile of one label against its value, with the estimate, the
+#' limit of the interval at level 0.95 where the profile gives a likelihood
+#' ratio statistic, and the points whose refit did not converge. Every
+#' element is mapped to an aesthetic with a descriptive label, so that the
+#' legend names it; [profile_finish()] adds the legend.
+#'
 #' @param q A [profiled_quantity] object.
 #' @param x The [StatmodProfile] object.
 #' @param column The column of `points` that is drawn.
 #' @param cutoff Whether to draw the line of the interval at level 0.95.
 #' @param steps Whether the profile is constant between two consecutive
 #'   values of the covariate, and is drawn as one segment over each interval.
+#' @param line Whether the points of the profile are joined by a line.
 #'
-#' @return A list with `plot`, a ggplot2 object with the line, the points,
-#'   the estimate and the cutoff, and `data`, the data frame drawn.
+#' @return A list with `plot`, a ggplot2 object, `data`, the data frame
+#'   drawn, and `entries`, the legend entries of the colour scale, a list of
+#'   lists with `label`, `colour`, `shape` and `linetype`.
 #'
 #' @keywords internal
 profile_base <- function(q, x, column = x@profile_column[[q@label]],
                          cutoff = x@is_likelihood_ratio[[q@label]],
-                         steps = FALSE) {
+                         steps = FALSE, line = TRUE) {
   d <- profile_curve(x, q@label, column = column)
   ax <- profile_axis(q)
+  crit <- profile_criterion_name(x, q@label, column)
+  lab <- sprintf("%s at each value held", crit)
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$value, y = .data$profile)) +
     ggplot2::theme_bw()
   if (cutoff) {
     p <- p + ggplot2::geom_hline(
-      yintercept = attr(d, "maximum") - stats::qchisq(0.95, 1) / 2,
-      colour = "#b2182b", linetype = "dotted")
+      ggplot2::aes(yintercept = attr(d, "maximum") - stats::qchisq(0.95, 1) / 2,
+                   linetype = "limit of the 95% interval"),
+      colour = "#b2182b")
   }
-  p <- p + ggplot2::geom_vline(xintercept = q@estimate, colour = "#b2182b",
-                               linetype = "dashed", linewidth = 0.3)
+  p <- p + ggplot2::geom_vline(ggplot2::aes(xintercept = q@estimate,
+                                            linetype = "estimate"),
+                               colour = "#b2182b", linewidth = 0.3)
   if (steps) {
     # constant between two consecutive values of the covariate: one segment
     # over the interval that holds each value of the grid
@@ -655,26 +671,69 @@ profile_base <- function(q, x, column = x@profile_column[[q@label]],
     j <- findInterval(d$value, u)
     ok <- j >= 1L & j < length(u)
     seg <- data.frame(x0 = u[j[ok]], x1 = u[j[ok] + 1L], y = d$profile[ok])
+    lab <- sprintf("%s, constant between observations", crit)
     p <- p + ggplot2::geom_segment(
       data = seg, ggplot2::aes(x = .data$x0, xend = .data$x1, y = .data$y,
-                               yend = .data$y),
-      inherit.aes = FALSE, colour = "#1f5fa8")
+                               yend = .data$y, colour = lab),
+      inherit.aes = FALSE)
+    entries <- list(list(label = lab, colour = "#1f5fa8", shape = NA,
+                         linetype = "solid"))
   } else {
-    p <- p + ggplot2::geom_line(colour = "#1f5fa8") +
-      ggplot2::geom_point(colour = "#1f5fa8", size = 1)
+    if (line) p <- p + ggplot2::geom_line(ggplot2::aes(colour = lab))
+    p <- p + ggplot2::geom_point(ggplot2::aes(colour = lab), size = 1)
+    entries <- list(list(label = lab, colour = "#1f5fa8", shape = 16,
+                         linetype = if (line) "solid" else "blank"))
   }
   bad <- d[!d$converged, , drop = FALSE]
   if (nrow(bad)) {
-    p <- p + ggplot2::geom_point(data = bad, shape = 4, size = 3,
-                                 colour = "#b2182b")
+    p <- p + ggplot2::geom_point(data = bad,
+                                 ggplot2::aes(shape = "refit did not converge"),
+                                 size = 3, colour = "#b2182b")
   }
-  p <- p + ggplot2::labs(title = ax$title, x = ax$x,
-                         y = profile_criterion_name(x, q@label, column))
-  list(plot = p, data = d)
+  p <- p + ggplot2::labs(title = ax$title, x = ax$x, y = crit)
+  list(plot = p, data = d, entries = entries)
+}
+
+
+#' The Legend of a Profile Panel
+#'
+#' @description
+#' Adds the scales that name every element of a panel: the colour scale for
+#' the drawn series, with the key of each entry drawn as its line or its
+#' point, the line type of the estimate and of the limit of the interval,
+#' and the shape of the points whose refit did not converge.
+#'
+#' @param p A ggplot2 object.
+#' @param entries The entries of the colour scale, as [profile_base()]
+#'   returns them.
+#'
+#' @return `p` with the scales and the legend at the bottom.
+#'
+#' @keywords internal
+profile_finish <- function(p, entries) {
+  labs <- vapply(entries, function(e) e$label, "")
+  cols <- vapply(entries, function(e) e$colour, "")
+  shp <- vapply(entries, function(e) as.numeric(e$shape), numeric(1))
+  lty <- vapply(entries, function(e) e$linetype, "")
+  p + ggplot2::scale_colour_manual(
+        values = stats::setNames(cols, labs), breaks = labs, name = NULL,
+        guide = ggplot2::guide_legend(
+          order = 1, override.aes = list(shape = shp, linetype = lty))) +
+    ggplot2::scale_linetype_manual(
+      values = c("estimate" = "dashed", "limit of the 95% interval" = "dotted",
+                 "plus and minus one standard error" = "solid"),
+      name = NULL, guide = ggplot2::guide_legend(order = 2)) +
+    (if (any(vapply(p$layers, function(l) !is.null(l$mapping$shape), TRUE)))
+      ggplot2::scale_shape_manual(values = c("refit did not converge" = 4),
+                                  name = NULL,
+                                  guide = ggplot2::guide_legend(order = 3))) +
+    ggplot2::theme(legend.position = "bottom", legend.box = "vertical",
+                   legend.margin = ggplot2::margin(0, 0, 0, 0))
 }
 
 S7::method(profile_panel, profiled_quantity) <- function(q, x) {
-  profile_base(q, x)$plot
+  b <- profile_base(q, x)
+  profile_finish(b$plot, b$entries)
 }
 
 S7::method(profile_panel, ProfiledBreakpoint) <- function(q, x) {
@@ -682,17 +741,24 @@ S7::method(profile_panel, ProfiledBreakpoint) <- function(q, x) {
   d <- b$data
   rug <- data.frame(value = q@covariate_values)
   rug <- rug[rug$value >= min(d$value) & rug$value <= max(d$value), , drop = FALSE]
-  b$plot + ggplot2::geom_rug(data = rug, ggplot2::aes(x = .data$value),
-                             inherit.aes = FALSE, sides = "b", alpha = 0.4)
+  lab <- "observed values of the covariate"
+  p <- b$plot + ggplot2::geom_rug(data = rug,
+                                  ggplot2::aes(x = .data$value, colour = lab),
+                                  inherit.aes = FALSE, sides = "b", alpha = 0.5)
+  profile_finish(p, c(b$entries, list(list(label = lab, colour = "grey30",
+                                           shape = NA, linetype = "solid"))))
 }
 
 S7::method(profile_panel, ProfiledHyperparameter) <- function(q, x) {
   link <- q@link
   name <- sub(".*/", "", q@label)
-  profile_base(q, x)$plot +
+  b <- profile_base(q, x)
+  p <- b$plot +
     ggplot2::scale_x_continuous(
       sec.axis = ggplot2::sec_axis(
-        transform = function(t) linkfunctions7::linkinv(link, t), name = name))
+        transform = function(t) linkfunctions7::linkinv(link, t),
+        name = sprintf("%s (natural scale)", name)))
+  profile_finish(p, b$entries)
 }
 
 S7::method(profile_panel, ProfiledPathHyperparameter) <- function(q, x) {
@@ -700,31 +766,41 @@ S7::method(profile_panel, ProfiledPathHyperparameter) <- function(q, x) {
   col <- x@profile_column[[q@label]]
   ax <- profile_axis(q)
   if (identical(col, "path_criterion")) {
-    p <- profile_base(q, x, cutoff = FALSE)$plot
+    b <- profile_base(q, x, cutoff = FALSE, line = FALSE)
+    entries <- b$entries
+    p <- b$plot
     if (nrow(rec)) {
-      p <- p + ggplot2::geom_point(data = rec, ggplot2::aes(x = .data$value,
-                                                            y = .data$criterion),
-                                   inherit.aes = FALSE, shape = 1,
-                                   colour = "grey30")
+      lab <- sprintf("%s at the values of the path", q@criterion_name)
+      p <- p + ggplot2::geom_point(data = rec,
+                                   ggplot2::aes(x = .data$value, y = .data$criterion,
+                                                colour = lab),
+                                   inherit.aes = FALSE, shape = 1)
+      entries <- c(entries, list(list(label = lab, colour = "grey30", shape = 1,
+                                      linetype = "blank")))
     }
-    return(p + ggplot2::labs(y = q@criterion_name))
+    return(profile_finish(p, entries))
   }
   if (nrow(rec) && any(is.finite(rec$se))) {
     # a cross-validated criterion is not recomputed at the points of the
     # profile: the graph is the path's own record, with its standard errors
-    return(ggplot2::ggplot(rec, ggplot2::aes(x = .data$value, y = .data$criterion)) +
+    lab <- "cross-validated criterion at the values of the path"
+    p <- ggplot2::ggplot(rec, ggplot2::aes(x = .data$value, y = .data$criterion)) +
       ggplot2::theme_bw() +
-      ggplot2::geom_vline(xintercept = q@estimate, colour = "#b2182b",
-                          linetype = "dashed", linewidth = 0.3) +
+      ggplot2::geom_vline(ggplot2::aes(xintercept = q@estimate,
+                                       linetype = "estimate"),
+                          colour = "#b2182b", linewidth = 0.3) +
       ggplot2::geom_errorbar(ggplot2::aes(ymin = .data$criterion - .data$se,
-                                          ymax = .data$criterion + .data$se),
+                                          ymax = .data$criterion + .data$se,
+                                          linetype = "plus and minus one standard error"),
                              colour = "grey60", width = 0) +
-      ggplot2::geom_line(colour = "#1f5fa8") +
-      ggplot2::geom_point(colour = "#1f5fa8", size = 1) +
-      ggplot2::labs(title = ax$title, x = ax$x,
-                    y = "cross-validated criterion"))
+      ggplot2::geom_line(ggplot2::aes(colour = lab)) +
+      ggplot2::geom_point(ggplot2::aes(colour = lab), size = 1) +
+      ggplot2::labs(title = ax$title, x = ax$x, y = "cross-validated criterion")
+    return(profile_finish(p, list(list(label = lab, colour = "#1f5fa8",
+                                       shape = 16, linetype = "solid"))))
   }
-  profile_base(q, x, column = "profile_loglik", cutoff = FALSE)$plot
+  b <- profile_base(q, x, column = "profile_loglik", cutoff = FALSE)
+  profile_finish(b$plot, b$entries)
 }
 
 
@@ -754,6 +830,7 @@ profile_contour <- function(x, a, b) {
   d <- profile_refine(d)
   qa <- x@profiled_quantities[[a]]
   qb <- x@profiled_quantities[[b]]
+  crit <- profile_criterion_name(x, a)
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$a, y = .data$b)) +
     ggplot2::theme_bw()
   if (x@is_likelihood_ratio[[a]]) {
@@ -764,20 +841,27 @@ profile_contour <- function(x, a, b) {
       breaks = brk) +
       ggplot2::scale_colour_manual(
         values = grDevices::colorRampPalette(c("#0b2f5e", "#9ecae1"))(length(cover)),
-        labels = format(cover), name = "coverage")
+        labels = format(cover), name = "joint confidence region, level")
   } else {
-    p <- p + ggplot2::geom_contour(ggplot2::aes(z = .data$profile), bins = 12,
-                                   colour = "#1f5fa8")
+    p <- p + ggplot2::geom_contour(
+      ggplot2::aes(z = .data$profile, colour = sprintf("contours of the %s", crit)),
+      bins = 12) +
+      ggplot2::scale_colour_manual(values = "#1f5fa8", name = NULL)
   }
   p <- p +
     ggplot2::geom_point(data = data.frame(a = qa@estimate, b = qb@estimate),
-                        shape = 3, size = 3, colour = "#b2182b")
+                        ggplot2::aes(shape = "estimate"), size = 3,
+                        colour = "#b2182b")
   if (nrow(bad)) {
-    p <- p + ggplot2::geom_point(data = bad, shape = 4, size = 3,
-                                 colour = "#b2182b")
+    p <- p + ggplot2::geom_point(data = bad,
+                                 ggplot2::aes(shape = "refit did not converge"),
+                                 size = 3, colour = "#b2182b")
   }
-  p + ggplot2::labs(x = profile_axis(qa)$title, y = profile_axis(qb)$title,
-                    title = sprintf("profile of the %s", profile_criterion_name(x, a)))
+  p + ggplot2::scale_shape_manual(
+        values = c("estimate" = 3, "refit did not converge" = 4), name = NULL) +
+    ggplot2::labs(x = profile_axis(qa)$title, y = profile_axis(qb)$title,
+                  title = sprintf("profile of the %s", crit)) +
+    ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
 }
 
 

@@ -9,7 +9,8 @@ profile_base(
   x,
   column = x@profile_column[[q@label]],
   cutoff = x@is_likelihood_ratio[[q@label]],
-  steps = FALSE
+  steps = FALSE,
+  line = TRUE
 )
 }
 \arguments{
@@ -23,12 +24,19 @@ profile_base(
 
 \item{steps}{Whether the profile is constant between two consecutive
 values of the covariate, and is drawn as one segment over each interval.}
+
+\item{line}{Whether the points of the profile are joined by a line.}
 }
 \value{
-A list with \code{plot}, a ggplot2 object with the line, the points,
-the estimate and the cutoff, and \code{data}, the data frame drawn.
+A list with \code{plot}, a ggplot2 object, \code{data}, the data frame
+drawn, and \code{entries}, the legend entries of the colour scale, a list of
+lists with \code{label}, \code{colour}, \code{shape} and \code{linetype}.
 }
 \description{
-The Common Layers of a Profile Panel
+Draws the profile of one label against its value, with the estimate, the
+limit of the interval at level 0.95 where the profile gives a likelihood
+ratio statistic, and the points whose refit did not converge. Every
+element is mapped to an aesthetic with a descriptive label, so that the
+legend names it; \code{\link[=profile_finish]{profile_finish()}} adds the legend.
 }
 \keyword{internal}
