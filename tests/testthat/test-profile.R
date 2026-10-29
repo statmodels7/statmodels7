@@ -165,7 +165,7 @@ test_that("values: a range, a list with names, a default, and the errors", {
   expect_error(statmod_profile(p$fit, "mu:x1", c(1, 2)), "wrap a numeric")
   expect_error(statmod_profile(p$fit, "mu:nope"), "Not a coefficient")
   expect_error(statmod_profile(p$fit, c("mu:x1", "mu:x1")), "repeat")
-  expect_error(statmod_profile(p$fit, "mu:x1", ncores = 0), "ncores")
+  expect_error(statmod_profile(p$fit, "mu:x1", cores = 0), "cores")
   expect_error(profile_range(width = -1), "positive")
   expect_error(profile_range(n = 1), "at least 2")
   expect_error(profile_grid("middle"))
@@ -220,10 +220,10 @@ test_that("a model with a structural term is rejected", {
   expect_error(statmod_profile(fit, "mu:(Intercept)"), "structural term")
 })
 
-test_that("ncores gives the same table", {
+test_that("cores gives the same table", {
   p <- poisson_fit()
   v <- profile_range(width = 1, n = 5)
   a <- statmod_profile(p$fit, "mu:x1", v)
-  b <- statmod_profile(p$fit, "mu:x1", v, ncores = 2)
+  b <- statmod_profile(p$fit, "mu:x1", v, cores = 2)
   expect_equal(a, b)
 })

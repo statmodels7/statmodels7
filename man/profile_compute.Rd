@@ -13,7 +13,7 @@ profile_compute(method, ...)
 
 \item{grid}{The data frame of held values, one column per coefficient.}
 
-\item{ncores}{The number of worker processes.}
+\item{cores}{The number of worker processes.}
 }
 \value{
 A list with one element per row of \code{grid}, each a list of

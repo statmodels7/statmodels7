@@ -10,7 +10,7 @@
   both. The hyperparameters are held at the values of the fit or searched
   again at every point (`hyper`), and the coefficients that `reml()` and
   `ml()` estimate are estimated by the criterion at every point. The points
-  can be distributed over worker processes (`ncores`). The positions of one
+  can be distributed over worker processes (`cores`). The positions of one
   `seg()` term that are held together are kept in increasing order. A
   coefficient under a lasso, SCAD or MCP penalty and a model with a
   structural term are rejected for now.

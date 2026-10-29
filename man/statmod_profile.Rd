@@ -10,7 +10,7 @@ statmod_profile(
   values = profile_range(width = 3, n = 21),
   method = profile_grid(),
   hyper = c("held", "refit"),
-  ncores = 1
+  cores = 1
 )
 }
 \arguments{
@@ -35,7 +35,7 @@ values, and the first coefficient varies fastest.}
 \item{hyper}{\code{"held"} or \code{"refit"}: whether the hyperparameters stay at the
 values of the fit or are searched again at every point.}
 
-\item{ncores}{The number of worker processes, a positive integer. The
+\item{cores}{The number of worker processes, a positive integer. The
 default runs in this process. Under \code{pkgload} the run stays sequential.}
 }
 \value{

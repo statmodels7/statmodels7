@@ -36,7 +36,7 @@ the refit with the larger penalized log-likelihood, at twice the cost. A
 profile with several local maxima, as that of a break-point has, can be
 reached from one start and missed from the other.
 
-With \code{ncores} greater than one in \code{\link[=statmod_profile]{statmod_profile()}}, the chains of
+With \code{cores} greater than one in \code{\link[=statmod_profile]{statmod_profile()}}, the chains of
 \code{"neighbor"} and the points of \code{"fit"} are distributed over worker
 processes.
 }

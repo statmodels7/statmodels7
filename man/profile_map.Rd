@@ -4,12 +4,12 @@
 \alias{profile_map}
 \title{Run Independent Units of a Profile}
 \usage{
-profile_map(ctx, ncores, n, body)
+profile_map(ctx, cores, n, body)
 }
 \arguments{
 \item{ctx}{The context of the call.}
 
-\item{ncores}{The number of worker processes.}
+\item{cores}{The number of worker processes.}
 
 \item{n}{How many units.}
 

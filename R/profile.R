@@ -131,7 +131,7 @@ ProfileGrid <- S7::new_class(
 #' profile with several local maxima, as that of a break-point has, can be
 #' reached from one start and missed from the other.
 #'
-#' With `ncores` greater than one in [statmod_profile()], the chains of
+#' With `cores` greater than one in [statmod_profile()], the chains of
 #' `"neighbor"` and the points of `"fit"` are distributed over worker
 #' processes.
 #'
@@ -161,7 +161,7 @@ profile_grid <- function(start = c("neighbor", "fit", "both")) {
 #' @param method A [profile_method].
 #' @param ctx The context of the call, as `profile_context()` builds it.
 #' @param grid The data frame of held values, one column per coefficient.
-#' @param ncores The number of worker processes.
+#' @param cores The number of worker processes.
 #'
 #' @return A list with one element per row of `grid`, each a list of
 #'   `par`, `hyper`, `objective`, `loglik`, `criterion` and `converged`.
@@ -296,7 +296,7 @@ profile_compute <- S7::new_generic("profile_compute", "method")
 #' @param method A [profile_method]: [profile_grid()].
 #' @param hyper `"held"` or `"refit"`: whether the hyperparameters stay at the
 #'   values of the fit or are searched again at every point.
-#' @param ncores The number of worker processes, a positive integer. The
+#' @param cores The number of worker processes, a positive integer. The
 #'   default runs in this process. Under `pkgload` the run stays sequential.
 #'
 #' @return A data frame (`check.names = FALSE`) with one column for each
@@ -336,7 +336,7 @@ profile_compute <- S7::new_generic("profile_compute", "method")
 statmod_profile <- function(fit, which,
                             values = profile_range(width = 3, n = 21),
                             method = profile_grid(),
-                            hyper = c("held", "refit"), ncores = 1) {
+                            hyper = c("held", "refit"), cores = 1) {
   if (!S7::S7_inherits(fit, StatmodFit)) {
     stop("'fit' must be a StatmodFit.", call. = FALSE)
   }
@@ -345,16 +345,16 @@ statmod_profile <- function(fit, which,
     stop("'method' must be a profile method, as profile_grid() returns.",
          call. = FALSE)
   }
-  if (!is.numeric(ncores) || length(ncores) != 1L || !is.finite(ncores) ||
-      ncores < 1) {
-    stop("'ncores' must be a single positive integer.", call. = FALSE)
+  if (!is.numeric(cores) || length(cores) != 1L || !is.finite(cores) ||
+      cores < 1) {
+    stop("'cores' must be a single positive integer.", call. = FALSE)
   }
-  ncores <- as.integer(ncores)
+  cores <- as.integer(cores)
   ctx <- profile_context(fit, which, hyper)
   vals <- profile_values(ctx, values)
   grid <- profile_prune(ctx, expand.grid(vals, KEEP.OUT.ATTRS = FALSE,
                                          stringsAsFactors = FALSE))
-  pts <- profile_compute(method, ctx, grid, ncores)
+  pts <- profile_compute(method, ctx, grid, cores)
   profile_assemble(ctx, grid, pts, method)
 }
 
@@ -635,15 +635,15 @@ profile_values <- function(ctx, values) {
 #' [worker_map()].
 #'
 #' @param ctx The context of the call.
-#' @param ncores The number of worker processes.
+#' @param cores The number of worker processes.
 #' @param n How many units.
 #' @param body The unit's body, a function of the unit index.
 #'
 #' @return The list of results, in unit order.
 #'
 #' @keywords internal
-profile_map <- function(ctx, ncores, n, body) {
-  worker_map(S7::set_props(ctx$spec, workers = as.integer(ncores)), n, body,
+profile_map <- function(ctx, cores, n, body) {
+  worker_map(S7::set_props(ctx$spec, workers = as.integer(cores)), n, body,
              what = "profile points")
 }
 
@@ -767,9 +767,9 @@ profile_chains <- function(ctx, grid, start) {
 
 #' @rdname profile_compute
 #' @keywords internal
-S7::method(profile_compute, ProfileGrid) <- function(method, ctx, grid, ncores) {
+S7::method(profile_compute, ProfileGrid) <- function(method, ctx, grid, cores) {
   chains <- profile_chains(ctx, grid, method@start)
-  if (ncores > 1L) ctx$spec <- S7::set_props(ctx$spec, threads = 1L)
+  if (cores > 1L) ctx$spec <- S7::set_props(ctx$spec, threads = 1L)
   vals <- as.matrix(grid)
   body <- function(i) {
     ch <- chains[[i]]
@@ -784,7 +784,7 @@ S7::method(profile_compute, ProfileGrid) <- function(method, ctx, grid, ncores) 
     }
     out
   }
-  res <- profile_map(ctx, ncores, length(chains), body)
+  res <- profile_map(ctx, cores, length(chains), body)
   pts <- vector("list", nrow(grid))
   for (i in seq_along(chains)) {
     for (m in seq_along(chains[[i]]$rows)) {
