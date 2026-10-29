@@ -134,6 +134,19 @@ reference:
   - gradient_test
   - test_restricted
 
+- title: Profile likelihood
+  desc: >
+    The penalized log-likelihood maximized over every coefficient but one or
+    several that are held on a grid, returned as a data frame together with
+    the value of the outer criterion where one ran. The grid of values is
+    given by `profile_range()` or by the caller, and `profile_grid()` selects
+    the exact method, one refit for each point.
+  contents:
+  - statmod_profile
+  - profile_range
+  - profile_method
+  - profile_grid
+
 - title: Variance conventions
   desc: >
     The three conventions for the variance matrix of the coefficients, as

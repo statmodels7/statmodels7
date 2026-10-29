@@ -160,7 +160,9 @@ marginal_coords <- function(spec, design, method) {
     !isTRUE(tryCatch(tm@build_info$held, error = function(e) FALSE))
   }, attr(design, "refresh"))
   refresh <- vapply(moving, function(r) r$param, character(1))
-  held <- term_held_stack(spec, design)
+  # the coefficients held by name, by a caller or by a profile, are not
+  # coordinates of the criterion either
+  held <- held_stack(spec, design)
   # a block that is a working linearization rather than a Jacobian has no
   # curvature for a determinant to read: at one break-point the criterion
   # read -132.9 or -109.8 according to where the iteration began

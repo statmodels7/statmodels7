@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.222.2
+Version: 0.223.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Fits distributional regression models, and installs and attaches
@@ -137,6 +137,7 @@ Collate:
     'predict_group.R'
     'predict_nested.R'
     'restricted.R'
+    'profile.R'
     'rstatmod.R'
     'sandwich_hc23.R'
     'start.R'
