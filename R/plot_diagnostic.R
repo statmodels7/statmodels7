@@ -255,29 +255,52 @@ diag_qq_data <- function(type, fit, ctx, worm, over = NULL, n_inter = 4) {
 #' The Layers of a Quantile-Quantile or Worm Graph
 #'
 #' @description
-#' Draws the band, the reference line, the points and, when the data carry a
-#' `class` column, one facet for each class.
+#' Draws the band, the reference line, the points and a legend that names
+#' them and, when the data carry a `class` column, one facet for each class,
+#' headed by the covariate and the class.
 #'
 #' @param data The list returned by [plot_data()].
 #' @param worm Whether the graph is detrended.
+#' @param type The `PlotQq` or `PlotWorm` object, which gives the kind and
+#'   the level of the band.
+#' @param over The covariate that defines the classes, or `NULL`.
 #'
 #' @return A list of ggplot2 components.
 #'
 #' @keywords internal
-diag_qq_layers <- function(data, worm) {
+diag_qq_layers <- function(data, worm, type, over = NULL) {
+  band <- band_label(type@level, if (type@band == "order")
+    "pointwise band of the order statistics"
+    else "pointwise envelope of simulated residuals")
+  ref <- if (worm) "no deviation" else "line y = x"
   out <- list(
     ggplot2::geom_ribbon(data = data$band,
                          mapping = ggplot2::aes(x = .data$x,
                                                 ymin = .data$lower,
-                                                ymax = .data$upper),
-                         fill = "#1f5fa8", alpha = 0.18),
-    if (worm) ggplot2::geom_hline(yintercept = 0, colour = "grey50")
-    else ggplot2::geom_abline(intercept = 0, slope = 1, colour = "grey50"),
+                                                ymax = .data$upper,
+                                                fill = band),
+                         alpha = 0.18),
+    if (worm) {
+      ggplot2::geom_hline(data = data.frame(y = 0),
+                          mapping = ggplot2::aes(yintercept = .data$y,
+                                                 colour = ref))
+    } else {
+      ggplot2::geom_abline(data = data.frame(a = 0, b = 1),
+                           mapping = ggplot2::aes(intercept = .data$a,
+                                                  slope = .data$b,
+                                                  colour = ref))
+    },
     ggplot2::geom_point(data = data$points,
-                        mapping = ggplot2::aes(x = .data$x, y = .data$y),
-                        colour = "grey30", alpha = 0.35, size = 0.9))
+                        mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                               colour = "quantile residuals"),
+                        alpha = 0.35, size = 0.9),
+    plot_key(colour = stats::setNames(c("grey30", "grey50"),
+                                      c("quantile residuals", ref)),
+             fill = stats::setNames("#1f5fa8", band)))
   if ("class" %in% names(data$points)) {
-    out <- c(out, list(ggplot2::facet_wrap(ggplot2::vars(.data$class))))
+    out <- c(out, list(ggplot2::facet_wrap(
+      ggplot2::vars(.data$class),
+      labeller = strip_labeller(over))))
   }
   out
 }
@@ -379,7 +402,7 @@ S7::method(plot_data, list(PlotQq, distributions7::distrib)) <-
   }
 
 S7::method(plot_layers, PlotQq) <- function(type, data, ...) {
-  diag_qq_layers(data, worm = FALSE)
+  diag_qq_layers(data, worm = FALSE, type = type)
 }
 
 
@@ -466,7 +489,7 @@ S7::method(plot_data, list(PlotWorm, distributions7::distrib)) <-
   }
 
 S7::method(plot_layers, PlotWorm) <- function(type, data, ...) {
-  diag_qq_layers(data, worm = TRUE)
+  diag_qq_layers(data, worm = TRUE, type = type, over = type@over)
 }
 
 
@@ -624,23 +647,31 @@ S7::method(plot_data, list(PlotResiduals, distributions7::distrib)) <-
   }
 
 S7::method(plot_layers, PlotResiduals) <- function(type, data, ...) {
-  pa <- ggplot2::aes(x = .data$x, y = .data$y)
+  pa <- ggplot2::aes(x = .data$x, y = .data$y, colour = "quantile residuals")
   pts <- if (is.numeric(data$points$x)) {
-    ggplot2::geom_point(data = data$points, mapping = pa, colour = "grey30",
-                        alpha = 0.35, size = 0.9)
+    ggplot2::geom_point(data = data$points, mapping = pa, alpha = 0.35,
+                        size = 0.9)
   } else {
-    ggplot2::geom_jitter(data = data$points, mapping = pa, colour = "grey30",
-                         alpha = 0.35, size = 0.9, width = 0.15, height = 0)
+    ggplot2::geom_jitter(data = data$points, mapping = pa, alpha = 0.35,
+                         size = 0.9, width = 0.15, height = 0)
   }
+  lim <- "-2 and 2 (95% of a standard normal)"
   out <- list(
-    ggplot2::geom_hline(yintercept = c(-2, 2), linetype = "dashed",
-                        colour = "grey50"),
+    ggplot2::geom_hline(data = data.frame(y = c(-2, 2)),
+                        mapping = ggplot2::aes(yintercept = .data$y,
+                                               colour = lim),
+                        linetype = "dashed"),
     ggplot2::geom_hline(yintercept = 0, colour = "grey50"), pts)
   if (nrow(data$smooth)) {
-    out <- c(out, list(ggplot2::geom_line(data = data$smooth, mapping = pa,
-                                          colour = "#1f5fa8", linewidth = 0.9)))
+    out <- c(out, list(ggplot2::geom_line(
+      data = data$smooth,
+      mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                             colour = "smoothed mean of the residuals"),
+      linewidth = 0.9)))
   }
-  out
+  c(out, plot_key(colour = stats::setNames(
+    c("grey30", "#1f5fa8", "grey50"),
+    c("quantile residuals", "smoothed mean of the residuals", lim))))
 }
 
 
@@ -725,19 +756,27 @@ S7::method(plot_data, list(PlotPit, distributions7::distrib)) <-
   }
 
 S7::method(plot_layers, PlotPit) <- function(type, data, ...) {
+  band <- band_label(type@level, "range of a bar under the fitted model")
+  bars <- "histogram of F(y)"
   list(
     ggplot2::geom_rect(data = data$band,
                        mapping = ggplot2::aes(xmin = .data$xmin,
                                               xmax = .data$xmax,
                                               ymin = .data$lower,
-                                              ymax = .data$upper),
-                       fill = "#1f5fa8", alpha = 0.18),
+                                              ymax = .data$upper,
+                                              fill = band),
+                       alpha = 0.18),
     ggplot2::geom_rect(data = data$bars,
                        mapping = ggplot2::aes(xmin = .data$xmin,
                                               xmax = .data$xmax, ymin = 0,
-                                              ymax = .data$density),
-                       fill = "grey70", colour = "grey30", alpha = 0.6),
-    ggplot2::geom_hline(yintercept = 1, colour = "#b2182b"))
+                                              ymax = .data$density,
+                                              fill = bars),
+                       colour = "grey30", alpha = 0.6),
+    ggplot2::geom_hline(data = data.frame(y = 1),
+                        mapping = ggplot2::aes(yintercept = .data$y,
+                                               colour = "uniform density")),
+    plot_key(colour = c("uniform density" = "#b2182b"),
+             fill = stats::setNames(c("grey70", "#1f5fa8"), c(bars, band))))
 }
 
 
@@ -846,22 +885,32 @@ S7::method(plot_data, list(PlotCalibration, distributions7::distrib)) <-
   }
 
 S7::method(plot_layers, PlotCalibration) <- function(type, data, ...) {
+  band <- band_label(type@level, "pointwise band under the fitted model")
+  obs <- "observed coverage"
+  ref <- "exact calibration"
   out <- list(
     ggplot2::geom_ribbon(data = data$points,
                          mapping = ggplot2::aes(x = .data$p,
                                                 ymin = .data$lower,
-                                                ymax = .data$upper),
-                         fill = "#1f5fa8", alpha = 0.18),
-    ggplot2::geom_abline(intercept = 0, slope = 1, colour = "grey50"),
+                                                ymax = .data$upper,
+                                                fill = band),
+                         alpha = 0.18),
+    ggplot2::geom_abline(data = data.frame(a = 0, b = 1),
+                         mapping = ggplot2::aes(intercept = .data$a,
+                                                slope = .data$b, colour = ref)),
     ggplot2::geom_line(data = data$points,
-                       mapping = ggplot2::aes(x = .data$p, y = .data$observed),
-                       colour = "#1f5fa8"),
+                       mapping = ggplot2::aes(x = .data$p, y = .data$observed,
+                                              colour = obs)),
     ggplot2::geom_point(data = data$points,
                         mapping = ggplot2::aes(x = .data$p,
-                                               y = .data$observed),
-                        colour = "#1f5fa8", size = 1.4))
+                                               y = .data$observed,
+                                               colour = obs),
+                        size = 1.4),
+    plot_key(colour = stats::setNames(c("#1f5fa8", "grey50"), c(obs, ref)),
+             fill = stats::setNames("#1f5fa8", band)))
   if ("class" %in% names(data$points)) {
-    out <- c(out, list(ggplot2::facet_wrap(ggplot2::vars(.data$class))))
+    out <- c(out, list(ggplot2::facet_wrap(
+      ggplot2::vars(.data$class), labeller = strip_labeller(type@over))))
   }
   out
 }
@@ -993,18 +1042,44 @@ S7::method(plot_data, list(PlotScore, distributions7::distrib)) <-
   }
 
 S7::method(plot_layers, PlotScore) <- function(type, data, ...) {
-  list(
+  c(list(
     ggplot2::geom_hline(yintercept = 0, colour = "grey50"),
     ggplot2::geom_point(data = data$points,
-                        mapping = ggplot2::aes(x = .data$x, y = .data$y),
-                        colour = "grey30", alpha = 0.35, size = 0.9),
-    ggplot2::geom_point(data = data$top,
-                        mapping = ggplot2::aes(x = .data$x, y = .data$y),
-                        colour = "#b2182b", size = 1.8),
-    ggplot2::geom_text(data = data$top,
+                        mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                               colour = "score of an observation"),
+                        alpha = 0.35, size = 0.9)),
+    diag_top_layers(data$top, "score of an observation", "grey30",
+                    "the five largest in absolute value"))
+}
+
+
+#' The Labelled Points of a Diagnostic Graph
+#'
+#' @description
+#' Draws the points returned by `diag_top()` in the reference colour, with
+#' their row numbers above them, and the legend that names them beside the
+#' element drawn for every observation.
+#'
+#' @param top The data frame returned by `diag_top()`.
+#' @param all The name of the element drawn for every observation.
+#' @param all_colour Its colour.
+#' @param what The description of the labelled points.
+#'
+#' @return A list of ggplot2 components.
+#'
+#' @keywords internal
+diag_top_layers <- function(top, all, all_colour, what) {
+  lab <- sprintf("%s, with the row number", what)
+  list(
+    ggplot2::geom_point(data = top,
+                        mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                               colour = lab),
+                        size = 1.8),
+    ggplot2::geom_text(data = top,
                        mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                               label = .data$label),
-                       colour = "#b2182b", size = 3, vjust = -0.7))
+                       colour = "#b2182b", size = 3, vjust = -0.7),
+    plot_key(colour = stats::setNames(c(all_colour, "#b2182b"), c(all, lab))))
 }
 
 
@@ -1186,18 +1261,14 @@ S7::method(plot_data, list(PlotInfluence, distributions7::distrib)) <-
   }
 
 S7::method(plot_layers, PlotInfluence) <- function(type, data, ...) {
-  list(
+  all <- sprintf("%s of an observation", if (type@measure == "cook")
+    "Cook distance" else "leverage")
+  c(list(
     ggplot2::geom_segment(data = data$points,
                           mapping = ggplot2::aes(x = .data$x, xend = .data$x,
-                                                 y = 0, yend = .data$y),
-                          colour = "grey60"),
-    ggplot2::geom_point(data = data$top,
-                        mapping = ggplot2::aes(x = .data$x, y = .data$y),
-                        colour = "#b2182b", size = 1.8),
-    ggplot2::geom_text(data = data$top,
-                       mapping = ggplot2::aes(x = .data$x, y = .data$y,
-                                              label = .data$label),
-                       colour = "#b2182b", size = 3, vjust = -0.7))
+                                                 y = 0, yend = .data$y,
+                                                 colour = all))),
+    diag_top_layers(data$top, all, "grey60", "the five largest"))
 }
 
 
@@ -1283,15 +1354,21 @@ S7::method(plot_data, list(PlotAcf, distributions7::distrib)) <-
   }
 
 S7::method(plot_layers, PlotAcf) <- function(type, data, ...) {
+  lim <- "95% bounds of an uncorrelated series, 1.96 / sqrt(n)"
   list(
     ggplot2::geom_hline(yintercept = 0, colour = "grey50"),
-    ggplot2::geom_hline(yintercept = c(-1, 1) * data$limit$value,
-                        linetype = "dashed", colour = "#1f5fa8"),
+    ggplot2::geom_hline(data = data.frame(y = c(-1, 1) * data$limit$value),
+                        mapping = ggplot2::aes(yintercept = .data$y,
+                                               colour = lim),
+                        linetype = "dashed"),
     ggplot2::geom_segment(data = data$acf,
                           mapping = ggplot2::aes(x = .data$lag,
                                                  xend = .data$lag, y = 0,
-                                                 yend = .data$acf),
-                          colour = "grey30", linewidth = 0.8))
+                                                 yend = .data$acf,
+                                                 colour = "autocorrelation"),
+                          linewidth = 0.8),
+    plot_key(colour = stats::setNames(c("grey30", "#1f5fa8"),
+                                      c("autocorrelation", lim))))
 }
 
 
@@ -1421,38 +1498,57 @@ S7::method(plot_data, list(PlotPpc, distributions7::distrib)) <-
 S7::method(plot_layers, PlotPpc) <- function(type, data, ...) {
   kind <- attr(data, "kind")
   if (kind == "statistic") {
+    sim <- sprintf("statistic of %d simulated responses", nrow(data$sim))
     return(list(
       ggplot2::geom_histogram(data = data$sim,
-                              mapping = ggplot2::aes(x = .data$value),
-                              bins = 30, fill = "grey70", colour = "grey30"),
+                              mapping = ggplot2::aes(x = .data$value,
+                                                     fill = sim),
+                              bins = 30, colour = "grey30"),
       ggplot2::geom_vline(data = data$observed,
-                          mapping = ggplot2::aes(xintercept = .data$value),
-                          colour = "#b2182b", linewidth = 0.9)))
+                          mapping = ggplot2::aes(xintercept = .data$value,
+                                                 colour = "observed statistic"),
+                          linewidth = 0.9),
+      plot_key(colour = c("observed statistic" = "#b2182b"),
+               fill = stats::setNames("grey70", sim))))
   }
   if (kind == "discrete") {
+    rng <- "90% range of the simulated counts"
+    avg <- "mean of the simulated counts"
+    obs <- "observed count"
     return(list(
       ggplot2::geom_linerange(data = data$counts,
                               mapping = ggplot2::aes(x = .data$value,
                                                      ymin = .data$lower,
-                                                     ymax = .data$upper),
-                              colour = "#1f5fa8", linewidth = 2, alpha = 0.4),
+                                                     ymax = .data$upper,
+                                                     colour = rng),
+                              linewidth = 2, alpha = 0.4),
       ggplot2::geom_point(data = data$counts,
                           mapping = ggplot2::aes(x = .data$value,
-                                                 y = .data$mean),
-                          colour = "#1f5fa8", shape = 95, size = 5),
+                                                 y = .data$mean, colour = avg),
+                          shape = 95, size = 5),
       ggplot2::geom_point(data = data$counts,
                           mapping = ggplot2::aes(x = .data$value,
-                                                 y = .data$observed),
-                          colour = "#b2182b", size = 1.8)))
+                                                 y = .data$observed,
+                                                 colour = obs),
+                          size = 1.8),
+      plot_key(colour = stats::setNames(c("#b2182b", "#1f5fa8", "#1f5fa8"),
+                                        c(obs, avg, rng)))))
   }
+  lab_sim <- sprintf("density of each of %d simulated responses",
+                 length(unique(data$sim$sim)))
+  lab_obs <- "density of the observed response"
   list(
     ggplot2::geom_line(data = data$sim,
                        mapping = ggplot2::aes(x = .data$x, y = .data$y,
-                                              group = .data$sim),
-                       colour = "grey70", alpha = 0.5, linewidth = 0.3),
+                                              group = .data$sim,
+                                              colour = lab_sim),
+                       alpha = 0.5, linewidth = 0.3),
     ggplot2::geom_line(data = data$observed,
-                       mapping = ggplot2::aes(x = .data$x, y = .data$y),
-                       colour = "#1f5fa8", linewidth = 0.9))
+                       mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                              colour = lab_obs),
+                       linewidth = 0.9),
+    plot_key(colour = stats::setNames(c("#1f5fa8", "grey70"),
+                                      c(lab_obs, lab_sim))))
 }
 
 

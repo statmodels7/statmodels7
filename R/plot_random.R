@@ -321,8 +321,7 @@ S7::method(plot_data, list(PlotCaterpillar, modelterms7::RandomTerm)) <-
     attr(out, "labels") <- list(
       title = sprintf("%s: %s", ctx$param, if (is.null(ctx$title)) ctx$name
                       else ctx$title),
-      x = "predicted effect", y = NULL,
-      caption = if (type@raw) "open circles: unshrunk estimates" else NULL)
+      x = "predicted effect", y = random_group_label(x))
     out
   }
 
@@ -366,27 +365,51 @@ raw_effects <- function(fit, param, tm, rb, information) {
 }
 
 
+#' The Axis Title of the Levels of a Random Term
+#'
+#' @description
+#' Names the grouping of a random term, as in "level of id", for the axis on
+#' which a graph lists its levels.
+#'
+#' @param tm A [modelterms7::RandomTerm].
+#'
+#' @return A single string, or `NULL` when the term records no grouping.
+#'
+#' @keywords internal
+random_group_label <- function(tm) {
+  g <- tm@build_info$gexpr
+  if (is.null(g)) return(NULL)
+  sprintf("level of %s", paste(deparse(g), collapse = ""))
+}
+
+
 S7::method(plot_layers, PlotCaterpillar) <- function(type, data, ...) {
   d <- data$effects
   lv <- levels(d$level)
   keep <- if (length(lv) > 40L) lv[round(seq(1, length(lv), length.out = 40L))]
     else lv
+  k_est <- sprintf("predicted effect with %s",
+                   band_label(type@level, "interval"))
+  k_raw <- "estimate without shrinkage"
   out <- list(
     ggplot2::geom_vline(xintercept = 0, linetype = "dotted", colour = "grey50"),
     ggplot2::geom_linerange(
       data = d, mapping = ggplot2::aes(y = .data$level, xmin = .data$lower,
-                                       xmax = .data$upper),
-      orientation = "y", colour = "#1f5fa8"),
+                                       xmax = .data$upper, colour = k_est),
+      orientation = "y"),
     ggplot2::geom_point(
-      data = d, mapping = ggplot2::aes(x = .data$estimate, y = .data$level),
-      colour = "#1f5fa8", size = 1.8))
+      data = d, mapping = ggplot2::aes(x = .data$estimate, y = .data$level,
+                                       colour = k_est),
+      size = 1.8))
   if (type@raw && any(is.finite(d$raw))) {
     out <- c(out, list(ggplot2::geom_point(
       data = d[is.finite(d$raw), , drop = FALSE],
-      mapping = ggplot2::aes(x = .data$raw, y = .data$level),
-      shape = 1, colour = "grey30", size = 1.8)))
+      mapping = ggplot2::aes(x = .data$raw, y = .data$level, colour = k_raw),
+      shape = 1, size = 1.8)))
   }
-  out <- c(out, list(ggplot2::scale_y_discrete(breaks = keep)))
+  out <- c(out, list(ggplot2::scale_y_discrete(breaks = keep)),
+           plot_key(colour = stats::setNames(c("#1f5fa8", "grey30"),
+                                             c(k_est, k_raw))))
   if (nlevels(d$coef) > 1L) {
     out <- c(out, list(ggplot2::facet_wrap(ggplot2::vars(.data$coef),
                                            scales = "free_x")))
@@ -506,21 +529,26 @@ S7::method(plot_data, list(PlotPrior, modelterms7::RandomTerm)) <-
     attr(out, "labels") <- list(
       title = sprintf("%s: %s", ctx$param, if (is.null(ctx$title)) ctx$name
                       else ctx$title),
-      x = "effect", y = "density",
-      caption = "bars: predicted effects; line: fitted prior")
+      x = "effect", y = "density")
     out
   }
 
 
 S7::method(plot_layers, PlotPrior) <- function(type, data, ...) {
+  k_eff <- "histogram of the predicted effects"
+  k_pri <- "fitted prior density"
   out <- list(
     ggplot2::geom_histogram(
       data = data$effects,
-      mapping = ggplot2::aes(x = .data$value, y = ggplot2::after_stat(density)),
-      bins = attr(data, "bins"), fill = "grey80", colour = "white"),
+      mapping = ggplot2::aes(x = .data$value, y = ggplot2::after_stat(density),
+                             fill = k_eff),
+      bins = attr(data, "bins"), colour = "white"),
     ggplot2::geom_line(data = data$density,
-                       mapping = ggplot2::aes(x = .data$x, y = .data$density),
-                       colour = "#1f5fa8", linewidth = 0.9))
+                       mapping = ggplot2::aes(x = .data$x, y = .data$density,
+                                              colour = k_pri),
+                       linewidth = 0.9),
+    plot_key(colour = stats::setNames("#1f5fa8", k_pri),
+             fill = stats::setNames("grey80", k_eff)))
   if (nlevels(data$effects$coef) > 1L) {
     out <- c(out, list(ggplot2::facet_wrap(ggplot2::vars(.data$coef),
                                            scales = "free")))
@@ -561,22 +589,27 @@ S7::method(plot_data, list(PlotRandomCov, modelterms7::RandomTerm)) <-
     attr(out, "labels") <- list(
       title = sprintf("%s: %s", ctx$param, if (is.null(ctx$title)) ctx$name
                       else ctx$title),
-      x = rb$wnames[w[1L]], y = rb$wnames[w[2L]],
-      caption = sprintf("ellipse: %g%% of the fitted prior", 100 * type@level))
+      x = rb$wnames[w[1L]], y = rb$wnames[w[2L]])
     out
   }
 
 
 S7::method(plot_layers, PlotRandomCov) <- function(type, data, ...) {
+  k_pts <- "predicted effects of a level"
+  k_ell <- sprintf("region of %s probability under the fitted prior",
+                   paste0(format(100 * type@level), "%"))
   list(
     ggplot2::geom_hline(yintercept = 0, linetype = "dotted", colour = "grey50"),
     ggplot2::geom_vline(xintercept = 0, linetype = "dotted", colour = "grey50"),
     ggplot2::geom_path(data = data$ellipse,
-                       mapping = ggplot2::aes(x = .data$x, y = .data$y),
-                       colour = "#b2182b"),
+                       mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                              colour = k_ell)),
     ggplot2::geom_point(data = data$points,
-                        mapping = ggplot2::aes(x = .data$x, y = .data$y),
-                        colour = "#1f5fa8", size = 2))
+                        mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                               colour = k_pts),
+                        size = 2),
+    plot_key(colour = stats::setNames(c("#1f5fa8", "#b2182b"),
+                                      c(k_pts, k_ell))))
 }
 
 
@@ -663,15 +696,22 @@ parts_contribution_values <- function(fit, param, name, tm, newdata) {
 
 
 S7::method(plot_layers, PlotCurves) <- function(type, data, ...) {
+  pop <- nrow(data$population) > 0L
+  k_lev <- if (pop) "curve of a level" else
+    "departure of a level from the population curve"
+  k_pop <- "population curve"
   out <- list(
     ggplot2::geom_line(data = data$curves,
                        mapping = ggplot2::aes(x = .data$x, y = .data$fit,
-                                              group = .data$group),
-                       colour = "grey55", alpha = 0.7, linewidth = 0.4))
-  if (nrow(data$population)) {
+                                              group = .data$group,
+                                              colour = k_lev),
+                       alpha = 0.7, linewidth = 0.4))
+  if (pop) {
     out <- c(out, list(ggplot2::geom_line(
-      data = data$population, mapping = ggplot2::aes(x = .data$x, y = .data$fit),
-      colour = "#1f5fa8", linewidth = 1.2)))
+      data = data$population, mapping = ggplot2::aes(x = .data$x, y = .data$fit,
+                                                     colour = k_pop),
+      linewidth = 1.2)))
   }
-  out
+  c(out, plot_key(colour = stats::setNames(c("grey55", "#1f5fa8"),
+                                           c(k_lev, k_pop))))
 }

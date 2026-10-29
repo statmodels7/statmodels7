@@ -334,27 +334,33 @@ shrinkage_data <- function(type, x, fit, ctx) {
   attr(out, "labels") <- list(
     title = sprintf("%s: %s", ctx$param, if (is.null(ctx$title)) ctx$name
                     else ctx$title),
-    x = "estimate", y = NULL,
-    caption = "filled: penalized; open: without the penalty of the term")
+    x = "estimate", y = NULL)
   out
 }
 
 
 S7::method(plot_layers, PlotShrinkage) <- function(type, data, ...) {
   d <- data$estimates
+  k_pen <- "penalized estimate"
+  k_unp <- "estimate without the penalty of the term"
+  k_arr <- "shrinkage by the penalty"
   list(
     ggplot2::geom_vline(xintercept = 0, linetype = "dotted", colour = "grey50"),
     ggplot2::geom_segment(
       data = d, mapping = ggplot2::aes(x = .data$unpenalized, xend = .data$penalized,
-                                       y = .data$coef, yend = .data$coef),
-      colour = "grey40",
+                                       y = .data$coef, yend = .data$coef,
+                                       colour = k_arr),
       arrow = grid::arrow(length = grid::unit(0.08, "inches"), type = "closed")),
     ggplot2::geom_point(data = d, mapping = ggplot2::aes(x = .data$unpenalized,
-                                                         y = .data$coef),
-                        shape = 1, size = 2.4, colour = "grey30"),
+                                                         y = .data$coef,
+                                                         colour = k_unp),
+                        shape = 1, size = 2.4),
     ggplot2::geom_point(data = d, mapping = ggplot2::aes(x = .data$penalized,
-                                                         y = .data$coef),
-                        shape = 16, size = 2.4, colour = "#1f5fa8")
+                                                         y = .data$coef,
+                                                         colour = k_pen),
+                        shape = 16, size = 2.4),
+    plot_key(colour = stats::setNames(c("#1f5fa8", "grey30", "grey40"),
+                                      c(k_pen, k_unp, k_arr)))
   )
 }
 
@@ -403,7 +409,7 @@ S7::method(plot_data, list(PlotPath, modelterms7::PenalizedTerm)) <-
     attr(out, "labels") <- list(
       title = sprintf("%s: %s", ctx$param, if (is.null(ctx$title)) ctx$name
                       else ctx$title),
-      x = "log lambda", y = "coefficient", colour = NULL)
+      x = "log lambda", y = "coefficient", colour = "coefficient")
     out
   }
 
@@ -530,6 +536,8 @@ quadratic_path <- function(fit, sys, u, lam_hat, log_lambda) {
 
 
 S7::method(plot_layers, PlotPath) <- function(type, data, ...) {
+  k_fit <- "fitted lambda"
+  k_cnt <- "number of nonzero coefficients (right axis)"
   out <- list(
     ggplot2::geom_hline(yintercept = 0, colour = "grey70"),
     ggplot2::geom_line(data = data$paths,
@@ -538,16 +546,26 @@ S7::method(plot_layers, PlotPath) <- function(type, data, ...) {
                                               colour = .data$coef),
                        linewidth = 0.7),
     ggplot2::geom_vline(data = data$fitted,
-                        mapping = ggplot2::aes(xintercept = .data$log_lambda),
-                        linetype = "dashed", colour = "#b2182b")
+                        mapping = ggplot2::aes(xintercept = .data$log_lambda,
+                                               linetype = k_fit),
+                        colour = "#b2182b"),
+    # the colour names the coefficients, so the other lines are named by
+    # their line type
+    ggplot2::scale_linetype_manual(
+      name = NULL, values = stats::setNames(c("dashed", "dotted"),
+                                            c(k_fit, k_cnt)),
+      breaks = c(k_fit, k_cnt)),
+    ggplot2::guides(colour = ggplot2::guide_legend(order = 1)),
+    plot_key_theme()
   )
   if (nrow(data$count)) {
     sc <- attr(data, "count_scale")
     out <- c(out, list(
       ggplot2::geom_step(data = data$count,
                          mapping = ggplot2::aes(x = .data$log_lambda,
-                                                y = .data$y),
-                         colour = "grey40", linetype = "dotted"),
+                                                y = .data$y,
+                                                linetype = k_cnt),
+                         colour = "grey40"),
       ggplot2::scale_y_continuous(
         sec.axis = ggplot2::sec_axis(
           function(y) (y - sc$ymin) / sc$span * sc$p,

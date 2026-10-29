@@ -302,30 +302,54 @@ simultaneous_critical <- function(D, se, draws, level) {
 
 S7::method(plot_layers, PlotDerivative) <- function(type, data, ...) {
   grouped <- "group" %in% names(data$curve)
-  out <- list(ggplot2::geom_hline(yintercept = 0, linetype = "dashed",
-                                  colour = "grey40"))
+  k_fit <- "estimated derivative"
+  k_band <- band_label(type@level, if (type@simultaneous)
+    "simultaneous confidence band" else "pointwise confidence band")
+  k_zero <- "zero derivative"
   if (grouped) {
-    out <- c(out, list(
+    # the colour names the levels of the crossed factor, so the elements are
+    # named by their line type and their transparency
+    out <- list(
+      ggplot2::geom_hline(data = data.frame(y = 0),
+                          mapping = ggplot2::aes(yintercept = .data$y,
+                                                 linetype = k_zero),
+                          colour = "grey40"),
       ggplot2::geom_ribbon(data = data$curve,
                            mapping = ggplot2::aes(x = .data$x,
                                                   ymin = .data$lower,
                                                   ymax = .data$upper,
-                                                  fill = .data$group),
-                           alpha = 0.18),
+                                                  fill = .data$group,
+                                                  alpha = k_band)),
       ggplot2::geom_line(data = data$curve,
                          mapping = ggplot2::aes(x = .data$x, y = .data$fit,
-                                                colour = .data$group),
-                         linewidth = 0.9)))
+                                                colour = .data$group,
+                                                linetype = k_fit),
+                         linewidth = 0.9),
+      ggplot2::scale_linetype_manual(
+        name = NULL, values = stats::setNames(c("solid", "dashed"),
+                                              c(k_fit, k_zero))),
+      ggplot2::scale_alpha_manual(name = NULL,
+                                  values = stats::setNames(0.18, k_band)),
+      plot_key_theme())
   } else {
-    out <- c(out, list(
+    out <- list(
+      ggplot2::geom_hline(data = data.frame(y = 0),
+                          mapping = ggplot2::aes(yintercept = .data$y,
+                                                 colour = k_zero),
+                          linetype = "dashed"),
       ggplot2::geom_ribbon(data = data$curve,
                            mapping = ggplot2::aes(x = .data$x,
                                                   ymin = .data$lower,
-                                                  ymax = .data$upper),
-                           fill = "#1f5fa8", alpha = 0.18),
+                                                  ymax = .data$upper,
+                                                  fill = k_band),
+                           alpha = 0.18),
       ggplot2::geom_line(data = data$curve,
-                         mapping = ggplot2::aes(x = .data$x, y = .data$fit),
-                         colour = "#1f5fa8", linewidth = 0.9)))
+                         mapping = ggplot2::aes(x = .data$x, y = .data$fit,
+                                                colour = k_fit),
+                         linewidth = 0.9),
+      plot_key(colour = stats::setNames(c("#1f5fa8", "grey40"),
+                                        c(k_fit, k_zero)),
+               fill = stats::setNames("#1f5fa8", k_band)))
   }
   out
 }
@@ -502,20 +526,33 @@ S7::method(plot_data, list(PlotSurface, modelterms7::SmoothTerm)) <-
 S7::method(plot_layers, PlotSurface) <- function(type, data, ...) {
   group <- attr(data, "group")
   if (identical(attr(data, "kind"), "slices")) {
+    # the colour names the slices, so the line and the band are named by
+    # their line type and their transparency
+    k_fit <- "estimated effect"
+    k_band <- band_label(type@level)
     out <- list(
       ggplot2::geom_ribbon(data = data$curve,
                            mapping = ggplot2::aes(x = .data$x,
                                                   ymin = .data$lower,
                                                   ymax = .data$upper,
                                                   fill = .data$slice,
-                                                  group = .data$slice),
-                           alpha = 0.18),
+                                                  group = .data$slice,
+                                                  alpha = k_band)),
       ggplot2::geom_line(data = data$curve,
                          mapping = ggplot2::aes(x = .data$x, y = .data$fit,
                                                 colour = .data$slice,
-                                                group = .data$slice),
-                         linewidth = 0.9))
+                                                group = .data$slice,
+                                                linetype = k_fit),
+                         linewidth = 0.9),
+      ggplot2::scale_linetype_manual(name = NULL,
+                                     values = stats::setNames("solid", k_fit)),
+      ggplot2::scale_alpha_manual(name = NULL,
+                                  values = stats::setNames(0.18, k_band)),
+      plot_key_theme())
   } else {
+    k_cont <- "contour lines of the effect"
+    k_mask <- sprintf("points where the %s contains zero",
+                      band_label(type@level, "confidence interval"))
     out <- list(
       ggplot2::geom_raster(data = data$surface,
                            mapping = ggplot2::aes(x = .data$x, y = .data$y,
@@ -524,17 +561,27 @@ S7::method(plot_layers, PlotSurface) <- function(type, data, ...) {
                                     high = "#b2182b", midpoint = 0),
       ggplot2::geom_contour(data = data$surface,
                             mapping = ggplot2::aes(x = .data$x, y = .data$y,
-                                                   z = .data$fit),
-                            colour = "grey20", linewidth = 0.25))
+                                                   z = .data$fit,
+                                                   colour = k_cont),
+                            linewidth = 0.25))
     if (nrow(data$masked)) {
       out <- c(out, list(ggplot2::geom_point(
         data = data$masked,
-        mapping = ggplot2::aes(x = .data$x, y = .data$y), colour = "grey30",
+        mapping = ggplot2::aes(x = .data$x, y = .data$y, colour = k_mask),
         size = 0.3, alpha = 0.5)))
     }
+    out <- c(out, list(
+      ggplot2::scale_colour_manual(
+        name = NULL, values = stats::setNames(c("grey20", "grey30"),
+                                              c(k_cont, k_mask)),
+        breaks = c(k_cont, k_mask)),
+      ggplot2::guides(colour = ggplot2::guide_legend(
+        override.aes = list(size = 1.5, alpha = 1))),
+      plot_key_theme()))
   }
   if (!is.null(group)) {
-    out <- c(out, list(ggplot2::facet_wrap(ggplot2::vars(.data$group))))
+    out <- c(out, list(ggplot2::facet_wrap(ggplot2::vars(.data$group),
+                                           labeller = strip_labeller(group))))
   }
   out
 }
@@ -929,6 +976,10 @@ criterion_quadratic <- function(fit, cd) {
 S7::method(plot_layers, PlotCriterion) <- function(type, data, ...) {
   axis <- attr(data, "axis")
   cv <- data$curve
+  lab <- attr(data, "labels")
+  k_crit <- lab$y
+  k_fit <- sprintf("fitted %s", sub("^log ", "", lab$x))
+  k_edf <- "edf of the term (right axis)"
   out <- list()
   if (!is.null(axis)) {
     cv$edf_scaled <- axis[["a"]] + axis[["b"]] * cv$edf
@@ -937,21 +988,29 @@ S7::method(plot_layers, PlotCriterion) <- function(type, data, ...) {
     out <- c(out, list(
       ggplot2::geom_line(data = cv[is.finite(cv$edf_scaled), , drop = FALSE],
                          mapping = ggplot2::aes(x = .data$x,
-                                                y = .data$edf_scaled),
-                         colour = "grey55", linetype = "dashed"),
+                                                y = .data$edf_scaled,
+                                                colour = k_edf),
+                         linetype = "dashed"),
       ggplot2::scale_y_continuous(
         sec.axis = ggplot2::sec_axis(~ (. - a) / b, name = "edf of the term"))))
   }
   c(out, list(
-    ggplot2::geom_vline(xintercept = data$fitted$x, colour = "#b2182b",
+    ggplot2::geom_vline(data = data$fitted,
+                        mapping = ggplot2::aes(xintercept = .data$x,
+                                               colour = k_fit),
                         alpha = 0.4, linetype = "dotted"),
     ggplot2::geom_line(data = cv, mapping = ggplot2::aes(x = .data$x,
-                                                         y = .data$value),
-                       colour = "#1f5fa8", linewidth = 0.9),
+                                                         y = .data$value,
+                                                         colour = k_crit),
+                       linewidth = 0.9),
     ggplot2::geom_point(data = cv, mapping = ggplot2::aes(x = .data$x,
-                                                          y = .data$value),
-                        colour = "#1f5fa8", size = 1.1),
+                                                          y = .data$value,
+                                                          colour = k_crit),
+                        size = 1.1),
     ggplot2::geom_point(data = data$fitted,
-                        mapping = ggplot2::aes(x = .data$x, y = .data$value),
-                        colour = "#b2182b", size = 2.8)))
+                        mapping = ggplot2::aes(x = .data$x, y = .data$value,
+                                               colour = k_fit),
+                        size = 2.8),
+    plot_key(colour = stats::setNames(c("#1f5fa8", "#b2182b", "grey55"),
+                                      c(k_crit, k_fit, k_edf)))))
 }

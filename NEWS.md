@@ -1,3 +1,15 @@
+# statmodels7 0.227.1
+
+* Every graph of `autoplot()` names its elements in a legend below the panel:
+  estimates, bands with their level and kind, partial and quantile residuals,
+  rugs, reference lines, labeled points, the fitted value of a
+  hyperparameter and the counts on a second axis. Where the color already
+  distinguishes the levels of a factor, the other elements are named by line
+  type, shape and transparency. The captions of the shrinkage and random-effect
+  graphs are replaced by legends.
+* Panels divided by a covariate are headed by its name ("x: (0.29,0.5]"), and
+  the levels of a random term are on an axis titled by its grouping.
+
 # statmodels7 0.227.0
 
 * `statmod_profile()` profiles the hyperparameter of a kinked penalty that a path

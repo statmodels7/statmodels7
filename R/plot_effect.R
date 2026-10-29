@@ -362,42 +362,63 @@ offset_variables <- function(spec, data) {
 S7::method(plot_layers, PlotEffect) <- function(type, data, ...) {
   kind <- attr(data, "kind")
   grouped <- "group" %in% names(data$curve)
+  k_pts <- "partial residuals"
+  k_fit <- "estimated effect"
+  k_band <- band_label(type@level)
+  k_ci <- sprintf("estimate with %s",
+                  band_label(type@level, "confidence interval"))
+  k_bins <- sprintf("mean of the partial residuals in %d classes",
+                    nrow(data$bins))
+  k_rug <- "observed values"
   out <- list()
-  pa <- if ("group" %in% names(data$points))
-    ggplot2::aes(x = .data$x, y = .data$y, colour = .data$group)
-    else ggplot2::aes(x = .data$x, y = .data$y)
+  if (grouped) {
+    # the colour names the levels of the crossed factor, so the elements are
+    # named by aesthetics that no group uses: shape, linetype and alpha
+    pa <- ggplot2::aes(x = .data$x, y = .data$y, colour = .data$group,
+                       shape = k_pts)
+    key <- list(
+      ggplot2::scale_shape_manual(
+        name = NULL, values = stats::setNames(c(16, 23), c(k_pts, k_bins)),
+        breaks = c(k_pts, k_bins)),
+      ggplot2::scale_linetype_manual(
+        name = NULL, values = stats::setNames(rep("solid", 3),
+                                              c(k_fit, k_ci, k_rug)),
+        breaks = c(k_fit, k_ci, k_rug)),
+      ggplot2::scale_alpha_manual(name = NULL,
+                                  values = stats::setNames(0.18, k_band)),
+      plot_key_theme())
+  } else {
+    pa <- ggplot2::aes(x = .data$x, y = .data$y, colour = k_pts)
+    key <- plot_key(
+      colour = stats::setNames(c("#1f5fa8", "#1f5fa8", "grey30", "grey30"),
+                               c(k_fit, k_ci, k_pts, k_rug)),
+      fill = if (!identical(kind, "factor"))
+        stats::setNames(c("#1f5fa8", "#b2182b"), c(k_band, k_bins)))
+  }
   if (identical(kind, "factor")) {
     if (nrow(data$points)) {
       out <- c(out, list(ggplot2::geom_jitter(data = data$points, mapping = pa,
                                               width = 0.15, height = 0,
-                                              alpha = 0.35, size = 0.9,
-                                              colour = "grey30")))
+                                              alpha = 0.35, size = 0.9)))
     }
-    ca <- if (grouped) ggplot2::aes(x = .data$x, y = .data$fit,
-                                    ymin = .data$lower, ymax = .data$upper,
-                                    colour = .data$group)
-      else ggplot2::aes(x = .data$x, y = .data$fit, ymin = .data$lower,
-                        ymax = .data$upper)
-    # a fixed colour is passed only where no group maps one, since a NULL
-    # parameter is reported by ggplot2 as an empty aesthetic
     pr <- if (grouped) {
-      ggplot2::geom_pointrange(data = data$curve, mapping = ca,
-                               position = ggplot2::position_dodge(width = 0.4))
+      ggplot2::geom_pointrange(
+        data = data$curve,
+        mapping = ggplot2::aes(x = .data$x, y = .data$fit, ymin = .data$lower,
+                               ymax = .data$upper, colour = .data$group,
+                               linetype = k_ci),
+        position = ggplot2::position_dodge(width = 0.4))
     } else {
-      ggplot2::geom_pointrange(data = data$curve, mapping = ca,
-                               colour = "#1f5fa8")
+      ggplot2::geom_pointrange(
+        data = data$curve,
+        mapping = ggplot2::aes(x = .data$x, y = .data$fit, ymin = .data$lower,
+                               ymax = .data$upper, colour = k_ci))
     }
-    return(c(out, list(pr)))
+    return(c(out, list(pr), key))
   }
   if (nrow(data$points)) {
-    pt <- if ("group" %in% names(data$points)) {
-      ggplot2::geom_point(data = data$points, mapping = pa, alpha = 0.35,
-                          size = 0.9)
-    } else {
-      ggplot2::geom_point(data = data$points, mapping = pa, alpha = 0.35,
-                          size = 0.9, colour = "grey30")
-    }
-    out <- c(out, list(pt))
+    out <- c(out, list(ggplot2::geom_point(data = data$points, mapping = pa,
+                                           alpha = 0.35, size = 0.9)))
   }
   if (grouped) {
     out <- c(out, list(
@@ -405,32 +426,51 @@ S7::method(plot_layers, PlotEffect) <- function(type, data, ...) {
                            mapping = ggplot2::aes(x = .data$x,
                                                   ymin = .data$lower,
                                                   ymax = .data$upper,
-                                                  fill = .data$group),
-                           alpha = 0.18),
+                                                  fill = .data$group,
+                                                  alpha = k_band)),
       ggplot2::geom_line(data = data$curve,
                          mapping = ggplot2::aes(x = .data$x, y = .data$fit,
-                                                colour = .data$group),
+                                                colour = .data$group,
+                                                linetype = k_fit),
                          linewidth = 0.9)))
   } else {
     out <- c(out, list(
       ggplot2::geom_ribbon(data = data$curve,
                            mapping = ggplot2::aes(x = .data$x,
                                                   ymin = .data$lower,
-                                                  ymax = .data$upper),
-                           fill = "#1f5fa8", alpha = 0.18),
+                                                  ymax = .data$upper,
+                                                  fill = k_band),
+                           alpha = 0.18),
       ggplot2::geom_line(data = data$curve,
-                         mapping = ggplot2::aes(x = .data$x, y = .data$fit),
-                         colour = "#1f5fa8", linewidth = 0.9)))
+                         mapping = ggplot2::aes(x = .data$x, y = .data$fit,
+                                                colour = k_fit),
+                         linewidth = 0.9)))
   }
   if (nrow(data$bins)) {
-    out <- c(out, list(ggplot2::geom_point(
-      data = data$bins, mapping = ggplot2::aes(x = .data$x, y = .data$y),
-      shape = 23, fill = "#b2182b", size = 2.6)))
+    bins <- if (grouped) {
+      ggplot2::geom_point(data = data$bins,
+                          mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                                 shape = k_bins),
+                          fill = "#b2182b", size = 2.6)
+    } else {
+      ggplot2::geom_point(data = data$bins,
+                          mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                                 fill = k_bins),
+                          shape = 23, size = 2.6)
+    }
+    out <- c(out, list(bins))
   }
   if (nrow(data$rug)) {
-    out <- c(out, list(ggplot2::geom_rug(
-      data = data$rug, mapping = ggplot2::aes(x = .data$x), sides = "b",
-      alpha = 0.3)))
+    rug <- if (grouped) {
+      ggplot2::geom_rug(data = data$rug,
+                        mapping = ggplot2::aes(x = .data$x, linetype = k_rug),
+                        sides = "b", alpha = 0.3)
+    } else {
+      ggplot2::geom_rug(data = data$rug,
+                        mapping = ggplot2::aes(x = .data$x, colour = k_rug),
+                        sides = "b", alpha = 0.3)
+    }
+    out <- c(out, list(rug))
   }
-  out
+  c(out, key)
 }

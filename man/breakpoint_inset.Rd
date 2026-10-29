@@ -4,11 +4,13 @@
 \alias{breakpoint_inset}
 \title{The Profile Inset of the Break-Point Graph}
 \usage{
-breakpoint_inset(data)
+breakpoint_inset(data, level)
 }
 \arguments{
 \item{data}{The list returned by the \code{\link[=plot_data]{plot_data()}} method of
 \code{\link[=plot_breakpoint]{plot_breakpoint()}}.}
+
+\item{level}{The level of the cutoff, which the title of the inset names.}
 }
 \value{
 A list of ggplot2 components.

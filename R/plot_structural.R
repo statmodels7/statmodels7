@@ -460,35 +460,47 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::MarginalBreakTerm)) <-
 
 
 S7::method(plot_layers, PlotBreakpoint) <- function(type, data, ...) {
+  k_pts <- "partial residuals"
+  k_fit <- "estimated effect"
+  k_band <- band_label(type@level)
+  k_psi <- "estimated break-point"
+  k_int <- band_label(type@level, "interval of the break-point")
   out <- list()
   if (nrow(data$points)) {
     out <- c(out, list(ggplot2::geom_point(
       data = data$points,
-      mapping = ggplot2::aes(x = .data$x, y = .data$y),
-      alpha = 0.35, size = 0.9, colour = "grey30")))
+      mapping = ggplot2::aes(x = .data$x, y = .data$y, colour = k_pts),
+      alpha = 0.35, size = 0.9)))
   }
   out <- c(out, list(
     ggplot2::geom_ribbon(data = data$curve,
                          mapping = ggplot2::aes(x = .data$x,
                                                 ymin = .data$lower,
-                                                ymax = .data$upper),
-                         fill = "#1f5fa8", alpha = 0.18),
+                                                ymax = .data$upper,
+                                                fill = k_band),
+                         alpha = 0.18),
     ggplot2::geom_line(data = data$curve,
-                       mapping = ggplot2::aes(x = .data$x, y = .data$fit),
-                       colour = "#1f5fa8", linewidth = 0.9),
+                       mapping = ggplot2::aes(x = .data$x, y = .data$fit,
+                                              colour = k_fit),
+                       linewidth = 0.9),
     ggplot2::geom_vline(data = data$breaks,
-                        mapping = ggplot2::aes(xintercept = .data$psi),
-                        colour = "#b2182b", linetype = "dashed")))
+                        mapping = ggplot2::aes(xintercept = .data$psi,
+                                               colour = k_psi),
+                        linetype = "dashed")))
   has <- is.finite(data$breaks$from) & is.finite(data$breaks$to)
   if (any(has)) {
     out <- c(out, list(ggplot2::geom_segment(
       data = data$breaks[has, , drop = FALSE],
       mapping = ggplot2::aes(x = .data$from, xend = .data$to,
-                             y = .data$y, yend = .data$y),
-      colour = "#b2182b", linewidth = 1.6)))
+                             y = .data$y, yend = .data$y, colour = k_int),
+      linewidth = 1.6)))
   }
+  out <- c(out, plot_key(
+    colour = stats::setNames(c("#1f5fa8", "grey30", "#b2182b", "#b2182b"),
+                             c(k_fit, k_pts, k_psi, k_int)),
+    fill = stats::setNames("#1f5fa8", k_band)))
   if (nrow(data$profile)) {
-    out <- c(out, breakpoint_inset(data))
+    out <- c(out, breakpoint_inset(data, type@level))
   }
   out
 }
@@ -505,11 +517,12 @@ S7::method(plot_layers, PlotBreakpoint) <- function(type, data, ...) {
 #'
 #' @param data The list returned by the [plot_data()] method of
 #'   [plot_breakpoint()].
+#' @param level The level of the cutoff, which the title of the inset names.
 #'
 #' @return A list of ggplot2 components.
 #'
 #' @keywords internal
-breakpoint_inset <- function(data) {
+breakpoint_inset <- function(data, level) {
   pr <- data$profile
   ct <- data$cutoff$cutoff
   cap <- max(3 * ct, 1)
@@ -523,7 +536,11 @@ breakpoint_inset <- function(data) {
                         linewidth = 0.3) +
     ggplot2::geom_line(colour = "#1f5fa8") +
     ggplot2::coord_cartesian(ylim = c(0, cap)) +
-    ggplot2::labs(x = NULL, y = NULL, title = "profile of the criterion") +
+    ggplot2::labs(x = NULL, y = NULL,
+                  title = sprintf(paste0("profile of the criterion over the ",
+                                         "break-point; dotted: cutoff of the ",
+                                         "%s interval"),
+                                  paste0(format(100 * level), "%"))) +
     ggplot2::theme_bw(base_size = 7) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 6),
                    plot.margin = ggplot2::margin(2, 2, 0, 2))
@@ -719,6 +736,7 @@ filter_data <- function(type, bp, params, fit, ctx) {
   }
   path$param <- factor(path$param, levels = params)
   out <- list(path = path, obs = obs)
+  attr(out, "by") <- if (!is.null(bp$by)) paste(deparse(bp$by), collapse = "")
   attr(out, "labels") <- list(
     title = sprintf("%s: filtered %s", paste(params, collapse = ", "),
                     if (type@scale == "link") "predictor" else "parameter"),
@@ -747,28 +765,40 @@ S7::method(plot_data, list(PlotFilter, modelterms7::GasJoint)) <-
 
 S7::method(plot_layers, PlotFilter) <- function(type, data, ...) {
   path <- data$path
+  k_obs <- "observed response"
+  k_fit <- if (type@scale == "link") "filtered predictor"
+    else "filtered parameter"
+  k_band <- band_label(type@level)
   out <- list()
   if (nrow(data$obs)) {
     out <- c(out, list(ggplot2::geom_point(
-      data = data$obs, mapping = ggplot2::aes(x = .data$x, y = .data$y),
-      alpha = 0.5, size = 0.9, colour = "grey30")))
+      data = data$obs, mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                              colour = k_obs),
+      alpha = 0.5, size = 0.9)))
   }
   if (any(is.finite(path$lower) & is.finite(path$upper))) {
     out <- c(out, list(ggplot2::geom_ribbon(
       data = path, mapping = ggplot2::aes(x = .data$x, ymin = .data$lower,
-                                          ymax = .data$upper),
-      fill = "#1f5fa8", alpha = 0.18)))
+                                          ymax = .data$upper, fill = k_band),
+      alpha = 0.18)))
   }
   out <- c(out, list(ggplot2::geom_line(
-    data = path, mapping = ggplot2::aes(x = .data$x, y = .data$fit),
-    colour = "#1f5fa8", linewidth = 0.8)))
+    data = path, mapping = ggplot2::aes(x = .data$x, y = .data$fit,
+                                        colour = k_fit),
+    linewidth = 0.8),
+    plot_key(colour = stats::setNames(c("#1f5fa8", "grey30"), c(k_fit, k_obs)),
+             fill = stats::setNames("#1f5fa8", k_band))))
   ng <- nlevels(droplevels(path$group))
   np <- nlevels(droplevels(path$param))
+  by <- strip_labeller(attr(data, "by"))
   if (ng > 1L && np > 1L) {
-    out <- c(out, list(ggplot2::facet_grid(param ~ group, scales = "free")))
+    out <- c(out, list(ggplot2::facet_grid(
+      param ~ group, scales = "free",
+      labeller = ggplot2::labeller(group = by))))
   } else if (ng > 1L) {
     out <- c(out, list(ggplot2::facet_wrap(ggplot2::vars(.data$group),
-                                           scales = "free_x")))
+                                           scales = "free_x",
+                                           labeller = by)))
   } else if (np > 1L) {
     out <- c(out, list(ggplot2::facet_wrap(ggplot2::vars(.data$param),
                                            ncol = 1L, scales = "free_y")))

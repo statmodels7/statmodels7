@@ -331,6 +331,83 @@ plot_assemble <- function(type, x, fit, ctx) {
 }
 
 
+#' The Legend of the Elements of a Graph
+#'
+#' @description
+#' Returns the scales that name the elements of a graph in a legend below the
+#' panel. Each layer maps a constant string, the description of the element,
+#' to `colour` or `fill`, and `colour` and `fill` are named vectors whose
+#' names are those strings and whose values are the colours drawn. A string
+#' that no layer maps does not appear in the legend; the others appear in the
+#' order given.
+#'
+#' @param colour,fill Named character vectors, or `NULL`.
+#'
+#' @return A list of ggplot2 components.
+#'
+#' @keywords internal
+plot_key <- function(colour = NULL, fill = NULL) {
+  out <- list(plot_key_theme())
+  if (length(colour)) {
+    out <- c(out, list(ggplot2::scale_colour_manual(
+      name = NULL, values = colour, breaks = names(colour))))
+  }
+  if (length(fill)) {
+    out <- c(out, list(ggplot2::scale_fill_manual(
+      name = NULL, values = fill, breaks = names(fill))))
+  }
+  out
+}
+
+#' The Placement of the Legends of a Graph
+#'
+#' @description
+#' Places the legends below the panel, one above the other, so that each
+#' has the width of the graph.
+#'
+#' @return A `ggplot2::theme()` object.
+#'
+#' @keywords internal
+plot_key_theme <- function() {
+  ggplot2::theme(legend.position = "bottom", legend.box = "vertical",
+                 legend.spacing.y = ggplot2::unit(2, "pt"),
+                 legend.margin = ggplot2::margin(0, 0, 0, 0))
+}
+
+#' The Headings of the Panels of a Graph
+#'
+#' @description
+#' Returns a labeller that heads each panel with the name of the variable
+#' that divides the panels and the value of the panel, as in "x: (0.29,0.5]".
+#'
+#' @param name The name of the variable, or `NULL` for the value alone.
+#'
+#' @return A labeller for `ggplot2::facet_wrap()`.
+#'
+#' @keywords internal
+strip_labeller <- function(name) {
+  if (is.null(name)) return(ggplot2::label_value)
+  force(name)
+  ggplot2::as_labeller(function(v) paste0(name, ": ", v))
+}
+
+#' The Name of a Band in a Legend
+#'
+#' @description
+#' Writes the level of a band as a percentage before its description, as in
+#' "95% pointwise confidence band".
+#'
+#' @param level A number in (0, 1).
+#' @param what The description of the band.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+band_label <- function(level, what = "pointwise confidence band") {
+  sprintf("%s%% %s", format(100 * level), what)
+}
+
+
 #' A Sum of Terms Drawn as One Effect
 #'
 #' @description
@@ -778,5 +855,14 @@ diagnostics <- function(fit, plot_types = NULL, data = NULL, compose = FALSE) {
   ctx <- list(param = NULL, name = NULL, vars = NULL, cols = NULL,
               data = data)
   out <- lapply(plot_types, function(t) plot_assemble(t, fit@spec@distrib, fit, ctx))
-  if (compose) patchwork::wrap_plots(out) else out
+  if (!compose) return(out)
+  # in a composed figure each panel is narrow, so the entries of a legend
+  # are stacked one per row
+  stacked <- ggplot2::guide_legend(ncol = 1)
+  out <- lapply(out, function(p) p +
+    ggplot2::guides(colour = stacked, fill = stacked) +
+    ggplot2::theme(legend.box = "vertical",
+                   legend.spacing.y = ggplot2::unit(0, "pt"),
+                   legend.key.spacing.y = ggplot2::unit(0, "pt")))
+  patchwork::wrap_plots(out)
 }

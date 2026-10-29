@@ -419,19 +419,27 @@ S7::method(plot_data, list(PlotParam, distributions7::distrib)) <-
 
 S7::method(plot_layers, PlotParam) <- function(type, data, ...) {
   cv <- data$curve
+  k_fit <- sprintf("fitted %s", type@param)
   if (identical(attr(data, "kind"), "factor")) {
+    k_ci <- sprintf("%s with %s", k_fit,
+                    band_label(type@level, "confidence interval"))
     return(list(ggplot2::geom_pointrange(
       data = cv, mapping = ggplot2::aes(x = .data$x, y = .data$fit,
-                                        ymin = .data$lower, ymax = .data$upper),
-      colour = "#1f5fa8")))
+                                        ymin = .data$lower, ymax = .data$upper,
+                                        colour = k_ci)),
+      plot_key(colour = stats::setNames("#1f5fa8", k_ci))))
   }
+  k_band <- band_label(type@level)
   list(ggplot2::geom_ribbon(
          data = cv, mapping = ggplot2::aes(x = .data$x, ymin = .data$lower,
-                                           ymax = .data$upper),
-         fill = "#1f5fa8", alpha = 0.18),
+                                           ymax = .data$upper, fill = k_band),
+         alpha = 0.18),
        ggplot2::geom_line(
-         data = cv, mapping = ggplot2::aes(x = .data$x, y = .data$fit),
-         colour = "#1f5fa8", linewidth = 0.9))
+         data = cv, mapping = ggplot2::aes(x = .data$x, y = .data$fit,
+                                           colour = k_fit),
+         linewidth = 0.9),
+       plot_key(colour = stats::setNames("#1f5fa8", k_fit),
+                fill = stats::setNames("#1f5fa8", k_band)))
 }
 
 
@@ -485,37 +493,51 @@ S7::method(plot_layers, PlotQuantiles) <- function(type, data, ...) {
   outer <- if (length(ps) > 1L) c(min(ps), max(ps)) else numeric(0)
   discrete <- isTRUE(attr(data, "discrete"))
   factor_x <- identical(attr(data, "kind"), "factor")
+  k_pts <- "observations"
   out <- list()
   if (nrow(data$points)) {
+    pm <- ggplot2::aes(x = .data$x, y = .data$y, colour = k_pts)
     out <- c(out, list(
       if (factor_x) ggplot2::geom_jitter(
-        data = data$points, mapping = ggplot2::aes(x = .data$x, y = .data$y),
-        width = 0.15, height = 0, alpha = 0.35, size = 0.9, colour = "grey30")
+        data = data$points, mapping = pm, width = 0.15, height = 0,
+        alpha = 0.35, size = 0.9)
       else ggplot2::geom_point(
-        data = data$points, mapping = ggplot2::aes(x = .data$x, y = .data$y),
-        alpha = 0.35, size = 0.9, colour = "grey30")))
+        data = data$points, mapping = pm, alpha = 0.35, size = 0.9)))
+  }
+  # the legend names each kind of line by the probabilities that it draws
+  name_of <- function(d) {
+    p <- sort(unique(d$prob))
+    if (identical(p, 0.5)) return("median")
+    sprintf("%s %s", if (length(p) == 1L) "quantile" else "quantiles",
+            if (length(p) <= 2L) paste(format(p), collapse = " and ")
+            else paste(format(p), collapse = ", "))
   }
   add <- function(d, lw, lty) {
     if (!nrow(d)) return(NULL)
-    m <- ggplot2::aes(x = .data$x, y = .data$q, group = .data$prob)
+    k <- name_of(d)
+    m <- ggplot2::aes(x = .data$x, y = .data$q, group = .data$prob,
+                      colour = k)
     if (factor_x) {
-      list(ggplot2::geom_line(data = d, mapping = m, colour = "#1f5fa8",
-                              linewidth = lw, linetype = lty),
-           ggplot2::geom_point(data = d, mapping = m, colour = "#1f5fa8"))
+      list(ggplot2::geom_line(data = d, mapping = m, linewidth = lw,
+                              linetype = lty),
+           ggplot2::geom_point(data = d, mapping = m))
     } else if (discrete) {
-      list(ggplot2::geom_step(data = d, mapping = m, colour = "#1f5fa8",
-                              linewidth = lw, linetype = lty))
+      list(ggplot2::geom_step(data = d, mapping = m, linewidth = lw,
+                              linetype = lty))
     } else {
-      list(ggplot2::geom_line(data = d, mapping = m, colour = "#1f5fa8",
-                              linewidth = lw, linetype = lty))
+      list(ggplot2::geom_line(data = d, mapping = m, linewidth = lw,
+                              linetype = lty))
     }
   }
   is_out <- cv$prob %in% outer
   is_med <- cv$prob == 0.5
   inner <- !is_out & !is_med
-  c(out, add(cv[inner, ], 0.6, "solid"), add(cv[is_out & !is_med, ], 0.6,
-                                             "dashed"),
-    add(cv[is_med, ], 1.4, "solid"))
+  parts <- list(cv[is_med, ], cv[inner, ], cv[is_out & !is_med, ])
+  keys <- unlist(lapply(Filter(nrow, parts), name_of))
+  c(out, add(parts[[1L]], 1.4, "solid"), add(parts[[2L]], 0.6, "solid"),
+    add(parts[[3L]], 0.6, "dashed"),
+    plot_key(colour = stats::setNames(c(rep("#1f5fa8", length(keys)),
+                                        "grey30"), c(keys, k_pts))))
 }
 
 
@@ -657,17 +679,25 @@ S7::method(plot_layers, PlotDensity) <- function(type, data, ...) {
                                        colour = .data$row),
       linewidth = 0.9)))
   }
+  over <- attr(data, "over")
+  k_pts <- "observations"
+  k_dens <- sprintf("fitted %s at a row of 'at', drawn from its value of %s",
+                    if (discrete) "probabilities" else "density", over)
   if (nrow(data$points)) {
     out <- c(out, list(ggplot2::geom_point(
-      data = data$points, mapping = ggplot2::aes(x = .data$x, y = .data$y),
-      alpha = 0.35, size = 0.9, colour = "grey30")))
+      data = data$points, mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                                 colour = k_pts),
+      alpha = 0.35, size = 0.9)))
   }
+  key <- plot_key(colour = stats::setNames(c("#1f5fa8", "grey30"),
+                                           c(k_dens, k_pts)))
   if (discrete) {
     c(out, list(ggplot2::geom_segment(
       data = d[d$dens > 0, ],
       mapping = ggplot2::aes(x = .data$x0, xend = .data$x, y = .data$y,
-                             yend = .data$y, group = .data$index),
-      colour = "#1f5fa8", linewidth = 1.2)))
+                             yend = .data$y, group = .data$index,
+                             colour = k_dens),
+      linewidth = 1.2)), key)
   } else {
     c(out, list(
       ggplot2::geom_ribbon(
@@ -676,8 +706,9 @@ S7::method(plot_layers, PlotDensity) <- function(type, data, ...) {
         orientation = "y", fill = "#1f5fa8", alpha = 0.18),
       ggplot2::geom_path(
         data = d, mapping = ggplot2::aes(x = .data$x, y = .data$y,
-                                         group = .data$index),
-        colour = "#1f5fa8", linewidth = 0.7)))
+                                         group = .data$index,
+                                         colour = k_dens),
+        linewidth = 0.7)), key)
   }
 }
 

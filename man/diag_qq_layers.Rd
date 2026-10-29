@@ -4,18 +4,24 @@
 \alias{diag_qq_layers}
 \title{The Layers of a Quantile-Quantile or Worm Graph}
 \usage{
-diag_qq_layers(data, worm)
+diag_qq_layers(data, worm, type, over = NULL)
 }
 \arguments{
 \item{data}{The list returned by \code{\link[=plot_data]{plot_data()}}.}
 
 \item{worm}{Whether the graph is detrended.}
+
+\item{type}{The \code{PlotQq} or \code{PlotWorm} object, which gives the kind and
+the level of the band.}
+
+\item{over}{The covariate that defines the classes, or \code{NULL}.}
 }
 \value{
 A list of ggplot2 components.
 }
 \description{
-Draws the band, the reference line, the points and, when the data carry a
-\code{class} column, one facet for each class.
+Draws the band, the reference line, the points and a legend that names
+them and, when the data carry a \code{class} column, one facet for each class,
+headed by the covariate and the class.
 }
 \keyword{internal}
