@@ -226,6 +226,38 @@ test_that("two held positions reproduce lm() with the positions fixed", {
   expect_equal(prof$profile_loglik, unname(ref), tolerance = 1e-9)
 })
 
+test_that("a point settled by the outer search is reported as converged", {
+  skip_on_cran()
+  # the model and the point where outer_fit() stops at the optimum with the
+  # flag of its stopping rule FALSE and the decrement below the tolerance
+  set.seed(3)
+  n <- 1000
+  dd <- data.frame(z = runif(n), w = runif(n, 0, 10), x = runif(n))
+  psi <- 5 + 1.5 * dd$x
+  dd$y <- sin(2 * pi * dd$z) + 0.8 * pmax(dd$w - psi, 0) +
+    stats::rnorm(n, sd = exp(-0.5 + 0.4 * dd$x))
+  fit <- statmod(y ~ s(z) + seg(w, psi ~ x) | sigma ~ s(x),
+                 distributions7::gaussian1_distrib(), dd)
+  lab <- "mu:seg.psi1.x"
+  ctx <- profile_context(fit, lab, "held")
+  v <- ctx$estimate + sqrt(diag(stats::vcov(fit)))[[lab]] * 2 * (-1 / 3)
+  spec <- profile_hold(ctx$spec, ctx$param, ctx$coefname, v)
+  design <- statmod_design(spec)
+  beta0 <- ctx$beta_fit
+  beta0[ctx$at] <- v
+  pins <- pin_held_breakpoints(spec, design, beta0, from = ctx$beta_fit)
+  res <- outer_fit(spec, design, statmod_blocks(spec, design), ctx$hyper0,
+                   ctx$inner, ctx$outer, NULL, pins$beta, ctx$emethod,
+                   ctx$cfg$maxit, ctx$cfg$tol, verbosity(0), hold_hyper = TRUE)
+  skip_if(isTRUE(res$converged) || !isTRUE(res$settled),
+          "the search no longer stops short of its rule at this point")
+  prof <- statmod_profile(fit, lab, list(v))
+  expect_true(prof$converged)
+  expect_equal(prof$profile_pen_loglik, -res$value, tolerance = 1e-8)
+  # the maximum row keeps the flag of the stopping rule
+  expect_identical(attr(prof, "maximum")$converged, isTRUE(fit@converged))
+})
+
 test_that("a model with a structural term is rejected", {
   skip_on_cran()
   set.seed(7)

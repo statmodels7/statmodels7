@@ -209,14 +209,18 @@ profile_compute <- S7::new_generic("profile_compute", "method")
 #' hyperparameters are held (`hyper = "held"`) and the criterion estimates no
 #' coefficient.
 #'
-#' The column `converged` is the flag of the refit, `TRUE` when the stopping
-#' rules of the fit fired. Where an outer search ran, the flag is also `TRUE`
-#' when the search ended at a point whose decrement passes the check of
-#' [statmod_certificate()], because the line search of the outer optimizer can
-#' stop at the optimum without recording that its own rules fired; a point
-#' of that kind was measured with the same criterion, to \eqn{10^{-6}}, as
-#' its neighbors that did. A refit that signals an error
-#' gives a row of `NA` with `converged = FALSE`, and the function warns.
+#' The column `converged` states that the point is at the maximum of its
+#' refit. It is `TRUE` when the stopping rule of the refit fired, or when the
+#' Newton decrement at the point is below the tolerance of
+#' [statmod_certificate()], and in both cases the final inner fit converged.
+#' The second condition is needed because the line search of the outer
+#' optimizer can exhaust its backtracks at a point that is already the
+#' optimum, without recording that its stopping rule fired. Such a point was
+#' measured with the same criterion, to \eqn{10^{-6}}, as the neighboring
+#' points whose flag was `TRUE`. The row of the attribute `maximum` reports
+#' instead `fit@converged`, which is only the flag of the stopping rule. A
+#' refit that signals an error gives a row of `NA` with `converged = FALSE`,
+#' and the function warns.
 #'
 #' # The coefficients to hold: `which`
 #'
