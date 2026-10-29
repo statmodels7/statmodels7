@@ -4,7 +4,7 @@
 \alias{profile_point}
 \title{One Refit of a Profile}
 \usage{
-profile_point(ctx, val, start = NULL)
+profile_point(ctx, val, start = NULL, maxit = Inf)
 }
 \arguments{
 \item{ctx}{The context of the call.}

@@ -30,7 +30,8 @@ each coefficient are sorted increasingly and repeated values are dropped.
 With several coefficients the table has one row for each combination of
 values, and the first coefficient varies fastest.}
 
-\item{method}{A \link{profile_method}: \code{\link[=profile_grid]{profile_grid()}}.}
+\item{method}{A \link{profile_method}: \code{\link[=profile_grid]{profile_grid()}}, \code{\link[=profile_continuation]{profile_continuation()}}
+or \code{\link[=profile_taylor]{profile_taylor()}}.}
 
 \item{hyper}{\code{"held"} or \code{"refit"}: whether the hyperparameters stay at the
 values of the fit or are searched again at every point.}

@@ -140,12 +140,15 @@ reference:
     several that are held on a grid, returned as a data frame together with
     the value of the outer criterion where one ran. The grid of values is
     given by `profile_range()` or by the caller, and `profile_grid()` selects
-    the exact method, one refit for each point.
+    the exact method, one refit for each point; `profile_continuation()` and
+    `profile_taylor()` approximate it for smooth coefficients.
   contents:
   - statmod_profile
   - profile_range
   - profile_method
   - profile_grid
+  - profile_continuation
+  - profile_taylor
 
 - title: Variance conventions
   desc: >

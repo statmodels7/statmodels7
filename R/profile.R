@@ -305,7 +305,8 @@ profile_compute <- S7::new_generic(
 #'   each coefficient are sorted increasingly and repeated values are dropped.
 #'   With several coefficients the table has one row for each combination of
 #'   values, and the first coefficient varies fastest.
-#' @param method A [profile_method]: [profile_grid()].
+#' @param method A [profile_method]: [profile_grid()], [profile_continuation()]
+#'   or [profile_taylor()].
 #' @param hyper `"held"` or `"refit"`: whether the hyperparameters stay at the
 #'   values of the fit or are searched again at every point.
 #' @param cores The number of separate R processes over which the refits are
@@ -682,9 +683,10 @@ profile_map <- function(ctx, cores, n, body) {
 #'   `converged`.
 #'
 #' @keywords internal
-profile_point <- function(ctx, val, start = NULL) {
+profile_point <- function(ctx, val, start = NULL, maxit = Inf) {
   spec <- profile_hold(ctx$spec, ctx$param, ctx$coefname, val)
   cfg <- ctx$cfg
+  if (is.finite(maxit)) cfg$maxit <- as.integer(maxit)
   beta_fit <- ctx$beta_fit
   beta0 <- if (is.null(start)) beta_fit else start$par
   beta0[ctx$at] <- val
@@ -842,8 +844,8 @@ profile_assemble <- function(ctx, grid, pts, method) {
   num <- function(f) vapply(pts, function(p) as.numeric(f(p)), numeric(1))
   out <- cbind(grid, one(num(function(p) p$loglik), num(function(p) p$objective),
                          num(function(p) p$criterion),
-                         vapply(pts, function(p) isTRUE(p$converged),
-                                logical(1))))
+                         vapply(pts, function(p) if (isTRUE(is.na(p$converged))) NA else
+                                isTRUE(p$converged), logical(1))))
   names(out) <- c(names(grid), "profile_loglik", "profile_penalty",
                   "profile_pen_loglik", "outer_criterion", "converged")
   failed <- Filter(Negate(is.null), lapply(pts, `[[`, "error"))
