@@ -5,7 +5,7 @@
 \alias{profile_compute.ProfileGrid}
 \title{Compute a Profile}
 \usage{
-profile_compute(method, ...)
+profile_compute(method, ctx, grid, cores)
 }
 \arguments{
 \item{method}{A \link{profile_method}.}

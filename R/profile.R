@@ -136,6 +136,9 @@ ProfileGrid <- S7::new_class(
 #' processes.
 #'
 #' @param start One of `"neighbor"` (the default), `"fit"` and `"both"`.
+#' @param name The short name of the method, a single string. The class
+#'   constructor `ProfileGrid()` takes it, and `profile_grid()` sets it to
+#'   `"grid"`.
 #'
 #' @return A `ProfileGrid` object, inheriting from [profile_method], with the
 #'   properties `name` (`"grid"`) and `start`.
@@ -167,7 +170,10 @@ profile_grid <- function(start = c("neighbor", "fit", "both")) {
 #'   `par`, `hyper`, `objective`, `loglik`, `criterion` and `converged`.
 #'
 #' @keywords internal
-profile_compute <- S7::new_generic("profile_compute", "method")
+profile_compute <- S7::new_generic(
+  "profile_compute", "method",
+  function(method, ctx, grid, cores) S7::S7_dispatch()
+)
 
 
 #' @title The Profile Likelihood of Coefficients

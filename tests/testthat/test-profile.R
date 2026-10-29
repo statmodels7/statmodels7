@@ -131,6 +131,27 @@ test_that("coefficients the outer criterion estimates are estimated by it", {
   expect_equal(mx$outer_criterion, fit@criterion[[1L]])
 })
 
+test_that("the dispersion that reml() estimates is its estimate at every point", {
+  # Gaussian with sigma constant: with x held, the criterion estimates sigma
+  # by REML on the free mean coefficients, so the profile at each point is
+  # the log-likelihood of the least-squares fit with offset x b and
+  # sigma^2 = RSS / (n - p_free). The ML dispersion RSS / n would differ by
+  # about p_free^2 / (4 n) on the log-likelihood.
+  set.seed(5)
+  n <- 150
+  dd <- data.frame(x = runif(n), z = rnorm(n))
+  dd$y <- 1 + 2 * dd$x - 0.5 * dd$z + stats::rnorm(n, sd = 0.4)
+  fit <- statmod(y ~ x + z, distributions7::gaussian1_distrib(), dd)
+  expect_identical(fit@methods$outer@kind, "reml")
+  prof <- statmod_profile(fit, "mu:x", profile_range(width = 2, n = 5))
+  ref <- vapply(prof[["mu:x"]], function(b) {
+    r <- stats::lm.fit(cbind(1, dd$z), dd$y - b * dd$x)$residuals
+    sum(stats::dnorm(r, sd = sqrt(sum(r^2) / (n - 2)), log = TRUE))
+  }, numeric(1))
+  expect_equal(prof$profile_loglik, ref, tolerance = 1e-8)
+  expect_true(all(prof$converged))
+})
+
 test_that("the label of a coefficient of a nonlinear term is found", {
   set.seed(2)
   dd <- data.frame(x = rep(seq(0.25, 4, length.out = 8), 25),

@@ -10,6 +10,10 @@ ProfileGrid(name = character(0), start = character(0))
 profile_grid(start = c("neighbor", "fit", "both"))
 }
 \arguments{
+\item{name}{The short name of the method, a single string. The class
+constructor \code{ProfileGrid()} takes it, and \code{profile_grid()} sets it to
+\code{"grid"}.}
+
 \item{start}{One of \code{"neighbor"} (the default), \code{"fit"} and \code{"both"}.}
 }
 \value{
