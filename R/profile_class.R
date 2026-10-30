@@ -318,7 +318,10 @@ profile_curve <- function(x, label, column = x@profile_column[[label]]) {
   d <- data.frame(value = v[ok], profile = pr[ok], converged = pts$converged[ok])
   if (nrow(d)) {
     agg <- stats::aggregate(profile ~ value, data = d, FUN = max)
-    cv <- stats::aggregate(converged ~ value, data = d, FUN = all)
+    # a point of an approximate method involved no refit and carries
+    # converged = NA, which aggregate() would drop with its row
+    cv <- stats::aggregate(converged ~ value, data = d, FUN = all,
+                           na.action = stats::na.pass)
     d <- merge(agg, cv, by = "value")
   }
   if (is.finite(up) && !any(abs(d$value - q@estimate) <= 1e-12 * max(1, abs(q@estimate)))) {
@@ -684,7 +687,7 @@ profile_base <- function(q, x, column = x@profile_column[[q@label]],
     entries <- list(list(label = lab, colour = "#1f5fa8", shape = 16,
                          linetype = if (line) "solid" else "blank"))
   }
-  bad <- d[!d$converged, , drop = FALSE]
+  bad <- d[d$converged %in% FALSE, , drop = FALSE]
   if (nrow(bad)) {
     p <- p + ggplot2::geom_point(data = bad,
                                  ggplot2::aes(shape = "refit did not converge"),
@@ -823,10 +826,11 @@ profile_contour <- function(x, a, b) {
                   converged = pts$converged)
   d <- d[is.finite(d$profile), , drop = FALSE]
   agg <- stats::aggregate(profile ~ a + b, data = d, FUN = max)
-  cv <- stats::aggregate(converged ~ a + b, data = d, FUN = all)
+  cv <- stats::aggregate(converged ~ a + b, data = d, FUN = all,
+                         na.action = stats::na.pass)
   d <- merge(agg, cv, by = c("a", "b"))
   mx <- max(c(x@unrestricted_point[[col]][1L], d$profile), na.rm = TRUE)
-  bad <- d[!d$converged, , drop = FALSE]
+  bad <- d[d$converged %in% FALSE, , drop = FALSE]
   d <- profile_refine(d)
   qa <- x@profiled_quantities[[a]]
   qb <- x@profiled_quantities[[b]]

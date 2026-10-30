@@ -273,3 +273,22 @@ test_that("the lambda of a path is profiled on the path's own criterion", {
   expect_true(any(is.finite(pc@profiled_quantities[[1L]]@path_record$se)))
   expect_identical(autoplot(pc)$labels$y, "cross-validated criterion")
 })
+
+test_that("a profile of an approximate method gives intervals and graphs", {
+  data(quine, package = "MASS")
+  fit <- statmod(Days ~ Eth + Lrn, distrib = distributions7::poisson_distrib(), data = quine)
+  pg <- statmod_profile(fit, which = c("mu:EthN", "mu:LrnSL"), joint = FALSE)
+  pt <- statmod_profile(fit, which = c("mu:EthN", "mu:LrnSL"), joint = FALSE,
+                        method = profile_taylor())
+  expect_true(all(is.na(pt@points$converged)))
+  ct <- confint(pt)
+  cg <- confint(pg)
+  expect_equal(ct$lower, cg$lower, tolerance = 1e-3)
+  expect_equal(ct$upper, cg$upper, tolerance = 1e-3)
+  expect_s3_class(autoplot(pt), "ggplot")
+  pj <- statmod_profile(fit, which = c("mu:EthN", "mu:LrnSL"),
+                        values = profile_range(width = 3, n = 9),
+                        method = profile_taylor())
+  expect_s3_class(autoplot(pj), "ggplot")
+  expect_true(all(is.finite(unlist(confint(pj, type = "simultaneous")[, c("lower", "upper")]))))
+})

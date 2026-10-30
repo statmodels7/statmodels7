@@ -1,3 +1,10 @@
+# statmodels7 0.229.3
+
+* `confint()` and `autoplot()` of a profile computed with
+  `method = profile_taylor()` work: its points carry `converged = NA`, as
+  documented, and the rows were dropped before the interval was read
+  ("no rows to aggregate").
+
 # statmodels7 0.229.2
 
 * Within one call of `statmod()` the check of the supplied gradient in
