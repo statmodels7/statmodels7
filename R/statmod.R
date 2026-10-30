@@ -459,9 +459,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # every kernel takes exactly the sequential path.
   n_thr <- numericals7::local_threads(threads)
   n_cores <- check_cores(cores)
-  memo_old <- intercepts_memo$store
-  intercepts_memo$store <- new.env(parent = emptyenv())
-  on.exit(intercepts_memo$store <- memo_old, add = TRUE)
+  memo_old <- statmod_memo$store
+  statmod_memo$store <- new.env(parent = emptyenv())
+  on.exit(statmod_memo$store <- memo_old, add = TRUE)
   asked <- !missing(outer_criterion)
   asked_sparse <- !missing(sparse_criterion)
   vb <- verbosity(verbose)
@@ -2271,7 +2271,9 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
   }
 
   # an optimizers7 method solves nothing by a pivot and names no coordinate
-  res <- optimizers7::minimize(method, fn, beta[idx], gr = gr, hess = he)
+  res <- with_gradient_check(
+    paste0("smooth:", paste(idx, collapse = ",")),
+    optimizers7::minimize(method, fn, beta[idx], gr = gr, hess = he))
   out <- beta
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,
@@ -2760,7 +2762,7 @@ statmod_start <- function(spec, design, obj, start = NULL) {
 #'
 #' @keywords internal
 statmod_intercepts <- function(spec) {
-  st <- intercepts_memo$store
+  st <- statmod_memo$store
   if (!is.null(st) && !is.null(st$value) &&
       identical(st$distrib, spec@distrib) &&
       identical(st$response, spec@response)) {
@@ -2785,10 +2787,46 @@ statmod_intercepts <- function(spec) {
 # family whose methods the user redefines between two calls still compares
 # identical() and gives another answer.
 #' @rdname statmod_intercepts
-#' @format `intercepts_memo` is an environment whose `store` is the memory of
-#'   the current [statmod()] call, or `NULL` outside one.
+#' @format `statmod_memo` is an environment whose `store` is the memory of
+#'   the current [statmod()] call, or `NULL` outside one: the intercept-only
+#'   fit and the sites whose gradient check has run ([with_gradient_check()]).
 #' @keywords internal
-intercepts_memo <- new.env(parent = emptyenv())
+statmod_memo <- new.env(parent = emptyenv())
+
+#' Run the Gradient Check of optimizers7 Once per Site and Fit
+#'
+#' @description
+#' Evaluates `expr`, a call of [optimizers7::minimize()], with the check of
+#' the supplied gradient switched off (the option
+#' `optimizers7.check_gradient`) when the same `site` has already been
+#' checked within the current call of [statmod()].
+#'
+#' @details
+#' `minimize()` compares the gradient with a central difference of the
+#' objective at the start of every call. Within one fit the objective and the
+#' gradient at a site are the same code at every pass and every start, so
+#' the first comparison is the only informative one. A site names the block
+#' as well as the routine, since two blocks are two objectives. Outside a
+#' call of [statmod()] every check runs.
+#'
+#' @param site A single string naming the routine and its block.
+#' @param expr The call to evaluate.
+#'
+#' @return The value of `expr`.
+#'
+#' @keywords internal
+with_gradient_check <- function(site, expr) {
+  st <- statmod_memo$store
+  if (!is.null(st)) {
+    if (site %in% st$checked) {
+      old <- options(optimizers7.check_gradient = FALSE)
+      on.exit(options(old), add = TRUE)
+    } else {
+      st$checked <- c(st$checked, site)
+    }
+  }
+  expr
+}
 
 #' @rdname statmod_intercepts
 #' @keywords internal

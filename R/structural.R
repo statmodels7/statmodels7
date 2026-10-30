@@ -1156,7 +1156,9 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
       }, error = function(e) NULL)
       if (is.null(v) || !all(is.finite(v))) numeric(length(z)) else v
     }
-    res <- optimizers7::minimize(optimizer, fn, as.numeric(z0), gr = gr)
+    res <- with_gradient_check(
+      paste0("structural:", key),
+      optimizers7::minimize(optimizer, fn, as.numeric(z0), gr = gr))
     set(res@par)
     its <- its + res@iterations
     ok <- ok && isTRUE(res@converged)
@@ -1275,8 +1277,10 @@ sparse_fit_structural <- function(obj, beta, block, hyper, spec, design,
   opt <- optimizers7::prox_grad(prox = prox, g = gval,
                                 criterion = optimizers7::crit_grad(tol),
                                 maxit = maxit, verbose = verbose)
-  res <- tryCatch(optimizers7::minimize(opt, smooth_fn, z0, gr = smooth_gr),
-                  error = function(e) NULL)
+  res <- tryCatch(with_gradient_check(
+    paste0("sparse-structural:", key, ":", paste(pos, collapse = ",")),
+    optimizers7::minimize(opt, smooth_fn, z0, gr = smooth_gr)),
+    error = function(e) NULL)
   if (is.null(res)) return(none)
   set(res@par)
   list(par = beta, value = obj$fn(beta), converged = isTRUE(res@converged),
@@ -1395,16 +1399,20 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
   # a coefficient, converges at -637.40.
   lv <- joint_level_chart(spec, jp)
   if (is.null(lv)) {
-    res <- optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, hess = jp$he)
+    res <- with_gradient_check(
+      paste0("joint:", length(u0)),
+      optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, hess = jp$he))
     par <- res@par
   } else {
-    res <- optimizers7::minimize(
-      optimizer, function(v) jp$fn(lv$to(v)), lv$from(u0),
-      gr = function(v) lv$grad(v, jp$gr(lv$to(v))),
-      hess = function(v) {
-        u <- lv$to(v)
-        lv$hess(v, jp$gr(u), jp$he(u))
-      })
+    res <- with_gradient_check(
+      paste0("joint-level:", length(u0)),
+      optimizers7::minimize(
+        optimizer, function(v) jp$fn(lv$to(v)), lv$from(u0),
+        gr = function(v) lv$grad(v, jp$gr(lv$to(v))),
+        hess = function(v) {
+          u <- lv$to(v)
+          lv$hess(v, jp$gr(u), jp$he(u))
+        }))
     par <- lv$to(res@par)
   }
   jp$setz(par[jp$ix])

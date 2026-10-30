@@ -3,17 +3,18 @@
 \docType{data}
 \name{statmod_intercepts}
 \alias{statmod_intercepts}
-\alias{intercepts_memo}
+\alias{statmod_memo}
 \alias{statmod_intercepts_fit}
 \title{The Intercept of Each Equation, on the Link Scale}
 \format{
-\code{intercepts_memo} is an environment whose \code{store} is the memory of
-the current \code{\link[=statmod]{statmod()}} call, or \code{NULL} outside one.
+\code{statmod_memo} is an environment whose \code{store} is the memory of
+the current \code{\link[=statmod]{statmod()}} call, or \code{NULL} outside one: the intercept-only
+fit and the sites whose gradient check has run (\code{\link[=with_gradient_check]{with_gradient_check()}}).
 }
 \usage{
 statmod_intercepts(spec)
 
-intercepts_memo
+statmod_memo
 
 statmod_intercepts_fit(spec)
 }

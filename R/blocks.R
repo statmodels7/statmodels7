@@ -259,7 +259,9 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
   opt <- optimizers7::prox_grad(prox = prox, g = gval,
                                 criterion = optimizers7::crit_grad(tol),
                                 maxit = maxit, verbose = verbose)
-  res <- optimizers7::minimize(opt, smooth_fn, beta[idx], gr = smooth_gr)
+  res <- with_gradient_check(
+    paste0("sparse:", paste(idx, collapse = ",")),
+    optimizers7::minimize(opt, smooth_fn, beta[idx], gr = smooth_gr))
   out <- beta
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,

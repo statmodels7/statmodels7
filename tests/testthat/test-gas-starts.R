@@ -47,7 +47,7 @@ test_that("the intercept-only fit is computed once per call and gives the same f
   f_memo <- statmod(y ~ 1 | sigma ~ gas(1, 1, time = t), fam, d,
                     outer_criterion = ml())
   expect_equal(calls, 1L)
-  expect_null(intercepts_memo$store)
+  expect_null(statmod_memo$store)
   # without the memory: every reading fits again
   local_mocked_bindings(statmod_intercepts = function(spec) {
     calls <<- calls + 1L
@@ -59,4 +59,37 @@ test_that("the intercept-only fit is computed once per call and gives the same f
   expect_gt(calls, 1L)
   expect_identical(coef(f_memo), coef(f_plain))
   expect_identical(as.numeric(logLik(f_memo)), as.numeric(logLik(f_plain)))
+})
+
+test_that("the gradient check runs once per site within a fit, and the fit is unchanged", {
+  d <- gas_series(3, n = 300)
+  fam <- distributions7::gaussian1_distrib()
+  sites <- character(0)
+  wgc <- with_gradient_check
+  local_mocked_bindings(with_gradient_check = function(site, expr) {
+    sites <<- c(sites, site)
+    wgc(site, expr)
+  })
+  checks <- logical(0)
+  local_mocked_bindings(check_gradient_consistency = function(fn, gr, par) {
+    checks <<- c(checks, isTRUE(getOption("optimizers7.check_gradient", TRUE)))
+    invisible(TRUE)
+  }, .package = "optimizers7")
+  f_once <- statmod(y ~ 1 | sigma ~ gas(1, 1, time = t), fam, d, outer_criterion = ml())
+  expect_gt(length(sites), length(unique(sites)))
+  expect_true(any(checks) && any(!checks))
+  expect_null(statmod_memo$store)
+  expect_true(isTRUE(getOption("optimizers7.check_gradient", TRUE)))
+  # every check, as before
+  local_mocked_bindings(with_gradient_check = function(site, expr) expr)
+  f_all <- statmod(y ~ 1 | sigma ~ gas(1, 1, time = t), fam, d, outer_criterion = ml())
+  expect_identical(coef(f_once), coef(f_all))
+  expect_identical(as.numeric(logLik(f_once)), as.numeric(logLik(f_all)))
+})
+
+test_that("outside a call of statmod() every gradient check runs", {
+  expect_null(statmod_memo$store)
+  seen <- logical(0)
+  for (i in 1:2) with_gradient_check("x", seen <- c(seen, isTRUE(getOption("optimizers7.check_gradient", TRUE))))
+  expect_identical(seen, c(TRUE, TRUE))
 })
