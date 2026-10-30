@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.229.3" id="statmodels7-02293">statmodels7 0.229.3<a class="anchor" aria-label="anchor" href="#statmodels7-02293"></a></h2>
+<ul><li>
+<code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> and <code>autoplot()</code> of a profile computed with <code>method = profile_taylor()</code> work: its points carry <code>converged = NA</code>, as documented, and the rows were dropped before the interval was read (“no rows to aggregate”).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.229.2" id="statmodels7-02292">statmodels7 0.229.2<a class="anchor" aria-label="anchor" href="#statmodels7-02292"></a></h2>
 <ul><li>Within one call of <code><a href="../reference/statmod.html">statmod()</a></code> the check of the supplied gradient in <code><a href="https://statmodels7.github.io/optimizers7/reference/minimize.html" class="external-link">optimizers7::minimize()</a></code> runs once for each inner routine and block, not at every pass and every start. The fits are unchanged; on 108 simulated series a <code>gas()</code> fit is 2.5 per cent faster with one start and 8.9 with two.</li>
