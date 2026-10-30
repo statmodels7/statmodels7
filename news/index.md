@@ -1,5 +1,15 @@
 # Changelog
 
+## statmodels7 0.229.1
+
+- Within one call of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  the intercept-only fit of the family to the response is computed once.
+  A fit with a `gas()` term computed it at each build of the design, at
+  the start and at each further start (four times with `n_start = 2`);
+  the fits are unchanged and faster (median 14 per cent with one start,
+  11 with two, on 108 simulated series).
+
 ## statmodels7 0.229.0
 
 - [`statmod_profile()`](https://statmodels7.github.io/statmodels7/reference/statmod_profile.md)

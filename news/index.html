@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.229.1" id="statmodels7-02291">statmodels7 0.229.1<a class="anchor" aria-label="anchor" href="#statmodels7-02291"></a></h2>
+<ul><li>Within one call of <code><a href="../reference/statmod.html">statmod()</a></code> the intercept-only fit of the family to the response is computed once. A fit with a <code>gas()</code> term computed it at each build of the design, at the start and at each further start (four times with <code>n_start = 2</code>); the fits are unchanged and faster (median 14 per cent with one start, 11 with two, on 108 simulated series).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.229.0" id="statmodels7-02290">statmodels7 0.229.0<a class="anchor" aria-label="anchor" href="#statmodels7-02290"></a></h2>
 <ul><li>

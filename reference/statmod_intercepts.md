@@ -8,7 +8,18 @@ had, and otherwise the data-based start of
 
 ``` r
 statmod_intercepts(spec)
+
+intercepts_memo
+
+statmod_intercepts_fit(spec)
 ```
+
+## Format
+
+`intercepts_memo` is an environment whose `store` is the memory of the
+current
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+call, or `NULL` outside one.
 
 ## Arguments
 
@@ -38,6 +49,17 @@ several starts (`n_start = 10`) and keeps the best, and the starts of
 some families are random draws. The seed is therefore fixed for the
 length of this call and the caller's stream is put back afterwards, so
 that the same call gives the same answer twice.
+
+Within one call of
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+the result is computed once and reused. It depends only on
+`spec@distrib` and `spec@response`, and a fit with a score-driven term
+reads it at each build of the design, at the start and at each further
+start. The stored value is used only while both compare
+[`identical()`](https://rdrr.io/r/base/identical.html) to those of the
+call that computed it, and it is discarded when
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+returns.
 
 An intercept that the fit ran to the limit of its chart is replaced by
 the data-based start of

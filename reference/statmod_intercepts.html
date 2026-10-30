@@ -9,7 +9,7 @@ and otherwise the data-based start of distributions7::distrib_start()."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,9 +45,18 @@ and otherwise the data-based start of <code><a href="https://statmodels7.github.
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_intercepts</span><span class="op">(</span><span class="va">spec</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_intercepts</span><span class="op">(</span><span class="va">spec</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">intercepts_memo</span></span>
+<span></span>
+<span><span class="fu">statmod_intercepts_fit</span><span class="op">(</span><span class="va">spec</span><span class="op">)</span></span></code></pre></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
+    <p><code>intercepts_memo</code> is an environment whose <code>store</code> is the memory of
+the current <code><a href="statmod.html">statmod()</a></code> call, or <code>NULL</code> outside one.</p>
+    </div>
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
@@ -75,6 +84,12 @@ several starts (<code>n_start = 10</code>) and keeps the best, and the starts of
 families are random draws. The seed is therefore fixed for the length of
 this call and the caller's stream is put back afterwards, so that the same
 call gives the same answer twice.</p>
+<p>Within one call of <code><a href="statmod.html">statmod()</a></code> the result is computed once and reused.
+It depends only on <code>spec@distrib</code> and <code>spec@response</code>, and a fit with a
+score-driven term reads it at each build of the design, at the start and
+at each further start. The stored value is used only while both compare
+<code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> to those of the call that computed it, and it is discarded
+when <code><a href="statmod.html">statmod()</a></code> returns.</p>
 <p>An intercept that the fit ran to the limit of its chart is replaced by the
 data-based start of <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_start.html" class="external-link">distributions7::distrib_start()</a></code>. On a log or logit
 chart a value past \(e^{\pm 16}\) is a limit of the family and not an
