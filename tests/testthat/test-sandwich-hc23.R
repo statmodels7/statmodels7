@@ -92,10 +92,9 @@ test_that("HC2, HC3 and HC4 of a Gaussian linear model are the textbook formulas
   h <- unname(hatvalues(m))
   A <- solve(crossprod(X))
   tb <- function(w) A %*% crossprod(X * sqrt(w)) %*% A
-  # the exponent of HC4 reads the trace over both equations: the scale
-  # equation adds 1 / n to every row
-  ht <- h + 1 / length(h)
-  d4 <- pmin(4, ht / mean(ht))
+  # the exponent of HC4 reads the leverage of the mean against its own mean,
+  # as Cribari-Neto (2004) and sandwich::vcovHC(type = "HC4") do
+  d4 <- pmin(4, h / mean(h))
   hand <- list(HC2 = tb(e^2 / (1 - h)), HC3 = tb(e^2 / (1 - h)^2),
                HC4 = tb(e^2 / (1 - h)^d4))
   sws <- list(HC2 = hc2_sandwich(), HC3 = hc3_sandwich(), HC4 = hc4_sandwich())
@@ -462,4 +461,43 @@ test_that("the leverage and HC2/HC3 default to the expected information", {
     information = distributions7::observed_info(), sandwich = hc2_sandwich()),
     param = "mu", readable = FALSE)
   expect_gt(max(abs(v2o / v2 - 1)), 1e-6)
+})
+
+
+test_that("HC4 has one exponent per equation, in the matrix form", {
+  # a location-scale model: the expected leverage block is diagonal, and the
+  # correction is (1 - h_iaa)^(-delta_ia / 2) on each equation's scores
+  set.seed(3)
+  n <- 40
+  x <- rt(n, 4)
+  d <- data.frame(x = x, y = 1 + x + rnorm(n, sd = exp(0.3 + 0.5 * abs(x))))
+  f <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), d)
+  lab <- c("mu:(Intercept)", "mu:x", "sigma:(Intercept)", "sigma:x")
+  v4 <- vcov(f, vcov_type = frequentist_vcov(sandwich = hc4_sandwich()))[lab, lab]
+  X <- cbind(1, x)
+  s2 <- exp(2 * as.numeric(X %*% coef(f)$sigma))
+  r <- d$y - as.numeric(X %*% coef(f)$mu)
+  U <- cbind(X * (r / s2), X * (r^2 / s2 - 1))
+  Vb <- vcov(f, vcov_type = frequentist_vcov())[lab, lab]
+  L <- statmod_leverage(f)$leverage
+  dm <- pmin(4, L[, "mu"] / mean(L[, "mu"]))
+  ds <- pmin(4, L[, "sigma"] / mean(L[, "sigma"]))
+  fac <- cbind((1 - L[, "mu"])^(-dm / 2), (1 - L[, "mu"])^(-dm / 2),
+               (1 - L[, "sigma"])^(-ds / 2), (1 - L[, "sigma"])^(-ds / 2))
+  hand <- Vb %*% crossprod(U * fac) %*% Vb
+  expect_equal(unname(v4), unname(hand), tolerance = 1e-10)
+  # the matrix form: diagonal on a diagonal block, the scalar power when the
+  # exponents agree, and symmetric in between
+  set.seed(4)
+  A <- matrix(rnorm(9), 3)
+  H <- crossprod(A)
+  H <- 0.6 * H / max(eigen(H, only.values = TRUE)$values)
+  p <- leverage_power_eq(H, rep(1.7, 3))
+  expect_equal(p$F, leverage_power(H, -1.7 / 2)$F, tolerance = 1e-12)
+  Hd <- diag(c(0.2, 0.5, 0.1))
+  expect_equal(leverage_power_eq(Hd, c(1, 2, 3))$F,
+               diag((1 - c(0.2, 0.5, 0.1))^(-c(1, 2, 3) / 2)), tolerance = 1e-12)
+  Fm <- leverage_power_eq(H, c(0.5, 2, 4))$F
+  expect_equal(Fm, t(Fm), tolerance = 1e-12)
+  expect_true(all(eigen(Fm, only.values = TRUE)$values > 0))
 })

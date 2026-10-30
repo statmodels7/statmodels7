@@ -201,11 +201,22 @@ profile_compute <- S7::new_generic(
 #' @description
 #' Returns, for each combination of values of one or several coefficients, the
 #' maximum of the penalized log-likelihood over all the other coefficients
-#' when those are held at the values. The result is a data frame, one row per
-#' combination, which serves a plot, an interval or a diagnostic; the
-#' function computes none of those.
+#' when those are held at the values. The result is a [StatmodProfile]
+#' object, whose table `points` has one row per combination, and on which
+#' [confint.StatmodProfile()] computes the intervals and
+#' [autoplot.StatmodProfile()] draws the profile.
 #'
 #' @details
+#' # Joint and separate profiles
+#'
+#' With `joint = TRUE` the labels of `which` are held together, at every
+#' combination of their values, and the table is the profile of the vector
+#' of the labels. With `joint = FALSE` each label is profiled by itself,
+#' with the other labels of `which` free like every other coefficient, and
+#' the table stacks the one-dimensional profiles, with the columns
+#' `profiled_label` and `value` in place of one column per label. The two
+#' coincide for a single label.
+#'
 #' # What the columns report
 #'
 #' The columns `profile_loglik`, `profile_penalty` and `profile_pen_loglik`
@@ -380,17 +391,23 @@ profile_compute <- S7::new_generic(
 #'   threads inside one process; a refit that runs in a separate process is
 #'   sequential. Under `pkgload` the run stays sequential.
 #'
-#' @return A data frame (`check.names = FALSE`) with one column for each
-#'   coefficient of `which`, named by its label, then `profile_loglik`,
-#'   `profile_penalty`, `profile_pen_loglik`, `outer_criterion` and
-#'   `converged`. Its attributes are `maximum`, a one-row data frame with the
-#'   same columns at the unrestricted fit (the numbers of the fit itself,
-#'   which under [reml()] or [ml()] can lie slightly below the nearest rows
-#'   of the table, because at a row the criterion does not integrate the held
-#'   coefficients), `method`, the [profile_method]
-#'   object, `hyper`, and `criterion`, the outer criterion object of the fit
-#'   (`NULL` if it has none). The hyperparameters and the other coefficients
-#'   of each point are not returned.
+#' @param joint Whether the labels of `which` are held together (`TRUE`, the
+#'   profile of their vector) or each by itself with the others free
+#'   (`FALSE`).
+#'
+#' @return A [StatmodProfile] object. Its table `points` (`check.names =
+#'   FALSE`) has, with `joint = TRUE`, one column for each label of `which`,
+#'   named by the label, and with `joint = FALSE` the columns `profiled_label`
+#'   and `value`, then `profile_loglik`, `profile_penalty`,
+#'   `profile_pen_loglik`, `outer_criterion` and `converged`.
+#'   `unrestricted_point` has the same columns at the unrestricted fit (the
+#'   numbers of the fit itself, which under [reml()] or [ml()] can lie
+#'   slightly below the nearest rows of the table, because at a row the
+#'   criterion does not integrate the held coefficients). `profile_column`
+#'   names, for each label, the column that is its profile, and
+#'   `is_likelihood_ratio` states, for each label, whether that column gives
+#'   a likelihood ratio statistic. The hyperparameters and the other
+#'   coefficients of each point are not returned.
 #'
 #' @seealso [profile_grid()], [profile_range()], [statmod_test()] for the
 #'   likelihood ratio at one value.
@@ -407,17 +424,25 @@ profile_compute <- S7::new_generic(
 #' prof
 #'
 #' # the log-likelihood falls by z^2 / 2 at z standard errors
-#' attr(prof, "maximum")
+#' prof@unrestricted_point
+#' confint(prof)
 #'
 #' # two coefficients, with values chosen by the caller for the second
 #' statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
 #'                 values = list("mu:x" = profile_range(width = 1, n = 3),
 #'                               "mu:(Intercept)" = c(0.8, 1, 1.2)))
+#'
+#' # the same two, each profiled with the other free
+#' sep <- statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
+#'                        values = profile_range(width = 3, n = 7),
+#'                        joint = FALSE)
+#' confint(sep, type = "simultaneous")
 #' @export
 statmod_profile <- function(fit, which,
                             values = profile_range(width = 3, n = 21),
                             method = profile_grid(),
-                            hyper = c("held", "refit"), cores = 1) {
+                            hyper = c("held", "refit"), joint = TRUE,
+                            cores = 1) {
   if (!S7::S7_inherits(fit, StatmodFit)) {
     stop("'fit' must be a StatmodFit.", call. = FALSE)
   }
@@ -426,13 +451,92 @@ statmod_profile <- function(fit, which,
     stop("'method' must be a profile method, as profile_grid() returns.",
          call. = FALSE)
   }
+  if (!is.logical(joint) || length(joint) != 1L || is.na(joint)) {
+    stop("'joint' must be TRUE or FALSE.", call. = FALSE)
+  }
   cores <- check_cores(cores)
-  ctx <- profile_context(fit, which, hyper)
-  vals <- profile_values(ctx, values)
-  grid <- profile_prune(ctx, expand.grid(vals, KEEP.OUT.ATTRS = FALSE,
-                                         stringsAsFactors = FALSE))
-  pts <- profile_compute(method, ctx, grid, cores)
-  profile_assemble(ctx, grid, pts, method)
+  run <- function(w, vls) {
+    ctx <- profile_context(fit, w, hyper)
+    vals <- profile_values(ctx, vls)
+    grid <- profile_prune(ctx, expand.grid(vals, KEEP.OUT.ATTRS = FALSE,
+                                           stringsAsFactors = FALSE))
+    pts <- profile_compute(method, ctx, grid, cores)
+    out <- profile_assemble(ctx, grid, pts, method)
+    out$quantities <- profile_quantities(ctx)
+    out$column <- if (length(ctx$sidx)) {
+      "outer_criterion"
+    } else if (length(ctx$hidx) == length(w) && !is.null(ctx$path_method) &&
+               ctx$path_method@kind %in% c("aic", "bic")) {
+      "path_criterion"
+    } else {
+      "profile_pen_loglik"
+    }
+    out$lr <- profile_is_lr(ctx, out$quantities, out$column)
+    out
+  }
+  if (joint || length(which) == 1L) {
+    r <- run(which, values)
+    k <- length(which)
+    return(StatmodProfile(
+      points = r$points, profiled_labels = which,
+      profiled_quantities = r$quantities,
+      profile_column = stats::setNames(rep(r$column, k), which),
+      unrestricted_point = r$unrestricted_point, profile_method = method,
+      hyper_handling = hyper, outer_method = fit@methods$outer,
+      is_likelihood_ratio = stats::setNames(rep(r$lr, k), which),
+      joint = TRUE))
+  }
+  # the labels must all exist before the first refit, so that a typo in the
+  # last one does not cost the profiles of the others
+  profile_context(fit, which, hyper)
+  if (is.list(values) && !S7::S7_inherits(values, ProfileRange)) {
+    extra <- setdiff(names(values)[names(values) != ""], which)
+    if (length(extra)) {
+      stop("'values' names ", paste(sprintf("'%s'", extra), collapse = ", "),
+           ", which is not in 'which'.", call. = FALSE)
+    }
+  }
+  rs <- lapply(which, function(w) run(w, profile_values_for(values, w)))
+  relabel <- function(d, w) {
+    cbind(data.frame(profiled_label = rep(w, nrow(d)), value = d[[w]],
+                     stringsAsFactors = FALSE),
+          d[, setdiff(names(d), w), drop = FALSE])
+  }
+  pts <- do.call(rbind, Map(function(r, w) relabel(r$points, w), rs, which))
+  ups <- do.call(rbind, Map(function(r, w) relabel(r$unrestricted_point, w),
+                            rs, which))
+  rownames(pts) <- NULL
+  rownames(ups) <- NULL
+  StatmodProfile(
+    points = pts, profiled_labels = which,
+    profiled_quantities = stats::setNames(
+      lapply(seq_along(which), function(i) rs[[i]]$quantities[[1L]]), which),
+    profile_column = stats::setNames(vapply(rs, function(r) r$column, ""), which),
+    unrestricted_point = ups, profile_method = method, hyper_handling = hyper,
+    outer_method = fit@methods$outer,
+    is_likelihood_ratio = stats::setNames(vapply(rs, function(r) r$lr, TRUE), which),
+    joint = FALSE)
+}
+
+
+#' The Argument values for a Subset of the Labels
+#'
+#' @description
+#' Keeps, of a list `values` of [statmod_profile()], the elements that name a
+#' label of `which` and the element without a name, so that a list written
+#' for every label serves a profile of some of them.
+#'
+#' @param values The argument `values`.
+#' @param which The labels of the profile.
+#'
+#' @return `values`, possibly shortened.
+#'
+#' @keywords internal
+profile_values_for <- function(values, which) {
+  if (!is.list(values) || S7::S7_inherits(values, ProfileRange)) return(values)
+  nms <- names(values)
+  if (is.null(nms)) return(values)
+  values[nms == "" | nms %in% which]
 }
 
 
@@ -599,8 +703,9 @@ profile_hyper_at <- function(ctx, val, hyper) {
 #' @param val The held values, one for each label of `which`.
 #' @param spec The specification to hold them on.
 #'
-#' @return `spec`, with the coefficients in `held_coef` and the
-#'   hyperparameters in `held_hyper`.
+#' @return `spec`, with the coefficients in `held_coef`, the
+#'   hyperparameters in `held_hyper` and the sharp break-point terms moved
+#'   and held.
 #'
 #' @keywords internal
 profile_spec <- function(ctx, val, spec = ctx$spec) {
@@ -609,6 +714,10 @@ profile_spec <- function(ctx, val, spec = ctx$spec) {
   }
   if (length(ctx$hidx)) {
     spec <- profile_hold_hyper(spec, ctx$hyp, val[ctx$hidx])
+  }
+  for (j in seq_along(ctx$xidx)) {
+    spec <- profile_hold_position(spec, ctx$xpos$param[j], ctx$xpos$term[j],
+                                  ctx$xpos$k[j], val[ctx$xidx[j]])
   }
   spec
 }
@@ -655,7 +764,18 @@ profile_context <- function(fit, which, hyper) {
   htab <- profile_hyper_table(fit, spec, blocks)
   htab$row <- seq_len(nrow(htab))
   is_h <- which %in% htab$key
-  bad <- setdiff(which[!is_h], rownames(lab))
+  bps <- profile_breakpoints(spec, design)
+  sh <- bps[bps$sharp, , drop = FALSE]
+  aux <- which[which %in% sh$slot_label]
+  if (length(aux)) {
+    r <- sh[match(aux[1L], sh$slot_label), ]
+    stop(sprintf(paste0("'%s' is the auxiliary coefficient of a sharp ",
+                        "break-point term, from which the fit reads the ",
+                        "position.\n  Hold the position itself, '%s'."),
+                 aux[1L], r$label), call. = FALSE)
+  }
+  is_x <- which %in% sh$label
+  bad <- setdiff(which[!is_h & !is_x], rownames(lab))
   held <- profile_held_keys(spec)
   if (any(bad %in% held$key)) {
     h <- held[match(bad[bad %in% held$key][1L], held$key), ]
@@ -674,8 +794,10 @@ profile_context <- function(fit, which, hyper) {
                  if (nrow(htab)) paste(htab$key, collapse = ", ") else "none"),
          call. = FALSE)
   }
-  cidx <- which(!is_h)
+  cidx <- which(!is_h & !is_x)
   hidx <- which(is_h)
+  xidx <- which(is_x)
+  xpos <- sh[match(which[xidx], sh$label), , drop = FALSE]
   hyp <- htab[match(which[hidx], htab$key), , drop = FALSE]
   attr(hyp, "links") <- attr(htab, "links")
   attr(hyp, "members") <- attr(htab, "members")
@@ -722,11 +844,16 @@ profile_context <- function(fit, which, hyper) {
   estimate <- numeric(length(which))
   estimate[cidx] <- beta_fit[at]
   estimate[hidx] <- hyp$eta
+  estimate[xidx] <- xpos$estimate
   # which search each point runs. The coordinates the criterion estimates are
   # read with the held quantities fixed, so a profiled coefficient is not
   # among them
   spec_at <- profile_hold(spec, param, coefname, beta_fit[at])
   if (length(hidx)) spec_at <- profile_hold_hyper(spec_at, hyp, hyp$eta)
+  for (j in seq_along(xidx)) {
+    spec_at <- profile_hold_position(spec_at, xpos$param[j], xpos$term[j],
+                                     xpos$k[j], xpos$estimate[j])
+  }
   blocks_at <- statmod_blocks(spec_at, design)
   if (identical(hyper, "refit") && !is.null(fit@methods$sparse_criterion) &&
       nrow(path_rows(spec_at, blocks_at, hyper0))) {
@@ -744,8 +871,11 @@ profile_context <- function(fit, which, hyper) {
     nrow(outer_hyper_index(spec_at, blocks_at))
   psi <- lapply(profile_psi_groups(spec, design, param, coefname),
                 function(i) cidx[i])
+  path_method <- if (any(hyp$path)) fit@methods$sparse_criterion else NULL
   list(fit = fit, spec = spec, params = params, psi = psi, which = which,
        cidx = cidx, hidx = hidx, sidx = sidx, hyp = hyp, htab = htab,
+       path_method = path_method,
+       xidx = xidx, xpos = xpos, bps = bps,
        param = param,
        coefname = coefname, at = at, estimate = estimate,
        beta_fit = beta_fit, hyper = hyper, hyper0 = hyper0, inner = method,
@@ -898,7 +1028,13 @@ profile_values <- function(ctx, values) {
   out <- list()
   for (i in seq_along(which)) {
     v <- if (!is.null(given[[which[i]]])) given[[which[i]]] else default
-    if (S7::S7_inherits(v, ProfileRange) && i %in% ctx$hidx) {
+    if (S7::S7_inherits(v, ProfileRange) && i %in% ctx$xidx) {
+      r <- ctx$xpos[match(i, ctx$xidx), ]
+      u <- sort(unique(r$covariate[[1L]]))
+      mid <- (u[-1L] + u[-length(u)]) / 2
+      mid <- mid[mid > r$lower & mid < r$upper]
+      v <- sort(mid[order(abs(mid - r$estimate))][seq_len(min(v@n, length(mid)))])
+    } else if (S7::S7_inherits(v, ProfileRange) && i %in% ctx$hidx) {
       if (is.null(seh)) seh <- profile_hyper_se(ctx)
       s <- seh[[match(i, ctx$hidx)]]
       est <- ctx$estimate[i]
@@ -918,6 +1054,12 @@ profile_values <- function(ctx, values) {
                             "numeric vector."), which[i]), call. = FALSE)
       }
       v <- ctx$estimate[i] + s * v@width * seq(-1, 1, length.out = v@n)
+      r <- ctx$bps[ctx$bps$label == which[i] & ctx$bps$sharp_seg, , drop = FALSE]
+      if (nrow(r)) {
+        u <- unique(r$covariate[[1L]])
+        v <- c(v, u[u > min(v) & u < max(v)])
+        v <- v[v > r$lower & v < r$upper]
+      }
     }
     if (!is.numeric(v) || !length(v) || any(!is.finite(v))) {
       stop(sprintf("The values of '%s' must be finite numbers.", which[i]),
@@ -1039,11 +1181,13 @@ profile_point <- function(ctx, val, start = NULL, maxit = Inf) {
                                                    ctx$outer@kind))
     crit <- if (is.null(m)) NA_real_ else m$value
   }
+  hy <- if (ctx$use_outer && !is.null(res$hyper)) res$hyper else hyper0
   list(par = res$par,
-       hyper = if (ctx$use_outer && !is.null(res$hyper)) res$hyper else hyper0,
+       hyper = hy,
        objective = res$value,
        loglik = statmod_loglik_at(spec, cf, best$design),
        criterion = crit,
+       path = profile_path_value(ctx, spec, best$design, res$par, cf, hy),
        converged = isTRUE(res$converged) || isTRUE(res$settled))
 }
 
@@ -1141,8 +1285,7 @@ S7::method(profile_compute, ProfileGrid) <- function(method, ctx, grid, cores) {
 #'
 #' @description
 #' Converts the points returned by [profile_compute()] into the data frame of
-#' [statmod_profile()], with the row of the unrestricted fit as the attribute
-#' `maximum`.
+#' [statmod_profile()], and the row of the unrestricted fit.
 #'
 #' @details
 #' The objective of a point is the negative of the penalized log-likelihood,
@@ -1155,7 +1298,8 @@ S7::method(profile_compute, ProfileGrid) <- function(method, ctx, grid, cores) {
 #' @param pts The points.
 #' @param method The profile method.
 #'
-#' @return The data frame.
+#' @return A list with `points`, the data frame, and `unrestricted_point`, the
+#'   row of the fit.
 #'
 #' @keywords internal
 profile_assemble <- function(ctx, grid, pts, method) {
@@ -1171,6 +1315,12 @@ profile_assemble <- function(ctx, grid, pts, method) {
                                 isTRUE(p$converged), logical(1))))
   names(out) <- c(names(grid), "profile_loglik", "profile_penalty",
                   "profile_pen_loglik", "outer_criterion", "converged")
+  if (!is.null(ctx$path_method)) {
+    out$path_criterion <- vapply(pts, function(p) {
+      v <- p$path
+      if (is.null(v)) NA_real_ else as.numeric(v)
+    }, numeric(1))
+  }
   failed <- Filter(Negate(is.null), lapply(pts, `[[`, "error"))
   if (length(failed)) {
     warning(sprintf(paste0("%d of %d refits signaled an error and are ",
@@ -1184,10 +1334,147 @@ profile_assemble <- function(ctx, grid, pts, method) {
                   if ((ctx$use_outer || length(ctx$sidx)) && length(fit@criterion))
                     fit@criterion[[1L]]
                   else NA_real_, isTRUE(fit@converged)))
+  if (!is.null(ctx$path_method)) {
+    sp <- fit@spec
+    ds <- statmod_design(sp)
+    mx$path_criterion <- profile_path_value(ctx, sp, ds, ctx$beta_fit,
+                                            fit@coefficients, fit@hyper)
+  }
   names(mx) <- names(out)
-  attr(out, "maximum") <- mx
-  attr(out, "method") <- method
-  attr(out, "hyper") <- ctx$hyper
-  attr(out, "criterion") <- ctx$outer
-  out
+  list(points = out, unrestricted_point = mx)
+}
+
+
+#' The Positions of the Break-Points of a Model
+#'
+#' @description
+#' Lists every position of a break-point of a [modelterms7::seg()],
+#' [modelterms7::jump()] or [modelterms7::jseg()] term that is a single
+#' coefficient, that is a position without a subformula.
+#'
+#' @details
+#' The position of a continuous or smoothed term is a coefficient of the
+#' design, and its label is that of the coefficient. The position of a sharp
+#' [modelterms7::jump()] or [modelterms7::jseg()] is not: the coefficient
+#' in its slot is the auxiliary \eqn{g_k = -\delta_k\psi_k} of the working
+#' linearization, labelled `g1`, `g2`, and so on. Its label in `which` is
+#' then the one that [coef()] prints, with `psi1`, `psi2` in place of `g1`,
+#' `g2`, and [statmod_profile()] holds it by moving the term to the value and
+#' holding it there ([modelterms7::seg_relocate()], [modelterms7::seg_hold()]).
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design Its design.
+#'
+#' @return A data frame with one row for each position and the columns
+#'   `label` (the label in `which`), `slot_label` (the label of the
+#'   coefficient in the slot), `param`, `term`, `k` (the break-point), `at`
+#'   (the stacked position of the slot), `sharp` (a sharp jump or jseg),
+#'   `sharp_seg` (a sharp continuous seg), `estimate`, `lower` and `upper`
+#'   (the interval in which the term confines the position), and the list
+#'   column `covariate`, the values of the covariate of the term.
+#'
+#' @keywords internal
+profile_breakpoints <- function(spec, design) {
+  st <- attr(design, "state")
+  params <- spec@distrib@params
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  lab <- rownames(coef_labels(spec, design))
+  rows <- list()
+  for (p in names(st$terms)) {
+    a <- match(p, params)
+    for (nm in names(st$terms[[p]])) {
+      tm <- st$terms[[p]][[nm]]
+      if (!S7::S7_inherits(tm, modelterms7::SegTerm)) next
+      bp <- tm@build_info
+      if (is.null(bp$index) || isTRUE(bp$marginal)) next
+      cols <- design[[p]]$blocks[[nm]]
+      smooth <- !is.null(bp$smooth)
+      sharp <- bp$kind %in% c("jump", "jseg") && !smooth
+      pos <- tryCatch(modelterms7::seg_psi(tm), error = function(e) NULL)
+      for (k in seq_len(bp$npsi)) {
+        ix <- bp$index[[paste0("psi", k)]]
+        if (length(ix) != 1L || !is.null(bp$Z[[paste0("psi", k)]])) next
+        at <- offs[[a]] + cols[ix]
+        sl <- lab[at]
+        rows[[length(rows) + 1L]] <- data.frame(
+          label = if (sharp) sub("g([0-9]+)$", "psi\\1", sl) else sl,
+          slot_label = sl, param = p, term = nm, k = k, at = at,
+          sharp = sharp, sharp_seg = identical(bp$kind, "seg") && !smooth,
+          estimate = if (sharp && !is.null(pos)) pos[k] else NA_real_,
+          lower = bp$lim[1L], upper = bp$lim[2L],
+          stringsAsFactors = FALSE)
+        rows[[length(rows)]]$covariate <- list(as.numeric(bp$xv))
+      }
+    }
+  }
+  if (!length(rows)) {
+    out <- data.frame(label = character(0), slot_label = character(0),
+                      param = character(0), term = character(0),
+                      k = integer(0), at = integer(0), sharp = logical(0),
+                      sharp_seg = logical(0), estimate = numeric(0),
+                      lower = numeric(0), upper = numeric(0),
+                      stringsAsFactors = FALSE)
+    out$covariate <- list()
+    return(out)
+  }
+  do.call(rbind, rows)
+}
+
+
+#' Hold the Position of a Sharp Break-Point
+#'
+#' @description
+#' Moves the break-point `k` of the sharp term `term` of the equation `param`
+#' to `value` and holds the term there, the other break-points of the term
+#' staying where they are.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param param,term,k The equation, the key of the term and the break-point.
+#' @param value The position.
+#'
+#' @return `spec`, with the term replaced.
+#'
+#' @keywords internal
+profile_hold_position <- function(spec, param, term, k, value) {
+  terms <- spec@terms
+  t0 <- terms[[param]][[term]]
+  if (isTRUE(t0@build_info$held)) t0 <- modelterms7::seg_hold(t0, FALSE)
+  pos <- modelterms7::seg_psi(t0)
+  pos[k] <- value
+  terms[[param]][[term]] <- modelterms7::seg_hold(modelterms7::seg_relocate(t0, pos))
+  S7::set_props(spec, terms = terms)
+}
+
+
+
+#' The Criterion of a Path at One Point of a Profile
+#'
+#' @description
+#' Scores the refit at one point of a profile with the criterion that chose
+#' the hyperparameter of a kinked penalty along its path, [aic()] or
+#' [bic()], as the path scores each of its points: the curvature of a scaled
+#' SCAD or MCP is read at the coefficients of the point, and the degrees of
+#' freedom are counted on the active coordinates.
+#'
+#' @param ctx The context of the call.
+#' @param spec,design The specification of the point and its design.
+#' @param par,cf The stacked coefficients of the refit and their list.
+#' @param hyper The hyperparameters of the point.
+#'
+#' @return A single number, `NA` where the profile holds no hyperparameter of
+#'   a path, where the path's criterion is [cv()], or where the criterion
+#'   cannot be read.
+#'
+#' @keywords internal
+profile_path_value <- function(ctx, spec, design, par, cf, hyper) {
+  m <- ctx$path_method
+  if (is.null(m) || !m@kind %in% c("aic", "bic")) return(NA_real_)
+  sp <- tryCatch(statmod_curv(spec, design, cf, ctx$cfg$expected,
+                              ctx$cfg$emethod), error = function(e) NULL)
+  if (is.null(sp)) sp <- spec
+  act <- statmod_active(sp, statmod_blocks(sp, design), par, hyper)
+  r <- tryCatch(statmod_pe(sp, design, cf, hyper, m, ctx$cfg$emethod, act),
+                error = function(e) NULL)
+  if (is.null(r) || !is.finite(r$value)) NA_real_ else r$value
 }

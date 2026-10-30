@@ -1325,8 +1325,15 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # the inner objective's gradient with the held coordinates left out: at the
   # held mode their score is not zero, and a mode error or a resolution is a
   # statement about the free coordinates alone
+  # a coefficient held at a value (held_coef, or a break-point term held in
+  # place) is not free either: the inner fit leaves its score where the hold
+  # puts it, and read as a mode error that score turned the resolution of a
+  # profile point next to the estimate into 0.0875, which stopped the search
+  # at its start, and the point beside it into a refused mode
+  held_free <- held_stack(spec, design)
   free_score <- function(g) {
     if (!is.null(g) && ng) g[gam$where] <- 0
+    if (!is.null(g) && length(held_free)) g[held_free] <- 0
     g
   }
   pe <- outer_minimize(method)

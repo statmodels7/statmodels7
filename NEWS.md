@@ -1,3 +1,65 @@
+# statmodels7 0.229.0
+
+* `statmod_profile()` returns a `StatmodProfile` object in place of a data
+  frame with attributes. Its properties are `points` (the table),
+  `profiled_labels`, `profiled_quantities`, `profile_column`,
+  `unrestricted_point` (formerly the attribute `maximum`), `profile_method`,
+  `hyper_handling`, `outer_method`, `is_likelihood_ratio` and `joint`, and
+  `as.data.frame()` returns the table.
+* `statmod_profile(joint = FALSE)` profiles each label of `which` by itself,
+  with the other labels free; the table then has the columns
+  `profiled_label` and `value`.
+* Each label has a kind (coefficient, penalized coefficient, break-point
+  position, hyperparameter, hyperparameter chosen by a path). `autoplot()`
+  and `plot()` draw the criterion of the profile (the log-likelihood, the
+  penalized log-likelihood, or the REML or ML criterion) against the value
+  held, with the details of each kind. A joint profile of two labels is
+  drawn as contours, and one of three or more as one panel for each pair.
+* `confint()` of a profile gives the values at which the likelihood ratio
+  statistic does not exceed a chi-squared quantile, with `type =
+  "marginal"` (one degree of freedom) or `"simultaneous"` (the projection
+  of the joint region, with as many degrees of freedom as labels). It
+  signals an error where the profile gives no likelihood ratio statistic.
+* The position of a sharp `jump()` or `jseg()` is profiled under the label
+  that `coef()` prints (`"mu:jump.psi1"`), by moving the term to each value
+  and holding it there. Its profile is constant between consecutive values
+  of the covariate, and the default values are the midpoints between them
+  nearest to the estimate. Holding the auxiliary coefficient `g1`, which the
+  fit reads the position from, left the profile constant at the
+  log-likelihood of the fit; it now signals an error that names the label of
+  the position. The default values of the position of a sharp `seg()` add
+  the values of the covariate inside the window.
+* A fit with a term that recomputes its own block runs a second pass when
+  the first one moves the objective by less than the tolerance, the step of
+  the term being measured only from the second. From a warm start the fit
+  ended as not converged, and 2 of 27 points of a profile of a `seg()`
+  position were missing.
+* The profile of the hyperparameter of a kinked penalty chosen by a path
+  under `aic()` or `bic()` is the path's criterion, computed at each point
+  as the path computes it (the column `path_criterion`); `autoplot()` draws
+  it with the points that the path scored. Under `cv()` the graph is the
+  path's record of the cross-validated criterion with its standard errors.
+* A `gas()` term is fitted from two starts by default (`n_start` of
+  modelterms7 0.115.0, the persistence at 0 and at 0.9) and the better fit
+  is kept; a joint filter tries the further starts of each of its terms in
+  turn. `structural_multistarts()` lists the starts of every structural term
+  that gives several, each tried in turn with the others at the starts of
+  the best fit so far.
+* `hc4_sandwich()` gives each equation its own exponent,
+  `delta_ia = min(4, h_iaa / mean h_aa)`, and corrects the scores of an
+  observation by `exp(-D log(I - H_ii) D / 2)` with `D = diag(sqrt(delta))`.
+  The exponent read off the trace of the whole leverage block, where a scale
+  equation with an intercept alone added `1/n` to every row. A Gaussian
+  linear model now gives the HC4 of Cribari-Neto (2004) and of
+  `sandwich::vcovHC()`. Measured over 2000 replicates of a location-scale
+  model at n = 30, the coverage of the scale's slope goes from 0.855 to
+  0.874.
+* The outer search no longer reads the score of a held coefficient as an
+  error of the inner mode. That score turned the resolution of a profile
+  point next to the estimate into 0.0875, which stopped the search for the
+  dispersion under `reml()` at its start (0.0008 REML units below the
+  optimum), and made the points beside it refuse the resolution rule.
+
 # statmodels7 0.228.0
 
 * Every graph of `autoplot()` names its elements in a legend below the panel.
