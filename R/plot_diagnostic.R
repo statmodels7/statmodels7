@@ -758,7 +758,7 @@ S7::method(plot_data, list(PlotPit, distributions7::distrib)) <-
 
 S7::method(plot_layers, PlotPit) <- function(type, data, ...) {
   band <- band_label(type@level, "range of a bar under the fitted model")
-  bars <- "histogram of the fitted F(y)"
+  bars <- "histogram"
   list(
     ggplot2::geom_rect(data = data$band,
                        mapping = ggplot2::aes(xmin = .data$xmin,
@@ -776,8 +776,14 @@ S7::method(plot_layers, PlotPit) <- function(type, data, ...) {
     ggplot2::geom_hline(data = data.frame(y = 1),
                         mapping = ggplot2::aes(yintercept = .data$y,
                                                colour = "uniform density")),
-    plot_key(colour = c("uniform density" = "#b2182b"),
-             fill = stats::setNames(c("grey70", "#1f5fa8"), c(bars, band))))
+    plot_key(colour = c("uniform density" = "#b2182b")),
+    # the histogram is of the fitted distribution function, written with its
+    # hat as on the axis
+    ggplot2::scale_fill_manual(
+      name = NULL, values = stats::setNames(c("grey70", "#1f5fa8"),
+                                            c(bars, band)),
+      breaks = c(bars, band),
+      labels = c(expression(paste("histogram of ", hat(F)(y))), band)))
 }
 
 

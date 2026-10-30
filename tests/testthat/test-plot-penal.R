@@ -151,20 +151,22 @@ test_that("a random slope gives a panel for each coefficient and an ellipse", {
                "at least two")
 })
 
-test_that("the curves of a random smooth are the group deviations", {
+test_that("the curves of a random smooth are the curves of the levels", {
   cf <- statmod(y ~ s(x) + random(~ s(x) | id), G, pd)
   cn <- names(cf@spec@terms$mu)[3]
   d <- plot_data(plot_curves(n_grid = 5), pterm(cf, cn), cf,
-                 pctx(cf, cn, pd))$curves
-  expect_equal(nrow(d), 50)
-  nd <- data.frame(x = d$x, id = d$group)
+                 pctx(cf, cn, pd))
+  expect_equal(nrow(d$curves), 50)
+  expect_equal(nrow(d$population), 0)
+  nd <- data.frame(x = d$curves$x, id = d$curves$group)
   full <- predict(cf, what = "mu", newdata = nd)
-  zero <- predict(cf, what = "mu", newdata = nd, random = "zero")
-  expect_equal(d$fit, unname(full - zero), tolerance = 1e-8)
+  # the population smooth plus the departure of the level, without the
+  # intercept of the equation
+  expect_equal(d$curves$fit, unname(full) - cf@coefficients$mu[[1]],
+               tolerance = 1e-8)
   pop <- plot_data(plot_curves(n_grid = 5, population = TRUE), pterm(cf, cn),
                    cf, pctx(cf, cn, pd))
-  expect_equal(pop$curves$fit, unname(full) - cf@coefficients$mu[[1]],
-               tolerance = 1e-8)
+  expect_equal(pop$curves$fit, d$curves$fit, tolerance = 1e-12)
   expect_equal(nrow(pop$population), 5)
   expect_error(autoplot(cf, term = cn), "does not keep its data")
 })

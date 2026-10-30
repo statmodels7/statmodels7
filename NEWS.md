@@ -21,6 +21,10 @@
   `profile` is removed.
 * `plot_filter(response = TRUE)` signals an error when the filtered parameter
   is not the mean of the family.
+* `plot_curves()` draws the curve of each level, the population smooth plus
+  the departure of the level, whether or not `population = TRUE`, which now
+  only adds the population curve. Before, without `population = TRUE` the
+  graph showed the departures alone.
 * `plot_moments()` keeps the panel of a moment that is not finite at the
   fitted parameters, with a note.
 * Panels divided by a covariate are headed by its name ("x: (0.29,0.5]"), and

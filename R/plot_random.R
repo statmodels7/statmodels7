@@ -203,19 +203,20 @@ plot_random_cov <- function(level = 0.95, which = c(1, 2), legend = TRUE) {
 #' @description
 #' Selects the graph of a random smooth, `random(~ s(x) | g)`: one thin curve
 #' for each level of the grouping factor, over the range of the variable
-#' within that level. The graph reads the covariates and requires `data`.
+#' within that level, and optionally the population curve as a thick line.
+#' The graph reads the covariates and requires `data`.
 #'
 #' @details
-#' The curve of a level is its contribution to the predictor of the equation,
-#' \eqn{g_j(x) = a_{0j} + N(x) a_j + Z(x) \delta_j}, the departure of the
-#' level from the curve that the other terms of the equation describe. It is
-#' centred around zero and does not include the population curve. With
-#' `population = TRUE` the population curve, taken from the single smooth of
-#' the same variable in the same equation, is added to each curve and drawn
-#' as a thick line, so that the curves are the curves of the levels.
+#' The contribution of a level to the predictor of the equation is
+#' \eqn{g_j(x) = a_{0j} + N(x) a_j + Z(x) \delta_j}, its departure from the
+#' population curve \eqn{s(x)}, which is the single smooth of the same
+#' variable in the same equation. The curve of a level is
+#' \eqn{s(x) + g_j(x)}. When the equation has no smooth of the variable, the
+#' curve of a level is \eqn{g_j(x)} alone.
 #'
 #' @param n_grid The number of points of each curve.
-#' @param population Whether to add the population smooth of the variable.
+#' @param population Whether to draw the population curve \eqn{s(x)} as well;
+#'   it requires a smooth of the variable in the equation.
 #'
 #' @param legend Whether to draw the legend that names the elements of
 #'   the graph.
@@ -660,21 +661,23 @@ S7::method(plot_data, list(PlotCurves, modelterms7::RandomSmoothTerm)) <-
     }))
     f <- drop(as.matrix(modelterms7::term_predict(x, newdata = grid)) %*% b)
     pop <- data.frame(x = numeric(0), fit = numeric(0))
+    terms <- fit@spec@terms[[ctx$param]]
+    cand <- Filter(function(k) {
+      tk <- terms[[k]]
+      S7::S7_inherits(tk, modelterms7::SmoothTerm) &&
+        identical(term_variables(tk, k), xv)
+    }, names(terms))
+    if (type@population && length(cand) != 1L) {
+      stop(sprintf(paste0("'population' needs one smooth of '%s' in the ",
+                          "equation '%s', and there are %d."), xv, ctx$param,
+                   length(cand)), call. = FALSE)
+    }
+    # the curve of a level is the population curve plus its departure
+    if (length(cand) == 1L) {
+      f <- f + parts_contribution_values(fit, ctx$param, cand, terms[[cand]],
+                                         grid)
+    }
     if (type@population) {
-      terms <- fit@spec@terms[[ctx$param]]
-      cand <- Filter(function(k) {
-        tk <- terms[[k]]
-        S7::S7_inherits(tk, modelterms7::SmoothTerm) &&
-          identical(term_variables(tk, k), xv)
-      }, names(terms))
-      if (length(cand) != 1L) {
-        stop(sprintf(paste0("'population' needs one smooth of '%s' in the ",
-                            "equation '%s', and there are %d."), xv, ctx$param,
-                     length(cand)), call. = FALSE)
-      }
-      pgrid <- grid
-      pf <- parts_contribution_values(fit, ctx$param, cand, terms[[cand]], pgrid)
-      f <- f + pf
       xs <- seq(min(data[[xv]]), max(data[[xv]]), length.out = type@n_grid)
       pg <- data.frame(xs)
       names(pg) <- xv
@@ -688,8 +691,7 @@ S7::method(plot_data, list(PlotCurves, modelterms7::RandomSmoothTerm)) <-
     attr(out, "labels") <- list(
       title = sprintf("%s: %s", ctx$param, if (is.null(ctx$title)) ctx$name
                       else ctx$title),
-      x = xv, y = if (type@population) "curve of the level"
-        else "departure from the population")
+      x = xv, y = sprintf("effect on the link scale of %s", ctx$param))
     out
   }
 
@@ -712,8 +714,7 @@ parts_contribution_values <- function(fit, param, name, tm, newdata) {
 
 S7::method(plot_layers, PlotCurves) <- function(type, data, ...) {
   pop <- nrow(data$population) > 0L
-  k_lev <- if (pop) "curve of a level" else
-    "departure of a level from the population curve"
+  k_lev <- "curve of a level"
   k_pop <- "population curve"
   out <- list(
     ggplot2::geom_line(data = data$curves,

@@ -9,7 +9,8 @@ plot_curves(n_grid = 100, population = FALSE, legend = TRUE)
 \arguments{
 \item{n_grid}{The number of points of each curve.}
 
-\item{population}{Whether to add the population smooth of the variable.}
+\item{population}{Whether to draw the population curve \eqn{s(x)} as well;
+it requires a smooth of the variable in the equation.}
 
 \item{legend}{Whether to draw the legend that names the elements of
 the graph.}
@@ -20,16 +21,16 @@ A \code{PlotCurves} object, inheriting from \link{term_plot}.
 \description{
 Selects the graph of a random smooth, \code{random(~ s(x) | g)}: one thin curve
 for each level of the grouping factor, over the range of the variable
-within that level. The graph reads the covariates and requires \code{data}.
+within that level, and optionally the population curve as a thick line.
+The graph reads the covariates and requires \code{data}.
 }
 \details{
-The curve of a level is its contribution to the predictor of the equation,
-\eqn{g_j(x) = a_{0j} + N(x) a_j + Z(x) \delta_j}, the departure of the
-level from the curve that the other terms of the equation describe. It is
-centred around zero and does not include the population curve. With
-\code{population = TRUE} the population curve, taken from the single smooth of
-the same variable in the same equation, is added to each curve and drawn
-as a thick line, so that the curves are the curves of the levels.
+The contribution of a level to the predictor of the equation is
+\eqn{g_j(x) = a_{0j} + N(x) a_j + Z(x) \delta_j}, its departure from the
+population curve \eqn{s(x)}, which is the single smooth of the same
+variable in the same equation. The curve of a level is
+\eqn{s(x) + g_j(x)}. When the equation has no smooth of the variable, the
+curve of a level is \eqn{g_j(x)} alone.
 }
 \examples{
 set.seed(1)
