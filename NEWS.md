@@ -39,6 +39,15 @@
   as the path computes it (the column `path_criterion`); `autoplot()` draws
   it with the points that the path scored. Under `cv()` the graph is the
   path's record of the cross-validated criterion with its standard errors.
+* `hc4_sandwich()` gives each equation its own exponent,
+  `delta_ia = min(4, h_iaa / mean h_aa)`, and corrects the scores of an
+  observation by `exp(-D log(I - H_ii) D / 2)` with `D = diag(sqrt(delta))`.
+  The exponent read off the trace of the whole leverage block, where a scale
+  equation with an intercept alone added `1/n` to every row. A Gaussian
+  linear model now gives the HC4 of Cribari-Neto (2004) and of
+  `sandwich::vcovHC()`. Measured over 2000 replicates of a location-scale
+  model at n = 30, the coverage of the scale's slope goes from 0.855 to
+  0.874.
 * The outer search no longer reads the score of a held coefficient as an
   error of the inner mode. That score turned the resolution of a profile
   point next to the estimate into 0.0875, which stopped the search for the

@@ -59,10 +59,16 @@ and then forms \eqn{B = \sum_i u_i^* u_i^{*\prime}} with
 (1985);
 \item HC3 (\code{hc3_sandwich()}): \eqn{p = 1}, as in MacKinnon and White
 (1985);
-\item HC4 (\code{hc4_sandwich()}): \eqn{p = \delta_i/2} with
-\eqn{\delta_i = \min\{4, \mathrm{tr}(H_{ii})/\bar h\}}, where
-\eqn{\bar h} is the mean of \eqn{\mathrm{tr}(H_{ii})} over the
-observations, as in Cribari-Neto (2004).
+\item HC4 (\code{hc4_sandwich()}): one exponent for each equation \eqn{a},
+\eqn{\delta_{ia} = \min\{4, h_{i,aa}/\bar h_a\}}, where \eqn{h_{i,aa}}
+is the diagonal element of \eqn{H_{ii}} for that equation and
+\eqn{\bar h_a} its mean over the observations, as in Cribari-Neto
+(2004) for each equation. The power \eqn{(I - H_{ii})^{-p}} is replaced
+by \deqn{F_i = \exp\big(-\tfrac12\, D_i \log(I - H_{ii})\, D_i\big),
+    \qquad D_i = \mathrm{diag}(\delta_{i1}^{1/2}, \ldots, \delta_{id}^{1/2}),}
+which is \eqn{\mathrm{diag}\{(1 - h_{i,aa})^{-\delta_{ia}/2}\}} when
+\eqn{H_{ii}} is diagonal and \eqn{(I - H_{ii})^{-\delta_i/2}} when the
+exponents of the equations are equal.
 }
 The matrix power is taken on the eigenvalues of the symmetric matrix
 \eqn{H_{ii}}. When a model has one equation, \eqn{W_i} is a scalar and
@@ -70,7 +76,9 @@ The matrix power is taken on the eigenvalues of the symmetric matrix
 linear model with a constant scale they equal the estimators built from
 \code{\link[stats:influence.measures]{stats::hatvalues()}}. An eigenvalue of \eqn{H_{ii}} equal to one (a
 direction that the fit reproduces exactly) is given the factor zero, which
-is the pseudo-inverse, and a warning reports it.
+is the pseudo-inverse, and a warning reports it; under HC4 the block of
+such an observation is corrected by the power with the mean of its
+exponents.
 
 With \code{cluster = ~ id}, the observations of a cluster \eqn{g} are corrected
 together: \eqn{s_g^* = W_g^{1/2}\,(I - H_{gg})^{-p}\,W_g^{-1/2}\,s_g},
@@ -104,7 +112,8 @@ of one of the \eqn{w_i} copies of a row is \eqn{1/w_i} times that of the
 row, which is what the estimator uses, and with a cluster the copies of a
 row are corrected within the cluster. With \code{weights = "sampling"} and no
 cluster the leverage is that of the row, not divided by \eqn{w_i}, and the
-mean leverage of HC4 is the mean over the rows with positive weight.
+mean leverage of each equation in HC4 is the mean over the rows with
+positive weight.
 
 \strong{Few clusters.} With CR2 and \code{reference = "t"} (the default),
 \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} and the Wald rows of \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} and
