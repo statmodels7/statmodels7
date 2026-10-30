@@ -51,7 +51,10 @@ diagnostic_plot(label = character(0), legend = TRUE)
 
 - legend:
 
-  Whether the graph draws the legend that names its elements.
+  Whether the graph draws the legend that names its elements. `NULL`,
+  which a subclass gets when its constructor builds the object from
+  [`S7::S7_object()`](https://rconsortium.github.io/S7/reference/S7_object.html)
+  without naming `legend`, draws it as `TRUE` does.
 
 ## Value
 

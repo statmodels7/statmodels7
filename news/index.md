@@ -1,5 +1,13 @@
 # Changelog
 
+## statmodels7 0.229.4
+
+- A graph type whose constructor builds its object from
+  [`S7::S7_object()`](https://rconsortium.github.io/S7/reference/S7_object.html)
+  without naming `legend`, as the graph types written before the
+  property existed do, is valid again: `legend` admits `NULL`, which
+  draws the legend as `TRUE` does.
+
 ## statmodels7 0.229.3
 
 - [`confint()`](https://rdrr.io/r/stats/confint.html) and `autoplot()`
