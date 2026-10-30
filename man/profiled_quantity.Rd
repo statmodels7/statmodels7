@@ -48,20 +48,7 @@ ProfiledPathHyperparameter(
   standard_error = integer(0),
   link = NULL,
   criterion_name = character(0),
-  path_record = (function (.data = list(), row.names = NULL) 
- {
-     if
-    (is.null(row.names)) {
-         list2DF(.data)
-     }
-     else {
-         out <-
-    list2DF(.data, length(row.names))
-         attr(out, "row.names") <- row.names
-      
-      out
-     }
- })()
+  path_record = NULL
 )
 }
 \arguments{

@@ -5,37 +5,11 @@
 \title{The Profile Likelihood Returned by statmod_profile()}
 \usage{
 StatmodProfile(
-  points = (function (.data = list(), row.names = NULL) 
- {
-     if (is.null(row.names))
-    {
-         list2DF(.data)
-     }
-     else {
-         out <- list2DF(.data,
-    length(row.names))
-         attr(out, "row.names") <- row.names
-         out
-     }
-
-    })(),
+  points = NULL,
   profiled_labels = character(0),
   profiled_quantities = list(),
   profile_column = character(0),
-  unrestricted_point = (function (.data = list(), row.names = NULL) 
- {
-     if
-    (is.null(row.names)) {
-         list2DF(.data)
-     }
-     else {
-         out <-
-    list2DF(.data, length(row.names))
-         attr(out, "row.names") <- row.names
-      
-      out
-     }
- })(),
+  unrestricted_point = NULL,
   profile_method = profile_method(),
   hyper_handling = character(0),
   outer_method = NULL,

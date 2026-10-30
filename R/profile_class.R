@@ -69,7 +69,7 @@ ProfiledPathHyperparameter <- S7::new_class("ProfiledPathHyperparameter",
   parent = profiled_quantity,
   properties = list(link = S7::class_any,
                     criterion_name = S7::class_character,
-                    path_record = S7::class_data.frame))
+                    path_record = S7::class_any))
 
 
 #' The Profile Likelihood Returned by statmod_profile()
@@ -123,11 +123,11 @@ ProfiledPathHyperparameter <- S7::new_class("ProfiledPathHyperparameter",
 #' @export
 StatmodProfile <- S7::new_class("StatmodProfile",
   properties = list(
-    points = S7::class_data.frame,
+    points = S7::class_any,
     profiled_labels = S7::class_character,
     profiled_quantities = S7::class_list,
     profile_column = S7::class_character,
-    unrestricted_point = S7::class_data.frame,
+    unrestricted_point = S7::class_any,
     profile_method = profile_method,
     hyper_handling = S7::class_character,
     outer_method = S7::class_any,
