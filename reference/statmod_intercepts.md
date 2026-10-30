@@ -9,17 +9,19 @@ had, and otherwise the data-based start of
 ``` r
 statmod_intercepts(spec)
 
-intercepts_memo
+statmod_memo
 
 statmod_intercepts_fit(spec)
 ```
 
 ## Format
 
-`intercepts_memo` is an environment whose `store` is the memory of the
+`statmod_memo` is an environment whose `store` is the memory of the
 current
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-call, or `NULL` outside one.
+call, or `NULL` outside one: the intercept-only fit and the sites whose
+gradient check has run
+([`with_gradient_check()`](https://statmodels7.github.io/statmodels7/reference/with_gradient_check.md)).
 
 ## Arguments
 

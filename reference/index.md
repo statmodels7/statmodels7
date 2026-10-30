@@ -2638,7 +2638,7 @@ helper functions. Using the package does not require any of it.
   : The Information of the Weighted Log-Likelihood
 
 - [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
-  [`intercepts_memo`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
+  [`statmod_memo`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
   [`statmod_intercepts_fit()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
   : The Intercept of Each Equation, on the Link Scale
 
@@ -3032,6 +3032,9 @@ helper functions. Using the package does not require any of it.
 
 - [`weights(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/weights.StatmodFit.md)
   : The Prior Weights of a Fitted Model
+
+- [`with_gradient_check()`](https://statmodels7.github.io/statmodels7/reference/with_gradient_check.md)
+  : Run the Gradient Check of optimizers7 Once per Site and Fit
 
 - [`with_seed()`](https://statmodels7.github.io/statmodels7/reference/with_seed.md)
   : Run an Expression Under a Seed

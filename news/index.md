@@ -1,5 +1,15 @@
 # Changelog
 
+## statmodels7 0.229.2
+
+- Within one call of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  the check of the supplied gradient in
+  [`optimizers7::minimize()`](https://statmodels7.github.io/optimizers7/reference/minimize.html)
+  runs once for each inner routine and block, not at every pass and
+  every start. The fits are unchanged; on 108 simulated series a `gas()`
+  fit is 2.5 per cent faster with one start and 8.9 with two.
+
 ## statmodels7 0.229.1
 
 - Within one call of
