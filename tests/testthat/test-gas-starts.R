@@ -34,3 +34,29 @@ test_that("the joint filter carries the starts of its terms in turn", {
   sp1 <- statmod_spec(y ~ gas(1, 1, time = t, n_start = 1), distributions7::gaussian1_distrib(), d)
   expect_length(structural_multistarts(sp1, statmod_design(sp1)), 0L)
 })
+
+test_that("the intercept-only fit is computed once per call and gives the same fit", {
+  d <- gas_series(3, n = 300)
+  fam <- distributions7::gaussian1_distrib()
+  fit_fun <- statmod_intercepts_fit
+  calls <- 0L
+  local_mocked_bindings(statmod_intercepts_fit = function(spec) {
+    calls <<- calls + 1L
+    fit_fun(spec)
+  })
+  f_memo <- statmod(y ~ 1 | sigma ~ gas(1, 1, time = t), fam, d,
+                    outer_criterion = ml())
+  expect_equal(calls, 1L)
+  expect_null(intercepts_memo$store)
+  # without the memory: every reading fits again
+  local_mocked_bindings(statmod_intercepts = function(spec) {
+    calls <<- calls + 1L
+    fit_fun(spec)
+  })
+  calls <- 0L
+  f_plain <- statmod(y ~ 1 | sigma ~ gas(1, 1, time = t), fam, d,
+                     outer_criterion = ml())
+  expect_gt(calls, 1L)
+  expect_identical(coef(f_memo), coef(f_plain))
+  expect_identical(as.numeric(logLik(f_memo)), as.numeric(logLik(f_plain)))
+})

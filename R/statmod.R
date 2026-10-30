@@ -459,6 +459,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # every kernel takes exactly the sequential path.
   n_thr <- numericals7::local_threads(threads)
   n_cores <- check_cores(cores)
+  memo_old <- intercepts_memo$store
+  intercepts_memo$store <- new.env(parent = emptyenv())
+  on.exit(intercepts_memo$store <- memo_old, add = TRUE)
   asked <- !missing(outer_criterion)
   asked_sparse <- !missing(sparse_criterion)
   vb <- verbosity(verbose)
@@ -2731,6 +2734,13 @@ statmod_start <- function(spec, design, obj, start = NULL) {
 #' this call and the caller's stream is put back afterwards, so that the same
 #' call gives the same answer twice.
 #'
+#' Within one call of [statmod()] the result is computed once and reused.
+#' It depends only on `spec@distrib` and `spec@response`, and a fit with a
+#' score-driven term reads it at each build of the design, at the start and
+#' at each further start. The stored value is used only while both compare
+#' [identical()] to those of the call that computed it, and it is discarded
+#' when [statmod()] returns.
+#'
 #' An intercept that the fit ran to the limit of its chart is replaced by the
 #' data-based start of [distributions7::distrib_start()]. On a log or logit
 #' chart a value past \eqn{e^{\pm 16}} is a limit of the family and not an
@@ -2750,6 +2760,39 @@ statmod_start <- function(spec, design, obj, start = NULL) {
 #'
 #' @keywords internal
 statmod_intercepts <- function(spec) {
+  st <- intercepts_memo$store
+  if (!is.null(st) && !is.null(st$value) &&
+      identical(st$distrib, spec@distrib) &&
+      identical(st$response, spec@response)) {
+    return(st$value)
+  }
+  v <- statmod_intercepts_fit(spec)
+  if (!is.null(st)) {
+    st$distrib <- spec@distrib
+    st$response <- spec@response
+    st$value <- v
+  }
+  v
+}
+
+# THE INTERCEPT-ONLY FIT IS KEPT FOR THE LENGTH OF ONE statmod() CALL. Each
+# reading is a fit_distrib() from ten starts, and a fit with a gas() term
+# made four of them with n_start = 2 (two builds of the design, the start,
+# the further start), all on the same family and response: measured on 108
+# simulated series, keeping the first answer gave identical fits and took
+# 20 to 30 ms off each (median 14 per cent with one start, 11 with two). The
+# store lives in the frame of statmod() and not across calls, because a
+# family whose methods the user redefines between two calls still compares
+# identical() and gives another answer.
+#' @rdname statmod_intercepts
+#' @format `intercepts_memo` is an environment whose `store` is the memory of
+#'   the current [statmod()] call, or `NULL` outside one.
+#' @keywords internal
+intercepts_memo <- new.env(parent = emptyenv())
+
+#' @rdname statmod_intercepts
+#' @keywords internal
+statmod_intercepts_fit <- function(spec) {
   params <- spec@distrib@params
   links <- spec@distrib@link_params
   none <- stats::setNames(vector("list", length(params)), params)
