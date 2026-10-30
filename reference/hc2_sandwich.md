@@ -69,10 +69,16 @@ the exponent \\p\\:
 
 - HC3 (`hc3_sandwich()`): \\p = 1\\, as in MacKinnon and White (1985);
 
-- HC4 (`hc4_sandwich()`): \\p = \delta_i/2\\ with \\\delta_i = \min\\4,
-  \mathrm{tr}(H\_{ii})/\bar h\\\\, where \\\bar h\\ is the mean of
-  \\\mathrm{tr}(H\_{ii})\\ over the observations, as in Cribari-Neto
-  (2004).
+- HC4 (`hc4_sandwich()`): one exponent for each equation \\a\\,
+  \\\delta\_{ia} = \min\\4, h\_{i,aa}/\bar h_a\\\\, where \\h\_{i,aa}\\
+  is the diagonal element of \\H\_{ii}\\ for that equation and \\\bar
+  h_a\\ its mean over the observations, as in Cribari-Neto (2004) for
+  each equation. The power \\(I - H\_{ii})^{-p}\\ is replaced by \$\$F_i
+  = \exp\big(-\tfrac12\\ D_i \log(I - H\_{ii})\\ D_i\big), \qquad D_i =
+  \mathrm{diag}(\delta\_{i1}^{1/2}, \ldots, \delta\_{id}^{1/2}),\$\$
+  which is \\\mathrm{diag}\\(1 - h\_{i,aa})^{-\delta\_{ia}/2}\\\\ when
+  \\H\_{ii}\\ is diagonal and \\(I - H\_{ii})^{-\delta_i/2}\\ when the
+  exponents of the equations are equal.
 
 The matrix power is taken on the eigenvalues of the symmetric matrix
 \\H\_{ii}\\. When a model has one equation, \\W_i\\ is a scalar and
@@ -81,7 +87,8 @@ linear model with a constant scale they equal the estimators built from
 [`stats::hatvalues()`](https://rdrr.io/r/stats/influence.measures.html).
 An eigenvalue of \\H\_{ii}\\ equal to one (a direction that the fit
 reproduces exactly) is given the factor zero, which is the
-pseudo-inverse, and a warning reports it.
+pseudo-inverse, and a warning reports it; under HC4 the block of such an
+observation is corrected by the power with the mean of its exponents.
 
 With `cluster = ~ id`, the observations of a cluster \\g\\ are corrected
 together: \\s_g^\* = W_g^{1/2}\\(I - H\_{gg})^{-p}\\W_g^{-1/2}\\s_g\\,
@@ -110,18 +117,21 @@ whose matrix \\W_i\\ is indefinite contributes the positive part, with
 the pseudo-inverse root
 ([`statmod_leverage()`](https://statmodels7.github.io/statmodels7/reference/statmod_leverage.md)
 returns how many observations that concerns). With penalties the
-leverage is that of the penalized fit, so that the sum of the traces is
-the effective degrees of freedom of the model. Prior weights, random
-effects, aliased coordinates and the models that are rejected are
-treated as at
+leverage is that of the penalized fit, and the sum of the traces is the
+effective degrees of freedom computed on the information of the
+leverage, which equals the degrees of freedom of the fit only when the
+fit reads the same information
+([`statmod_leverage()`](https://statmodels7.github.io/statmodels7/reference/statmod_leverage.md)
+gives the conditions). Prior weights, random effects, aliased
+coordinates and the models that are rejected are treated as at
 [`hc0_sandwich()`](https://statmodels7.github.io/statmodels7/reference/hc0_sandwich.md).
 Prior weights enter the leverage through \\W_i\\; without a cluster the
 leverage of one of the \\w_i\\ copies of a row is \\1/w_i\\ times that
 of the row, which is what the estimator uses, and with a cluster the
 copies of a row are corrected within the cluster. With
 `weights = "sampling"` and no cluster the leverage is that of the row,
-not divided by \\w_i\\, and the mean leverage of HC4 is the mean over
-the rows with positive weight.
+not divided by \\w_i\\, and the mean leverage of each equation in HC4 is
+the mean over the rows with positive weight.
 
 **Few clusters.** With CR2 and `reference = "t"` (the default),
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)

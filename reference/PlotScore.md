@@ -7,7 +7,12 @@ instantiates. Use the constructor, which checks the properties.
 ## Usage
 
 ``` r
-PlotScore(label = character(0), param = character(0), against = character(0))
+PlotScore(
+  label = character(0),
+  legend = TRUE,
+  param = character(0),
+  against = character(0)
+)
 ```
 
 ## Arguments

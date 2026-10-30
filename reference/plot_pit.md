@@ -7,7 +7,7 @@ the uniform density and a pointwise binomial band for each bin.
 ## Usage
 
 ``` r
-plot_pit(bins = 20, seed = NULL, level = 0.95)
+plot_pit(bins = 20, seed = NULL, level = 0.95, legend = TRUE)
 ```
 
 ## Arguments
@@ -23,6 +23,10 @@ plot_pit(bins = 20, seed = NULL, level = 0.95)
 - level:
 
   The level of the band.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

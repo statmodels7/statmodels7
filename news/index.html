@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.227.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,40 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.229.0" id="statmodels7-02290">statmodels7 0.229.0<a class="anchor" aria-label="anchor" href="#statmodels7-02290"></a></h2>
+<ul><li>
+<code><a href="../reference/statmod_profile.html">statmod_profile()</a></code> returns a <code>StatmodProfile</code> object in place of a data frame with attributes. Its properties are <code>points</code> (the table), <code>profiled_labels</code>, <code>profiled_quantities</code>, <code>profile_column</code>, <code>unrestricted_point</code> (formerly the attribute <code>maximum</code>), <code>profile_method</code>, <code>hyper_handling</code>, <code>outer_method</code>, <code>is_likelihood_ratio</code> and <code>joint</code>, and <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> returns the table.</li>
+<li>
+<code>statmod_profile(joint = FALSE)</code> profiles each label of <code>which</code> by itself, with the other labels free; the table then has the columns <code>profiled_label</code> and <code>value</code>.</li>
+<li>Each label has a kind (coefficient, penalized coefficient, break-point position, hyperparameter, hyperparameter chosen by a path). <code>autoplot()</code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draw the criterion of the profile (the log-likelihood, the penalized log-likelihood, or the REML or ML criterion) against the value held, with the details of each kind. A joint profile of two labels is drawn as contours, and one of three or more as one panel for each pair.</li>
+<li>
+<code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> of a profile gives the values at which the likelihood ratio statistic does not exceed a chi-squared quantile, with <code>type = "marginal"</code> (one degree of freedom) or <code>"simultaneous"</code> (the projection of the joint region, with as many degrees of freedom as labels). It signals an error where the profile gives no likelihood ratio statistic.</li>
+<li>The position of a sharp <code>jump()</code> or <code>jseg()</code> is profiled under the label that <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> prints (<code>"mu:jump.psi1"</code>), by moving the term to each value and holding it there. Its profile is constant between consecutive values of the covariate, and the default values are the midpoints between them nearest to the estimate. Holding the auxiliary coefficient <code>g1</code>, which the fit reads the position from, left the profile constant at the log-likelihood of the fit; it now signals an error that names the label of the position. The default values of the position of a sharp <code>seg()</code> add the values of the covariate inside the window.</li>
+<li>A fit with a term that recomputes its own block runs a second pass when the first one moves the objective by less than the tolerance, the step of the term being measured only from the second. From a warm start the fit ended as not converged, and 2 of 27 points of a profile of a <code>seg()</code> position were missing.</li>
+<li>The profile of the hyperparameter of a kinked penalty chosen by a path under <code><a href="../reference/aic.html">aic()</a></code> or <code><a href="../reference/aic.html">bic()</a></code> is the path’s criterion, computed at each point as the path computes it (the column <code>path_criterion</code>); <code>autoplot()</code> draws it with the points that the path scored. Under <code><a href="../reference/cv.html">cv()</a></code> the graph is the path’s record of the cross-validated criterion with its standard errors.</li>
+<li>A <code>gas()</code> term is fitted from two starts by default (<code>n_start</code> of modelterms7 0.115.0, the persistence at 0 and at 0.9) and the better fit is kept; a joint filter tries the further starts of each of its terms in turn. <code><a href="../reference/structural_multistarts.html">structural_multistarts()</a></code> lists the starts of every structural term that gives several, each tried in turn with the others at the starts of the best fit so far.</li>
+<li>
+<code><a href="../reference/hc2_sandwich.html">hc4_sandwich()</a></code> gives each equation its own exponent, <code>delta_ia = min(4, h_iaa / mean h_aa)</code>, and corrects the scores of an observation by <code>exp(-D log(I - H_ii) D / 2)</code> with <code>D = diag(sqrt(delta))</code>. The exponent read off the trace of the whole leverage block, where a scale equation with an intercept alone added <code>1/n</code> to every row. A Gaussian linear model now gives the HC4 of Cribari-Neto (2004) and of <code>sandwich::vcovHC()</code>. Measured over 2000 replicates of a location-scale model at n = 30, the coverage of the scale’s slope goes from 0.855 to 0.874.</li>
+<li>The outer search no longer reads the score of a held coefficient as an error of the inner mode. That score turned the resolution of a profile point next to the estimate into 0.0875, which stopped the search for the dispersion under <code><a href="../reference/reml.html">reml()</a></code> at its start (0.0008 REML units below the optimum), and made the points beside it refuse the resolution rule.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.228.0" id="statmodels7-02280">statmodels7 0.228.0<a class="anchor" aria-label="anchor" href="#statmodels7-02280"></a></h2>
+<ul><li>Every graph of <code>autoplot()</code> names its elements in a legend below the panel. An estimate and its interval share one entry (“estimated effect” over “(95% CI)”, the level being the one of the graph). Reference lines at zero, at -2 and 2 and on the diagonal are drawn without an entry. Where the color distinguishes the levels of a factor, the other elements are named by line type and shape. The captions of the shrinkage and random-effect graphs are replaced by legends.</li>
+<li>Every graph type takes the argument <code>legend</code>; <code>legend = FALSE</code> draws the graph without its legend.</li>
+<li>The vertical axis of an effect reads “effect on the link scale of mu”. The reference level of a factor, whose effect is zero under treatment contrasts, is labeled “reference level”.</li>
+<li>
+<code><a href="../reference/plot_acf.html">plot_acf()</a></code> takes <code>by</code> and <code>time</code>, and pools the autocorrelation over the series: the pairs of each lag are formed within a series, and the series are those of a <code>gas()</code> or <code>regime()</code> term when <code>by</code> and <code>time</code> are not given. Before, the residuals were read in row order as one series. <code><a href="../reference/plot_acf.html">plot_pacf()</a></code> draws the partial autocorrelation.</li>
+<li>
+<code><a href="../reference/plot_breakpoint.html">plot_breakpoint()</a></code> no longer draws the profile inset, and its argument <code>profile</code> is removed.</li>
+<li>
+<code>plot_filter(response = TRUE)</code> signals an error when the filtered parameter is not the mean of the family.</li>
+<li>
+<code><a href="../reference/plot_curves.html">plot_curves()</a></code> draws the curve of each level, the population smooth plus the departure of the level, whether or not <code>population = TRUE</code>, which now only adds the population curve. Before, without <code>population = TRUE</code> the graph showed the departures alone.</li>
+<li>
+<code><a href="../reference/plot_moments.html">plot_moments()</a></code> keeps the panel of a moment that is not finite at the fitted parameters, with a note.</li>
+<li>Panels divided by a covariate are headed by its name (“x: (0.29,0.5]”), and the levels of a random term are on an axis titled by its grouping.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.227.0" id="statmodels7-02270">statmodels7 0.227.0<a class="anchor" aria-label="anchor" href="#statmodels7-02270"></a></h2>
 <ul><li>

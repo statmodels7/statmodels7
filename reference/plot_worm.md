@@ -16,7 +16,8 @@ plot_worm(
   band = "order",
   level = 0.95,
   n_sim = 99,
-  seed = NULL
+  seed = NULL,
+  legend = TRUE
 )
 ```
 
@@ -34,6 +35,10 @@ plot_worm(
 
   See
   [`plot_qq()`](https://statmodels7.github.io/statmodels7/reference/plot_qq.md).
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

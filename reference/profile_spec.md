@@ -24,5 +24,5 @@ profile_spec(ctx, val, spec = ctx$spec)
 
 ## Value
 
-`spec`, with the coefficients in `held_coef` and the hyperparameters in
-`held_hyper`.
+`spec`, with the coefficients in `held_coef`, the hyperparameters in
+`held_hyper` and the sharp break-point terms moved and held.

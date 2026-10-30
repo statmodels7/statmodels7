@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotEffect(
   label = character(0),
+  legend = TRUE,
   residuals = logical(0),
   binned = NULL,
   scale = character(0),

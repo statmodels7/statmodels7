@@ -16,7 +16,8 @@ plot_caterpillar(
   sort = TRUE,
   level = 0.95,
   vcov_type = bayesian_vcov(),
-  information = distributions7::expected_info()
+  information = distributions7::expected_info(),
+  legend = TRUE
 )
 ```
 
@@ -48,6 +49,10 @@ plot_caterpillar(
   (the default) or
   [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html),
   the weight of the working residuals.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

@@ -199,10 +199,11 @@ tells whether a statistic refits the model under the restriction.
 
 ## Profile likelihood
 
-The penalized log-likelihood maximized over every coefficient but one or
-several that are held on a grid, returned as a data frame together with
-the value of the outer criterion where one ran. The grid of values is
-given by
+The penalized log-likelihood, or the outer criterion, maximized over
+every quantity but one or several that are held on a grid, returned as a
+`StatmodProfile` object with its intervals
+([`confint()`](https://rdrr.io/r/stats/confint.html)) and its graphs.
+The grid of values is given by
 [`profile_range()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
 or by the caller, and
 [`profile_grid()`](https://statmodels7.github.io/statmodels7/reference/profile_grid.md)
@@ -214,6 +215,9 @@ approximate it for smooth coefficients.
 
 - [`statmod_profile()`](https://statmodels7.github.io/statmodels7/reference/statmod_profile.md)
   : The Profile Likelihood of Coefficients
+- [`autoplot(`*`<StatmodProfile>`*`)`](https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodProfile.md)
+  [`plot(`*`<StatmodProfile>`*`)`](https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodProfile.md)
+  : Graphs of a Profile
 - [`profile_range()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
   [`ProfileRange()`](https://statmodels7.github.io/statmodels7/reference/profile_range.md)
   : Values of a Profile
@@ -400,6 +404,7 @@ responses.
 - [`plot_influence()`](https://statmodels7.github.io/statmodels7/reference/plot_influence.md)
   : Graph of the Influence of the Observations on an Equation
 - [`plot_acf()`](https://statmodels7.github.io/statmodels7/reference/plot_acf.md)
+  [`plot_pacf()`](https://statmodels7.github.io/statmodels7/reference/plot_acf.md)
   : Autocorrelation of the Residuals
 - [`plot_ppc()`](https://statmodels7.github.io/statmodels7/reference/plot_ppc.md)
   : Comparison of the Response with Simulated Responses
@@ -448,7 +453,7 @@ helper functions. Using the package does not require any of it.
   : S7 Classes for the Shipped Resampling Schemes
 
 - [`PlotAcf()`](https://statmodels7.github.io/statmodels7/reference/PlotAcf.md)
-  : S7 Class of the Autocorrelation Graph
+  : S7 Class of the Autocorrelation Graphs
 
 - [`PlotBreakpoint()`](https://statmodels7.github.io/statmodels7/reference/PlotBreakpoint.md)
   : S7 Class of the Break-Point Graph
@@ -533,6 +538,9 @@ helper functions. Using the package does not require any of it.
 - [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
   : A Fitted Model
 
+- [`StatmodProfile()`](https://statmodels7.github.io/statmodels7/reference/StatmodProfile.md)
+  : The Profile Likelihood Returned by statmod_profile()
+
 - [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
   : The Specification of a Model, Before It Is Fitted
 
@@ -551,6 +559,12 @@ helper functions. Using the package does not require any of it.
   [`ScoreTest()`](https://statmodels7.github.io/statmodels7/reference/WaldTest.md)
   [`GradientTest()`](https://statmodels7.github.io/statmodels7/reference/WaldTest.md)
   : S7 Classes for the Shipped Test Statistics
+
+- [`acf_series()`](https://statmodels7.github.io/statmodels7/reference/acf_series.md)
+  : The Series of the Observations of a Fit
+
+- [`acf_type()`](https://statmodels7.github.io/statmodels7/reference/acf_type.md)
+  : Build an Autocorrelation Graph Type
 
 - [`active_rank()`](https://statmodels7.github.io/statmodels7/reference/active_rank.md)
   : The Rank of the Active Columns
@@ -600,6 +614,9 @@ helper functions. Using the package does not require any of it.
 
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
+
+- [`band_label()`](https://statmodels7.github.io/statmodels7/reference/band_label.md)
+  : The Name of a Band in a Legend
 
 - [`bind_blocks()`](https://statmodels7.github.io/statmodels7/reference/bind_blocks.md)
   : Bind a Model's Term Blocks Side by Side
@@ -776,9 +793,6 @@ helper functions. Using the package does not require any of it.
 - [`break_edges()`](https://statmodels7.github.io/statmodels7/reference/break_edges.md)
   : The Range of a Break-Point Position
 
-- [`breakpoint_inset()`](https://statmodels7.github.io/statmodels7/reference/breakpoint_inset.md)
-  : The Profile Inset of the Break-Point Graph
-
 - [`certificate_core()`](https://statmodels7.github.io/statmodels7/reference/certificate_core.md)
   : The Certificate's Readings Before the Edge Check
 
@@ -815,6 +829,9 @@ helper functions. Using the package does not require any of it.
 
 - [`check_information()`](https://statmodels7.github.io/statmodels7/reference/check_information.md)
   : Check That an Argument Is an Information Object
+
+- [`check_legend()`](https://statmodels7.github.io/statmodels7/reference/check_legend.md)
+  : Check the Legend Argument of a Graph
 
 - [`check_level_grid()`](https://statmodels7.github.io/statmodels7/reference/check_level_grid.md)
   : Check a Level and a Number of Grid Points
@@ -908,6 +925,9 @@ helper functions. Using the package does not require any of it.
 
 - [`confint(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
   : Confidence Intervals for a Fit
+
+- [`confint(`*`<StatmodProfile>`*`)`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodProfile.md)
+  : Profile Likelihood Intervals
 
 - [`confint_interval()`](https://statmodels7.github.io/statmodels7/reference/confint_interval.md)
   : The Bootstrap Intervals of a Table of Coefficients
@@ -1134,6 +1154,9 @@ helper functions. Using the package does not require any of it.
 - [`diag_top()`](https://statmodels7.github.io/statmodels7/reference/diag_top.md)
   : The Largest Absolute Values
 
+- [`diag_top_layers()`](https://statmodels7.github.io/statmodels7/reference/diag_top_layers.md)
+  : The Labelled Points of a Diagnostic Graph
+
 - [`diag_with_seed()`](https://statmodels7.github.io/statmodels7/reference/diag_with_seed.md)
   : Evaluate an Expression under a Seed
 
@@ -1146,8 +1169,14 @@ helper functions. Using the package does not require any of it.
 - [`draw_covariates()`](https://statmodels7.github.io/statmodels7/reference/draw_covariates.md)
   : Draw One Replicate's Covariates
 
+- [`draw_key_band()`](https://statmodels7.github.io/statmodels7/reference/draw_key_band.md)
+  : The Legend Key of an Estimate with Its Band
+
 - [`drop_common_prefix()`](https://statmodels7.github.io/statmodels7/reference/drop_common_prefix.md)
   : Drop the Prefix That a Set of Coefficient Names Share
+
+- [`durbin_levinson()`](https://statmodels7.github.io/statmodels7/reference/durbin_levinson.md)
+  : Partial Autocorrelations by the Durbin-Levinson Recursion
 
 - [`edf_info_indefinite()`](https://statmodels7.github.io/statmodels7/reference/edf_info_indefinite.md)
   : Whether an Information Matrix Is Indefinite
@@ -1172,6 +1201,9 @@ helper functions. Using the package does not require any of it.
 
 - [`entry_owner()`](https://statmodels7.github.io/statmodels7/reference/entry_owner.md)
   : The Sub-Term to Which a Penalty Entry Belongs
+
+- [`est_label()`](https://statmodels7.github.io/statmodels7/reference/est_label.md)
+  : The Name of an Estimate and Its Interval in a Legend
 
 - [`eval_offsets()`](https://statmodels7.github.io/statmodels7/reference/eval_offsets.md)
   : Evaluate the Offsets That a Formula Names
@@ -1615,6 +1647,10 @@ helper functions. Using the package does not require any of it.
 - [`leverage_power()`](https://statmodels7.github.io/statmodels7/reference/leverage_power.md)
   : Apply a Function of a Symmetric Block Through Its Eigenvalues
 
+- [`leverage_power_eq()`](https://statmodels7.github.io/statmodels7/reference/leverage_power_eq.md)
+  : The HC4 Correction of a Leverage Block With One Exponent per
+  Equation
+
 - [`link_kind()`](https://statmodels7.github.io/statmodels7/reference/link_kind.md)
   : The Kind of Inverse Link, for the Moments of a New Group's Parameter
 
@@ -1908,6 +1944,12 @@ helper functions. Using the package does not require any of it.
 - [`plot_assemble()`](https://statmodels7.github.io/statmodels7/reference/plot_assemble.md)
   : Assemble a Graph from Its Data and Its Layers
 
+- [`plot_key()`](https://statmodels7.github.io/statmodels7/reference/plot_key.md)
+  : The Legend of the Elements of a Graph
+
+- [`plot_key_theme()`](https://statmodels7.github.io/statmodels7/reference/plot_key_theme.md)
+  : The Placement of the Legends of a Graph
+
 - [`plot_needs_data()`](https://statmodels7.github.io/statmodels7/reference/plot_needs_data.md)
   : Check That a Graph Has Its Data
 
@@ -1919,6 +1961,9 @@ helper functions. Using the package does not require any of it.
 
 - [`pool_nested_random()`](https://statmodels7.github.io/statmodels7/reference/pool_nested_random.md)
   : A Term With Its Nested Random Effects Read in One Group's Columns
+
+- [`pooled_acf()`](https://statmodels7.github.io/statmodels7/reference/pooled_acf.md)
+  : Pooled Autocorrelation of Several Series
 
 - [`predict(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
   : Predict From a Fitted Model
@@ -2023,6 +2068,15 @@ helper functions. Using the package does not require any of it.
 - [`profile_assemble()`](https://statmodels7.github.io/statmodels7/reference/profile_assemble.md)
   : Assemble the Table of a Profile
 
+- [`profile_axis()`](https://statmodels7.github.io/statmodels7/reference/profile_axis.md)
+  : The Title and the Axis of a Profiled Quantity
+
+- [`profile_base()`](https://statmodels7.github.io/statmodels7/reference/profile_base.md)
+  : The Common Layers of a Profile Panel
+
+- [`profile_breakpoints()`](https://statmodels7.github.io/statmodels7/reference/profile_breakpoints.md)
+  : The Positions of the Break-Points of a Model
+
 - [`profile_chains()`](https://statmodels7.github.io/statmodels7/reference/profile_chains.md)
   : The Chains of Points That a Start Visits
 
@@ -2035,6 +2089,15 @@ helper functions. Using the package does not require any of it.
 - [`profile_context()`](https://statmodels7.github.io/statmodels7/reference/profile_context.md)
   : The Context of a Profile
 
+- [`profile_contour()`](https://statmodels7.github.io/statmodels7/reference/profile_contour.md)
+  : The Contours of a Joint Profile Over Two Labels
+
+- [`profile_criterion_name()`](https://statmodels7.github.io/statmodels7/reference/profile_criterion_name.md)
+  : The Name of the Criterion of a Profile
+
+- [`profile_curve()`](https://statmodels7.github.io/statmodels7/reference/profile_curve.md)
+  : The One-Dimensional Profile of One Label
+
 - [`profile_exact()`](https://statmodels7.github.io/statmodels7/reference/profile_exact.md)
   : The Exact Penalized Log-Likelihood at Predicted Coefficients
 
@@ -2044,6 +2107,9 @@ helper functions. Using the package does not require any of it.
 - [`profile_failed()`](https://statmodels7.github.io/statmodels7/reference/profile_failed.md)
   : A Failed Point of a Profile
 
+- [`profile_finish()`](https://statmodels7.github.io/statmodels7/reference/profile_finish.md)
+  : The Legend of a Profile Panel
+
 - [`profile_held_keys()`](https://statmodels7.github.io/statmodels7/reference/profile_held_keys.md)
   : The Hyperparameters That the Terms Hold
 
@@ -2052,6 +2118,9 @@ helper functions. Using the package does not require any of it.
 
 - [`profile_hold_hyper()`](https://statmodels7.github.io/statmodels7/reference/profile_hold_hyper.md)
   : Hold Hyperparameters on a Specification
+
+- [`profile_hold_position()`](https://statmodels7.github.io/statmodels7/reference/profile_hold_position.md)
+  : Hold the Position of a Sharp Break-Point
 
 - [`profile_hyper_at()`](https://statmodels7.github.io/statmodels7/reference/profile_hyper_at.md)
   : The Hyperparameter Store With Held Values Written In
@@ -2069,6 +2138,12 @@ helper functions. Using the package does not require any of it.
 - [`profile_interval()`](https://statmodels7.github.io/statmodels7/reference/profile_interval.md)
   : The Interval of a Position from Its Profile
 
+- [`profile_is_lr()`](https://statmodels7.github.io/statmodels7/reference/profile_is_lr.md)
+  : Whether the Drop of a Profile Is a Likelihood Ratio
+
+- [`profile_kind_name()`](https://statmodels7.github.io/statmodels7/reference/profile_kind_name.md)
+  : The Name of the Kind of a Profiled Quantity
+
 - [`profile_map()`](https://statmodels7.github.io/statmodels7/reference/profile_map.md)
   : Run Independent Units of a Profile
 
@@ -2081,6 +2156,15 @@ helper functions. Using the package does not require any of it.
 - [`profile_nested_state()`](https://statmodels7.github.io/statmodels7/reference/profile_nested_state.md)
   : The Nested Problem at a Point
 
+- [`profile_panel()`](https://statmodels7.github.io/statmodels7/reference/profile_panel.md)
+  : The Panel of One Profiled Quantity
+
+- [`profile_path_record()`](https://statmodels7.github.io/statmodels7/reference/profile_path_record.md)
+  : The Points That a Path Scored
+
+- [`profile_path_value()`](https://statmodels7.github.io/statmodels7/reference/profile_path_value.md)
+  : The Criterion of a Path at One Point of a Profile
+
 - [`profile_point()`](https://statmodels7.github.io/statmodels7/reference/profile_point.md)
   : One Refit of a Profile
 
@@ -2090,8 +2174,14 @@ helper functions. Using the package does not require any of it.
 - [`profile_psi_groups()`](https://statmodels7.github.io/statmodels7/reference/profile_psi_groups.md)
   : The Positions of One Break-Point Term Among the Held Coefficients
 
+- [`profile_quantities()`](https://statmodels7.github.io/statmodels7/reference/profile_quantities.md)
+  : The Kind of Each Label of a Profile
+
 - [`profile_ray()`](https://statmodels7.github.io/statmodels7/reference/profile_ray.md)
   : The Coefficients That a Polynomial of the Trace Predicts at a Point
+
+- [`profile_refine()`](https://statmodels7.github.io/statmodels7/reference/profile_refine.md)
+  : A Profile Over Two Labels on a Finer Grid
 
 - [`profile_scales()`](https://statmodels7.github.io/statmodels7/reference/profile_scales.md)
   : The Scale of Each Label of a Profile
@@ -2103,8 +2193,22 @@ helper functions. Using the package does not require any of it.
 - [`profile_spec()`](https://statmodels7.github.io/statmodels7/reference/profile_spec.md)
   : The Specification With the Labelled Quantities Held
 
+- [`profile_step_limits()`](https://statmodels7.github.io/statmodels7/reference/profile_step_limits.md)
+  : The Interval of a Profile That Is Constant Between Observations
+
 - [`profile_values()`](https://statmodels7.github.io/statmodels7/reference/profile_values.md)
   : The Values of a Profile for Each Coefficient
+
+- [`profile_values_for()`](https://statmodels7.github.io/statmodels7/reference/profile_values_for.md)
+  : The Argument values for a Subset of the Labels
+
+- [`profiled_quantity()`](https://statmodels7.github.io/statmodels7/reference/profiled_quantity.md)
+  [`ProfiledCoefficient()`](https://statmodels7.github.io/statmodels7/reference/profiled_quantity.md)
+  [`ProfiledPenalizedCoefficient()`](https://statmodels7.github.io/statmodels7/reference/profiled_quantity.md)
+  [`ProfiledBreakpoint()`](https://statmodels7.github.io/statmodels7/reference/profiled_quantity.md)
+  [`ProfiledHyperparameter()`](https://statmodels7.github.io/statmodels7/reference/profiled_quantity.md)
+  [`ProfiledPathHyperparameter()`](https://statmodels7.github.io/statmodels7/reference/profiled_quantity.md)
+  : The Quantity That a Profile Holds
 
 - [`project_blocks()`](https://statmodels7.github.io/statmodels7/reference/project_blocks.md)
   : Project a Reference Fit's Predictor onto the Blocks That Did Not
@@ -2124,6 +2228,9 @@ helper functions. Using the package does not require any of it.
 
 - [`random_blocks()`](https://statmodels7.github.io/statmodels7/reference/random_blocks.md)
   : The Gaussian Prior of the Effects That a Prediction Sets Aside
+
+- [`random_group_label()`](https://statmodels7.github.io/statmodels7/reference/random_group_label.md)
+  : The Axis Title of the Levels of a Random Term
 
 - [`random_marginal()`](https://statmodels7.github.io/statmodels7/reference/random_marginal.md)
   : A Marginal Prediction: the Population Average Over New Groups
@@ -2697,6 +2804,9 @@ helper functions. Using the package does not require any of it.
 
 - [`stop_cv_nothing()`](https://statmodels7.github.io/statmodels7/reference/stop_cv_nothing.md)
   : The Error for a Cross-Validation With Nothing to Select
+
+- [`strip_labeller()`](https://statmodels7.github.io/statmodels7/reference/strip_labeller.md)
+  : The Headings of the Panels of a Graph
 
 - [`structural_blocks_data()`](https://statmodels7.github.io/statmodels7/reference/structural_blocks_data.md)
   : The Same Pieces as Data for the Compiled Recursion

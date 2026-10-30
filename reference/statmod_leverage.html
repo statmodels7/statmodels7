@@ -15,7 +15,7 @@ effective parameters that observation \(i\) uses."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.227.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,7 +106,18 @@ block of observation \(i\) is
 $$H_{ii} = W_i^{1/2} Z_i K^{-1} Z_i' W_i^{1/2}.$$
 It is symmetric, and for an unpenalized fit with \(W\) the information
 at the estimate it is a projection, so that \(\sum_i \mathrm{tr}\,
-H_{ii} = P\). With penalties the sum is the effective degrees of freedom.</p>
+H_{ii} = P\). With penalties the sum is
+\(\mathrm{tr}\{(\mathcal I + S)^{-1}\mathcal I\}\), the effective degrees
+of freedom computed on the information \(\mathcal I\) that the leverage
+reads. It equals the degrees of freedom of the fit (<code>fit@edf</code>) when the fit
+reads the same information. The fit reads the information of its outer
+criterion, observed by default (<code><a href="reml.html">reml()</a></code>), while the leverage reads the
+expected one. The two sums then coincide where the observed and the
+expected information coincide at the estimate, as for a generalized linear
+model with the canonical link and no scale parameter, and they differ
+otherwise, by much for a penalized model with an equation for the scale
+and slightly for a Gaussian model whose scale <code><a href="reml.html">reml()</a></code> estimates. They
+coincide when <code><a href="reml.html">reml()</a></code> is given <code>information = expected_info()</code>.</p>
 <p>For a Gaussian linear model with a constant scale and the expected
 information, the block of the mean equation is the scalar
 \(h_i = x_i'(X'X)^{-1}x_i\) of <code><a href="https://rdrr.io/r/stats/influence.measures.html" class="external-link">stats::hatvalues()</a></code>. For one equation

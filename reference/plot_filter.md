@@ -16,7 +16,8 @@ plot_filter(
   scale = "response",
   response = FALSE,
   groups = NULL,
-  vcov_type = bayesian_vcov()
+  vcov_type = bayesian_vcov(),
+  legend = TRUE
 )
 ```
 
@@ -46,6 +47,10 @@ plot_filter(
   A
   [vcov_method](https://statmodels7.github.io/statmodels7/reference/vcov_method.md)
   object, the variance of the band.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

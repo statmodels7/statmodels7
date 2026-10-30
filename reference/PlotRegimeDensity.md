@@ -7,7 +7,12 @@ instantiates. Use the constructor, which checks the properties.
 ## Usage
 
 ``` r
-PlotRegimeDensity(label = character(0), at = NULL, n_grid = integer(0))
+PlotRegimeDensity(
+  label = character(0),
+  legend = TRUE,
+  at = NULL,
+  n_grid = integer(0)
+)
 ```
 
 ## Arguments

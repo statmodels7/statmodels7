@@ -9,7 +9,8 @@ empty
 [`ggplot2::ggplot()`](https://ggplot2.tidyverse.org/reference/ggplot.html).
 The theme comes first, so that a list of layers may also carry
 [`ggplot2::theme()`](https://ggplot2.tidyverse.org/reference/theme.html)
-elements.
+elements. The legends are placed below the panel, and removed when the
+property `legend` of the type is `FALSE`.
 
 ## Usage
 

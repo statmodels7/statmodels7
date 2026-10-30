@@ -8,7 +8,7 @@ highlighted and labeled with the row number.
 ## Usage
 
 ``` r
-plot_score(param, against = "index")
+plot_score(param, against = "index", legend = TRUE)
 ```
 
 ## Arguments
@@ -20,6 +20,10 @@ plot_score(param, against = "index")
 - against:
 
   `"index"` (the default) or the name of a covariate.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

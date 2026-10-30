@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotPpc(
   label = character(0),
+  legend = TRUE,
   statistic = NULL,
   n_sim = integer(0),
   seed = NULL

@@ -6,29 +6,24 @@ Selects the graph of a break-point term
 or
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)):
 the contribution of the term as a function of its variable, with the
-partial residuals, each break-point as a dashed vertical line, its
-confidence interval as a bar at the bottom of the graph, and an inset
-with the profile of the criterion over the position of the break-point.
+partial residuals, each break-point as a dashed vertical line, and its
+confidence interval as a bar at the bottom of the graph.
 
 ## Usage
 
 ``` r
 plot_breakpoint(
-  profile = TRUE,
   test = lr_test(),
   level = 0.95,
   vcov_type = bayesian_vcov(),
   information = distributions7::expected_info(),
   n_grid = 200,
-  n_profile = 100
+  n_profile = 100,
+  legend = TRUE
 )
 ```
 
 ## Arguments
-
-- profile:
-
-  Whether to draw the inset with the profile.
 
 - test:
 
@@ -39,8 +34,7 @@ plot_breakpoint(
 
 - level:
 
-  The confidence level of the band, of the intervals and of the cutoff
-  of the profile.
+  The confidence level of the band and of the intervals.
 
 - vcov_type:
 
@@ -62,7 +56,15 @@ plot_breakpoint(
 
 - n_profile:
 
-  The number of positions at which the profile is computed.
+  The number of positions at which the profile of a
+  [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
+  or
+  [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
+  position is computed.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 
@@ -93,7 +95,8 @@ or
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
 term is read off other coefficients and has no coordinate to invert a
 test on; its interval is the set of positions, connected to the
-estimate, at which the profile described below stays under the cutoff.
+estimate, at which the profile described below stays under the cutoff
+\\\chi^2\_{1}(\text{level})\\.
 
 The profile is computed on the working response of the equation,
 \\y_i^\* = f(x_i) + s_i / w_i\\, where \\s_i\\ is the score of the
@@ -102,12 +105,11 @@ log-likelihood in the predictor and \\w_i\\ the information selected by
 positions and the other terms of the equation at their fitted values,
 \\R(\psi_k)\\ is the weighted residual sum of squares of \\y^\*\\ on an
 intercept, the linear column and the columns of the term, as computed by
-[`modelterms7::seg_profile_rss()`](https://statmodels7.github.io/modelterms7/reference/seg_profile_rss.html).
-The inset shows \\R(\psi_k) - \min R\\, the increase of the criterion in
-the units of the log-likelihood, against the cutoff
-\\\chi^2\_{1}(\text{level})\\ (dotted line). For a gaussian mean it is
-the likelihood ratio statistic; for other families it is its quadratic
-approximation at the fit.
+[`modelterms7::seg_profile_rss()`](https://statmodels7.github.io/modelterms7/reference/seg_profile_rss.html),
+and \\R(\psi_k) - \min R\\ is the increase of the criterion in the units
+of the log-likelihood. For a gaussian mean it is the likelihood ratio
+statistic; for other families it is its quadratic approximation at the
+fit.
 
 A term whose break-points are developed over covariates has one position
 per observation and no single profile, and a marginal break-point term
@@ -128,6 +130,5 @@ fit <- statmod(y ~ seg(x, npsi = 1), distributions7::gaussian1_distrib(), dd)
 ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd)
 
 ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd,
-                  plot_type = plot_breakpoint(profile = FALSE,
-                                         test = wald_test()))
+                  plot_type = plot_breakpoint(test = wald_test()))
 ```

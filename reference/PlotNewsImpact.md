@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotNewsImpact(
   label = character(0),
+  legend = TRUE,
   range = integer(0),
   at = NULL,
   n_points = integer(0)

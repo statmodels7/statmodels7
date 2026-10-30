@@ -13,6 +13,7 @@ instantiate. Use the constructors, which check the properties.
 ``` r
 PlotParam(
   label = character(0),
+  legend = TRUE,
   param = character(0),
   over = character(0),
   at = NULL,
@@ -23,6 +24,7 @@ PlotParam(
 
 PlotQuantiles(
   label = character(0),
+  legend = TRUE,
   over = character(0),
   probs = integer(0),
   at = NULL,
@@ -32,6 +34,7 @@ PlotQuantiles(
 
 PlotDensity(
   label = character(0),
+  legend = TRUE,
   at = NULL,
   over = NULL,
   n_grid = integer(0),
@@ -40,6 +43,7 @@ PlotDensity(
 
 PlotMoments(
   label = character(0),
+  legend = TRUE,
   over = character(0),
   moments = character(0),
   at = NULL,

@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotPit(
   label = character(0),
+  legend = TRUE,
   bins = integer(0),
   seed = NULL,
   level = integer(0)

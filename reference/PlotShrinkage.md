@@ -9,9 +9,19 @@ instantiate. Use the constructors, which check the properties.
 ## Usage
 
 ``` r
-PlotShrinkage(label = character(0), sort = logical(0), information = NULL)
+PlotShrinkage(
+  label = character(0),
+  legend = TRUE,
+  sort = logical(0),
+  information = NULL
+)
 
-PlotPath(label = character(0), log_lambda = NULL, information = NULL)
+PlotPath(
+  label = character(0),
+  legend = TRUE,
+  log_lambda = NULL,
+  information = NULL
+)
 ```
 
 ## Arguments

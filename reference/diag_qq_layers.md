@@ -1,12 +1,13 @@
 # The Layers of a Quantile-Quantile or Worm Graph
 
-Draws the band, the reference line, the points and, when the data carry
-a `class` column, one facet for each class.
+Draws the band, the reference line, the points and a legend that names
+them and, when the data carry a `class` column, one facet for each
+class, headed by the covariate and the class.
 
 ## Usage
 
 ``` r
-diag_qq_layers(data, worm)
+diag_qq_layers(data, worm, type, over = NULL)
 ```
 
 ## Arguments
@@ -19,6 +20,15 @@ diag_qq_layers(data, worm)
 - worm:
 
   Whether the graph is detrended.
+
+- type:
+
+  The `PlotQq` or `PlotWorm` object, which gives the kind and the level
+  of the band.
+
+- over:
+
+  The covariate that defines the classes, or `NULL`.
 
 ## Value
 

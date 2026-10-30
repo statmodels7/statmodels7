@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotInfluence(
   label = character(0),
+  legend = TRUE,
   param = character(0),
   measure = character(0),
   adjust = logical(0),

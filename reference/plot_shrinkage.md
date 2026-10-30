@@ -17,7 +17,11 @@ to a smooth and to a random effect.
 ## Usage
 
 ``` r
-plot_shrinkage(sort = TRUE, information = distributions7::expected_info())
+plot_shrinkage(
+  sort = TRUE,
+  information = distributions7::expected_info(),
+  legend = TRUE
+)
 ```
 
 ## Arguments
@@ -33,6 +37,10 @@ plot_shrinkage(sort = TRUE, information = distributions7::expected_info())
   (the default) or
   [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html),
   the information of the log-likelihood in the step.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

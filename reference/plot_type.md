@@ -34,13 +34,13 @@ the types by what they read:
 ## Usage
 
 ``` r
-plot_type(label = character(0))
+plot_type(label = character(0), legend = TRUE)
 
-term_plot(label = character(0))
+term_plot(label = character(0), legend = TRUE)
 
-model_plot(label = character(0))
+model_plot(label = character(0), legend = TRUE)
 
-diagnostic_plot(label = character(0))
+diagnostic_plot(label = character(0), legend = TRUE)
 ```
 
 ## Arguments
@@ -49,11 +49,15 @@ diagnostic_plot(label = character(0))
 
   A single string, the name of the graph.
 
+- legend:
+
+  Whether the graph draws the legend that names its elements.
+
 ## Value
 
 Nothing: the classes are abstract and their constructors signal an
-error. Every object that inherits from `plot_type` has the property
-`label`.
+error. Every object that inherits from `plot_type` has the properties
+`label` and `legend`.
 
 ## Details
 
@@ -82,6 +86,6 @@ S7::S7_inherits(plot_effect(), plot_type)
 S7::S7_inherits(plot_effect(), term_plot)
 #> [1] TRUE
 try(plot_type(label = "mine"))
-#> Error in S7::new_object(S7::S7_object(), label = label) : 
+#> Error in S7::new_object(S7::S7_object(), label = label, legend = legend) : 
 #>   Can't construct an object from abstract class <plot_type>
 ```

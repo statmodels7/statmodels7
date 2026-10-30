@@ -8,7 +8,13 @@ observation or a covariate, with a smoother and the horizontal lines at
 ## Usage
 
 ``` r
-plot_residuals(against = "median", param = NULL, smooth = TRUE, seed = NULL)
+plot_residuals(
+  against = "median",
+  param = NULL,
+  smooth = TRUE,
+  seed = NULL,
+  legend = TRUE
+)
 ```
 
 ## Arguments
@@ -29,6 +35,10 @@ plot_residuals(against = "median", param = NULL, smooth = TRUE, seed = NULL)
 - seed:
 
   A single number that seeds the randomization, or `NULL`.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

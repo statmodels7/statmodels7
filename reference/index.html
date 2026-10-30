@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.227.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -482,7 +482,7 @@
       </dl></div><div class="section level2">
       <h2 id="profile-likelihood">Profile likelihood<a class="anchor" aria-label="anchor" href="#profile-likelihood"></a></h2>
 
-      <div class="section-desc"><p>The penalized log-likelihood maximized over every coefficient but one or several that are held on a grid, returned as a data frame together with the value of the outer criterion where one ran. The grid of values is given by <code><a href="../reference/profile_range.html">profile_range()</a></code> or by the caller, and <code><a href="../reference/profile_grid.html">profile_grid()</a></code> selects the exact method, one refit for each point; <code><a href="../reference/profile_continuation.html">profile_continuation()</a></code> and <code><a href="../reference/profile_taylor.html">profile_taylor()</a></code> approximate it for smooth coefficients.</p></div>
+      <div class="section-desc"><p>The penalized log-likelihood, or the outer criterion, maximized over every quantity but one or several that are held on a grid, returned as a <code>StatmodProfile</code> object with its intervals (<code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>) and its graphs. The grid of values is given by <code><a href="../reference/profile_range.html">profile_range()</a></code> or by the caller, and <code><a href="../reference/profile_grid.html">profile_grid()</a></code> selects the exact method, one refit for each point; <code><a href="../reference/profile_continuation.html">profile_continuation()</a></code> and <code><a href="../reference/profile_taylor.html">profile_taylor()</a></code> approximate it for smooth coefficients.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -495,6 +495,13 @@
 
         </dt>
         <dd>The Profile Likelihood of Coefficients</dd>
+
+        <dt>
+
+          <code><a href="autoplot.StatmodProfile.html">autoplot(<i>&lt;StatmodProfile&gt;</i>)</a></code> <code><a href="autoplot.StatmodProfile.html">plot(<i>&lt;StatmodProfile&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Graphs of a Profile</dd>
 
         <dt>
 
@@ -937,7 +944,7 @@
 
         <dt>
 
-          <code><a href="plot_acf.html">plot_acf()</a></code>
+          <code><a href="plot_acf.html">plot_acf()</a></code> <code><a href="plot_acf.html">plot_pacf()</a></code>
 
         </dt>
         <dd>Autocorrelation of the Residuals</dd>
@@ -1021,7 +1028,7 @@
           <code><a href="PlotAcf.html">PlotAcf()</a></code>
 
         </dt>
-        <dd>S7 Class of the Autocorrelation Graph</dd>
+        <dd>S7 Class of the Autocorrelation Graphs</dd>
 
         <dt>
 
@@ -1193,6 +1200,13 @@
 
         <dt>
 
+          <code><a href="StatmodProfile.html">StatmodProfile()</a></code>
+
+        </dt>
+        <dd>The Profile Likelihood Returned by statmod_profile()</dd>
+
+        <dt>
+
           <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>
 
         </dt>
@@ -1225,6 +1239,20 @@
 
         </dt>
         <dd>S7 Classes for the Shipped Test Statistics</dd>
+
+        <dt>
+
+          <code><a href="acf_series.html">acf_series()</a></code>
+
+        </dt>
+        <dd>The Series of the Observations of a Fit</dd>
+
+        <dt>
+
+          <code><a href="acf_type.html">acf_type()</a></code>
+
+        </dt>
+        <dd>Build an Autocorrelation Graph Type</dd>
 
         <dt>
 
@@ -1337,6 +1365,13 @@
 
         </dt>
         <dd>Solve a Scoring Step From the Square-Root Design</dd>
+
+        <dt>
+
+          <code><a href="band_label.html">band_label()</a></code>
+
+        </dt>
+        <dd>The Name of a Band in a Legend</dd>
 
         <dt>
 
@@ -1732,13 +1767,6 @@
 
         <dt>
 
-          <code><a href="breakpoint_inset.html">breakpoint_inset()</a></code>
-
-        </dt>
-        <dd>The Profile Inset of the Break-Point Graph</dd>
-
-        <dt>
-
           <code><a href="certificate_core.html">certificate_core()</a></code>
 
         </dt>
@@ -1820,6 +1848,13 @@
 
         </dt>
         <dd>Check That an Argument Is an Information Object</dd>
+
+        <dt>
+
+          <code><a href="check_legend.html">check_legend()</a></code>
+
+        </dt>
+        <dd>Check the Legend Argument of a Graph</dd>
 
         <dt>
 
@@ -2023,6 +2058,13 @@
 
         </dt>
         <dd>Confidence Intervals for a Fit</dd>
+
+        <dt>
+
+          <code><a href="confint.StatmodProfile.html">confint(<i>&lt;StatmodProfile&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Profile Likelihood Intervals</dd>
 
         <dt>
 
@@ -2530,6 +2572,13 @@
 
         <dt>
 
+          <code><a href="diag_top_layers.html">diag_top_layers()</a></code>
+
+        </dt>
+        <dd>The Labelled Points of a Diagnostic Graph</dd>
+
+        <dt>
+
           <code><a href="diag_with_seed.html">diag_with_seed()</a></code>
 
         </dt>
@@ -2558,10 +2607,24 @@
 
         <dt>
 
+          <code><a href="draw_key_band.html">draw_key_band()</a></code>
+
+        </dt>
+        <dd>The Legend Key of an Estimate with Its Band</dd>
+
+        <dt>
+
           <code><a href="drop_common_prefix.html">drop_common_prefix()</a></code>
 
         </dt>
         <dd>Drop the Prefix That a Set of Coefficient Names Share</dd>
+
+        <dt>
+
+          <code><a href="durbin_levinson.html">durbin_levinson()</a></code>
+
+        </dt>
+        <dd>Partial Autocorrelations by the Durbin-Levinson Recursion</dd>
 
         <dt>
 
@@ -2618,6 +2681,13 @@
 
         </dt>
         <dd>The Sub-Term to Which a Penalty Entry Belongs</dd>
+
+        <dt>
+
+          <code><a href="est_label.html">est_label()</a></code>
+
+        </dt>
+        <dd>The Name of an Estimate and Its Interval in a Legend</dd>
 
         <dt>
 
@@ -3615,6 +3685,13 @@
 
         <dt>
 
+          <code><a href="leverage_power_eq.html">leverage_power_eq()</a></code>
+
+        </dt>
+        <dd>The HC4 Correction of a Leverage Block With One Exponent per Equation</dd>
+
+        <dt>
+
           <code><a href="link_kind.html">link_kind()</a></code>
 
         </dt>
@@ -4266,6 +4343,20 @@
 
         <dt>
 
+          <code><a href="plot_key.html">plot_key()</a></code>
+
+        </dt>
+        <dd>The Legend of the Elements of a Graph</dd>
+
+        <dt>
+
+          <code><a href="plot_key_theme.html">plot_key_theme()</a></code>
+
+        </dt>
+        <dd>The Placement of the Legends of a Graph</dd>
+
+        <dt>
+
           <code><a href="plot_needs_data.html">plot_needs_data()</a></code>
 
         </dt>
@@ -4291,6 +4382,13 @@
 
         </dt>
         <dd>A Term With Its Nested Random Effects Read in One Group's Columns</dd>
+
+        <dt>
+
+          <code><a href="pooled_acf.html">pooled_acf()</a></code>
+
+        </dt>
+        <dd>Pooled Autocorrelation of Several Series</dd>
 
         <dt>
 
@@ -4532,6 +4630,27 @@
 
         <dt>
 
+          <code><a href="profile_axis.html">profile_axis()</a></code>
+
+        </dt>
+        <dd>The Title and the Axis of a Profiled Quantity</dd>
+
+        <dt>
+
+          <code><a href="profile_base.html">profile_base()</a></code>
+
+        </dt>
+        <dd>The Common Layers of a Profile Panel</dd>
+
+        <dt>
+
+          <code><a href="profile_breakpoints.html">profile_breakpoints()</a></code>
+
+        </dt>
+        <dd>The Positions of the Break-Points of a Model</dd>
+
+        <dt>
+
           <code><a href="profile_chains.html">profile_chains()</a></code>
 
         </dt>
@@ -4560,6 +4679,27 @@
 
         <dt>
 
+          <code><a href="profile_contour.html">profile_contour()</a></code>
+
+        </dt>
+        <dd>The Contours of a Joint Profile Over Two Labels</dd>
+
+        <dt>
+
+          <code><a href="profile_criterion_name.html">profile_criterion_name()</a></code>
+
+        </dt>
+        <dd>The Name of the Criterion of a Profile</dd>
+
+        <dt>
+
+          <code><a href="profile_curve.html">profile_curve()</a></code>
+
+        </dt>
+        <dd>The One-Dimensional Profile of One Label</dd>
+
+        <dt>
+
           <code><a href="profile_exact.html">profile_exact()</a></code>
 
         </dt>
@@ -4581,6 +4721,13 @@
 
         <dt>
 
+          <code><a href="profile_finish.html">profile_finish()</a></code>
+
+        </dt>
+        <dd>The Legend of a Profile Panel</dd>
+
+        <dt>
+
           <code><a href="profile_held_keys.html">profile_held_keys()</a></code>
 
         </dt>
@@ -4599,6 +4746,13 @@
 
         </dt>
         <dd>Hold Hyperparameters on a Specification</dd>
+
+        <dt>
+
+          <code><a href="profile_hold_position.html">profile_hold_position()</a></code>
+
+        </dt>
+        <dd>Hold the Position of a Sharp Break-Point</dd>
 
         <dt>
 
@@ -4637,6 +4791,20 @@
 
         <dt>
 
+          <code><a href="profile_is_lr.html">profile_is_lr()</a></code>
+
+        </dt>
+        <dd>Whether the Drop of a Profile Is a Likelihood Ratio</dd>
+
+        <dt>
+
+          <code><a href="profile_kind_name.html">profile_kind_name()</a></code>
+
+        </dt>
+        <dd>The Name of the Kind of a Profiled Quantity</dd>
+
+        <dt>
+
           <code><a href="profile_map.html">profile_map()</a></code>
 
         </dt>
@@ -4665,6 +4833,27 @@
 
         <dt>
 
+          <code><a href="profile_panel.html">profile_panel()</a></code>
+
+        </dt>
+        <dd>The Panel of One Profiled Quantity</dd>
+
+        <dt>
+
+          <code><a href="profile_path_record.html">profile_path_record()</a></code>
+
+        </dt>
+        <dd>The Points That a Path Scored</dd>
+
+        <dt>
+
+          <code><a href="profile_path_value.html">profile_path_value()</a></code>
+
+        </dt>
+        <dd>The Criterion of a Path at One Point of a Profile</dd>
+
+        <dt>
+
           <code><a href="profile_point.html">profile_point()</a></code>
 
         </dt>
@@ -4686,10 +4875,24 @@
 
         <dt>
 
+          <code><a href="profile_quantities.html">profile_quantities()</a></code>
+
+        </dt>
+        <dd>The Kind of Each Label of a Profile</dd>
+
+        <dt>
+
           <code><a href="profile_ray.html">profile_ray()</a></code>
 
         </dt>
         <dd>The Coefficients That a Polynomial of the Trace Predicts at a Point</dd>
+
+        <dt>
+
+          <code><a href="profile_refine.html">profile_refine()</a></code>
+
+        </dt>
+        <dd>A Profile Over Two Labels on a Finer Grid</dd>
 
         <dt>
 
@@ -4714,10 +4917,31 @@
 
         <dt>
 
+          <code><a href="profile_step_limits.html">profile_step_limits()</a></code>
+
+        </dt>
+        <dd>The Interval of a Profile That Is Constant Between Observations</dd>
+
+        <dt>
+
           <code><a href="profile_values.html">profile_values()</a></code>
 
         </dt>
         <dd>The Values of a Profile for Each Coefficient</dd>
+
+        <dt>
+
+          <code><a href="profile_values_for.html">profile_values_for()</a></code>
+
+        </dt>
+        <dd>The Argument values for a Subset of the Labels</dd>
+
+        <dt>
+
+          <code><a href="profiled_quantity.html">profiled_quantity()</a></code> <code><a href="profiled_quantity.html">ProfiledCoefficient()</a></code> <code><a href="profiled_quantity.html">ProfiledPenalizedCoefficient()</a></code> <code><a href="profiled_quantity.html">ProfiledBreakpoint()</a></code> <code><a href="profiled_quantity.html">ProfiledHyperparameter()</a></code> <code><a href="profiled_quantity.html">ProfiledPathHyperparameter()</a></code>
+
+        </dt>
+        <dd>The Quantity That a Profile Holds</dd>
 
         <dt>
 
@@ -4760,6 +4984,13 @@
 
         </dt>
         <dd>The Gaussian Prior of the Effects That a Prediction Sets Aside</dd>
+
+        <dt>
+
+          <code><a href="random_group_label.html">random_group_label()</a></code>
+
+        </dt>
+        <dd>The Axis Title of the Levels of a Random Term</dd>
 
         <dt>
 
@@ -6048,6 +6279,13 @@
 
         </dt>
         <dd>The Error for a Cross-Validation With Nothing to Select</dd>
+
+        <dt>
+
+          <code><a href="strip_labeller.html">strip_labeller()</a></code>
+
+        </dt>
+        <dd>The Headings of the Panels of a Graph</dd>
 
         <dt>
 

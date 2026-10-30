@@ -7,7 +7,7 @@ and a pointwise band.
 ## Usage
 
 ``` r
-plot_qq(band = "order", level = 0.95, n_sim = 99, seed = NULL)
+plot_qq(band = "order", level = 0.95, n_sim = 99, seed = NULL, legend = TRUE)
 ```
 
 ## Arguments
@@ -28,6 +28,10 @@ plot_qq(band = "order", level = 0.95, n_sim = 99, seed = NULL)
 
   A single number that seeds the randomization and the simulation, or
   `NULL` for the ambient state.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

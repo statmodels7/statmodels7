@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotCriterion(
   label = character(0),
+  legend = TRUE,
   log_lambda = NULL,
   method = character(0),
   hyper = NULL

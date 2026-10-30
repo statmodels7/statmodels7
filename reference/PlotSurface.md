@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotSurface(
   label = character(0),
+  legend = TRUE,
   mask = logical(0),
   slices = NULL,
   level = integer(0),

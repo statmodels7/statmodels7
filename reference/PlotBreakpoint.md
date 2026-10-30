@@ -9,7 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotBreakpoint(
   label = character(0),
-  profile = logical(0),
+  legend = TRUE,
   test = NULL,
   level = integer(0),
   vcov_type = NULL,
@@ -21,8 +21,7 @@ PlotBreakpoint(
 
 ## Arguments
 
-- label, profile, test, level, vcov_type, information, n_grid,
-  n_profile:
+- label, legend, test, level, vcov_type, information, n_grid, n_profile:
 
   See
   [`plot_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/plot_breakpoint.md).

@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotCalibration(
   label = character(0),
+  legend = TRUE,
   probs = integer(0),
   over = NULL,
   n_inter = integer(0),

@@ -9,7 +9,11 @@ coefficients.
 ## Usage
 
 ``` r
-plot_path(log_lambda = NULL, information = distributions7::expected_info())
+plot_path(
+  log_lambda = NULL,
+  information = distributions7::expected_info(),
+  legend = TRUE
+)
 ```
 
 ## Arguments
@@ -26,6 +30,10 @@ plot_path(log_lambda = NULL, information = distributions7::expected_info())
   [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html),
   the information of the log-likelihood in the closed form of a
   quadratic penalty.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

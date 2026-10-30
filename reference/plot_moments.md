@@ -6,7 +6,13 @@ one covariate, one panel for each moment with its own vertical scale.
 ## Usage
 
 ``` r
-plot_moments(over, moments = c("mean", "variance"), at = NULL, n_grid = 200)
+plot_moments(
+  over,
+  moments = c("mean", "variance"),
+  at = NULL,
+  n_grid = 200,
+  legend = TRUE
+)
 ```
 
 ## Arguments
@@ -26,6 +32,10 @@ plot_moments(over, moments = c("mean", "variance"), at = NULL, n_grid = 200)
 - n_grid:
 
   The number of points of the grid of a numeric covariate.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

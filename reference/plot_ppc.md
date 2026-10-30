@@ -11,7 +11,7 @@ the simulated responses with the observed value as a line.
 ## Usage
 
 ``` r
-plot_ppc(statistic = NULL, n_sim = 200, seed = NULL)
+plot_ppc(statistic = NULL, n_sim = 200, seed = NULL, legend = TRUE)
 ```
 
 ## Arguments
@@ -27,6 +27,10 @@ plot_ppc(statistic = NULL, n_sim = 200, seed = NULL)
 - seed:
 
   A single number that seeds the simulation, or `NULL`.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

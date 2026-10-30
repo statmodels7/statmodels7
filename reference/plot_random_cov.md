@@ -8,7 +8,7 @@ the ellipse of the fitted covariance of the effects.
 ## Usage
 
 ``` r
-plot_random_cov(level = 0.95, which = c(1, 2))
+plot_random_cov(level = 0.95, which = c(1, 2), legend = TRUE)
 ```
 
 ## Arguments
@@ -20,6 +20,10 @@ plot_random_cov(level = 0.95, which = c(1, 2))
 - which:
 
   The two coefficients within a level, by position.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

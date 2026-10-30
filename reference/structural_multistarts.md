@@ -2,8 +2,9 @@
 
 Returns the starts given by
 [`modelterms7::term_starts()`](https://statmodels7.github.io/modelterms7/reference/term_starts.html)
-for the structural term of the model, when that function gives more than
-one and the specification carries no values from a previous fit.
+for every structural term of the model for which that function gives
+more than one and the specification carries no values from a previous
+fit.
 
 ## Usage
 
@@ -26,8 +27,8 @@ structural_multistarts(spec, design)
 
 ## Value
 
-`NULL` where there is nothing to try, otherwise a list with `term`, the
-unit's key, and `zeta`, the list of starts, whose first element is the
-one that
+A list, empty where there is nothing to try, with one element for each
+such term: a list with `term`, the unit's key, and `zeta`, the list of
+starts, whose first element is the one that
 [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
 already used.

@@ -2,9 +2,13 @@
 
 Returns, for each combination of values of one or several coefficients,
 the maximum of the penalized log-likelihood over all the other
-coefficients when those are held at the values. The result is a data
-frame, one row per combination, which serves a plot, an interval or a
-diagnostic; the function computes none of those.
+coefficients when those are held at the values. The result is a
+[StatmodProfile](https://statmodels7.github.io/statmodels7/reference/StatmodProfile.md)
+object, whose table `points` has one row per combination, and on which
+[`confint.StatmodProfile()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodProfile.md)
+computes the intervals and
+[`autoplot.StatmodProfile()`](https://statmodels7.github.io/statmodels7/reference/autoplot.StatmodProfile.md)
+draws the profile.
 
 ## Usage
 
@@ -15,6 +19,7 @@ statmod_profile(
   values = profile_range(width = 3, n = 21),
   method = profile_grid(),
   hyper = c("held", "refit"),
+  joint = TRUE,
   cores = 1
 )
 ```
@@ -63,6 +68,11 @@ statmod_profile(
   `"held"` or `"refit"`: whether the hyperparameters stay at the values
   of the fit or are searched again at every point.
 
+- joint:
+
+  Whether the labels of `which` are held together (`TRUE`, the profile
+  of their vector) or each by itself with the others free (`FALSE`).
+
 - cores:
 
   The number of separate R processes over which the refits are
@@ -75,20 +85,33 @@ statmod_profile(
 
 ## Value
 
-A data frame (`check.names = FALSE`) with one column for each
-coefficient of `which`, named by its label, then `profile_loglik`,
-`profile_penalty`, `profile_pen_loglik`, `outer_criterion` and
-`converged`. Its attributes are `maximum`, a one-row data frame with the
-same columns at the unrestricted fit (the numbers of the fit itself,
-which under
+A
+[StatmodProfile](https://statmodels7.github.io/statmodels7/reference/StatmodProfile.md)
+object. Its table `points` (`check.names = FALSE`) has, with
+`joint = TRUE`, one column for each label of `which`, named by the
+label, and with `joint = FALSE` the columns `profiled_label` and
+`value`, then `profile_loglik`, `profile_penalty`, `profile_pen_loglik`,
+`outer_criterion` and `converged`. `unrestricted_point` has the same
+columns at the unrestricted fit (the numbers of the fit itself, which
+under
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 can lie slightly below the nearest rows of the table, because at a row
-the criterion does not integrate the held coefficients), `method`, the
-[profile_method](https://statmodels7.github.io/statmodels7/reference/profile_method.md)
-object, `hyper`, and `criterion`, the outer criterion object of the fit
-(`NULL` if it has none). The hyperparameters and the other coefficients
-of each point are not returned.
+the criterion does not integrate the held coefficients).
+`profile_column` names, for each label, the column that is its profile,
+and `is_likelihood_ratio` states, for each label, whether that column
+gives a likelihood ratio statistic. The hyperparameters and the other
+coefficients of each point are not returned.
+
+## Joint and separate profiles
+
+With `joint = TRUE` the labels of `which` are held together, at every
+combination of their values, and the table is the profile of the vector
+of the labels. With `joint = FALSE` each label is profiled by itself,
+with the other labels of `which` free like every other coefficient, and
+the table stacks the one-dimensional profiles, with the columns
+`profiled_label` and `value` in place of one column per label. The two
+coincide for a single label.
 
 ## What the columns report
 
@@ -290,6 +313,9 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 prof <- statmod_profile(fit, which = "mu:x",
                         values = profile_range(width = 2, n = 9))
 prof
+#> <profile> 1 label, method grid, hyperparameters held, outer criterion reml()
+#>   mu:x                         coefficient, estimate 1.95614, profile profile_pen_loglik
+#> 9 points, 0 not converged
 #>       mu:x profile_loglik profile_penalty profile_pen_loglik outer_criterion
 #> 1 1.615742      -23.56354               0          -23.56354       -25.70965
 #> 2 1.700842      -22.70458               0          -22.70458       -24.86501
@@ -312,16 +338,23 @@ prof
 #> 9      TRUE
 
 # the log-likelihood falls by z^2 / 2 at z standard errors
-attr(prof, "maximum")
+prof@unrestricted_point
 #>       mu:x profile_loglik profile_penalty profile_pen_loglik outer_criterion
 #> 1 1.956143      -21.57563               0          -21.57563       -24.59838
 #>   converged
 #> 1      TRUE
+confint(prof)
+#>      estimate    lower    upper
+#> mu:x 1.956143 1.622844 2.289441
 
 # two coefficients, with values chosen by the caller for the second
 statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
                 values = list("mu:x" = profile_range(width = 1, n = 3),
                               "mu:(Intercept)" = c(0.8, 1, 1.2)))
+#> <profile> 2 labels, held jointly, method grid, hyperparameters held, outer criterion reml()
+#>   mu:x                         coefficient, estimate 1.95614, profile profile_pen_loglik
+#>   mu:(Intercept)               coefficient, estimate 1.07107, profile profile_pen_loglik
+#> 9 points, 0 not converged
 #>       mu:x mu:(Intercept) profile_loglik profile_penalty profile_pen_loglik
 #> 1 1.785942            0.8      -43.60960               0          -43.60960
 #> 2 1.956143            0.8      -35.87738               0          -35.87738
@@ -342,4 +375,13 @@ statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
 #> 7       -22.49681      TRUE
 #> 8       -25.44694      TRUE
 #> 9       -31.78035      TRUE
+
+# the same two, each profiled with the other free
+sep <- statmod_profile(fit, which = c("mu:x", "mu:(Intercept)"),
+                       values = profile_range(width = 3, n = 7),
+                       joint = FALSE)
+confint(sep, type = "simultaneous")
+#>                estimate     lower    upper
+#> mu:x           1.956143 1.5361347 2.376151
+#> mu:(Intercept) 1.071069 0.8284342 1.313704
 ```

@@ -13,7 +13,8 @@ plot_derivative(
   n_sim = 10000,
   seed = NULL,
   vcov_type = bayesian_vcov(),
-  n_grid = 200
+  n_grid = 200,
+  legend = TRUE
 )
 ```
 
@@ -49,6 +50,10 @@ plot_derivative(
 - n_grid:
 
   The number of points of the grid of the variable.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

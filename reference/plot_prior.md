@@ -10,8 +10,14 @@ coefficient.
 ## Usage
 
 ``` r
-plot_prior()
+plot_prior(legend = TRUE)
 ```
+
+## Arguments
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

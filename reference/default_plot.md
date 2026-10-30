@@ -44,6 +44,7 @@ An object inheriting from
 default_plot(modelterms7::s(x))
 #> <statmodels7::PlotEffect>
 #>  @ label      : chr "plot_effect()"
+#>  @ legend     : logi TRUE
 #>  @ residuals  : logi TRUE
 #>  @ binned     : NULL
 #>  @ scale      : chr "link"

@@ -9,7 +9,7 @@ each regime.
 ## Usage
 
 ``` r
-plot_regime_density(at = NULL, n_grid = 300)
+plot_regime_density(at = NULL, n_grid = 300, legend = TRUE)
 ```
 
 ## Arguments
@@ -23,6 +23,10 @@ plot_regime_density(at = NULL, n_grid = 300)
 
   The number of points of the grid of the response of a continuous
   family.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

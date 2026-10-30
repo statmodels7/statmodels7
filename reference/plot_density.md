@@ -9,7 +9,7 @@ by row.
 ## Usage
 
 ``` r
-plot_density(at, over = NULL, n_grid = 200, scale = 0.9)
+plot_density(at, over = NULL, n_grid = 200, scale = 0.9, legend = TRUE)
 ```
 
 ## Arguments
@@ -32,6 +32,10 @@ plot_density(at, over = NULL, n_grid = 200, scale = 0.9)
   With `over`, the width of the widest density as a fraction of the
   smallest gap between positions (of 15 per cent of the range of the
   covariate for a single row).
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

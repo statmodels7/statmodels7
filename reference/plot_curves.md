@@ -2,13 +2,13 @@
 
 Selects the graph of a random smooth, `random(~ s(x) | g)`: one thin
 curve for each level of the grouping factor, over the range of the
-variable within that level. The graph reads the covariates and requires
-`data`.
+variable within that level, and optionally the population curve as a
+thick line. The graph reads the covariates and requires `data`.
 
 ## Usage
 
 ``` r
-plot_curves(n_grid = 100, population = FALSE)
+plot_curves(n_grid = 100, population = FALSE, legend = TRUE)
 ```
 
 ## Arguments
@@ -19,7 +19,12 @@ plot_curves(n_grid = 100, population = FALSE)
 
 - population:
 
-  Whether to add the population smooth of the variable.
+  Whether to draw the population curve \\s(x)\\ as well; it requires a
+  smooth of the variable in the equation.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 
@@ -28,14 +33,12 @@ A `PlotCurves` object, inheriting from
 
 ## Details
 
-The curve of a level is its contribution to the predictor of the
-equation, \\g_j(x) = a\_{0j} + N(x) a_j + Z(x) \delta_j\\, the departure
-of the level from the curve that the other terms of the equation
-describe. It is centred around zero and does not include the population
-curve. With `population = TRUE` the population curve, taken from the
-single smooth of the same variable in the same equation, is added to
-each curve and drawn as a thick line, so that the curves are the curves
-of the levels.
+The contribution of a level to the predictor of the equation is \\g_j(x)
+= a\_{0j} + N(x) a_j + Z(x) \delta_j\\, its departure from the
+population curve \\s(x)\\, which is the single smooth of the same
+variable in the same equation. The curve of a level is \\s(x) +
+g_j(x)\\. When the equation has no smooth of the variable, the curve of
+a level is \\g_j(x)\\ alone.
 
 ## See also
 

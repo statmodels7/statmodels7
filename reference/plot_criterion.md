@@ -14,7 +14,12 @@ second axis.
 ## Usage
 
 ``` r
-plot_criterion(log_lambda = NULL, method = "refit", hyper = NULL)
+plot_criterion(
+  log_lambda = NULL,
+  method = "refit",
+  hyper = NULL,
+  legend = TRUE
+)
 ```
 
 ## Arguments
@@ -31,6 +36,10 @@ plot_criterion(log_lambda = NULL, method = "refit", hyper = NULL)
 - hyper:
 
   `NULL`, or the name of the hyperparameter of the term.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

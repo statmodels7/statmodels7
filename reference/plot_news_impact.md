@@ -9,7 +9,7 @@ observation.
 ## Usage
 
 ``` r
-plot_news_impact(range = c(-6, 6), at = NULL, n_points = 401)
+plot_news_impact(range = c(-6, 6), at = NULL, n_points = 401, legend = TRUE)
 ```
 
 ## Arguments
@@ -27,6 +27,10 @@ plot_news_impact(range = c(-6, 6), at = NULL, n_points = 401)
 - n_points:
 
   The number of points of the grid of \\z\\.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

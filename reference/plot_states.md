@@ -8,7 +8,7 @@ series.
 ## Usage
 
 ``` r
-plot_states(smoothed = TRUE)
+plot_states(smoothed = TRUE, legend = TRUE)
 ```
 
 ## Arguments
@@ -17,6 +17,10 @@ plot_states(smoothed = TRUE)
 
   Whether to draw the smoothed probabilities (`TRUE`) or the filtered
   ones (`FALSE`).
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

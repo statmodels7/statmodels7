@@ -50,5 +50,5 @@ dd$y <- 1 + dd$x + rnorm(40, sd = 0.3)
 fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 formula(fit)
 #> y ~ x | sigma ~ x
-#> <environment: 0x559e1856b638>
+#> <environment: 0x55e1a28c6f10>
 ```

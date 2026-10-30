@@ -7,7 +7,7 @@ instantiates. Use the constructor, which checks the properties.
 ## Usage
 
 ``` r
-PlotStates(label = character(0), smoothed = logical(0))
+PlotStates(label = character(0), legend = TRUE, smoothed = logical(0))
 ```
 
 ## Arguments

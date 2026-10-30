@@ -16,7 +16,8 @@ plot_surface(
   slices = NULL,
   level = 0.95,
   vcov_type = bayesian_vcov(),
-  n_grid = 60
+  n_grid = 60,
+  legend = TRUE
 )
 ```
 
@@ -45,6 +46,10 @@ plot_surface(
 - n_grid:
 
   The number of points of the grid of each variable.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

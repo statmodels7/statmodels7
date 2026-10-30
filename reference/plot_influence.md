@@ -12,7 +12,8 @@ plot_influence(
   param,
   measure = "cook",
   adjust = TRUE,
-  information = distributions7::expected_info()
+  information = distributions7::expected_info(),
+  legend = TRUE
 )
 ```
 
@@ -37,6 +38,10 @@ plot_influence(
   (the default) or
   [`distributions7::observed_info()`](https://statmodels7.github.io/distributions7/reference/observed_info.html),
   the matrix of the variance and of the weights \\w_i\\.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

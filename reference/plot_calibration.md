@@ -12,7 +12,8 @@ plot_calibration(
   over = NULL,
   n_inter = 4,
   level = 0.95,
-  seed = NULL
+  seed = NULL,
+  legend = TRUE
 )
 ```
 
@@ -37,6 +38,10 @@ plot_calibration(
 - seed:
 
   A single number that seeds the randomization, or `NULL`.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

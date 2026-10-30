@@ -12,7 +12,8 @@ plot_quantiles(
   probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
   at = NULL,
   points = TRUE,
-  n_grid = 200
+  n_grid = 200,
+  legend = TRUE
 )
 ```
 
@@ -37,6 +38,10 @@ plot_quantiles(
 - n_grid:
 
   The number of points of the grid of a numeric covariate.
+
+- legend:
+
+  Whether to draw the legend that names the elements of the graph.
 
 ## Value
 

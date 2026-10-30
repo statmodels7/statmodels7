@@ -9,6 +9,7 @@ instantiates. Use the constructor, which checks the properties.
 ``` r
 PlotDerivative(
   label = character(0),
+  legend = TRUE,
   order = integer(0),
   level = integer(0),
   simultaneous = logical(0),
