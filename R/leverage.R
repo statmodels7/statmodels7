@@ -219,7 +219,18 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' \deqn{H_{ii} = W_i^{1/2} Z_i K^{-1} Z_i' W_i^{1/2}.}
 #' It is symmetric, and for an unpenalized fit with \eqn{W} the information
 #' at the estimate it is a projection, so that \eqn{\sum_i \mathrm{tr}\,
-#' H_{ii} = P}. With penalties the sum is the effective degrees of freedom.
+#' H_{ii} = P}. With penalties the sum is
+#' \eqn{\mathrm{tr}\{(\mathcal I + S)^{-1}\mathcal I\}}, the effective degrees
+#' of freedom computed on the information \eqn{\mathcal I} that the leverage
+#' reads. It equals the degrees of freedom of the fit (`fit@edf`) when the fit
+#' reads the same information. The fit reads the information of its outer
+#' criterion, observed by default ([reml()]), while the leverage reads the
+#' expected one. The two sums then coincide where the observed and the
+#' expected information coincide at the estimate, as for a generalized linear
+#' model with the canonical link and no scale parameter, and they differ
+#' otherwise, by much for a penalized model with an equation for the scale
+#' and slightly for a Gaussian model whose scale [reml()] estimates. They
+#' coincide when [reml()] is given `information = expected_info()`.
 #'
 #' For a Gaussian linear model with a constant scale and the expected
 #' information, the block of the mean equation is the scalar

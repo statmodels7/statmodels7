@@ -104,8 +104,10 @@ for the family. With the observed information, an observation whose matrix
 \eqn{W_i} is indefinite contributes the positive part, with the
 pseudo-inverse root (\code{\link[=statmod_leverage]{statmod_leverage()}} returns how many observations
 that concerns). With penalties the leverage is that of
-the penalized fit, so that the sum of the traces is the effective degrees of
-freedom of the model. Prior weights, random effects, aliased coordinates
+the penalized fit, and the sum of the traces is the effective degrees of
+freedom computed on the information of the leverage, which equals the
+degrees of freedom of the fit only when the fit reads the same information
+(\code{\link[=statmod_leverage]{statmod_leverage()}} gives the conditions). Prior weights, random effects, aliased coordinates
 and the models that are rejected are treated as at \code{\link[=hc0_sandwich]{hc0_sandwich()}}. Prior
 weights enter the leverage through \eqn{W_i}; without a cluster the leverage
 of one of the \eqn{w_i} copies of a row is \eqn{1/w_i} times that of the
