@@ -4,7 +4,7 @@
 \alias{plot_density}
 \title{Graph of Fitted Densities at Chosen Covariate Values}
 \usage{
-plot_density(at, over = NULL, n_grid = 200, scale = 0.9)
+plot_density(at, over = NULL, n_grid = 200, scale = 0.9, legend = TRUE)
 }
 \arguments{
 \item{at}{A data frame of covariate values, one fitted distribution per
@@ -19,6 +19,9 @@ family.}
 \item{scale}{With \code{over}, the width of the widest density as a fraction of
 the smallest gap between positions (of 15 per cent of the range of the
 covariate for a single row).}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotDensity} object, inheriting from \link{model_plot}.

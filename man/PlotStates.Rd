@@ -4,7 +4,7 @@
 \alias{PlotStates}
 \title{S7 Class of the State-Probability Graph}
 \usage{
-PlotStates(label = character(0), smoothed = logical(0))
+PlotStates(label = character(0), legend = TRUE, smoothed = logical(0))
 }
 \arguments{
 \item{label, smoothed}{See \code{\link[=plot_states]{plot_states()}}.}

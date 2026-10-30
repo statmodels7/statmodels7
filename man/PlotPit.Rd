@@ -6,6 +6,7 @@
 \usage{
 PlotPit(
   label = character(0),
+  legend = TRUE,
   bins = integer(0),
   seed = NULL,
   level = integer(0)

@@ -6,6 +6,7 @@
 \usage{
 PlotQq(
   label = character(0),
+  legend = TRUE,
   band = character(0),
   level = integer(0),
   n_sim = integer(0),

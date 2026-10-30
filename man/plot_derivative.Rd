@@ -11,7 +11,8 @@ plot_derivative(
   n_sim = 10000,
   seed = NULL,
   vcov_type = bayesian_vcov(),
-  n_grid = 200
+  n_grid = 200,
+  legend = TRUE
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ the random number generator is restored afterwards.}
 \item{vcov_type}{A \link{vcov_method} object, the variance of the band.}
 
 \item{n_grid}{The number of points of the grid of the variable.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotDerivative} object, inheriting from \link{term_plot}.

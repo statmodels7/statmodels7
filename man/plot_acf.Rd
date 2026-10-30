@@ -2,35 +2,75 @@
 % Please edit documentation in R/plot_diagnostic.R
 \name{plot_acf}
 \alias{plot_acf}
+\alias{plot_pacf}
 \title{Autocorrelation of the Residuals}
 \usage{
-plot_acf(lag_max = 30, squared = FALSE, seed = NULL)
+plot_acf(
+  lag_max = 30,
+  squared = FALSE,
+  by = NULL,
+  time = NULL,
+  seed = NULL,
+  legend = TRUE
+)
+
+plot_pacf(
+  lag_max = 30,
+  squared = FALSE,
+  by = NULL,
+  time = NULL,
+  seed = NULL,
+  legend = TRUE
+)
 }
 \arguments{
 \item{lag_max}{The largest lag.}
 
 \item{squared}{Whether to use the squared residuals.}
 
+\item{by}{\code{NULL}, or the name of the variable of the data that divides the
+observations into separate series.}
+
+\item{time}{\code{NULL}, or the name of the variable of the data that orders the
+observations within a series.}
+
 \item{seed}{A single number that seeds the randomization, or \code{NULL}.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotAcf} object, inheriting from \link{diagnostic_plot}.
 }
 \description{
-Selects the graph of the sample autocorrelation of the quantile residuals,
-or of their squares, in the order of the observations, with the limits
-\eqn{\pm 1.96/\sqrt{n}}.
+\code{plot_acf()} selects the graph of the sample autocorrelation of the
+quantile residuals, or of their squares, and \code{plot_pacf()} the graph of
+their partial autocorrelation, with the limits \eqn{\pm 1.96/\sqrt{N}}.
+The series are the observations of each group in time order, and the
+autocorrelation is pooled over the groups.
 }
 \details{
-The autocorrelations are those of \code{\link[stats:acf]{stats::acf()}} at the lags 1 to
-\code{lag_max}. Under a correct model with independent observations the quantile
-residuals are independent standard normal variables, the autocorrelations
-have standard deviation near \eqn{1/\sqrt{n}}, and about five percent of
-them fall outside the limits. The autocorrelation of the squares
-(\code{squared = TRUE}) detects a variance that depends on the past. The order is
-the row order of the data, so the graph is meaningful for a series, or for
-data sorted within a panel; for a discrete family the residuals are
-randomized and \code{seed} makes them reproducible.
+With residuals \eqn{e_{gt}} for the group \eqn{g} at the position \eqn{t}
+of its series, and \eqn{\bar e} their mean over all \eqn{N} observations,
+the autocorrelation at lag \eqn{k} is
+\deqn{r_k = \frac{\sum_g \sum_t (e_{gt} - \bar e)(e_{g,t+k} - \bar e)}
+  {\sum_g \sum_t (e_{gt} - \bar e)^2},}
+where the numerator sums the pairs that lie in the same group at distance
+\eqn{k} and the denominator sums every observation. Each pair counts once,
+so a long series weighs more than a short one, and with one group
+\eqn{r_k} is the autocorrelation of \code{\link[stats:acf]{stats::acf()}}. The partial
+autocorrelations are computed from \eqn{r_1, \dots, r_K} by the
+Durbin-Levinson recursion. Under a correct model the quantile residuals are
+independent standard normal variables, \eqn{r_k} has standard deviation
+near \eqn{1/\sqrt{N}}, and about five percent of the values fall outside
+the limits. The autocorrelation of the squares (\code{squared = TRUE}) detects a
+variance that depends on the past.
+
+The groups and the order are taken from \code{by} and \code{time} when they are
+given; otherwise from the \code{\link[modelterms7:gas]{modelterms7::gas()}} or \code{\link[modelterms7:regime]{modelterms7::regime()}}
+term of the fit, if there is one; otherwise the observations form one
+series in the row order of the data. For a discrete family the residuals
+are randomized and \code{seed} makes them reproducible.
 }
 \examples{
 set.seed(1)
@@ -38,6 +78,12 @@ dd <- data.frame(t = 1:150)
 dd$y <- as.numeric(arima.sim(list(ar = 0.5), n = 150))
 fit <- statmod(y ~ 1, distributions7::gaussian1_distrib(), dd)
 ggplot2::autoplot(fit, plot_type = plot_acf(lag_max = 20))
+ggplot2::autoplot(fit, plot_type = plot_pacf(lag_max = 20))
+
+# three series of 50 observations, stored one after the other
+dd$id <- rep(1:3, each = 50)
+ggplot2::autoplot(fit, plot_type = plot_acf(by = "id", time = "t"),
+                  data = dd)
 }
 \seealso{
 \code{\link[=plot_residuals]{plot_residuals()}}, \code{\link[=diagnostics]{diagnostics()}}

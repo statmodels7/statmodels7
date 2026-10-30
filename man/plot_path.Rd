@@ -4,7 +4,11 @@
 \alias{plot_path}
 \title{Graph of the Coefficient Paths of a Penalized Block}
 \usage{
-plot_path(log_lambda = NULL, information = distributions7::expected_info())
+plot_path(
+  log_lambda = NULL,
+  information = distributions7::expected_info(),
+  legend = TRUE
+)
 }
 \arguments{
 \item{log_lambda}{\code{NULL}, or an increasing numeric vector of values of
@@ -13,6 +17,9 @@ plot_path(log_lambda = NULL, information = distributions7::expected_info())
 \item{information}{An object from \code{\link[distributions7:expected_info]{distributions7::expected_info()}} (the
 default) or \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the information of the
 log-likelihood in the closed form of a quadratic penalty.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotPath} object, inheriting from \link{term_plot}.

@@ -4,7 +4,12 @@
 \alias{PlotRegimeDensity}
 \title{S7 Class of the Regime-Density Graph}
 \usage{
-PlotRegimeDensity(label = character(0), at = NULL, n_grid = integer(0))
+PlotRegimeDensity(
+  label = character(0),
+  legend = TRUE,
+  at = NULL,
+  n_grid = integer(0)
+)
 }
 \arguments{
 \item{label, at, n_grid}{See \code{\link[=plot_regime_density]{plot_regime_density()}}.}

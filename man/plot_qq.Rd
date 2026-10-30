@@ -4,7 +4,7 @@
 \alias{plot_qq}
 \title{Quantile-Quantile Graph of the Residuals}
 \usage{
-plot_qq(band = "order", level = 0.95, n_sim = 99, seed = NULL)
+plot_qq(band = "order", level = 0.95, n_sim = 99, seed = NULL, legend = TRUE)
 }
 \arguments{
 \item{band}{\code{"order"} (the default) or \code{"simulated"}.}
@@ -15,6 +15,9 @@ plot_qq(band = "order", level = 0.95, n_sim = 99, seed = NULL)
 
 \item{seed}{A single number that seeds the randomization and the
 simulation, or \code{NULL} for the ambient state.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotQq} object, inheriting from \link{diagnostic_plot}.

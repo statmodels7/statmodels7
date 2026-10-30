@@ -72,6 +72,9 @@ PlotPath <- S7::new_class("PlotPath", parent = term_plot,
 #'   default) or [distributions7::observed_info()], the information of the
 #'   log-likelihood in the step.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotShrinkage` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_path()], [plot_caterpillar()]
@@ -86,13 +89,14 @@ PlotPath <- S7::new_class("PlotPath", parent = term_plot,
 #'                   plot_type = plot_shrinkage())
 #' @export
 plot_shrinkage <- function(sort = TRUE,
-                           information = distributions7::expected_info()) {
+                           information = distributions7::expected_info(),
+                           legend = TRUE) {
   if (!is.logical(sort) || length(sort) != 1L || is.na(sort)) {
     stop("'sort' must be TRUE or FALSE.", call. = FALSE)
   }
   check_plot_information(information)
   PlotShrinkage(label = "plot_shrinkage()", sort = sort,
-                information = information)
+                information = information, legend = check_legend(legend))
 }
 
 
@@ -133,6 +137,9 @@ plot_shrinkage <- function(sort = TRUE,
 #'   default) or [distributions7::observed_info()], the information of the
 #'   log-likelihood in the closed form of a quadratic penalty.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotPath` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_shrinkage()]
@@ -146,7 +153,8 @@ plot_shrinkage <- function(sort = TRUE,
 #' ggplot2::autoplot(fit, term = "lasso(~x1 + x2 + x3)", plot_type = plot_path())
 #' @export
 plot_path <- function(log_lambda = NULL,
-                      information = distributions7::expected_info()) {
+                      information = distributions7::expected_info(),
+                      legend = TRUE) {
   if (!is.null(log_lambda) &&
       (!is.numeric(log_lambda) || length(log_lambda) < 2L ||
        any(!is.finite(log_lambda)) || is.unsorted(log_lambda, strictly = TRUE))) {
@@ -155,7 +163,7 @@ plot_path <- function(log_lambda = NULL,
   }
   check_plot_information(information)
   PlotPath(label = "plot_path()", log_lambda = log_lambda,
-           information = information)
+           information = information, legend = check_legend(legend))
 }
 
 
@@ -342,8 +350,8 @@ shrinkage_data <- function(type, x, fit, ctx) {
 S7::method(plot_layers, PlotShrinkage) <- function(type, data, ...) {
   d <- data$estimates
   k_pen <- "penalized estimate"
-  k_unp <- "estimate without the penalty of the term"
-  k_arr <- "shrinkage by the penalty"
+  k_unp <- "non-penalized estimate"
+  k_arr <- "shrinkage"
   list(
     ggplot2::geom_vline(xintercept = 0, linetype = "dotted", colour = "grey50"),
     ggplot2::geom_segment(
@@ -537,7 +545,7 @@ quadratic_path <- function(fit, sys, u, lam_hat, log_lambda) {
 
 S7::method(plot_layers, PlotPath) <- function(type, data, ...) {
   k_fit <- "fitted lambda"
-  k_cnt <- "number of nonzero coefficients (right axis)"
+  k_cnt <- "number of nonzero coefficients"
   out <- list(
     ggplot2::geom_hline(yintercept = 0, colour = "grey70"),
     ggplot2::geom_line(data = data$paths,
@@ -555,8 +563,9 @@ S7::method(plot_layers, PlotPath) <- function(type, data, ...) {
       name = NULL, values = stats::setNames(c("dashed", "dotted"),
                                             c(k_fit, k_cnt)),
       breaks = c(k_fit, k_cnt)),
-    ggplot2::guides(colour = ggplot2::guide_legend(order = 1)),
-    plot_key_theme()
+    # the coefficients are named in the legend only while it stays readable
+    ggplot2::guides(colour = if (nlevels(factor(data$paths$coef)) <= 12L)
+      ggplot2::guide_legend(order = 1) else "none")
   )
   if (nrow(data$count)) {
     sc <- attr(data, "count_scale")

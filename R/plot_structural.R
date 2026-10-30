@@ -175,7 +175,7 @@ moving_effect_data <- function(type, tm, fit, ctx) {
         bins <- bins[stats::complete.cases(bins), , drop = FALSE]
       }
     }
-    ylab <- sprintf("effect on the predictor of %s", ctx$param)
+    ylab <- sprintf("effect on the link scale of %s", ctx$param)
   }
   rug <- if (type@rug && kind == "numeric") data.frame(x = data[[var]])
     else data.frame(x = numeric(0))
@@ -206,7 +206,7 @@ S7::method(plot_data, list(PlotEffect, modelterms7::NlTerm)) <-
 #' The class that [plot_breakpoint()] instantiates. Use the constructor, which
 #' checks the properties.
 #'
-#' @param label,profile,test,level,vcov_type,information,n_grid,n_profile
+#' @param label,legend,test,level,vcov_type,information,n_grid,n_profile
 #'   See [plot_breakpoint()].
 #'
 #' @return A `PlotBreakpoint` object, inheriting from [term_plot].
@@ -215,7 +215,6 @@ S7::method(plot_data, list(PlotEffect, modelterms7::NlTerm)) <-
 #' @keywords internal
 PlotBreakpoint <- S7::new_class("PlotBreakpoint", parent = term_plot,
   properties = list(
-    profile = S7::class_logical,
     test = S7::class_any,
     level = S7::class_numeric,
     vcov_type = S7::class_any,
@@ -231,9 +230,8 @@ PlotBreakpoint <- S7::new_class("PlotBreakpoint", parent = term_plot,
 #' Selects the graph of a break-point term ([modelterms7::seg()],
 #' [modelterms7::jump()] or [modelterms7::jseg()]): the contribution of the
 #' term as a function of its variable, with the partial residuals, each
-#' break-point as a dashed vertical line, its confidence interval as a bar at
-#' the bottom of the graph, and an inset with the profile of the criterion over
-#' the position of the break-point.
+#' break-point as a dashed vertical line, and its confidence interval as a bar
+#' at the bottom of the graph.
 #'
 #' @details
 #' The contribution and its band are those of [plot_effect()] for a term whose
@@ -252,7 +250,7 @@ PlotBreakpoint <- S7::new_class("PlotBreakpoint", parent = term_plot,
 #' [modelterms7::jump()] or [modelterms7::jseg()] term is read off other
 #' coefficients and has no coordinate to invert a test on; its interval is
 #' the set of positions, connected to the estimate, at which the profile
-#' described below stays under the cutoff.
+#' described below stays under the cutoff \eqn{\chi^2_{1}(\text{level})}.
 #'
 #' The profile is computed on the working response of the equation,
 #' \eqn{y_i^* = f(x_i) + s_i / w_i}, where \eqn{s_i} is the score of the
@@ -261,27 +259,28 @@ PlotBreakpoint <- S7::new_class("PlotBreakpoint", parent = term_plot,
 #' positions and the other terms of the equation at their fitted values,
 #' \eqn{R(\psi_k)} is the weighted residual sum of squares of \eqn{y^*} on an
 #' intercept, the linear column and the columns of the term, as computed by
-#' [modelterms7::seg_profile_rss()]. The inset shows
-#' \eqn{R(\psi_k) - \min R}, the increase of the criterion in the units of the
-#' log-likelihood, against the cutoff \eqn{\chi^2_{1}(\text{level})} (dotted
-#' line). For a gaussian mean it is the likelihood ratio statistic; for other
-#' families it is its quadratic approximation at the fit.
+#' [modelterms7::seg_profile_rss()], and \eqn{R(\psi_k) - \min R} is the
+#' increase of the criterion in the units of the log-likelihood. For a
+#' gaussian mean it is the likelihood ratio statistic; for other families it
+#' is its quadratic approximation at the fit.
 #'
 #' A term whose break-points are developed over covariates has one position per
 #' observation and no single profile, and a marginal break-point term has a
 #' distribution of positions per group; both signal an error.
 #'
-#' @param profile Whether to draw the inset with the profile.
 #' @param test A test object ([wald_test()], [lr_test()] and others), the test
 #'   inverted for the interval of a break-point.
-#' @param level The confidence level of the band, of the intervals and of the
-#'   cutoff of the profile.
+#' @param level The confidence level of the band and of the intervals.
 #' @param vcov_type A [vcov_method] object, the variance of the band.
 #' @param information An object from [distributions7::expected_info()] (the
 #'   default) or [distributions7::observed_info()], the weight of the working
 #'   response.
 #' @param n_grid The number of points of the grid of the variable.
-#' @param n_profile The number of positions at which the profile is computed.
+#' @param n_profile The number of positions at which the profile of a
+#'   [modelterms7::jump()] or [modelterms7::jseg()] position is computed.
+#'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
 #'
 #' @return A `PlotBreakpoint` object, inheriting from [term_plot].
 #'
@@ -294,16 +293,12 @@ PlotBreakpoint <- S7::new_class("PlotBreakpoint", parent = term_plot,
 #' fit <- statmod(y ~ seg(x, npsi = 1), distributions7::gaussian1_distrib(), dd)
 #' ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd)
 #' ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd,
-#'                   plot_type = plot_breakpoint(profile = FALSE,
-#'                                          test = wald_test()))
+#'                   plot_type = plot_breakpoint(test = wald_test()))
 #' @export
-plot_breakpoint <- function(profile = TRUE, test = lr_test(), level = 0.95,
+plot_breakpoint <- function(test = lr_test(), level = 0.95,
                             vcov_type = bayesian_vcov(),
                             information = distributions7::expected_info(),
-                            n_grid = 200, n_profile = 100) {
-  if (!is.logical(profile) || length(profile) != 1L || is.na(profile)) {
-    stop("'profile' must be TRUE or FALSE.", call. = FALSE)
-  }
+                            n_grid = 200, n_profile = 100, legend = TRUE) {
   test <- as_test_statistic(test)
   check_level_grid(level, n_grid)
   if (!is.numeric(n_profile) || length(n_profile) != 1L ||
@@ -317,10 +312,10 @@ plot_breakpoint <- function(profile = TRUE, test = lr_test(), level = 0.95,
     stop("'information' must be expected_info() or observed_info().",
          call. = FALSE)
   }
-  PlotBreakpoint(label = "plot_breakpoint()", profile = profile, test = test,
+  PlotBreakpoint(label = "plot_breakpoint()", test = test,
                  level = level, vcov_type = vcov_type,
                  information = information, n_grid = n_grid,
-                 n_profile = n_profile)
+                 n_profile = n_profile, legend = check_legend(legend))
 }
 
 
@@ -401,10 +396,9 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
                           k = integer(0))
     cutoff <- data.frame(cutoff = stats::qchisq(type@level, 1))
     # a jump() or jseg() position has no coefficient of its own, so its
-    # interval is read from the profile, which is then computed even when the
-    # inset is not drawn
+    # interval is read from the profile
     from_profile <- !identical(x@kind, "seg")
-    if (type@profile || from_profile) {
+    if (from_profile) {
       wp <- working_parts(fit, ctx$param, type@information)
       yn <- modelterms7::term_value(x) + wp$wr
       w <- fit@spec@weights * wp$w
@@ -433,7 +427,6 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
         breaks$upper[k] <- iv[2L]
       }
     }
-    if (!type@profile) profile <- profile[0L, , drop = FALSE]
     # a limit the data do not bound is infinite, and the bar is drawn to the
     # edge of the variable's range
     rng <- range(x@build_info$xv)
@@ -445,7 +438,7 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::SegTerm)) <-
                                                 if (is.null(ctx$title))
                                                   ctx$name else ctx$title),
                                 x = var,
-                                y = sprintf("effect on the predictor of %s",
+                                y = sprintf("effect on the link scale of %s",
                                             ctx$param))
     out
   }
@@ -461,10 +454,8 @@ S7::method(plot_data, list(PlotBreakpoint, modelterms7::MarginalBreakTerm)) <-
 
 S7::method(plot_layers, PlotBreakpoint) <- function(type, data, ...) {
   k_pts <- "partial residuals"
-  k_fit <- "estimated effect"
-  k_band <- band_label(type@level)
-  k_psi <- "estimated break-point"
-  k_int <- band_label(type@level, "interval of the break-point")
+  k_fit <- est_label("estimated effect", type@level)
+  k_psi <- est_label("estimated break-point", type@level)
   out <- list()
   if (nrow(data$points)) {
     out <- c(out, list(ggplot2::geom_point(
@@ -476,13 +467,12 @@ S7::method(plot_layers, PlotBreakpoint) <- function(type, data, ...) {
     ggplot2::geom_ribbon(data = data$curve,
                          mapping = ggplot2::aes(x = .data$x,
                                                 ymin = .data$lower,
-                                                ymax = .data$upper,
-                                                fill = k_band),
-                         alpha = 0.18),
+                                                ymax = .data$upper),
+                         fill = "#1f5fa8", alpha = 0.18),
     ggplot2::geom_line(data = data$curve,
                        mapping = ggplot2::aes(x = .data$x, y = .data$fit,
                                               colour = k_fit),
-                       linewidth = 0.9),
+                       linewidth = 0.9, key_glyph = draw_key_band),
     ggplot2::geom_vline(data = data$breaks,
                         mapping = ggplot2::aes(xintercept = .data$psi,
                                                colour = k_psi),
@@ -492,76 +482,11 @@ S7::method(plot_layers, PlotBreakpoint) <- function(type, data, ...) {
     out <- c(out, list(ggplot2::geom_segment(
       data = data$breaks[has, , drop = FALSE],
       mapping = ggplot2::aes(x = .data$from, xend = .data$to,
-                             y = .data$y, yend = .data$y, colour = k_int),
+                             y = .data$y, yend = .data$y, colour = k_psi),
       linewidth = 1.6)))
   }
-  out <- c(out, plot_key(
-    colour = stats::setNames(c("#1f5fa8", "grey30", "#b2182b", "#b2182b"),
-                             c(k_fit, k_pts, k_psi, k_int)),
-    fill = stats::setNames("#1f5fa8", k_band)))
-  if (nrow(data$profile)) {
-    out <- c(out, breakpoint_inset(data, type@level))
-  }
-  out
-}
-
-
-#' The Profile Inset of the Break-Point Graph
-#'
-#' @description
-#' Builds the layers of the inset: a small ggplot of the profile, placed with
-#' `ggplot2::annotation_custom()` in a band above the data, and a blank layer
-#' that extends the vertical axis to make room for it. The inset is on the
-#' side of the graph, left or right, where the data above their middle are
-#' fewer.
-#'
-#' @param data The list returned by the [plot_data()] method of
-#'   [plot_breakpoint()].
-#' @param level The level of the cutoff, which the title of the inset names.
-#'
-#' @return A list of ggplot2 components.
-#'
-#' @keywords internal
-breakpoint_inset <- function(data, level) {
-  pr <- data$profile
-  ct <- data$cutoff$cutoff
-  cap <- max(3 * ct, 1)
-  pp <- ggplot2::ggplot(pr, ggplot2::aes(x = .data$x, y = .data$delta,
-                                         group = .data$k)) +
-    ggplot2::geom_hline(yintercept = ct, colour = "#b2182b",
-                        linetype = "dotted") +
-    ggplot2::geom_vline(data = data$breaks,
-                        mapping = ggplot2::aes(xintercept = .data$psi),
-                        colour = "#b2182b", linetype = "dashed",
-                        linewidth = 0.3) +
-    ggplot2::geom_line(colour = "#1f5fa8") +
-    ggplot2::coord_cartesian(ylim = c(0, cap)) +
-    ggplot2::labs(x = NULL, y = NULL,
-                  title = sprintf(paste0("profile of the criterion over the ",
-                                         "break-point; dotted: cutoff of the ",
-                                         "%s interval"),
-                                  paste0(format(100 * level), "%"))) +
-    ggplot2::theme_bw(base_size = 7) +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 6),
-                   plot.margin = ggplot2::margin(2, 2, 0, 2))
-  xr <- range(c(data$curve$x, data$points$x))
-  ys <- c(data$points$y, data$curve$lower, data$curve$upper, data$breaks$y)
-  yr <- range(ys[is.finite(ys)])
-  dx <- diff(xr)
-  dy <- diff(yr)
-  mid <- mean(xr)
-  top <- data$points$y > mean(yr)
-  left <- sum(data$points$x[top] < mid)
-  right <- sum(data$points$x[top] >= mid)
-  x0 <- if (left <= right) xr[1L] + 0.01 * dx else mid + 0.01 * dx
-  y0 <- yr[2L] + 0.03 * dy
-  box <- ggplot2::annotation_custom(ggplot2::ggplotGrob(pp), xmin = x0,
-                                    xmax = x0 + 0.49 * dx, ymin = y0,
-                                    ymax = y0 + 0.42 * dy)
-  blank <- ggplot2::geom_blank(
-    data = data.frame(x = mid, y = yr[2L] + 0.46 * dy),
-    mapping = ggplot2::aes(x = .data$x, y = .data$y))
-  list(blank, box)
+  c(out, plot_key(colour = stats::setNames(c("#1f5fa8", "grey30", "#b2182b"),
+                                           c(k_fit, k_pts, k_psi))))
 }
 
 
@@ -622,6 +547,9 @@ PlotFilter <- S7::new_class("PlotFilter", parent = term_plot,
 #'   (the levels of the `by` variable as text).
 #' @param vcov_type A [vcov_method] object, the variance of the band.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotFilter` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_news_impact()]
@@ -644,7 +572,8 @@ PlotFilter <- S7::new_class("PlotFilter", parent = term_plot,
 #'                   plot_type = plot_filter(response = TRUE))
 #' @export
 plot_filter <- function(level = 0.95, scale = "response", response = FALSE,
-                        groups = NULL, vcov_type = bayesian_vcov()) {
+                        groups = NULL, vcov_type = bayesian_vcov(),
+                        legend = TRUE) {
   check_level_grid(level, 2)
   scale <- match.arg(scale, c("response", "link"))
   if (!is.logical(response) || length(response) != 1L || is.na(response)) {
@@ -661,7 +590,8 @@ plot_filter <- function(level = 0.95, scale = "response", response = FALSE,
   if (!is.null(groups)) groups <- as.character(groups)
   vcov_type <- as_vcov_method(vcov_type)
   PlotFilter(label = "plot_filter()", level = level, scale = scale,
-             response = response, groups = groups, vcov_type = vcov_type)
+             response = response, groups = groups, vcov_type = vcov_type,
+             legend = check_legend(legend))
 }
 
 
@@ -692,6 +622,18 @@ filter_data <- function(type, bp, params, fit, ctx) {
     if (is.matrix(spec@response)) {
       stop("'response = TRUE' needs a response that is a vector.",
            call. = FALSE)
+    }
+    # the response shares the axis of the parameter only where the parameter
+    # is the mean of the family, which is checked on the fitted values and
+    # not assumed from the position of the parameter
+    m <- tryCatch(as.numeric(predict(fit, what = "mean")),
+                  error = function(e) NULL)
+    th <- as.numeric(fit@fitted[[params]])
+    if (is.null(m) || type@scale == "link" ||
+        !isTRUE(all.equal(m, rep_len(th, length(m)), tolerance = 1e-8))) {
+      stop(sprintf(paste0("response = TRUE draws the response on the axis of ",
+                          "the filtered parameter, and '%s' is not the mean ",
+                          "of the family."), params), call. = FALSE)
     }
   }
   n <- spec@n_obs
@@ -766,9 +708,8 @@ S7::method(plot_data, list(PlotFilter, modelterms7::GasJoint)) <-
 S7::method(plot_layers, PlotFilter) <- function(type, data, ...) {
   path <- data$path
   k_obs <- "observed response"
-  k_fit <- if (type@scale == "link") "filtered predictor"
-    else "filtered parameter"
-  k_band <- band_label(type@level)
+  k_fit <- est_label(if (type@scale == "link") "filtered predictor"
+                     else "filtered parameter", type@level)
   out <- list()
   if (nrow(data$obs)) {
     out <- c(out, list(ggplot2::geom_point(
@@ -779,15 +720,15 @@ S7::method(plot_layers, PlotFilter) <- function(type, data, ...) {
   if (any(is.finite(path$lower) & is.finite(path$upper))) {
     out <- c(out, list(ggplot2::geom_ribbon(
       data = path, mapping = ggplot2::aes(x = .data$x, ymin = .data$lower,
-                                          ymax = .data$upper, fill = k_band),
-      alpha = 0.18)))
+                                          ymax = .data$upper),
+      fill = "#1f5fa8", alpha = 0.18)))
   }
   out <- c(out, list(ggplot2::geom_line(
     data = path, mapping = ggplot2::aes(x = .data$x, y = .data$fit,
                                         colour = k_fit),
-    linewidth = 0.8),
-    plot_key(colour = stats::setNames(c("#1f5fa8", "grey30"), c(k_fit, k_obs)),
-             fill = stats::setNames("#1f5fa8", k_band))))
+    linewidth = 0.8, key_glyph = draw_key_band),
+    plot_key(colour = stats::setNames(c("#1f5fa8", "grey30"),
+                                      c(k_fit, k_obs)))))
   ng <- nlevels(droplevels(path$group))
   np <- nlevels(droplevels(path$param))
   by <- strip_labeller(attr(data, "by"))
@@ -870,6 +811,9 @@ PlotNewsImpact <- S7::new_class("PlotNewsImpact", parent = term_plot,
 #'   predictor.
 #' @param n_points The number of points of the grid of \eqn{z}.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotNewsImpact` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_filter()]
@@ -891,7 +835,8 @@ PlotNewsImpact <- S7::new_class("PlotNewsImpact", parent = term_plot,
 #' ggplot2::autoplot(fit, term = "gas(p = 1, q = 1, time = t, scaling = 0.5)",
 #'                   plot_type = plot_news_impact())
 #' @export
-plot_news_impact <- function(range = c(-6, 6), at = NULL, n_points = 401) {
+plot_news_impact <- function(range = c(-6, 6), at = NULL, n_points = 401,
+                             legend = TRUE) {
   if (!is.numeric(range) || length(range) != 2L || anyNA(range) ||
       !all(is.finite(range)) || range[1L] >= range[2L]) {
     stop("'range' must be two increasing finite numbers.", call. = FALSE)
@@ -906,7 +851,7 @@ plot_news_impact <- function(range = c(-6, 6), at = NULL, n_points = 401) {
          call. = FALSE)
   }
   PlotNewsImpact(label = "plot_news_impact()", range = range, at = at,
-                 n_points = n_points)
+                 n_points = n_points, legend = check_legend(legend))
 }
 
 
@@ -1109,6 +1054,9 @@ PlotStates <- S7::new_class("PlotStates", parent = term_plot,
 #' @param smoothed Whether to draw the smoothed probabilities (`TRUE`) or the
 #'   filtered ones (`FALSE`).
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotStates` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_regime_density()],
@@ -1127,11 +1075,12 @@ PlotStates <- S7::new_class("PlotStates", parent = term_plot,
 #' ggplot2::autoplot(fit, term = "regime(k = 2, time = t)",
 #'                   plot_type = plot_states(smoothed = FALSE))
 #' @export
-plot_states <- function(smoothed = TRUE) {
+plot_states <- function(smoothed = TRUE, legend = TRUE) {
   if (!is.logical(smoothed) || length(smoothed) != 1L || is.na(smoothed)) {
     stop("'smoothed' must be TRUE or FALSE.", call. = FALSE)
   }
-  PlotStates(label = "plot_states()", smoothed = smoothed)
+  PlotStates(label = "plot_states()", smoothed = smoothed,
+             legend = check_legend(legend))
 }
 
 
@@ -1255,6 +1204,9 @@ PlotRegimeDensity <- S7::new_class("PlotRegimeDensity", parent = term_plot,
 #' @param n_grid The number of points of the grid of the response of a
 #'   continuous family.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotRegimeDensity` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_states()]
@@ -1271,7 +1223,7 @@ PlotRegimeDensity <- S7::new_class("PlotRegimeDensity", parent = term_plot,
 #' ggplot2::autoplot(fit, term = "regime(k = 2, time = t)",
 #'                   plot_type = plot_regime_density())
 #' @export
-plot_regime_density <- function(at = NULL, n_grid = 300) {
+plot_regime_density <- function(at = NULL, n_grid = 300, legend = TRUE) {
   if (!is.null(at) && (!is.numeric(at) || length(at) != 1L || is.na(at) ||
                        at < 1 || at != round(at))) {
     stop("'at' must be NULL or a row number.", call. = FALSE)
@@ -1281,7 +1233,8 @@ plot_regime_density <- function(at = NULL, n_grid = 300) {
     stop("'n_grid' must be a single whole number of at least 10.",
          call. = FALSE)
   }
-  PlotRegimeDensity(label = "plot_regime_density()", at = at, n_grid = n_grid)
+  PlotRegimeDensity(label = "plot_regime_density()", at = at, n_grid = n_grid,
+                    legend = check_legend(legend))
 }
 
 

@@ -76,6 +76,9 @@ PlotCurves <- S7::new_class("PlotCurves", parent = term_plot,
 #'   default) or [distributions7::observed_info()], the weight of the working
 #'   residuals.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotCaterpillar` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_prior()], [plot_random_cov()],
@@ -91,7 +94,8 @@ PlotCurves <- S7::new_class("PlotCurves", parent = term_plot,
 #' @export
 plot_caterpillar <- function(raw = TRUE, sort = TRUE, level = 0.95,
                              vcov_type = bayesian_vcov(),
-                             information = distributions7::expected_info()) {
+                             information = distributions7::expected_info(),
+                             legend = TRUE) {
   if (!is.logical(raw) || length(raw) != 1L || is.na(raw)) {
     stop("'raw' must be TRUE or FALSE.", call. = FALSE)
   }
@@ -103,7 +107,7 @@ plot_caterpillar <- function(raw = TRUE, sort = TRUE, level = 0.95,
   check_plot_information(information)
   PlotCaterpillar(label = "plot_caterpillar()", raw = raw, sort = sort,
                   level = level, vcov_type = vcov_type,
-                  information = information)
+                  information = information, legend = check_legend(legend))
 }
 
 
@@ -125,6 +129,9 @@ plot_caterpillar <- function(raw = TRUE, sort = TRUE, level = 0.95,
 #' predicted effects are shrunk towards zero, so their histogram is narrower
 #' than the prior.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotPrior` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_caterpillar()],
@@ -138,8 +145,8 @@ plot_caterpillar <- function(raw = TRUE, sort = TRUE, level = 0.95,
 #'                dd)
 #' ggplot2::autoplot(fit, term = "random(~1|id)", plot_type = plot_prior())
 #' @export
-plot_prior <- function() {
-  PlotPrior(label = "plot_prior()")
+plot_prior <- function(legend = TRUE) {
+  PlotPrior(label = "plot_prior()", legend = check_legend(legend))
 }
 
 
@@ -163,6 +170,9 @@ plot_prior <- function() {
 #' @param level The probability content of the ellipse.
 #' @param which The two coefficients within a level, by position.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotRandomCov` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_caterpillar()], [plot_prior()]
@@ -176,14 +186,15 @@ plot_prior <- function() {
 #'                dd)
 #' ggplot2::autoplot(fit, term = "random(~1+x|id)", plot_type = plot_random_cov())
 #' @export
-plot_random_cov <- function(level = 0.95, which = c(1, 2)) {
+plot_random_cov <- function(level = 0.95, which = c(1, 2), legend = TRUE) {
   check_level_grid(level, 2)
   if (!is.numeric(which) || length(which) != 2L || any(which < 1) ||
       any(which != round(which)) || which[1L] == which[2L]) {
     stop("'which' must be two different positions of coefficients.",
          call. = FALSE)
   }
-  PlotRandomCov(label = "plot_random_cov()", level = level, which = which)
+  PlotRandomCov(label = "plot_random_cov()", level = level, which = which,
+                legend = check_legend(legend))
 }
 
 
@@ -206,6 +217,9 @@ plot_random_cov <- function(level = 0.95, which = c(1, 2)) {
 #' @param n_grid The number of points of each curve.
 #' @param population Whether to add the population smooth of the variable.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotCurves` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_caterpillar()]
@@ -220,7 +234,7 @@ plot_random_cov <- function(level = 0.95, which = c(1, 2)) {
 #' ggplot2::autoplot(fit, term = "random(~s(x)|id)", plot_type = plot_curves(),
 #'                   data = dd)
 #' @export
-plot_curves <- function(n_grid = 100, population = FALSE) {
+plot_curves <- function(n_grid = 100, population = FALSE, legend = TRUE) {
   if (!is.numeric(n_grid) || length(n_grid) != 1L || !is.finite(n_grid) ||
       n_grid < 2 || n_grid != round(n_grid)) {
     stop("'n_grid' must be a single whole number of at least 2.", call. = FALSE)
@@ -228,7 +242,8 @@ plot_curves <- function(n_grid = 100, population = FALSE) {
   if (!is.logical(population) || length(population) != 1L || is.na(population)) {
     stop("'population' must be TRUE or FALSE.", call. = FALSE)
   }
-  PlotCurves(label = "plot_curves()", n_grid = n_grid, population = population)
+  PlotCurves(label = "plot_curves()", n_grid = n_grid, population = population,
+             legend = check_legend(legend))
 }
 
 
@@ -595,7 +610,7 @@ S7::method(plot_data, list(PlotRandomCov, modelterms7::RandomTerm)) <-
 
 
 S7::method(plot_layers, PlotRandomCov) <- function(type, data, ...) {
-  k_pts <- "predicted effects of a level"
+  k_pts <- "predicted effects"
   k_ell <- sprintf("region of %s probability under the fitted prior",
                    paste0(format(100 * type@level), "%"))
   list(

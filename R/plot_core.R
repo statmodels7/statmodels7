@@ -24,10 +24,11 @@
 #' subclass of one of the three classes, with a method for each generic.
 #'
 #' @param label A single string, the name of the graph.
+#' @param legend Whether the graph draws the legend that names its elements.
 #'
 #' @return Nothing: the classes are abstract and their constructors signal an
-#'   error. Every object that inherits from `plot_type` has the property
-#'   `label`.
+#'   error. Every object that inherits from `plot_type` has the properties
+#'   `label` and `legend`.
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_data()], [plot_layers()],
 #'   [default_plot()]
@@ -42,7 +43,9 @@
 #' @export
 plot_type <- S7::new_class(
   "plot_type",
-  properties = list(label = S7::class_character),
+  properties = list(label = S7::class_character,
+                    legend = S7::new_property(S7::class_logical,
+                                              default = TRUE)),
   abstract = TRUE
 )
 
@@ -70,6 +73,24 @@ diagnostic_plot <- S7::new_class("diagnostic_plot", parent = plot_type,
 #'
 #' @keywords internal
 plot_type_class <- function() plot_type
+
+
+#' Check the Legend Argument of a Graph
+#'
+#' @description
+#' Signals an error unless `legend` is `TRUE` or `FALSE`.
+#'
+#' @param legend The value to check.
+#'
+#' @return `legend`.
+#'
+#' @keywords internal
+check_legend <- function(legend) {
+  if (!is.logical(legend) || length(legend) != 1L || is.na(legend)) {
+    stop("'legend' must be TRUE or FALSE.", call. = FALSE)
+  }
+  legend
+}
 
 
 #' The Default Graph of a Term
@@ -311,7 +332,8 @@ S7::method(plot, StatmodFit) <- plot.StatmodFit
 #' Calls [plot_data()] and [plot_layers()] and adds the theme, the layers
 #' and the labels recorded on the data to an empty `ggplot2::ggplot()`. The
 #' theme comes first, so that a list of layers may also carry
-#' `ggplot2::theme()` elements.
+#' `ggplot2::theme()` elements. The legends are placed below the panel, and
+#' removed when the property `legend` of the type is `FALSE`.
 #'
 #' @param type An object inheriting from [plot_type].
 #' @param x The term or family on which [plot_data()] dispatches.
@@ -325,8 +347,10 @@ plot_assemble <- function(type, x, fit, ctx) {
   d <- plot_data(type, x, fit, ctx = ctx)
   lab <- attr(d, "labels")
   # the theme first, so that a type's layers may adjust its elements
-  p <- ggplot2::ggplot() + ggplot2::theme_bw() + plot_layers(type, d)
+  p <- ggplot2::ggplot() + ggplot2::theme_bw() + plot_key_theme() +
+    plot_layers(type, d)
   if (length(lab)) p <- p + do.call(ggplot2::labs, lab)
+  if (!type@legend) p <- p + ggplot2::theme(legend.position = "none")
   p
 }
 
@@ -372,6 +396,46 @@ plot_key_theme <- function() {
   ggplot2::theme(legend.position = "bottom", legend.box = "vertical",
                  legend.spacing.y = ggplot2::unit(2, "pt"),
                  legend.margin = ggplot2::margin(0, 0, 0, 0))
+}
+
+#' The Legend Key of an Estimate with Its Band
+#'
+#' @description
+#' Draws the key of a line together with a light band behind it, in the
+#' colour of the line, so that one legend entry names an estimate and its
+#' interval. It is passed as `key_glyph` to the layer of the line, and the
+#' layer of the band draws no key.
+#'
+#' @param data,params,size As for the `draw_key_*()` functions of ggplot2.
+#'
+#' @return A grob.
+#'
+#' @keywords internal
+draw_key_band <- function(data, params, size) {
+  col <- if (is.null(data$colour) || is.na(data$colour)) "#1f5fa8" else
+    data$colour
+  grid::grobTree(
+    grid::rectGrob(gp = grid::gpar(col = NA, fill = col, alpha = 0.18)),
+    ggplot2::draw_key_path(data, params, size))
+}
+
+
+#' The Name of an Estimate and Its Interval in a Legend
+#'
+#' @description
+#' Writes the name of an estimate followed by its interval on a second line,
+#' as in "estimated effect\\n(95% CI)", for a legend entry that draws the
+#' estimate and its band together.
+#'
+#' @param what The name of the estimate.
+#' @param level A number in (0, 1).
+#' @param interval The name of the interval.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+est_label <- function(what, level, interval = "CI") {
+  sprintf("%s\n(%s%% %s)", what, format(100 * level), interval)
 }
 
 #' The Headings of the Panels of a Graph

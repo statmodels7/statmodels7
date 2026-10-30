@@ -6,6 +6,7 @@
 \usage{
 PlotWorm(
   label = character(0),
+  legend = TRUE,
   over = NULL,
   n_inter = integer(0),
   band = character(0),

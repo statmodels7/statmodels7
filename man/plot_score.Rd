@@ -4,12 +4,15 @@
 \alias{plot_score}
 \title{Graph of the Scores of an Equation}
 \usage{
-plot_score(param, against = "index")
+plot_score(param, against = "index", legend = TRUE)
 }
 \arguments{
 \item{param}{The equation, a parameter of the family.}
 
 \item{against}{\code{"index"} (the default) or the name of a covariate.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotScore} object, inheriting from \link{diagnostic_plot}.

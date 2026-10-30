@@ -75,6 +75,9 @@ PlotEffect <- S7::new_class("PlotEffect", parent = term_plot,
 #'   response.
 #' @param n_grid The number of points of the grid of a numeric variable.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotEffect` object, inheriting from [term_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_derivative()], [plot_surface()]
@@ -95,7 +98,7 @@ plot_effect <- function(residuals = TRUE, binned = NULL, scale = "link",
                         at = NULL, rug = TRUE, level = 0.95,
                         vcov_type = bayesian_vcov(),
                         information = distributions7::expected_info(),
-                        n_grid = 200) {
+                        n_grid = 200, legend = TRUE) {
   if (!is.logical(residuals) || length(residuals) != 1L || is.na(residuals)) {
     stop("'residuals' must be TRUE or FALSE.", call. = FALSE)
   }
@@ -121,7 +124,7 @@ plot_effect <- function(residuals = TRUE, binned = NULL, scale = "link",
   PlotEffect(label = "plot_effect()", residuals = residuals, binned = binned,
              scale = scale, at = at, rug = rug, level = level,
              vcov_type = vcov_type, information = information,
-             n_grid = n_grid)
+             n_grid = n_grid, legend = check_legend(legend))
 }
 
 
@@ -230,7 +233,7 @@ effect_data <- function(type, parts, fit, ctx) {
         bins <- bins[stats::complete.cases(bins), , drop = FALSE]
       }
     }
-    ylab <- sprintf("effect on the predictor of %s", ctx$param)
+    ylab <- sprintf("effect on the link scale of %s", ctx$param)
   }
   rug <- if (type@rug && kind == "numeric") data.frame(x = data[[var]])
     else data.frame(x = numeric(0))
@@ -363,17 +366,13 @@ S7::method(plot_layers, PlotEffect) <- function(type, data, ...) {
   kind <- attr(data, "kind")
   grouped <- "group" %in% names(data$curve)
   k_pts <- "partial residuals"
-  k_fit <- "estimated effect"
-  k_band <- band_label(type@level)
-  k_ci <- sprintf("estimate with %s",
-                  band_label(type@level, "confidence interval"))
+  k_fit <- est_label("estimated effect", type@level)
   k_bins <- sprintf("mean of the partial residuals in %d classes",
                     nrow(data$bins))
-  k_rug <- "observed values"
   out <- list()
   if (grouped) {
     # the colour names the levels of the crossed factor, so the elements are
-    # named by aesthetics that no group uses: shape, linetype and alpha
+    # named by aesthetics that no group uses: shape and linetype
     pa <- ggplot2::aes(x = .data$x, y = .data$y, colour = .data$group,
                        shape = k_pts)
     key <- list(
@@ -381,19 +380,13 @@ S7::method(plot_layers, PlotEffect) <- function(type, data, ...) {
         name = NULL, values = stats::setNames(c(16, 23), c(k_pts, k_bins)),
         breaks = c(k_pts, k_bins)),
       ggplot2::scale_linetype_manual(
-        name = NULL, values = stats::setNames(rep("solid", 3),
-                                              c(k_fit, k_ci, k_rug)),
-        breaks = c(k_fit, k_ci, k_rug)),
-      ggplot2::scale_alpha_manual(name = NULL,
-                                  values = stats::setNames(0.18, k_band)),
-      plot_key_theme())
+        name = NULL, values = stats::setNames("solid", k_fit)))
   } else {
     pa <- ggplot2::aes(x = .data$x, y = .data$y, colour = k_pts)
     key <- plot_key(
-      colour = stats::setNames(c("#1f5fa8", "#1f5fa8", "grey30", "grey30"),
-                               c(k_fit, k_ci, k_pts, k_rug)),
-      fill = if (!identical(kind, "factor"))
-        stats::setNames(c("#1f5fa8", "#b2182b"), c(k_band, k_bins)))
+      colour = stats::setNames(c("#1f5fa8", "grey30"), c(k_fit, k_pts)),
+      fill = if (nrow(data$bins))
+        stats::setNames("#b2182b", k_bins))
   }
   if (identical(kind, "factor")) {
     if (nrow(data$points)) {
@@ -401,20 +394,31 @@ S7::method(plot_layers, PlotEffect) <- function(type, data, ...) {
                                               width = 0.15, height = 0,
                                               alpha = 0.35, size = 0.9)))
     }
+    dodge <- ggplot2::position_dodge(width = if (grouped) 0.4 else 0)
     pr <- if (grouped) {
       ggplot2::geom_pointrange(
         data = data$curve,
         mapping = ggplot2::aes(x = .data$x, y = .data$fit, ymin = .data$lower,
                                ymax = .data$upper, colour = .data$group,
-                               linetype = k_ci),
-        position = ggplot2::position_dodge(width = 0.4))
+                               linetype = k_fit),
+        position = dodge)
     } else {
       ggplot2::geom_pointrange(
         data = data$curve,
         mapping = ggplot2::aes(x = .data$x, y = .data$fit, ymin = .data$lower,
-                               ymax = .data$upper, colour = k_ci))
+                               ymax = .data$upper, colour = k_fit))
     }
-    return(c(out, list(pr), key))
+    # under treatment contrasts the first level is absorbed by the intercept:
+    # its contribution is zero with no variance, and it is labeled as such
+    ref <- data$curve[data$curve$upper - data$curve$lower == 0 &
+                        data$curve$fit == 0, , drop = FALSE]
+    lab <- if (nrow(ref)) {
+      list(ggplot2::geom_text(
+        data = ref, mapping = ggplot2::aes(x = .data$x, y = .data$fit),
+        label = "reference level", vjust = 2, size = 3, colour = "grey20",
+        position = dodge))
+    }
+    return(c(out, list(pr), lab, key))
   }
   if (nrow(data$points)) {
     out <- c(out, list(ggplot2::geom_point(data = data$points, mapping = pa,
@@ -426,25 +430,24 @@ S7::method(plot_layers, PlotEffect) <- function(type, data, ...) {
                            mapping = ggplot2::aes(x = .data$x,
                                                   ymin = .data$lower,
                                                   ymax = .data$upper,
-                                                  fill = .data$group,
-                                                  alpha = k_band)),
+                                                  fill = .data$group),
+                           alpha = 0.18, show.legend = FALSE),
       ggplot2::geom_line(data = data$curve,
                          mapping = ggplot2::aes(x = .data$x, y = .data$fit,
                                                 colour = .data$group,
                                                 linetype = k_fit),
-                         linewidth = 0.9)))
+                         linewidth = 0.9, key_glyph = draw_key_band)))
   } else {
     out <- c(out, list(
       ggplot2::geom_ribbon(data = data$curve,
                            mapping = ggplot2::aes(x = .data$x,
                                                   ymin = .data$lower,
-                                                  ymax = .data$upper,
-                                                  fill = k_band),
-                           alpha = 0.18),
+                                                  ymax = .data$upper),
+                           fill = "#1f5fa8", alpha = 0.18),
       ggplot2::geom_line(data = data$curve,
                          mapping = ggplot2::aes(x = .data$x, y = .data$fit,
                                                 colour = k_fit),
-                         linewidth = 0.9)))
+                         linewidth = 0.9, key_glyph = draw_key_band)))
   }
   if (nrow(data$bins)) {
     bins <- if (grouped) {
@@ -461,16 +464,9 @@ S7::method(plot_layers, PlotEffect) <- function(type, data, ...) {
     out <- c(out, list(bins))
   }
   if (nrow(data$rug)) {
-    rug <- if (grouped) {
-      ggplot2::geom_rug(data = data$rug,
-                        mapping = ggplot2::aes(x = .data$x, linetype = k_rug),
-                        sides = "b", alpha = 0.3)
-    } else {
-      ggplot2::geom_rug(data = data$rug,
-                        mapping = ggplot2::aes(x = .data$x, colour = k_rug),
-                        sides = "b", alpha = 0.3)
-    }
-    out <- c(out, list(rug))
+    out <- c(out, list(ggplot2::geom_rug(
+      data = data$rug, mapping = ggplot2::aes(x = .data$x), sides = "b",
+      alpha = 0.3)))
   }
   c(out, key)
 }

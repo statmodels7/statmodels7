@@ -2,23 +2,29 @@
 % Please edit documentation in R/plot_diagnostic.R
 \name{PlotAcf}
 \alias{PlotAcf}
-\title{S7 Class of the Autocorrelation Graph}
+\title{S7 Class of the Autocorrelation Graphs}
 \usage{
 PlotAcf(
   label = character(0),
+  legend = TRUE,
   lag_max = integer(0),
   squared = logical(0),
-  seed = NULL
+  by = NULL,
+  time = NULL,
+  seed = NULL,
+  partial = logical(0)
 )
 }
 \arguments{
-\item{label, lag_max, squared, seed}{See \code{\link[=plot_acf]{plot_acf()}}.}
+\item{label, legend, lag_max, squared, by, time, seed}{See \code{\link[=plot_acf]{plot_acf()}}.}
+
+\item{partial}{Whether the graph shows the partial autocorrelation.}
 }
 \value{
 A \code{PlotAcf} object, inheriting from \link{diagnostic_plot}.
 }
 \description{
-The class that \code{\link[=plot_acf]{plot_acf()}} instantiates. Use the constructor, which checks
-the properties.
+The class that \code{\link[=plot_acf]{plot_acf()}} and \code{\link[=plot_pacf]{plot_pacf()}} instantiate. Use the
+constructors, which check the properties.
 }
 \keyword{internal}

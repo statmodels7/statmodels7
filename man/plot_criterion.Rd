@@ -4,7 +4,12 @@
 \alias{plot_criterion}
 \title{Graph of the Outer Criterion Against a Hyperparameter}
 \usage{
-plot_criterion(log_lambda = NULL, method = "refit", hyper = NULL)
+plot_criterion(
+  log_lambda = NULL,
+  method = "refit",
+  hyper = NULL,
+  legend = TRUE
+)
 }
 \arguments{
 \item{log_lambda}{\code{NULL}, or a numeric vector of values of the logarithm
@@ -13,6 +18,9 @@ of the hyperparameter.}
 \item{method}{\code{"refit"} (the default) or \code{"quadratic"}.}
 
 \item{hyper}{\code{NULL}, or the name of the hyperparameter of the term.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotCriterion} object, inheriting from \link{term_plot}.

@@ -6,6 +6,7 @@
 \usage{
 PlotEffect(
   label = character(0),
+  legend = TRUE,
   residuals = logical(0),
   binned = NULL,
   scale = character(0),

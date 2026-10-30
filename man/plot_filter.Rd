@@ -9,7 +9,8 @@ plot_filter(
   scale = "response",
   response = FALSE,
   groups = NULL,
-  vcov_type = bayesian_vcov()
+  vcov_type = bayesian_vcov(),
+  legend = TRUE
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ that is a vector, and a term in one equation.}
 (the levels of the \code{by} variable as text).}
 
 \item{vcov_type}{A \link{vcov_method} object, the variance of the band.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotFilter} object, inheriting from \link{term_plot}.

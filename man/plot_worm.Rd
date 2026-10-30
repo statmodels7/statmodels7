@@ -10,7 +10,8 @@ plot_worm(
   band = "order",
   level = 0.95,
   n_sim = 99,
-  seed = NULL
+  seed = NULL,
+  legend = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ plot_worm(
 \item{n_inter}{The number of classes of a numeric covariate.}
 
 \item{band, level, n_sim, seed}{See \code{\link[=plot_qq]{plot_qq()}}.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotWorm} object, inheriting from \link{diagnostic_plot}.

@@ -10,7 +10,8 @@ plot_param(
   at = NULL,
   level = 0.95,
   vcov_type = bayesian_vcov(),
-  n_grid = 200
+  n_grid = 200,
+  legend = TRUE
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ plot_param(
 \item{vcov_type}{A \link{vcov_method} object, the variance of the band.}
 
 \item{n_grid}{The number of points of the grid of a numeric covariate.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotParam} object, inheriting from \link{model_plot}.

@@ -4,7 +4,7 @@
 \alias{diag_top_layers}
 \title{The Labelled Points of a Diagnostic Graph}
 \usage{
-diag_top_layers(top, all, all_colour, what)
+diag_top_layers(top, all, all_colour)
 }
 \arguments{
 \item{top}{The data frame returned by \code{diag_top()}.}
@@ -12,15 +12,13 @@ diag_top_layers(top, all, all_colour, what)
 \item{all}{The name of the element drawn for every observation.}
 
 \item{all_colour}{Its colour.}
-
-\item{what}{The description of the labelled points.}
 }
 \value{
 A list of ggplot2 components.
 }
 \description{
 Draws the points returned by \code{diag_top()} in the reference colour, with
-their row numbers above them, and the legend that names them beside the
-element drawn for every observation.
+their row numbers above them, and the legend that names the element drawn
+for every observation.
 }
 \keyword{internal}

@@ -22,6 +22,7 @@ A ggplot2 object.
 Calls \code{\link[=plot_data]{plot_data()}} and \code{\link[=plot_layers]{plot_layers()}} and adds the theme, the layers
 and the labels recorded on the data to an empty \code{ggplot2::ggplot()}. The
 theme comes first, so that a list of layers may also carry
-\code{ggplot2::theme()} elements.
+\code{ggplot2::theme()} elements. The legends are placed below the panel, and
+removed when the property \code{legend} of the type is \code{FALSE}.
 }
 \keyword{internal}

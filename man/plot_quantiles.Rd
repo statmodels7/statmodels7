@@ -9,7 +9,8 @@ plot_quantiles(
   probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
   at = NULL,
   points = TRUE,
-  n_grid = 200
+  n_grid = 200,
+  legend = TRUE
 )
 }
 \arguments{
@@ -23,6 +24,9 @@ plot_quantiles(
 \code{over}.}
 
 \item{n_grid}{The number of points of the grid of a numeric covariate.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotQuantiles} object, inheriting from \link{model_plot}.

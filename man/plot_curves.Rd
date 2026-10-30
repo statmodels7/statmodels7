@@ -4,12 +4,15 @@
 \alias{plot_curves}
 \title{Graph of the Curves of a Random Smooth}
 \usage{
-plot_curves(n_grid = 100, population = FALSE)
+plot_curves(n_grid = 100, population = FALSE, legend = TRUE)
 }
 \arguments{
 \item{n_grid}{The number of points of each curve.}
 
 \item{population}{Whether to add the population smooth of the variable.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotCurves} object, inheriting from \link{term_plot}.

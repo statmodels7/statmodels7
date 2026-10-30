@@ -4,11 +4,14 @@
 \alias{plot_states}
 \title{Graph of the State Probabilities of a Regime Term}
 \usage{
-plot_states(smoothed = TRUE)
+plot_states(smoothed = TRUE, legend = TRUE)
 }
 \arguments{
 \item{smoothed}{Whether to draw the smoothed probabilities (\code{TRUE}) or the
 filtered ones (\code{FALSE}).}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotStates} object, inheriting from \link{term_plot}.

@@ -272,7 +272,6 @@ diag_qq_layers <- function(data, worm, type, over = NULL) {
   band <- band_label(type@level, if (type@band == "order")
     "pointwise band of the order statistics"
     else "pointwise envelope of simulated residuals")
-  ref <- if (worm) "no deviation" else "line y = x"
   out <- list(
     ggplot2::geom_ribbon(data = data$band,
                          mapping = ggplot2::aes(x = .data$x,
@@ -280,22 +279,13 @@ diag_qq_layers <- function(data, worm, type, over = NULL) {
                                                 ymax = .data$upper,
                                                 fill = band),
                          alpha = 0.18),
-    if (worm) {
-      ggplot2::geom_hline(data = data.frame(y = 0),
-                          mapping = ggplot2::aes(yintercept = .data$y,
-                                                 colour = ref))
-    } else {
-      ggplot2::geom_abline(data = data.frame(a = 0, b = 1),
-                           mapping = ggplot2::aes(intercept = .data$a,
-                                                  slope = .data$b,
-                                                  colour = ref))
-    },
+    if (worm) ggplot2::geom_hline(yintercept = 0, colour = "grey50")
+    else ggplot2::geom_abline(intercept = 0, slope = 1, colour = "grey50"),
     ggplot2::geom_point(data = data$points,
                         mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                                colour = "quantile residuals"),
                         alpha = 0.35, size = 0.9),
-    plot_key(colour = stats::setNames(c("grey30", "grey50"),
-                                      c("quantile residuals", ref)),
+    plot_key(colour = c("quantile residuals" = "grey30"),
              fill = stats::setNames("#1f5fa8", band)))
   if ("class" %in% names(data$points)) {
     out <- c(out, list(ggplot2::facet_wrap(
@@ -370,6 +360,9 @@ PlotQq <- S7::new_class("PlotQq", parent = diagnostic_plot,
 #' @param seed A single number that seeds the randomization and the
 #'   simulation, or `NULL` for the ambient state.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotQq` object, inheriting from [diagnostic_plot].
 #'
 #' @seealso [plot_worm()], [diagnostics()], [autoplot.StatmodFit()]
@@ -383,13 +376,14 @@ PlotQq <- S7::new_class("PlotQq", parent = diagnostic_plot,
 #' ggplot2::autoplot(fit, plot_type = plot_qq(band = "simulated", n_sim = 49,
 #'                                       seed = 1))
 #' @export
-plot_qq <- function(band = "order", level = 0.95, n_sim = 99, seed = NULL) {
+plot_qq <- function(band = "order", level = 0.95, n_sim = 99, seed = NULL,
+                    legend = TRUE) {
   band <- match.arg(band, c("order", "simulated"))
   diag_check_level(level)
   diag_check_count(n_sim, "n_sim", min = 2)
   diag_check_seed(seed)
   PlotQq(label = "plot_qq()", band = band, level = level, n_sim = n_sim,
-         seed = seed)
+         seed = seed, legend = check_legend(legend))
 }
 
 S7::method(plot_data, list(PlotQq, distributions7::distrib)) <-
@@ -449,6 +443,9 @@ PlotWorm <- S7::new_class("PlotWorm", parent = diagnostic_plot,
 #' @param n_inter The number of classes of a numeric covariate.
 #' @param band,level,n_sim,seed See [plot_qq()].
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotWorm` object, inheriting from [diagnostic_plot].
 #'
 #' @references
@@ -467,7 +464,7 @@ PlotWorm <- S7::new_class("PlotWorm", parent = diagnostic_plot,
 #' ggplot2::autoplot(fit, plot_type = plot_worm(over = "x", n_inter = 3), data = dd)
 #' @export
 plot_worm <- function(over = NULL, n_inter = 4, band = "order", level = 0.95,
-                      n_sim = 99, seed = NULL) {
+                      n_sim = 99, seed = NULL, legend = TRUE) {
   diag_check_name(over, "over")
   diag_check_count(n_inter, "n_inter", min = 2)
   band <- match.arg(band, c("order", "simulated"))
@@ -475,7 +472,8 @@ plot_worm <- function(over = NULL, n_inter = 4, band = "order", level = 0.95,
   diag_check_count(n_sim, "n_sim", min = 2)
   diag_check_seed(seed)
   PlotWorm(label = "plot_worm()", over = over, n_inter = n_inter, band = band,
-           level = level, n_sim = n_sim, seed = seed)
+           level = level, n_sim = n_sim, seed = seed,
+           legend = check_legend(legend))
 }
 
 S7::method(plot_data, list(PlotWorm, distributions7::distrib)) <-
@@ -540,6 +538,9 @@ PlotResiduals <- S7::new_class("PlotResiduals", parent = diagnostic_plot,
 #' @param smooth Whether to draw the smoother.
 #' @param seed A single number that seeds the randomization, or `NULL`.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotResiduals` object, inheriting from [diagnostic_plot].
 #'
 #' @seealso [plot_qq()], [plot_acf()], [diagnostics()]
@@ -553,7 +554,7 @@ PlotResiduals <- S7::new_class("PlotResiduals", parent = diagnostic_plot,
 #' ggplot2::autoplot(fit, plot_type = plot_residuals(against = "x"), data = dd)
 #' @export
 plot_residuals <- function(against = "median", param = NULL, smooth = TRUE,
-                           seed = NULL) {
+                           seed = NULL, legend = TRUE) {
   diag_check_name(against, "against", null = FALSE)
   diag_check_name(param, "param")
   if (identical(against, "fitted") && is.null(param)) {
@@ -568,7 +569,7 @@ plot_residuals <- function(against = "median", param = NULL, smooth = TRUE,
   }
   diag_check_seed(seed)
   PlotResiduals(label = "plot_residuals()", against = against, param = param,
-                smooth = smooth, seed = seed)
+                smooth = smooth, seed = seed, legend = check_legend(legend))
 }
 
 
@@ -655,12 +656,9 @@ S7::method(plot_layers, PlotResiduals) <- function(type, data, ...) {
     ggplot2::geom_jitter(data = data$points, mapping = pa, alpha = 0.35,
                          size = 0.9, width = 0.15, height = 0)
   }
-  lim <- "-2 and 2 (95% of a standard normal)"
   out <- list(
-    ggplot2::geom_hline(data = data.frame(y = c(-2, 2)),
-                        mapping = ggplot2::aes(yintercept = .data$y,
-                                               colour = lim),
-                        linetype = "dashed"),
+    ggplot2::geom_hline(yintercept = c(-2, 2), linetype = "dashed",
+                        colour = "grey50"),
     ggplot2::geom_hline(yintercept = 0, colour = "grey50"), pts)
   if (nrow(data$smooth)) {
     out <- c(out, list(ggplot2::geom_line(
@@ -669,9 +667,8 @@ S7::method(plot_layers, PlotResiduals) <- function(type, data, ...) {
                              colour = "smoothed mean of the residuals"),
       linewidth = 0.9)))
   }
-  c(out, plot_key(colour = stats::setNames(
-    c("grey30", "#1f5fa8", "grey50"),
-    c("quantile residuals", "smoothed mean of the residuals", lim))))
+  c(out, plot_key(colour = c("quantile residuals" = "grey30",
+                            "smoothed mean of the residuals" = "#1f5fa8")))
 }
 
 
@@ -716,6 +713,9 @@ PlotPit <- S7::new_class("PlotPit", parent = diagnostic_plot,
 #' @param seed A single number that seeds the randomization, or `NULL`.
 #' @param level The level of the band.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotPit` object, inheriting from [diagnostic_plot].
 #'
 #' @seealso [plot_calibration()], [plot_qq()], [diagnostics()]
@@ -727,11 +727,12 @@ PlotPit <- S7::new_class("PlotPit", parent = diagnostic_plot,
 #' fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
 #' ggplot2::autoplot(fit, plot_type = plot_pit(bins = 10, seed = 1))
 #' @export
-plot_pit <- function(bins = 20, seed = NULL, level = 0.95) {
+plot_pit <- function(bins = 20, seed = NULL, level = 0.95, legend = TRUE) {
   diag_check_count(bins, "bins", min = 2)
   diag_check_seed(seed)
   diag_check_level(level)
-  PlotPit(label = "plot_pit()", bins = bins, seed = seed, level = level)
+  PlotPit(label = "plot_pit()", bins = bins, seed = seed, level = level,
+          legend = check_legend(legend))
 }
 
 S7::method(plot_data, list(PlotPit, distributions7::distrib)) <-
@@ -751,13 +752,13 @@ S7::method(plot_data, list(PlotPit, distributions7::distrib)) <-
                        upper = stats::qbinom(1 - a, n, w) / (n * w))
     out <- list(bars = bars, band = band, values = data.frame(u = u))
     attr(out, "labels") <- list(title = "Probability integral transform",
-                                x = "F(y)", y = "density")
+                                x = expression(hat(F)(y)), y = "density")
     out
   }
 
 S7::method(plot_layers, PlotPit) <- function(type, data, ...) {
   band <- band_label(type@level, "range of a bar under the fitted model")
-  bars <- "histogram of F(y)"
+  bars <- "histogram of the fitted F(y)"
   list(
     ggplot2::geom_rect(data = data$band,
                        mapping = ggplot2::aes(xmin = .data$xmin,
@@ -825,6 +826,9 @@ PlotCalibration <- S7::new_class("PlotCalibration", parent = diagnostic_plot,
 #' @param level The level of the band.
 #' @param seed A single number that seeds the randomization, or `NULL`.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotCalibration` object, inheriting from [diagnostic_plot].
 #'
 #' @seealso [plot_pit()], [plot_worm()], [diagnostics()]
@@ -839,7 +843,8 @@ PlotCalibration <- S7::new_class("PlotCalibration", parent = diagnostic_plot,
 #'                   data = dd)
 #' @export
 plot_calibration <- function(probs = seq(0.05, 0.95, by = 0.05), over = NULL,
-                             n_inter = 4, level = 0.95, seed = NULL) {
+                             n_inter = 4, level = 0.95, seed = NULL,
+                             legend = TRUE) {
   if (!is.numeric(probs) || !length(probs) || anyNA(probs) ||
       any(probs <= 0 | probs >= 1)) {
     stop("'probs' must be numbers between 0 and 1.", call. = FALSE)
@@ -849,7 +854,8 @@ plot_calibration <- function(probs = seq(0.05, 0.95, by = 0.05), over = NULL,
   diag_check_level(level)
   diag_check_seed(seed)
   PlotCalibration(label = "plot_calibration()", probs = sort(probs),
-                  over = over, n_inter = n_inter, level = level, seed = seed)
+                  over = over, n_inter = n_inter, level = level, seed = seed,
+                  legend = check_legend(legend))
 }
 
 S7::method(plot_data, list(PlotCalibration, distributions7::distrib)) <-
@@ -887,7 +893,6 @@ S7::method(plot_data, list(PlotCalibration, distributions7::distrib)) <-
 S7::method(plot_layers, PlotCalibration) <- function(type, data, ...) {
   band <- band_label(type@level, "pointwise band under the fitted model")
   obs <- "observed coverage"
-  ref <- "exact calibration"
   out <- list(
     ggplot2::geom_ribbon(data = data$points,
                          mapping = ggplot2::aes(x = .data$p,
@@ -895,9 +900,7 @@ S7::method(plot_layers, PlotCalibration) <- function(type, data, ...) {
                                                 ymax = .data$upper,
                                                 fill = band),
                          alpha = 0.18),
-    ggplot2::geom_abline(data = data.frame(a = 0, b = 1),
-                         mapping = ggplot2::aes(intercept = .data$a,
-                                                slope = .data$b, colour = ref)),
+    ggplot2::geom_abline(intercept = 0, slope = 1, colour = "grey50"),
     ggplot2::geom_line(data = data$points,
                        mapping = ggplot2::aes(x = .data$p, y = .data$observed,
                                               colour = obs)),
@@ -906,7 +909,7 @@ S7::method(plot_layers, PlotCalibration) <- function(type, data, ...) {
                                                y = .data$observed,
                                                colour = obs),
                         size = 1.4),
-    plot_key(colour = stats::setNames(c("#1f5fa8", "grey50"), c(obs, ref)),
+    plot_key(colour = stats::setNames("#1f5fa8", obs),
              fill = stats::setNames("#1f5fa8", band)))
   if ("class" %in% names(data$points)) {
     out <- c(out, list(ggplot2::facet_wrap(
@@ -955,6 +958,9 @@ PlotScore <- S7::new_class("PlotScore", parent = diagnostic_plot,
 #' @param param The equation, a parameter of the family.
 #' @param against `"index"` (the default) or the name of a covariate.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotScore` object, inheriting from [diagnostic_plot].
 #'
 #' @seealso [plot_influence()], [plot_residuals()], [diagnostics()]
@@ -968,10 +974,11 @@ PlotScore <- S7::new_class("PlotScore", parent = diagnostic_plot,
 #' ggplot2::autoplot(fit, plot_type = plot_score(param = "sigma", against = "x"),
 #'                   data = dd)
 #' @export
-plot_score <- function(param, against = "index") {
+plot_score <- function(param, against = "index", legend = TRUE) {
   diag_check_name(param, "param", null = FALSE)
   diag_check_name(against, "against", null = FALSE)
-  PlotScore(label = "plot_score()", param = param, against = against)
+  PlotScore(label = "plot_score()", param = param, against = against,
+            legend = check_legend(legend))
 }
 
 
@@ -1037,7 +1044,7 @@ S7::method(plot_data, list(PlotScore, distributions7::distrib)) <-
     out <- list(points = data.frame(x = xv, y = s), top = diag_top(xv, s))
     attr(out, "labels") <- list(
       title = sprintf("Score of %s", type@param), x = xlab,
-      y = sprintf("score on the predictor of %s", type@param))
+      y = sprintf("score on the link scale of %s", type@param))
     out
   }
 
@@ -1048,8 +1055,7 @@ S7::method(plot_layers, PlotScore) <- function(type, data, ...) {
                         mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                                colour = "score of an observation"),
                         alpha = 0.35, size = 0.9)),
-    diag_top_layers(data$top, "score of an observation", "grey30",
-                    "the five largest in absolute value"))
+    diag_top_layers(data$top, "score of an observation", "grey30"))
 }
 
 
@@ -1057,29 +1063,26 @@ S7::method(plot_layers, PlotScore) <- function(type, data, ...) {
 #'
 #' @description
 #' Draws the points returned by `diag_top()` in the reference colour, with
-#' their row numbers above them, and the legend that names them beside the
-#' element drawn for every observation.
+#' their row numbers above them, and the legend that names the element drawn
+#' for every observation.
 #'
 #' @param top The data frame returned by `diag_top()`.
 #' @param all The name of the element drawn for every observation.
 #' @param all_colour Its colour.
-#' @param what The description of the labelled points.
 #'
 #' @return A list of ggplot2 components.
 #'
 #' @keywords internal
-diag_top_layers <- function(top, all, all_colour, what) {
-  lab <- sprintf("%s, with the row number", what)
+diag_top_layers <- function(top, all, all_colour) {
   list(
     ggplot2::geom_point(data = top,
-                        mapping = ggplot2::aes(x = .data$x, y = .data$y,
-                                               colour = lab),
-                        size = 1.8),
+                        mapping = ggplot2::aes(x = .data$x, y = .data$y),
+                        colour = "#b2182b", size = 1.8),
     ggplot2::geom_text(data = top,
                        mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                               label = .data$label),
                        colour = "#b2182b", size = 3, vjust = -0.7),
-    plot_key(colour = stats::setNames(c(all_colour, "#b2182b"), c(all, lab))))
+    plot_key(colour = stats::setNames(all_colour, all)))
 }
 
 
@@ -1141,6 +1144,9 @@ PlotInfluence <- S7::new_class("PlotInfluence", parent = diagnostic_plot,
 #'   default) or [distributions7::observed_info()], the matrix of the
 #'   variance and of the weights \eqn{w_i}.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotInfluence` object, inheriting from [diagnostic_plot].
 #'
 #' @seealso [plot_score()], [diagnostics()]
@@ -1155,7 +1161,8 @@ PlotInfluence <- S7::new_class("PlotInfluence", parent = diagnostic_plot,
 #'                                              measure = "leverage"))
 #' @export
 plot_influence <- function(param, measure = "cook", adjust = TRUE,
-                           information = distributions7::expected_info()) {
+                           information = distributions7::expected_info(),
+                           legend = TRUE) {
   diag_check_name(param, "param", null = FALSE)
   measure <- match.arg(measure, c("cook", "leverage"))
   if (!is.logical(adjust) || length(adjust) != 1L || is.na(adjust)) {
@@ -1167,7 +1174,8 @@ plot_influence <- function(param, measure = "cook", adjust = TRUE,
          call. = FALSE)
   }
   PlotInfluence(label = "plot_influence()", param = param, measure = measure,
-                adjust = adjust, information = information)
+                adjust = adjust, information = information,
+                legend = check_legend(legend))
 }
 
 
@@ -1268,19 +1276,20 @@ S7::method(plot_layers, PlotInfluence) <- function(type, data, ...) {
                           mapping = ggplot2::aes(x = .data$x, xend = .data$x,
                                                  y = 0, yend = .data$y,
                                                  colour = all))),
-    diag_top_layers(data$top, all, "grey60", "the five largest"))
+    diag_top_layers(data$top, all, "grey60"))
 }
 
 
 # ---- plot_acf --------------------------------------------------------------
 
-#' @title S7 Class of the Autocorrelation Graph
+#' @title S7 Class of the Autocorrelation Graphs
 #'
 #' @description
-#' The class that [plot_acf()] instantiates. Use the constructor, which checks
-#' the properties.
+#' The class that [plot_acf()] and [plot_pacf()] instantiate. Use the
+#' constructors, which check the properties.
 #'
-#' @param label,lag_max,squared,seed See [plot_acf()].
+#' @param label,legend,lag_max,squared,by,time,seed See [plot_acf()].
+#' @param partial Whether the graph shows the partial autocorrelation.
 #'
 #' @return A `PlotAcf` object, inheriting from [diagnostic_plot].
 #'
@@ -1288,30 +1297,51 @@ S7::method(plot_layers, PlotInfluence) <- function(type, data, ...) {
 #' @keywords internal
 PlotAcf <- S7::new_class("PlotAcf", parent = diagnostic_plot,
   properties = list(lag_max = S7::class_numeric, squared = S7::class_logical,
-                    seed = S7::class_any))
+                    by = S7::class_any, time = S7::class_any,
+                    seed = S7::class_any, partial = S7::class_logical))
 
 
 #' Autocorrelation of the Residuals
 #'
 #' @description
-#' Selects the graph of the sample autocorrelation of the quantile residuals,
-#' or of their squares, in the order of the observations, with the limits
-#' \eqn{\pm 1.96/\sqrt{n}}.
+#' `plot_acf()` selects the graph of the sample autocorrelation of the
+#' quantile residuals, or of their squares, and `plot_pacf()` the graph of
+#' their partial autocorrelation, with the limits \eqn{\pm 1.96/\sqrt{N}}.
+#' The series are the observations of each group in time order, and the
+#' autocorrelation is pooled over the groups.
 #'
 #' @details
-#' The autocorrelations are those of [stats::acf()] at the lags 1 to
-#' `lag_max`. Under a correct model with independent observations the quantile
-#' residuals are independent standard normal variables, the autocorrelations
-#' have standard deviation near \eqn{1/\sqrt{n}}, and about five percent of
-#' them fall outside the limits. The autocorrelation of the squares
-#' (`squared = TRUE`) detects a variance that depends on the past. The order is
-#' the row order of the data, so the graph is meaningful for a series, or for
-#' data sorted within a panel; for a discrete family the residuals are
-#' randomized and `seed` makes them reproducible.
+#' With residuals \eqn{e_{gt}} for the group \eqn{g} at the position \eqn{t}
+#' of its series, and \eqn{\bar e} their mean over all \eqn{N} observations,
+#' the autocorrelation at lag \eqn{k} is
+#' \deqn{r_k = \frac{\sum_g \sum_t (e_{gt} - \bar e)(e_{g,t+k} - \bar e)}
+#'   {\sum_g \sum_t (e_{gt} - \bar e)^2},}
+#' where the numerator sums the pairs that lie in the same group at distance
+#' \eqn{k} and the denominator sums every observation. Each pair counts once,
+#' so a long series weighs more than a short one, and with one group
+#' \eqn{r_k} is the autocorrelation of [stats::acf()]. The partial
+#' autocorrelations are computed from \eqn{r_1, \dots, r_K} by the
+#' Durbin-Levinson recursion. Under a correct model the quantile residuals are
+#' independent standard normal variables, \eqn{r_k} has standard deviation
+#' near \eqn{1/\sqrt{N}}, and about five percent of the values fall outside
+#' the limits. The autocorrelation of the squares (`squared = TRUE`) detects a
+#' variance that depends on the past.
+#'
+#' The groups and the order are taken from `by` and `time` when they are
+#' given; otherwise from the [modelterms7::gas()] or [modelterms7::regime()]
+#' term of the fit, if there is one; otherwise the observations form one
+#' series in the row order of the data. For a discrete family the residuals
+#' are randomized and `seed` makes them reproducible.
 #'
 #' @param lag_max The largest lag.
 #' @param squared Whether to use the squared residuals.
+#' @param by `NULL`, or the name of the variable of the data that divides the
+#'   observations into separate series.
+#' @param time `NULL`, or the name of the variable of the data that orders the
+#'   observations within a series.
 #' @param seed A single number that seeds the randomization, or `NULL`.
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
 #'
 #' @return A `PlotAcf` object, inheriting from [diagnostic_plot].
 #'
@@ -1323,38 +1353,174 @@ PlotAcf <- S7::new_class("PlotAcf", parent = diagnostic_plot,
 #' dd$y <- as.numeric(arima.sim(list(ar = 0.5), n = 150))
 #' fit <- statmod(y ~ 1, distributions7::gaussian1_distrib(), dd)
 #' ggplot2::autoplot(fit, plot_type = plot_acf(lag_max = 20))
+#' ggplot2::autoplot(fit, plot_type = plot_pacf(lag_max = 20))
+#'
+#' # three series of 50 observations, stored one after the other
+#' dd$id <- rep(1:3, each = 50)
+#' ggplot2::autoplot(fit, plot_type = plot_acf(by = "id", time = "t"),
+#'                   data = dd)
 #' @export
-plot_acf <- function(lag_max = 30, squared = FALSE, seed = NULL) {
+plot_acf <- function(lag_max = 30, squared = FALSE, by = NULL, time = NULL,
+                     seed = NULL, legend = TRUE) {
+  acf_type("plot_acf()", FALSE, lag_max, squared, by, time, seed, legend)
+}
+
+#' @rdname plot_acf
+#' @export
+plot_pacf <- function(lag_max = 30, squared = FALSE, by = NULL, time = NULL,
+                      seed = NULL, legend = TRUE) {
+  acf_type("plot_pacf()", TRUE, lag_max, squared, by, time, seed, legend)
+}
+
+
+#' Build an Autocorrelation Graph Type
+#'
+#' @description
+#' Checks the arguments of [plot_acf()] and [plot_pacf()] and returns the
+#' `PlotAcf` object.
+#'
+#' @param label The name of the graph.
+#' @param partial Whether the graph shows the partial autocorrelation.
+#' @param lag_max,squared,by,time,seed,legend See [plot_acf()].
+#'
+#' @return A `PlotAcf` object.
+#'
+#' @keywords internal
+acf_type <- function(label, partial, lag_max, squared, by, time, seed,
+                     legend) {
   diag_check_count(lag_max, "lag_max", min = 1)
   if (!is.logical(squared) || length(squared) != 1L || is.na(squared)) {
     stop("'squared' must be TRUE or FALSE.", call. = FALSE)
   }
+  diag_check_name(by, "by")
+  diag_check_name(time, "time")
   diag_check_seed(seed)
-  PlotAcf(label = "plot_acf()", lag_max = lag_max, squared = squared,
-          seed = seed)
+  PlotAcf(label = label, lag_max = lag_max, squared = squared, by = by,
+          time = time, seed = seed, partial = partial,
+          legend = check_legend(legend))
+}
+
+
+#' The Series of the Observations of a Fit
+#'
+#' @description
+#' Returns the positions of the observations of each series in time order:
+#' from `by` and `time` when the graph gives them, from the ordering that a
+#' [modelterms7::gas()] or [modelterms7::regime()] term recorded otherwise,
+#' and one series in row order when there is neither.
+#'
+#' @param type A `PlotAcf` object.
+#' @param fit A [StatmodFit()].
+#' @param ctx The context described at [plot_data()].
+#'
+#' @return A list of integer vectors.
+#'
+#' @keywords internal
+acf_series <- function(type, fit, ctx) {
+  n <- fit@spec@n_obs
+  if (!is.null(type@by) || !is.null(type@time)) {
+    d <- plot_needs_data(ctx, fit, type, vars = c(type@by, type@time))
+    g <- if (is.null(type@by)) rep(1L, n) else as.integer(factor(d[[type@by]]))
+    tm <- if (is.null(type@time)) seq_len(n) else d[[type@time]]
+    if (anyNA(g) || anyNA(tm)) {
+      stop("'by' and 'time' must have no missing values.", call. = FALSE)
+    }
+    o <- order(g, tm)
+    return(unname(split(o, g[o])))
+  }
+  for (p in names(fit@spec@terms)) {
+    for (tm in fit@spec@terms[[p]]) {
+      if (S7::S7_inherits(tm, modelterms7::GasTerm) ||
+          S7::S7_inherits(tm, modelterms7::RegimeTerm)) {
+        ord <- tm@build_info$order
+        if (length(ord)) return(unname(lapply(ord, as.integer)))
+      }
+    }
+  }
+  list(seq_len(n))
+}
+
+
+#' Pooled Autocorrelation of Several Series
+#'
+#' @description
+#' Computes \eqn{r_1, \dots, r_K} of [plot_acf()], with the products of the
+#' pairs within each series in the numerator and the sum of squares of all
+#' the observations in the denominator, both about the overall mean. A pair
+#' with a missing value is left out of the numerator.
+#'
+#' @param e A numeric vector.
+#' @param series A list of integer vectors, the positions of each series in
+#'   time order.
+#' @param lag_max The largest lag.
+#'
+#' @return A numeric vector of length `lag_max`.
+#'
+#' @keywords internal
+pooled_acf <- function(e, series, lag_max) {
+  m <- mean(e, na.rm = TRUE)
+  den <- sum((e - m)^2, na.rm = TRUE)
+  vapply(seq_len(lag_max), function(k) {
+    sum(vapply(series, function(s) {
+      if (length(s) <= k) return(0)
+      v <- e[s] - m
+      sum(v[-seq_len(k)] * v[seq_len(length(v) - k)], na.rm = TRUE)
+    }, numeric(1))) / den
+  }, numeric(1))
+}
+
+
+#' Partial Autocorrelations by the Durbin-Levinson Recursion
+#'
+#' @description
+#' Turns the autocorrelations \eqn{r_1, \dots, r_K} into the partial
+#' autocorrelations \eqn{\phi_{11}, \dots, \phi_{KK}}.
+#'
+#' @param r A numeric vector of autocorrelations at the lags 1 to K.
+#'
+#' @return A numeric vector of the same length.
+#'
+#' @keywords internal
+durbin_levinson <- function(r) {
+  K <- length(r)
+  out <- numeric(K)
+  phi <- numeric(0)
+  for (k in seq_len(K)) {
+    a <- if (k == 1L) r[1L] else
+      (r[k] - sum(phi * r[(k - 1L):1L])) / (1 - sum(phi * r[seq_len(k - 1L)]))
+    phi <- c(phi - a * rev(phi), a)
+    out[k] <- a
+  }
+  out
 }
 
 S7::method(plot_data, list(PlotAcf, distributions7::distrib)) <-
   function(type, x, fit, ctx, ...) {
     r <- diag_resid(fit, seed = type@seed)
     if (type@squared) r <- r^2
-    n <- sum(is.finite(r))
     r[!is.finite(r)] <- NA_real_
-    lag_max <- min(type@lag_max, length(r) - 1L)
-    a <- stats::acf(r, lag.max = lag_max, plot = FALSE,
-                    na.action = stats::na.pass)
-    out <- list(acf = data.frame(lag = as.numeric(a$lag)[-1L],
-                                 acf = as.numeric(a$acf)[-1L]),
+    n <- sum(!is.na(r))
+    series <- acf_series(type, fit, ctx)
+    lag_max <- min(type@lag_max, max(lengths(series)) - 1L)
+    if (lag_max < 1L) {
+      stop("every series has a single observation, so there is no lag.",
+           call. = FALSE)
+    }
+    a <- pooled_acf(r, series, lag_max)
+    if (type@partial) a <- durbin_levinson(a)
+    what <- if (type@partial) "Partial autocorrelation" else "Autocorrelation"
+    out <- list(acf = data.frame(lag = seq_len(lag_max), acf = a),
                 limit = data.frame(value = 1.96 / sqrt(n)))
     attr(out, "labels") <- list(
-      title = if (type@squared) "Autocorrelation of the squared residuals"
-        else "Autocorrelation of the residuals",
-      x = "lag", y = "autocorrelation")
+      title = sprintf("%s of the %s", what,
+                      if (type@squared) "squared residuals" else "residuals"),
+      x = "lag", y = tolower(what))
     out
   }
 
 S7::method(plot_layers, PlotAcf) <- function(type, data, ...) {
-  lim <- "95% bounds of an uncorrelated series, 1.96 / sqrt(n)"
+  lim <- "95% bounds of an uncorrelated series, 1.96 / sqrt(N)"
+  what <- if (type@partial) "partial autocorrelation" else "autocorrelation"
   list(
     ggplot2::geom_hline(yintercept = 0, colour = "grey50"),
     ggplot2::geom_hline(data = data.frame(y = c(-1, 1) * data$limit$value),
@@ -1365,10 +1531,9 @@ S7::method(plot_layers, PlotAcf) <- function(type, data, ...) {
                           mapping = ggplot2::aes(x = .data$lag,
                                                  xend = .data$lag, y = 0,
                                                  yend = .data$acf,
-                                                 colour = "autocorrelation"),
+                                                 colour = what),
                           linewidth = 0.8),
-    plot_key(colour = stats::setNames(c("grey30", "#1f5fa8"),
-                                      c("autocorrelation", lim))))
+    plot_key(colour = stats::setNames(c("grey30", "#1f5fa8"), c(what, lim))))
 }
 
 
@@ -1416,6 +1581,9 @@ PlotPpc <- S7::new_class("PlotPpc", parent = diagnostic_plot,
 #' @param n_sim The number of simulated responses.
 #' @param seed A single number that seeds the simulation, or `NULL`.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotPpc` object, inheriting from [diagnostic_plot].
 #'
 #' @seealso [simulate.StatmodFit()], [plot_qq()], [diagnostics()]
@@ -1429,14 +1597,15 @@ PlotPpc <- S7::new_class("PlotPpc", parent = diagnostic_plot,
 #' ggplot2::autoplot(fit, plot_type = plot_ppc(statistic = max, n_sim = 50,
 #'                                        seed = 1))
 #' @export
-plot_ppc <- function(statistic = NULL, n_sim = 200, seed = NULL) {
+plot_ppc <- function(statistic = NULL, n_sim = 200, seed = NULL,
+                     legend = TRUE) {
   if (!is.null(statistic) && !is.function(statistic)) {
     stop("'statistic' must be NULL or a function.", call. = FALSE)
   }
   diag_check_count(n_sim, "n_sim", min = 2)
   diag_check_seed(seed)
   PlotPpc(label = "plot_ppc()", statistic = statistic, n_sim = n_sim,
-          seed = seed)
+          seed = seed, legend = check_legend(legend))
 }
 
 S7::method(plot_data, list(PlotPpc, distributions7::distrib)) <-
@@ -1498,7 +1667,7 @@ S7::method(plot_data, list(PlotPpc, distributions7::distrib)) <-
 S7::method(plot_layers, PlotPpc) <- function(type, data, ...) {
   kind <- attr(data, "kind")
   if (kind == "statistic") {
-    sim <- sprintf("statistic of %d simulated responses", nrow(data$sim))
+    sim <- "statistic of the simulated datasets"
     return(list(
       ggplot2::geom_histogram(data = data$sim,
                               mapping = ggplot2::aes(x = .data$value,
@@ -1512,30 +1681,31 @@ S7::method(plot_layers, PlotPpc) <- function(type, data, ...) {
                fill = stats::setNames("grey70", sim))))
   }
   if (kind == "discrete") {
-    rng <- "90% range of the simulated counts"
-    avg <- "mean of the simulated counts"
+    # the mean count over the simulated datasets and the interval between
+    # their 5 and 95 per cent quantiles, named together
+    sim <- est_label("mean count over the simulated datasets", 0.9,
+                     "interval")
     obs <- "observed count"
     return(list(
       ggplot2::geom_linerange(data = data$counts,
                               mapping = ggplot2::aes(x = .data$value,
                                                      ymin = .data$lower,
                                                      ymax = .data$upper,
-                                                     colour = rng),
+                                                     colour = sim),
                               linewidth = 2, alpha = 0.4),
       ggplot2::geom_point(data = data$counts,
                           mapping = ggplot2::aes(x = .data$value,
-                                                 y = .data$mean, colour = avg),
+                                                 y = .data$mean, colour = sim),
                           shape = 95, size = 5),
       ggplot2::geom_point(data = data$counts,
                           mapping = ggplot2::aes(x = .data$value,
                                                  y = .data$observed,
                                                  colour = obs),
                           size = 1.8),
-      plot_key(colour = stats::setNames(c("#b2182b", "#1f5fa8", "#1f5fa8"),
-                                        c(obs, avg, rng)))))
+      plot_key(colour = stats::setNames(c("#b2182b", "#1f5fa8"),
+                                        c(obs, sim)))))
   }
-  lab_sim <- sprintf("density of each of %d simulated responses",
-                 length(unique(data$sim$sim)))
+  lab_sim <- "densities of the simulated datasets"
   lab_obs <- "density of the observed response"
   list(
     ggplot2::geom_line(data = data$sim,

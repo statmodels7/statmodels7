@@ -6,6 +6,7 @@
 \usage{
 PlotFilter(
   label = character(0),
+  legend = TRUE,
   level = integer(0),
   scale = character(0),
   response = logical(0),

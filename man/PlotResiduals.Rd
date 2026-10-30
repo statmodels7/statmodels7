@@ -6,6 +6,7 @@
 \usage{
 PlotResiduals(
   label = character(0),
+  legend = TRUE,
   against = character(0),
   param = NULL,
   smooth = logical(0),

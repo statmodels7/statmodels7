@@ -5,23 +5,20 @@
 \title{Graph of the Break-Points of a Term}
 \usage{
 plot_breakpoint(
-  profile = TRUE,
   test = lr_test(),
   level = 0.95,
   vcov_type = bayesian_vcov(),
   information = distributions7::expected_info(),
   n_grid = 200,
-  n_profile = 100
+  n_profile = 100,
+  legend = TRUE
 )
 }
 \arguments{
-\item{profile}{Whether to draw the inset with the profile.}
-
 \item{test}{A test object (\code{\link[=wald_test]{wald_test()}}, \code{\link[=lr_test]{lr_test()}} and others), the test
 inverted for the interval of a break-point.}
 
-\item{level}{The confidence level of the band, of the intervals and of the
-cutoff of the profile.}
+\item{level}{The confidence level of the band and of the intervals.}
 
 \item{vcov_type}{A \link{vcov_method} object, the variance of the band.}
 
@@ -31,7 +28,11 @@ response.}
 
 \item{n_grid}{The number of points of the grid of the variable.}
 
-\item{n_profile}{The number of positions at which the profile is computed.}
+\item{n_profile}{The number of positions at which the profile of a
+\code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} position is computed.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotBreakpoint} object, inheriting from \link{term_plot}.
@@ -40,9 +41,8 @@ A \code{PlotBreakpoint} object, inheriting from \link{term_plot}.
 Selects the graph of a break-point term (\code{\link[modelterms7:seg]{modelterms7::seg()}},
 \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}): the contribution of the
 term as a function of its variable, with the partial residuals, each
-break-point as a dashed vertical line, its confidence interval as a bar at
-the bottom of the graph, and an inset with the profile of the criterion over
-the position of the break-point.
+break-point as a dashed vertical line, and its confidence interval as a bar
+at the bottom of the graph.
 }
 \details{
 The contribution and its band are those of \code{\link[=plot_effect]{plot_effect()}} for a term whose
@@ -61,7 +61,7 @@ variable. The position of a
 \code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}} term is read off other
 coefficients and has no coordinate to invert a test on; its interval is
 the set of positions, connected to the estimate, at which the profile
-described below stays under the cutoff.
+described below stays under the cutoff \eqn{\chi^2_{1}(\text{level})}.
 
 The profile is computed on the working response of the equation,
 \eqn{y_i^* = f(x_i) + s_i / w_i}, where \eqn{s_i} is the score of the
@@ -70,11 +70,10 @@ log-likelihood in the predictor and \eqn{w_i} the information selected by
 positions and the other terms of the equation at their fitted values,
 \eqn{R(\psi_k)} is the weighted residual sum of squares of \eqn{y^*} on an
 intercept, the linear column and the columns of the term, as computed by
-\code{\link[modelterms7:seg_profile_rss]{modelterms7::seg_profile_rss()}}. The inset shows
-\eqn{R(\psi_k) - \min R}, the increase of the criterion in the units of the
-log-likelihood, against the cutoff \eqn{\chi^2_{1}(\text{level})} (dotted
-line). For a gaussian mean it is the likelihood ratio statistic; for other
-families it is its quadratic approximation at the fit.
+\code{\link[modelterms7:seg_profile_rss]{modelterms7::seg_profile_rss()}}, and \eqn{R(\psi_k) - \min R} is the
+increase of the criterion in the units of the log-likelihood. For a
+gaussian mean it is the likelihood ratio statistic; for other families it
+is its quadratic approximation at the fit.
 
 A term whose break-points are developed over covariates has one position per
 observation and no single profile, and a marginal break-point term has a
@@ -87,8 +86,7 @@ dd$y <- 1 + 0.5 * dd$x + 2 * pmax(dd$x - 6, 0) + rnorm(120, sd = 0.4)
 fit <- statmod(y ~ seg(x, npsi = 1), distributions7::gaussian1_distrib(), dd)
 ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd)
 ggplot2::autoplot(fit, term = "seg(x, npsi = 1)", data = dd,
-                  plot_type = plot_breakpoint(profile = FALSE,
-                                         test = wald_test()))
+                  plot_type = plot_breakpoint(test = wald_test()))
 }
 \seealso{
 \code{\link[=autoplot.StatmodFit]{autoplot.StatmodFit()}}, \code{\link[=plot_effect]{plot_effect()}}

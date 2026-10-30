@@ -4,7 +4,13 @@
 \alias{plot_moments}
 \title{Graph of the Moments of the Fitted Distribution Against a Covariate}
 \usage{
-plot_moments(over, moments = c("mean", "variance"), at = NULL, n_grid = 200)
+plot_moments(
+  over,
+  moments = c("mean", "variance"),
+  at = NULL,
+  n_grid = 200,
+  legend = TRUE
+)
 }
 \arguments{
 \item{over}{The name of the covariate on the horizontal axis.}
@@ -14,6 +20,9 @@ plot_moments(over, moments = c("mean", "variance"), at = NULL, n_grid = 200)
 \item{at}{A named list of values for the other covariates, or \code{NULL}.}
 
 \item{n_grid}{The number of points of the grid of a numeric covariate.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotMoments} object, inheriting from \link{model_plot}.

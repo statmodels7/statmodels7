@@ -9,7 +9,8 @@ plot_surface(
   slices = NULL,
   level = 0.95,
   vcov_type = bayesian_vcov(),
-  n_grid = 60
+  n_grid = 60,
+  legend = TRUE
 )
 }
 \arguments{
@@ -24,6 +25,9 @@ at which curves of the effect against the first variable are drawn.}
 \item{vcov_type}{A \link{vcov_method} object, the variance of the effect.}
 
 \item{n_grid}{The number of points of the grid of each variable.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotSurface} object, inheriting from \link{term_plot}.

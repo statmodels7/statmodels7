@@ -99,7 +99,7 @@ test_that("confint() reports the infinite side and the graph draws it to the ran
   term <- tb$fit@spec@terms$mu[["seg(x, npsi = 2)"]]
   ctx <- list(param = "mu", name = "seg(x, npsi = 2)", vars = "x",
               cols = NULL, data = tb$data)
-  d <- plot_data(plot_breakpoint(profile = FALSE), term, tb$fit, ctx = ctx)
+  d <- plot_data(plot_breakpoint(), term, tb$fit, ctx = ctx)
   expect_identical(d$breaks$upper[2L], Inf)
   expect_equal(d$breaks$to[2L], max(tb$data$x))
   expect_equal(d$breaks$from[2L], d$breaks$lower[2L])
@@ -107,6 +107,6 @@ test_that("confint() reports the infinite side and the graph draws it to the ran
   pdf(NULL)
   on.exit(dev.off())
   p <- autoplot(tb$fit, term = "seg(x, npsi = 2)", data = tb$data,
-                plot_type = plot_breakpoint(profile = FALSE))
+                plot_type = plot_breakpoint())
   expect_no_error(print(p))
 })

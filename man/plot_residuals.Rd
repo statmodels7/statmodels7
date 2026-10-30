@@ -4,7 +4,13 @@
 \alias{plot_residuals}
 \title{Graph of the Residuals against a Quantity}
 \usage{
-plot_residuals(against = "median", param = NULL, smooth = TRUE, seed = NULL)
+plot_residuals(
+  against = "median",
+  param = NULL,
+  smooth = TRUE,
+  seed = NULL,
+  legend = TRUE
+)
 }
 \arguments{
 \item{against}{\code{"median"} (the default), \code{"fitted"}, \code{"index"}, or the name
@@ -15,6 +21,9 @@ of a covariate.}
 \item{smooth}{Whether to draw the smoother.}
 
 \item{seed}{A single number that seeds the randomization, or \code{NULL}.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotResiduals} object, inheriting from \link{diagnostic_plot}.

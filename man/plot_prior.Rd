@@ -4,7 +4,11 @@
 \alias{plot_prior}
 \title{Graph of the Prior of a Random Effect}
 \usage{
-plot_prior()
+plot_prior(legend = TRUE)
+}
+\arguments{
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotPrior} object, inheriting from \link{term_plot}.

@@ -9,7 +9,8 @@ plot_caterpillar(
   sort = TRUE,
   level = 0.95,
   vcov_type = bayesian_vcov(),
-  information = distributions7::expected_info()
+  information = distributions7::expected_info(),
+  legend = TRUE
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ first coefficient.}
 \item{information}{An object from \code{\link[distributions7:expected_info]{distributions7::expected_info()}} (the
 default) or \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the weight of the working
 residuals.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotCaterpillar} object, inheriting from \link{term_plot}.

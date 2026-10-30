@@ -6,6 +6,7 @@
 \usage{
 PlotDerivative(
   label = character(0),
+  legend = TRUE,
   order = integer(0),
   level = integer(0),
   simultaneous = logical(0),

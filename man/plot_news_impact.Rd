@@ -4,7 +4,7 @@
 \alias{plot_news_impact}
 \title{Graph of the News Impact of a Score-Driven Term}
 \usage{
-plot_news_impact(range = c(-6, 6), at = NULL, n_points = 401)
+plot_news_impact(range = c(-6, 6), at = NULL, n_points = 401, legend = TRUE)
 }
 \arguments{
 \item{range}{A numeric vector of length 2, the range of \eqn{z}.}
@@ -14,6 +14,9 @@ density, or \code{NULL} for the observation with the median filtered
 predictor.}
 
 \item{n_points}{The number of points of the grid of \eqn{z}.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotNewsImpact} object, inheriting from \link{term_plot}.

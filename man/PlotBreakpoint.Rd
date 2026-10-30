@@ -6,7 +6,7 @@
 \usage{
 PlotBreakpoint(
   label = character(0),
-  profile = logical(0),
+  legend = TRUE,
   test = NULL,
   level = integer(0),
   vcov_type = NULL,
@@ -16,7 +16,7 @@ PlotBreakpoint(
 )
 }
 \arguments{
-\item{label, profile, test, level, vcov_type, information, n_grid, n_profile}{See \code{\link[=plot_breakpoint]{plot_breakpoint()}}.}
+\item{label, legend, test, level, vcov_type, information, n_grid, n_profile}{See \code{\link[=plot_breakpoint]{plot_breakpoint()}}.}
 }
 \value{
 A \code{PlotBreakpoint} object, inheriting from \link{term_plot}.

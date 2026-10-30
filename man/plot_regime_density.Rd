@@ -4,7 +4,7 @@
 \alias{plot_regime_density}
 \title{Graph of the Density of the Response under Each Regime}
 \usage{
-plot_regime_density(at = NULL, n_grid = 300)
+plot_regime_density(at = NULL, n_grid = 300, legend = TRUE)
 }
 \arguments{
 \item{at}{The row of the fitting data that supplies the covariates, or
@@ -12,6 +12,9 @@ plot_regime_density(at = NULL, n_grid = 300)
 
 \item{n_grid}{The number of points of the grid of the response of a
 continuous family.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotRegimeDensity} object, inheriting from \link{term_plot}.

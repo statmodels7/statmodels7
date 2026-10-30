@@ -13,7 +13,8 @@ plot_effect(
   level = 0.95,
   vcov_type = bayesian_vcov(),
   information = distributions7::expected_info(),
-  n_grid = 200
+  n_grid = 200,
+  legend = TRUE
 )
 }
 \arguments{
@@ -40,6 +41,9 @@ default) or \code{\link[distributions7:observed_info]{distributions7::observed_i
 response.}
 
 \item{n_grid}{The number of points of the grid of a numeric variable.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotEffect} object, inheriting from \link{term_plot}.

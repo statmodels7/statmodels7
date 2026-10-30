@@ -8,7 +8,8 @@ plot_influence(
   param,
   measure = "cook",
   adjust = TRUE,
-  information = distributions7::expected_info()
+  information = distributions7::expected_info(),
+  legend = TRUE
 )
 }
 \arguments{
@@ -21,6 +22,9 @@ plot_influence(
 \item{information}{An object from \code{\link[distributions7:expected_info]{distributions7::expected_info()}} (the
 default) or \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the matrix of the
 variance and of the weights \eqn{w_i}.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotInfluence} object, inheriting from \link{diagnostic_plot}.

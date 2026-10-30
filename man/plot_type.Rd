@@ -7,21 +7,23 @@
 \alias{diagnostic_plot}
 \title{Graphical Types for a Fitted Model}
 \usage{
-plot_type(label = character(0))
+plot_type(label = character(0), legend = TRUE)
 
-term_plot(label = character(0))
+term_plot(label = character(0), legend = TRUE)
 
-model_plot(label = character(0))
+model_plot(label = character(0), legend = TRUE)
 
-diagnostic_plot(label = character(0))
+diagnostic_plot(label = character(0), legend = TRUE)
 }
 \arguments{
 \item{label}{A single string, the name of the graph.}
+
+\item{legend}{Whether the graph draws the legend that names its elements.}
 }
 \value{
 Nothing: the classes are abstract and their constructors signal an
-error. Every object that inherits from \code{plot_type} has the property
-\code{label}.
+error. Every object that inherits from \code{plot_type} has the properties
+\code{label} and \code{legend}.
 }
 \description{
 \code{plot_type} is the abstract S7 class of the objects that select a graph of

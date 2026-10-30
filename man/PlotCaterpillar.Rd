@@ -9,6 +9,7 @@
 \usage{
 PlotCaterpillar(
   label = character(0),
+  legend = TRUE,
   raw = logical(0),
   sort = logical(0),
   level = integer(0),
@@ -16,11 +17,21 @@ PlotCaterpillar(
   information = NULL
 )
 
-PlotPrior(label = character(0))
+PlotPrior(label = character(0), legend = TRUE)
 
-PlotRandomCov(label = character(0), level = integer(0), which = integer(0))
+PlotRandomCov(
+  label = character(0),
+  legend = TRUE,
+  level = integer(0),
+  which = integer(0)
+)
 
-PlotCurves(label = character(0), n_grid = integer(0), population = logical(0))
+PlotCurves(
+  label = character(0),
+  legend = TRUE,
+  n_grid = integer(0),
+  population = logical(0)
+)
 }
 \arguments{
 \item{label, raw, sort, level, vcov_type, information, which, n_grid, population}{See the constructors.}

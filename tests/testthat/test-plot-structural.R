@@ -85,7 +85,7 @@ test_that("the effect of a nonlinear term is its function", {
   expect_true(all(is.finite(d$lower) & d$lower < d$fit))
 })
 
-test_that("the break-point graph carries the position, the interval and the profile", {
+test_that("the break-point graph carries the position and the interval", {
   d <- plot_data(plot_breakpoint(), sg$fit@spec@terms$mu[[sg$name]], sg$fit,
                  ctx = list(param = "mu", name = sg$name, vars = "x",
                             cols = NULL, data = sg$data))
@@ -95,27 +95,20 @@ test_that("the break-point graph carries the position, the interval and the prof
                 readable = FALSE)
   expect_equal(c(d$breaks$lower, d$breaks$upper),
                c(ci$lower, ci$upper), tolerance = 1e-8)
-  # the profile is zero at its minimum, which is the fitted position up to
-  # the grid, and crosses the cutoff on both sides of the interval
-  expect_equal(min(d$profile$delta), 0)
-  expect_equal(d$profile$x[which.min(d$profile$delta)], psi, tolerance = 0.2)
-  expect_equal(d$cutoff$cutoff, stats::qchisq(0.95, 1))
-  inside <- d$profile$x > d$breaks$lower & d$profile$x < d$breaks$upper
-  expect_true(mean(d$profile$delta[inside]) < d$cutoff$cutoff)
-  expect_true(all(d$profile$delta[d$profile$x < psi - 1.5 |
-                                    d$profile$x > psi + 1.5] >
-                    d$cutoff$cutoff))
+  # the position of a seg() term has its own coefficient, so no profile is
+  # computed for it
+  expect_equal(nrow(d$profile), 0)
   pdf(NULL)
   on.exit(dev.off())
   p <- autoplot(sg$fit, term = sg$name, data = sg$data)
   expect_s3_class(p, "ggplot")
   expect_no_error(print(p))
   q <- autoplot(sg$fit, term = sg$name, data = sg$data,
-                plot_type = plot_breakpoint(profile = FALSE, test = wald_test()))
+                plot_type = plot_breakpoint(test = wald_test()))
   wi <- confint(sg$fit, parm = "mu:seg.psi1", readable = FALSE)
   d2 <- q$layers[[5]]$data
   expect_equal(c(d2$lower, d2$upper), c(wi$lower, wi$upper), tolerance = 1e-8)
-  expect_error(plot_breakpoint(profile = NA), "TRUE or FALSE")
+  expect_error(plot_breakpoint(legend = NA), "TRUE or FALSE")
   expect_error(autoplot(sg$fit, term = sg$name, plot_type = plot_breakpoint()),
                "does not keep its data")
 })
@@ -258,14 +251,15 @@ test_that("the interval of a jump() position is read from its profile", {
   nm <- grep("jump", names(fj@spec@terms$mu), value = TRUE)
   tm <- fj@spec@terms$mu[[nm]]
   ctx <- list(param = "mu", name = nm, vars = "x", data = dj)
-  d <- plot_data(plot_breakpoint(profile = FALSE), tm, fj, ctx = ctx)
-  expect_equal(nrow(d$profile), 0)
-  expect_true(d$breaks$lower <= d$breaks$psi && d$breaks$psi <= d$breaks$upper)
   dp <- plot_data(plot_breakpoint(), tm, fj, ctx = ctx)
+  expect_true(dp$breaks$lower <= dp$breaks$psi &&
+                dp$breaks$psi <= dp$breaks$upper)
+  # the profile is zero at its minimum and stays under the cutoff inside the
+  # interval
+  expect_equal(min(dp$profile$delta), 0)
+  expect_equal(dp$cutoff$cutoff, stats::qchisq(0.95, 1))
   inside <- dp$profile$x >= dp$breaks$lower & dp$profile$x <= dp$breaks$upper
   expect_true(all(dp$profile$delta[inside] <= dp$cutoff$cutoff))
-  expect_equal(c(dp$breaks$lower, dp$breaks$upper),
-               c(d$breaks$lower, d$breaks$upper))
 })
 
 test_that("profile_interval keeps the run connected to the estimate", {

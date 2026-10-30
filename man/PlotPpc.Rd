@@ -6,6 +6,7 @@
 \usage{
 PlotPpc(
   label = character(0),
+  legend = TRUE,
   statistic = NULL,
   n_sim = integer(0),
   seed = NULL

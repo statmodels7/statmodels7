@@ -5,9 +5,19 @@
 \alias{PlotPath}
 \title{S7 Classes of the Shrinkage and Path Graphs}
 \usage{
-PlotShrinkage(label = character(0), sort = logical(0), information = NULL)
+PlotShrinkage(
+  label = character(0),
+  legend = TRUE,
+  sort = logical(0),
+  information = NULL
+)
 
-PlotPath(label = character(0), log_lambda = NULL, information = NULL)
+PlotPath(
+  label = character(0),
+  legend = TRUE,
+  log_lambda = NULL,
+  information = NULL
+)
 }
 \arguments{
 \item{label, sort, information, log_lambda}{See \code{\link[=plot_shrinkage]{plot_shrinkage()}} and

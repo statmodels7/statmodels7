@@ -4,7 +4,11 @@
 \alias{plot_shrinkage}
 \title{Graph of the Shrinkage of a Penalized Block}
 \usage{
-plot_shrinkage(sort = TRUE, information = distributions7::expected_info())
+plot_shrinkage(
+  sort = TRUE,
+  information = distributions7::expected_info(),
+  legend = TRUE
+)
 }
 \arguments{
 \item{sort}{Whether to order the coefficients by their penalized estimate.}
@@ -12,6 +16,9 @@ plot_shrinkage(sort = TRUE, information = distributions7::expected_info())
 \item{information}{An object from \code{\link[distributions7:expected_info]{distributions7::expected_info()}} (the
 default) or \code{\link[distributions7:observed_info]{distributions7::observed_info()}}, the information of the
 log-likelihood in the step.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotShrinkage} object, inheriting from \link{term_plot}.

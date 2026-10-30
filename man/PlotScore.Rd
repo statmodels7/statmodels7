@@ -4,7 +4,12 @@
 \alias{PlotScore}
 \title{S7 Class of the Score Graph}
 \usage{
-PlotScore(label = character(0), param = character(0), against = character(0))
+PlotScore(
+  label = character(0),
+  legend = TRUE,
+  param = character(0),
+  against = character(0)
+)
 }
 \arguments{
 \item{label, param, against}{See \code{\link[=plot_score]{plot_score()}}.}

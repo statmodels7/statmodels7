@@ -4,7 +4,7 @@
 \alias{plot_pit}
 \title{Histogram of the Probability Integral Transform}
 \usage{
-plot_pit(bins = 20, seed = NULL, level = 0.95)
+plot_pit(bins = 20, seed = NULL, level = 0.95, legend = TRUE)
 }
 \arguments{
 \item{bins}{The number of bins.}
@@ -12,6 +12,9 @@ plot_pit(bins = 20, seed = NULL, level = 0.95)
 \item{seed}{A single number that seeds the randomization, or \code{NULL}.}
 
 \item{level}{The level of the band.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotPit} object, inheriting from \link{diagnostic_plot}.

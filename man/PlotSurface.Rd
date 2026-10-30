@@ -6,6 +6,7 @@
 \usage{
 PlotSurface(
   label = character(0),
+  legend = TRUE,
   mask = logical(0),
   slices = NULL,
   level = integer(0),

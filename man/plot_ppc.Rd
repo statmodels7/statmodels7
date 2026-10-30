@@ -4,7 +4,7 @@
 \alias{plot_ppc}
 \title{Comparison of the Response with Simulated Responses}
 \usage{
-plot_ppc(statistic = NULL, n_sim = 200, seed = NULL)
+plot_ppc(statistic = NULL, n_sim = 200, seed = NULL, legend = TRUE)
 }
 \arguments{
 \item{statistic}{\code{NULL}, or a function of a numeric vector that returns a
@@ -13,6 +13,9 @@ number.}
 \item{n_sim}{The number of simulated responses.}
 
 \item{seed}{A single number that seeds the simulation, or \code{NULL}.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotPpc} object, inheriting from \link{diagnostic_plot}.

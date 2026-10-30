@@ -1,12 +1,28 @@
-# statmodels7 0.227.1
+# statmodels7 0.228.0
 
-* Every graph of `autoplot()` names its elements in a legend below the panel:
-  estimates, bands with their level and kind, partial and quantile residuals,
-  rugs, reference lines, labeled points, the fitted value of a
-  hyperparameter and the counts on a second axis. Where the color already
+* Every graph of `autoplot()` names its elements in a legend below the panel.
+  An estimate and its interval share one entry ("estimated effect" over
+  "(95% CI)", the level being the one of the graph). Reference lines at zero,
+  at -2 and 2 and on the diagonal are drawn without an entry. Where the color
   distinguishes the levels of a factor, the other elements are named by line
-  type, shape and transparency. The captions of the shrinkage and random-effect
-  graphs are replaced by legends.
+  type and shape. The captions of the shrinkage and random-effect graphs are
+  replaced by legends.
+* Every graph type takes the argument `legend`; `legend = FALSE` draws the
+  graph without its legend.
+* The vertical axis of an effect reads "effect on the link scale of mu". The
+  reference level of a factor, whose effect is zero under treatment contrasts,
+  is labeled "reference level".
+* `plot_acf()` takes `by` and `time`, and pools the autocorrelation over the
+  series: the pairs of each lag are formed within a series, and the series
+  are those of a `gas()` or `regime()` term when `by` and `time` are not
+  given. Before, the residuals were read in row order as one series.
+  `plot_pacf()` draws the partial autocorrelation.
+* `plot_breakpoint()` no longer draws the profile inset, and its argument
+  `profile` is removed.
+* `plot_filter(response = TRUE)` signals an error when the filtered parameter
+  is not the mean of the family.
+* `plot_moments()` keeps the panel of a moment that is not finite at the
+  fitted parameters, with a note.
 * Panels divided by a covariate are headed by its name ("x: (0.29,0.5]"), and
   the levels of a random term are on an axis titled by its grouping.
 

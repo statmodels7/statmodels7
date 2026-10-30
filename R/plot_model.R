@@ -117,6 +117,9 @@ check_at_list <- function(at) {
 #' @param vcov_type A [vcov_method] object, the variance of the band.
 #' @param n_grid The number of points of the grid of a numeric covariate.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotParam` object, inheriting from [model_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_quantiles()], [plot_moments()]
@@ -130,7 +133,8 @@ check_at_list <- function(at) {
 #'                   data = dd)
 #' @export
 plot_param <- function(param, over, at = NULL, level = 0.95,
-                       vcov_type = bayesian_vcov(), n_grid = 200) {
+                       vcov_type = bayesian_vcov(), n_grid = 200,
+                       legend = TRUE) {
   if (missing(param) || !is.character(param) || length(param) != 1L ||
       is.na(param)) {
     stop("'param' must be the name of a parameter, a single string.",
@@ -141,7 +145,8 @@ plot_param <- function(param, over, at = NULL, level = 0.95,
   check_level_grid(level, n_grid)
   vcov_type <- as_vcov_method(vcov_type)
   PlotParam(label = "plot_param()", param = param, over = over, at = at,
-            level = level, vcov_type = vcov_type, n_grid = n_grid)
+            level = level, vcov_type = vcov_type, n_grid = n_grid,
+            legend = check_legend(legend))
 }
 
 
@@ -170,6 +175,9 @@ plot_param <- function(param, over, at = NULL, level = 0.95,
 #'   `over`.
 #' @param n_grid The number of points of the grid of a numeric covariate.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotQuantiles` object, inheriting from [model_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_param()], [plot_density()]
@@ -182,7 +190,8 @@ plot_param <- function(param, over, at = NULL, level = 0.95,
 #' ggplot2::autoplot(fit, plot_type = plot_quantiles(over = "x"), data = dd)
 #' @export
 plot_quantiles <- function(over, probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
-                           at = NULL, points = TRUE, n_grid = 200) {
+                           at = NULL, points = TRUE, n_grid = 200,
+                           legend = TRUE) {
   over <- check_over(over)
   if (!is.numeric(probs) || !length(probs) || anyNA(probs) ||
       any(probs <= 0 | probs >= 1)) {
@@ -195,7 +204,7 @@ plot_quantiles <- function(over, probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
   check_level_grid(0.5, n_grid)
   PlotQuantiles(label = "plot_quantiles()", over = over,
                 probs = sort(unique(probs)), at = at, points = points,
-                n_grid = n_grid)
+                n_grid = n_grid, legend = check_legend(legend))
 }
 
 
@@ -227,6 +236,9 @@ plot_quantiles <- function(over, probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
 #'   the smallest gap between positions (of 15 per cent of the range of the
 #'   covariate for a single row).
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotDensity` object, inheriting from [model_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_quantiles()]
@@ -240,7 +252,8 @@ plot_quantiles <- function(over, probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
 #'                                                                   0.9)),
 #'                                            over = "x"), data = dd)
 #' @export
-plot_density <- function(at, over = NULL, n_grid = 200, scale = 0.9) {
+plot_density <- function(at, over = NULL, n_grid = 200, scale = 0.9,
+                         legend = TRUE) {
   if (missing(at) || !is.data.frame(at) || !nrow(at)) {
     stop("'at' must be a data frame of covariate values with at least one row.",
          call. = FALSE)
@@ -261,7 +274,7 @@ plot_density <- function(at, over = NULL, n_grid = 200, scale = 0.9) {
     stop("'scale' must be a single positive number.", call. = FALSE)
   }
   PlotDensity(label = "plot_density()", at = at, over = over,
-              n_grid = n_grid, scale = scale)
+              n_grid = n_grid, scale = scale, legend = check_legend(legend))
 }
 
 
@@ -288,6 +301,9 @@ plot_density <- function(at, over = NULL, n_grid = 200, scale = 0.9) {
 #' @param at A named list of values for the other covariates, or `NULL`.
 #' @param n_grid The number of points of the grid of a numeric covariate.
 #'
+#' @param legend Whether to draw the legend that names the elements of
+#'   the graph.
+#'
 #' @return A `PlotMoments` object, inheriting from [model_plot].
 #'
 #' @seealso [autoplot.StatmodFit()], [plot_param()]
@@ -301,7 +317,7 @@ plot_density <- function(at, over = NULL, n_grid = 200, scale = 0.9) {
 #'                   moments = c("mean", "skewness")), data = dd)
 #' @export
 plot_moments <- function(over, moments = c("mean", "variance"), at = NULL,
-                         n_grid = 200) {
+                         n_grid = 200, legend = TRUE) {
   over <- check_over(over)
   ok <- c("mean", "variance", "std_dev", "skewness", "kurtosis")
   if (!is.character(moments) || !length(moments) || !all(moments %in% ok)) {
@@ -311,7 +327,8 @@ plot_moments <- function(over, moments = c("mean", "variance"), at = NULL,
   at <- check_at_list(at)
   check_level_grid(0.5, n_grid)
   PlotMoments(label = "plot_moments()", over = unique(over),
-              moments = unique(moments), at = at, n_grid = n_grid)
+              moments = unique(moments), at = at, n_grid = n_grid,
+              legend = check_legend(legend))
 }
 
 
@@ -419,27 +436,23 @@ S7::method(plot_data, list(PlotParam, distributions7::distrib)) <-
 
 S7::method(plot_layers, PlotParam) <- function(type, data, ...) {
   cv <- data$curve
-  k_fit <- sprintf("fitted %s", type@param)
+  k_fit <- est_label(sprintf("fitted %s", type@param), type@level)
+  key <- plot_key(colour = stats::setNames("#1f5fa8", k_fit))
   if (identical(attr(data, "kind"), "factor")) {
-    k_ci <- sprintf("%s with %s", k_fit,
-                    band_label(type@level, "confidence interval"))
     return(list(ggplot2::geom_pointrange(
       data = cv, mapping = ggplot2::aes(x = .data$x, y = .data$fit,
                                         ymin = .data$lower, ymax = .data$upper,
-                                        colour = k_ci)),
-      plot_key(colour = stats::setNames("#1f5fa8", k_ci))))
+                                        colour = k_fit)), key))
   }
-  k_band <- band_label(type@level)
   list(ggplot2::geom_ribbon(
          data = cv, mapping = ggplot2::aes(x = .data$x, ymin = .data$lower,
-                                           ymax = .data$upper, fill = k_band),
-         alpha = 0.18),
+                                           ymax = .data$upper),
+         fill = "#1f5fa8", alpha = 0.18),
        ggplot2::geom_line(
          data = cv, mapping = ggplot2::aes(x = .data$x, y = .data$fit,
                                            colour = k_fit),
-         linewidth = 0.9),
-       plot_key(colour = stats::setNames("#1f5fa8", k_fit),
-                fill = stats::setNames("#1f5fa8", k_band)))
+         linewidth = 0.9, key_glyph = draw_key_band),
+       key)
 }
 
 
@@ -681,8 +694,7 @@ S7::method(plot_layers, PlotDensity) <- function(type, data, ...) {
   }
   over <- attr(data, "over")
   k_pts <- "observations"
-  k_dens <- sprintf("fitted %s at a row of 'at', drawn from its value of %s",
-                    if (discrete) "probabilities" else "density", over)
+  k_dens <- if (discrete) "fitted probabilities" else "fitted density"
   if (nrow(data$points)) {
     out <- c(out, list(ggplot2::geom_point(
       data = data$points, mapping = ggplot2::aes(x = .data$x, y = .data$y,
@@ -723,8 +735,19 @@ S7::method(plot_data, list(PlotMoments, distributions7::distrib)) <-
       data.frame(x = g$x, moment = m, value = as.numeric(v))
     }))
     curve$moment <- factor(curve$moment, levels = type@moments)
+    # a moment that does not exist at the fitted parameters (the variance of a
+    # Student t with nu <= 2) is not finite; its panel is kept with a note
+    gone <- tapply(is.finite(curve$value), curve$moment, function(v) !any(v))
+    absent <- names(gone)[gone]
+    partial <- names(gone)[!gone & tapply(is.finite(curve$value),
+                                         curve$moment, function(v) !all(v))]
+    notes <- data.frame(
+      moment = factor(c(absent, partial), levels = type@moments),
+      label = c(rep("not finite at the fitted parameters", length(absent)),
+                rep("not finite where the curve is interrupted",
+                    length(partial))))
     curve <- curve[is.finite(curve$value), , drop = FALSE]
-    out <- list(curve = curve)
+    out <- list(curve = curve, notes = notes)
     attr(out, "kind") <- kind_of(g$x)
     attr(out, "labels") <- list(
       title = sprintf("moments of the response against %s", type@over),
@@ -745,6 +768,13 @@ S7::method(plot_layers, PlotMoments) <- function(type, data, ...) {
     list(ggplot2::geom_line(data = cv, mapping = m, colour = "#1f5fa8",
                             linewidth = 0.9))
   }
+  notes <- data$notes
+  if (nrow(notes)) {
+    geom <- c(geom, list(ggplot2::geom_text(
+      data = notes, mapping = ggplot2::aes(label = .data$label),
+      x = -Inf, y = Inf, hjust = -0.05, vjust = 1.5, size = 3,
+      colour = "grey30")))
+  }
   c(geom, list(ggplot2::facet_wrap(ggplot2::vars(.data$moment),
-                                   scales = "free_y")))
+                                   scales = "free_y", drop = FALSE)))
 }

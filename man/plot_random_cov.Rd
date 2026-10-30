@@ -4,12 +4,15 @@
 \alias{plot_random_cov}
 \title{Graph of the Covariance of a Random Effect}
 \usage{
-plot_random_cov(level = 0.95, which = c(1, 2))
+plot_random_cov(level = 0.95, which = c(1, 2), legend = TRUE)
 }
 \arguments{
 \item{level}{The probability content of the ellipse.}
 
 \item{which}{The two coefficients within a level, by position.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotRandomCov} object, inheriting from \link{term_plot}.

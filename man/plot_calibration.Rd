@@ -9,7 +9,8 @@ plot_calibration(
   over = NULL,
   n_inter = 4,
   level = 0.95,
-  seed = NULL
+  seed = NULL,
+  legend = TRUE
 )
 }
 \arguments{
@@ -22,6 +23,9 @@ plot_calibration(
 \item{level}{The level of the band.}
 
 \item{seed}{A single number that seeds the randomization, or \code{NULL}.}
+
+\item{legend}{Whether to draw the legend that names the elements of
+the graph.}
 }
 \value{
 A \code{PlotCalibration} object, inheriting from \link{diagnostic_plot}.

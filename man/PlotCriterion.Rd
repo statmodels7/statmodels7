@@ -6,6 +6,7 @@
 \usage{
 PlotCriterion(
   label = character(0),
+  legend = TRUE,
   log_lambda = NULL,
   method = character(0),
   hyper = NULL
