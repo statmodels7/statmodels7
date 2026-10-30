@@ -25,6 +25,8 @@
 #'
 #' @param label A single string, the name of the graph.
 #' @param legend Whether the graph draws the legend that names its elements.
+#'   `NULL`, which a subclass gets when its constructor builds the object
+#'   from `S7::S7_object()` without naming `legend`, draws it as `TRUE` does.
 #'
 #' @return Nothing: the classes are abstract and their constructors signal an
 #'   error. Every object that inherits from `plot_type` has the properties
@@ -44,7 +46,11 @@
 plot_type <- S7::new_class(
   "plot_type",
   properties = list(label = S7::class_character,
-                    legend = S7::new_property(S7::class_logical,
+                    # NULL is admitted, and drawn as TRUE: a graph type
+                    # written before the property existed builds its object
+                    # with S7::new_object(S7::S7_object(), ...) and names no
+                    # legend, and it stays valid
+                    legend = S7::new_property(S7::class_logical | NULL,
                                               default = TRUE)),
   abstract = TRUE
 )
@@ -350,7 +356,7 @@ plot_assemble <- function(type, x, fit, ctx) {
   p <- ggplot2::ggplot() + ggplot2::theme_bw() + plot_key_theme() +
     plot_layers(type, d)
   if (length(lab)) p <- p + do.call(ggplot2::labs, lab)
-  if (!type@legend) p <- p + ggplot2::theme(legend.position = "none")
+  if (isFALSE(type@legend)) p <- p + ggplot2::theme(legend.position = "none")
   p
 }
 

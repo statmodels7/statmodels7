@@ -1,3 +1,10 @@
+# statmodels7 0.229.4
+
+* A graph type whose constructor builds its object from `S7::S7_object()`
+  without naming `legend`, as the graph types written before the property
+  existed do, is valid again: `legend` admits `NULL`, which draws the legend
+  as `TRUE` does.
+
 # statmodels7 0.229.3
 
 * `confint()` and `autoplot()` of a profile computed with

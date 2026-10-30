@@ -140,3 +140,20 @@ test_that("a factor is crossed only where it interacts with the variable", {
   expect_equal(db$fit, (b[["z"]] + b[["z:gb"]]) * db$x + b[["gb"]] * 0,
                tolerance = 1e-10)
 })
+
+test_that("a graph type built without naming legend draws its legend", {
+  my_plot <- S7::new_class("my_plot", parent = term_plot,
+    constructor = function() S7::new_object(S7::S7_object(), label = "my_plot()"))
+  S7::method(plot_data, list(my_plot, S7::class_any)) <- function(type, x, fit, ..., ctx) {
+    list(points = data.frame(x = 1:3, y = 1:3, what = "a"))
+  }
+  S7::method(plot_layers, my_plot) <- function(type, data, ...) {
+    list(ggplot2::geom_point(ggplot2::aes(x = .data$x, y = .data$y, colour = .data$what),
+                             data = data$points))
+  }
+  g <- my_plot()
+  expect_null(g@legend)
+  p <- autoplot(fit, term = "s(x)", plot_type = g, data = dd)
+  expect_s3_class(p, "ggplot")
+  expect_false(identical(p$theme$legend.position, "none"))
+})

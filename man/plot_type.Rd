@@ -18,7 +18,9 @@ diagnostic_plot(label = character(0), legend = TRUE)
 \arguments{
 \item{label}{A single string, the name of the graph.}
 
-\item{legend}{Whether the graph draws the legend that names its elements.}
+\item{legend}{Whether the graph draws the legend that names its elements.
+\code{NULL}, which a subclass gets when its constructor builds the object
+from \code{S7::S7_object()} without naming \code{legend}, draws it as \code{TRUE} does.}
 }
 \value{
 Nothing: the classes are abstract and their constructors signal an
