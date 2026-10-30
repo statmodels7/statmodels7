@@ -27,10 +27,26 @@ object inheriting from
 
 ``` r
 # S3 method for class 'StatmodFit'
-autoplot(object, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
+autoplot(
+  object,
+  term = NULL,
+  param = NULL,
+  plot_type = NULL,
+  data = NULL,
+  legend = NULL,
+  ...
+)
 
 # S3 method for class 'StatmodFit'
-plot(x, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
+plot(
+  x,
+  term = NULL,
+  param = NULL,
+  plot_type = NULL,
+  data = NULL,
+  legend = NULL,
+  ...
+)
 ```
 
 ## Arguments
@@ -57,6 +73,13 @@ plot(x, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
 - data:
 
   The data frame of the fit, or `NULL`.
+
+- legend:
+
+  `NULL`, `TRUE` or `FALSE`. `NULL` leaves each graph with the property
+  `legend` of its type; `TRUE` or `FALSE` sets it on every graph drawn,
+  the four diagnostic graphs included, so that
+  `plot(fit, legend = FALSE)` draws them without legends.
 
 - ...:
 

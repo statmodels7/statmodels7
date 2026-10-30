@@ -1082,6 +1082,9 @@ helper functions. Using the package does not require any of it.
 - [`decrement_off()`](https://statmodels7.github.io/statmodels7/reference/decrement_off.md)
   : The Decrement Over the Directions Orthogonal to Some Others
 
+- [`default_diagnostic_types()`](https://statmodels7.github.io/statmodels7/reference/default_diagnostic_types.md)
+  : The Four Diagnostic Graphs Drawn by Default
+
 - [`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md)
   : The Coordinates That a Fit Does Not Identify, Found After the Fact
 

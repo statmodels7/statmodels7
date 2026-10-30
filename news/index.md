@@ -1,5 +1,13 @@
 # Changelog
 
+## statmodels7 0.230.0
+
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) and
+  `autoplot()` of a fit take `legend`: `NULL` (the default) leaves each
+  graph with the property `legend` of its type, and `TRUE` or `FALSE`
+  sets it on every graph drawn, so `plot(fit, legend = FALSE)` draws the
+  four diagnostic graphs without legends.
+
 ## statmodels7 0.229.4
 
 - A graph type whose constructor builds its object from

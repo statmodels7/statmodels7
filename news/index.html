@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.229.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.230.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.230.0" id="statmodels7-02300">statmodels7 0.230.0<a class="anchor" aria-label="anchor" href="#statmodels7-02300"></a></h2>
+<ul><li>
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> and <code>autoplot()</code> of a fit take <code>legend</code>: <code>NULL</code> (the default) leaves each graph with the property <code>legend</code> of its type, and <code>TRUE</code> or <code>FALSE</code> sets it on every graph drawn, so <code>plot(fit, legend = FALSE)</code> draws the four diagnostic graphs without legends.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.229.4" id="statmodels7-02294">statmodels7 0.229.4<a class="anchor" aria-label="anchor" href="#statmodels7-02294"></a></h2>
 <ul><li>A graph type whose constructor builds its object from <code><a href="https://rconsortium.github.io/S7/reference/S7_object.html" class="external-link">S7::S7_object()</a></code> without naming <code>legend</code>, as the graph types written before the property existed do, is valid again: <code>legend</code> admits <code>NULL</code>, which draws the legend as <code>TRUE</code> does.</li>
