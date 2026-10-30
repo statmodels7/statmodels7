@@ -940,8 +940,11 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # is a whole fit from the fresh coefficient start, and the best is kept by
   # the rule the edge restarts below use. Run before the edge check, so the
   # point that check reads is the winner.
-  ms <- structural_multistarts(spec, design)
-  if (length(ms$zeta) > 1L) {
+  # ONE TERM AT A TIME. Where several terms give several starts, the
+  # further starts of each are tried in turn, the other terms at the starts
+  # of the best fit so far, so the number of fits is the sum of the starts
+  # and not their product.
+  for (ms in structural_multistarts(spec, design)) {
     sst <- statmod_structural_state(design)
     zbest <- sst$zeta
     su <- attr(design, "structural")
@@ -950,7 +953,13 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       structural_start_fixups(spec, sst, su,
                               vapply(su, function(u) u$term == ms$term,
                                      logical(1)))
-      f2 <- tryCatch(fit_once(beta), error = function(e) NULL)
+      # a further start can put a filter where it explodes before the fit
+      # leaves it, and the gradient check of optimizers7 then warns about a
+      # point that the fit does not report; the warning is not passed on
+      f2 <- tryCatch(withCallingHandlers(fit_once(beta), warning = function(w) {
+        if (grepl("does not appear to be the gradient", conditionMessage(w),
+                  fixed = TRUE)) invokeRestart("muffleWarning")
+      }), error = function(e) NULL)
       if (!is.null(f2) && edge_restart_better(f2$res, res, crit,
                                               outer_criterion,
                                               sparse_criterion)) {

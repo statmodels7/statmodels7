@@ -39,6 +39,12 @@
   as the path computes it (the column `path_criterion`); `autoplot()` draws
   it with the points that the path scored. Under `cv()` the graph is the
   path's record of the cross-validated criterion with its standard errors.
+* A `gas()` term is fitted from two starts by default (`n_start` of
+  modelterms7 0.115.0, the persistence at 0 and at 0.9) and the better fit
+  is kept; a joint filter tries the further starts of each of its terms in
+  turn. `structural_multistarts()` lists the starts of every structural term
+  that gives several, each tried in turn with the others at the starts of
+  the best fit so far.
 * `hc4_sandwich()` gives each equation its own exponent,
   `delta_ia = min(4, h_iaa / mean h_aa)`, and corrects the scores of an
   observation by `exp(-D log(I - H_ii) D / 2)` with `D = diag(sqrt(delta))`.

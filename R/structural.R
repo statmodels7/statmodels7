@@ -167,27 +167,30 @@ structural_zeta_start <- function(term, target = NULL) {
 #' The Starting Points of a Structural Term
 #'
 #' @description
-#' Returns the starts given by [modelterms7::term_starts()] for the
-#' structural term of the model, when that function gives more than one and
-#' the specification carries no values from a previous fit.
+#' Returns the starts given by [modelterms7::term_starts()] for every
+#' structural term of the model for which that function gives more than one
+#' and the specification carries no values from a previous fit.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design Its design, as [statmod_design()] returns it.
 #'
-#' @return `NULL` where there is nothing to try, otherwise a list with `term`,
-#'   the unit's key, and `zeta`, the list of starts, whose first element is
-#'   the one that [statmod_design()] already used.
+#' @return A list, empty where there is nothing to try, with one element for
+#'   each such term: a list with `term`, the unit's key, and `zeta`, the list
+#'   of starts, whose first element is the one that [statmod_design()]
+#'   already used.
 #'
 #' @keywords internal
 structural_multistarts <- function(spec, design) {
   su <- attr(design, "structural")
+  out <- list()
   for (u in su) {
     if (!is.null(spec@structural[[u$term]])) next
-    z <- modelterms7::term_starts(spec@terms[[u$param]][[u$term]],
-                                  target = predictor_target(spec, u$param))
-    if (length(z) > 1L) return(list(term = u$term, zeta = z))
+    tm <- spec@terms[[u$param]][[u$term]]
+    if (is.null(tm)) next
+    z <- modelterms7::term_starts(tm, target = predictor_target(spec, u$param))
+    if (length(z) > 1L) out[[length(out) + 1L]] <- list(term = u$term, zeta = z)
   }
-  NULL
+  out
 }
 
 

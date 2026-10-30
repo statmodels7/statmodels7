@@ -12,13 +12,14 @@ structural_multistarts(spec, design)
 \item{design}{Its design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 }
 \value{
-\code{NULL} where there is nothing to try, otherwise a list with \code{term},
-the unit's key, and \code{zeta}, the list of starts, whose first element is
-the one that \code{\link[=statmod_design]{statmod_design()}} already used.
+A list, empty where there is nothing to try, with one element for
+each such term: a list with \code{term}, the unit's key, and \code{zeta}, the list
+of starts, whose first element is the one that \code{\link[=statmod_design]{statmod_design()}}
+already used.
 }
 \description{
-Returns the starts given by \code{\link[modelterms7:term_starts]{modelterms7::term_starts()}} for the
-structural term of the model, when that function gives more than one and
-the specification carries no values from a previous fit.
+Returns the starts given by \code{\link[modelterms7:term_starts]{modelterms7::term_starts()}} for every
+structural term of the model for which that function gives more than one
+and the specification carries no values from a previous fit.
 }
 \keyword{internal}
