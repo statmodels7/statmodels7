@@ -5,9 +5,25 @@
 \alias{plot.StatmodFit}
 \title{Graphs of a Fitted Model}
 \usage{
-\method{autoplot}{StatmodFit}(object, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
+\method{autoplot}{StatmodFit}(
+  object,
+  term = NULL,
+  param = NULL,
+  plot_type = NULL,
+  data = NULL,
+  legend = NULL,
+  ...
+)
 
-\method{plot}{StatmodFit}(x, term = NULL, param = NULL, plot_type = NULL, data = NULL, ...)
+\method{plot}{StatmodFit}(
+  x,
+  term = NULL,
+  param = NULL,
+  plot_type = NULL,
+  data = NULL,
+  legend = NULL,
+  ...
+)
 }
 \arguments{
 \item{object, x}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -21,6 +37,11 @@
 \item{plot_type}{An object inheriting from \link{plot_type}, or \code{NULL}.}
 
 \item{data}{The data frame of the fit, or \code{NULL}.}
+
+\item{legend}{\code{NULL}, \code{TRUE} or \code{FALSE}. \code{NULL} leaves each graph with the
+property \code{legend} of its type; \code{TRUE} or \code{FALSE} sets it on every graph
+drawn, the four diagnostic graphs included, so that
+\code{plot(fit, legend = FALSE)} draws them without legends.}
 
 \item{...}{Unused.}
 }

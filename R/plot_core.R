@@ -247,6 +247,10 @@ plot_layers <- S7::new_generic("plot_layers", "type",
 #'   `NULL`.
 #' @param plot_type An object inheriting from [plot_type], or `NULL`.
 #' @param data The data frame of the fit, or `NULL`.
+#' @param legend `NULL`, `TRUE` or `FALSE`. `NULL` leaves each graph with the
+#'   property `legend` of its type; `TRUE` or `FALSE` sets it on every graph
+#'   drawn, the four diagnostic graphs included, so that
+#'   `plot(fit, legend = FALSE)` draws them without legends.
 #' @param ... Unused.
 #'
 #' @return `autoplot()` returns a ggplot2 object (a patchwork object for the
@@ -268,10 +272,16 @@ plot_layers <- S7::new_generic("plot_layers", "type",
 #' @name autoplot.StatmodFit
 #' @export
 autoplot.StatmodFit <- function(object, term = NULL, param = NULL,
-                                plot_type = NULL, data = NULL, ...) {
+                                plot_type = NULL, data = NULL, legend = NULL,
+                                ...) {
   check_dots("autoplot", ...)
   if (!is.null(data) && !is.data.frame(data)) {
     stop("'data' must be a data frame.", call. = FALSE)
+  }
+  if (!is.null(legend)) check_legend(legend)
+  # the argument, where given, overrides the property of every type drawn
+  set_legend <- function(type) {
+    if (is.null(legend)) type else S7::set_props(type, legend = legend)
   }
   if (!is.null(plot_type) && !S7::S7_inherits(plot_type, plot_type_class())) {
     stop("'plot_type' must be a plot_type object, such as plot_effect().",
@@ -282,7 +292,10 @@ autoplot.StatmodFit <- function(object, term = NULL, param = NULL,
       stop("'param' selects the equation of a term; give 'term' as well.",
            call. = FALSE)
     }
-    return(diagnostics(object, data = data, compose = TRUE))
+    return(diagnostics(object,
+                       plot_types = lapply(default_diagnostic_types(),
+                                           set_legend),
+                       data = data, compose = TRUE))
   }
   if (!is.null(plot_type) && !S7::S7_inherits(plot_type, term_plot)) {
     if (!is.null(term) || !is.null(param)) {
@@ -292,7 +305,8 @@ autoplot.StatmodFit <- function(object, term = NULL, param = NULL,
     }
     ctx <- list(param = NULL, name = NULL, vars = NULL, cols = NULL,
                 data = data)
-    return(plot_assemble(plot_type, object@spec@distrib, object, ctx))
+    return(plot_assemble(set_legend(plot_type), object@spec@distrib, object,
+                         ctx))
   }
   if (is.null(term)) {
     stop(sprintf("the graph %s needs 'term'.", plot_type@label), call. = FALSE)
@@ -303,6 +317,7 @@ autoplot.StatmodFit <- function(object, term = NULL, param = NULL,
       default_plot(unit$parts[[1L]]$term)
     } else plot_effect()
   }
+  plot_type <- set_legend(plot_type)
   if (length(unit$parts) == 1L) {
     pt <- unit$parts[[1L]]
     ctx <- list(param = unit$param, name = pt$name, vars = unit$vars,
@@ -318,9 +333,9 @@ autoplot.StatmodFit <- function(object, term = NULL, param = NULL,
 #' @rdname autoplot.StatmodFit
 #' @export
 plot.StatmodFit <- function(x, term = NULL, param = NULL, plot_type = NULL,
-                            data = NULL, ...) {
+                            data = NULL, legend = NULL, ...) {
   p <- autoplot.StatmodFit(x, term = term, param = param, plot_type = plot_type,
-                           data = data, ...)
+                           data = data, legend = legend, ...)
   print(p)
   invisible(p)
 }
@@ -908,11 +923,7 @@ diagnostics <- function(fit, plot_types = NULL, data = NULL, compose = FALSE) {
   if (!S7::S7_inherits(fit, StatmodFit)) {
     stop("'fit' must be a statmod fit.", call. = FALSE)
   }
-  if (is.null(plot_types)) {
-    plot_types <- list(ppc = plot_ppc(), worm = plot_worm(),
-                  calibration = plot_calibration(),
-                  residuals = plot_residuals(against = "median"))
-  }
+  if (is.null(plot_types)) plot_types <- default_diagnostic_types()
   if (!is.list(plot_types) || !length(plot_types) ||
       !all(vapply(plot_types, S7::S7_inherits, logical(1), diagnostic_plot))) {
     stop("'plot_types' must be a list of diagnostic_plot objects, such as plot_qq().",
@@ -935,4 +946,20 @@ diagnostics <- function(fit, plot_types = NULL, data = NULL, compose = FALSE) {
                    legend.spacing.y = ggplot2::unit(0, "pt"),
                    legend.key.spacing.y = ggplot2::unit(0, "pt")))
   patchwork::wrap_plots(out)
+}
+
+#' The Four Diagnostic Graphs Drawn by Default
+#'
+#' @description
+#' Returns the graph types that [diagnostics()] composes when `plot_types` is
+#' not given: [plot_ppc()], [plot_worm()], [plot_calibration()] and
+#' [plot_residuals()] against the predicted median.
+#'
+#' @return A named list of four [diagnostic_plot] objects.
+#'
+#' @keywords internal
+default_diagnostic_types <- function() {
+  list(ppc = plot_ppc(), worm = plot_worm(),
+       calibration = plot_calibration(),
+       residuals = plot_residuals(against = "median"))
 }

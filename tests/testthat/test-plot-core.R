@@ -157,3 +157,22 @@ test_that("a graph type built without naming legend draws its legend", {
   expect_s3_class(p, "ggplot")
   expect_false(identical(p$theme$legend.position, "none"))
 })
+
+test_that("the argument legend of plot() and autoplot() reaches every graph", {
+  pos <- function(p) p$theme$legend.position
+  d4 <- autoplot(fit, legend = FALSE)
+  for (i in 1:4) expect_identical(pos(d4[[i]]), "none")
+  d4 <- autoplot(fit)
+  for (i in 1:4) expect_false(identical(pos(d4[[i]]), "none"))
+  expect_identical(pos(autoplot(fit, term = "s(x)", data = dd, legend = FALSE)), "none")
+  # NULL keeps the type's own setting, TRUE or FALSE overrides it
+  q <- autoplot(fit, plot_type = plot_qq(legend = FALSE))
+  expect_identical(pos(q), "none")
+  q <- autoplot(fit, plot_type = plot_qq(legend = FALSE), legend = TRUE)
+  expect_false(identical(pos(q), "none"))
+  expect_error(autoplot(fit, legend = NA), "'legend' must be TRUE or FALSE")
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_invisible(p <- plot(fit, legend = FALSE))
+  expect_identical(pos(p[[1]]), "none")
+})
