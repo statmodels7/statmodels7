@@ -2912,6 +2912,10 @@ helper functions. Using the package does not require any of it.
 - [`statmod_values()`](https://statmodels7.github.io/statmodels7/reference/statmod_values.md)
   : The Values That a Term Wrote Out for One Hyperparameter
 
+- [`statmod_variants`](https://statmodels7.github.io/statmodels7/reference/statmod_variant_search.md)
+  [`statmod_variant_search()`](https://statmodels7.github.io/statmodels7/reference/statmod_variant_search.md)
+  : A Fit Searched over the Versions of a Term
+
 - [`statmodels7`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   [`statmodels7-package`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   : statmodels7: The S7 Toolkit for Statistical Modeling
@@ -3111,6 +3115,12 @@ helper functions. Using the package does not require any of it.
 
 - [`vanished_coords()`](https://statmodels7.github.io/statmodels7/reference/vanished_coords.md)
   : Coordinates Whose Design Column Has Vanished
+
+- [`variant_score()`](https://statmodels7.github.io/statmodels7/reference/variant_score.md)
+  : The Score That Ranks the Versions of a Term
+
+- [`variant_terms()`](https://statmodels7.github.io/statmodels7/reference/variant_terms.md)
+  : The Terms That Carry a Choice for a Search
 
 - [`vb_inner()`](https://statmodels7.github.io/statmodels7/reference/vb_inner.md)
   : The Verbosity of an Inner Fit Inside the Outer Search

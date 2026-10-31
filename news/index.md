@@ -1,5 +1,27 @@
 # Changelog
 
+## statmodels7 0.235.1
+
+- Tests only: the test of a Jeffreys block with singular information
+  uses a column of zeros, whose information is exactly zero on every
+  platform; a repeated column left a tiny positive pivot on Linux.
+
+## statmodels7 0.235.0
+
+- [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  fits a model whose terms carry a discrete choice
+  ([`modelterms7::term_pilot()`](https://statmodels7.github.io/modelterms7/reference/term_pilot.html))
+  by a search: one pilot fit with each such term replaced by its
+  stand-in, then one fit for each version of the term
+  ([`modelterms7::term_variants()`](https://statmodels7.github.io/modelterms7/reference/term_variants.html)),
+  keeping the best criterion. Several such terms are settled one at a
+  time. The versions tried and their scores are in
+  `fit@history$variants`, and
+  [`print()`](https://rdrr.io/r/base/print.html) names the version
+  chosen. This is how the mode of
+  [`modelterms7::shape_unimodal()`](https://statmodels7.github.io/modelterms7/reference/shape_unimodal.html)
+  is chosen when it is not given.
+
 ## statmodels7 0.234.0
 
 - [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
