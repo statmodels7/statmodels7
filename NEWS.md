@@ -1,3 +1,9 @@
+# statmodels7 0.235.1
+
+* Tests only: the test of a Jeffreys block with singular information uses a
+  column of zeros, whose information is exactly zero on every platform; a
+  repeated column left a tiny positive pivot on Linux.
+
 # statmodels7 0.235.0
 
 * `statmod()` fits a model whose terms carry a discrete choice

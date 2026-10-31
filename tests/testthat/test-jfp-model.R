@@ -107,11 +107,14 @@ test_that("the effective degrees of freedom can exceed p under separation", {
 
 test_that("a block whose information is singular has no usable value", {
   d <- jfp_sep_data()
-  sp <- statmod_spec(y ~ x1, distributions7::bernoulli_distrib(), d)
+  d$z0 <- 0
+  sp <- statmod_spec(y ~ x1 + z0, distributions7::bernoulli_distrib(), d)
   des <- statmod_design(sp)
-  # a column repeated in the block: the determinant is zero
-  st <- jfp_state(sp, des, list(mu = c(0.1, 0.2)),
-                  list(jfp_block("mu", c(2L, 2L))))
+  # a block on a column of zeros: the information is exactly zero, so the
+  # factorization fails on every platform (a repeated column left a tiny
+  # positive pivot on Linux's BLAS)
+  st <- jfp_state(sp, des, list(mu = c(0.1, 0.2, 0)),
+                  list(jfp_block("mu", 3L)))
   expect_identical(jfp_value(st), -Inf)
   expect_error(jfp_gradient(st), "not positive definite")
 })
