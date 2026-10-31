@@ -4,7 +4,7 @@
 \alias{design_derivative}
 \title{Rows of the Derivative of a Block}
 \usage{
-design_derivative(tm, grid, var, order, lo, hi)
+design_derivative(tm, grid, var, order, lo, hi, value = FALSE)
 }
 \arguments{
 \item{tm}{A built \link[modelterms7:SmoothTerm]{modelterms7::SmoothTerm}.}
@@ -16,10 +16,15 @@ design_derivative(tm, grid, var, order, lo, hi)
 \item{order}{The order of the derivative.}
 
 \item{lo, hi}{The range of the variable.}
+
+\item{value}{\code{FALSE} for the rows of the block; \code{TRUE} for the derivative
+of the contribution itself, \code{\link[modelterms7:term_value]{modelterms7::term_value()}}, which a term
+nonlinear in its coefficients needs, since its block times the
+coefficients is not its contribution.}
 }
 \value{
 A matrix with one row for each row of \code{grid} and one column for
-each coefficient of the term.
+each coefficient of the term, or one column where \code{value} is \code{TRUE}.
 }
 \description{
 Computes the derivative of order \code{order} with respect to \code{var} of every

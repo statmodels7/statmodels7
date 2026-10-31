@@ -18,7 +18,8 @@ iwls_fit(
   kinks_at = NULL,
   newton_at = NULL,
   switch_at = NULL,
-  switch_after = Inf
+  switch_after = Inf,
+  guard = FALSE
 )
 }
 \arguments{
@@ -89,6 +90,12 @@ settled on the expected information from \code{\link[=auto_info]{auto_info()}}.}
 
 \item{switch_after}{The iteration after which \code{switch_at} replaces
 \code{pieces_at}.}
+
+\item{guard}{Whether a trial point of the line search whose objective
+raises an error is read as a rejected step, also where there is no
+\code{backup_at}. \code{\link[=fit_smooth]{fit_smooth()}} sets it for a design with a term whose block
+moves with its coefficients, where a long step can carry the predictor
+out of the range in which the family is defined.}
 }
 \value{
 A list of ten: the six below; \code{note}, the reason for which a run

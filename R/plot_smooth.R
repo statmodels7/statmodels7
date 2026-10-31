@@ -166,6 +166,49 @@ S7::method(plot_data, list(PlotDerivative, modelterms7::SmoothTerm)) <-
   }
 
 
+S7::method(plot_data, list(PlotDerivative, modelterms7::ScsTerm)) <-
+  function(type, x, fit, ctx, ...) {
+    # A SHAPE-CONSTRAINED SMOOTH IS NONLINEAR IN ITS COEFFICIENTS: its
+    # derivative is W'(x) b(gamma), read off term_value(), and the rows of
+    # its block, W'(x) diag(b'(gamma)), are the gradient of that derivative
+    # in gamma, which is what the standard error needs.
+    var <- paste(deparse(x@var), collapse = "")
+    vars_all <- unique(c(var, term_variables(x, ctx$name)))
+    data <- plot_needs_data(ctx, fit, type, vars = vars_all)
+    if (!is.numeric(data[[var]]) || is.matrix(data[[var]])) {
+      stop(sprintf("the derivative needs a numeric variable, and '%s' is not.",
+                   var), call. = FALSE)
+    }
+    grid <- effect_grid(data, var, vars_all, type@n_grid)
+    lo <- min(data[[var]], na.rm = TRUE)
+    hi <- max(data[[var]], na.rm = TRUE)
+    cb <- term_coef_block(fit, ctx$param, ctx$name, ctx$cols, type@vcov_type)
+    tm <- modelterms7::term_refresh(x, cb$coef)
+    D <- design_derivative(tm, grid, var, type@order, lo, hi)
+    est <- drop(design_derivative(tm, grid, var, type@order, lo, hi, value = TRUE))
+    se <- sqrt(pmax(rowSums((D %*% cb$vcov) * D), 0))
+    zp <- stats::qnorm((1 + type@level) / 2)
+    crit <- if (type@simultaneous) {
+      draws <- with_seed(type@seed, mvn_draws(cb$vcov, type@n_sim))
+      simultaneous_critical(D, se, draws, type@level)
+    } else zp
+    curve <- data.frame(x = grid[[var]], fit = est, se = se,
+                        lower = est - crit * se, upper = est + crit * se)
+    critical <- data.frame(group = "", pointwise = zp, used = crit,
+                           stringsAsFactors = FALSE)
+    out <- list(curve = curve, critical = critical)
+    attr(out, "labels") <- list(
+      title = sprintf("%s: %s, %s derivative", ctx$param,
+                      if (is.null(ctx$title)) ctx$name else ctx$title,
+                      if (type@order == 1) "first" else "second"),
+      x = var,
+      y = sprintf("%s derivative of the effect",
+                  if (type@order == 1) "first" else "second"),
+      colour = NULL, fill = NULL)
+    out
+  }
+
+
 #' The Variables of a Smooth
 #'
 #' @description
@@ -204,12 +247,16 @@ smooth_variables <- function(tm) {
 #' @param var The variable that is differentiated.
 #' @param order The order of the derivative.
 #' @param lo,hi The range of the variable.
+#' @param value `FALSE` for the rows of the block; `TRUE` for the derivative
+#'   of the contribution itself, [modelterms7::term_value()], which a term
+#'   nonlinear in its coefficients needs, since its block times the
+#'   coefficients is not its contribution.
 #'
 #' @return A matrix with one row for each row of `grid` and one column for
-#'   each coefficient of the term.
+#'   each coefficient of the term, or one column where `value` is `TRUE`.
 #'
 #' @keywords internal
-design_derivative <- function(tm, grid, var, order, lo, hi) {
+design_derivative <- function(tm, grid, var, order, lo, hi, value = FALSE) {
   off <- numericals7::fd_offsets(order, accuracy = 4L)
   r <- off$half_width
   ks <- off$central
@@ -220,7 +267,8 @@ design_derivative <- function(tm, grid, var, order, lo, hi) {
   n <- nrow(grid)
   nodes <- grid[rep(seq_len(n), length(ks)), , drop = FALSE]
   nodes[[var]] <- rep(centre, length(ks)) + rep(ks, each = n) * h
-  X <- as.matrix(modelterms7::term_predict(tm, newdata = nodes))
+  X <- if (value) matrix(modelterms7::term_value(tm, newdata = nodes), ncol = 1L)
+       else as.matrix(modelterms7::term_predict(tm, newdata = nodes))
   p <- ncol(X)
   D <- matrix(0, n, p)
   for (s in unique(shift)) {
