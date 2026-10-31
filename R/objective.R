@@ -870,11 +870,16 @@ hess_key <- function(params, a, b) {
 #'   a named list of hyperparameter vectors keyed by term.
 #' @param design The design.
 #' @param what Which quantity: `"value"`, `"gradient"` or `"hessian"`.
+#' @param jeffreys Whether the Jeffreys penalties of [jfp_penalty()] are
+#'   included (the default). [iwls_pieces()] passes `FALSE` and places their
+#'   curvature itself, split into the part with the sparsity of the
+#'   information and a product of low rank.
 #'
 #' @return Depends on `what`:
 #'   \describe{
 #'     \item{`"value"`}{a single number, the sum of the penalties. The value is
-#'       `0` for an unpenalized model.}
+#'       `0` for an unpenalized model, and `Inf` where the information of a
+#'       Jeffreys block is not positive definite.}
 #'     \item{`"gradient"`}{a named list of numeric vectors, one per
 #'       distribution parameter, zero in every unpenalized coordinate.}
 #'     \item{`"hessian"`}{a symmetric `p x p` matrix over the stacked
@@ -890,7 +895,8 @@ hess_key <- function(params, a, b) {
 #' @keywords internal
 statmod_penalty_at <- function(spec, coef, hyper,
                                design = statmod_design(spec),
-                               what = c("value", "gradient", "hessian")) {
+                               what = c("value", "gradient", "hessian"),
+                               jeffreys = TRUE) {
   what <- match.arg(what)
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
@@ -928,6 +934,8 @@ statmod_penalty_at <- function(spec, coef, hyper,
     # a MIXED class is read at positions in the JOINT vector, half of which
     # this matrix does not span; joint_penalty_at() places the whole of it
     if (isTRUE(u$mixed)) next
+    # a Jeffreys unit is evaluated on the model, below
+    if (isTRUE(u$jeffreys)) next
     if (isTRUE(u$structural)) {
       if (what != "value" || is.null(sst)) next
       z <- sst$zeta[[u$term]][u$cols]
@@ -975,6 +983,19 @@ statmod_penalty_at <- function(spec, coef, hyper,
   # scales of a class ran away, to exp(3.7) and exp(14.4).
   if (what == "value") {
     value <- value + joint_penalty_at(spec, design, coef, hyper, "value")
+  }
+  if (jeffreys) {
+    if (what == "value") {
+      value <- value + jfp_penalty(spec, design, coef, "value")
+    } else if (what == "gradient") {
+      jg <- jfp_penalty(spec, design, coef, "gradient")
+      for (a in seq_along(params)) {
+        grad[[a]] <- grad[[a]] + jg[offs[a] + seq_len(npar[a])]
+      }
+    } else {
+      jh <- jfp_penalty(spec, design, coef, "hessian")
+      if (!is.null(jh)) hess <- hess + jh
+    }
   }
   switch(what, value = value, gradient = grad, hessian = hess)
 }
@@ -1738,7 +1759,10 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
 #'
 #' @return For `"value"` a single number; for `"gradient"` a numeric vector of
 #'   length `n`; for `"hessian"` an `n` by `n` matrix. The result is zero
-#'   throughout if no class is mixed.
+#'   throughout if no class is mixed and no Jeffreys term is present. The
+#'   gradient and the Hessian also carry the part of a Jeffreys penalty that
+#'   lies outside the coefficients ([jfp_joint_extra()]), whose part over the
+#'   coefficients [statmod_penalty_at()] already places.
 #'
 #' @seealso [statmod_penalty_at()] for the coefficients' own penalties,
 #'   [statmod_structural_penalty()] for a filter's.
@@ -1752,6 +1776,10 @@ joint_penalty_at <- function(spec, design, coef, hyper,
                 hessian = matrix(0, n, n))
   sst <- statmod_structural_state(design)
   if (is.null(sst)) return(out)
+  if (what != "value" && n > sum(vapply(design, function(d) d$npar,
+                                        integer(1)))) {
+    out <- out + jfp_joint_extra(spec, design, coef, what, n)
+  }
   params <- spec@distrib@params
   flat <- unlist(coef[params], use.names = FALSE)
   for (u in statmod_penalized(spec, design)) {

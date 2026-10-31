@@ -9,7 +9,8 @@ statmod_penalty_at(
   coef,
   hyper,
   design = statmod_design(spec),
-  what = c("value", "gradient", "hessian")
+  what = c("value", "gradient", "hessian"),
+  jeffreys = TRUE
 )
 }
 \arguments{
@@ -23,12 +24,18 @@ a named list of hyperparameter vectors keyed by term.}
 \item{design}{The design.}
 
 \item{what}{Which quantity: \code{"value"}, \code{"gradient"} or \code{"hessian"}.}
+
+\item{jeffreys}{Whether the Jeffreys penalties of \code{\link[=jfp_penalty]{jfp_penalty()}} are
+included (the default). \code{\link[=iwls_pieces]{iwls_pieces()}} passes \code{FALSE} and places their
+curvature itself, split into the part with the sparsity of the
+information and a product of low rank.}
 }
 \value{
 Depends on \code{what}:
 \describe{
 \item{\code{"value"}}{a single number, the sum of the penalties. The value is
-\code{0} for an unpenalized model.}
+\code{0} for an unpenalized model, and \code{Inf} where the information of a
+Jeffreys block is not positive definite.}
 \item{\code{"gradient"}}{a named list of numeric vectors, one per
 distribution parameter, zero in every unpenalized coordinate.}
 \item{\code{"hessian"}}{a symmetric \verb{p x p} matrix over the stacked

@@ -905,11 +905,17 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev,
 #'   the fitted predictors.
 #' @param theta The per-observation parameters at which they were read, from
 #'   which the expected information is read where the filter scales its score.
+#' @param g The per-observation weights against which the second derivative
+#'   of the filtered predictor is contracted, or `NULL` (the default) for the
+#'   observation weights times the score of the filtered parameter, the term
+#'   of the observed information. The Jeffreys penalty ([jfp_hessian()])
+#'   passes its own.
 #'
 #' @return The list that [modelterms7::term_curvature()] returns.
 #'
 #' @keywords internal
-filter_curvature <- function(spec, design, f, ap, Vs, gl, H, D3, theta) {
+filter_curvature <- function(spec, design, f, ap, Vs, gl, H, D3, theta,
+                             g = NULL) {
   params <- spec@distrib@params
   n <- spec@n_obs
   w <- spec@weights
@@ -918,16 +924,17 @@ filter_curvature <- function(spec, design, f, ap, Vs, gl, H, D3, theta) {
   dr <- filter_driving(spec, theta, ap, filter_scaling(f$tm), gl, H, D3)
   blocks <- .structural_blocks(params, ap, Vs, dr$H, dr$D3, NULL, n)(NULL)
   s_at <- rep_len(gl[[f$param]], n)
+  gw <- if (is.null(g)) w * s_at else rep_len(as.numeric(g), n)
   sd_at <- rep_len(dr$gl[[f$param]], n)
   cd_at <- rep_len(dr$H[[hess_key(params, ap, ap)]], n)
   bd_data <- structural_blocks_data(params, ap, Vs, dr$H, dr$D3, n)
   structural_memo(design, "curv",
                   list(zeta = f$psi, eta = f$eta_static,
-                       g = w * s_at, seed = Vs[[ap]]), function() {
+                       g = gw, seed = Vs[[ap]]), function() {
     modelterms7::term_curvature(
       f$tm, f$eta_static, spec@response,
       function(e, i) sd_at[i], function(e, i) cd_at[i], f$psi,
-      w * s_at, Vs[[ap]], blocks,
+      gw, Vs[[ap]], blocks,
       score_values = sd_at, curvature_values = cd_at,
       blocks_data = bd_data, threads = spec@threads)
   })
@@ -1772,6 +1779,10 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
   # parameter enters, and neither half's assembly has anywhere to put it.
   mixed <- any(vapply(statmod_penalized(spec, design),
                       function(z) isTRUE(z$mixed), TRUE))
+  # a Jeffreys penalty moves with the filter's own parameters too, through
+  # every predictor, and joint_penalty_at() carries that part
+  mixed <- mixed || any(vapply(statmod_penalized(spec, design),
+                               function(z) isTRUE(z$jeffreys), TRUE))
   raw <- function(u) {
     setz(u[ix])
     # the VALUE of a mixed class arrives through obj$fn, which reads

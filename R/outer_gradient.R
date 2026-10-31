@@ -1015,6 +1015,9 @@ penalty_dbeta_blocks <- function(spec, design, coef, hyper, v) {
   for (u in statmod_penalized(spec, design)) {
     if (isTRUE(u$structural) || isTRUE(u$mixed) || is.null(u$penalty) ||
         !length(u$index)) next
+    # a Jeffreys penalty depends on the model and moves with every
+    # coefficient; its movement is not read through penalties7
+    if (isTRUE(u$jeffreys)) next
     pen <- u$penalty
     th <- as.list(hyper[[u$param]][[u$key]])
     if (isTRUE(penalties7::beta_quadratic(pen, th))) next
@@ -1079,6 +1082,7 @@ statmod_penalty_second <- function(spec, design, coef, hyper, idx, m, l, bm,
   for (u in statmod_penalized(spec, design)) {
     if (isTRUE(u$structural) || isTRUE(u$mixed) || is.null(u$penalty) ||
         !length(u$index)) next
+    if (isTRUE(u$jeffreys)) next
     pen <- u$penalty
     th <- as.list(hyper[[u$param]][[u$key]])
     if (isTRUE(penalties7::beta_quadratic(pen, th))) next
@@ -1518,6 +1522,7 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
     s <- 0
     for (u in statmod_penalized(spec, design)) {
       if (isTRUE(u$mixed) || is.null(u$penalty)) next
+      if (isTRUE(u$jeffreys)) next
       th <- as.list(hyper[[u$param]][[u$key]])
       pen <- u$penalty
       if (isTRUE(penalties7::beta_quadratic(pen, th))) next

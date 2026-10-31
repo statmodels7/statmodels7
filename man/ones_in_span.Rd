@@ -4,17 +4,19 @@
 \alias{ones_in_span}
 \title{Whether the Column of Ones Lies in the Span of a Matrix}
 \usage{
-ones_in_span(X, tol = 1e-08)
+ones_in_span(X, tol = 1e-07)
 }
 \arguments{
 \item{X}{A matrix, a \pkg{Matrix} object, or \code{NULL}.}
 
-\item{tol}{The relative tolerance on the residual norm.}
+\item{tol}{The tolerance of \code{\link[=qr]{qr()}}.}
 }
 \value{
 A single logical.
 }
 \description{
-Whether the Column of Ones Lies in the Span of a Matrix
+Compares the rank of the matrix with the rank of the matrix with a column
+of ones appended, both from the pivoted QR decomposition with the tolerance
+with which the toolkit detects aliased coefficients.
 }
 \keyword{internal}

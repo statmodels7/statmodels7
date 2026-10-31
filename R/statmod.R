@@ -3185,6 +3185,26 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
                  !any(vapply(ent, function(e)
                    penalty_has_kink(e$penalty, nm), logical(1)))) {
         sum(smoother[offs[a] + cols])
+      } else if (S7::S7_inherits(spec@terms[[p]][[nm]],
+                                 modelterms7::JeffreysTerm)) {
+        # THE BLOCK'S OWN SHARE where the model's smoother could not be read,
+        # by the rule modelterms7::edf() applies to any other penalty: the
+        # trace of (H_AA + S_AA)^-1 H_AA, with S the Jeffreys curvature read
+        # on the model
+        if (is.null(H)) {
+          H <- statmod_information_at(spec, coef, design, expected, emethod)
+        }
+        idx <- offs[a] + cols
+        tryCatch({
+          HA <- as_dense(H)[idx, idx, drop = FALSE]
+          SA <- jfp_penalty(spec, design, coef, "hessian")[idx, idx,
+                                                           drop = FALSE]
+          sum(diag(solve_pd(HA + SA, "the penalized information") %*% HA))
+        }, error = function(e) {
+          warning(sprintf("edf() failed for '%s' in '%s': %s", nm, p,
+                          conditionMessage(e)), call. = FALSE)
+          NA_real_
+        })
       } else {
         if (is.null(H)) {
           H <- statmod_information_at(spec, coef, design, expected, emethod)

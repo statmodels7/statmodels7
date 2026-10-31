@@ -11,7 +11,8 @@ sparse_augmented_solve(R, C, u, how)
 
 \item{C}{The penalty's factor, with \code{p} columns.}
 
-\item{u}{The right-hand side, a numeric vector of length \code{p}.}
+\item{u}{The right-hand side, a numeric vector of length \code{p} or a matrix
+with \code{p} rows.}
 
 \item{how}{The decomposition requested. Only \code{"qr"} is served; \code{"svd"} has
 no sparse counterpart, so the function returns \code{NULL} for it.}

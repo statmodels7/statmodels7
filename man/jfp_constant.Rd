@@ -4,7 +4,7 @@
 \alias{jfp_constant}
 \title{Whether the Constant Direction Enters a Jeffreys Block}
 \usage{
-jfp_constant(intercept, X_level, X_A, tol = 1e-08)
+jfp_constant(intercept, X_level, X_A, tol = 1e-07)
 }
 \arguments{
 \item{intercept}{\code{NULL}, \code{TRUE} or \code{FALSE}.}
@@ -14,7 +14,7 @@ jfp_constant(intercept, X_level, X_A, tol = 1e-08)
 
 \item{X_A}{The block's columns.}
 
-\item{tol}{The relative tolerance of the span test.}
+\item{tol}{The tolerance of the span test.}
 }
 \value{
 A single logical.
@@ -32,8 +32,7 @@ Otherwise \code{TRUE} includes it, and \code{NULL} includes it when the column o
 ones lies in the span of \code{X_level}, that is when the model is invariant to
 centering a column of the block.
 
-The span is tested by the residual of the least-squares projection of the
-column of ones, relative to its norm.
+The span is tested by \code{\link[=ones_in_span]{ones_in_span()}}.
 }
 \seealso{
 \code{\link[=jfp_block]{jfp_block()}}

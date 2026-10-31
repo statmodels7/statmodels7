@@ -68,21 +68,20 @@ jfp_block <- function(param, cols, power = 0.5, const = FALSE,
 #' ones lies in the span of `X_level`, that is when the model is invariant to
 #' centering a column of the block.
 #'
-#' The span is tested by the residual of the least-squares projection of the
-#' column of ones, relative to its norm.
+#' The span is tested by [ones_in_span()].
 #'
 #' @param intercept `NULL`, `TRUE` or `FALSE`.
 #' @param X_level The columns of the formula level outside the block, or
 #'   `NULL`.
 #' @param X_A The block's columns.
-#' @param tol The relative tolerance of the span test.
+#' @param tol The tolerance of the span test.
 #'
 #' @return A single logical.
 #'
 #' @seealso [jfp_block()]
 #'
 #' @keywords internal
-jfp_constant <- function(intercept, X_level, X_A, tol = 1e-8) {
+jfp_constant <- function(intercept, X_level, X_A, tol = 1e-7) {
   if (!is.null(intercept) &&
       (!is.logical(intercept) || length(intercept) != 1L || is.na(intercept))) {
     stop("'intercept' must be NULL, TRUE or FALSE.", call. = FALSE)
@@ -96,18 +95,21 @@ jfp_constant <- function(intercept, X_level, X_A, tol = 1e-8) {
 
 #' Whether the Column of Ones Lies in the Span of a Matrix
 #'
+#' @description
+#' Compares the rank of the matrix with the rank of the matrix with a column
+#' of ones appended, both from the pivoted QR decomposition with the tolerance
+#' with which the toolkit detects aliased coefficients.
+#'
 #' @param X A matrix, a \pkg{Matrix} object, or `NULL`.
-#' @param tol The relative tolerance on the residual norm.
+#' @param tol The tolerance of [qr()].
 #'
 #' @return A single logical.
 #'
 #' @keywords internal
-ones_in_span <- function(X, tol = 1e-8) {
+ones_in_span <- function(X, tol = 1e-7) {
   if (is.null(X) || !ncol(X)) return(FALSE)
   X <- as_dense(X)
-  one <- rep(1, nrow(X))
-  r <- qr.resid(qr(X), one)
-  sqrt(sum(r^2)) <= tol * sqrt(nrow(X))
+  qr(cbind(X, 1), tol = tol)$rank == qr(X, tol = tol)$rank
 }
 
 
@@ -130,10 +132,13 @@ ones_in_span <- function(X, tol = 1e-8) {
 #' \eqn{h_{qr,t} = Z_{q,t}Z_{r,t}^\top}.
 #'
 #' The point is the joint vector \eqn{u} of [statmod_full_information()]. For
-#' a model without a structural term it is the stacked coefficients. A model
-#' carrying a filter is rejected in this phase, and a model carrying a
-#' mixture over latent states is always rejected, because its expected
-#' information does not exist.
+#' a model without a structural term it is the stacked coefficients. For a
+#' model carrying a filter it is the coefficients followed by the filter's
+#' free parameters, and the derivative of every predictor in \eqn{u} is read
+#' from the forward recursion ([jfp_joint_rows()]); a block in an equation
+#' that the filter drives moves with the coefficients and is rejected in
+#' this phase. A model carrying a mixture over latent states is always
+#' rejected, because its expected information does not exist.
 #'
 #' The derivatives of the expected information are computed at the first
 #' request and kept in the state, so that the value, the gradient and the
@@ -151,8 +156,10 @@ ones_in_span <- function(X, tol = 1e-8) {
 #'   or `NULL` for the family's own closed form.
 #'
 #' @return An environment with the fields `spec`, `design` (refreshed at
-#'   `coef`), `coef`, `ev`, `params`, `npar`, `offs`, `total`, `E`,
-#'   `emethod` and `blocks`, each entry of the last carrying `block`,
+#'   `coef`), `coef`, `ev`, `params`, `npar`, `offs`, `nb` (the number of
+#'   coefficients), `total` (the length of \eqn{u}), `joint` (`NULL`, or what
+#'   [jfp_joint_rows()] returns), `E`, `emethod` and `blocks`, each entry of
+#'   the last carrying `block`,
 #'   `index` (positions in \eqn{u}), `rows`, `info`, `U`, `Z`, `G`,
 #'   `logdet` and `ok`.
 #'
@@ -168,10 +175,7 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
          "model carrying a\n  mixture over latent states does not have.",
          call. = FALSE)
   }
-  if (length(ev$filters)) {
-    stop("The Jeffreys penalty beside a filter is not implemented yet.",
-         call. = FALSE)
-  }
+  design0 <- design
   design <- statmod_design_at(spec, coef, design)
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -183,11 +187,101 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
   st$params <- params
   st$npar <- npar
   st$offs <- offs
+  st$nb <- sum(npar)
   st$total <- sum(npar)
+  st$joint <- NULL
   st$emethod <- emethod
   st$E <- statmod_family_hessian(spec, ev$theta, TRUE, emethod)
+  if (length(ev$filters)) {
+    st$joint <- jfp_joint_rows(spec, design0, coef, ev)
+    st$total <- length(st$joint$keep)
+    driven <- st$joint$driven
+    for (b in blocks) {
+      if (b$param %in% driven) {
+        stop(sprintf(paste0("A Jeffreys block in '%s', an equation that a ",
+                            "filter drives, moves with\n  the coefficients, ",
+                            "which is not implemented yet."), b$param),
+             call. = FALSE)
+      }
+    }
+  }
   st$blocks <- lapply(blocks, function(b) jfp_block_state(st, b))
   st
+}
+
+
+#' The Derivative of Every Predictor Beside a Filter
+#'
+#' @description
+#' Returns, for a model carrying a filter, the derivative of each equation's
+#' predictor in the joint vector of the coefficients and the filter's free
+#' parameters, with what the second derivative of a filtered predictor needs.
+#'
+#' @details
+#' The rows are those of [joint_design_rows()], with the equation that the
+#' filter drives replaced by the forward Jacobian of the recursion
+#' ([filter_curvature()], or [joint_filter_curvature()] for a joint filter),
+#' and a level that an intercept holds dropped as
+#' [statmod_full_information()] drops it.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design as it arrived, carrying the structural state.
+#' @param coef The coefficients.
+#' @param ev What [statmod_eta()] returns at `coef`.
+#'
+#' @return A list with `V` (one dense matrix per distribution parameter over
+#'   the kept coordinates), `keep`, `driven` (the equations whose predictor
+#'   the filter writes), and `curv`, a function of the per-observation weights
+#'   (a named list keyed by parameter) returning
+#'   \eqn{\sum_t\sum_c g_{c,t}\,\partial^2\eta_{c,t}/\partial u\,\partial u}
+#'   over the kept coordinates.
+#'
+#' @keywords internal
+jfp_joint_rows <- function(spec, design, coef, ev) {
+  jd <- joint_design_rows(spec, design, coef)
+  params <- spec@distrib@params
+  f <- jd$f
+  Vs <- jd$V
+  gl <- distributions7::distrib_gradient(spec@distrib, spec@response,
+                                         ev$theta, scale = "link",
+                                         threads = spec@threads)
+  H <- distributions7::distrib_hessian(spec@distrib, spec@response, ev$theta,
+                                       scale = "link", threads = spec@threads)
+  D3 <- distributions7::distrib_deriv3(spec@distrib, spec@response, ev$theta,
+                                       scale = "link", threads = spec@threads)
+  joint <- isTRUE(f$joint)
+  driven <- if (joint) f$params else f$param
+  cv <- if (joint) {
+    joint_filter_curvature(spec, design, f, Vs, gl, H, D3, ev$theta)
+  } else {
+    filter_curvature(spec, design, f, match(f$param, params), Vs, gl, H, D3,
+                     ev$theta)
+  }
+  V <- Vs
+  if (joint) {
+    for (k in seq_along(f$params)) {
+      V[[match(f$params[k], params)]] <- cv$jacobian[[k]]
+    }
+  } else {
+    V[[match(f$param, params)]] <- cv$jacobian
+  }
+  keep <- jd$keep
+  V <- lapply(V, function(M) M[, keep, drop = FALSE])
+  w <- spec@weights
+  n <- spec@n_obs
+  curv <- function(g) {
+    out <- if (joint) {
+      gg <- stats::setNames(lapply(f$params, function(p) w * g[[p]]),
+                            f$params)
+      joint_filter_curvature(spec, design, f, Vs, gl, H, D3, ev$theta,
+                             g = gg)$curvature
+    } else {
+      filter_curvature(spec, design, f, match(f$param, params), Vs, gl, H,
+                       D3, ev$theta, g = w * rep_len(g[[f$param]], n))$curvature
+    }
+    as_dense(out)[keep, keep, drop = FALSE]
+  }
+  list(V = V, keep = keep, driven = driven, curv = curv, nb = jd$nb)
 }
 
 
@@ -338,7 +432,8 @@ jfp_gradient <- function(st) {
   for (bs in st$blocks) {
     out <- out + bs$block$power *
       u_vector(st$spec, st$design, st$coef, NULL, params, st$npar, st$offs,
-               st$total, d3 = dE, G = bs$G, key = key)
+               st$total, d3 = dE, G = bs$G, key = key,
+               rows = if (is.null(st$joint)) NULL else st$joint$V)
   }
   out
 }
@@ -375,9 +470,13 @@ jfp_gradient <- function(st) {
 #'
 #' @return A list with `sparse` (the first term times the powers, in the
 #'   storage type of the information), `lowrank` (\eqn{B} times the square
-#'   roots of the powers, one block of columns per Jeffreys block) and, when
-#'   `assemble` is `TRUE`, `hessian`, equal to
-#'   `sparse - tcrossprod(lowrank)` as a base matrix.
+#'   roots of the powers, one block of columns per Jeffreys block),
+#'   `weights` (the per-observation weights of the first term, keyed as
+#'   [statmod_information_at()] reads its `H`, so that `sparse` is that
+#'   function's result at `H = weights` plus `refresh`), `refresh` (the part
+#'   that a refreshed block contributes, or `NULL`) and, when `assemble` is
+#'   `TRUE`, `hessian`, equal to `sparse - tcrossprod(lowrank)` as a base
+#'   matrix.
 #'
 #' @seealso [jfp_value()], [jfp_gradient()]
 #'
@@ -394,7 +493,8 @@ jfp_hessian <- function(st, assemble = TRUE) {
   npar <- st$npar
   offs <- st$offs
   rf <- attr(st$design, "refresh")
-  sparse <- NULL
+  weights <- list()
+  refresh <- NULL
   lowrank <- vector("list", length(st$blocks))
   for (i in seq_along(st$blocks)) {
     bs <- st$blocks[[i]]
@@ -403,7 +503,6 @@ jfp_hessian <- function(st, assemble = TRUE) {
     # the weights of the first term, one per pair of equations (c <= d), keyed
     # as statmod_information_at() reads its H: it forms -X_c' diag(w H) X_d,
     # so H_cd = sum_qr h_qr d2E_qr,cd gives the trace of the second derivative
-    Hl <- list()
     for (cc in seq_len(np)) {
       for (dd in cc:np) {
         v <- numeric(n)
@@ -413,17 +512,22 @@ jfp_hessian <- function(st, assemble = TRUE) {
               distributions7::d2expected_key(params, q, r, cc, dd)]], n)
           }
         }
-        Hl[[hess_key(params, cc, dd)]] <- v
+        k <- hess_key(params, cc, dd)
+        weights[[k]] <- if (is.null(weights[[k]])) a * v else
+          weights[[k]] + a * v
       }
     }
-    H1 <- statmod_information_at(spec, st$coef, st$design, expected = TRUE,
-                                 emethod = st$emethod, H = Hl)
-    if (!is.null(rf) && length(rf)) {
+    if ((!is.null(rf) && length(rf)) || !is.null(st$joint)) {
       s <- jfp_first_weights(st, bs, dE)
-      H1 <- H1 - mode_curvature(spec, st$design, st$coef, params, npar, offs,
-                                st$total, gl = s)
+      D <- matrix(0, st$total, st$total)
+      if (!is.null(rf) && length(rf)) {
+        nb <- st$nb
+        D[seq_len(nb), seq_len(nb)] <- -a * mode_curvature(
+          spec, st$design, st$coef, params, npar, offs, nb, gl = s)
+      }
+      if (!is.null(st$joint)) D <- D + a * st$joint$curv(s)
+      refresh <- if (is.null(refresh)) D else refresh + D
     }
-    sparse <- if (is.null(sparse)) a * H1 else sparse + a * H1
 
     # B: one column per entry i <= j of the whitened derivative
     p <- ncol(bs$Z[[live[1L]]])
@@ -431,7 +535,7 @@ jfp_hessian <- function(st, assemble = TRUE) {
     gam <- ifelse(ij[, 1L] == ij[, 2L], 1, sqrt(2))
     B <- matrix(0, st$total, nrow(ij))
     for (cc in seq_len(np)) {
-      if (npar[cc] == 0L) next
+      if (npar[cc] == 0L && is.null(st$joint)) next
       Fc <- matrix(0, n, nrow(ij))
       for (q in live) {
         for (r in live) {
@@ -442,13 +546,35 @@ jfp_hessian <- function(st, assemble = TRUE) {
         }
       }
       Fc <- sweep(Fc, 2L, gam, `*`)
-      B[offs[cc] + seq_len(npar[cc]), ] <-
-        as.matrix(crossprod(st$design[[params[cc]]]$X, w * Fc))
+      if (is.null(st$joint)) {
+        B[offs[cc] + seq_len(npar[cc]), ] <-
+          as.matrix(crossprod(st$design[[params[cc]]]$X, w * Fc))
+      } else {
+        B <- B + crossprod(st$joint$V[[cc]], w * Fc)
+      }
     }
     lowrank[[i]] <- sqrt(a) * B
   }
   lowrank <- do.call(cbind, lowrank)
-  out <- list(sparse = sparse, lowrank = lowrank)
+  sparse <- if (is.null(st$joint)) {
+    statmod_information_at(spec, st$coef, st$design, expected = TRUE,
+                           emethod = st$emethod, H = weights)
+  } else {
+    # the same first term on the joint rows: -sum V_c' diag(w H_cd) V_d over
+    # the ordered pairs, each unordered pair's weights read once
+    out <- matrix(0, st$total, st$total)
+    for (cc in seq_len(np)) {
+      for (dd in seq_len(np)) {
+        wv <- w * rep_len(weights[[hess_key(params, cc, dd)]], n)
+        out <- out - wcrossprod(st$joint$V[[cc]], wv, st$joint$V[[dd]],
+                                spec@threads)
+      }
+    }
+    (out + t(out)) / 2
+  }
+  if (!is.null(refresh)) sparse <- sparse + refresh
+  out <- list(sparse = sparse, lowrank = lowrank, weights = weights,
+              refresh = refresh)
   if (assemble) {
     H <- as_dense(sparse) - tcrossprod(lowrank)
     out$hessian <- (H + t(H)) / 2

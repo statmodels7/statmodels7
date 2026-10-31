@@ -20,8 +20,10 @@ or \code{NULL} for the family's own closed form.}
 }
 \value{
 An environment with the fields \code{spec}, \code{design} (refreshed at
-\code{coef}), \code{coef}, \code{ev}, \code{params}, \code{npar}, \code{offs}, \code{total}, \code{E},
-\code{emethod} and \code{blocks}, each entry of the last carrying \code{block},
+\code{coef}), \code{coef}, \code{ev}, \code{params}, \code{npar}, \code{offs}, \code{nb} (the number of
+coefficients), \code{total} (the length of \eqn{u}), \code{joint} (\code{NULL}, or what
+\code{\link[=jfp_joint_rows]{jfp_joint_rows()}} returns), \code{E}, \code{emethod} and \code{blocks}, each entry of
+the last carrying \code{block},
 \code{index} (positions in \eqn{u}), \code{rows}, \code{info}, \code{U}, \code{Z}, \code{G},
 \code{logdet} and \code{ok}.
 }
@@ -42,10 +44,13 @@ link scale, minus \code{\link[distributions7:distrib_expected_hessian]{distribut
 \eqn{h_{qr,t} = Z_{q,t}Z_{r,t}^\top}.
 
 The point is the joint vector \eqn{u} of \code{\link[=statmod_full_information]{statmod_full_information()}}. For
-a model without a structural term it is the stacked coefficients. A model
-carrying a filter is rejected in this phase, and a model carrying a
-mixture over latent states is always rejected, because its expected
-information does not exist.
+a model without a structural term it is the stacked coefficients. For a
+model carrying a filter it is the coefficients followed by the filter's
+free parameters, and the derivative of every predictor in \eqn{u} is read
+from the forward recursion (\code{\link[=jfp_joint_rows]{jfp_joint_rows()}}); a block in an equation
+that the filter drives moves with the coefficients and is rejected in
+this phase. A model carrying a mixture over latent states is always
+rejected, because its expected information does not exist.
 
 The derivatives of the expected information are computed at the first
 request and kept in the state, so that the value, the gradient and the

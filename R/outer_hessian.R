@@ -1159,6 +1159,7 @@ hyper_mode_cross <- function(spec, design, coef, hyper, idx, n,
     # alone, writing it would land on whichever coefficients happen to occupy
     # those positions; where it spans the joint vector those parameters are
     # its tail and the positions are theirs.
+    if (isTRUE(un$jeffreys)) next
     own <- isTRUE(un$structural) || isTRUE(un$mixed)
     pos <- if (own && !joint) integer(0)
            else unit_joint_positions(un, spec, design)

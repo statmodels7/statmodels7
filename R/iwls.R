@@ -636,12 +636,14 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0),
         return(list(delta = numeric(p), rank = 0L, route = how, held = held,
                     dropped = integer(0)))
       }
-      out <- augmented_solve(pieces$R[, keep, drop = FALSE],
-                             damp_rows(pieces$C[, keep, drop = FALSE],
-                                       length(keep)),
-                             u[keep], how,
-                             threads = if (is.null(pieces$threads)) 1L
-                                       else pieces$threads, tol = tol)
+      out <- augmented_lowrank(pieces$R[, keep, drop = FALSE],
+                               damp_rows(pieces$C[, keep, drop = FALSE],
+                                         length(keep)),
+                               if (is.null(pieces$V)) NULL else
+                                 pieces$V[keep, , drop = FALSE],
+                               u[keep], how,
+                               threads = if (is.null(pieces$threads)) 1L
+                                         else pieces$threads, tol = tol)
       d <- numeric(p)
       d[keep] <- out$delta
       # the solve ran on the kept columns, so its coordinates are read back
@@ -649,9 +651,9 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0),
       return(list(delta = d, rank = out$rank, route = how, held = held,
                   dropped = keep[out$dropped]))
     }
-    out <- augmented_solve(pieces$R, damp_rows(pieces$C, p), u, how,
-                           threads = if (is.null(pieces$threads)) 1L
-                                     else pieces$threads, tol = tol)
+    out <- augmented_lowrank(pieces$R, damp_rows(pieces$C, p), pieces$V, u,
+                             how, threads = if (is.null(pieces$threads)) 1L
+                                           else pieces$threads, tol = tol)
     out$route <- how
     out$held <- held
     return(out)
@@ -681,7 +683,17 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0),
         return(list(delta = numeric(p), rank = 0L, route = route, held = held,
                     dropped = integer(0)))
       }
-      A <- pd_repair(A0[keep, keep, drop = FALSE], rel = floor)
+      Vk <- if (is.null(pieces$V)) NULL else
+        pieces$V[keep, , drop = FALSE]
+      lr <- lowrank_solve(A0[keep, keep, drop = FALSE], Vk, u[keep], damp)
+      if (!is.null(lr)) {
+        d <- numeric(p)
+        d[keep] <- lr
+        return(list(delta = d, rank = length(keep), route = route,
+                    held = held, dropped = integer(0)))
+      }
+      A <- pd_repair(lowrank_dense(A0[keep, keep, drop = FALSE], Vk),
+                     rel = floor)
       if (is.null(A)) {
         return(list(delta = numeric(p), rank = 0L, route = route, held = held,
                     dropped = integer(0)))
@@ -693,6 +705,14 @@ iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0),
       return(list(delta = d, rank = ncol(A), route = route, held = held,
                   dropped = integer(0)))
     }
+  }
+  if (!is.null(A0) && !is.null(pieces$V)) {
+    lr <- lowrank_solve(A0, pieces$V, u, damp)
+    if (!is.null(lr)) {
+      return(list(delta = lr, rank = length(u), route = route, held = held,
+                  dropped = integer(0)))
+    }
+    A0 <- lowrank_dense(A0, pieces$V)
   }
   A <- pd_repair(A0, rel = floor)
   # nothing can be solved at a point whose curvature is not finite ANYWHERE;
@@ -756,11 +776,40 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
   if (info_auto(method@hessian)) method <- iwls_resolve(method, spec@distrib)
   expected <- info_expected(method@hessian)
   emethod <- info_emethod(method@hessian)
-  S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
+  S <- statmod_penalty_at(spec, coef, hyper, design, "hessian",
+                          jeffreys = FALSE)
+  # THE JEFFREYS CURVATURE IN TWO PARTS. The part with the sparsity of the
+  # information is a per-observation weight on the same cross products, so it
+  # is folded into the family's components and reaches both routes through
+  # them; the rest is V V' with V of a few columns, which the square-root
+  # route takes as further rows of the penalty's factor and the assembled
+  # route by Woodbury's identity (iwls_solve()), so a sparse information is
+  # never made dense by it.
+  jp <- jfp_penalty(spec, design, coef, "parts")
+  V <- NULL
+  fold <- function(H) H
+  if (!is.null(jp)) {
+    if (!is.null(jp$refresh)) S <- S - jp$refresh
+    V <- jp$lowrank
+    fold <- function(H) {
+      for (k in names(jp$weights)) {
+        H[[k]] <- rep_len(H[[k]], spec@n_obs) - jp$weights[[k]]
+      }
+      H
+    }
+  }
   assembled <- function(H = NULL) {
+    if (!is.null(jp)) {
+      if (is.null(H)) {
+        H <- statmod_family_hessian(spec, statmod_eta(spec, design,
+                                                      coef)$theta,
+                                    expected, emethod)
+      }
+      H <- fold(H)
+    }
     list(R = NULL, C = NULL,
          A = statmod_information_at(spec, coef, design, expected,
-                                    emethod, H = H) + S)
+                                    emethod, H = H) + S, V = V)
   }
   if (!(solver_how(method@solver) %in% c("qr", "svd"))) return(assembled())
   ev <- statmod_eta(spec, design, coef)
@@ -777,11 +826,12 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
   # to ask for its own.
   H <- if (length(ev$regimes)) NULL else
     statmod_family_hessian(spec, ev$theta, expected, emethod)
-  L <- chol_blocks(info_blocks(spec, ev$theta, expected, emethod, H = H))
+  L <- chol_blocks(info_blocks(spec, ev$theta, expected, emethod,
+                               H = if (is.null(jp)) H else fold(H)))
   R <- sqrt_design(statmod_design_at(spec, coef, design), L)
   C <- penalty_sqrt(S)
   if (is.null(R) || is.null(C)) return(assembled(H))
-  list(R = R, C = C, A = NULL, threads = spec@threads)
+  list(R = R, C = C, A = NULL, V = V, threads = spec@threads)
 }
 
 
@@ -1355,6 +1405,7 @@ iwls_tied <- function(obj, beta, method, n, pieces_at, Ak, frozen,
     if (!is.null(pc$R)) pc$R <- pc$R %*% N
     if (!is.null(pc$C)) pc$C <- pc$C %*% N
     if (!is.null(pc$A)) pc$A <- crossprod(N, as_dense(pc$A) %*% N)
+    if (!is.null(pc$V)) pc$V <- crossprod(N, pc$V)
     pc
   }
   wrap <- function(f) if (is.null(f)) NULL else function(w) carry(f(at(w)))
@@ -1468,7 +1519,7 @@ iwls_line_search <- function(obj, beta, value, g, pc, method, damp, frozen,
 #' @keywords internal
 pieces_definite <- function(pc, rel = 1e-8) {
   if (is.null(pc$A)) return(TRUE)
-  A <- as_dense(pc$A)
+  A <- lowrank_dense(pc$A, pc$V)
   if (!all(is.finite(A))) return(TRUE)
   ev <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
   min(ev) > rel * max(abs(ev))
@@ -1591,9 +1642,11 @@ iwls_newton_step <- function(obj, beta, value, g, H, frozen, halvings) {
 iwls_scale <- function(pieces) {
   v <- if (!is.null(pieces$R)) {
     as.numeric(Matrix::colSums(pieces$R^2)) +
-      if (is.null(pieces$C)) 0 else as.numeric(Matrix::colSums(pieces$C^2))
+      (if (is.null(pieces$C)) 0 else as.numeric(Matrix::colSums(pieces$C^2))) +
+      (if (is.null(pieces$V)) 0 else rowSums(pieces$V^2))
   } else if (!is.null(pieces$A)) {
-    as.numeric(Matrix::diag(pieces$A))
+    as.numeric(Matrix::diag(pieces$A)) +
+      if (is.null(pieces$V)) 0 else rowSums(pieces$V^2)
   } else {
     return(1)
   }
@@ -1800,9 +1853,11 @@ iwls_score <- function(g, hj, groups, n) {
 #' @keywords internal
 iwls_info_diag <- function(pieces) {
   if (!is.null(pieces$R)) {
-    return(as.numeric(Matrix::colSums(pieces$R^2)))
+    return(as.numeric(Matrix::colSums(pieces$R^2)) +
+             if (is.null(pieces$V)) 0 else rowSums(pieces$V^2))
   }
-  as.numeric(diag(as_dense(pieces$A)))
+  as.numeric(diag(as_dense(pieces$A))) +
+    if (is.null(pieces$V)) 0 else rowSums(pieces$V^2)
 }
 
 
@@ -1858,4 +1913,114 @@ pd_repair <- function(A, rel = 1e-8) {
 fmt_step <- function(x) {
   if (is.null(x) || !is.finite(x)) return("-")
   formatC(x, format = "g", digits = 3)
+}
+
+
+#' A Solve With a Matrix Plus a Product of Low Rank
+#'
+#' @description
+#' `lowrank_solve()` solves \eqn{(A + VV^\top + \lambda I)\delta = u} by
+#' Woodbury's identity, factoring \eqn{A + \lambda I} in its own storage and
+#' a small matrix of the size of \eqn{V}'s columns. `lowrank_dense()` returns
+#' \eqn{A + VV^\top} as a base matrix.
+#'
+#' @details
+#' With \eqn{A} positive definite,
+#' \deqn{(A + VV^\top)^{-1}u = A^{-1}u - A^{-1}V(I + V^\top A^{-1}V)^{-1}
+#'   V^\top A^{-1}u,}
+#' and the matrix in the middle is positive definite. The Jeffreys curvature
+#' enters the assembled route in this form ([iwls_pieces()]), so a sparse
+#' information keeps its sparse factorization. Where \eqn{A} has no Cholesky
+#' factor the function returns `NULL`, and [iwls_solve()] assembles the sum
+#' and repairs it as it repairs any indefinite matrix.
+#'
+#' @param A A symmetric matrix, dense or a \pkg{Matrix} object.
+#' @param V A matrix with as many rows as `A`, or `NULL`.
+#' @param u The right-hand side.
+#' @param damp The Levenberg damping added to the diagonal.
+#'
+#' @return `lowrank_solve()`: a numeric vector, or `NULL`.
+#'   `lowrank_dense()`: a base matrix.
+#'
+#' @seealso [iwls_solve()]
+#'
+#' @keywords internal
+lowrank_solve <- function(A, V, u, damp = 0) {
+  if (is.null(V) || !ncol(V)) return(NULL)
+  if (!all(is.finite(V))) return(NULL)
+  if (damp > 0) Matrix::diag(A) <- Matrix::diag(A) + damp
+  if (isS4(A)) {
+    ch <- tryCatch(Matrix::Cholesky(Matrix::forceSymmetric(
+      methods::as(A, "CsparseMatrix")), LDL = FALSE, perm = TRUE),
+      error = function(e) NULL)
+    if (is.null(ch)) return(NULL)
+    sol <- function(b) as.matrix(Matrix::solve(ch, b, system = "A"))
+  } else {
+    ch <- tryCatch(chol(A), error = function(e) NULL)
+    if (is.null(ch)) return(NULL)
+    sol <- function(b) backsolve(ch, forwardsolve(t(ch), b))
+  }
+  Au <- sol(u)
+  AV <- sol(V)
+  cap <- diag(ncol(V)) + crossprod(V, AV)
+  cc <- tryCatch(chol((cap + t(cap)) / 2), error = function(e) NULL)
+  if (is.null(cc)) return(NULL)
+  w <- backsolve(cc, forwardsolve(t(cc), crossprod(V, Au)))
+  out <- as.numeric(Au - AV %*% w)
+  if (!all(is.finite(out))) return(NULL)
+  out
+}
+
+#' @rdname lowrank_solve
+#' @keywords internal
+lowrank_dense <- function(A, V) {
+  A <- as_dense(A)
+  if (is.null(V) || !ncol(V)) return(A)
+  A + tcrossprod(V)
+}
+
+
+#' The Augmented Solve With a Product of Low Rank
+#'
+#' @description
+#' Solves \eqn{(R^\top R + C^\top C + VV^\top)\delta = u} from one
+#' decomposition of \eqn{[R; C]}, by Woodbury's identity.
+#'
+#' @details
+#' [augmented_solve()] solves the right-hand side and the columns of \eqn{V}
+#' with one factorization, and the correction is a system of the size of
+#' \eqn{V}'s columns. Appending \eqn{V^\top} as rows of the augmented
+#' matrix would give the same solution, but each such row is dense, and a
+#' sparse QR decomposition fills in completely beside it: measured on a
+#' random intercept over 250 levels, the Jeffreys fit took 13.9 s against
+#' 3.1 s without the block, almost all of it in that decomposition. A
+#' coordinate that the pivot leaves out is read as zero in every column.
+#'
+#' @param R,C The square-root design and the penalty's factor.
+#' @param V The low-rank factor, or `NULL` for the plain augmented solve.
+#' @param u The right-hand side.
+#' @param how,threads,tol As in [augmented_solve()].
+#'
+#' @return What [augmented_solve()] returns.
+#'
+#' @seealso [lowrank_solve()], the same identity on the assembled route.
+#'
+#' @keywords internal
+augmented_lowrank <- function(R, C, V, u, how, threads = 1L, tol = NULL) {
+  if (is.null(V) || !ncol(V)) {
+    return(augmented_solve(R, C, u, how, threads = threads, tol = tol))
+  }
+  out <- augmented_solve(R, C, cbind(u, V), how, threads = threads, tol = tol)
+  D <- as.matrix(out$delta)
+  Au <- D[, 1L]
+  AV <- D[, -1L, drop = FALSE]
+  cap <- diag(ncol(V)) + crossprod(V, AV)
+  w <- tryCatch(solve((cap + t(cap)) / 2, crossprod(V, Au)),
+                error = function(e) NULL)
+  if (is.null(w)) {
+    out$delta <- Au
+    return(out)
+  }
+  out$delta <- as.numeric(Au - AV %*% w)
+  out
 }

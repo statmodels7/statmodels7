@@ -14,9 +14,13 @@ jfp_hessian(st, assemble = TRUE)
 \value{
 A list with \code{sparse} (the first term times the powers, in the
 storage type of the information), \code{lowrank} (\eqn{B} times the square
-roots of the powers, one block of columns per Jeffreys block) and, when
-\code{assemble} is \code{TRUE}, \code{hessian}, equal to
-\code{sparse - tcrossprod(lowrank)} as a base matrix.
+roots of the powers, one block of columns per Jeffreys block),
+\code{weights} (the per-observation weights of the first term, keyed as
+\code{\link[=statmod_information_at]{statmod_information_at()}} reads its \code{H}, so that \code{sparse} is that
+function's result at \code{H = weights} plus \code{refresh}), \code{refresh} (the part
+that a refreshed block contributes, or \code{NULL}) and, when \code{assemble} is
+\code{TRUE}, \code{hessian}, equal to \code{sparse - tcrossprod(lowrank)} as a base
+matrix.
 }
 \description{
 Computes \eqn{\partial_{kl}\sum_b a_b\log|\tilde I_b|} as a matrix with the

@@ -5810,6 +5810,12 @@ certificate_core <- function(fit, tol, flat, edge) {
     #     score is -0.715. So this stays unknown, and says why.
     pen_units <- tryCatch(statmod_penalized(spec, design),
                           error = function(e) list())
+    # A JEFFREYS PENALTY has no hyperparameter and no kink, so beside it the
+    # only question is the one the unpenalized branch below answers: whether
+    # the inner fit reached its mode, where the score of the penalized
+    # objective vanishes
+    jeff <- any(vapply(pen_units, function(u) isTRUE(u$jeffreys), logical(1)))
+    pen_units <- Filter(function(u) !isTRUE(u$jeffreys), pen_units)
     if (length(pen_units)) {
       # ⚠️ AND CASES THE TWO ABOVE DO NOT COVER, whose reason used to be the
       # kinked one whatever the model carried: a prediction-error criterion on
@@ -5865,7 +5871,9 @@ certificate_core <- function(fit, tol, flat, edge) {
     out$state <- if (out$mode_error <= mode_error_limit()) "converged" else
       "not converged"
     out$reason <- sprintf(paste0(
-      "the model carries no penalty, so there is no outer gradient; the ",
+      if (jeff) "the model carries no penalty with a hyperparameter" else
+        "the model carries no penalty",
+      ", so there is no outer gradient; the ",
       "reading is the inner fit's own, %.4g log-likelihood units above its ",
       "mode against %g"), out$mode_error, mode_error_limit())
     return(out)
