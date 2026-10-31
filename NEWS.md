@@ -1,3 +1,20 @@
+# statmodels7 0.234.0
+
+* `statmod()` fits `modelterms7::jfp()` blocks, a Jeffreys prior on a block of
+  coefficients, in any equation and beside `gas()` in another equation. The
+  penalty is evaluated on the model's expected information (the family's
+  closed form, or `expect_integrate()` for a family with a density only);
+  its curvature enters the inner fit as a sparse matrix plus a product of
+  low rank. On endometrial, `HG ~ jfp(~ NV + PI + EH)` gives the estimates of
+  brglm2's `MPL_Jeffreys` and of logistf.
+* `reml()` and `ml()` estimate the hyperparameters of other terms beside
+  `jfp()` with the exact outer gradient and Hessian. Under `ml()` the
+  coefficients of a `jfp()` block are estimated as fixed effects, and
+  `logLik(loglik_type = "marginal")` counts them under both criteria. The
+  marginal criterion factors the Jeffreys curvature as a sparse matrix plus a
+  product of low rank.
+* Requires modelterms7 0.120.0.
+
 # statmodels7 0.233.0
 
 * `plot_derivative()` draws the derivative of a `modelterms7::scs()` term:
