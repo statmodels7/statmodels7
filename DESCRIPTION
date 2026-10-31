@@ -111,6 +111,7 @@ Collate:
     'path.R'
     'coord.R'
     'filter_driving.R'
+    'jfp_engine.R'
     'refresh.R'
     'structural.R'
     'joint_filter.R'

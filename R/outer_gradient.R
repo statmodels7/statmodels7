@@ -1297,6 +1297,10 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #' @param design The design, already refreshed at `coef`.
 #' @param coef The coefficients at the penalized mode.
 #' @param params,npar,offs,total The block bookkeeping.
+#' @param gl The per-observation weights of each equation's second
+#'   derivative, a named list keyed by parameter, or `NULL` (the default) for
+#'   the family's score on the link scale at `coef`. The Jeffreys engine
+#'   ([jfp_hessian()]) passes its own weights here.
 #'
 #' @return A symmetric matrix over the stacked coefficients, with nonzero
 #'   entries only on the blocks of refreshable terms.
@@ -1305,16 +1309,20 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #'   [modelterms7::term_block_contract()]
 #'
 #' @keywords internal
-mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
+mode_curvature <- function(spec, design, coef, params, npar, offs, total,
+                           gl = NULL) {
   D <- matrix(0, total, total)
   rf <- attr(design, "refresh")
   st <- attr(design, "state")
   if (is.null(rf) || !length(rf) || is.null(st)) return(D)
   n <- spec@n_obs
   w <- spec@weights
-  th <- statmod_eta(spec, design, coef)$theta
-  gl <- distributions7::distrib_gradient(spec@distrib, spec@response, th,
-                                         scale = "link", threads = spec@threads)
+  if (is.null(gl)) {
+    th <- statmod_eta(spec, design, coef)$theta
+    gl <- distributions7::distrib_gradient(spec@distrib, spec@response, th,
+                                           scale = "link",
+                                           threads = spec@threads)
+  }
   for (r in rf) {
     p <- r$param
     a <- match(p, params)
