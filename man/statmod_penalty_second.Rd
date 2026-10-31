@@ -15,7 +15,8 @@ statmod_penalty_second(
   bm,
   bl,
   bml,
-  total
+  total,
+  M = NULL
 )
 }
 \arguments{
@@ -34,10 +35,14 @@ statmod_penalty_second(
 \item{bm, bl, bml}{The mode's movement along each and along the pair.}
 
 \item{total}{The stacked width.}
+
+\item{M}{\code{NULL}, or the matrix against which the result is traced; the
+trace is then returned instead of the matrix, and a Jeffreys penalty's
+share is computed without assembling it.}
 }
 \value{
 A \code{total} square matrix, or \code{NULL} if no penalty's Hessian
-moves with the coefficients.
+moves with the coefficients; with \code{M}, a single number.
 }
 \description{
 Computes the part of \eqn{\partial K_m/\partial t_l} that a penalty whose

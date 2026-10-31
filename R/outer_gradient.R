@@ -176,6 +176,12 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
   for (un in statmod_penalized(spec, design)) {
     pen <- un$penalty
     if (is.null(pen)) next
+    # a Jeffreys penalty's movement is read on the model, by
+    # jfp_deriv3_dir() and jfp_deriv4_dir()
+    if (isTRUE(un$jeffreys)) {
+      if (!jfp_outer_ok(spec, design, order)) return(FALSE)
+      next
+    }
     ok <- tryCatch({
       th <- as.list(penalty_theta_start(pen))
       k <- as.integer(pen@n_coef)
@@ -991,9 +997,11 @@ filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3,
 #' @keywords internal
 statmod_penalty_dbeta <- function(spec, design, coef, hyper, v, total) {
   bl <- penalty_dbeta_blocks(spec, design, coef, hyper, v)
-  if (!length(bl)) return(NULL)
+  jt <- jfp_penalty_move(spec, design, coef, v)
+  if (!length(bl) && is.null(jt)) return(NULL)
   out <- matrix(0, total, total)
   for (b in bl) out[b$pos, b$pos] <- out[b$pos, b$pos] + b$T
+  if (!is.null(jt)) out <- out + jt
   out
 }
 
@@ -1004,7 +1012,7 @@ penalty_dbeta_trace <- function(spec, design, coef, hyper, v, M) {
   for (b in penalty_dbeta_blocks(spec, design, coef, hyper, v)) {
     s <- s + sum(as_dense(M[b$pos, b$pos, drop = FALSE]) * b$T)
   }
-  s
+  s + jfp_penalty_move(spec, design, coef, v, M = M)
 }
 
 #' @rdname statmod_penalty_dbeta
@@ -1066,16 +1074,19 @@ penalty_dbeta_blocks <- function(spec, design, coef, hyper, v) {
 #' @param m,l The two rows of the index.
 #' @param bm,bl,bml The mode's movement along each and along the pair.
 #' @param total The stacked width.
+#' @param M `NULL`, or the matrix against which the result is traced; the
+#'   trace is then returned instead of the matrix, and a Jeffreys penalty's
+#'   share is computed without assembling it.
 #'
 #' @return A `total` square matrix, or `NULL` if no penalty's Hessian
-#'   moves with the coefficients.
+#'   moves with the coefficients; with `M`, a single number.
 #'
 #' @seealso [statmod_penalty_dbeta()], [statmod_marginal_hess()],
 #'   [statmod_pe_derivs()]
 #'
 #' @keywords internal
 statmod_penalty_second <- function(spec, design, coef, hyper, idx, m, l, bm,
-                                   bl, bml, total) {
+                                   bl, bml, total, M = NULL) {
   params <- spec@distrib@params
   mem <- index_members(idx)
   out <- NULL
@@ -1104,6 +1115,18 @@ statmod_penalty_second <- function(spec, design, coef, hyper, idx, m, l, bm,
     E <- E + owned(m, bl) + owned(l, bm)
     if (is.null(out)) out <- matrix(0, total, total)
     out[pos, pos] <- out[pos, pos] + E
+  }
+  # a Jeffreys penalty has no hyperparameter, so it adds its second movement
+  # along the pair and its first along the pair's own movement of the mode
+  if (!is.null(M)) {
+    s <- if (is.null(out)) 0 else sum(as_dense(M) * out)
+    return(s + jfp_penalty_move(spec, design, coef, bl, w = bm, M = M) +
+             jfp_penalty_move(spec, design, coef, bml, M = M))
+  }
+  j2 <- jfp_penalty_move(spec, design, coef, bl, w = bm)
+  if (!is.null(j2)) {
+    j2 <- j2 + jfp_penalty_move(spec, design, coef, bml)
+    out <- if (is.null(out)) j2 else out + j2
   }
   out
 }

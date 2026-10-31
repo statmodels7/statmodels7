@@ -464,6 +464,10 @@ logLik.StatmodFit <- function(object,
     # penalty leaves free (a smooth's straight line) are added here: they are
     # estimated, not integrated, as lme4 counts its fixed effects
     nn <- sum(vapply(statmod_penalized(object@spec, design), function(u) {
+      # a Jeffreys block's coefficients are estimated as fixed effects are,
+      # whether or not reml() integrates them, and they are counted as the
+      # unpenalized coefficients are
+      if (isTRUE(u$jeffreys)) return(length(u$cols))
       if (isTRUE(u$structural) ||
           isTRUE(tryCatch(penalty_has_kink(u$penalty),
                           error = function(e) TRUE))) return(0)

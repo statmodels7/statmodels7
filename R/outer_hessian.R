@@ -351,9 +351,9 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
           trace_refresh4(spec, M, params, npar, Hl, dref[[l]], dref[[m]],
                          units, G, d3, bhat[[l]], f2, acurv)
       }
-      E2 <- statmod_penalty_second(spec, design, coef, hyper, idx, m, l,
-                                   bhat[[m]], bhat[[l]], bml, total)
-      if (!is.null(E2)) tr_dKm <- tr_dKm + sum(M * E2)
+      tr_dKm <- tr_dKm +
+        statmod_penalty_second(spec, design, coef, hyper, idx, m, l,
+                               bhat[[m]], bhat[[l]], bml, total, M = M)
       # the second derivative of l_p at the mode is -E_a'K_m b_b - r_a'b_b
       # - rho_ab; for two hyperparameters E vanishes and -r_m'b_l is
       # b_m'J b_l, the form kept here

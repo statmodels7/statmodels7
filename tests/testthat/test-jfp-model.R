@@ -185,3 +185,86 @@ test_that("a Jeffreys block beside a filter in another equation is exact", {
   expect_gt(max(abs(g[nb + seq_along(free)])), 1e-3)
   expect_identical(statmod_certificate(f)$state, "converged")
 })
+
+test_that("the third and fourth derivatives match differences of the lower", {
+  skip_if_not_installed("numDeriv")
+  set.seed(7)
+  n <- 80
+  d <- data.frame(x = rnorm(n), z = rnorm(n), g = factor(rep(1:8, 10)))
+  d$y <- rbinom(n, 1, plogis(0.3 + d$x - 0.5 * d$z))
+  sp <- statmod_spec(y ~ x + z + random(~1 | g),
+                     distributions7::bernoulli_distrib(), d)
+  des <- statmod_design(sp)
+  m <- sum(vapply(des, function(z) z$npar, integer(1)))
+  bl <- list(jfp_block("mu", 2:3, const = TRUE))
+  set.seed(3)
+  u0 <- rnorm(m, sd = 0.2)
+  v <- rnorm(m)
+  w <- rnorm(m)
+  split <- function(u) list(mu = u)
+  st_at <- function(u) jfp_state(sp, des, split(u), bl)
+  n3 <- matrix(numDeriv::jacobian(function(t)
+    as.vector(jfp_hessian(st_at(u0 + t * v))$hessian), 0), m)
+  n4 <- matrix(numDeriv::jacobian(function(t)
+    as.vector(jfp_deriv3_dir(st_at(u0 + t * w), v)), 0), m)
+  st <- st_at(u0)
+  D3 <- jfp_deriv3_dir(st, v)
+  D4 <- jfp_deriv4_dir(st, v, w)
+  expect_lt(max(abs(D3 - n3)) / max(abs(n3)), 1e-7)
+  expect_lt(max(abs(D4 - n4)) / max(abs(n4)), 1e-7)
+  M <- crossprod(matrix(rnorm(m * m), m)) / m
+  expect_equal(jfp_deriv3(st, M, v), sum(M * D3), tolerance = 1e-10)
+  expect_equal(jfp_deriv4(st, M, v, w), sum(M * D4), tolerance = 1e-10)
+  # the negative control: the low-rank terms carry a share of D3
+  t3 <- jfp_terms3(st, v)
+  t3$lr <- list()
+  expect_gt(max(abs(jfp_terms_matrix(st, t3) - n3)) / max(abs(n3)), 1e-2)
+})
+
+test_that("the outer gradient and Hessian of reml() and ml() are exact", {
+  skip_if_not_installed("numDeriv")
+  set.seed(4)
+  d <- data.frame(id = factor(rep(1:20, each = 8)), x = rnorm(160),
+                  z = rbinom(160, 1, 0.2))
+  d$y <- rbinom(160, 1, plogis(-0.3 + 0.7 * d$x +
+                                 rnorm(20, 0, 0.8)[d$id]))
+  d$y[d$z == 1] <- 1L
+  fm <- y ~ x + jfp(~ z) + random(~1 | id)
+  B <- distributions7::bernoulli_distrib()
+  for (method in list(reml(information = observed_info()),
+                      ml(information = observed_info()))) {
+    fit0 <- statmod(fm, distrib = B, data = d, outer_criterion = NULL)
+    spec <- fit0@spec
+    design <- statmod_design(spec)
+    idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+    expect_true(outer_gradient_ok(spec, design, idx, method, 2L))
+    basis <- integrated_basis(spec, design, method@kind)
+    at <- function(eta) {
+      hy <- eta_to_hyper(eta, idx, fit0@hyper)
+      list(hy = hy, cf = fit_at_hyper(fm, B, d, hy,
+                                      polish = TRUE)$coefficients)
+    }
+    fn <- function(eta) {
+      a <- at(eta)
+      statmod_marginal(spec, design, a$cf, a$hy, method, basis = basis)$value
+    }
+    gr <- function(eta) {
+      a <- at(eta)
+      statmod_marginal_grad(spec, design, a$cf, a$hy, method, idx, basis)
+    }
+    eta <- hyper_to_eta(fit0@hyper, idx) + 0.3
+    a <- at(eta)
+    g <- gr(eta)
+    gn <- (fn(eta + 1e-4) - fn(eta - 1e-4)) / 2e-4
+    expect_lt(abs(g - gn) / abs(gn), 1e-7)
+    H <- statmod_marginal_hess(spec, design, a$cf, a$hy, method, idx, basis)
+    Hn <- (gr(eta + 1e-4) - gr(eta - 1e-4)) / 2e-4
+    expect_lt(abs(H - Hn) / abs(Hn), 1e-7)
+  }
+  # a fit under ml() counts the jfp coefficient among the estimated ones
+  f <- statmod(fm, distrib = B, data = d, outer_criterion = ml())
+  expect_identical(statmod_certificate(f)$state, "converged")
+  lab <- coef_labels(f@spec, statmod_design(f@spec))
+  expect_equal(attr(logLik(f, loglik_type = "marginal"), "df"),
+               sum(!lab$penalized) + 1 + 1)
+})

@@ -195,6 +195,16 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE,
   build <- function() {
     H <- ctx_information(ctx, spec, design, coef, hyper, expected,
                          ctx_emethod(ctx))
+    hold <- if (laplace) laplace_pinned(spec, design) else
+      c(pinned_coords(spec, design),
+        if (kinked) zero_kinked(spec, design, coef))
+    # A JEFFREYS CURVATURE IS FACTORED AS A SPARSE MATRIX PLUS A PRODUCT OF
+    # LOW RANK, as the inner fit factors it: assembled, its low-rank part
+    # makes K dense, and a random intercept over a thousand levels then went
+    # through the dense eigen route of pd_factor() at every point of the
+    # outer search
+    lr <- penalized_lowrank(ctx, spec, design, coef, hyper, H, hold)
+    if (!is.null(lr)) return(lr)
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     K <- H + S
     # a coefficient the marginal criterion holds is not integrated, and is
@@ -848,4 +858,65 @@ inner_mode_error <- function(ctx, spec, design, coef, hyper, score,
   if (is.null(db) || !all(is.finite(db))) return(NA_real_)
   v <- 0.5 * sum(score * db)
   if (is.finite(v)) v else NA_real_
+}
+
+
+#' The Penalized Matrix With a Jeffreys Curvature, Factored in Two Parts
+#'
+#' @description
+#' Returns what [ctx_penalized()] returns, for a model carrying a Jeffreys
+#' term, from a factorization of the sparse part of \eqn{K} and Woodbury's
+#' identity for its part of low rank, or `NULL` where the model carries no
+#' Jeffreys term or the sparse part has no positive definite factor, and
+#' [ctx_penalized()] then assembles \eqn{K} whole.
+#'
+#' @details
+#' With \eqn{K = K_0 + VV^\top},
+#' \deqn{\log|K| = \log|K_0| + \log|I + V^\top K_0^{-1}V|,\qquad
+#'   K^{-1} = K_0^{-1} - K_0^{-1}V(I + V^\top K_0^{-1}V)^{-1}V^\top K_0^{-1}.}
+#' A coordinate held in \eqn{K_0} has a zero row in \eqn{V}, which is the
+#' row that pinning the assembled matrix would leave. The matrix returned as
+#' `K` is the assembled sum, for its readers that multiply by it.
+#'
+#' @param ctx A context, or `NULL`.
+#' @param spec,design,coef,hyper As in [ctx_penalized()].
+#' @param H The information.
+#' @param hold The coordinates to pin, beside the boundary ones.
+#'
+#' @return A list with `K`, `inv` and `logdet`, or `NULL`.
+#'
+#' @seealso [lowrank_solve()], the same identity in the inner fit.
+#'
+#' @keywords internal
+penalized_lowrank <- function(ctx, spec, design, coef, hyper, H, hold) {
+  # beside a filter the joint assemblies place the penalty themselves
+  if (length(attr(design, "structural"))) return(NULL)
+  jp <- tryCatch(jfp_penalty(spec, design, coef, "parts"),
+                 error = function(e) NULL)
+  if (is.null(jp)) return(NULL)
+  S0 <- statmod_penalty_at(spec, coef, hyper, design, "hessian",
+                           jeffreys = FALSE) - jp$sparse
+  S0 <- zap_nonfinite(S0)
+  K0 <- pin_boundary(H + S0, hold)
+  V <- jp$lowrank
+  held <- attr(K0, "held_at")
+  if (length(held)) V[held, ] <- 0
+  fac <- pd_factor(K0)
+  if (!isTRUE(fac$ok) || (!isTRUE(fac$sparse) && is.null(fac$factor))) {
+    return(NULL)
+  }
+  K0inv <- if (isTRUE(fac$sparse)) {
+    as.matrix(Matrix::solve(fac$factor, Matrix::Diagonal(ncol(K0))))
+  } else chol2inv(fac$factor)
+  AV <- K0inv %*% V
+  cap <- diag(ncol(V)) + crossprod(V, AV)
+  cc <- tryCatch(chol((cap + t(cap)) / 2), error = function(e) NULL)
+  if (is.null(cc)) return(NULL)
+  inv <- K0inv - AV %*% chol2inv(cc) %*% t(AV)
+  K <- as_dense(K0) + tcrossprod(V)
+  for (a in c("held", "held_at", "boundary_at", "hold_at")) {
+    attr(K, a) <- attr(K0, a)
+  }
+  list(K = K, inv = (inv + t(inv)) / 2,
+       logdet = fac$logdet + 2 * sum(log(diag(cc))))
 }

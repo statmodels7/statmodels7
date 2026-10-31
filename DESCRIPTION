@@ -113,6 +113,7 @@ Collate:
     'filter_driving.R'
     'jfp_engine.R'
     'jfp_model.R'
+    'jfp_outer.R'
     'refresh.R'
     'structural.R'
     'joint_filter.R'
