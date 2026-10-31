@@ -2783,6 +2783,26 @@ summary.StatmodFit <- function(object, level = 0.95,
   if (length(edge_rows)) {
     ci[edge_rows, c("se", "statistic", "p_value", "lower", "upper")] <-
       NA_real_
+  }
+  # A COEFFICIENT WHOSE ESTIMATE DOES NOT EXIST (separation, a level with all
+  # its counts at zero) is among those rows, with the sentence of
+  # separation_diagnosis() as its note: it was estimated in the inner fit,
+  # not on the outer criterion, so the note above does not describe it
+  sep_coef <- if (is.null(cert) || is.null(cert$separation)) character(0)
+    else cert$separation$boundary_coef
+  sep_rows <- edge_rows[rownames(ci)[edge_rows] %in% sep_coef]
+  edge_rows <- setdiff(edge_rows, sep_rows)
+  sep_msg <- character(0)
+  if (length(sep_rows)) {
+    rec <- vapply(cert$separation$directions, function(d)
+      identical(d$kind, "recession") && length(d$free) > 0L, logical(1))
+    sep_msg <- sprintf(paste0(
+      "%s %s no standard error, interval or test: %s."),
+      paste(rownames(ci)[sep_rows], collapse = ", "),
+      if (length(sep_rows) == 1L) "carries" else "carry",
+      paste(cert$separation$message[rec], collapse = "; "))
+  }
+  if (length(edge_rows)) {
     edge_msg <- sprintf(paste0(
       "%s %s estimated on the outer criterion and %s at a boundary of it: ",
       "the
@@ -2836,7 +2856,7 @@ summary.StatmodFit <- function(object, level = 0.95,
             if (length(object@aliased) == 1L) "Its" else "Their",
             paste(object@aliased, collapse = ", "))
   } else character(0)
-  notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, edge_msg,
+  notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, sep_msg, edge_msg,
              sed$note,
              test_msg,
              tryCatch(class_notes(spec, design), error = function(e) character(0)))
@@ -4811,7 +4831,11 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
     # a criterion whose every coordinate ran to an edge, or a coefficient at
     # its link's clamp, leaves nothing to read; a silent absence would read
     # the same as a model with no criterion at all
-    if (!any(is.finite(ct$outer)) && length(ct$boundary)) {
+    # (a coefficient whose estimate does not exist is a boundary of the inner
+    # fit, not of the criterion, and does not count here)
+    edges <- setdiff(ct$boundary, sub(":", "/", ct$separation$boundary_coef,
+                                      fixed = TRUE))
+    if (!any(is.finite(ct$outer)) && length(edges)) {
       cat("outer   not available: at a boundary\n")
     }
   }
@@ -5472,10 +5496,16 @@ drop_common_prefix <- function(nms) {
 #'   reads `NULL` where no coefficient sits at the kink of a penalty and is
 #'   otherwise a named vector with `ratio` and `n` from [zero_readings()].
 #'
-#'   `separation` is the list that [separation_diagnosis()] returns, with a
-#'   further element `message` that describes each direction it found in a
-#'   sentence (empty where there is none), or `NULL` where the diagnosis
-#'   signaled an error. It does not enter `state`.
+#'   `separation` is the list that [separation_diagnosis()] returns, with
+#'   two further elements: `message`, which describes each direction it found
+#'   in a sentence (empty where there is none), and `boundary_coef`, the
+#'   coefficients without a smooth penalty that move along a direction of
+#'   recession and that the outer reading has not already named at a
+#'   boundary; it is `NULL` where the diagnosis signaled an error. A
+#'   direction of recession makes the state `"boundary"` (unless the state is
+#'   `"not converged"`), adds its sentence to `reason` and adds those
+#'   coefficients to `boundary` and `boundary_coef`. A direction of descent
+#'   does not change the state.
 #'
 #' @seealso [statmod()], [joint_decrement()], [outer_curvature()],
 #'   [mode_error_limit()], [criterion_resolution()]
@@ -5514,14 +5544,35 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
       kk$eta, kk$target, kk$gain), out$reason)
   }
   # A DIRECTION ALONG WHICH THE ESTIMATE DOES NOT EXIST (separation, a level
-  # with all its counts at zero) leaves a point that the readings above
-  # certify, since the score and the curvature vanish together along it. It
-  # is read by separation_diagnosis() and recorded beside the verdict, which
-  # it does not change.
+  # with all its counts at zero, a parameter running to a limit at which the
+  # family becomes another one) leaves a point that the readings above
+  # certify, since the score and the curvature vanish together along it.
+  # separation_diagnosis() finds it. A recession in coefficients without a
+  # smooth penalty makes the state "boundary" (Giovanni, 2026-10-31) and
+  # names those coefficients in `boundary` and `boundary_coef`, so that
+  # summary() leaves their standard errors off; a point already read as not
+  # converged keeps that state. A direction of descent is recorded in
+  # `separation` only.
   out$separation <- tryCatch(separation_diagnosis(fit),
                              error = function(e) NULL)
   if (!is.null(out$separation)) {
-    out$separation$message <- separation_message(out$separation)
+    sep <- out$separation
+    sep$message <- separation_message(sep)
+    rec <- vapply(sep$directions, function(d)
+      identical(d$kind, "recession") && length(d$free) > 0L, logical(1))
+    # the coefficients the outer reading has already named keep its note in
+    # summary(); only the others are the separation's own
+    sep$boundary_coef <- setdiff(unique(unlist(lapply(sep$directions[rec],
+                                                      function(d) d$free))),
+                                 out$boundary_coef)
+    if (any(rec)) {
+      if (out$state %in% c("converged", "unknown")) out$state <- "boundary"
+      out$reason <- c(out$reason, sep$message[rec])
+      out$boundary <- union(out$boundary, sub(":", "/", sep$boundary_coef,
+                                              fixed = TRUE))
+      out$boundary_coef <- union(out$boundary_coef, sep$boundary_coef)
+    }
+    out$separation <- sep
   }
   out
 }

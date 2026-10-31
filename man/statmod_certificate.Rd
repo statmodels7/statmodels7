@@ -55,10 +55,16 @@ there is nothing to read), and \code{zeros}, which
 reads \code{NULL} where no coefficient sits at the kink of a penalty and is
 otherwise a named vector with \code{ratio} and \code{n} from \code{\link[=zero_readings]{zero_readings()}}.
 
-\code{separation} is the list that \code{\link[=separation_diagnosis]{separation_diagnosis()}} returns, with a
-further element \code{message} that describes each direction it found in a
-sentence (empty where there is none), or \code{NULL} where the diagnosis
-signaled an error. It does not enter \code{state}.
+\code{separation} is the list that \code{\link[=separation_diagnosis]{separation_diagnosis()}} returns, with
+two further elements: \code{message}, which describes each direction it found
+in a sentence (empty where there is none), and \code{boundary_coef}, the
+coefficients without a smooth penalty that move along a direction of
+recession and that the outer reading has not already named at a
+boundary; it is \code{NULL} where the diagnosis signaled an error. A
+direction of recession makes the state \code{"boundary"} (unless the state is
+\code{"not converged"}), adds its sentence to \code{reason} and adds those
+coefficients to \code{boundary} and \code{boundary_coef}. A direction of descent
+does not change the state.
 }
 \description{
 Reads the outer criterion at the reported point, independently of the path

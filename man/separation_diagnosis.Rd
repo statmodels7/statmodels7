@@ -33,6 +33,7 @@ A list with \code{found} (logical, a direction of recession), \code{descent}
 found, each with \code{kind}, \code{"recession"} or \code{"descent"}; \code{coefficients},
 the named components of the direction over the coefficients that it
 moves, scaled so that the largest change in a linear predictor is one;
+\code{free}, the names of those coefficients that carry no smooth penalty;
 \code{equations}; \code{n_moved}, the number of observations whose linear predictor
 moves by more than 1e-3 in each equation; \code{change}, the change of the
 objective at each step; \code{source}, \code{"newton"} or \code{"eigen"}; and

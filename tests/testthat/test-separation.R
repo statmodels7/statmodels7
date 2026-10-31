@@ -81,11 +81,44 @@ test_that("ordinary fits, near separation and penalized terms are not reported",
   expect_false(s3$descent)
 })
 
-test_that("the certificate records the diagnosis without changing its state", {
+test_that("a recession makes the certificate's state boundary and names the coefficients", {
   d <- data.frame(x = 1:10, y = as.integer(1:10 > 5))
   f <- suppressWarnings(statmod(y ~ x, sep_bern, d))
+  expect_identical(certificate_core(f, 1e-2, 2e-3, 8)$state, "converged")
   ct <- statmod_certificate(f)
   expect_true(ct$separation$found)
   expect_length(ct$separation$message, length(ct$separation$directions))
+  expect_identical(ct$state, "boundary")
+  expect_setequal(ct$boundary_coef, c("mu:(Intercept)", "mu:x"))
+  expect_setequal(ct$boundary, c("mu/(Intercept)", "mu/x"))
+  expect_length(ct$boundary_key, 0L)
+  expect_true(any(grepl("the estimate does not exist", ct$reason)))
+})
+
+test_that("summary() leaves the separated coefficient without inference and says why", {
+  set.seed(1)
+  d <- data.frame(g = factor(rep(c("a", "b", "c", "d"), each = 15)),
+                  x = rnorm(60))
+  d$y <- rpois(60, exp(1 + 0.3 * d$x))
+  d$y[d$g == "d"] <- 0L
+  f <- statmod(y ~ g + x, distributions7::poisson_distrib(), d)
+  s <- summary(f)
+  tb <- s@tables$mu[[1L]]$table
+  row <- tb[tb$name == "gd", ]
+  expect_true(is.na(row$se) && is.na(row$lower) && is.na(row$p_value))
+  expect_false(anyNA(tb[tb$name == "x", "se"]))
+  expect_true(any(grepl("mu:gd carries no standard error", s@notes)))
+  expect_false(any(grepl("estimated on the outer criterion", s@notes)))
+  out <- utils::capture.output(print(s))
+  expect_false(any(grepl("outer   not available", out)))
+})
+
+test_that("a direction of descent leaves the state alone", {
+  f <- suppressWarnings(statmod(
+    Sepal.Length ~ Species | sigma ~ Species | nu ~ Species,
+    distributions7::student_t1_distrib(), iris,
+    inner_optimizer = iwls(maxit = 1L), outer_criterion = reml(marginal = "none")))
+  ct <- statmod_certificate(f)
+  expect_true(ct$separation$descent)
   expect_identical(ct$state, certificate_core(f, 1e-2, 2e-3, 8)$state)
 })

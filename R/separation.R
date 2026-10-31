@@ -70,6 +70,7 @@
 #'   found, each with `kind`, `"recession"` or `"descent"`; `coefficients`,
 #'   the named components of the direction over the coefficients that it
 #'   moves, scaled so that the largest change in a linear predictor is one;
+#'   `free`, the names of those coefficients that carry no smooth penalty;
 #'   `equations`; `n_moved`, the number of observations whose linear predictor
 #'   moves by more than 1e-3 in each equation; `change`, the change of the
 #'   objective at each step; `source`, `"newton"` or `"eigen"`; and
@@ -291,6 +292,7 @@ separation_diagnosis <- function(fit, steps = 2^(0:6), tol = 1e-8,
     names(moved) <- params
     list(kind = f$kind,
          coefficients = stats::setNames(f$d[who], rownames(lab)[who]),
+         free = rownames(lab)[intersect(who, iu)],
          equations = unique(eq_of[who]), n_moved = moved[moved > 0],
          change = f$change, source = f$source, curvature = f$curvature)
   })
@@ -327,9 +329,9 @@ separation_message <- function(sep) {
                          d$n_moved), collapse = " and ")
     if (identical(d$kind, "recession")) {
       sprintf(paste0(
-        "the estimate does not exist: the log-likelihood increases without ",
-        "reaching a maximum %s, which moves the linear predictor of %s, ",
-        "so the value reported depends on where the fit stopped"),
+        "the log-likelihood increases without reaching a maximum %s, which ",
+        "moves the linear predictor of %s, so the estimate does not exist ",
+        "and the value reported depends on where the fit stopped"),
         where, obs)
     } else {
       sprintf(paste0(
