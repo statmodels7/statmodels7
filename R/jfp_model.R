@@ -400,8 +400,17 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 #' derivative of the family's expected information, and the Hessian the
 #' fourth; each is probed once at a random point with the method that
 #' [jfp_emethod()] selects. The derivatives are written for a model without a
-#' filter and without a term whose block is recomputed at the coefficients,
-#' and the function returns `FALSE` there.
+#' filter, and the function returns `FALSE` beside one.
+#'
+#' Where a term recomputes its block at the coefficients, `jfp_refresh_ok()`
+#' asks that the block be a Jacobian ([modelterms7::term_jacobian_block()])
+#' and that the term's class have its own method for the derivative of its
+#' block that the order reads: [modelterms7::term_block_deriv2()] for the
+#' gradient and [modelterms7::term_block_deriv3()] for the Hessian, one
+#' order more for the term that holds a Jeffreys block in its subformula,
+#' whose rows move. The method is called once at the term's coefficients, so
+#' that a term that signals an error there (an [modelterms7::nl()] parameter
+#' whose development moves, a step's fourth derivative) is read as `FALSE`.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -412,8 +421,7 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 #' @keywords internal
 jfp_outer_ok <- function(spec, design, order = 1L) {
   if (length(attr(design, "structural"))) return(FALSE)
-  rf <- attr(design, "refresh")
-  if (!is.null(rf) && length(rf)) return(FALSE)
+  if (!jfp_refresh_ok(spec, design, order)) return(FALSE)
   d <- spec@distrib
   mem <- .jfp_outer_memory
   if (!is.null(mem$distrib) && identical(mem$distrib, d) &&
@@ -436,6 +444,43 @@ jfp_outer_ok <- function(spec, design, order = 1L) {
   ans <- jfp_outer_probe(d, order)
   mem$value[[as.character(order)]] <- ans
   ans
+}
+
+#' @rdname jfp_outer_ok
+#' @keywords internal
+jfp_refresh_ok <- function(spec, design, order = 1L) {
+  rf <- attr(design, "refresh")
+  if (is.null(rf) || !length(rf)) return(TRUE)
+  sst <- attr(design, "state")
+  if (is.null(sst)) return(FALSE)
+  hosts <- vapply(jfp_blocks(spec, design), function(b)
+    if (identical(b$kind, "refresh")) paste(b$param, b$term, sep = ":") else
+      "", character(1))
+  gens <- list(modelterms7::term_block_deriv2, modelterms7::term_block_deriv3,
+               modelterms7::term_block_deriv4)
+  for (r in rf) {
+    tm <- sst$terms[[r$param]][[r$term]]
+    if (is.null(tm)) return(FALSE)
+    if (!isTRUE(modelterms7::term_jacobian_block(tm))) return(FALSE)
+    k <- order + 1L + (paste(r$param, r$term, sep = ":") %in% hosts)
+    if (k > 4L) return(FALSE)
+    gen <- gens[[k - 1L]]
+    if (identical(S7::method(gen, S7::S7_class(tm)),
+                  S7::method(gen, modelterms7::model_term))) {
+      return(FALSE)
+    }
+    m <- length(modelterms7::term_coef_names(tm))
+    z <- rep(0.37, m)
+    ok <- tryCatch({
+      switch(k - 1L,
+        gen(tm, v = z, u = z),
+        gen(tm, v = z, u = z, s = z),
+        gen(tm, v = z, u = z, s = z, r = z))
+      TRUE
+    }, error = function(e) FALSE)
+    if (!ok) return(FALSE)
+  }
+  TRUE
 }
 
 # The one-slot memory of jfp_outer_ok(): the family last probed and the

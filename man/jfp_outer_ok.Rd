@@ -2,10 +2,13 @@
 % Please edit documentation in R/jfp_model.R
 \name{jfp_outer_ok}
 \alias{jfp_outer_ok}
+\alias{jfp_refresh_ok}
 \alias{jfp_outer_probe}
 \title{Whether the Outer Derivatives Can Read a Jeffreys Penalty}
 \usage{
 jfp_outer_ok(spec, design, order = 1L)
+
+jfp_refresh_ok(spec, design, order = 1L)
 
 jfp_outer_probe(d, order)
 }
@@ -30,7 +33,16 @@ The gradient reads the third derivative of the penalty, so the third
 derivative of the family's expected information, and the Hessian the
 fourth; each is probed once at a random point with the method that
 \code{\link[=jfp_emethod]{jfp_emethod()}} selects. The derivatives are written for a model without a
-filter and without a term whose block is recomputed at the coefficients,
-and the function returns \code{FALSE} there.
+filter, and the function returns \code{FALSE} beside one.
+
+Where a term recomputes its block at the coefficients, \code{jfp_refresh_ok()}
+asks that the block be a Jacobian (\code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}})
+and that the term's class have its own method for the derivative of its
+block that the order reads: \code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}} for the
+gradient and \code{\link[modelterms7:term_block_deriv3]{modelterms7::term_block_deriv3()}} for the Hessian, one
+order more for the term that holds a Jeffreys block in its subformula,
+whose rows move. The method is called once at the term's coefficients, so
+that a term that signals an error there (an \code{\link[modelterms7:nl]{modelterms7::nl()}} parameter
+whose development moves, a step's fourth derivative) is read as \code{FALSE}.
 }
 \keyword{internal}

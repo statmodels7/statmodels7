@@ -222,3 +222,54 @@ test_that("the moving third and fourth derivatives match an enumerating twin", {
     expect_gt(r$ctrl_static, 1e-2)
   }
 })
+
+test_that("the outer gradient and Hessian are exact with a block that moves", {
+  skip_if_not_installed("numDeriv")
+  set.seed(6)
+  n <- 200
+  d <- data.frame(x = stats::runif(n, -2, 2), h = stats::rbinom(n, 1, 0.3),
+                  g = factor(rep(1:20, 10)))
+  d$y <- stats::rbinom(n, 1, stats::plogis(2 * (d$x - 0.3) +
+                                             stats::rnorm(20, sd = 0.5)[d$g]))
+  d$y[d$h == 1] <- as.numeric(d$x[d$h == 1] > 0.5)
+  B <- distributions7::bernoulli_distrib()
+  fm <- y ~ 0 + nl(~ b * (x - e), b ~ 1 + jfp(~ h),
+                   start = list(b = 1, e = 0)) + random(~1 | g)
+  method <- ml(information = observed_info())
+  fit0 <- statmod(fm, distrib = B, data = d, outer_criterion = NULL)
+  spec <- fit0@spec
+  design <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  expect_true(outer_gradient_ok(spec, design, idx, method, 2L))
+  basis <- integrated_basis(spec, design, method@kind)
+  # the mode on the fit's own specification, polished by Newton on the
+  # exact gradient
+  at <- function(eta) {
+    hy <- eta_to_hyper(eta, idx, fit0@hyper)
+    obj <- statmod_objective(spec, hy, design, FALSE)
+    par <- obj$stack(fit_at_hyper_spec(spec, design, hy, B))
+    for (k in 1:8) {
+      gg <- obj$gr(par)
+      if (max(abs(gg)) < 1e-10) break
+      J <- numDeriv::jacobian(obj$gr, par)
+      par <- par - as.numeric(solve((J + t(J)) / 2, gg))
+    }
+    list(hy = hy, cf = obj$split(par))
+  }
+  fn <- function(eta) {
+    a <- at(eta)
+    statmod_marginal(spec, design, a$cf, a$hy, method, basis = basis)$value
+  }
+  gr <- function(eta) {
+    a <- at(eta)
+    statmod_marginal_grad(spec, design, a$cf, a$hy, method, idx, basis)
+  }
+  eta <- hyper_to_eta(fit0@hyper, idx) + 0.3
+  a <- at(eta)
+  g <- gr(eta)
+  gn <- (fn(eta + 1e-4) - fn(eta - 1e-4)) / 2e-4
+  expect_lt(abs(g - gn) / abs(gn), 1e-7)
+  H <- statmod_marginal_hess(spec, design, a$cf, a$hy, method, idx, basis)
+  Hn <- (gr(eta + 1e-4) - gr(eta - 1e-4)) / 2e-4
+  expect_lt(abs(H - Hn) / abs(Hn), 1e-7)
+})
