@@ -66,7 +66,9 @@ only the null space of a penalty can carry a direction of recession.
 
 The candidates are the Newton step at the fitted point,
 \eqn{\delta = -K^{-1} g}, with each eigenvalue of \eqn{S} floored at
-\eqn{10^{-14}} times the largest, and the eigenvectors of \eqn{S} against
+\eqn{10^{-14}} times the largest; where coefficients are estimated on the
+outer criterion, a second Newton step that keeps their gradient in
+\eqn{F} (see below); and both signs of the eigenvectors of \eqn{S} against
 the metric of the linear predictors, \eqn{M = X_u^\top X_u} over the
 equations, whose eigenvalues fall below \code{flat} times the largest one. At a
 point where the fit has drifted along a direction of recession the gradient

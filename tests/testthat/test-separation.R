@@ -47,6 +47,19 @@ test_that("a group without zeros is found in the zero-inflation equation", {
   expect_true(s$found)
   expect_true(any(vapply(s$directions, function(z)
     identical(names(z$coefficients), "zi:gB"), logical(1))))
+  # zi:gB is estimated on the outer criterion, whose search decides where it
+  # stops; the diagnosis must not depend on that point
+  for (z in c(-6, -10, -12, -16, -25)) {
+    f2 <- f
+    cf <- f2@coefficients
+    cf$zi[2] <- z
+    f2@coefficients <- cf
+    s2 <- separation_diagnosis(f2)
+    expect_true(s2$found, label = sprintf("zi:gB at %g", z))
+    expect_true(any(vapply(s2$directions, function(w)
+      identical(names(w$coefficients), "zi:gB"), logical(1))),
+      label = sprintf("zi:gB named at %g", z))
+  }
 })
 
 test_that("separation beside a random effect is found in the fixed effect", {

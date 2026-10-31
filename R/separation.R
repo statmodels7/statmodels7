@@ -22,7 +22,9 @@
 #'
 #' The candidates are the Newton step at the fitted point,
 #' \eqn{\delta = -K^{-1} g}, with each eigenvalue of \eqn{S} floored at
-#' \eqn{10^{-14}} times the largest, and the eigenvectors of \eqn{S} against
+#' \eqn{10^{-14}} times the largest; where coefficients are estimated on the
+#' outer criterion, a second Newton step that keeps their gradient in
+#' \eqn{F} (see below); and both signs of the eigenvectors of \eqn{S} against
 #' the metric of the linear predictors, \eqn{M = X_u^\top X_u} over the
 #' equations, whose eigenvalues fall below `flat` times the largest one. At a
 #' point where the fit has drifted along a direction of recession the gradient
@@ -215,28 +217,51 @@ separation_diagnosis <- function(fit, steps = 2^(0:6), tol = 1e-8,
   # the Newton step on the profile, with the curvature floored at rounding of
   # the largest eigenvalue so that a direction whose curvature is lost to
   # rounding is still followed
-  gu <- g[iu]
-  if (length(iv)) gu <- gu - as.numeric(crossprod(KvvKvu, g[iv]))
   lam <- pmax(ec$values, lmax * 1e-14)
-  du <- -as.numeric(W %*% (ec$vectors %*%
-                              (crossprod(ec$vectors, crossprod(W, gu)) / lam)))
-  newton <- numeric(p)
-  newton[iu] <- du
-  if (length(iv)) {
-    newton[iv] <- -as.numeric(solve_v(g[iv] + as.numeric(Kvu %*% du)))
+  newton_step <- function(gr, keep = rep(TRUE, length(lam))) {
+    gu <- gr[iu]
+    if (length(iv)) gu <- gu - as.numeric(crossprod(KvvKvu, gr[iv]))
+    V <- ec$vectors[, keep, drop = FALSE]
+    du <- -as.numeric(W %*% (V %*% (crossprod(V, crossprod(W, gu)) /
+                                      lam[keep])))
+    st <- numeric(p)
+    st[iu] <- du
+    if (length(iv)) {
+      st[iv] <- -as.numeric(solve_v(gr[iv] + as.numeric(Kvu %*% du)))
+    }
+    st
   }
+  newton <- newton_step(g)
   out$newton_eta <- max(abs(unlist(delta_eta(newton))))
   cand <- list()
   dn <- scale_to_eta(newton)
   if (!is.null(dn)) cand[[1]] <- list(d = dn, source = "newton")
+  # A COEFFICIENT ESTIMATED ON THE OUTER CRITERION drifts with the outer
+  # search, not with the inner fit, so the step above (with its gradient set
+  # to zero) does not follow it. The step with its gradient in F does, taken
+  # over the directions of S whose curvature ratio is at most `drift`: over
+  # the others the gradient in F is the difference between F and the outer
+  # criterion at an ordinary optimum, and following it moves the probe off
+  # that optimum. On a zero-inflated Poisson whose group B has no zeros,
+  # zi:gB stopped at -18.2 here and elsewhere at a point that the outer
+  # search's steps of one decide; the flat eigenvector alone found it at -14,
+  # -18, -20 and -25 but not at -8 to -12 (curvature ratio above `flat`) nor
+  # at -16 (a sign chosen from rounding).
+  drift <- rel <= 1e-3
+  if (any(g_marg != 0) && any(drift)) {
+    dm <- scale_to_eta(newton_step(g + g_marg, drift))
+    if (!is.null(dm)) cand[[length(cand) + 1L]] <-
+      list(d = dm, source = "newton")
+  }
   small <- order(rel)[seq_len(min(max_eigen, length(rel)))]
   small <- small[rel[small] <= flat]
+  # both signs of a flat eigenvector are probed: the slope along it is of
+  # the order of rounding where the gradient of its coordinates was set to
+  # zero, and choosing the sign from that slope missed zi:gB at -16
   for (k in small) {
     v <- scale_to_eta(complete(as.numeric(W %*% ec$vectors[, k])))
     if (is.null(v)) next
-    slope <- sum(g * v)
-    signs <- if (abs(slope) > 0) -sign(slope) else c(1, -1)
-    for (s in signs) cand[[length(cand) + 1L]] <-
+    for (s in c(1, -1)) cand[[length(cand) + 1L]] <-
       list(d = s * v, source = "eigen")
   }
 
