@@ -141,7 +141,7 @@ summary(fit, vcov_type = frequentist_vcov())
 #> 95% intervals, frequentist variance
 #> conditional log-likelihood -29.891019    effective df 3.00
 #> cAIC 65.782    cBIC 72.928
-#> fitted in 61 ms
+#> fitted in 88 ms
 #> inner   max |grad|/se 5.3e-15   min eigen 0.11
 #> outer   max |grad|/se 9.4e-15   min eigen 1
 frequentist_vcov(information = distributions7::expected_info())

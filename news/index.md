@@ -1,5 +1,15 @@
 # Changelog
 
+## statmodels7 0.232.1
+
+- [`separation_diagnosis()`](https://statmodels7.github.io/statmodels7/reference/separation_diagnosis.md)
+  no longer depends on where the outer search stops a coefficient
+  estimated on the outer criterion: both signs of a flat direction are
+  probed, and a Newton step that keeps those coefficients’ gradient
+  follows their drift. A zero-inflation probability running to zero was
+  missed on Linux and macOS.
+- Requires distributions7 0.94.1 and linkfunctions7 0.8.1.
+
 ## statmodels7 0.232.0
 
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)

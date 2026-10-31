@@ -81,13 +81,15 @@ penalty can carry a direction of recession.
 
 The candidates are the Newton step at the fitted point, \\\delta =
 -K^{-1} g\\, with each eigenvalue of \\S\\ floored at \\10^{-14}\\ times
-the largest, and the eigenvectors of \\S\\ against the metric of the
-linear predictors, \\M = X_u^\top X_u\\ over the equations, whose
-eigenvalues fall below `flat` times the largest one. At a point where
-the fit has drifted along a direction of recession the gradient and the
-curvature along it vanish together, so the Newton step remains of order
-one in the linear predictor while the decrease that it predicts is below
-the stopping rule.
+the largest; where coefficients are estimated on the outer criterion, a
+second Newton step that keeps their gradient in \\F\\ (see below); and
+both signs of the eigenvectors of \\S\\ against the metric of the linear
+predictors, \\M = X_u^\top X_u\\ over the equations, whose eigenvalues
+fall below `flat` times the largest one. At a point where the fit has
+drifted along a direction of recession the gradient and the curvature
+along it vanish together, so the Newton step remains of order one in the
+linear predictor while the decrease that it predicts is below the
+stopping rule.
 
 Each candidate \\d\\ is scaled so that the largest change it makes in a
 linear predictor is one, and \\F\\ is evaluated at \\\hat\beta + t d\\

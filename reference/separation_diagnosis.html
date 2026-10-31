@@ -19,7 +19,7 @@ then stops at a finite point that depends only on its stopping rule."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -128,7 +128,9 @@ candidate as the profile requires, \(v = -K_{vv}^{-1} K_{vu} u\), and
 only the null space of a penalty can carry a direction of recession.</p>
 <p>The candidates are the Newton step at the fitted point,
 \(\delta = -K^{-1} g\), with each eigenvalue of \(S\) floored at
-\(10^{-14}\) times the largest, and the eigenvectors of \(S\) against
+\(10^{-14}\) times the largest; where coefficients are estimated on the
+outer criterion, a second Newton step that keeps their gradient in
+\(F\) (see below); and both signs of the eigenvectors of \(S\) against
 the metric of the linear predictors, \(M = X_u^\top X_u\) over the
 equations, whose eigenvalues fall below <code>flat</code> times the largest one. At a
 point where the fit has drifted along a direction of recession the gradient
