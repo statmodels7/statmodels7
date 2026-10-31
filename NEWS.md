@@ -1,3 +1,22 @@
+# statmodels7 0.232.0
+
+* `statmod_certificate()` reports the state `"boundary"` when the estimate
+  does not exist: separation in a binary or binomial response, a factor level
+  whose counts are all zero, a group without zeros in a zero-inflation
+  equation, or a parameter running to a limit at which the family becomes
+  another one (the degrees of freedom of a Student t at the gaussian limit).
+  The internal `separation_diagnosis()` finds the direction along which the
+  penalized log-likelihood keeps increasing. The certificate adds its
+  sentence to `reason` and the coefficients to `boundary` and
+  `boundary_coef`, and keeps the full diagnosis in a new field `separation`;
+  a state of `"not converged"` is kept. `summary()` gives those coefficients
+  no standard error, interval or test, and gives the reason in a note.
+* The driving quantity of a score-driven filter is carried to order five:
+  `filter_driving()` reads the sixth derivative of the log-likelihood and
+  the fifth derivative of the expected information.
+* Requires distributions7 0.94.0, linkfunctions7 0.8.0 and modelterms7
+  0.118.0.
+
 # statmodels7 0.231.0
 
 * A fit with `modelterms7::scs()` is summarized as a smooth (its smoothing
