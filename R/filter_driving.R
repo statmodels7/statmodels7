@@ -117,29 +117,33 @@ check_filter_scaling <- function(d, y, theta) {
 #' The derivatives \eqn{\mathcal{I}_\beta} are minus those of
 #' [distributions7::distrib_dexpected_hessian()] and its higher-order
 #' siblings, and all of them are on the link scale. The highest array given sets
-#' the order: `D5` needs the fourth derivative of the information.
+#' the order: `D5` needs the fourth derivative of the information and `D6`
+#' the fifth ([distributions7::distrib_d5expected_hessian()]).
 #'
 #' @param spec A [StatmodSpec()].
 #' @param theta The per-observation parameters.
 #' @param ap The index of the parameter in whose equation the filter sits.
 #' @param scaling The exponent \eqn{d}.
-#' @param gl,H,D3,D4,D5 The family's link-scale derivatives; the higher ones
-#'   may be `NULL`.
+#' @param gl,H,D3,D4,D5,D6 The family's link-scale derivatives; the higher
+#'   ones may be `NULL`.
 #'
-#' @return A list with `gl`, `H`, `D3`, `D4` and `D5`, the same objects where
-#'   `scaling` is zero.
+#' @return A list with `gl`, `H`, `D3`, `D4`, `D5` and `D6`, the same objects
+#'   where `scaling` is zero.
 #'
 #' @keywords internal
 filter_driving <- function(spec, theta, ap, scaling, gl, H, D3 = NULL,
-                           D4 = NULL, D5 = NULL) {
-  if (scaling == 0) return(list(gl = gl, H = H, D3 = D3, D4 = D4, D5 = D5))
+                           D4 = NULL, D5 = NULL, D6 = NULL) {
+  if (scaling == 0) {
+    return(list(gl = gl, H = H, D3 = D3, D4 = D4, D5 = D5, D6 = D6))
+  }
   d <- spec@distrib
   y <- spec@response
   n <- spec@n_obs
   params <- d@params
   np <- length(params)
-  order <- if (!is.null(D5)) 4L else if (!is.null(D4)) 3L else
-    if (!is.null(D3)) 2L else if (!is.null(H)) 1L else 0L
+  order <- if (!is.null(D6)) 5L else if (!is.null(D5)) 4L else
+    if (!is.null(D4)) 3L else
+      if (!is.null(D3)) 2L else if (!is.null(H)) 1L else 0L
   rn <- function(x) rep_len(as.numeric(x), n)
   tkey <- function(idx) paste(sort(idx), collapse = ".")
 
@@ -182,6 +186,13 @@ filter_driving <- function(spec, theta, ap, scaling, gl, H, D3 = NULL,
         params, ap, ap, tu[1L], tu[2L], tu[3L], tu[4L])]])
     }
   }
+  if (order >= 5L) {
+    E5 <- distributions7::distrib_d5expected_hessian(d, y, theta, scale = "link")
+    for (tu in tuples(5L)) {
+      Ider[[tkey(tu)]] <- -rn(E5[[distributions7::d5expected_key(
+        params, ap, ap, tu[1L], tu[2L], tu[3L], tu[4L], tu[5L])]])
+    }
+  }
 
   # phi^(k)(I) = (-d)(-d-1)...(-d-k+1) I^(-d-k)
   phik <- function(k) {
@@ -200,14 +211,16 @@ filter_driving <- function(spec, theta, ap, scaling, gl, H, D3 = NULL,
   }
   # the score's derivatives are read from the arrays as they came in, which
   # the assignments below replace one order at a time
-  s0 <- list(gl = gl, H = H, D3 = D3, D4 = D4, D5 = D5)
+  s0 <- list(gl = gl, H = H, D3 = D3, D4 = D4, D5 = D5, D6 = D6)
   s_of <- function(A) {
     switch(length(A) + 1L,
            rn(s0$gl[[params[ap]]]),
            rn(s0$H[[hess_key(params, ap, A[1L])]]),
            rn(s0$D3[[deriv3_key(params, ap, A[1L], A[2L])]]),
            rn(s0$D4[[deriv4_key(params, ap, A[1L], A[2L], A[3L])]]),
-           rn(s0$D5[[deriv5_key(params, ap, A[1L], A[2L], A[3L], A[4L])]]))
+           rn(s0$D5[[deriv5_key(params, ap, A[1L], A[2L], A[3L], A[4L])]]),
+           rn(s0$D6[[deriv6_key(params, ap, A[1L], A[2L], A[3L], A[4L],
+                                A[5L])]]))
   }
   u_of <- function(Tt) {
     m <- length(Tt)
@@ -236,5 +249,11 @@ filter_driving <- function(spec, theta, ap, scaling, gl, H, D3 = NULL,
       D5[[deriv5_key(params, ap, tu[1L], tu[2L], tu[3L], tu[4L])]] <- u_of(tu)
     }
   }
-  list(gl = gl, H = H, D3 = D3, D4 = D4, D5 = D5)
+  if (order >= 5L) {
+    for (tu in tuples(5L)) {
+      D6[[deriv6_key(params, ap, tu[1L], tu[2L], tu[3L], tu[4L],
+                     tu[5L])]] <- u_of(tu)
+    }
+  }
+  list(gl = gl, H = H, D3 = D3, D4 = D4, D5 = D5, D6 = D6)
 }

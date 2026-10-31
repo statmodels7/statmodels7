@@ -566,6 +566,28 @@ deriv5_key <- function(params, a, b, c, d, e) {
 }
 
 
+#' The Name of a Sixth-Derivative Component
+#'
+#' @description
+#' Locates the \eqn{(a, b, c, d, e, f)} entry of a distribution's
+#' sixth-derivative list, built the same way [deriv5_key()] builds its own.
+#'
+#' @details
+#' The sixth order is read where a filter's fifth derivative is,
+#' [modelterms7::term_fifth()], for the reason that [deriv5_key()] gives one
+#' order down. [distributions7::distrib_deriv6()] supplies the values.
+#'
+#' @param params The parameter names, in the family's order.
+#' @param a,b,c,d,e,f Indices into `params`.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+deriv6_key <- function(params, a, b, c, d, e, f) {
+  paste(params[sort(c(a, b, c, d, e, f))], collapse = "_")
+}
+
+
 #' Reject the Expected Information Beside a Term of the Likelihood Shape
 #'
 #' @description
