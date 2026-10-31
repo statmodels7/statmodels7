@@ -197,7 +197,9 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
   st$total <- sum(npar)
   st$joint <- NULL
   st$emethod <- emethod
-  st$E <- statmod_family_hessian(spec, ev$theta, TRUE, emethod)
+  st$raw0 <- statmod_family_hessian(spec, ev$theta, TRUE, emethod)
+  st$scale <- jfp_scale_setup(st)
+  st$E <- jfp_scale_apply(st, 0L)
   if (length(ev$filters)) {
     st$joint <- jfp_joint_rows(spec, design0, coef, ev)
     st$total <- length(st$joint$keep)
@@ -723,7 +725,9 @@ jfp_first_weights <- function(st, bs, dE) {
 #' `jfp_dexpected()` returns [distributions7::distrib_dexpected_hessian()] and
 #' `jfp_d2expected()` returns [distributions7::distrib_d2expected_hessian()],
 #' both on the link scale at the state's predictors, computed at the first
-#' request and kept in the state.
+#' request and kept in the state, with the factor that
+#' [distributions7::information_scale()] declares divided out of the
+#' information of each parameter ([jfp_scale_apply()]).
 #'
 #' @param st A state, from [jfp_state()].
 #'
@@ -731,22 +735,14 @@ jfp_first_weights <- function(st, bs, dE) {
 #'
 #' @keywords internal
 jfp_dexpected <- function(st) {
-  if (is.null(st$dE)) {
-    st$dE <- distributions7::distrib_dexpected_hessian(
-      st$spec@distrib, st$spec@response, st$ev$theta, scale = "link",
-      method = st$emethod)
-  }
+  if (is.null(st$dE)) st$dE <- jfp_scale_apply(st, 1L)
   st$dE
 }
 
 #' @rdname jfp_dexpected
 #' @keywords internal
 jfp_d2expected <- function(st) {
-  if (is.null(st$d2E)) {
-    st$d2E <- distributions7::distrib_d2expected_hessian(
-      st$spec@distrib, st$spec@response, st$ev$theta, scale = "link",
-      method = st$emethod, threads = st$spec@threads)
-  }
+  if (is.null(st$d2E)) st$d2E <- jfp_scale_apply(st, 2L)
   st$d2E
 }
 
@@ -868,4 +864,157 @@ jfp_refresh_hessian <- function(st, bs, dE) {
   }, numeric(nrow(ij))))
   BV <- matrix(BV, m, nrow(ij))
   list(H = (H + t(H)) / 2, BV = BV)
+}
+
+
+#' The Information Without the Factors That Only Scale It
+#'
+#' @description
+#' `jfp_scale_setup()` reads [distributions7::information_scale()] and
+#' computes, for each declared factor, \eqn{g = \phi^{k}} and its derivatives
+#' to the fourth order in the predictor of \eqn{\phi}. `jfp_raw()` returns
+#' the family's derivative of order `k` of the expected information on the
+#' link scale. `jfp_scale_apply()` returns that derivative for the information
+#' with the factors divided out, \eqn{\tilde J = \mathcal I_{aa}\prod_\phi
+#' g_\phi}, which the Jeffreys penalty reads in place of
+#' \eqn{\mathcal I_{aa}}.
+#'
+#' @details
+#' Where the family declares that \eqn{\mathcal I_{aa} = W\prod_\phi
+#' \phi^{-k_\phi}}, the penalty of a block in the equation of
+#' \eqn{\theta_a} is \eqn{a\log|X^\top\mathrm{diag}(wW)X|}. A constant
+#' \eqn{\phi} would leave the log-determinant shifted by a constant, so the
+#' coefficients do not change, and \eqn{\phi} receives no implicit prior from
+#' the penalty. Each \eqn{g_\phi} depends on its own predictor only, so a
+#' derivative of \eqn{\tilde J} in the predictors with \eqn{m_\phi} indices
+#' equal to \eqn{\phi} is the Leibniz sum
+#' \deqn{\sum_{j}\prod_\phi\binom{m_\phi}{j_\phi}g_\phi^{(j_\phi)}\,
+#'   \partial^{k-\sum j}\mathcal I_{aa},}
+#' the last derivative taken over the indices that are left. With
+#' \eqn{f(x) = x^k} and \eqn{\phi_j} the derivatives of the inverse link,
+#' \eqn{g' = f'\phi_1}, \eqn{g'' = f''\phi_1^2 + f'\phi_2},
+#' \eqn{g''' = f'''\phi_1^3 + 3f''\phi_1\phi_2 + f'\phi_3} and
+#' \eqn{g'''' = f''''\phi_1^4 + 6f'''\phi_1^2\phi_2 + f''(3\phi_2^2 +
+#' 4\phi_1\phi_3) + f'\phi_4}. The entries of other pairs of parameters are
+#' returned as the family gives them.
+#'
+#' @param st A state, from [jfp_state()].
+#' @param k The order, 0 to 4.
+#'
+#' @return `jfp_scale_setup()` a list with one entry per scaled parameter
+#'   (`a`, its index, and `phis`, each with `idx` and `g`, the derivatives of
+#'   orders 0 to 4); `jfp_raw()` and `jfp_scale_apply()` a named list of
+#'   per-observation components, keyed as the family keys them.
+#'
+#' @keywords internal
+jfp_scale_setup <- function(st) {
+  d <- st$spec@distrib
+  sc <- distributions7::information_scale(d)
+  params <- st$params
+  n <- st$spec@n_obs
+  out <- list()
+  for (a in names(sc)) {
+    ia <- match(a, params)
+    if (is.na(ia)) next
+    k <- sc[[a]]
+    phis <- lapply(names(k), function(phi) {
+      lk <- d@link_params[[phi]]
+      th <- rep_len(st$ev$theta[[phi]], n)
+      eta <- linkfunctions7::linkfun(lk, th)
+      p1 <- linkfunctions7::dlinkinv(lk, eta)
+      p2 <- linkfunctions7::d2linkinv(lk, eta)
+      p3 <- linkfunctions7::d3linkinv(lk, eta)
+      p4 <- linkfunctions7::d4linkinv(lk, eta)
+      kk <- k[[phi]]
+      f1 <- kk * th^(kk - 1)
+      f2 <- kk * (kk - 1) * th^(kk - 2)
+      f3 <- kk * (kk - 1) * (kk - 2) * th^(kk - 3)
+      f4 <- kk * (kk - 1) * (kk - 2) * (kk - 3) * th^(kk - 4)
+      list(idx = match(phi, params), g = list(
+        th^kk,
+        f1 * p1,
+        f2 * p1^2 + f1 * p2,
+        f3 * p1^3 + 3 * f2 * p1 * p2 + f1 * p3,
+        f4 * p1^4 + 6 * f3 * p1^2 * p2 + f2 * (3 * p2^2 + 4 * p1 * p3) +
+          f1 * p4))
+    })
+    out[[length(out) + 1L]] <- list(a = ia, phis = phis)
+  }
+  out
+}
+
+#' @rdname jfp_scale_setup
+#' @keywords internal
+jfp_raw <- function(st, k) {
+  slot <- paste0("raw", k)
+  if (is.null(st[[slot]])) {
+    d <- st$spec@distrib
+    y <- st$spec@response
+    th <- st$ev$theta
+    st[[slot]] <- switch(k,
+      distributions7::distrib_dexpected_hessian(d, y, th, scale = "link",
+                                                method = st$emethod),
+      distributions7::distrib_d2expected_hessian(d, y, th, scale = "link",
+                                                 method = st$emethod,
+                                                 threads = st$spec@threads),
+      distributions7::distrib_d3expected_hessian(d, y, th, scale = "link",
+                                                 method = st$emethod),
+      distributions7::distrib_d4expected_hessian(d, y, th, scale = "link",
+                                                 method = st$emethod))
+  }
+  st[[slot]]
+}
+
+#' @rdname jfp_scale_setup
+#' @keywords internal
+jfp_scale_apply <- function(st, k) {
+  out <- if (k == 0L) st$raw0 else jfp_raw(st, k)
+  if (!length(st$scale)) return(out)
+  params <- st$params
+  np <- length(params)
+  n <- st$spec@n_obs
+  key <- function(a, cs) {
+    switch(length(cs) + 1L,
+      hess_key(params, a, a),
+      distributions7::dexpected_key(params, a, a, cs[1L]),
+      distributions7::d2expected_key(params, a, a, cs[1L], cs[2L]),
+      distributions7::d3expected_key(params, a, a, cs[1L], cs[2L], cs[3L]),
+      distributions7::d4expected_key(params, a, a, cs[1L], cs[2L], cs[3L],
+                                     cs[4L]))
+  }
+  val <- function(a, cs) {
+    D <- if (!length(cs)) st$raw0 else jfp_raw(st, length(cs))
+    x <- D[[key(a, cs)]]
+    if (is.null(x)) numeric(n) else rep_len(x, n)
+  }
+  combos <- if (k == 0L) matrix(integer(0), 1L, 0L) else
+    as.matrix(expand.grid(rep(list(seq_len(np)), k)))
+  for (sc in st$scale) {
+    a <- sc$a
+    done <- character(0)
+    for (r in seq_len(nrow(combos))) {
+      cs <- sort(as.integer(combos[r, ]))
+      kk <- key(a, cs)
+      if (kk %in% done) next
+      done <- c(done, kk)
+      # the Leibniz sum over how many indices fall on each factor
+      m <- vapply(sc$phis, function(ph) sum(cs == ph$idx), integer(1))
+      js <- as.matrix(expand.grid(lapply(m, function(x) 0:x)))
+      tot <- numeric(n)
+      for (j in seq_len(nrow(js))) {
+        rest <- cs
+        cf <- rep(1, n)
+        for (i in seq_along(sc$phis)) {
+          ji <- js[j, i]
+          cf <- cf * choose(m[i], ji) * sc$phis[[i]]$g[[ji + 1L]]
+          if (ji > 0L) {
+            rest <- rest[-which(rest == sc$phis[[i]]$idx)[seq_len(ji)]]
+          }
+        }
+        tot <- tot + cf * val(a, rest)
+      }
+      out[[kk]] <- tot
+    }
+  }
+  out
 }

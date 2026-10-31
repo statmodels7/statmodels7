@@ -10,7 +10,8 @@ jfp_split <- function(design, u) {
 }
 
 # the reference: predictors from statmod_eta(), the block's matrix assembled
-# from distrib_expected_hessian() and its log-determinant by determinant()
+# from distrib_expected_hessian() without the factors that
+# information_scale() declares, and its log-determinant by determinant()
 jfp_reference <- function(spec, design, blocks) function(u) {
   cf <- jfp_split(design, u)
   th <- statmod_eta(spec, design, cf)$theta
@@ -22,6 +23,9 @@ jfp_reference <- function(spec, design, blocks) function(u) {
     X <- as.matrix(dz[[b$param]]$X)[, b$cols, drop = FALSE]
     if (b$const) X <- cbind(1, X)
     e <- -rep_len(E[[paste(b$param, b$param, sep = "_")]], spec@n_obs)
+    # the factor that the family declares as only scaling the information
+    sc <- distributions7::information_scale(spec@distrib)[[b$param]]
+    for (phi in names(sc)) e <- e * rep_len(th[[phi]], spec@n_obs)^sc[[phi]]
     I <- crossprod(X * (e * spec@weights), X)
     tot <- tot + b$power * as.numeric(determinant(I, logarithm = TRUE)$modulus)
   }

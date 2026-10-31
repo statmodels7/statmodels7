@@ -19,6 +19,8 @@ A named list of per-observation components.
 \code{jfp_dexpected()} returns \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} and
 \code{jfp_d2expected()} returns \code{\link[distributions7:distrib_d2expected_hessian]{distributions7::distrib_d2expected_hessian()}},
 both on the link scale at the state's predictors, computed at the first
-request and kept in the state.
+request and kept in the state, with the factor that
+\code{\link[distributions7:information_scale]{distributions7::information_scale()}} declares divided out of the
+information of each parameter (\code{\link[=jfp_scale_apply]{jfp_scale_apply()}}).
 }
 \keyword{internal}
