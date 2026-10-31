@@ -19,7 +19,8 @@ statmod_penalty_second(
   bm,
   bl,
   bml,
-  total
+  total,
+  M = NULL
 )
 ```
 
@@ -58,10 +59,16 @@ statmod_penalty_second(
 
   The stacked width.
 
+- M:
+
+  `NULL`, or the matrix against which the result is traced; the trace is
+  then returned instead of the matrix, and a Jeffreys penalty's share is
+  computed without assembling it.
+
 ## Value
 
 A `total` square matrix, or `NULL` if no penalty's Hessian moves with
-the coefficients.
+the coefficients; with `M`, a single number.
 
 ## Details
 

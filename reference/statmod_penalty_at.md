@@ -12,7 +12,8 @@ statmod_penalty_at(
   coef,
   hyper,
   design = statmod_design(spec),
-  what = c("value", "gradient", "hessian")
+  what = c("value", "gradient", "hessian"),
+  jeffreys = TRUE
 )
 ```
 
@@ -40,6 +41,15 @@ statmod_penalty_at(
 
   Which quantity: `"value"`, `"gradient"` or `"hessian"`.
 
+- jeffreys:
+
+  Whether the Jeffreys penalties of
+  [`jfp_penalty()`](https://statmodels7.github.io/statmodels7/reference/jfp_penalty.md)
+  are included (the default).
+  [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
+  passes `FALSE` and places their curvature itself, split into the part
+  with the sparsity of the information and a product of low rank.
+
 ## Value
 
 Depends on `what`:
@@ -47,7 +57,8 @@ Depends on `what`:
 - `"value"`:
 
   a single number, the sum of the penalties. The value is `0` for an
-  unpenalized model.
+  unpenalized model, and `Inf` where the information of a Jeffreys block
+  is not positive definite.
 
 - `"gradient"`:
 

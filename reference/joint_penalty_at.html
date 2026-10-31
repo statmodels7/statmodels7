@@ -11,7 +11,7 @@ places them in the joint vector \([\beta; \zeta_{\mathrm{free}}]\)."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.234.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +92,10 @@ computed it.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>For <code>"value"</code> a single number; for <code>"gradient"</code> a numeric vector of
 length <code>n</code>; for <code>"hessian"</code> an <code>n</code> by <code>n</code> matrix. The result is zero
-throughout if no class is mixed.</p>
+throughout if no class is mixed and no Jeffreys term is present. The
+gradient and the Hessian also carry the part of a Jeffreys penalty that
+lies outside the coefficients (<code><a href="jfp_joint_extra.html">jfp_joint_extra()</a></code>), whose part over the
+coefficients <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code> already places.</p>
     </div>
     <div class="section level2">
     <h2 id="one-function-for-both-parts">One function for both parts<a class="anchor" aria-label="anchor" href="#one-function-for-both-parts"></a></h2>

@@ -19,7 +19,7 @@ and not at \(\kappa^2\), which the normal equations would give."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.234.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,9 @@ model.</p></dd>
 
 
 <dt id="arg-u">u<a class="anchor" aria-label="anchor" href="#arg-u"></a></dt>
-<dd><p>The right-hand side, a numeric vector of length <code>p</code>.</p></dd>
+<dd><p>The right-hand side, a numeric vector of length <code>p</code>, or a matrix
+with <code>p</code> rows whose columns are solved with one factorization; <code>delta</code>
+is then a matrix of the same shape.</p></dd>
 
 
 <dt id="arg-how">how<a class="anchor" aria-label="anchor" href="#arg-how"></a></dt>

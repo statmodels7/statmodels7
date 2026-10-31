@@ -22,7 +22,8 @@ sparse_augmented_solve(R, C, u, how)
 
 - u:
 
-  The right-hand side, a numeric vector of length `p`.
+  The right-hand side, a numeric vector of length `p` or a matrix with
+  `p` rows.
 
 - how:
 

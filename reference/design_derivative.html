@@ -13,7 +13,7 @@ modelterms7::term_predict() returns."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.234.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@ finite-difference stencil of accuracy four on the rows that
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">design_derivative</span><span class="op">(</span><span class="va">tm</span>, <span class="va">grid</span>, <span class="va">var</span>, <span class="va">order</span>, <span class="va">lo</span>, <span class="va">hi</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">design_derivative</span><span class="op">(</span><span class="va">tm</span>, <span class="va">grid</span>, <span class="va">var</span>, <span class="va">order</span>, <span class="va">lo</span>, <span class="va">hi</span>, value <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -77,11 +77,18 @@ finite-difference stencil of accuracy four on the rows that
 <dt id="arg-lo-hi">lo, hi<a class="anchor" aria-label="anchor" href="#arg-lo-hi"></a></dt>
 <dd><p>The range of the variable.</p></dd>
 
+
+<dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>
+<dd><p><code>FALSE</code> for the rows of the block; <code>TRUE</code> for the derivative
+of the contribution itself, <code><a href="https://statmodels7.github.io/modelterms7/reference/term_value.html" class="external-link">modelterms7::term_value()</a></code>, which a term
+nonlinear in its coefficients needs, since its block times the
+coefficients is not its contribution.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A matrix with one row for each row of <code>grid</code> and one column for
-each coefficient of the term.</p>
+each coefficient of the term, or one column where <code>value</code> is <code>TRUE</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

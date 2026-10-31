@@ -33,7 +33,9 @@ augmented_solve(R, C, u, how, threads = 1L, tol = NULL)
 
 - u:
 
-  The right-hand side, a numeric vector of length `p`.
+  The right-hand side, a numeric vector of length `p`, or a matrix with
+  `p` rows whose columns are solved with one factorization; `delta` is
+  then a matrix of the same shape.
 
 - how:
 

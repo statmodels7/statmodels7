@@ -9,7 +9,7 @@ returns.
 ## Usage
 
 ``` r
-design_derivative(tm, grid, var, order, lo, hi)
+design_derivative(tm, grid, var, order, lo, hi, value = FALSE)
 ```
 
 ## Arguments
@@ -35,10 +35,18 @@ design_derivative(tm, grid, var, order, lo, hi)
 
   The range of the variable.
 
+- value:
+
+  `FALSE` for the rows of the block; `TRUE` for the derivative of the
+  contribution itself,
+  [`modelterms7::term_value()`](https://statmodels7.github.io/modelterms7/reference/term_value.html),
+  which a term nonlinear in its coefficients needs, since its block
+  times the coefficients is not its contribution.
+
 ## Value
 
 A matrix with one row for each row of `grid` and one column for each
-coefficient of the term.
+coefficient of the term, or one column where `value` is `TRUE`.
 
 ## Details
 

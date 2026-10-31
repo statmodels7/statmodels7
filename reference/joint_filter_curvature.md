@@ -9,7 +9,7 @@ contracted against the weighted score.
 ## Usage
 
 ``` r
-joint_filter_curvature(spec, design, f, Vs, gl, H, D3, theta)
+joint_filter_curvature(spec, design, f, Vs, gl, H, D3, theta, g = NULL)
 ```
 
 ## Arguments
@@ -42,6 +42,14 @@ joint_filter_curvature(spec, design, f, Vs, gl, H, D3, theta)
 - theta:
 
   The per-observation parameters at the fitted predictors.
+
+- g:
+
+  The per-observation weights of each filtered parameter, a named list
+  keyed by parameter, or `NULL` (the default) for the observation
+  weights times the score. The Jeffreys penalty
+  ([`jfp_hessian()`](https://statmodels7.github.io/statmodels7/reference/jfp_hessian.md))
+  passes its own.
 
 ## Value
 

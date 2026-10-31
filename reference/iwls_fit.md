@@ -22,7 +22,8 @@ iwls_fit(
   kinks_at = NULL,
   newton_at = NULL,
   switch_at = NULL,
-  switch_after = Inf
+  switch_after = Inf,
+  guard = FALSE
 )
 ```
 
@@ -141,6 +142,15 @@ iwls_fit(
 - switch_after:
 
   The iteration after which `switch_at` replaces `pieces_at`.
+
+- guard:
+
+  Whether a trial point of the line search whose objective raises an
+  error is read as a rejected step, also where there is no `backup_at`.
+  [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
+  sets it for a design with a term whose block moves with its
+  coefficients, where a long step can carry the predictor out of the
+  range in which the family is defined.
 
 ## Value
 

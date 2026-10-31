@@ -1,5 +1,45 @@
 # Changelog
 
+## statmodels7 0.234.0
+
+- [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  fits
+  [`modelterms7::jfp()`](https://statmodels7.github.io/modelterms7/reference/jfp.html)
+  blocks, a Jeffreys prior on a block of coefficients, in any equation
+  and beside `gas()` in another equation. The penalty is evaluated on
+  the model’s expected information (the family’s closed form, or
+  `expect_integrate()` for a family with a density only); its curvature
+  enters the inner fit as a sparse matrix plus a product of low rank. On
+  endometrial, `HG ~ jfp(~ NV + PI + EH)` gives the estimates of
+  brglm2’s `MPL_Jeffreys` and of logistf.
+- [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  estimate the hyperparameters of other terms beside `jfp()` with the
+  exact outer gradient and Hessian. Under
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  the coefficients of a `jfp()` block are estimated as fixed effects,
+  and `logLik(loglik_type = "marginal")` counts them under both
+  criteria. The marginal criterion factors the Jeffreys curvature as a
+  sparse matrix plus a product of low rank.
+- Requires modelterms7 0.120.0.
+
+## statmodels7 0.233.0
+
+- [`plot_derivative()`](https://statmodels7.github.io/statmodels7/reference/plot_derivative.md)
+  draws the derivative of a
+  [`modelterms7::scs()`](https://statmodels7.github.io/modelterms7/reference/scs.html)
+  term: the curve is the derivative of the fitted effect, and its band
+  comes from the rows of the block, which are its gradient in the
+  coefficients.
+- The graphs of an `scs()` term read its covariate from the term, so a
+  shape given as an object in the call is not taken for a variable of
+  the data.
+- In a model with a term whose block moves with its coefficients, a
+  trial step of the inner fit at which the density cannot be evaluated
+  is rejected and halved; such a step used to stop the fit with an
+  error.
+
 ## statmodels7 0.232.1
 
 - [`separation_diagnosis()`](https://statmodels7.github.io/statmodels7/reference/separation_diagnosis.md)

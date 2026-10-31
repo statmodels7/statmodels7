@@ -9,7 +9,7 @@ and Hessian of that sum are placed in the columns that each term owns."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.234.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,8 @@ and Hessian of that sum are placed in the columns that each term owns.</p>
 <span>  <span class="va">coef</span>,</span>
 <span>  <span class="va">hyper</span>,</span>
 <span>  design <span class="op">=</span> <span class="fu"><a href="statmod_design.html">statmod_design</a></span><span class="op">(</span><span class="va">spec</span><span class="op">)</span>,</span>
-<span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"gradient"</span>, <span class="st">"hessian"</span><span class="op">)</span></span>
+<span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"gradient"</span>, <span class="st">"hessian"</span><span class="op">)</span>,</span>
+<span>  jeffreys <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -78,12 +79,20 @@ a named list of hyperparameter vectors keyed by term.</p></dd>
 <dt id="arg-what">what<a class="anchor" aria-label="anchor" href="#arg-what"></a></dt>
 <dd><p>Which quantity: <code>"value"</code>, <code>"gradient"</code> or <code>"hessian"</code>.</p></dd>
 
+
+<dt id="arg-jeffreys">jeffreys<a class="anchor" aria-label="anchor" href="#arg-jeffreys"></a></dt>
+<dd><p>Whether the Jeffreys penalties of <code><a href="jfp_penalty.html">jfp_penalty()</a></code> are
+included (the default). <code><a href="iwls_pieces.html">iwls_pieces()</a></code> passes <code>FALSE</code> and places their
+curvature itself, split into the part with the sparsity of the
+information and a product of low rank.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Depends on <code>what</code>:</p><dl><dt><code>"value"</code></dt>
 <dd><p>a single number, the sum of the penalties. The value is
-<code>0</code> for an unpenalized model.</p></dd>
+<code>0</code> for an unpenalized model, and <code>Inf</code> where the information of a
+Jeffreys block is not positive definite.</p></dd>
 
 <dt><code>"gradient"</code></dt>
 <dd><p>a named list of numeric vectors, one per

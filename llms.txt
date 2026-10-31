@@ -869,6 +869,9 @@ helper functions. Using the package does not require any of it.
 - [`assert_method_signatures()`](https://statmodels7.github.io/statmodels7/reference/assert_method_signatures.md)
   : Check the Signatures of a Family's Own Methods
 
+- [`augmented_lowrank()`](https://statmodels7.github.io/statmodels7/reference/augmented_lowrank.md)
+  : The Augmented Solve With a Product of Low Rank
+
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
 
@@ -1772,6 +1775,95 @@ helper functions. Using the package does not require any of it.
 - [`jacobian_depends()`](https://statmodels7.github.io/statmodels7/reference/jacobian_depends.md)
   : Which Readings a Chart's Coordinate Enters
 
+- [`jfp_block()`](https://statmodels7.github.io/statmodels7/reference/jfp_block.md)
+  : A Block of the Jeffreys Penalty
+
+- [`jfp_block_state()`](https://statmodels7.github.io/statmodels7/reference/jfp_block_state.md)
+  : The Rows, Information and Factor of One Jeffreys Block
+
+- [`jfp_blocks()`](https://statmodels7.github.io/statmodels7/reference/jfp_blocks.md)
+  : The Jeffreys Blocks of a Model
+
+- [`jfp_check_ok()`](https://statmodels7.github.io/statmodels7/reference/jfp_check_ok.md)
+  : Signals an Error Where a Jeffreys Block Has No Usable Information
+
+- [`jfp_constant()`](https://statmodels7.github.io/statmodels7/reference/jfp_constant.md)
+  : Whether the Constant Direction Enters a Jeffreys Block
+
+- [`jfp_deriv3_dir()`](https://statmodels7.github.io/statmodels7/reference/jfp_deriv3_dir.md)
+  [`jfp_deriv3()`](https://statmodels7.github.io/statmodels7/reference/jfp_deriv3_dir.md)
+  [`jfp_deriv4_dir()`](https://statmodels7.github.io/statmodels7/reference/jfp_deriv3_dir.md)
+  [`jfp_deriv4()`](https://statmodels7.github.io/statmodels7/reference/jfp_deriv3_dir.md)
+  : The Third and Fourth Derivatives of the Jeffreys Penalty
+
+- [`jfp_dexpected()`](https://statmodels7.github.io/statmodels7/reference/jfp_dexpected.md)
+  [`jfp_d2expected()`](https://statmodels7.github.io/statmodels7/reference/jfp_dexpected.md)
+  : The Derivatives of the Expected Information Kept in a Jeffreys State
+
+- [`jfp_emethod()`](https://statmodels7.github.io/statmodels7/reference/jfp_emethod.md)
+  : The Method of the Expected Information That a Jeffreys Penalty Reads
+
+- [`jfp_eta_dir()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
+  [`jfp_dI()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
+  [`jfp_white()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
+  [`jfp_rows_B()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
+  [`jfp_pair_weights()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
+  : The Pieces From Which the Terms Are Built
+
+- [`jfp_first_weights()`](https://statmodels7.github.io/statmodels7/reference/jfp_first_weights.md)
+  : The Weights of the First Derivative of a Jeffreys Block
+
+- [`jfp_gradient()`](https://statmodels7.github.io/statmodels7/reference/jfp_gradient.md)
+  : The Gradient of the Jeffreys Penalty in the Joint Vector
+
+- [`jfp_hessian()`](https://statmodels7.github.io/statmodels7/reference/jfp_hessian.md)
+  : The Hessian of the Jeffreys Penalty in the Joint Vector
+
+- [`jfp_joint_extra()`](https://statmodels7.github.io/statmodels7/reference/jfp_joint_extra.md)
+  : The Jeffreys Penalty Over a Filter's Own Parameters
+
+- [`jfp_joint_rows()`](https://statmodels7.github.io/statmodels7/reference/jfp_joint_rows.md)
+  : The Derivative of Every Predictor Beside a Filter
+
+- [`jfp_live()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
+  [`jfp_add_weights()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
+  [`jfp_darray()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
+  [`jfp_check_outer()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
+  : Small Helpers of the Third and Fourth Derivatives
+
+- [`jfp_outer_ok()`](https://statmodels7.github.io/statmodels7/reference/jfp_outer_ok.md)
+  [`jfp_outer_probe()`](https://statmodels7.github.io/statmodels7/reference/jfp_outer_ok.md)
+  : Whether the Outer Derivatives Can Read a Jeffreys Penalty
+
+- [`jfp_penalty()`](https://statmodels7.github.io/statmodels7/reference/jfp_penalty.md)
+  : The Jeffreys Penalty of a Model, With the Sign of a Penalty
+
+- [`jfp_penalty_move()`](https://statmodels7.github.io/statmodels7/reference/jfp_penalty_move.md)
+  : How the Jeffreys Curvature Moves With the Coefficients
+
+- [`jfp_resolve_units()`](https://statmodels7.github.io/statmodels7/reference/jfp_resolve_units.md)
+  : The Constant Direction and the Power of Each Jeffreys Unit
+
+- [`jfp_rows()`](https://statmodels7.github.io/statmodels7/reference/jfp_rows.md)
+  : The Rows of a Jeffreys Block
+
+- [`jfp_state()`](https://statmodels7.github.io/statmodels7/reference/jfp_state.md)
+  : The State of the Jeffreys Penalty at One Point
+
+- [`jfp_state_at()`](https://statmodels7.github.io/statmodels7/reference/jfp_state_at.md)
+  : The Jeffreys State at Given Coefficients, Kept Between Calls
+
+- [`jfp_terms3()`](https://statmodels7.github.io/statmodels7/reference/jfp_terms3.md)
+  [`jfp_terms4()`](https://statmodels7.github.io/statmodels7/reference/jfp_terms3.md)
+  : The Terms of the Third and Fourth Derivatives
+
+- [`jfp_terms_matrix()`](https://statmodels7.github.io/statmodels7/reference/jfp_terms_matrix.md)
+  [`jfp_terms_trace()`](https://statmodels7.github.io/statmodels7/reference/jfp_terms_matrix.md)
+  : Assemble or Trace a List of Derivative Terms
+
+- [`jfp_value()`](https://statmodels7.github.io/statmodels7/reference/jfp_value.md)
+  : The Value of the Jeffreys Penalty
+
 - [`join_gas_terms()`](https://statmodels7.github.io/statmodels7/reference/join_gas_terms.md)
   : Join the Score-Driven Terms of Several Equations
 
@@ -1938,6 +2030,10 @@ helper functions. Using the package does not require any of it.
   : The Derivative Row of an Equation Carrying a Likelihood Mixed Over
   States
 
+- [`lowrank_solve()`](https://statmodels7.github.io/statmodels7/reference/lowrank_solve.md)
+  [`lowrank_dense()`](https://statmodels7.github.io/statmodels7/reference/lowrank_solve.md)
+  : A Solve With a Matrix Plus a Product of Low Rank
+
 - [`marginal_blocks()`](https://statmodels7.github.io/statmodels7/reference/marginal_blocks.md)
   : The Pieces of the Block Variance Over the Estimated Coefficients
 
@@ -1947,6 +2043,9 @@ helper functions. Using the package does not require any of it.
 - [`marginal_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/marginal_edf_correction.md)
   : The Correction for the Estimated Hyperparameters, With Estimated
   Coefficients
+
+- [`marginal_lowrank()`](https://statmodels7.github.io/statmodels7/reference/marginal_lowrank.md)
+  : The Criterion's Determinant With a Jeffreys Curvature
 
 - [`marginal_out_of_domain()`](https://statmodels7.github.io/statmodels7/reference/marginal_out_of_domain.md)
   : Rows Where a New Group's Predictor Leaves the Domain of Its Link
@@ -2039,6 +2138,9 @@ helper functions. Using the package does not require any of it.
 
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression
+
+- [`ones_in_span()`](https://statmodels7.github.io/statmodels7/reference/ones_in_span.md)
+  : Whether the Column of Ones Lies in the Span of a Matrix
 
 - [`order_available()`](https://statmodels7.github.io/statmodels7/reference/order_available.md)
   : Whether a Family Carries Enough Derivatives
@@ -2170,6 +2272,10 @@ helper functions. Using the package does not require any of it.
 
 - [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
   : Floor the Eigenvalues of a Curvature Matrix
+
+- [`penalized_lowrank()`](https://statmodels7.github.io/statmodels7/reference/penalized_lowrank.md)
+  : The Penalized Matrix With a Jeffreys Curvature, Factored in Two
+  Parts
 
 - [`penalty_answers()`](https://statmodels7.github.io/statmodels7/reference/penalty_answers.md)
   : Does a Penalty Supply What a Marginal Criterion Needs?

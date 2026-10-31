@@ -11,7 +11,7 @@ returns, where a term's block moves with its coefficients."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.234.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ returns, where a term's block moves with its coefficients.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mode_curvature</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">offs</span>, <span class="va">total</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mode_curvature</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">offs</span>, <span class="va">total</span>, gl <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,6 +69,13 @@ returns, where a term's block moves with its coefficients.</p>
 
 <dt id="arg-params-npar-offs-total">params, npar, offs, total<a class="anchor" aria-label="anchor" href="#arg-params-npar-offs-total"></a></dt>
 <dd><p>The block bookkeeping.</p></dd>
+
+
+<dt id="arg-gl">gl<a class="anchor" aria-label="anchor" href="#arg-gl"></a></dt>
+<dd><p>The per-observation weights of each equation's second
+derivative, a named list keyed by parameter, or <code>NULL</code> (the default) for
+the family's score on the link scale at <code>coef</code>. The Jeffreys engine
+(<code><a href="jfp_hessian.html">jfp_hessian()</a></code>) passes its own weights here.</p></dd>
 
 </dl></div>
     <div class="section level2">

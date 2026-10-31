@@ -10,7 +10,7 @@ contracted second derivative.
 ## Usage
 
 ``` r
-filter_curvature(spec, design, f, ap, Vs, gl, H, D3, theta)
+filter_curvature(spec, design, f, ap, Vs, gl, H, D3, theta, g = NULL)
 ```
 
 ## Arguments
@@ -48,6 +48,15 @@ filter_curvature(spec, design, f, ap, Vs, gl, H, D3, theta)
 
   The per-observation parameters at which they were read, from which the
   expected information is read where the filter scales its score.
+
+- g:
+
+  The per-observation weights against which the second derivative of the
+  filtered predictor is contracted, or `NULL` (the default) for the
+  observation weights times the score of the filtered parameter, the
+  term of the observed information. The Jeffreys penalty
+  ([`jfp_hessian()`](https://statmodels7.github.io/statmodels7/reference/jfp_hessian.md))
+  passes its own.
 
 ## Value
 

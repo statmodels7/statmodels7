@@ -51,7 +51,13 @@ joint_penalty_at(
 
 For `"value"` a single number; for `"gradient"` a numeric vector of
 length `n`; for `"hessian"` an `n` by `n` matrix. The result is zero
-throughout if no class is mixed.
+throughout if no class is mixed and no Jeffreys term is present. The
+gradient and the Hessian also carry the part of a Jeffreys penalty that
+lies outside the coefficients
+([`jfp_joint_extra()`](https://statmodels7.github.io/statmodels7/reference/jfp_joint_extra.md)),
+whose part over the coefficients
+[`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
+already places.
 
 ## One function for both parts
 

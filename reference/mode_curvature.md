@@ -8,7 +8,7 @@ returns, where a term's block moves with its coefficients.
 ## Usage
 
 ``` r
-mode_curvature(spec, design, coef, params, npar, offs, total)
+mode_curvature(spec, design, coef, params, npar, offs, total, gl = NULL)
 ```
 
 ## Arguments
@@ -29,6 +29,14 @@ mode_curvature(spec, design, coef, params, npar, offs, total)
 - params, npar, offs, total:
 
   The block bookkeeping.
+
+- gl:
+
+  The per-observation weights of each equation's second derivative, a
+  named list keyed by parameter, or `NULL` (the default) for the
+  family's score on the link scale at `coef`. The Jeffreys engine
+  ([`jfp_hessian()`](https://statmodels7.github.io/statmodels7/reference/jfp_hessian.md))
+  passes its own weights here.
 
 ## Value
 
