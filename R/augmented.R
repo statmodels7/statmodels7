@@ -380,7 +380,9 @@ diagonal_sqrt <- function(S, p) {
 #' @param C The penalty's factor, as [penalty_sqrt()] returns it, with `p`
 #'   columns and at most `p` rows. May have zero rows for an unpenalized
 #'   model.
-#' @param u The right-hand side, a numeric vector of length `p`.
+#' @param u The right-hand side, a numeric vector of length `p`, or a matrix
+#'   with `p` rows whose columns are solved with one factorization; `delta`
+#'   is then a matrix of the same shape.
 #' @param how `"qr"` or `"svd"`. `"svd"` has no sparse counterpart, so with
 #'   `how = "svd"` a sparse pair is densified first.
 #' @param threads How many threads the triangular factor may use, a plain
@@ -429,7 +431,8 @@ augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
     dinv[keep] <- 1 / s$d[keep]^2
     # the svd removes singular DIRECTIONS, which are combinations of columns
     # and name no coordinate, so nothing is reported aliased on this route
-    return(list(delta = as.numeric(s$v %*% (dinv * crossprod(s$v, u))),
+    dl <- s$v %*% (dinv * crossprod(s$v, u))
+    return(list(delta = if (is.matrix(u)) dl else as.numeric(dl),
                 rank = sum(keep), dropped = integer(0)))
   }
   # THE THREADED FACTOR. Only the triangular factor is ever read here, so a
@@ -456,7 +459,8 @@ augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
         d <- tryCatch(backsolve(Rt, forwardsolve(t(Rt), u)),
                       error = function(e) NULL)
         if (!is.null(d) && all(is.finite(d))) {
-          fast <- list(delta = as.numeric(d), rank = ncol(A),
+          fast <- list(delta = if (is.matrix(u)) d else as.numeric(d),
+                       rank = ncol(A),
                        dropped = integer(0))
         }
       }
@@ -468,10 +472,17 @@ augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
   # (A'A)^-1 u from the R factor alone: A'A = R_qr' R_qr
   Rf <- qr.R(qrA)[seq_len(qrA$rank), seq_len(qrA$rank), drop = FALSE]
   piv <- qrA$pivot[seq_len(qrA$rank)]
-  z <- forwardsolve(t(Rf), u[piv])
-  d <- backsolve(Rf, z)
-  delta <- numeric(ncol(A))
-  delta[piv] <- d
+  if (is.matrix(u)) {
+    z <- forwardsolve(t(Rf), u[piv, , drop = FALSE])
+    d <- backsolve(Rf, z)
+    delta <- matrix(0, ncol(A), ncol(u))
+    delta[piv, ] <- d
+  } else {
+    z <- forwardsolve(t(Rf), u[piv])
+    d <- backsolve(Rf, z)
+    delta <- numeric(ncol(A))
+    delta[piv] <- d
+  }
   # The coordinates the pivot left out are the ALIASED ones, and this is the
   # only place in the package where a column is dropped: the sparse route
   # declines on a rank-deficient matrix and falls through to here, the
@@ -534,7 +545,8 @@ augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
 #'
 #' @param R The square-root design, \eqn{nK \times p}, sparse or dense.
 #' @param C The penalty's factor, with `p` columns.
-#' @param u The right-hand side, a numeric vector of length `p`.
+#' @param u The right-hand side, a numeric vector of length `p` or a matrix
+#'   with `p` rows.
 #' @param how The decomposition requested. Only `"qr"` is served; `"svd"` has
 #'   no sparse counterpart, so the function returns `NULL` for it.
 #'
@@ -590,11 +602,21 @@ sparse_augmented_solve <- function(R, C, u, how) {
   if (!all(is.finite(eq)) || max(eq) == 0) return(NULL)
   if (min(eq) <= ncol(A) * .Machine$double.eps * max(eq)) return(NULL)
   d <- tryCatch({
-    z <- Matrix::solve(Matrix::t(Rf), u[ord])
-    as.numeric(Matrix::solve(Rf, z))
+    if (is.matrix(u)) {
+      z <- Matrix::solve(Matrix::t(Rf), u[ord, , drop = FALSE])
+      as.matrix(Matrix::solve(Rf, z))
+    } else {
+      z <- Matrix::solve(Matrix::t(Rf), u[ord])
+      as.numeric(Matrix::solve(Rf, z))
+    }
   }, error = function(e) NULL)
   if (is.null(d) || !all(is.finite(d))) return(NULL)
-  delta <- numeric(ncol(A))
-  delta[ord] <- d
+  if (is.matrix(u)) {
+    delta <- matrix(0, ncol(A), ncol(u))
+    delta[ord, ] <- d
+  } else {
+    delta <- numeric(ncol(A))
+    delta[ord] <- d
+  }
   list(delta = delta, rank = ncol(A))
 }

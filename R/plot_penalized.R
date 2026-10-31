@@ -254,7 +254,14 @@ penalty_system <- function(fit, param, name, cols, information) {
   g <- unlist(gradient(fit), use.names = FALSE)
 
   So <- matrix(0, total, total)
+  jk <- vapply(units[!mine], function(u) isTRUE(u$jeffreys), logical(1))
+  if (any(jk)) {
+    keys <- vapply(units[!mine][jk], function(u) u$key, character(1))
+    So <- So + jfp_penalty(spec, design, fit@coefficients, "hessian",
+                           keys = keys)
+  }
   for (u in units[!mine]) {
+    if (isTRUE(u$jeffreys)) next
     if (isTRUE(u$structural) || isTRUE(u$mixed) || is.null(u$index)) next
     th <- as.list(fit@hyper[[u$param]][[u$key]])
     blkh <- as.matrix(penalties7::penalty_hessian(u$penalty, beta[u$index], th))

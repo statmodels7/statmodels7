@@ -176,6 +176,12 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
   for (un in statmod_penalized(spec, design)) {
     pen <- un$penalty
     if (is.null(pen)) next
+    # a Jeffreys penalty's movement is read on the model, by
+    # jfp_deriv3_dir() and jfp_deriv4_dir()
+    if (isTRUE(un$jeffreys)) {
+      if (!jfp_outer_ok(spec, design, order)) return(FALSE)
+      next
+    }
     ok <- tryCatch({
       th <- as.list(penalty_theta_start(pen))
       k <- as.integer(pen@n_coef)
@@ -991,9 +997,11 @@ filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3,
 #' @keywords internal
 statmod_penalty_dbeta <- function(spec, design, coef, hyper, v, total) {
   bl <- penalty_dbeta_blocks(spec, design, coef, hyper, v)
-  if (!length(bl)) return(NULL)
+  jt <- jfp_penalty_move(spec, design, coef, v)
+  if (!length(bl) && is.null(jt)) return(NULL)
   out <- matrix(0, total, total)
   for (b in bl) out[b$pos, b$pos] <- out[b$pos, b$pos] + b$T
+  if (!is.null(jt)) out <- out + jt
   out
 }
 
@@ -1004,7 +1012,7 @@ penalty_dbeta_trace <- function(spec, design, coef, hyper, v, M) {
   for (b in penalty_dbeta_blocks(spec, design, coef, hyper, v)) {
     s <- s + sum(as_dense(M[b$pos, b$pos, drop = FALSE]) * b$T)
   }
-  s
+  s + jfp_penalty_move(spec, design, coef, v, M = M)
 }
 
 #' @rdname statmod_penalty_dbeta
@@ -1015,6 +1023,9 @@ penalty_dbeta_blocks <- function(spec, design, coef, hyper, v) {
   for (u in statmod_penalized(spec, design)) {
     if (isTRUE(u$structural) || isTRUE(u$mixed) || is.null(u$penalty) ||
         !length(u$index)) next
+    # a Jeffreys penalty depends on the model and moves with every
+    # coefficient; its movement is not read through penalties7
+    if (isTRUE(u$jeffreys)) next
     pen <- u$penalty
     th <- as.list(hyper[[u$param]][[u$key]])
     if (isTRUE(penalties7::beta_quadratic(pen, th))) next
@@ -1063,22 +1074,26 @@ penalty_dbeta_blocks <- function(spec, design, coef, hyper, v) {
 #' @param m,l The two rows of the index.
 #' @param bm,bl,bml The mode's movement along each and along the pair.
 #' @param total The stacked width.
+#' @param M `NULL`, or the matrix against which the result is traced; the
+#'   trace is then returned instead of the matrix, and a Jeffreys penalty's
+#'   share is computed without assembling it.
 #'
 #' @return A `total` square matrix, or `NULL` if no penalty's Hessian
-#'   moves with the coefficients.
+#'   moves with the coefficients; with `M`, a single number.
 #'
 #' @seealso [statmod_penalty_dbeta()], [statmod_marginal_hess()],
 #'   [statmod_pe_derivs()]
 #'
 #' @keywords internal
 statmod_penalty_second <- function(spec, design, coef, hyper, idx, m, l, bm,
-                                   bl, bml, total) {
+                                   bl, bml, total, M = NULL) {
   params <- spec@distrib@params
   mem <- index_members(idx)
   out <- NULL
   for (u in statmod_penalized(spec, design)) {
     if (isTRUE(u$structural) || isTRUE(u$mixed) || is.null(u$penalty) ||
         !length(u$index)) next
+    if (isTRUE(u$jeffreys)) next
     pen <- u$penalty
     th <- as.list(hyper[[u$param]][[u$key]])
     if (isTRUE(penalties7::beta_quadratic(pen, th))) next
@@ -1100,6 +1115,18 @@ statmod_penalty_second <- function(spec, design, coef, hyper, idx, m, l, bm,
     E <- E + owned(m, bl) + owned(l, bm)
     if (is.null(out)) out <- matrix(0, total, total)
     out[pos, pos] <- out[pos, pos] + E
+  }
+  # a Jeffreys penalty has no hyperparameter, so it adds its second movement
+  # along the pair and its first along the pair's own movement of the mode
+  if (!is.null(M)) {
+    s <- if (is.null(out)) 0 else sum(as_dense(M) * out)
+    return(s + jfp_penalty_move(spec, design, coef, bl, w = bm, M = M) +
+             jfp_penalty_move(spec, design, coef, bml, M = M))
+  }
+  j2 <- jfp_penalty_move(spec, design, coef, bl, w = bm)
+  if (!is.null(j2)) {
+    j2 <- j2 + jfp_penalty_move(spec, design, coef, bml)
+    out <- if (is.null(out)) j2 else out + j2
   }
   out
 }
@@ -1297,6 +1324,10 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #' @param design The design, already refreshed at `coef`.
 #' @param coef The coefficients at the penalized mode.
 #' @param params,npar,offs,total The block bookkeeping.
+#' @param gl The per-observation weights of each equation's second
+#'   derivative, a named list keyed by parameter, or `NULL` (the default) for
+#'   the family's score on the link scale at `coef`. The Jeffreys engine
+#'   ([jfp_hessian()]) passes its own weights here.
 #'
 #' @return A symmetric matrix over the stacked coefficients, with nonzero
 #'   entries only on the blocks of refreshable terms.
@@ -1305,16 +1336,20 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #'   [modelterms7::term_block_contract()]
 #'
 #' @keywords internal
-mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
+mode_curvature <- function(spec, design, coef, params, npar, offs, total,
+                           gl = NULL) {
   D <- matrix(0, total, total)
   rf <- attr(design, "refresh")
   st <- attr(design, "state")
   if (is.null(rf) || !length(rf) || is.null(st)) return(D)
   n <- spec@n_obs
   w <- spec@weights
-  th <- statmod_eta(spec, design, coef)$theta
-  gl <- distributions7::distrib_gradient(spec@distrib, spec@response, th,
-                                         scale = "link", threads = spec@threads)
+  if (is.null(gl)) {
+    th <- statmod_eta(spec, design, coef)$theta
+    gl <- distributions7::distrib_gradient(spec@distrib, spec@response, th,
+                                           scale = "link",
+                                           threads = spec@threads)
+  }
   for (r in rf) {
     p <- r$param
     a <- match(p, params)
@@ -1510,6 +1545,7 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
     s <- 0
     for (u in statmod_penalized(spec, design)) {
       if (isTRUE(u$mixed) || is.null(u$penalty)) next
+      if (isTRUE(u$jeffreys)) next
       th <- as.list(hyper[[u$param]][[u$key]])
       pen <- u$penalty
       if (isTRUE(penalties7::beta_quadratic(pen, th))) next

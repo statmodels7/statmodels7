@@ -31,7 +31,10 @@ computed it.}
 \value{
 For \code{"value"} a single number; for \code{"gradient"} a numeric vector of
 length \code{n}; for \code{"hessian"} an \code{n} by \code{n} matrix. The result is zero
-throughout if no class is mixed.
+throughout if no class is mixed and no Jeffreys term is present. The
+gradient and the Hessian also carry the part of a Jeffreys penalty that
+lies outside the coefficients (\code{\link[=jfp_joint_extra]{jfp_joint_extra()}}), whose part over the
+coefficients \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} already places.
 }
 \description{
 Computes the value, gradient and Hessian of every penalty whose coordinates

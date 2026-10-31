@@ -14,7 +14,9 @@ augmented_solve(R, C, u, how, threads = 1L, tol = NULL)
 columns and at most \code{p} rows. May have zero rows for an unpenalized
 model.}
 
-\item{u}{The right-hand side, a numeric vector of length \code{p}.}
+\item{u}{The right-hand side, a numeric vector of length \code{p}, or a matrix
+with \code{p} rows whose columns are solved with one factorization; \code{delta}
+is then a matrix of the same shape.}
 
 \item{how}{\code{"qr"} or \code{"svd"}. \code{"svd"} has no sparse counterpart, so with
 \code{how = "svd"} a sparse pair is densified first.}

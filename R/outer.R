@@ -854,6 +854,11 @@ integrated_basis <- function(spec, design, kind, gamma = FALSE) {
     # a penalty over a structural term's own parameters owns no column of the
     # design; its directions are appended by statmod_marginal_full()
     if (isTRUE(u$structural)) next
+    # A JEFFREYS BLOCK IS NOT INTEGRATED by ml(): its coefficients are fixed
+    # effects at the mode, the penalty enters the objective and its curvature
+    # the matrix restricted to the integrated directions (Giovanni,
+    # 2026-10-31, piano_jfp.md 6c)
+    if (isTRUE(u$jeffreys)) next
     pen <- u$penalty
     # a kinked penalty's coordinates stay at the joint mode and are not
     # integrated, which is laplace_pinned()'s rule for reml()
@@ -1186,6 +1191,14 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
     # is nothing to share at those. The cheap route below is sparse where the
     # matrix is, which serves the criterion-only points as well.
     H <- ctx_information(ctx, spec, design, coef, hyper, expected, emethod)
+    # a Jeffreys curvature in two parts, the sparse one factored and the
+    # product of low rank by the determinant lemma; NULL where the model
+    # carries none or the sparse part has no factor
+    lr <- marginal_lowrank(spec, design, coef, hyper, H, basis)
+    if (!is.null(lr)) {
+      return(list(value = ll - rho + lr$q / 2 * log(2 * pi) - lr$logdet / 2,
+                  loglik = ll, penalty = rho, logdet = lr$logdet, q = lr$q))
+    }
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     M <- H + S
     if (!is.null(basis)) M <- crossprod(basis, M %*% basis)
@@ -2554,4 +2567,66 @@ outer_newton_ok <- function(spec, design, exact2, method = NULL) {
     if (isTRUE(as.integer(b) > 1L)) return(FALSE)
   }
   TRUE
+}
+
+
+#' The Criterion's Determinant With a Jeffreys Curvature
+#'
+#' @description
+#' Computes \eqn{\log|K|} and the dimension \eqn{q} that [statmod_marginal()]
+#' reads, for a model carrying a Jeffreys term, with \eqn{K = K_0 + VV^\top}
+#' factored in its two parts.
+#'
+#' @details
+#' \eqn{\log|K| = \log|K_0| + \log|I + V^\top K_0^{-1}V|}, the matrix
+#' determinant lemma. Under [ml()] both parts are projected on the integrated
+#' basis first. The coordinates are pinned as [statmod_marginal()] pins them,
+#' and the pinned rows of \eqn{V} are zero.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef,hyper The coefficients and the hyperparameters.
+#' @param H The information.
+#' @param basis The integrated basis, or `NULL`.
+#'
+#' @return A list with `logdet` and `q`, or `NULL` where the model carries no
+#'   Jeffreys term or \eqn{K_0} has no positive definite factor.
+#'
+#' @seealso [penalized_lowrank()]
+#'
+#' @keywords internal
+marginal_lowrank <- function(spec, design, coef, hyper, H, basis = NULL) {
+  # beside a filter the joint assemblies place the penalty themselves
+  if (length(attr(design, "structural"))) return(NULL)
+  jp <- tryCatch(jfp_penalty(spec, design, coef, "parts"),
+                 error = function(e) NULL)
+  if (is.null(jp)) return(NULL)
+  S0 <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design, "hessian",
+                                         jeffreys = FALSE) - jp$sparse)
+  K0 <- H + S0
+  V <- jp$lowrank
+  if (!is.null(basis)) {
+    K0 <- crossprod(basis, K0 %*% basis)
+    V <- crossprod(basis, V)
+  }
+  K0 <- pin_boundary(K0, if (is.null(basis)) laplace_pinned(spec, design) else
+                       integer(0))
+  held <- attr(K0, "held_at")
+  if (length(held)) V[held, ] <- 0
+  if (!nrow(K0)) return(NULL)
+  fac <- pd_factor(K0)
+  if (!isTRUE(fac$ok) || (!isTRUE(fac$sparse) && is.null(fac$factor))) {
+    return(NULL)
+  }
+  AV <- if (isTRUE(fac$sparse)) {
+    as.matrix(Matrix::solve(fac$factor, V))
+  } else {
+    backsolve(fac$factor, forwardsolve(t(fac$factor), V))
+  }
+  cap <- diag(ncol(V)) + crossprod(V, AV)
+  cc <- tryCatch(chol((cap + t(cap)) / 2), error = function(e) NULL)
+  if (is.null(cc)) return(NULL)
+  held_n <- attr(K0, "held")
+  list(logdet = fac$logdet + 2 * sum(log(diag(cc))),
+       q = nrow(K0) - (if (is.null(held_n)) 0L else held_n))
 }

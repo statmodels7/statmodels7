@@ -4,7 +4,7 @@
 \alias{filter_curvature}
 \title{A Filter's Second-Order Recursion at the Fitted Point}
 \usage{
-filter_curvature(spec, design, f, ap, Vs, gl, H, D3, theta)
+filter_curvature(spec, design, f, ap, Vs, gl, H, D3, theta, g = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -23,6 +23,12 @@ the fitted predictors.}
 
 \item{theta}{The per-observation parameters at which they were read, from
 which the expected information is read where the filter scales its score.}
+
+\item{g}{The per-observation weights against which the second derivative
+of the filtered predictor is contracted, or \code{NULL} (the default) for the
+observation weights times the score of the filtered parameter, the term
+of the observed information. The Jeffreys penalty (\code{\link[=jfp_hessian]{jfp_hessian()}})
+passes its own.}
 }
 \value{
 The list that \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} returns.

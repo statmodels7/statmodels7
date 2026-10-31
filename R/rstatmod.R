@@ -850,6 +850,8 @@ rstatmod_truth <- function(spec, design, par, sd) {
   rows <- list()
   done <- list()
   for (u in units) {
+    # a Jeffreys prior is improper and is not drawn from
+    if (isTRUE(u$jeffreys)) next
     # A PRIOR OVER COORDINATES THAT RIDE A CHART IS CENTRED HALF AS FAR
     # from its bound, by the rule term_draw() halves its own width by: a
     # chart carries a scale of one onto most of its parameter's range.

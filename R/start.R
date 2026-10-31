@@ -987,7 +987,7 @@ search_coords <- function(spec, design) {
   # began with. A structural term's penalty covers positions among the term's
   # own parameters and indexes no column, so it removes nothing here.
   pen <- unlist(lapply(statmod_penalized(spec, design), function(u) {
-    if (isTRUE(u$structural)) integer(0) else u$index
+    if (isTRUE(u$structural) || isTRUE(u$jeffreys)) integer(0) else u$index
   }), use.names = FALSE)
   setdiff(idx, as.integer(pen))
 }

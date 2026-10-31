@@ -501,16 +501,23 @@ joint_filter_entry <- function(spec, u, tm, psi, eta_static) {
 #' @param gl,H,D3 The family's first three link-scale derivatives at the
 #'   fitted predictors.
 #' @param theta The per-observation parameters at the fitted predictors.
+#' @param g The per-observation weights of each filtered parameter, a named
+#'   list keyed by parameter, or `NULL` (the default) for the observation
+#'   weights times the score. The Jeffreys penalty ([jfp_hessian()]) passes
+#'   its own.
 #'
 #' @return The list that [modelterms7::term_curvature()] returns.
 #'
 #' @keywords internal
-joint_filter_curvature <- function(spec, design, f, Vs, gl, H, D3, theta) {
+joint_filter_curvature <- function(spec, design, f, Vs, gl, H, D3, theta,
+                                   g = NULL) {
   params <- spec@distrib@params
   n <- spec@n_obs
   w <- spec@weights
-  gw <- vapply(f$params, function(p) w * rep_len(as.numeric(gl[[p]]), n),
-               numeric(n))
+  gw <- vapply(f$params, function(p) {
+    if (is.null(g)) w * rep_len(as.numeric(gl[[p]]), n)
+    else rep_len(as.numeric(g[[p]]), n)
+  }, numeric(n))
   gw <- matrix(gw, n, length(f$params))
   bd <- joint_drive_data(spec, f$tm, gl, H, D3, order = 2L, theta = theta)
   seed <- stats::setNames(Vs, params)

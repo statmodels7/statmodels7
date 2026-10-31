@@ -339,7 +339,7 @@ statmod_penalized_units <- function(spec, design) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
-  lapply(statmod_penalty_keys(spec), function(u) {
+  out <- lapply(statmod_penalty_keys(spec), function(u) {
     # A structural term contributes no design columns, so its penalty covers
     # positions among the TERM'S OWN parameters and there is nothing to look
     # up in the design. Reading `blocks[[term]]` for it returned NULL, and the
@@ -384,6 +384,7 @@ statmod_penalized_units <- function(spec, design) {
     cols <- design[[u$param]]$blocks[[u$term]][u$within]
     c(u, list(structural = FALSE, cols = cols, index = offs[a] + cols))
   })
+  jfp_resolve_units(out, spec, design)
 }
 
 
@@ -770,7 +771,19 @@ statmod_penalty_keys <- function(spec) {
           # under what label. It travels with the entry for the reason the
           # held values do, so a penalty reached through a sub-term of a
           # structural one carries it too.
-          ids = if (is.null(e$ids)) character(0) else e$ids)
+          ids = if (is.null(e$ids)) character(0) else e$ids,
+          # THE FOURTH KIND of unit: a Jeffreys penalty depends on the family
+          # and on every predictor, so it is evaluated by jfp_state() on the
+          # model and never through the penalties7 generics, whose methods
+          # for its class signal an error
+          jeffreys = S7::S7_inherits(e$penalty,
+                                     modelterms7::JeffreysPenalty))
+        if (out[[length(out)]]$jeffreys &&
+            !S7::S7_inherits(spec@terms[[p]][[nm]],
+                             modelterms7::JeffreysTerm)) {
+          stop(sprintf(paste0("jfp() inside the subformula of '%s' is not ",
+                              "implemented yet."), nm), call. = FALSE)
+        }
       }
     }
   }

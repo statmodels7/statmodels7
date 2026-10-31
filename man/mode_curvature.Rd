@@ -4,7 +4,7 @@
 \alias{mode_curvature}
 \title{The Curvature by Which the Mode Actually Moves}
 \usage{
-mode_curvature(spec, design, coef, params, npar, offs, total)
+mode_curvature(spec, design, coef, params, npar, offs, total, gl = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -14,6 +14,11 @@ mode_curvature(spec, design, coef, params, npar, offs, total)
 \item{coef}{The coefficients at the penalized mode.}
 
 \item{params, npar, offs, total}{The block bookkeeping.}
+
+\item{gl}{The per-observation weights of each equation's second
+derivative, a named list keyed by parameter, or \code{NULL} (the default) for
+the family's score on the link scale at \code{coef}. The Jeffreys engine
+(\code{\link[=jfp_hessian]{jfp_hessian()}}) passes its own weights here.}
 }
 \value{
 A symmetric matrix over the stacked coefficients, with nonzero
