@@ -91,6 +91,11 @@ fixed. Coefficients estimated on the outer criterion move with the others,
 since a direction of recession of \eqn{F} is one of that criterion too
 when no random effect integrates over them, but their gradient in \eqn{F}
 is set to zero, because they sit at the root of the outer criterion and not
-of \eqn{F}.
+of \eqn{F}. For the same reason a direction of descent is read on the change
+of \eqn{F} after removing the linear term of those coordinates,
+\eqn{t\,g_m^\top d}, where \eqn{g_m} is their gradient in \eqn{F}: under
+\code{\link[=reml]{reml()}} the scale of a gaussian is not at the minimum of \eqn{F}, and
+without the correction the difference between the two criteria reads as a
+direction of descent. A direction of recession is read on \eqn{F} itself.
 }
 \keyword{internal}

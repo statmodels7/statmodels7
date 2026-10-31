@@ -48,7 +48,12 @@
 #' since a direction of recession of \eqn{F} is one of that criterion too
 #' when no random effect integrates over them, but their gradient in \eqn{F}
 #' is set to zero, because they sit at the root of the outer criterion and not
-#' of \eqn{F}.
+#' of \eqn{F}. For the same reason a direction of descent is read on the change
+#' of \eqn{F} after removing the linear term of those coordinates,
+#' \eqn{t\,g_m^\top d}, where \eqn{g_m} is their gradient in \eqn{F}: under
+#' [reml()] the scale of a gaussian is not at the minimum of \eqn{F}, and
+#' without the correction the difference between the two criteria reads as a
+#' direction of descent. A direction of recession is read on \eqn{F} itself.
 #'
 #' @param fit A [StatmodFit()].
 #' @param steps The multiples of the scaled direction at which the objective is
@@ -125,7 +130,11 @@ separation_diagnosis <- function(fit, steps = 2^(0:6), tol = 1e-8,
   # certificate sets it to zero for the mode error
   gam <- tryCatch(marginal_coords(spec, design, fit@methods$outer),
                   error = function(e) NULL)
-  if (!is.null(gam) && length(gam$where)) g[gam$where] <- 0
+  g_marg <- numeric(p)
+  if (!is.null(gam) && length(gam$where)) {
+    g_marg[gam$where] <- g[gam$where]
+    g[gam$where] <- 0
+  }
 
   npar <- obj$npar
   offs <- cumsum(npar) - npar
@@ -241,16 +250,17 @@ separation_diagnosis <- function(fit, steps = 2^(0:6), tol = 1e-8,
       abs(sum(f$d * d)) / sqrt(sum(f$d^2) * sum(d^2)) > 0.999
     }, logical(1)))
     if (dup) next
-    change <- rep(NA_real_, length(steps))
+    change <- corrected <- rep(NA_real_, length(steps))
     for (i in seq_along(steps)) {
       Ft <- obj$fn(b + steps[i] * d)
       n_eval <- n_eval + 1L
       change[i] <- Ft - F0
+      corrected[i] <- change[i] - steps[i] * sum(g_marg * d)
       if (is.nan(change[i]) || change[i] > lev) break
     }
     seen <- change[!is.na(change)]
     if (!length(seen) || any(is.nan(seen))) next
-    kind <- if (min(seen) < -fall) {
+    kind <- if (min(corrected, na.rm = TRUE) < -fall) {
       "descent"
     } else if (length(seen) == length(steps) && all(seen <= lev) &&
                all(diff(seen) <= lev)) {
