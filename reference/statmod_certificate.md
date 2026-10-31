@@ -85,6 +85,18 @@ where no coefficient sits at the kink of a penalty and is otherwise a
 named vector with `ratio` and `n` from
 [`zero_readings()`](https://statmodels7.github.io/statmodels7/reference/zero_readings.md).
 
+`separation` is the list that
+[`separation_diagnosis()`](https://statmodels7.github.io/statmodels7/reference/separation_diagnosis.md)
+returns, with two further elements: `message`, which describes each
+direction it found in a sentence (empty where there is none), and
+`boundary_coef`, the coefficients without a smooth penalty that move
+along a direction of recession and that the outer reading has not
+already named at a boundary; it is `NULL` where the diagnosis signaled
+an error. A direction of recession makes the state `"boundary"` (unless
+the state is `"not converged"`), adds its sentence to `reason` and adds
+those coefficients to `boundary` and `boundary_coef`. A direction of
+descent does not change the state.
+
 ## Details
 
 The flag of an optimizer records whether a search stopped on its own

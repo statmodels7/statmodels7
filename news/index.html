@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.230.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,17 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.232.0" id="statmodels7-02320">statmodels7 0.232.0<a class="anchor" aria-label="anchor" href="#statmodels7-02320"></a></h2>
+<ul><li>
+<code><a href="../reference/statmod_certificate.html">statmod_certificate()</a></code> reports the state <code>"boundary"</code> when the estimate does not exist: separation in a binary or binomial response, a factor level whose counts are all zero, a group without zeros in a zero-inflation equation, or a parameter running to a limit at which the family becomes another one (the degrees of freedom of a Student t at the gaussian limit). The internal <code><a href="../reference/separation_diagnosis.html">separation_diagnosis()</a></code> finds the direction along which the penalized log-likelihood keeps increasing. The certificate adds its sentence to <code>reason</code> and the coefficients to <code>boundary</code> and <code>boundary_coef</code>, and keeps the full diagnosis in a new field <code>separation</code>; a state of <code>"not converged"</code> is kept. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> gives those coefficients no standard error, interval or test, and gives the reason in a note.</li>
+<li>The driving quantity of a score-driven filter is carried to order five: <code><a href="../reference/filter_driving.html">filter_driving()</a></code> reads the sixth derivative of the log-likelihood and the fifth derivative of the expected information.</li>
+<li>Requires distributions7 0.94.0, linkfunctions7 0.8.0 and modelterms7 0.118.0.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.231.0" id="statmodels7-02310">statmodels7 0.231.0<a class="anchor" aria-label="anchor" href="#statmodels7-02310"></a></h2>
+<ul><li>A fit with <code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code> is summarized as a smooth (its smoothing parameter and effective degrees of freedom, not its free coefficients), and the criterion graph is available for its smoothing parameter.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.230.0" id="statmodels7-02300">statmodels7 0.230.0<a class="anchor" aria-label="anchor" href="#statmodels7-02300"></a></h2>
 <ul><li>

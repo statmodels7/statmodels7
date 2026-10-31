@@ -129,5 +129,5 @@ f_chol <- statmod(y ~ s(x, bspline_smooth(k = 8)), G, dd,
                   inner_optimizer = iwls(solver = solve_chol()),
                   outer_criterion = NULL)
 max(abs(unlist(coef(f_qr)) - unlist(coef(f_chol))))
-#> [1] 5.551115e-17
+#> [1] 2.220446e-16
 ```

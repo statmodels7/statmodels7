@@ -16,7 +16,8 @@ filter_driving(
   H,
   D3 = NULL,
   D4 = NULL,
-  D5 = NULL
+  D5 = NULL,
+  D6 = NULL
 )
 ```
 
@@ -39,13 +40,13 @@ filter_driving(
 
   The exponent \\d\\.
 
-- gl, H, D3, D4, D5:
+- gl, H, D3, D4, D5, D6:
 
   The family's link-scale derivatives; the higher ones may be `NULL`.
 
 ## Value
 
-A list with `gl`, `H`, `D3`, `D4` and `D5`, the same objects where
+A list with `gl`, `H`, `D3`, `D4`, `D5` and `D6`, the same objects where
 `scaling` is zero.
 
 ## Details
@@ -61,4 +62,5 @@ x^{-d-k}.\$\$ The derivatives \\\mathcal{I}\_\beta\\ are minus those of
 [`distributions7::distrib_dexpected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html)
 and its higher-order siblings, and all of them are on the link scale.
 The highest array given sets the order: `D5` needs the fourth derivative
-of the information.
+of the information and `D6` the fifth
+([`distributions7::distrib_d5expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_d5expected_hessian.html)).

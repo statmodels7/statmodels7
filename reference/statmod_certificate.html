@@ -17,7 +17,7 @@ dimensionless readings that summary.StatmodFit() prints.'><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.230.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,6 +119,16 @@ with <code>gradient</code> and <code>eigen</code> from <code><a href="certificat
 there is nothing to read), and <code>zeros</code>, which
 reads <code>NULL</code> where no coefficient sits at the kink of a penalty and is
 otherwise a named vector with <code>ratio</code> and <code>n</code> from <code><a href="zero_readings.html">zero_readings()</a></code>.</p>
+<p><code>separation</code> is the list that <code><a href="separation_diagnosis.html">separation_diagnosis()</a></code> returns, with
+two further elements: <code>message</code>, which describes each direction it found
+in a sentence (empty where there is none), and <code>boundary_coef</code>, the
+coefficients without a smooth penalty that move along a direction of
+recession and that the outer reading has not already named at a
+boundary; it is <code>NULL</code> where the diagnosis signaled an error. A
+direction of recession makes the state <code>"boundary"</code> (unless the state is
+<code>"not converged"</code>), adds its sentence to <code>reason</code> and adds those
+coefficients to <code>boundary</code> and <code>boundary_coef</code>. A direction of descent
+does not change the state.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

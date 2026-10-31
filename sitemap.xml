@@ -234,6 +234,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv3_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv4_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv5_key.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/deriv6_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/design_count_exact.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/design_derivative.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/design_sparse.html</loc></url>
@@ -728,6 +729,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/seg_grid_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/select_emethod.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/select_parameter.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/separation_diagnosis.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/separation_message.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/shape_floor.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/short_keys.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/shrinkage_data.html</loc></url>

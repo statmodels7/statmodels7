@@ -105,9 +105,9 @@ bayesian_vcov()
 #> <vcov> bayesian
 vcov(fit, vcov_type = bayesian_vcov())
 #>                   mu:(Intercept)          mu:x sigma:(Intercept)
-#> mu:(Intercept)      7.691473e-03 -1.161719e-02      1.055974e-18
-#> mu:x               -1.161719e-02  2.209835e-02     -2.501978e-18
-#> sigma:(Intercept)   1.055974e-18 -2.501978e-18      6.410256e-03
+#> mu:(Intercept)      7.691473e-03 -1.161719e-02      8.809850e-19
+#> mu:x               -1.161719e-02  2.209835e-02      3.360036e-18
+#> sigma:(Intercept)   8.809850e-19  3.360036e-18      6.410256e-03
 confint(fit, vcov_type = bayesian_vcov())
 #>                   parameter   term coefficient  estimate         se      lower
 #> mu:(Intercept)           mu linpar (Intercept)  1.043291 0.08770104  0.8714004

@@ -1363,6 +1363,9 @@ helper functions. Using the package does not require any of it.
 - [`deriv5_key()`](https://statmodels7.github.io/statmodels7/reference/deriv5_key.md)
   : The Name of a Fifth-Derivative Component
 
+- [`deriv6_key()`](https://statmodels7.github.io/statmodels7/reference/deriv6_key.md)
+  : The Name of a Sixth-Derivative Component
+
 - [`design_count_exact()`](https://statmodels7.github.io/statmodels7/reference/design_count_exact.md)
   : Is the Count of the Active Coordinates Their Rank?
 
@@ -2701,6 +2704,12 @@ helper functions. Using the package does not require any of it.
 
 - [`select_parameter()`](https://statmodels7.github.io/statmodels7/reference/select_parameter.md)
   : One Equation's Submatrix of a Variance Matrix
+
+- [`separation_diagnosis()`](https://statmodels7.github.io/statmodels7/reference/separation_diagnosis.md)
+  : Directions Along Which the Estimate Does Not Exist
+
+- [`separation_message()`](https://statmodels7.github.io/statmodels7/reference/separation_message.md)
+  : A Sentence for Each Direction That separation_diagnosis() Found
 
 - [`shape_floor()`](https://statmodels7.github.io/statmodels7/reference/shape_floor.md)
   : The Smallest Admissible Value of a Shape Parameter

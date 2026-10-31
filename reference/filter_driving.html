@@ -11,7 +11,7 @@ derivatives of the scaled score \(u = s\,\mathcal{I}^{-d}\)."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.230.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.232.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,8 @@ derivatives of the scaled score \(u = s\,\mathcal{I}^{-d}\).</p>
 <span>  <span class="va">H</span>,</span>
 <span>  D3 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  D4 <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  D5 <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  D5 <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  D6 <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -81,15 +82,15 @@ derivatives of the scaled score \(u = s\,\mathcal{I}^{-d}\).</p>
 <dd><p>The exponent \(d\).</p></dd>
 
 
-<dt id="arg-gl-h-d-d-d-">gl, H, D3, D4, D5<a class="anchor" aria-label="anchor" href="#arg-gl-h-d-d-d-"></a></dt>
-<dd><p>The family's link-scale derivatives; the higher ones
-may be <code>NULL</code>.</p></dd>
+<dt id="arg-gl-h-d-d-d-d-">gl, H, D3, D4, D5, D6<a class="anchor" aria-label="anchor" href="#arg-gl-h-d-d-d-d-"></a></dt>
+<dd><p>The family's link-scale derivatives; the higher
+ones may be <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>gl</code>, <code>H</code>, <code>D3</code>, <code>D4</code> and <code>D5</code>, the same objects where
-<code>scaling</code> is zero.</p>
+    <p>A list with <code>gl</code>, <code>H</code>, <code>D3</code>, <code>D4</code>, <code>D5</code> and <code>D6</code>, the same objects
+where <code>scaling</code> is zero.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -105,7 +106,8 @@ $$w_B = \sum_{\pi} \phi^{(|\pi|)}(\mathcal{I})
 The derivatives \(\mathcal{I}_\beta\) are minus those of
 <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html" class="external-link">distributions7::distrib_dexpected_hessian()</a></code> and its higher-order
 siblings, and all of them are on the link scale. The highest array given sets
-the order: <code>D5</code> needs the fourth derivative of the information.</p>
+the order: <code>D5</code> needs the fourth derivative of the information and <code>D6</code>
+the fifth (<code><a href="https://statmodels7.github.io/distributions7/reference/distrib_d5expected_hessian.html" class="external-link">distributions7::distrib_d5expected_hessian()</a></code>).</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
