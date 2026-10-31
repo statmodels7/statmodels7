@@ -40,15 +40,109 @@ jfp_resolve_units <- function(units, spec, design) {
         covered <- c(covered, v$cols)
       }
     }
+    units[[k]]$power <- u$penalty@power
+    if (!S7::S7_inherits(spec@terms[[p]][[u$term]],
+                         modelterms7::JeffreysTerm)) {
+      units[[k]] <- c(units[[k]], jfp_subformula_unit(u, spec, design))
+      next
+    }
+    units[[k]]$kind <- "static"
     X <- design[[p]]$X
     level <- setdiff(seq_len(ncol(X)), covered)
-    units[[k]]$power <- u$penalty@power
     units[[k]]$const <- jfp_constant(
       u$penalty@intercept,
       if (length(level)) X[, level, drop = FALSE] else NULL,
       X[, u$cols, drop = FALSE])
   }
   units
+}
+
+
+#' A Jeffreys Block in the Subformula of a Refreshed Term
+#'
+#' @description
+#' Resolves a Jeffreys unit that a term such as [modelterms7::nl()] or a
+#' smoothed [modelterms7::seg()] carries up from the subformula of one of its
+#' parameters: the term's columns from which the block's rows are combined,
+#' and whether the constant direction of the subformula enters them.
+#'
+#' @details
+#' The level of the subformula is its unpenalized sub-terms, read from
+#' [modelterms7::term_components()]. The constant direction is the derivative
+#' of the predictor along a constant shift of the parameter, which is the
+#' combination \eqn{X_{\rm level}\gamma} of the level's refreshed columns
+#' with \eqn{Z_{\rm level}\gamma = 1}; the span is tested on the
+#' subformula's own design, by [jfp_constant()].
+#'
+#' A term whose block is a working linearization (a sharp
+#' [modelterms7::jump()] or [modelterms7::jseg()]) is rejected, and so is the
+#' break-point subformula of a sharp [modelterms7::seg()], whose rows jump
+#' when the break-point crosses an observation. A parameter whose own
+#' development moves is rejected as well.
+#'
+#' @param u The unit.
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#'
+#' @return A list with `kind` (`"refresh"`), `const`, `basis` and `C`, as
+#'   [jfp_block()] takes them.
+#'
+#' @keywords internal
+jfp_subformula_unit <- function(u, spec, design) {
+  p <- u$param
+  tm <- spec@terms[[p]][[u$term]]
+  rf <- Filter(function(r) identical(r$param, p) && identical(r$term, u$term),
+               attr(design, "refresh"))
+  no <- function(why) {
+    stop(sprintf("jfp() inside the subformula of '%s' is not available: %s.",
+                 u$term, why), call. = FALSE)
+  }
+  if (!length(rf)) no("the term's block is not recomputed at the coefficients")
+  if (isTRUE(rf[[1L]]$frozen)) {
+    no("the term's block is a working linearization with a frozen weight")
+  }
+  comp <- modelterms7::term_components(tm)
+  hit <- NULL
+  for (cp in comp) {
+    for (j in seq_along(cp$sub_index)) {
+      if (identical(as.integer(cp$sub_index[[j]]), as.integer(u$within))) {
+        hit <- list(cp = cp, j = j)
+      }
+    }
+  }
+  if (is.null(hit)) no("its columns are not one sub-term of one parameter")
+  cp <- hit$cp
+  if (isTRUE(tm@build_info$mobile[[cp$name]])) {
+    no(sprintf("the development of '%s' moves with the coefficients",
+               cp$name))
+  }
+  if (S7::S7_inherits(tm, modelterms7::SegTerm) &&
+      startsWith(cp$name, "psi") && is.null(tm@spec$smoothed)) {
+    no("the rows of a sharp break-point's subformula jump at the observations")
+  }
+  lev <- which(vapply(seq_along(cp$subs), function(j) {
+    j != hit$j && !length(modelterms7::term_penalties(cp$subs[[j]]))
+  }, logical(1)))
+  ZA <- as_dense(modelterms7::term_matrix(cp$subs[[hit$j]]))
+  Zl <- if (length(lev)) {
+    do.call(cbind, lapply(cp$subs[lev], function(s)
+      as_dense(modelterms7::term_matrix(s))))
+  } else NULL
+  const <- jfp_constant(u$penalty@intercept, Zl, ZA)
+  tcols <- design[[p]]$blocks[[u$term]]
+  pA <- length(u$within)
+  if (!const) {
+    return(list(kind = "refresh", const = FALSE,
+                basis = tcols[u$within], C = diag(pA)))
+  }
+  li <- unlist(cp$sub_index[lev], use.names = FALSE)
+  gam <- qr.coef(qr(Zl), rep(1, nrow(Zl)))
+  gam[is.na(gam)] <- 0
+  C <- matrix(0, length(li) + pA, pA + 1L)
+  C[seq_along(li), 1L] <- gam
+  C[length(li) + seq_len(pA), 1L + seq_len(pA)] <- diag(pA)
+  list(kind = "refresh", const = TRUE, basis = tcols[c(li, u$within)],
+       C = C)
 }
 
 
@@ -72,8 +166,12 @@ jfp_blocks <- function(spec, design, keys = NULL) {
   for (u in statmod_penalized(spec, design)) {
     if (!isTRUE(u$jeffreys)) next
     if (!is.null(keys) && !u$key %in% keys) next
-    out[[length(out) + 1L]] <- jfp_block(u$param, u$cols, power = u$power,
-                                         const = u$const)
+    out[[length(out) + 1L]] <- if (identical(u$kind, "refresh")) {
+      jfp_block(u$param, u$cols, power = u$power, const = u$const,
+                kind = "refresh", term = u$term, basis = u$basis, C = u$C)
+    } else {
+      jfp_block(u$param, u$cols, power = u$power, const = u$const)
+    }
   }
   out
 }

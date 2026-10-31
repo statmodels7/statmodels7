@@ -29,6 +29,11 @@
 #' @param kind One of `"static"`, `"refresh"` or `"filter"`.
 #' @param term,slot For the kinds `"refresh"` and `"filter"`, the term and the
 #'   parameter of the term whose subformula holds the block.
+#' @param basis,C For the kind `"refresh"`: the columns of the equation's
+#'   design from which the rows are combined, and the matrix that combines
+#'   them, so that the rows are the refreshed design's columns `basis` times
+#'   `C`. The constant direction of the subformula's level, where it is
+#'   included, is the first column of `C`.
 #'
 #' @return A list of class `jfp_block` with the arguments as fields.
 #'
@@ -37,7 +42,7 @@
 #' @keywords internal
 jfp_block <- function(param, cols, power = 0.5, const = FALSE,
                       kind = c("static", "refresh", "filter"), term = NULL,
-                      slot = NULL) {
+                      slot = NULL, basis = NULL, C = NULL) {
   kind <- match.arg(kind)
   if (!is.character(param) || length(param) != 1L) {
     stop("'param' must be a single parameter name.", call. = FALSE)
@@ -48,7 +53,8 @@ jfp_block <- function(param, cols, power = 0.5, const = FALSE,
   }
   structure(list(param = param, cols = as.integer(cols), power = power,
                  const = isTRUE(const), kind = kind, term = term,
-                 slot = slot),
+                 slot = slot, basis = if (is.null(basis)) NULL else
+                   as.integer(basis), C = C),
             class = "jfp_block")
 }
 
@@ -337,7 +343,74 @@ jfp_block_state <- function(st, b) {
   out$Z <- Z
   out$G <- G
   out$logdet <- 2 * sum(log(diag(U)))
+  if (b$kind == "refresh") out <- c(out, jfp_refresh_parts(st, b))
   out
+}
+
+
+#' The Movement of a Jeffreys Block Inside a Refreshed Term
+#'
+#' @description
+#' Returns, for a block inside a subformula of a term whose block is
+#' recomputed at the coefficients ([modelterms7::nl()], [modelterms7::seg()]),
+#' the term at the coefficients and the derivative of each of the block's
+#' basis columns in the term's coefficients.
+#'
+#' @details
+#' The block's columns are columns of the term's Jacobian, so
+#' \eqn{\partial X_{t,i}/\partial\beta_l = \partial^2\eta_t/\partial
+#' \beta_i\partial\beta_l}, which is column \eqn{l} of the block's derivative
+#' along \eqn{e_i}, [modelterms7::term_block_deriv()]. One call per basis
+#' column gives every derivative the gradient and the Hessian read.
+#'
+#' @param st The state under construction, from [jfp_state()].
+#' @param b A [jfp_block()] of kind `"refresh"`.
+#'
+#' @return A list with `tm`, `bt`, `tcols` (the term's columns in its
+#'   equation), `tidx` (their positions in the joint vector), `pos` (the basis
+#'   columns among the term's) and `D` (one matrix per basis column,
+#'   observations by the term's coefficients).
+#'
+#' @keywords internal
+jfp_refresh_parts <- function(st, b) {
+  p <- b$param
+  a <- match(p, st$params)
+  tcols <- st$design[[p]]$blocks[[b$term]]
+  sst <- attr(st$design, "state")
+  bt <- st$coef[[p]][tcols]
+  tm <- modelterms7::term_refresh(sst$terms[[p]][[b$term]], bt)
+  pos <- match(b$basis, tcols)
+  if (anyNA(pos)) {
+    stop("A Jeffreys block's columns must lie in the term that holds it.",
+         call. = FALSE)
+  }
+  D <- lapply(pos, function(i) {
+    e <- numeric(length(tcols))
+    e[i] <- 1
+    as.matrix(modelterms7::term_block_deriv(tm, coef = bt, v = e))
+  })
+  list(tm = tm, bt = bt, tcols = tcols, tidx = st$offs[a] + tcols, pos = pos,
+       D = D)
+}
+
+
+#' The Derivatives of a Refreshed Jeffreys Block's Rows
+#'
+#' @description
+#' `jfp_vk()` returns the derivative of the block's rows in one of the term's
+#' coefficients, an observations by \eqn{\tilde p} matrix, read from the
+#' state's `D`.
+#'
+#' @param bs A block's entry of the state, of kind `"refresh"`.
+#' @param l A position among the term's coefficients.
+#'
+#' @return A numeric matrix.
+#'
+#' @keywords internal
+jfp_vk <- function(bs, l) {
+  Dl <- vapply(bs$D, function(Di) Di[, l], numeric(nrow(bs$D[[1L]])))
+  Dl <- matrix(Dl, ncol = length(bs$D))
+  Dl %*% bs$block$C
 }
 
 
@@ -360,6 +433,14 @@ jfp_block_state <- function(st, b) {
 #'
 #' @keywords internal
 jfp_rows <- function(st, b) {
+  if (b$kind == "refresh") {
+    a <- match(b$param, st$params)
+    X <- as_dense(st$design[[b$param]]$X[, b$basis, drop = FALSE]) %*% b$C
+    dimnames(X) <- NULL
+    rows <- vector("list", length(st$params))
+    rows[[a]] <- X
+    return(rows)
+  }
   if (b$kind != "static") {
     stop(sprintf(paste0("A Jeffreys block of kind '%s' moves with the ",
                         "coefficients, which is not\n  implemented yet."),
@@ -434,6 +515,19 @@ jfp_gradient <- function(st) {
       u_vector(st$spec, st$design, st$coef, NULL, params, st$npar, st$offs,
                st$total, d3 = dE, G = bs$G, key = key,
                rows = if (is.null(st$joint)) NULL else st$joint$V)
+    if (bs$block$kind == "refresh") {
+      # 2 tr(I^-1 sum_t w I_t V_t' dV_t/du_l): the term's own contraction of
+      # its block's derivative against A = w I (V I^-1) C' on the basis
+      a <- match(bs$block$param, params)
+      It <- -st$spec@weights *
+        rep_len(st$E[[hess_key(params, a, a)]], st$spec@n_obs)
+      P <- bs$Z[[a]] %*% t(backsolve(bs$U, diag(ncol(bs$U))))
+      A <- matrix(0, st$spec@n_obs, length(bs$tcols))
+      A[, bs$pos] <- It * (P %*% t(bs$block$C))
+      out[bs$tidx] <- out[bs$tidx] + bs$block$power * 2 *
+        as.numeric(modelterms7::term_block_contract(bs$tm, coef = bs$bt,
+                                                    A = A))
+    }
   }
   out
 }
@@ -529,6 +623,10 @@ jfp_hessian <- function(st, assemble = TRUE) {
       refresh <- if (is.null(refresh)) D else refresh + D
     }
 
+    if (bs$block$kind == "refresh") {
+      rp <- jfp_refresh_hessian(st, bs, dE)
+      refresh <- if (is.null(refresh)) a * rp$H else refresh + a * rp$H
+    }
     # B: one column per entry i <= j of the whitened derivative
     p <- ncol(bs$Z[[live[1L]]])
     ij <- which(upper.tri(diag(p), diag = TRUE), arr.ind = TRUE)
@@ -553,6 +651,7 @@ jfp_hessian <- function(st, assemble = TRUE) {
         B <- B + crossprod(st$joint$V[[cc]], w * Fc)
       }
     }
+    if (bs$block$kind == "refresh") B[bs$tidx, ] <- B[bs$tidx, ] + rp$BV
     lowrank[[i]] <- sqrt(a) * B
   }
   lowrank <- do.call(cbind, lowrank)
@@ -667,4 +766,106 @@ jfp_check_ok <- function(st) {
                  bad[1L]), call. = FALSE)
   }
   invisible(NULL)
+}
+
+
+#' The Hessian's Shares From a Refreshed Block's Own Movement
+#'
+#' @description
+#' Computes the terms of \eqn{\partial_{kl}\log|\tilde I|} that the movement
+#' of the block's rows contributes, for a block inside a subformula of a term
+#' whose block is recomputed at the coefficients.
+#'
+#' @details
+#' With \eqn{\tilde I = \sum_t w_tI_t\tilde V_t^\top\tilde V_t} over the
+#' block's equation, \eqn{P = \tilde V\tilde I^{-1}} and \eqn{I_{c,t}} the
+#' derivative of \eqn{I_t} in the predictor of equation \eqn{c},
+#' \eqn{\mathrm{tr}(\tilde I^{-1}\partial_{kl}\tilde I)} gains
+#' \deqn{2\sum_t w_t\Big[\sum_c I_{c,t}\big(X_c[t,k]R_{tl} + X_c[t,l]R_{tk}\big)
+#'   + I_t\,\mathrm{tr}\big(P_t^\top\,\partial_{kl}\tilde V_t\big)
+#'   + I_t\,\partial_k\tilde V_t\,\tilde I^{-1}\partial_l\tilde V_t^\top\Big],}
+#' with \eqn{R_{tl} = P_t\,\partial_l\tilde V_t^\top}; the rows move in the
+#' term's own coefficients only. \eqn{\partial_{kl}\tilde V} is read from
+#' [modelterms7::term_block_deriv2()] by the symmetry of the third derivative
+#' of the predictor. The product
+#' \eqn{\mathrm{tr}(\tilde I^{-1}\partial_k\tilde I\,\tilde I^{-1}
+#' \partial_l\tilde I)} gains the whitened derivative
+#' \eqn{\sum_t w_tI_t(W_{k,t}^\top Z_t + Z_t^\top W_{k,t})},
+#' \eqn{W_k = \partial_k\tilde V\,U^{-1}}, in the rows of the low-rank
+#' factor.
+#'
+#' @param st A state, from [jfp_state()].
+#' @param bs A block's entry of the state, of kind `"refresh"`.
+#' @param dE The derivative of the expected information, from
+#'   [jfp_dexpected()].
+#'
+#' @return A list with `H`, a matrix over the joint vector, and `BV`, the rows
+#'   to add to the low-rank factor at the term's positions.
+#'
+#' @keywords internal
+jfp_refresh_hessian <- function(st, bs, dE) {
+  params <- st$params
+  np <- length(params)
+  n <- st$spec@n_obs
+  w <- st$spec@weights
+  a <- match(bs$block$param, params)
+  It <- -rep_len(st$E[[hess_key(params, a, a)]], n)
+  Ui <- backsolve(bs$U, diag(ncol(bs$U)))
+  Z <- bs$Z[[a]]
+  P <- Z %*% t(Ui)
+  m <- length(bs$tcols)
+  ti <- bs$tidx
+  # the derivative of the rows in each of the term's coefficients
+  Vk <- lapply(seq_len(m), function(l) jfp_vk(bs, l))
+  R <- vapply(Vk, function(V) rowSums(P * V), numeric(n))
+  R <- matrix(R, n, m)
+  H <- matrix(0, st$total, st$total)
+  # 2 sum_c X_c' diag(w I_c) R, placed in the term's columns, plus transpose
+  for (cc in seq_len(np)) {
+    if (st$npar[cc] == 0L) next
+    Ic <- -rep_len(dE[[distributions7::dexpected_key(params, a, a, cc)]], n)
+    blk <- 2 * as.matrix(crossprod(st$design[[params[cc]]]$X, (w * Ic) * R))
+    rows <- st$offs[cc] + seq_len(st$npar[cc])
+    H[rows, ti] <- H[rows, ti] + blk
+  }
+  H <- H + t(H)
+  # 2 sum_t w I_t tr(P_t' d_kl V_t), from the second derivative of the basis
+  # columns: d2 X[t, i] / d beta_k d beta_l is column l of the block's second
+  # derivative along (e_i, e_k)
+  Ac <- (w * It) * (P %*% t(bs$block$C))
+  for (k in seq_len(m)) {
+    ek <- numeric(m)
+    ek[k] <- 1
+    col <- numeric(m)
+    for (j in seq_along(bs$pos)) {
+      ej <- numeric(m)
+      ej[bs$pos[j]] <- 1
+      D2 <- as.matrix(modelterms7::term_block_deriv2(bs$tm, coef = bs$bt,
+                                                     v = ej, u = ek))
+      col <- col + as.numeric(crossprod(D2, Ac[, j]))
+    }
+    H[ti[k], ti] <- H[ti[k], ti] + 2 * col
+  }
+  # 2 sum_t w I_t dV_k I^-1 dV_l'
+  W <- lapply(Vk, function(V) V %*% Ui)
+  G <- matrix(0, m, m)
+  for (k in seq_len(m)) {
+    for (l in k:m) {
+      G[k, l] <- 2 * sum(w * It * rowSums(W[[k]] * W[[l]]))
+      G[l, k] <- G[k, l]
+    }
+  }
+  H[ti, ti] <- H[ti, ti] + G
+  # the rows of the low-rank factor: the whitened derivative's own share,
+  # in the convention of jfp_hessian() (upper triangle, sqrt(2) off it)
+  p <- ncol(Z)
+  ij <- which(upper.tri(diag(p), diag = TRUE), arr.ind = TRUE)
+  gam <- ifelse(ij[, 1L] == ij[, 2L], 1, sqrt(2))
+  BV <- t(vapply(W, function(Wk) {
+    Ak <- crossprod(Wk * (w * It), Z)
+    Ak <- Ak + t(Ak)
+    gam * Ak[ij]
+  }, numeric(nrow(ij))))
+  BV <- matrix(BV, m, nrow(ij))
+  list(H = (H + t(H)) / 2, BV = BV)
 }

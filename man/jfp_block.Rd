@@ -11,7 +11,9 @@ jfp_block(
   const = FALSE,
   kind = c("static", "refresh", "filter"),
   term = NULL,
-  slot = NULL
+  slot = NULL,
+  basis = NULL,
+  C = NULL
 )
 }
 \arguments{
@@ -30,6 +32,12 @@ decided by \code{\link[=jfp_constant]{jfp_constant()}}.}
 
 \item{term, slot}{For the kinds \code{"refresh"} and \code{"filter"}, the term and the
 parameter of the term whose subformula holds the block.}
+
+\item{basis, C}{For the kind \code{"refresh"}: the columns of the equation's
+design from which the rows are combined, and the matrix that combines
+them, so that the rows are the refreshed design's columns \code{basis} times
+\code{C}. The constant direction of the subformula's level, where it is
+included, is the first column of \code{C}.}
 }
 \value{
 A list of class \code{jfp_block} with the arguments as fields.

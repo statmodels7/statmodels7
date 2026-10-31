@@ -133,11 +133,11 @@ test_that("lowrank_solve() equals the dense solve", {
                tolerance = 1e-10)
 })
 
-test_that("jfp() inside a subformula is rejected in this phase", {
+test_that("jfp() inside the subformula of gas() is rejected in this phase", {
   set.seed(1)
-  d <- data.frame(x = runif(40), g = rnorm(40))
-  d$y <- 2 * exp(-d$x) + rnorm(40, sd = 0.1)
-  expect_error(statmod(y ~ 0 + nl(~ a * exp(-r * x), a ~ 1 + jfp(~ g)),
+  d <- data.frame(t = 1:60, g = rnorm(60))
+  d$y <- rnorm(60)
+  expect_error(statmod(y ~ gas(p = 1, q = 1, kappa1 ~ 1 + jfp(~ g), time = t),
                        distrib = distributions7::gaussian1_distrib(),
                        data = d),
                "not implemented yet")
@@ -267,4 +267,72 @@ test_that("the outer gradient and Hessian of reml() and ml() are exact", {
   lab <- coef_labels(f@spec, statmod_design(f@spec))
   expect_equal(attr(logLik(f, loglik_type = "marginal"), "df"),
                sum(!lab$penalized) + 1 + 1)
+})
+
+test_that("a block in a subformula of nl() moves, and its derivatives are exact", {
+  skip_if_not_installed("numDeriv")
+  set.seed(2)
+  n <- 150
+  d <- data.frame(x = runif(n, 0.2, 3), g = rnorm(n))
+  d$y <- rpois(n, exp(log(3 + 0.5 * d$g) - 0.6 * d$x))
+  fm <- y ~ 0 + nl(~ exp(a - r * x), a ~ 1 + jfp(~ g))
+  sp <- statmod_spec(fm, distributions7::poisson_distrib(), d)
+  des <- statmod_design(sp)
+  units <- statmod_penalized(sp, des)
+  expect_identical(units[[1]]$kind, "refresh")
+  expect_true(units[[1]]$const)
+  bl <- jfp_blocks(sp, des)
+  u0 <- c(1.1, 0.15, 0.55)
+  ref <- function(u) {
+    cf <- list(mu = u)
+    th <- statmod_eta(sp, des, cf)$theta
+    X <- as.matrix(statmod_design_at(sp, cf, des)$mu$X)[, bl[[1]]$basis] %*%
+      bl[[1]]$C
+    E <- distributions7::distrib_expected_hessian(sp@distrib, sp@response, th,
+                                                  scale = "link")
+    0.5 * as.numeric(determinant(crossprod(X * (-E$mu_mu), X))$modulus)
+  }
+  st_at <- function(u) jfp_state(sp, des, list(mu = u), bl)
+  g <- jfp_gradient(st_at(u0))
+  gn <- numDeriv::grad(ref, u0)
+  expect_lt(max(abs(g - gn)) / max(abs(gn)), 1e-7)
+  hj <- numDeriv::jacobian(function(u) jfp_gradient(st_at(u)), u0)
+  h <- jfp_hessian(st_at(u0))$hessian
+  expect_lt(max(abs(h - (hj + t(hj)) / 2)) / max(abs(hj)), 1e-7)
+  # the negative control: the same block read as though its rows were fixed
+  st0 <- st_at(u0)
+  st0$blocks[[1]]$block$kind <- "static"
+  expect_gt(max(abs(jfp_gradient(st0) - gn)) / max(abs(gn)), 1e-2)
+})
+
+test_that("jfp() inside nl() keeps a separated slope finite", {
+  set.seed(6)
+  n <- 200
+  d <- data.frame(x = runif(n, -2, 2), h = rbinom(n, 1, 0.3))
+  d$y <- rbinom(n, 1, plogis(2 * (d$x - 0.3)))
+  d$y[d$h == 1] <- as.numeric(d$x[d$h == 1] > 0.5)
+  B <- distributions7::bernoulli_distrib()
+  f <- statmod(y ~ 0 + nl(~ b * (x - e), b ~ 1 + jfp(~ h),
+                          start = list(b = 1, e = 0)), distrib = B, data = d)
+  cf <- unlist(coef(f))
+  expect_true(all(is.finite(cf)))
+  expect_lt(abs(cf[["mu.nl.b.jfp.h"]]), 50)
+  expect_identical(statmod_certificate(f)$state, "converged")
+  obj <- statmod_objective(f@spec, f@hyper, statmod_design(f@spec))
+  expect_lt(max(abs(obj$gr(obj$stack(f@coefficients)))), 1e-3)
+})
+
+test_that("the subformulas that move discontinuously are rejected", {
+  set.seed(6)
+  n <- 120
+  d <- data.frame(x = runif(n, -2, 2), h = rbinom(n, 1, 0.3))
+  d$y <- 1 + 0.5 * d$x + 1.5 * pmax(d$x - 0.2 - 0.6 * d$h, 0) +
+    rnorm(n, sd = 0.3)
+  G <- distributions7::gaussian1_distrib()
+  expect_error(statmod(y ~ seg(x, psi ~ 1 + jfp(~ h)), distrib = G, data = d),
+               "sharp break-point")
+  f <- suppressWarnings(statmod(y ~ seg(x, psi ~ 1 + jfp(~ h),
+                                         smoothed = numericals7::smooth_probit()),
+                                distrib = G, data = d))
+  expect_true(all(is.finite(unlist(coef(f)))))
 })

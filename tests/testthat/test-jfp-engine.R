@@ -175,7 +175,7 @@ test_that("the engine rejects what it does not compute", {
   sp <- statmod_spec(yb ~ x, distributions7::bernoulli_distrib(), d)
   des <- statmod_design(sp)
   cf <- list(mu = c(0, 0))
-  expect_error(jfp_state(sp, des, cf, jfp_block("mu", 2L, kind = "refresh")),
+  expect_error(jfp_state(sp, des, cf, jfp_block("mu", 2L, kind = "filter")),
                "not\n  implemented yet")
   expect_error(jfp_state(sp, des, cf, jfp_block("mu", 3L)), "positions")
   expect_error(jfp_state(sp, des, cf, jfp_block("sigma", 1L)), "no parameter")
