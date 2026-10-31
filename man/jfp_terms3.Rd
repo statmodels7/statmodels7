@@ -17,8 +17,10 @@ jfp_terms4(st, v, w)
 \value{
 A list with \code{sparse}, a list of per-observation weights keyed as
 \code{\link[=statmod_information_at]{statmod_information_at()}} reads its \code{H} (the matrix is
-\eqn{\sum_{c,d}X_c^\top\mathrm{diag}(w\,W_{cd})X_d}), and \code{lr}, a list of
-triples \code{X}, \code{K}, \code{Y} (the matrix is \eqn{XKY^\top}).
+\eqn{\sum_{c,d}X_c^\top\mathrm{diag}(w\,W_{cd})X_d}), \code{lr}, a list of
+triples \code{X}, \code{K}, \code{Y} (the matrix is \eqn{XKY^\top}), and \code{dense}, a
+list of entries \code{idx}, \code{X} (the matrix places \code{X} in the rows \code{idx} and
+its transpose in the columns \code{idx}).
 }
 \description{
 Returns the terms of \eqn{D_3(v)} (\code{jfp_terms3()}) and \eqn{D_4(v, w)}

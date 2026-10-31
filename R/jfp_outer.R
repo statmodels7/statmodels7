@@ -1,9 +1,8 @@
-#' @include jfp_engine.R
+#' @include jfp_engine.R jfp_move.R
 NULL
 
-# The third and fourth derivatives of log|I_tilde| in the joint vector, for
-# blocks whose rows do not move, in a model without a filter and without a
-# block that is recomputed at the coefficients. Every quantity is written in
+# The third and fourth derivatives of log|I_tilde| in the joint vector, in a
+# model without a filter. Every quantity is written in
 # the whitened coordinates of each block, I_tilde = U'U and Z_q = V_q U^-1,
 # where the derivatives of the block's matrix are
 #
@@ -24,6 +23,9 @@ NULL
 # information; a term with k and l in two different A's is B_x K B_y', B_x
 # holding vec(A_{k x}) in row k, with K a Kronecker product of p_tilde x
 # p_tilde matrices, by tr(X P Y Q) = vec(X)'(Q' (x) P) vec(Y) for symmetric X.
+# Where a predictor is not linear in u, or the block's rows move, each A
+# gains the shares that R/jfp_move.R computes, and a term with k and l inside
+# one A gains dense entries over the coordinates of the moving terms.
 
 
 #' The Third and Fourth Derivatives of the Jeffreys Penalty
@@ -43,9 +45,13 @@ NULL
 #' two to four. A term with both indices inside one derivative of the block's
 #' matrix is a weighted cross product of the designs and has the sparsity of
 #' the information; the others are products of low rank through matrices of
-#' \eqn{\tilde p^2} columns. They are written for blocks whose rows do not
-#' move, in a model without a filter and without a term whose block is
-#' recomputed at the coefficients, and they signal an error elsewhere.
+#' \eqn{\tilde p^2} columns. Where a term recomputes its block at the
+#' coefficients ([modelterms7::nl()], a smoothed [modelterms7::seg()]), the
+#' derivatives of the predictors to the fourth order and, for a block in the
+#' subformula of such a term, the movement of the block's rows enter as well
+#' ([jfp_mv_ctx()]); the derivatives of the term's block come from
+#' [modelterms7::term_block_deriv()] and its siblings up to
+#' [modelterms7::term_block_deriv4()]. Beside a filter they signal an error.
 #'
 #' The outer criterion reads them: the derivative of its penalized matrix
 #' along the movement of the mode carries \eqn{-a\,D_3(v)}, and its second
@@ -97,24 +103,27 @@ jfp_deriv4 <- function(st, M, v, w) {
 #'
 #' @return A list with `sparse`, a list of per-observation weights keyed as
 #'   [statmod_information_at()] reads its `H` (the matrix is
-#'   \eqn{\sum_{c,d}X_c^\top\mathrm{diag}(w\,W_{cd})X_d}), and `lr`, a list of
-#'   triples `X`, `K`, `Y` (the matrix is \eqn{XKY^\top}).
+#'   \eqn{\sum_{c,d}X_c^\top\mathrm{diag}(w\,W_{cd})X_d}), `lr`, a list of
+#'   triples `X`, `K`, `Y` (the matrix is \eqn{XKY^\top}), and `dense`, a
+#'   list of entries `idx`, `X` (the matrix places `X` in the rows `idx` and
+#'   its transpose in the columns `idx`).
 #'
 #' @keywords internal
 jfp_terms3 <- function(st, v) {
   jfp_check_outer(st)
-  ev <- jfp_eta_dir(st, v)
-  out <- list(sparse = list(), lr = list())
+  ds <- list(v = jfp_dir(st, v))
+  out <- list(sparse = list(), lr = list(), dense = list())
+  e <- character(0)
   for (bs in st$blocks) {
+    cx <- jfp_mv_ctx(st, bs, ds)
     a <- bs$block$power
-    p <- ncol(bs$Z[[jfp_live(bs)[1L]]])
+    p <- cx$p
     Ip <- diag(p)
-    Av <- jfp_white(st, bs, list(ev))
-    B <- jfp_rows_B(st, bs, list())
-    Bv <- jfp_rows_B(st, bs, list(ev))
-    out$sparse <- jfp_add_weights(out$sparse, list(
-      jfp_pair_weights(st, bs, Ip, list(ev)),
-      jfp_pair_weights(st, bs, Av, list())), c(a, -a))
+    Av <- jfp_mv_white(cx, "v")
+    B <- jfp_mv_B(cx, e)
+    Bv <- jfp_mv_B(cx, "v")
+    out <- jfp_add_pair(out, jfp_mv_pair(cx, Ip, "v"), a)
+    out <- jfp_add_pair(out, jfp_mv_pair(cx, Av, e), -a)
     out$lr <- c(out$lr, list(
       list(X = Bv, K = -a * diag(p * p), Y = B),
       list(X = B, K = -a * diag(p * p), Y = Bv),
@@ -127,29 +136,30 @@ jfp_terms3 <- function(st, v) {
 #' @keywords internal
 jfp_terms4 <- function(st, v, w) {
   jfp_check_outer(st)
-  ev <- jfp_eta_dir(st, v)
-  ew <- jfp_eta_dir(st, w)
-  out <- list(sparse = list(), lr = list())
+  ds <- list(v = jfp_dir(st, v), w = jfp_dir(st, w))
+  out <- list(sparse = list(), lr = list(), dense = list())
+  e <- character(0)
+  vw <- c("v", "w")
   for (bs in st$blocks) {
+    cx <- jfp_mv_ctx(st, bs, ds)
     a <- bs$block$power
-    p <- ncol(bs$Z[[jfp_live(bs)[1L]]])
+    p <- cx$p
     Ip <- diag(p)
     I2 <- diag(p * p)
-    Av <- jfp_white(st, bs, list(ev))
-    Aw <- jfp_white(st, bs, list(ew))
-    Avw <- jfp_white(st, bs, list(ev, ew))
-    B <- jfp_rows_B(st, bs, list())
-    Bv <- jfp_rows_B(st, bs, list(ev))
-    Bw <- jfp_rows_B(st, bs, list(ew))
-    Bvw <- jfp_rows_B(st, bs, list(ev, ew))
+    Av <- jfp_mv_white(cx, "v")
+    Aw <- jfp_mv_white(cx, "w")
+    Avw <- jfp_mv_white(cx, vw)
+    B <- jfp_mv_B(cx, e)
+    Bv <- jfp_mv_B(cx, "v")
+    Bw <- jfp_mv_B(cx, "w")
+    Bvw <- jfp_mv_B(cx, vw)
+    # the two terms without a direction share one trace, being linear in Y
+    out <- jfp_add_pair(out, jfp_mv_pair(cx, Ip, vw), a)
+    out <- jfp_add_pair(out, jfp_mv_pair(cx, Aw, "v"), -a)
+    out <- jfp_add_pair(out, jfp_mv_pair(cx, Av, "w"), -a)
+    out <- jfp_add_pair(out, jfp_mv_pair(cx, Aw %*% Av + Av %*% Aw - Avw, e),
+                        a)
     kr <- kronecker
-    out$sparse <- jfp_add_weights(out$sparse, list(
-      jfp_pair_weights(st, bs, Ip, list(ev, ew)),
-      jfp_pair_weights(st, bs, Aw, list(ev)),
-      jfp_pair_weights(st, bs, Avw, list()),
-      jfp_pair_weights(st, bs, Av, list(ew)),
-      jfp_pair_weights(st, bs, Aw %*% Av + Av %*% Aw, list())),
-      a * c(1, -1, -1, -1, 1))
     lr <- list(
       # minus the derivative of tr(A_kv A_l)
       list(Bvw, -I2, B), list(Bv, -I2, Bw),
@@ -188,6 +198,10 @@ jfp_terms_matrix <- function(st, terms) {
     st$spec, st$coef, st$design, expected = TRUE, emethod = st$emethod,
     H = lapply(terms$sparse, function(x) -x)))
   for (z in terms$lr) out <- out + z$X %*% z$K %*% t(z$Y)
+  for (z in terms$dense) {
+    out[z$idx, ] <- out[z$idx, ] + z$X
+    out[, z$idx] <- out[, z$idx] + t(z$X)
+  }
   (out + t(out)) / 2
 }
 
@@ -219,33 +233,28 @@ jfp_terms_trace <- function(st, terms, M) {
   for (z in terms$lr) {
     s <- s + sum((crossprod(z$X, M %*% z$Y)) * z$K)
   }
+  for (z in terms$dense) s <- s + 2 * sum(M[z$idx, , drop = FALSE] * z$X)
   s
 }
 
 
-#' The Pieces From Which the Terms Are Built
+#' The Movement of the Predictors and the Information Along Directions
 #'
 #' @description
 #' `jfp_eta_dir()` returns the movement of each equation's predictor along a
-#' direction; `jfp_dI()` a derivative of the family's expected information,
-#' contracted along directions; `jfp_white()`, `jfp_rows_B()` and
-#' `jfp_pair_weights()` the three shapes in which a derivative of the
-#' block's matrix enters (see the comment at the top of `R/jfp_outer.R`).
+#' direction, the Jacobian times the direction; `jfp_dI()` a derivative of
+#' the family's expected information, with some predictor indices fixed and
+#' the others contracted against per-equation movements.
 #'
 #' @param st A state, from [jfp_state()].
-#' @param bs A block's entry of the state.
 #' @param v A direction over the joint vector.
 #' @param q,r The pair of the information.
 #' @param fixed The equations of the derivatives that are not contracted.
-#' @param dirs A list of directions, each as `jfp_eta_dir()` returns it.
-#' @param Y A symmetric \eqn{\tilde p\times\tilde p} matrix.
+#' @param dirs A list of movements, each a list of numeric vectors, one per
+#'   distribution parameter.
 #'
 #' @return `jfp_eta_dir()` a list of numeric vectors, one per distribution
-#'   parameter; `jfp_dI()` a numeric vector over the observations;
-#'   `jfp_white()` a \eqn{\tilde p\times\tilde p} matrix; `jfp_rows_B()` a
-#'   matrix over the joint vector and the \eqn{\tilde p^2} entries;
-#'   `jfp_pair_weights()` a list keyed as [statmod_information_at()] reads
-#'   its `H`.
+#'   parameter; `jfp_dI()` a numeric vector over the observations.
 #'
 #' @keywords internal
 jfp_eta_dir <- function(st, v) {
@@ -286,89 +295,22 @@ jfp_dI <- function(st, q, r, fixed, dirs) {
   out
 }
 
-#' @rdname jfp_eta_dir
-#' @keywords internal
-jfp_white <- function(st, bs, dirs) {
-  live <- jfp_live(bs)
-  w <- st$spec@weights
-  p <- ncol(bs$Z[[live[1L]]])
-  out <- matrix(0, p, p)
-  for (q in live) {
-    for (r in live) {
-      out <- out + crossprod(bs$Z[[q]] * (w * jfp_dI(st, q, r, integer(0),
-                                                    dirs)), bs$Z[[r]])
-    }
-  }
-  (out + t(out)) / 2
-}
-
-#' @rdname jfp_eta_dir
-#' @keywords internal
-jfp_rows_B <- function(st, bs, dirs) {
-  live <- jfp_live(bs)
-  w <- st$spec@weights
-  n <- st$spec@n_obs
-  p <- ncol(bs$Z[[live[1L]]])
-  ii <- rep(seq_len(p), times = p)
-  jj <- rep(seq_len(p), each = p)
-  B <- matrix(0, st$total, p * p)
-  for (cc in seq_along(st$params)) {
-    if (st$npar[cc] == 0L) next
-    Fc <- matrix(0, n, p * p)
-    for (q in live) {
-      for (r in live) {
-        s <- jfp_dI(st, q, r, cc, dirs)
-        if (!any(s != 0)) next
-        Fc <- Fc + s * bs$Z[[q]][, ii, drop = FALSE] *
-          bs$Z[[r]][, jj, drop = FALSE]
-      }
-    }
-    B[st$offs[cc] + seq_len(st$npar[cc]), ] <-
-      as.matrix(crossprod(st$design[[st$params[cc]]]$X, w * Fc))
-  }
-  B
-}
-
-#' @rdname jfp_eta_dir
-#' @keywords internal
-jfp_pair_weights <- function(st, bs, Y, dirs) {
-  live <- jfp_live(bs)
-  params <- st$params
-  np <- length(params)
-  y <- list()
-  for (q in live) {
-    for (r in live) {
-      y[[paste(q, r)]] <- rowSums((bs$Z[[q]] %*% Y) * bs$Z[[r]])
-    }
-  }
-  out <- list()
-  for (cc in seq_len(np)) {
-    for (dd in cc:np) {
-      v <- numeric(st$spec@n_obs)
-      for (q in live) {
-        for (r in live) {
-          v <- v + y[[paste(q, r)]] * jfp_dI(st, q, r, c(cc, dd), dirs)
-        }
-      }
-      out[[hess_key(params, cc, dd)]] <- v
-    }
-  }
-  out
-}
-
 
 #' Small Helpers of the Third and Fourth Derivatives
 #'
 #' @description
 #' `jfp_live()` returns the equations in which a block has rows;
-#' `jfp_add_weights()` sums weight lists with coefficients;
+#' `jfp_add_weights()` sums weight lists with coefficients, and
+#' `jfp_add_pair()` adds a trace term of [jfp_mv_pair()] with a coefficient;
 #' `jfp_darray()` returns the family's derivative of the expected
 #' information of order `k`, kept in the state; `jfp_check_outer()` signals
-#' an error where the third and fourth derivatives are not written.
+#' an error beside a filter, where the third and fourth derivatives are not
+#' written.
 #'
 #' @param bs A block's entry of the state.
 #' @param acc,lst,coef An accumulated weight list, the lists to add and
 #'   their coefficients.
+#' @param pair What [jfp_mv_pair()] returns.
 #' @param st A state, from [jfp_state()].
 #' @param k The order, 1 to 4.
 #'
@@ -385,6 +327,16 @@ jfp_add_weights <- function(acc, lst, coef) {
       x <- coef[i] * lst[[i]][[k]]
       acc[[k]] <- if (is.null(acc[[k]])) x else acc[[k]] + x
     }
+  }
+  acc
+}
+
+#' @rdname jfp_live
+#' @keywords internal
+jfp_add_pair <- function(acc, pair, coef) {
+  acc$sparse <- jfp_add_weights(acc$sparse, list(pair$sparse), coef)
+  for (z in pair$dense) {
+    acc$dense[[length(acc$dense) + 1L]] <- list(idx = z$idx, X = coef * z$X)
   }
   acc
 }
@@ -415,12 +367,6 @@ jfp_check_outer <- function(st) {
   if (!is.null(st$joint)) {
     stop("The third derivative of a Jeffreys penalty beside a filter is not ",
          "implemented yet.", call. = FALSE)
-  }
-  rf <- attr(st$design, "refresh")
-  if (!is.null(rf) && length(rf)) {
-    stop(paste0("The third derivative of a Jeffreys penalty beside a block ",
-                "recomputed at the\n  coefficients is not implemented yet."),
-         call. = FALSE)
   }
   invisible(NULL)
 }

@@ -3,6 +3,7 @@
 \name{jfp_live}
 \alias{jfp_live}
 \alias{jfp_add_weights}
+\alias{jfp_add_pair}
 \alias{jfp_darray}
 \alias{jfp_check_outer}
 \title{Small Helpers of the Third and Fourth Derivatives}
@@ -10,6 +11,8 @@
 jfp_live(bs)
 
 jfp_add_weights(acc, lst, coef)
+
+jfp_add_pair(acc, pair, coef)
 
 jfp_darray(st, k)
 
@@ -21,6 +24,8 @@ jfp_check_outer(st)
 \item{acc, lst, coef}{An accumulated weight list, the lists to add and
 their coefficients.}
 
+\item{pair}{What \code{\link[=jfp_mv_pair]{jfp_mv_pair()}} returns.}
+
 \item{st}{A state, from \code{\link[=jfp_state]{jfp_state()}}.}
 
 \item{k}{The order, 1 to 4.}
@@ -30,9 +35,11 @@ As described.
 }
 \description{
 \code{jfp_live()} returns the equations in which a block has rows;
-\code{jfp_add_weights()} sums weight lists with coefficients;
+\code{jfp_add_weights()} sums weight lists with coefficients, and
+\code{jfp_add_pair()} adds a trace term of \code{\link[=jfp_mv_pair]{jfp_mv_pair()}} with a coefficient;
 \code{jfp_darray()} returns the family's derivative of the expected
 information of order \code{k}, kept in the state; \code{jfp_check_outer()} signals
-an error where the third and fourth derivatives are not written.
+an error beside a filter, where the third and fourth derivatives are not
+written.
 }
 \keyword{internal}
