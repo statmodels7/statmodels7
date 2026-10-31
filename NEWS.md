@@ -1,3 +1,14 @@
+# statmodels7 0.235.0
+
+* `statmod()` fits a model whose terms carry a discrete choice
+  (`modelterms7::term_pilot()`) by a search: one pilot fit with each such
+  term replaced by its stand-in, then one fit for each version of the term
+  (`modelterms7::term_variants()`), keeping the best criterion. Several such
+  terms are settled one at a time. The versions tried and their scores are
+  in `fit@history$variants`, and `print()` names the version chosen. This is
+  how the mode of `modelterms7::shape_unimodal()` is chosen when it is not
+  given.
+
 # statmodels7 0.234.0
 
 * `statmod()` fits `modelterms7::jfp()` blocks, a Jeffreys prior on a block of
