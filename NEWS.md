@@ -1,3 +1,9 @@
+# statmodels7 0.231.0
+
+* A fit with `modelterms7::scs()` is summarized as a smooth (its smoothing
+  parameter and effective degrees of freedom, not its free coefficients), and
+  the criterion graph is available for its smoothing parameter.
+
 # statmodels7 0.230.0
 
 * `plot()` and `autoplot()` of a fit take `legend`: `NULL` (the default)
