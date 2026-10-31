@@ -744,7 +744,8 @@ criterion_plot_data <- function(type, x, fit, ctx, ...) {
 }
 
 for (.cls in list(modelterms7::SmoothTerm, modelterms7::PenalizedTerm,
-                  modelterms7::RandomTerm, modelterms7::RandomSmoothTerm)) {
+                  modelterms7::RandomTerm, modelterms7::RandomSmoothTerm,
+                  modelterms7::ScsTerm)) {
   S7::method(plot_data, list(PlotCriterion, .cls)) <- criterion_plot_data
 }
 rm(.cls)

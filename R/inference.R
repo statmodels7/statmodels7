@@ -2230,7 +2230,8 @@ term_block_kind <- function(term) {
   # so a term written later is covered without an edit here.
   if (!length(ent) && !length(term_tags_deep(term))) return("parametric")
   if (S7::S7_inherits(term, modelterms7::RandomTerm)) return("random")
-  if (S7::S7_inherits(term, modelterms7::SmoothTerm)) return("smooth")
+  if (S7::S7_inherits(term, modelterms7::SmoothTerm) ||
+      S7::S7_inherits(term, modelterms7::ScsTerm)) return("smooth")
   if (any(vapply(ent, function(e) penalty_has_kink(e$penalty), logical(1)))) {
     return("selection")
   }
