@@ -54,6 +54,11 @@ with \code{gradient} and \code{eigen} from \code{\link[=certificate_readings]{ce
 there is nothing to read), and \code{zeros}, which
 reads \code{NULL} where no coefficient sits at the kink of a penalty and is
 otherwise a named vector with \code{ratio} and \code{n} from \code{\link[=zero_readings]{zero_readings()}}.
+
+\code{separation} is the list that \code{\link[=separation_diagnosis]{separation_diagnosis()}} returns, with a
+further element \code{message} that describes each direction it found in a
+sentence (empty where there is none), or \code{NULL} where the diagnosis
+signaled an error. It does not enter \code{state}.
 }
 \description{
 Reads the outer criterion at the reported point, independently of the path

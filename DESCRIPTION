@@ -143,6 +143,7 @@ Collate:
     'profile_class.R'
     'rstatmod.R'
     'sandwich_hc23.R'
+    'separation.R'
     'start.R'
     'statmodels7-package.R'
     'threads.R'

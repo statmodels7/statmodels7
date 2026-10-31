@@ -1,0 +1,91 @@
+sep_bern <- distributions7::bernoulli_distrib()
+
+test_that("complete separation is found along the separating direction", {
+  d <- data.frame(x = 1:10, y = as.integer(1:10 > 5))
+  f <- suppressWarnings(statmod(y ~ x, sep_bern, d))
+  s <- separation_diagnosis(f)
+  expect_true(s$found)
+  expect_false(s$descent)
+  dir <- s$directions[[1]]
+  expect_identical(dir$kind, "recession")
+  expect_setequal(names(dir$coefficients), c("mu:(Intercept)", "mu:x"))
+  # the direction separates: the predictor rises where y = 1
+  eta <- dir$coefficients[["mu:(Intercept)"]] + dir$coefficients[["mu:x"]] * d$x
+  expect_true(all(eta[d$y == 1] > 0) && all(eta[d$y == 0] < 0))
+})
+
+test_that("a level whose counts are all zero is found, and only that level", {
+  set.seed(1)
+  d <- data.frame(g = factor(rep(c("a", "b", "c", "d"), each = 15)),
+                  x = rnorm(60))
+  d$y <- rpois(60, exp(1 + 0.3 * d$x))
+  d$y[d$g == "d"] <- 0L
+  f <- statmod(y ~ g + x, distributions7::poisson_distrib(), d)
+  s <- separation_diagnosis(f)
+  expect_true(s$found)
+  expect_named(s$directions[[1]]$coefficients, "mu:gd")
+  expect_lt(s$directions[[1]]$coefficients[["mu:gd"]], 0)
+  expect_identical(unname(s$directions[[1]]$n_moved), 15L)
+  ct <- statmod_certificate(f)
+  expect_true(ct$separation$found)
+  expect_match(ct$separation$message, "mu:gd moves toward minus infinity")
+  # an observation with a count of one in that level makes the estimate exist
+  d$y[d$g == "d"][3] <- 1L
+  f1 <- statmod(y ~ g + x, distributions7::poisson_distrib(), d)
+  expect_false(separation_diagnosis(f1)$found)
+})
+
+test_that("a group without zeros is found in the zero-inflation equation", {
+  set.seed(3)
+  d <- data.frame(g = factor(rep(c("A", "B"), each = 80)), x = rnorm(160))
+  d$y <- ifelse(runif(160) < 0.3, 0L, rpois(160, exp(1.2 + 0.3 * d$x)))
+  d$y[d$g == "B" & d$y == 0] <- 1L
+  f <- suppressWarnings(statmod(
+    y ~ x | zi ~ g, distributions7::zero_inflated(distributions7::poisson_distrib()),
+    d))
+  s <- separation_diagnosis(f)
+  expect_true(s$found)
+  expect_true(any(vapply(s$directions, function(z)
+    identical(names(z$coefficients), "zi:gB"), logical(1))))
+})
+
+test_that("separation beside a random effect is found in the fixed effect", {
+  set.seed(4)
+  d <- data.frame(id = factor(rep(1:20, each = 8)), x = rnorm(160),
+                  z = rbinom(160, 1, 0.2))
+  d$y <- rbinom(160, 1, plogis(-0.3 + 0.7 * d$x + rnorm(20, 0, 0.8)[d$id]))
+  d$y[d$z == 1] <- 1L
+  f <- suppressWarnings(statmod(y ~ x + z + random(~ 1 | id), sep_bern, d))
+  s <- separation_diagnosis(f)
+  expect_true(s$found)
+  expect_named(s$directions[[1]]$coefficients, "mu:z")
+})
+
+test_that("ordinary fits, near separation and penalized terms are not reported", {
+  set.seed(11)
+  d <- data.frame(x = rnorm(200), z = rnorm(200))
+  d$y <- rbinom(200, 1, plogis(-0.5 + d$x - 0.5 * d$z))
+  s <- separation_diagnosis(statmod(y ~ x + z, sep_bern, d))
+  expect_false(s$found)
+  expect_false(s$descent)
+  # one overlapping pair: large but finite coefficients
+  d2 <- data.frame(x = 1:10, y = as.integer(c(0, 0, 0, 0, 1, 0, 1, 1, 1, 1)))
+  expect_false(separation_diagnosis(statmod(y ~ x, sep_bern, d2))$found)
+  # a group of ones under a random intercept has a finite mode
+  set.seed(19)
+  d3 <- data.frame(id = factor(rep(1:20, each = 8)), x = rnorm(160))
+  d3$y <- rbinom(160, 1, plogis(-0.3 + 0.7 * d3$x + rnorm(20, 0, 0.8)[d3$id]))
+  d3$y[d3$id == "3"] <- 1L
+  s3 <- separation_diagnosis(statmod(y ~ x + random(~ 1 | id), sep_bern, d3))
+  expect_false(s3$found)
+  expect_false(s3$descent)
+})
+
+test_that("the certificate records the diagnosis without changing its state", {
+  d <- data.frame(x = 1:10, y = as.integer(1:10 > 5))
+  f <- suppressWarnings(statmod(y ~ x, sep_bern, d))
+  ct <- statmod_certificate(f)
+  expect_true(ct$separation$found)
+  expect_length(ct$separation$message, length(ct$separation$directions))
+  expect_identical(ct$state, certificate_core(f, 1e-2, 2e-3, 8)$state)
+})

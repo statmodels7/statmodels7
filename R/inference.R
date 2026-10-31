@@ -5472,6 +5472,11 @@ drop_common_prefix <- function(nms) {
 #'   reads `NULL` where no coefficient sits at the kink of a penalty and is
 #'   otherwise a named vector with `ratio` and `n` from [zero_readings()].
 #'
+#'   `separation` is the list that [separation_diagnosis()] returns, with a
+#'   further element `message` that describes each direction it found in a
+#'   sentence (empty where there is none), or `NULL` where the diagnosis
+#'   signaled an error. It does not enter `state`.
+#'
 #' @seealso [statmod()], [joint_decrement()], [outer_curvature()],
 #'   [mode_error_limit()], [criterion_resolution()]
 #'
@@ -5507,6 +5512,16 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
                           paste0(kk$param, ":", kk$term, ":", kk$name),
                           paste0(kk$param, ":", kk$name)),
       kk$eta, kk$target, kk$gain), out$reason)
+  }
+  # A DIRECTION ALONG WHICH THE ESTIMATE DOES NOT EXIST (separation, a level
+  # with all its counts at zero) leaves a point that the readings above
+  # certify, since the score and the curvature vanish together along it. It
+  # is read by separation_diagnosis() and recorded beside the verdict, which
+  # it does not change.
+  out$separation <- tryCatch(separation_diagnosis(fit),
+                             error = function(e) NULL)
+  if (!is.null(out$separation)) {
+    out$separation$message <- separation_message(out$separation)
   }
   out
 }
