@@ -13,7 +13,8 @@ filter_driving(
   H,
   D3 = NULL,
   D4 = NULL,
-  D5 = NULL
+  D5 = NULL,
+  D6 = NULL
 )
 }
 \arguments{
@@ -25,12 +26,12 @@ filter_driving(
 
 \item{scaling}{The exponent \eqn{d}.}
 
-\item{gl, H, D3, D4, D5}{The family's link-scale derivatives; the higher ones
-may be \code{NULL}.}
+\item{gl, H, D3, D4, D5, D6}{The family's link-scale derivatives; the higher
+ones may be \code{NULL}.}
 }
 \value{
-A list with \code{gl}, \code{H}, \code{D3}, \code{D4} and \code{D5}, the same objects where
-\code{scaling} is zero.
+A list with \code{gl}, \code{H}, \code{D3}, \code{D4}, \code{D5} and \code{D6}, the same objects
+where \code{scaling} is zero.
 }
 \description{
 Replaces, in the family's link-scale derivative arrays, the entries that a
@@ -50,6 +51,7 @@ partitions \eqn{\pi} of \eqn{B} gives
 The derivatives \eqn{\mathcal{I}_\beta} are minus those of
 \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} and its higher-order
 siblings, and all of them are on the link scale. The highest array given sets
-the order: \code{D5} needs the fourth derivative of the information.
+the order: \code{D5} needs the fourth derivative of the information and \code{D6}
+the fifth (\code{\link[distributions7:distrib_d5expected_hessian]{distributions7::distrib_d5expected_hessian()}}).
 }
 \keyword{internal}

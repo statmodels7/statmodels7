@@ -406,3 +406,66 @@ test_that("a scaled filter is exact with its parameters developed", {
     expect_lt(max(g), 1e-7, label = deparse(fm[[3L]])[1L])
   }
 })
+
+test_that("the driving quantity's fifth derivative is the derivative of its fourth", {
+  # filter_driving() at the order of term_fifth(): D6 against a Richardson
+  # difference of D5 in each predictor, on the link scale, for a negative
+  # binomial mean whose scaling couples the two equations
+  dd <- sc_pois()
+  spec <- statmod_spec(y ~ x + gas(p = 1, q = 1, time = t, scaling = 0.5) |
+                         theta ~ z, negbin2_distrib(), dd)
+  d <- spec@distrib
+  y <- dd$y
+  n <- nrow(dd)
+  params <- d@params
+  set.seed(4)
+  eta <- list(mu = log(2) + stats::rnorm(n, 0, 0.2),
+              theta = log(3) + stats::rnorm(n, 0, 0.2))
+  th_of <- function(e) list(mu = exp(e$mu), theta = exp(e$theta))
+  arrays <- function(e) {
+    th <- th_of(e)
+    lk <- function(f) f(d, y, th, scale = "link")
+    list(gl = lk(distributions7::distrib_gradient),
+         H = lk(distributions7::distrib_hessian),
+         D3 = lk(distributions7::distrib_deriv3),
+         D4 = lk(distributions7::distrib_deriv4),
+         D5 = lk(distributions7::distrib_deriv5),
+         D6 = lk(distributions7::distrib_deriv6))
+  }
+  for (sc in c(0.5, 1)) {
+    drive <- function(e) {
+      a <- arrays(e)
+      filter_driving(spec, th_of(e), 1L, sc, a$gl, a$H, a$D3, a$D4, a$D5,
+                     a$D6)
+    }
+    got <- drive(eta)
+    expect_false(identical(got$D6, arrays(eta)$D6))
+    scale5 <- max(abs(got$D6[[deriv6_key(params, 1L, 1L, 1L, 1L, 1L, 1L)]]))
+    for (tu in list(c(1L, 1L, 1L, 1L, 1L), c(1L, 2L, 1L, 2L, 2L),
+                    c(2L, 2L, 2L, 2L, 1L))) {
+      c5 <- tu[5L]
+      d5 <- function(h) {
+        e <- eta
+        e[[params[c5]]] <- e[[params[c5]]] + h
+        drive(e)$D5[[deriv5_key(params, 1L, tu[1L], tu[2L], tu[3L],
+                                tu[4L])]]
+      }
+      dif <- function(h) (d5(h) - d5(-h)) / (2 * h)
+      ref <- (4 * dif(1e-3) - dif(2e-3)) / 3
+      val <- got$D6[[deriv6_key(params, 1L, tu[1L], tu[2L], tu[3L], tu[4L],
+                                tu[5L])]]
+      # at d = 1 the driving quantity of this family is (y - mu)/mu, free of
+      # theta, so a component in theta is zero and is judged on the order's
+      # own scale
+      expect_lt(max(abs(val - ref)) / max(abs(ref), scale5), 1e-6,
+                label = sprintf("d = %g, %s", sc, paste(tu, collapse = "")))
+    }
+    # the negative control: dropping the information's fifth derivative
+    # is detected
+    expect_false(isTRUE(all.equal(
+      got$D6, filter_driving(spec, th_of(eta), 1L, 0, arrays(eta)$gl,
+                             arrays(eta)$H, arrays(eta)$D3, arrays(eta)$D4,
+                             arrays(eta)$D5, arrays(eta)$D6)$D6,
+      tolerance = 1e-6)))
+  }
+})
