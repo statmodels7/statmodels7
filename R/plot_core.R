@@ -613,6 +613,11 @@ term_variables <- function(tm, name) {
   if (S7::S7_inherits(tm, modelterms7::LinparTerm)) {
     return(all.vars(tm@formula))
   }
+  # the shape of scs() may be an object named in the call, which is not a
+  # variable of the data; the covariate is the term's own expression
+  if (S7::S7_inherits(tm, modelterms7::ScsTerm)) {
+    return(all.vars(tm@var))
+  }
   out <- tryCatch(all.vars(str2lang(name)), error = function(e) character(0))
   # the call of nl() also names the term's own parameters; the variables of
   # the data are those among the ones the build recorded

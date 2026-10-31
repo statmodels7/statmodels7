@@ -878,6 +878,11 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   settled on the expected information from [auto_info()].
 #' @param switch_after The iteration after which `switch_at` replaces
 #'   `pieces_at`.
+#' @param guard Whether a trial point of the line search whose objective
+#'   raises an error is read as a rejected step, also where there is no
+#'   `backup_at`. [fit_smooth()] sets it for a design with a term whose block
+#'   moves with its coefficients, where a long step can carry the predictor
+#'   out of the range in which the family is defined.
 #'
 #' @return A list of ten: the six below; `note`, the reason for which a run
 #'   stopped or `NULL`; `aliased`, the coordinates that the pivot left out;
@@ -911,7 +916,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
                      groups = NULL, frozen = integer(0), backup_at = NULL,
                      damp_on_reject = TRUE, kinks_at = NULL,
                      newton_at = NULL, switch_at = NULL,
-                     switch_after = Inf) {
+                     switch_after = Inf, guard = FALSE) {
   beta <- start
   tol_def <- iwls_definite_tol(method)
   # the iteration at which the run moved to the observed information, 0 if
@@ -1077,7 +1082,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       fallback[["indefinite"]] <- fallback[["indefinite"]] + 1L
     }
     st <- iwls_line_search(obj, beta, value, g, pc, method, damp, frozen,
-                           guard = !is.null(backup_at))
+                           guard = guard || !is.null(backup_at))
     fallback[["error"]] <- fallback[["error"]] + st$errors
     if (!st$ok && !is.null(backup_at)) {
       pc <- backup_at(beta)

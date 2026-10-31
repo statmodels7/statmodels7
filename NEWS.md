@@ -1,3 +1,14 @@
+# statmodels7 0.233.0
+
+* `plot_derivative()` draws the derivative of a `modelterms7::scs()` term:
+  the curve is the derivative of the fitted effect, and its band comes from
+  the rows of the block, which are its gradient in the coefficients.
+* The graphs of an `scs()` term read its covariate from the term, so a shape
+  given as an object in the call is not taken for a variable of the data.
+* In a model with a term whose block moves with its coefficients, a trial
+  step of the inner fit at which the density cannot be evaluated is
+  rejected and halved; such a step used to stop the fit with an error.
+
 # statmodels7 0.232.1
 
 * `separation_diagnosis()` no longer depends on where the outer search stops

@@ -2260,7 +2260,12 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
                     damp_on_reject = !has_sharp_breakpoint(spec),
                     kinks_at = kinks_at, newton_at = newton_at,
                     switch_at = switch_at,
-                    switch_after = if (is.null(switch_at)) Inf else sw)
+                    switch_after = if (is.null(switch_at)) Inf else sw,
+                    # A MOVING BLOCK CAN STEP OUT OF THE FAMILY'S DOMAIN: a
+                    # long trial step of scs() overflows exp() and gives a
+                    # NaN predictor, and the density then stops the fit; the
+                    # step is rejected and halved instead (misure_scs/fase2)
+                    guard = length(attr(design, "refresh")) > 0L)
     out <- beta
     out[idx] <- res$par
     # the block was solved in its own numbering, so the aliased coordinates
