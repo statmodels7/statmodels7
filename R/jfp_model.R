@@ -486,6 +486,29 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 }
 
 
+#' @rdname jfp_outer_ok
+#' @keywords internal
+jfp_filter_outer_ok <- function(spec, design, order = 1L) {
+  su <- attr(design, "structural")
+  if (length(su) != 1L) return(FALSE)
+  if (length(attr(design, "refresh"))) return(FALSE)
+  if (!structural_penalized(spec, design)) return(FALSE)
+  tm <- structural_term_of(spec, design)
+  joint <- S7::S7_inherits(tm, modelterms7::GasJoint)
+  if (is.null(tm) || !(joint || S7::S7_inherits(tm, modelterms7::GasTerm))) {
+    return(FALSE)
+  }
+  host <- any(vapply(jfp_blocks(spec, design), function(b)
+    identical(b$kind, "filter"), logical(1)))
+  if (!order_available(spec@distrib, 3L + order + host)) return(FALSE)
+  if (host && order >= 2L && joint &&
+      filter_scaling(tm@terms[[1L]]) != 0) {
+    return(FALSE)
+  }
+  TRUE
+}
+
+
 #' Whether the Outer Derivatives Can Read a Jeffreys Penalty
 #'
 #' @description
@@ -496,8 +519,18 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 #' The gradient reads the third derivative of the penalty, so the third
 #' derivative of the family's expected information, and the Hessian the
 #' fourth; each is probed once at a random point with the method that
-#' [jfp_emethod()] selects. The derivatives are written for a model without a
-#' filter, and the function returns `FALSE` beside one.
+#' [jfp_emethod()] selects.
+#'
+#' Beside a filter ([modelterms7::gas()], a single or a joint one) the
+#' derivatives are written on the joint vector, which is the vector of the
+#' criterion only where a penalty covers the filter's own parameters
+#' ([structural_penalized()]); elsewhere the function returns `FALSE`. The
+#' gradient then reads the filter's third derivative and the family's fourth
+#' ([modelterms7::term_third()]), the Hessian one order more of each; a block
+#' in the subformula of a filter's parameter reads one order more again,
+#' the Hessian through [modelterms7::term_fifth()], which a joint filter with
+#' a scaled score does not supply. A filter together with a term whose block
+#' is recomputed at the coefficients is not covered.
 #'
 #' Where a term recomputes its block at the coefficients, `jfp_refresh_ok()`
 #' asks that the block be a Jacobian ([modelterms7::term_jacobian_block()])
@@ -517,7 +550,10 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 #'
 #' @keywords internal
 jfp_outer_ok <- function(spec, design, order = 1L) {
-  if (length(attr(design, "structural"))) return(FALSE)
+  if (length(attr(design, "structural")) &&
+      !jfp_filter_outer_ok(spec, design, order)) {
+    return(FALSE)
+  }
   if (!jfp_refresh_ok(spec, design, order)) return(FALSE)
   d <- spec@distrib
   mem <- .jfp_outer_memory

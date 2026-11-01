@@ -47,7 +47,13 @@ derivatives of the predictors to the fourth order and, for a block in the
 subformula of such a term, the movement of the block's rows enter as well
 (\code{\link[=jfp_mv_ctx]{jfp_mv_ctx()}}); the derivatives of the term's block come from
 \code{\link[modelterms7:term_block_deriv]{modelterms7::term_block_deriv()}} and its siblings up to
-\code{\link[modelterms7:term_block_deriv4]{modelterms7::term_block_deriv4()}}. Beside a filter they signal an error.
+\code{\link[modelterms7:term_block_deriv4]{modelterms7::term_block_deriv4()}}. In a model with a filter the
+predictors are those of the joint vector (\code{\link[=jfp_joint_rows]{jfp_joint_rows()}}): their
+derivatives come from the filter's kernels along the directions, and for a
+block in the subformula of a filter's parameter the rows' derivatives are
+read along the whitened directions of the block, one kernel call per
+direction (\code{\link[modelterms7:term_third]{modelterms7::term_third()}}, \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}},
+\code{\link[modelterms7:term_fifth]{modelterms7::term_fifth()}}).
 
 The outer criterion reads them: the derivative of its penalized matrix
 along the movement of the mode carries \eqn{-a\,D_3(v)}, and its second

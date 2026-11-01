@@ -51,7 +51,13 @@ NULL
 #' subformula of such a term, the movement of the block's rows enter as well
 #' ([jfp_mv_ctx()]); the derivatives of the term's block come from
 #' [modelterms7::term_block_deriv()] and its siblings up to
-#' [modelterms7::term_block_deriv4()]. Beside a filter they signal an error.
+#' [modelterms7::term_block_deriv4()]. In a model with a filter the
+#' predictors are those of the joint vector ([jfp_joint_rows()]): their
+#' derivatives come from the filter's kernels along the directions, and for a
+#' block in the subformula of a filter's parameter the rows' derivatives are
+#' read along the whitened directions of the block, one kernel call per
+#' direction ([modelterms7::term_third()], [modelterms7::term_fourth()],
+#' [modelterms7::term_fifth()]).
 #'
 #' The outer criterion reads them: the derivative of its penalized matrix
 #' along the movement of the mode carries \eqn{-a\,D_3(v)}, and its second
@@ -194,7 +200,9 @@ jfp_terms4 <- function(st, v, w) {
 #'
 #' @keywords internal
 jfp_terms_matrix <- function(st, terms) {
-  out <- as_dense(statmod_information_at(
+  if (!is.null(st$joint)) {
+    out <- jfp_joint_sparse(st, terms$sparse)
+  } else out <- as_dense(statmod_information_at(
     st$spec, st$coef, st$design, expected = TRUE, emethod = st$emethod,
     H = lapply(terms$sparse, function(x) -x)))
   for (z in terms$lr) out <- out + z$X %*% z$K %*% t(z$Y)
@@ -213,6 +221,19 @@ jfp_terms_trace <- function(st, terms, M) {
   np <- length(params)
   n <- st$spec@n_obs
   w <- st$spec@weights
+  if (!is.null(st$joint)) {
+    # the weighted cross products of the joint rows, traced densely
+    s <- 0
+    V <- st$joint$V
+    for (cc in seq_len(np)) {
+      VM <- V[[cc]] %*% M
+      for (dd in seq_len(np)) {
+        Wcd <- terms$sparse[[hess_key(params, cc, dd)]]
+        if (is.null(Wcd)) next
+        s <- s + sum(w * rep_len(Wcd, n) * rowSums(VM * V[[dd]]))
+      }
+    }
+  } else {
   # the outer derivatives trace against one M several times at a point
   if (is.null(st$lev_M) || !identical(st$lev_M, M)) {
     st$lev_M <- M
@@ -229,6 +250,7 @@ jfp_terms_trace <- function(st, terms, M) {
       if (is.null(Wcd)) next
       s <- s + sum(w * rep_len(Wcd, n) * G[[cc]][[dd]])
     }
+  }
   }
   for (z in terms$lr) {
     s <- s + sum((crossprod(z$X, M %*% z$Y)) * z$K)
@@ -258,6 +280,9 @@ jfp_terms_trace <- function(st, terms, M) {
 #'
 #' @keywords internal
 jfp_eta_dir <- function(st, v) {
+  if (!is.null(st$joint)) {
+    return(lapply(st$joint$V, function(X) as.numeric(X %*% v)))
+  }
   lapply(seq_along(st$params), function(cc) {
     if (st$npar[cc] == 0L) return(numeric(st$spec@n_obs))
     as.numeric(st$design[[st$params[cc]]]$X %*%
@@ -304,8 +329,7 @@ jfp_dI <- function(st, q, r, fixed, dirs) {
 #' `jfp_add_pair()` adds a trace term of [jfp_mv_pair()] with a coefficient;
 #' `jfp_darray()` returns the family's derivative of the expected
 #' information of order `k`, kept in the state; `jfp_check_outer()` signals
-#' an error beside a filter, where the third and fourth derivatives are not
-#' written.
+#' an error where a block's information is not positive definite.
 #'
 #' @param bs A block's entry of the state.
 #' @param acc,lst,coef An accumulated weight list, the lists to add and
@@ -359,9 +383,36 @@ jfp_darray <- function(st, k) {
 #' @keywords internal
 jfp_check_outer <- function(st) {
   jfp_check_ok(st)
-  if (!is.null(st$joint)) {
-    stop("The third derivative of a Jeffreys penalty beside a filter is not ",
-         "implemented yet.", call. = FALSE)
-  }
   invisible(NULL)
+}
+
+
+#' The Weighted Cross Product of the Joint Rows
+#'
+#' @description
+#' Assembles \eqn{\sum_{c,d}V_c^\top\mathrm{diag}(w\,W_{cd})V_d} over the
+#' joint vector of a model with a filter, where \eqn{V_c} are the rows of
+#' every equation in the joint vector ([jfp_joint_rows()]) and the weights
+#' are keyed as [jfp_terms3()] returns them.
+#'
+#' @param st A state, from [jfp_state()], of a model with a filter.
+#' @param sparse The list of per-observation weights.
+#'
+#' @return A base matrix over the joint vector.
+#'
+#' @keywords internal
+jfp_joint_sparse <- function(st, sparse) {
+  params <- st$params
+  n <- st$spec@n_obs
+  w <- st$spec@weights
+  V <- st$joint$V
+  out <- matrix(0, st$total, st$total)
+  for (cc in seq_along(params)) {
+    for (dd in seq_along(params)) {
+      Wcd <- sparse[[hess_key(params, cc, dd)]]
+      if (is.null(Wcd) || !any(Wcd != 0)) next
+      out <- out + crossprod(V[[cc]], (w * rep_len(Wcd, n)) * V[[dd]])
+    }
+  }
+  out
 }

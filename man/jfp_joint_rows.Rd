@@ -27,8 +27,12 @@ coordinate, \code{third}, a function of the weights and of a direction
 \eqn{d} over every coordinate returning a list with \code{curv}, the third
 derivative contracted against \eqn{w_tg_{c,t}} and \eqn{d}, and \code{dphi},
 the second derivative along \eqn{d}, one matrix per parameter, both over
-every coordinate (\code{\link[modelterms7:term_third]{modelterms7::term_third()}}), and \code{nb}, \code{mf}, \code{zn} and
-\code{term}.
+every coordinate (\code{\link[modelterms7:term_third]{modelterms7::term_third()}}), \code{higher}, the same for
+one, two or three directions (a list) returning \code{curv}, the derivative
+of order two plus their number contracted against the weights and the
+directions, and \code{rows}, the derivative of order one plus their number
+along them (\code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}, \code{\link[modelterms7:term_fifth]{modelterms7::term_fifth()}}),
+and \code{nb}, \code{mf}, \code{zn} and \code{term}.
 }
 \description{
 Returns, for a model carrying a filter, the derivative of each equation's

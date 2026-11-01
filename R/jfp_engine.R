@@ -261,8 +261,12 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
 #'   \eqn{d} over every coordinate returning a list with `curv`, the third
 #'   derivative contracted against \eqn{w_tg_{c,t}} and \eqn{d}, and `dphi`,
 #'   the second derivative along \eqn{d}, one matrix per parameter, both over
-#'   every coordinate ([modelterms7::term_third()]), and `nb`, `mf`, `zn` and
-#'   `term`.
+#'   every coordinate ([modelterms7::term_third()]), `higher`, the same for
+#'   one, two or three directions (a list) returning `curv`, the derivative
+#'   of order two plus their number contracted against the weights and the
+#'   directions, and `rows`, the derivative of order one plus their number
+#'   along them ([modelterms7::term_fourth()], [modelterms7::term_fifth()]),
+#'   and `nb`, `mf`, `zn` and `term`.
 #'
 #' @keywords internal
 jfp_joint_rows <- function(spec, design, coef, ev) {
@@ -298,7 +302,9 @@ jfp_joint_rows <- function(spec, design, coef, ev) {
   V <- lapply(V, function(M) M[, keep, drop = FALSE])
   w <- spec@weights
   n <- spec@n_obs
-  curv_full <- function(g) {
+  # `scale` FALSE reads g as already weighted
+  curv_full <- function(g, scale = TRUE) {
+    w <- if (scale) w else 1
     out <- if (joint) {
       gg <- stats::setNames(lapply(f$params, function(p) w * g[[p]]),
                             f$params)
@@ -311,49 +317,126 @@ jfp_joint_rows <- function(spec, design, coef, ev) {
     as_dense(out)
   }
   curv <- function(g) curv_full(g)[keep, keep, drop = FALSE]
-  D4 <- NULL
-  # the third derivative of the filtered predictors along a direction over
-  # the full width, contracted against w g, and the second derivative along
-  # it, one row per observation and per equation
-  third <- function(g, dir) {
-    if (is.null(D4)) {
-      D4 <<- distributions7::distrib_deriv4(spec@distrib, spec@response,
-                                            ev$theta, scale = "link",
-                                            threads = spec@threads)
+  fam <- vector("list", 6L)
+  fam_at <- function(k) {
+    if (is.null(fam[[k]])) {
+      fam[[k]] <<- switch(k - 3L,
+        distributions7::distrib_deriv4(spec@distrib, spec@response, ev$theta,
+                                       scale = "link", threads = spec@threads),
+        distributions7::distrib_deriv5(spec@distrib, spec@response, ev$theta,
+                                       scale = "link"),
+        distributions7::distrib_deriv6(spec@distrib, spec@response, ev$theta,
+                                       scale = "link"))
     }
-    dphi <- lapply(params, function(p) matrix(0, n, jd$mf))
+    fam[[k]]
+  }
+  # the derivative of order 2 + length(dirs) of the filtered predictors,
+  # along the directions (over the full width) and contracted against w g,
+  # with the derivative of order 1 + length(dirs) along all of them, one
+  # row per observation and per equation (`rows`); one to three directions
+  higher <- function(g, dirs, scale = TRUE) {
+    w <- if (scale) w else 1
+    order <- length(dirs) + 2L
+    D4 <- fam_at(4L)
+    D5 <- if (order >= 4L) fam_at(5L)
+    D6 <- if (order >= 5L) fam_at(6L)
+    rows <- lapply(params, function(p) matrix(0, n, jd$mf))
     if (joint) {
-      bd <- joint_drive_data(spec, f$tm, gl, H, D3, D4, order = 3L,
-                             theta = ev$theta)
+      bd <- joint_drive_data(spec, f$tm, gl, H, D3, D4, D5, order = order,
+                             theta = ev$theta, D6 = D6)
       gg <- matrix(vapply(f$params, function(p) w * rep_len(g[[p]], n),
                           numeric(n)), n, length(f$params))
-      out <- modelterms7::term_third(f$tm, f$eta_static, NULL, NULL, NULL,
-                                     f$psi, gg, stats::setNames(Vs, params),
-                                     bd, dir)
+      seed <- stats::setNames(Vs, params)
+      out <- switch(order - 2L,
+        modelterms7::term_third(f$tm, f$eta_static, NULL, NULL, NULL, f$psi,
+                                gg, seed, bd, dirs[[1L]]),
+        modelterms7::term_fourth(f$tm, f$eta_static, NULL, NULL, NULL,
+                                 f$psi, gg, seed, bd, dirs),
+        modelterms7::term_fifth(f$tm, f$eta_static, NULL, NULL, f$psi, gg,
+                                seed, bd, dirs))
       for (k in seq_along(f$params)) {
-        dphi[[match(f$params[k], params)]] <- as_dense(out$dphi[[k]][[1L]])
+        rows[[match(f$params[k], params)]] <- as_dense(switch(order - 2L,
+          out$dphi[[k]][[1L]], out$dpsi[[k]], out$domega[[k]]))
       }
     } else {
       ap <- match(f$param, params)
       dr <- filter_driving(spec, ev$theta, ap, filter_scaling(f$tm), gl, H,
-                           D3, D4)
+                           D3, D4, D5, D6)
       sd_at <- rep_len(dr$gl[[f$param]], n)
       cd_at <- rep_len(dr$H[[hess_key(params, ap, ap)]], n)
-      mk <- .structural_blocks(params, ap, Vs, dr$H, dr$D3, dr$D4, n)
-      bd <- structural_blocks_data(params, ap, Vs, dr$H, dr$D3, n,
-                                   D4 = dr$D4)
-      out <- modelterms7::term_third(
-        f$tm, f$eta_static, spec@response, function(e, i) sd_at[i],
-        function(e, i) cd_at[i], f$psi, w * rep_len(g[[f$param]], n),
-        Vs[[ap]], mk(dir), dir, score_values = sd_at,
-        curvature_values = cd_at, blocks_data = bd, threads = spec@threads)
-      dphi[[ap]] <- as_dense(out$dphi)
+      gv <- w * rep_len(g[[f$param]], n)
+      if (order <= 4L) {
+        mk <- .structural_blocks(params, ap, Vs, dr$H, dr$D3, dr$D4, n,
+                                 dr$D5)
+        bd <- structural_blocks_data(params, ap, Vs, dr$H, dr$D3, n,
+                                     D4 = dr$D4, D5 = dr$D5)
+      }
+      out <- switch(order - 2L,
+        modelterms7::term_third(
+          f$tm, f$eta_static, spec@response, function(e, i) sd_at[i],
+          function(e, i) cd_at[i], f$psi, gv, Vs[[ap]], mk(dirs[[1L]]),
+          dirs[[1L]], score_values = sd_at, curvature_values = cd_at,
+          blocks_data = bd, threads = spec@threads),
+        modelterms7::term_fourth(
+          f$tm, f$eta_static, spec@response, function(e, i) sd_at[i],
+          function(e, i) cd_at[i], f$psi, gv, Vs[[ap]], mk(dirs), dirs,
+          score_values = sd_at, curvature_values = cd_at, blocks_data = bd,
+          threads = spec@threads),
+        modelterms7::term_fifth(
+          f$tm, f$eta_static, spec@response, function(e, i) sd_at[i], f$psi,
+          gv, Vs[[ap]], jfp_fifth_arrays(params, ap, Vs, dr, n), dirs,
+          score_values = sd_at))
+      rows[[ap]] <- as_dense(switch(order - 2L, out$dphi, out$dpsi,
+                                    out$domega))
     }
-    list(curv = as_dense(out$curvature), dphi = dphi)
+    list(curv = as_dense(out$curvature), rows = rows)
+  }
+  third <- function(g, dir) {
+    out <- higher(g, list(dir))
+    list(curv = out$curv, dphi = out$rows)
   }
   list(V = V, Vfull = Vfull, keep = keep, driven = driven, curv = curv,
-       curv_full = curv_full, third = third, nb = jd$nb, mf = jd$mf,
+       curv_full = curv_full, third = third, higher = higher, nb = jd$nb,
+       mf = jd$mf,
        zn = jd$zn, term = f$term)
+}
+
+
+#' The Driving Score's Derivatives as the Fifth Order Reads Them
+#'
+#' @description
+#' Returns the arrays that [modelterms7::term_fifth()] reads for a filter in
+#' one equation: the derivatives of the driving score of orders one to five
+#' in the predictors of every equation, one row per observation, the
+#' filter's own parameter included.
+#'
+#' @param params The distribution parameters.
+#' @param ap The index of the filter's parameter.
+#' @param Vs The static rows, one matrix per parameter.
+#' @param dr What [filter_driving()] returns, to the sixth order.
+#' @param n The number of observations.
+#'
+#' @return A list with `H`, `D3`, `D4`, `D5`, `D6` (matrices with one column
+#'   per tuple of parameters, the first index running fastest), `Vs` and
+#'   `ap`.
+#'
+#' @keywords internal
+jfp_fifth_arrays <- function(params, ap, Vs, dr, n) {
+  np <- length(params)
+  one <- function(k, L, key) {
+    tup <- as.matrix(expand.grid(rep(list(seq_len(np)), k)))
+    out <- matrix(0, n, nrow(tup))
+    for (j in seq_len(nrow(tup))) {
+      kk <- do.call(key, c(list(params, ap), unname(as.list(tup[j, ]))))
+      out[, j] <- rep_len(as.numeric(L[[kk]]), n)
+    }
+    out
+  }
+  list(H = one(1L, dr$H, hess_key), D3 = one(2L, dr$D3, deriv3_key),
+       D4 = one(3L, dr$D4, deriv4_key), D5 = one(4L, dr$D5, deriv5_key),
+       D6 = one(5L, dr$D6, deriv6_key),
+       Vs = lapply(Vs, function(x) if (is.matrix(x)) x else as_dense(x)),
+       ap = ap)
 }
 
 

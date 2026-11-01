@@ -11,6 +11,10 @@
 \alias{jfp_mv_cv}
 \alias{jfp_mv_pfun}
 \alias{jfp_nonempty}
+\alias{jfp_mv_setpair}
+\alias{jfp_mv_full}
+\alias{jfp_mv_rows}
+\alias{jfp_jac}
 \title{The Building Blocks of the Moving Shares}
 \usage{
 jfp_dir(st, v)
@@ -19,19 +23,27 @@ jfp_mv_J(cx, fixed, R)
 
 jfp_mv_e2(cx)
 
-jfp_mv_W(cx, S)
+jfp_mv_W(cx, S, eq = cx$a)
 
-jfp_mv_Wk(cx, S)
+jfp_mv_Wk(cx, S, eq = cx$a)
 
 jfp_mv_etak(cx, i, S)
 
 jfp_mv_etakk(cx, i, S, g)
 
-jfp_mv_cv(cx, S, Q)
+jfp_mv_cv(cx, S, Q, eq = cx$a)
 
 jfp_mv_pfun(pr, A, B)
 
 jfp_nonempty(R)
+
+jfp_mv_setpair(cx, k)
+
+jfp_mv_full(cx, S)
+
+jfp_mv_rows(cx, i, S)
+
+jfp_jac(st, cc)
 }
 \arguments{
 \item{st}{A state, from \code{\link[=jfp_state]{jfp_state()}}.}
@@ -44,6 +56,8 @@ jfp_nonempty(R)
 
 \item{R, S}{A character vector naming directions.}
 
+\item{eq}{The equation of a factor of the block's rows.}
+
 \item{i}{The position of a moving term among the context's units.}
 
 \item{g}{Per-observation weights.}
@@ -53,6 +67,10 @@ jfp_nonempty(R)
 \item{pr}{A product of two matrices.}
 
 \item{A, B}{Functions of a set of directions returning a factor.}
+
+\item{k}{The position of an ordered pair of equations in the context.}
+
+\item{cc}{An equation.}
 }
 \value{
 As described; \code{NULL} where a factor is zero.
@@ -72,5 +90,13 @@ coefficients along \code{R}, contracted against per-observation weights;
 its term along \code{R}, contracted against weights on the block's columns.
 \code{jfp_mv_pfun()} wraps a product of two factors with a memory, and
 \code{jfp_nonempty()} lists the non-empty subsets of at most two directions.
+In a model with a filter, \code{jfp_mv_setpair()} selects the ordered pair of
+equations whose information and rows the other functions read,
+\code{jfp_mv_full()} places directions over the filter's full width,
+\code{jfp_mv_rows()} returns the predictors' derivative along the directions
+(and along the block's whitened direction \code{i}, when given), one row per
+observation and per equation, and \code{jfp_jac()} returns an equation's
+Jacobian columns with their positions in the joint vector; the weights
+\code{Q} of \code{jfp_mv_cv()} are then on the whitened directions.
 }
 \keyword{internal}

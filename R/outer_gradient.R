@@ -1561,8 +1561,12 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
       Tm <- as_dense(penalties7::penalty_dhessian_beta(pen, bt, th, v[pos]))
       s <- s + sum(as_dense(M[pos, pos, drop = FALSE]) * Tm)
     }
+    # the Jeffreys blocks, all at once, on the joint vector
+    if (has_jfp) s <- s + jfp_penalty_move(spec, design, coef, v, M = M)
     s
   }
+  has_jfp <- any(vapply(statmod_penalized(spec, design), function(u)
+    isTRUE(u$jeffreys), logical(1))) && jfp_outer_ok(spec, design, 1L)
   out <- numeric(nrow(idx))
   links <- attr(idx, "links")
   # over the members, and accumulating: see statmod_marginal_grad()

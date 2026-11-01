@@ -39,7 +39,6 @@ As described.
 \code{jfp_add_pair()} adds a trace term of \code{\link[=jfp_mv_pair]{jfp_mv_pair()}} with a coefficient;
 \code{jfp_darray()} returns the family's derivative of the expected
 information of order \code{k}, kept in the state; \code{jfp_check_outer()} signals
-an error beside a filter, where the third and fourth derivatives are not
-written.
+an error where a block's information is not positive definite.
 }
 \keyword{internal}

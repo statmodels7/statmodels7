@@ -61,5 +61,15 @@ rows only in the term that holds the block. For a model whose predictors
 are linear and a block whose rows do not move, every share beyond the
 design's cross products is zero and the objects are those of the static
 derivatives.
+
+In a model with a filter the Jacobian columns are the joint rows of every
+equation (\code{\link[=jfp_jac]{jfp_jac()}}), and each equation that the filter drives is a
+moving unit whose derivatives along the directions come from the filter's
+kernels (\code{\link[=jfp_mv_rows]{jfp_mv_rows()}}). A block in the subformula of a filter's
+parameter has rows in every equation that the filter drives, so
+\eqn{\tilde I = \sum_t w_t\sum_{q,r}I_{qr,t}\tilde V_{q,t}^\top
+\tilde V_{r,t}} and the three objects are summed over the ordered pairs
+\eqn{(q, r)} (\code{\link[=jfp_mv_setpair]{jfp_mv_setpair()}}); the rows' derivatives are read along
+the block's whitened directions \eqn{d_i}, one kernel call per direction.
 }
 \keyword{internal}

@@ -186,6 +186,38 @@ test_that("a Jeffreys block inside a filter's subformula is exact", {
   st <- jfp_state_at(sp, des, cf_at(u0))
   hp <- jfp_hessian(st)
   expect_gt(max(abs(-(hp$hessian - hp$refresh) - hn)) / max(abs(hn)), 1e-1)
+  # the outer orders: D3 against a central difference of the exact Hessian,
+  # D4 against one of the exact D3, along random directions
+  set.seed(11)
+  k <- length(u0)
+  v <- rnorm(k)
+  w <- rnorm(k)
+  hh <- function(u) jfp_penalty(sp, des, cf_at(u), "hessian", joint = TRUE)
+  d3 <- function(u) -jfp_deriv3_dir(jfp_state_at(sp, des, cf_at(u)), v)
+  cdif <- function(f, dir, h = 1e-4) {
+    a <- (f(u0 + h * dir) - f(u0 - h * dir)) / (2 * h)
+    b <- (f(u0 + 2 * h * dir) - f(u0 - 2 * h * dir)) / (4 * h)
+    (4 * a - b) / 3
+  }
+  r3 <- cdif(hh, v)
+  r4 <- cdif(d3, w)
+  D3 <- d3(u0)
+  D4 <- -jfp_deriv4_dir(jfp_state_at(sp, des, cf_at(u0)), v, w)
+  expect_lt(max(abs(D3 - r3)) / max(abs(r3)), 1e-8)
+  expect_lt(max(abs(D4 - r4)) / max(abs(r4)), 1e-8)
+  M <- crossprod(matrix(rnorm(k * k), k)) / k
+  expect_equal(-jfp_deriv4(jfp_state_at(sp, des, cf_at(u0)), M, v, w),
+               sum(M * D4), tolerance = 1e-10)
+  # the negative control: without the filter's derivatives of the rows
+  ns <- environment(jfp_mv_rows)
+  real <- jfp_mv_rows
+  unlockBinding("jfp_mv_rows", ns)
+  assign("jfp_mv_rows", function(cx, i, S)
+    lapply(real(cx, i, S), function(x) 0 * x), envir = ns)
+  C3 <- d3(u0)
+  assign("jfp_mv_rows", real, envir = ns)
+  lockBinding("jfp_mv_rows", ns)
+  expect_gt(max(abs(C3 - r3)) / max(abs(r3)), 1e-2)
   # the fit is stationary over the joint vector, the Jeffreys part included
   expect_lt(max(abs(jp$gr(u1))), 1e-5)
 })
