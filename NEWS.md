@@ -1,3 +1,18 @@
+# statmodels7 0.239.0
+
+* `statmod_leverage()` and `pred_bootstrap()` accept a term whose block
+  moves with its coefficients (`modelterms7::nl()`, `seg()`, `jump()`,
+  `jseg()`, `scs()`). The leverage reads the Jacobian at the estimate that
+  the fit stores, the tangent-plane leverage of St. Laurent and Cook (1992),
+  which the HC2 and HC3 sandwiches already read; the bootstrap refits such a
+  term with the restart cycle that `statmod_bootstrap()` uses. A structural
+  term and a sharp break-point whose position is not held are still
+  rejected.
+* `plot_influence()` reads the inverse penalized information for such a term,
+  as for any other block, in place of the Bayesian variance.
+* The documentation of `parametric_resample()` and `case_resample()` says
+  which models each scheme takes.
+
 # statmodels7 0.238.0
 
 * A `modelterms7::jfp()` block may sit in the subformula of `nl()`, of a

@@ -76,6 +76,14 @@ leverage that \code{\link[=plot_influence]{plot_influence()}} computes for that 
 for a coordinate that the marginal criterion estimates holds the
 curvature of that criterion.
 
+A term whose block moves with its coefficients (\code{\link[modelterms7:nl]{modelterms7::nl()}},
+\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:scs]{modelterms7::scs()}}) enters through the Jacobian of
+its contribution at the estimate, which is the block that the fit stores,
+so the hat matrix is the tangent-plane leverage of St. Laurent and Cook
+(1992). A model with a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}},
+\code{\link[modelterms7:regime]{modelterms7::regime()}}) and a sharp break-point whose position is not held
+are rejected.
+
 The matrix \eqn{W_i} and the matrix \eqn{K} are both read on \code{information}.
 With \code{\link[distributions7:expected_info]{distributions7::expected_info()}} the hat matrix is a projection and
 its trace is \eqn{P} when there is no penalty. With
@@ -98,6 +106,10 @@ range(lv$leverage[, "mu"] - hatvalues(lm(y ~ x, dd)))
 \references{
 Hoaglin, D. C. and Welsch, R. E. (1978). The hat matrix in regression and
 ANOVA. \emph{The American Statistician}, 32(1), 17--22.
+
+St. Laurent, R. T. and Cook, R. D. (1992). Leverage and superleverage in
+nonlinear regression. \emph{Journal of the American Statistical Association},
+87, 985--990.
 }
 \seealso{
 \code{\link[=hc2_sandwich]{hc2_sandwich()}}, which uses the blocks; \code{\link[=plot_influence]{plot_influence()}}.
