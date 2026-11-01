@@ -136,6 +136,15 @@ print.StatmodFit <- function(x, ...) {
   # was wrong four times in five where it fired, and summary() reports the
   # point itself through statmod_certificate()'s readings
   cat(sprintf("fitted in %s\n", format_duration(x@elapsed)))
+  # the version of a term that a search chose, among those it fitted
+  va <- x@history$variants
+  if (!is.null(va) && nrow(va)) {
+    for (k in unique(paste(va$param, va$term, sep = "\r"))) {
+      g <- va[paste(va$param, va$term, sep = "\r") == k, , drop = FALSE]
+      cat(sprintf("%s %s: %s, chosen among %s\n", g$param[1L], g$term[1L],
+                  g$version[g$chosen][1L], paste(g$version, collapse = ", ")))
+    }
+  }
   if (!is.null(x@history$blocks) && nrow(x@history$blocks) > 1L) {
     cat(sprintf("%d pass(es) over %d block(s)\n",
                 max(x@history$blocks$pass),

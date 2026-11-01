@@ -446,6 +446,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     verbose = 0, threads = 1, cores = 1, ...) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
+  caller <- parent.frame()
   # THE PRIOR WEIGHTS ARE LOOKED UP IN `data` FIRST, then where statmod() was
   # called, as glm() and lm() look them up: `weights = wt` naming a column
   # is the spelling a reader coming from those functions writes, and it used
@@ -482,6 +483,14 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   }
   spec <- statmod_spec(formula, distrib, data, weights, offsets,
                        linpar = linpar_control)
+  # A TERM WITH A DISCRETE CHOICE THAT THE DATA SETTLE (the mode of a
+  # unimodal scs()) is fitted by a search over its versions: a pilot fit, then
+  # one fit per version, each a call of statmod() as written with that term
+  # replaced. The search is not entered again from inside itself.
+  if (!isTRUE(statmod_variants$active)) {
+    auto <- variant_terms(spec)
+    if (length(auto)) return(statmod_variant_search(cl, caller, auto))
+  }
   spec@threads <- n_thr
   spec@cores <- n_cores
   design <- statmod_design(spec)

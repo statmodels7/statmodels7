@@ -1283,6 +1283,10 @@ statmod_terms <- function(equations, data, env, response = NULL,
     eq <- equations[[p]]
     environment(eq) <- shim
     out <- modelterms7::interpret_formula(eq, data, linpar)
+    # the term that a search over versions replaces, keyed by the call as
+    # written; see statmod_variant_search()
+    ov <- statmod_variants$override[[p]]
+    for (nm in intersect(names(ov), names(out$terms))) out$terms[[nm]] <- ov[[nm]]
     intercepts[[p]] <- out$intercept
     out_terms[[p]] <- lapply(out$terms, function(tm)
       modelterms7::term_build(seg_grid_start(tm, data, response), data))
