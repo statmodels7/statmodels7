@@ -820,7 +820,13 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev,
     }
     M
   })
-  if (!is.null(seed)) Vs <- seed
+  # a seed may be wider than the coefficients and the term's parameters: the
+  # outer Hessian beside a block that moves inserts columns before the term's
+  # parameters (structural_refresh_second()), which stay the LAST np columns
+  if (!is.null(seed)) {
+    Vs <- seed
+    m <- ncol(Vs[[1L]])
+  }
 
   gl <- distributions7::distrib_gradient(spec@distrib, spec@response,
                                          ev$theta, scale = "link", threads = spec@threads)
@@ -866,7 +872,7 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev,
   held <- statmod_structural_state(design)$held[[f$term]]
   if (length(held)) {
     zn <- modelterms7::term_params(f$tm)
-    drop <- nb + match(held, zn)
+    drop <- m - np + match(held, zn)
     out <- out[-drop, -drop, drop = FALSE]
   }
   out

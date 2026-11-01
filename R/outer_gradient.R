@@ -299,13 +299,13 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
     tm <- structural_term_of(spec, design)
     if (is.null(tm) || !answers_term_fourth(tm)) return(FALSE)
     # a block that moves with its coefficients beside the filter is read at
-    # order 1 (structural_refresh_move()) and not at order 2, where the
-    # second movement of the block, of the reverse pass and of the filter's
-    # curvature along it are not written: measured on nl() beside a
-    # penalized gas() the assembled Hessian was 2.4e-03 (negbin2) and
-    # 7.6e-03 (gaussian) out, so the Hessian is a difference of the exact
-    # gradient there
-    if (length(attr(design, "refresh"))) return(FALSE)
+    # order 2 by structural_refresh_second(), verified for nl() and seg()
+    # (smoothed and sharp): against Richardson of the exact gradient with the
+    # mode refitted, 1.6e-11 to 3.7e-09, where leaving the block's movement
+    # out was 2.4e-03 (negbin2) and 7.6e-03 (gaussian) out. jump(), jseg()
+    # and the other terms that recompute a block keep the difference of the
+    # exact gradient
+    if (!refresh_order2_ok(design)) return(FALSE)
   }
   if (structural_penalized(spec, design)) {
     for (u in statmod_penalized(spec, design)) {

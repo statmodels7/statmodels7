@@ -749,6 +749,15 @@ structural_refresh_move <- function(spec, design, coef, jd) {
     statmod_full_information_impl(spec, coef, design, params, jd$ev,
                                   seed = seed)
   }
+  # the derivative of K along a movement D of the rows, exact for any s
+  trace_D <- function(D, M) {
+    dmax <- max(vapply(D, function(x) max(abs(x)), numeric(1)))
+    if (dmax == 0) return(0)
+    s <- max(vapply(V0, function(x) max(abs(x)), numeric(1))) / dmax
+    Kp <- K_at(Map(function(a, b) a + s * b, V0, D))
+    Km <- K_at(Map(function(a, b) a - s * b, V0, D))
+    sum(M * (Kp - Km)) / (2 * s)
+  }
   trace <- function(v, M) {
     vf <- numeric(jd$mf)
     vf[jd$keep] <- v
@@ -757,12 +766,213 @@ structural_refresh_move <- function(spec, design, coef, jd) {
       D[[un$a]][, un$ra] <- as_dense(modelterms7::term_block_deriv(
         un$built, coef = un$bt, v = vf[un$ra]))
     }
-    dmax <- max(vapply(D, function(x) max(abs(x)), numeric(1)))
-    if (dmax == 0) return(0)
-    s <- max(vapply(V0, function(x) max(abs(x)), numeric(1))) / dmax
-    Kp <- K_at(Map(function(a, b) a + s * b, V0, D))
-    Km <- K_at(Map(function(a, b) a - s * b, V0, D))
-    sum(M * (Kp - Km)) / (2 * s)
+    trace_D(D, M)
   }
-  list(Dm = Dm, trace = trace)
+  list(Dm = Dm, trace = trace, trace_D = trace_D, units = units, gv = gv)
+}
+
+
+#' A Recomputed Block Beside a Structural Term, in the Outer Hessian
+#'
+#' @description
+#' Returns what the exact outer Hessian of the structural branch
+#' ([statmod_structural_hess()]) needs, beyond [structural_refresh_move()],
+#' where a term recomputes its block at the coefficients: the movement of
+#' \eqn{K} with the block along each hyperparameter's movement of the mode,
+#' the second movement of \eqn{K} along two of them, and the movement of the
+#' block's term of the likelihood's curvature.
+#'
+#' @details
+#' Write \eqn{K = K(u, R)} for the information at the joint vector \eqn{u}
+#' with static rows \eqn{R}, which the block makes a function of \eqn{u}:
+#' \eqn{\partial R/\partial u\,[b] = D_b}
+#' ([modelterms7::term_block_deriv()]), and the static predictor's second
+#' derivative is \eqn{D_b c}. At fixed predictors and filter parameters
+#' \eqn{K} is a quadratic form in the rows, \eqn{K_{ab} = B(R_a, R_b)}, where
+#' a column of the filter's own parameters enters linearly. Adding the
+#' columns of every \eqn{D_m} to the rows as further unknowns, placed before
+#' the filter's parameters, gives an information \eqn{K^+} whose blocks are
+#' the values of \eqn{B} on those columns, so that
+#' \deqn{\partial_R K[D] = \sum_j (e_j k_j^\top + k_j e_j^\top),\qquad
+#'   \partial^2_R K[D_m, D_l]_{ab} = B(D_{m,a}, D_{l,b}) + B(D_{l,a}, D_{m,b}),}
+#' with \eqn{k_j} the column of \eqn{K^+} for the added unknown that carries
+#' column \eqn{j} of \eqn{D}. The derivative of \eqn{K^+} along \eqn{b} at
+#' fixed rows ([structural_dk_matrix()] on the wider rows) gives the mixed
+#' derivative \eqn{\partial_u\partial_R K[b_m, D_l]}, and its derivative
+#' along an added unknown gives the movement of \eqn{K} with the static
+#' predictor's second derivative \eqn{D_m b_l}. The term
+#' \eqn{\partial_R K[\partial^2 R[b_m, b_l]]}, with the rows' second
+#' derivative from [modelterms7::term_block_deriv2()], is the exact central
+#' difference of the quadratic.
+#'
+#' The block's term of the curvature, \eqn{(D^{\rm m} b)_c = -\sum_t g_t\,
+#' (D_b)_{t,c}} with \eqn{g} the total derivative in the static predictor
+#' ([statmod_score_obs()]), moves along \eqn{b_l} through \eqn{g}, which is
+#' the row of \eqn{K^+} for the added unknown, and through the rows' second
+#' derivative.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design, refreshed at `coef`.
+#' @param coef The coefficients at the mode.
+#' @param jd The joint rows, from [joint_design_rows()].
+#' @param M The matrix against which the traces are taken.
+#' @param rm The result of [structural_refresh_move()].
+#' @param bhat The mode's movement along each hyperparameter, over the
+#'   estimated coordinates.
+#'
+#' @return `NULL` where the wider information cannot be formed; otherwise a
+#'   list with `R`, the matrices \eqn{\partial_R K[D_m]}; `mode(m, l)`, the
+#'   vector \eqn{\partial D^{\rm m}[b_l]\,b_m}; and `trace(m, l)`, the trace
+#'   against \eqn{M} of the second movement of \eqn{K} that the rows carry.
+#'
+#' @seealso [statmod_structural_hess()], [structural_refresh_move()]
+#'
+#' @keywords internal
+structural_refresh_second <- function(spec, design, coef, jd, M, rm, bhat) {
+  units <- rm$units
+  keep <- jd$keep
+  nk <- length(keep)
+  nb <- jd$nb
+  np <- jd$np
+  n <- jd$n
+  nh <- length(bhat)
+  na <- length(jd$V)
+  vfull <- lapply(bhat, function(b) {
+    vf <- numeric(jd$mf)
+    vf[keep] <- b
+    vf
+  })
+  # the rows' movement along each hyperparameter, unit by unit
+  Dm <- lapply(vfull, function(vf) lapply(units, function(un)
+    as_dense(modelterms7::term_block_deriv(un$built, coef = un$bt,
+                                           v = vf[un$ra]))))
+  # one added unknown per hyperparameter and column of a moving block
+  ps <- list()
+  for (m in seq_len(nh)) {
+    for (ui in seq_along(units)) {
+      un <- units[[ui]]
+      for (k in seq_along(un$ra)) {
+        ps[[length(ps) + 1L]] <- list(m = m, a = un$a, j = un$ra[k],
+                                      z = Dm[[m]][[ui]][, k])
+      }
+    }
+  }
+  q <- length(ps)
+  if (!q) return(NULL)
+  pm <- vapply(ps, function(x) x$m, integer(1))
+  jpos <- match(vapply(ps, function(x) x$j, numeric(1)), keep)
+  if (anyNA(jpos)) return(NULL)
+  Va <- lapply(seq_len(na), function(a) {
+    Z <- matrix(0, n, q)
+    for (i in seq_len(q)) if (ps[[i]]$a == a) Z[, i] <- ps[[i]]$z
+    V <- jd$V[[a]]
+    cbind(V[, seq_len(nb), drop = FALSE], Z, V[, nb + seq_len(np), drop = FALSE])
+  })
+  ka <- c(keep[keep <= nb], nb + seq_len(q), keep[keep > nb] + q)
+  po <- match(c(keep[keep <= nb], keep[keep > nb] + q), ka)
+  pp <- match(nb + seq_len(q), ka)
+  jda <- jd
+  jda$V <- Va
+  jda$mf <- jd$mf + q
+  jda$nb <- nb + q
+  jda$keep <- ka
+  Ka <- tryCatch(statmod_full_information_impl(spec, coef, design, jd$params,
+                                               jd$ev, seed = Va),
+                 error = function(e) NULL)
+  if (is.null(Ka) || nrow(Ka) != length(ka)) return(NULL)
+  Ma <- matrix(0, length(ka), length(ka))
+  Ma[po, po] <- M
+  sta <- structural_grad_parts_impl(spec, design, coef, jda, Ma)
+  pad <- function(b) {
+    v <- numeric(length(ka))
+    v[po] <- b
+    v
+  }
+  # dK+ along each movement of the mode, at fixed rows: its columns for the
+  # added unknowns are the mixed derivatives
+  dA <- lapply(bhat, function(b)
+    structural_dk_matrix(spec, design, jda, sta, pad(b))[po, pp, drop = FALSE])
+  # the movement of K along each added unknown, against M
+  tz <- vapply(seq_len(q), function(i) {
+    e <- numeric(length(ka))
+    e[pp[i]] <- 1
+    sta$u[pp[i]] + structural_chain_extra(spec, design, jda, Ma, sta, e)
+  }, numeric(1))
+  kcol <- Ka[po, pp, drop = FALSE]
+  R <- lapply(seq_len(nh), function(m) {
+    out <- matrix(0, nk, nk)
+    for (i in which(pm == m)) {
+      out[jpos[i], ] <- out[jpos[i], ] + kcol[, i]
+      out[, jpos[i]] <- out[, jpos[i]] + kcol[, i]
+    }
+    out
+  })
+  D2 <- function(m, l) {
+    D <- lapply(jd$V, function(x) matrix(0, nrow(x), ncol(x)))
+    for (ui in seq_along(units)) {
+      un <- units[[ui]]
+      D[[un$a]][, un$ra] <- D[[un$a]][, un$ra] +
+        as_dense(modelterms7::term_block_deriv2(
+          un$built, coef = un$bt, v = vfull[[m]][un$ra],
+          u = vfull[[l]][un$ra]))
+    }
+    D
+  }
+  gv <- rm$gv
+  mode <- function(m, l, d2 = D2(m, l)) {
+    out <- numeric(nk)
+    for (i in which(pm == m)) {
+      a <- ps[[i]]$a
+      out[jpos[i]] <- out[jpos[i]] +
+        sum(Ka[pp[i], po] * bhat[[l]]) -
+        sum(rep_len(gv[[a]], n) * d2[[a]][, ps[[i]]$j])
+    }
+    out
+  }
+  trace <- function(m, l, d2 = D2(m, l)) {
+    tot <- 0
+    # the static predictor's second derivative, D_m b_l
+    for (i in which(pm == m)) tot <- tot + bhat[[l]][jpos[i]] * tz[i]
+    # the mixed derivatives, both ways round
+    for (i in which(pm == l)) tot <- tot + 2 * sum(M[jpos[i], ] * dA[[m]][, i])
+    for (i in which(pm == m)) tot <- tot + 2 * sum(M[jpos[i], ] * dA[[l]][, i])
+    # the second derivative in the rows
+    for (i in which(pm == m)) {
+      for (k in which(pm == l)) {
+        tot <- tot + 2 * M[jpos[i], jpos[k]] * Ka[pp[i], pp[k]]
+      }
+    }
+    # the rows' own second derivative
+    tot + rm$trace_D(d2, M)
+  }
+  list(R = R, D2 = D2, mode = mode, trace = trace, Ka = Ka, po = po, pp = pp,
+       tz = tz, ps = ps, jpos = jpos)
+}
+
+
+#' Whether the Outer Hessian Reads Every Recomputed Block
+#'
+#' @description
+#' Returns `TRUE` where every term that recomputes its block is one for which
+#' [structural_refresh_second()] has been verified: [modelterms7::nl()] and
+#' [modelterms7::seg()], smoothed or not. [modelterms7::jump()],
+#' [modelterms7::jseg()] and other terms answer `FALSE`.
+#'
+#' @param design The design.
+#'
+#' @return A single logical.
+#'
+#' @keywords internal
+refresh_order2_ok <- function(design) {
+  rf <- attr(design, "refresh")
+  if (!length(rf)) return(TRUE)
+  st <- attr(design, "state")
+  if (is.null(st)) return(FALSE)
+  for (r in rf) {
+    tm <- st$terms[[r$param]][[r$term]]
+    ok <- S7::S7_inherits(tm, modelterms7::NlTerm) ||
+      (S7::S7_inherits(tm, modelterms7::SegTerm) && identical(tm@kind, "seg"))
+    if (!isTRUE(ok)) return(FALSE)
+  }
+  TRUE
 }

@@ -1926,6 +1926,7 @@ structural_outer_pieces <- function(spec, design, coef, hyper, idx, jd) {
 statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
                                     basis = NULL) {
   if (!nrow(idx)) return(NULL)
+  design <- statmod_design_at(spec, coef, design)
   jd <- joint_design_rows(spec, design, coef)
   if (is.null(jd)) return(NULL)
   K <- tryCatch(statmod_marginal_full(spec, design, coef, hyper, NULL),
@@ -1953,32 +1954,34 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
     blk4 <- NULL
   } else {
   st <- structural_grad_parts(spec, design, coef, jd, M)
-  # the fifth derivative is read HERE and not in structural_grad_parts(),
-  # whose result the gradient shares: the gradient never needs it, and it
-  # costs 2p evaluations of the fourth
-  # no `threads`: the fifth order is ONE central difference of the analytic
-  # fourth, and the count reaches the family's own kernels through those two
-  # calls rather than through this one
-  D5 <- tryCatch(
-    distributions7::distrib_deriv5(spec@distrib, spec@response,
-                                   jd$ev$theta, scale = "link"),
-    error = function(e) NULL)
-  if (is.null(D5)) return(NULL)
-  dr4 <- filter_driving(spec, jd$ev$theta, jd$ap, filter_scaling(jd$f$tm),
-                        st$gl, st$H, st$D3, st$D4, D5)
-  blk4 <- .structural_blocks(jd$params, jd$ap, jd$V, dr4$H, dr4$D3, dr4$D4,
-                             jd$n, dr4$D5)
-  # the same pieces as data, for the compiled fourth order
-  attr(blk4, "data") <- structural_blocks_data(jd$params, jd$ap, jd$V, dr4$H,
-                                               dr4$D3, jd$n, D4 = dr4$D4,
-                                               D5 = dr4$D5)
+  blk4 <- structural_blocks4(spec, jd, st)
+  if (is.null(blk4)) return(NULL)
   }
 
   nh <- nrow(idx)
   pieces <- structural_outer_pieces(spec, design, coef, hyper, idx, jd)
-  msolve <- function(z) as.numeric(Kinv %*% z)
+  # a term that recomputes its block: the mode moves by the likelihood's own
+  # curvature, K plus the block's term (structural_refresh_move()), and K
+  # moves with the block (structural_refresh_second())
+  rm <- structural_refresh_move(spec, design, coef, jd)
+  Kmode <- K
+  if (is.null(rm)) {
+    msolve <- function(z) as.numeric(Kinv %*% z)
+  } else {
+    ib <- seq_len(jd$nb)
+    Kmode[ib, ib] <- Kmode[ib, ib] + rm$Dm
+    Kmf <- tryCatch(chol(Kmode), error = function(e) NULL)
+    if (is.null(Kmf)) return(NULL)
+    msolve <- function(z) as.numeric(backsolve(Kmf, forwardsolve(t(Kmf), z)))
+  }
   bhat <- lapply(seq_len(nh), function(m) -msolve(pieces$c[[m]]))
   Tm <- lapply(bhat, function(v) structural_dk_matrix(spec, design, jd, st, v))
+  rs <- NULL
+  if (!is.null(rm)) {
+    rs <- structural_refresh_second(spec, design, coef, jd, M, rm, bhat)
+    if (is.null(rs)) return(NULL)
+    Tm <- lapply(seq_len(nh), function(m) Tm[[m]] + rs$R[[m]])
+  }
   # the Jeffreys blocks move the penalized matrix with the mode, on the joint
   # vector: their first movement here, the second and the first along the
   # pair's own movement in the trace below
@@ -1999,12 +2002,19 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
       cml <- pieces$c2[[key]]
       rhs <- as.numeric(Km[[l]] %*% bhat[[m]]) +
         as.numeric(pieces$S[[m]] %*% bhat[[l]]) + cml
+      if (!is.null(rs)) {
+        d2 <- rs$D2(m, l)
+        rhs <- rhs + rs$mode(m, l, d2)
+      }
       bml <- -msolve(rhs)
       tr_dKm <- sum(M * Sml) +
         structural_chain_extra2(spec, design, jd, M, st, blk4,
                                 bhat[[m]], bhat[[l]]) +
         sum(st$u * bml) +
         structural_chain_extra(spec, design, jd, M, st, bml)
+      if (!is.null(rs)) {
+        tr_dKm <- tr_dKm + rs$trace(m, l, d2) + rm$trace(bml, M)
+      }
       if (has_jfp) {
         tr_dKm <- tr_dKm +
           jfp_penalty_move(spec, design, coef, bhat[[m]], w = bhat[[l]],
@@ -2012,7 +2022,7 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
           jfp_penalty_move(spec, design, coef, bml, M = M)
       }
       v <- -pieces$rho2[m, l] +
-        sum(bhat[[m]] * as.numeric(K %*% bhat[[l]])) +
+        sum(bhat[[m]] * as.numeric(Kmode %*% bhat[[l]])) +
         sum((M %*% Km[[l]]) * t(M %*% Km[[m]])) / 2 -
         tr_dKm / 2
       out[m, l] <- v
@@ -2035,4 +2045,42 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
   out <- out * outer(h1, h1)
   diag(out) <- diag(out) + h2 * g
   out
+}
+
+
+#' The Fourth-Order Blocks of One Filter
+#'
+#' @description
+#' Returns the callback, with its data as the attribute `"data"`, through
+#' which [modelterms7::term_fourth()] reads the family's derivatives to the
+#' fifth order in [structural_chain_extra2()].
+#'
+#' @param spec A [StatmodSpec()].
+#' @param jd The joint rows, from [joint_design_rows()].
+#' @param st The shared quantities, from [structural_grad_parts()].
+#'
+#' @return The callback, or `NULL` where the family has no fifth derivative.
+#'
+#' @keywords internal
+structural_blocks4 <- function(spec, jd, st) {
+  # the fifth derivative is read HERE and not in structural_grad_parts(),
+  # whose result the gradient shares: the gradient never needs it, and it
+  # costs 2p evaluations of the fourth
+  # no `threads`: the fifth order is ONE central difference of the analytic
+  # fourth, and the count reaches the family's own kernels through those two
+  # calls rather than through this one
+  D5 <- tryCatch(
+    distributions7::distrib_deriv5(spec@distrib, spec@response,
+                                   jd$ev$theta, scale = "link"),
+    error = function(e) NULL)
+  if (is.null(D5)) return(NULL)
+  dr4 <- filter_driving(spec, jd$ev$theta, jd$ap, filter_scaling(jd$f$tm),
+                        st$gl, st$H, st$D3, st$D4, D5)
+  blk4 <- .structural_blocks(jd$params, jd$ap, jd$V, dr4$H, dr4$D3, dr4$D4,
+                             jd$n, dr4$D5)
+  # the same pieces as data, for the compiled fourth order
+  attr(blk4, "data") <- structural_blocks_data(jd$params, jd$ap, jd$V, dr4$H,
+                                               dr4$D3, jd$n, D4 = dr4$D4,
+                                               D5 = dr4$D5)
+  blk4
 }

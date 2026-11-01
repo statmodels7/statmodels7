@@ -3,7 +3,14 @@
 # mode, the mode's movement by the likelihood's own curvature, and the
 # movement of K with the block (structural_refresh_move())
 
+# each fit takes a minute or more, so a case is fitted once per file
+structural_refresh_cache <- new.env()
+
 structural_refresh_case <- function(fm, distrib) {
+  key <- paste(deparse(fm), collapse = "")
+  if (!is.null(structural_refresh_cache[[key]])) {
+    return(structural_refresh_cache[[key]])
+  }
   set.seed(9)
   S <- 4L
   Tn <- 30L
@@ -34,7 +41,10 @@ structural_refresh_case <- function(fm, distrib) {
     jp$setz(uu[nb + seq_along(free)])
     obj$split(uu[seq_len(nb)])
   }
-  list(f = f, sp = sp, des = des, nb = nb, jp = jp, u = u, cf_at = cf_at)
+  out <- list(f = f, sp = sp, des = des, nb = nb, jp = jp, u = u,
+              cf_at = cf_at)
+  assign(key, out, envir = structural_refresh_cache)
+  out
 }
 
 test_that("the block's movement beside a penalized filter is exact", {
@@ -90,7 +100,73 @@ test_that("the block's movement beside a penalized filter is exact", {
   }
 })
 
-test_that("the outer Hessian is a difference beside a recomputed block", {
+test_that("the block's second movement beside a penalized filter is exact", {
+  # one case: on the negative binomial the filter's own directions dominate
+  # every trace against a random M, and a difference cannot separate the
+  # block's share from them
+  cases <- list(
+    list(y ~ nl(~ b * exp(-r * xs), start = list(b = 1, r = 0.5)) +
+           gas(p = 1, q = 1, omega ~ random(~ 1 | id), time = t, by = id),
+         distributions7::gaussian1_distrib()))
+  for (cs in cases) {
+    k <- structural_refresh_case(cs[[1]], cs[[2]])
+    sp <- k$sp
+    des <- k$des
+    nb <- k$nb
+    set.seed(2)
+    u <- k$u + 0.1 * stats::rnorm(length(k$u))
+    cf <- k$cf_at(u)
+    desr <- statmod_design_at(sp, cf, des)
+    jd <- joint_design_rows(sp, desr, cf)
+    rm <- structural_refresh_move(sp, desr, cf, jd)
+    set.seed(1)
+    v1 <- stats::rnorm(length(u))
+    v2 <- stats::rnorm(length(u))
+    M <- crossprod(matrix(stats::rnorm(length(u)^2), length(u))) / length(u)
+    st <- structural_grad_parts_impl(sp, desr, cf, jd, M)
+    rs <- structural_refresh_second(sp, desr, cf, jd, M, rm, list(v1, v2))
+    expect_false(is.null(rs))
+    # the movement of K with the rows, as a matrix
+    expect_lt(abs(sum(M * rs$R[[1]]) - rm$trace(v1, M)) /
+                abs(rm$trace(v1, M)), 1e-9)
+    # the third derivative of the penalized objective along v2 and v1:
+    # K + Dm moves with the rows and with the block's second derivative
+    Kmode <- function(uu) {
+      cfu <- k$cf_at(uu)
+      dsu <- statmod_design_at(sp, cfu, des)
+      K <- statmod_marginal_full(sp, dsu, cfu, k$f@hyper, NULL)
+      r <- structural_refresh_move(sp, dsu, cfu, joint_design_rows(sp, dsu, cfu))
+      K[seq_len(nb), seq_len(nb)] <- K[seq_len(nb), seq_len(nb)] + r$Dm
+      K
+    }
+    h <- 1e-3
+    rich <- function(f) (4 * (f(h / 2) - f(-h / 2)) / h -
+                           (f(h) - f(-h)) / (2 * h)) / 3
+    dKm <- rich(function(s) as.numeric(Kmode(u + s * v2) %*% v1))
+    k_cfu <- k$cf_at(u)
+    an <- as.numeric((structural_dk_matrix(sp, desr, jd, st, v2) +
+                        rs$R[[2]]) %*% v1) + rs$mode(1, 2)
+    expect_lt(max(abs(an - dKm)) / max(abs(dKm)), 1e-8)
+    # the control: without the movement of the block's own term
+    expect_gt(max(abs(an - rs$mode(1, 2) - dKm)) / max(abs(dKm)), 1e-4)
+    # the second movement of K along v1 and v2, against M
+    Kf <- function(uu) statmod_marginal_full(sp, des, k$cf_at(uu),
+                                             k$f@hyper, NULL)
+    f2 <- function(s) sum(M * (Kf(u + s * (v1 + v2)) - Kf(u + s * (v1 - v2)) -
+                                 Kf(u - s * (v1 - v2)) +
+                                 Kf(u - s * (v1 + v2)))) / (4 * s^2)
+    num <- (4 * f2(h / 2) - f2(h)) / 3
+    k_cfu <- k$cf_at(u)
+    blk4 <- structural_blocks4(sp, jd, st)
+    fixed <- structural_chain_extra2(sp, desr, jd, M, st, blk4, v1, v2)
+    an2 <- fixed + rs$trace(1, 2)
+    expect_lt(abs(an2 - num) / abs(num), 1e-8)
+    # the control: the rows held fixed
+    expect_gt(abs(fixed - num) / abs(num), 1e-4)
+  }
+})
+
+test_that("the outer Hessian is exact beside a recomputed block", {
   k <- structural_refresh_case(
     y ~ nl(~ b * exp(-r * xs), start = list(b = 1, r = 0.5)) +
       gas(p = 1, q = 1, omega ~ random(~ 1 | id), time = t, by = id),
@@ -99,7 +175,14 @@ test_that("the outer Hessian is a difference beside a recomputed block", {
   idx <- outer_hyper_index(k$sp, statmod_blocks(k$sp, des))
   m <- reml(information = observed_info())
   expect_true(outer_gradient_ok(k$sp, des, idx, m, 1L))
-  expect_false(outer_gradient_ok(k$sp, des, idx, m, 2L))
+  expect_true(outer_gradient_ok(k$sp, des, idx, m, 2L))
+  # jump() keeps the difference of the exact gradient at order 2
+  kj <- structural_refresh_case(
+    y ~ jump(xs) + gas(p = 1, q = 1, omega ~ random(~ 1 | id), time = t,
+                       by = id),
+    distributions7::gaussian1_distrib())
+  idj <- outer_hyper_index(kj$sp, statmod_blocks(kj$sp, kj$des))
+  expect_false(outer_gradient_ok(kj$sp, kj$des, idj, m, 2L))
 })
 
 test_that("beside an unpenalized filter the mode moves by the total score", {
