@@ -15,7 +15,9 @@ jfp_block(
   const = FALSE,
   kind = c("static", "refresh", "filter"),
   term = NULL,
-  slot = NULL
+  slot = NULL,
+  basis = NULL,
+  C = NULL
 )
 ```
 
@@ -48,6 +50,16 @@ jfp_block(
   For the kinds `"refresh"` and `"filter"`, the term and the parameter
   of the term whose subformula holds the block.
 
+- basis, C:
+
+  For the kind `"refresh"`: the columns of the equation's design from
+  which the rows are combined, and the matrix that combines them, so
+  that the rows are the refreshed design's columns `basis` times `C`.
+  For the kind `"filter"`: positions among the filter's parameters and
+  the matrix that combines the derivatives along them. The constant
+  direction of the subformula's level, where it is included, is the
+  first column of `C`.
+
 ## Value
 
 A list of class `jfp_block` with the arguments as fields.
@@ -64,10 +76,12 @@ coefficients, and the constant direction is the column of ones.
 The other kinds describe a block inside the subformula of a term:
 `"refresh"` for a term whose block is recomputed at the coefficients
 (`nl()`, a smoothed `seg()`), and `"filter"` for a parameter of `gas()`.
-Their rows move with the coefficients, and
-[`jfp_state()`](https://statmodels7.github.io/statmodels7/reference/jfp_state.md)
-signals an error for them: they are reserved for a later phase, and the
-formulas of the engine do not change when they are added.
+Their rows move with the coefficients. For the kind `"refresh"` they are
+the refreshed design's columns `basis` times `C`; for the kind
+`"filter"` they are the derivatives of the filtered predictors along the
+columns of `C` placed at the positions `basis` among the filter's
+parameters
+([`jfp_filter_dirs()`](https://statmodels7.github.io/statmodels7/reference/jfp_filter_dirs.md)).
 
 ## See also
 

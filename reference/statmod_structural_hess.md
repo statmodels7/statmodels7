@@ -85,12 +85,13 @@ the joint vector.
 ## Blocks that move with their coefficients
 
 A block that moves with its coefficients (`nl()`, `seg()`) beside the
-filter contributes nothing here, as it contributes nothing to
-[`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md):
-the correction for such a block is written in the coefficient-space
-assembly and has no counterpart on the joint vector. Such a model is
-admitted at both orders, and the result has the approximation of the
-gradient.
+filter is read by
+[`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md)
+([`structural_refresh_move()`](https://statmodels7.github.io/statmodels7/reference/structural_refresh_move.md))
+and not here:
+[`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+returns `FALSE` at order 2 for such a model, and the Hessian is then a
+difference of the exact gradient.
 
 ## Cost
 

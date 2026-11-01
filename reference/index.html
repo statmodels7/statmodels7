@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -3440,6 +3440,13 @@
 
         <dt>
 
+          <code><a href="jfp_dir.html">jfp_dir()</a></code> <code><a href="jfp_dir.html">jfp_mv_J()</a></code> <code><a href="jfp_dir.html">jfp_mv_e2()</a></code> <code><a href="jfp_dir.html">jfp_mv_W()</a></code> <code><a href="jfp_dir.html">jfp_mv_Wk()</a></code> <code><a href="jfp_dir.html">jfp_mv_etak()</a></code> <code><a href="jfp_dir.html">jfp_mv_etakk()</a></code> <code><a href="jfp_dir.html">jfp_mv_cv()</a></code> <code><a href="jfp_dir.html">jfp_mv_pfun()</a></code> <code><a href="jfp_dir.html">jfp_nonempty()</a></code> <code><a href="jfp_dir.html">jfp_mv_setpair()</a></code> <code><a href="jfp_dir.html">jfp_mv_full()</a></code> <code><a href="jfp_dir.html">jfp_mv_rows()</a></code> <code><a href="jfp_dir.html">jfp_jac()</a></code>
+
+        </dt>
+        <dd>The Building Blocks of the Moving Shares</dd>
+
+        <dt>
+
           <code><a href="jfp_emethod.html">jfp_emethod()</a></code>
 
         </dt>
@@ -3447,10 +3454,45 @@
 
         <dt>
 
-          <code><a href="jfp_eta_dir.html">jfp_eta_dir()</a></code> <code><a href="jfp_eta_dir.html">jfp_dI()</a></code> <code><a href="jfp_eta_dir.html">jfp_white()</a></code> <code><a href="jfp_eta_dir.html">jfp_rows_B()</a></code> <code><a href="jfp_eta_dir.html">jfp_pair_weights()</a></code>
+          <code><a href="jfp_eta_dir.html">jfp_eta_dir()</a></code> <code><a href="jfp_eta_dir.html">jfp_dI()</a></code>
 
         </dt>
-        <dd>The Pieces From Which the Terms Are Built</dd>
+        <dd>The Movement of the Predictors and the Information Along Directions</dd>
+
+        <dt>
+
+          <code><a href="jfp_fifth_arrays.html">jfp_fifth_arrays()</a></code>
+
+        </dt>
+        <dd>The Driving Score's Derivatives as the Fifth Order Reads Them</dd>
+
+        <dt>
+
+          <code><a href="jfp_filter_dirs.html">jfp_filter_dirs()</a></code>
+
+        </dt>
+        <dd>The Directions of a Jeffreys Block Inside a Filter</dd>
+
+        <dt>
+
+          <code><a href="jfp_filter_hessian.html">jfp_filter_hessian()</a></code>
+
+        </dt>
+        <dd>The Hessian's Shares From a Filtered Block's Own Movement</dd>
+
+        <dt>
+
+          <code><a href="jfp_filter_unit.html">jfp_filter_unit()</a></code>
+
+        </dt>
+        <dd>A Jeffreys Block in the Subformula of a Filter's Parameter</dd>
+
+        <dt>
+
+          <code><a href="jfp_filter_weights.html">jfp_filter_weights()</a></code>
+
+        </dt>
+        <dd>The Weights of a Jeffreys Block Inside a Filter Along One Direction</dd>
 
         <dt>
 
@@ -3489,14 +3531,35 @@
 
         <dt>
 
-          <code><a href="jfp_live.html">jfp_live()</a></code> <code><a href="jfp_live.html">jfp_add_weights()</a></code> <code><a href="jfp_live.html">jfp_darray()</a></code> <code><a href="jfp_live.html">jfp_check_outer()</a></code>
+          <code><a href="jfp_joint_sparse.html">jfp_joint_sparse()</a></code>
+
+        </dt>
+        <dd>The Weighted Cross Product of the Joint Rows</dd>
+
+        <dt>
+
+          <code><a href="jfp_leibniz.html">jfp_leibniz()</a></code>
+
+        </dt>
+        <dd>The Leibniz Rule Over Three Factors</dd>
+
+        <dt>
+
+          <code><a href="jfp_live.html">jfp_live()</a></code> <code><a href="jfp_live.html">jfp_add_weights()</a></code> <code><a href="jfp_live.html">jfp_add_pair()</a></code> <code><a href="jfp_live.html">jfp_darray()</a></code> <code><a href="jfp_live.html">jfp_check_outer()</a></code>
 
         </dt>
         <dd>Small Helpers of the Third and Fourth Derivatives</dd>
 
         <dt>
 
-          <code><a href="jfp_outer_ok.html">jfp_outer_ok()</a></code> <code><a href="jfp_outer_ok.html">jfp_outer_probe()</a></code>
+          <code><a href="jfp_mv_ctx.html">jfp_mv_ctx()</a></code> <code><a href="jfp_mv_ctx.html">jfp_mv_white()</a></code> <code><a href="jfp_mv_ctx.html">jfp_mv_B()</a></code> <code><a href="jfp_mv_ctx.html">jfp_mv_pair()</a></code>
+
+        </dt>
+        <dd>The Movement of the Third and Fourth Derivatives of a Jeffreys Block</dd>
+
+        <dt>
+
+          <code><a href="jfp_outer_ok.html">jfp_filter_outer_ok()</a></code> <code><a href="jfp_outer_ok.html">jfp_outer_ok()</a></code> <code><a href="jfp_outer_ok.html">jfp_refresh_ok()</a></code> <code><a href="jfp_outer_ok.html">jfp_outer_probe()</a></code>
 
         </dt>
         <dd>Whether the Outer Derivatives Can Read a Jeffreys Penalty</dd>
@@ -3514,6 +3577,20 @@
 
         </dt>
         <dd>How the Jeffreys Curvature Moves With the Coefficients</dd>
+
+        <dt>
+
+          <code><a href="jfp_refresh_hessian.html">jfp_refresh_hessian()</a></code>
+
+        </dt>
+        <dd>The Hessian's Shares From a Refreshed Block's Own Movement</dd>
+
+        <dt>
+
+          <code><a href="jfp_refresh_parts.html">jfp_refresh_parts()</a></code>
+
+        </dt>
+        <dd>The Movement of a Jeffreys Block Inside a Refreshed Term</dd>
 
         <dt>
 
@@ -3545,6 +3622,13 @@
 
         <dt>
 
+          <code><a href="jfp_subformula_unit.html">jfp_subformula_unit()</a></code>
+
+        </dt>
+        <dd>A Jeffreys Block in the Subformula of a Refreshed Term</dd>
+
+        <dt>
+
           <code><a href="jfp_terms3.html">jfp_terms3()</a></code> <code><a href="jfp_terms3.html">jfp_terms4()</a></code>
 
         </dt>
@@ -3563,6 +3647,13 @@
 
         </dt>
         <dd>The Value of the Jeffreys Penalty</dd>
+
+        <dt>
+
+          <code><a href="jfp_vk.html">jfp_vk()</a></code>
+
+        </dt>
+        <dd>The Derivatives of a Refreshed Jeffreys Block's Rows</dd>
 
         <dt>
 
@@ -4151,6 +4242,13 @@
 
         </dt>
         <dd>The Null Coordinates of a Penalty</dd>
+
+        <dt>
+
+          <code><a href="numeric_by_variable.html">numeric_by_variable()</a></code>
+
+        </dt>
+        <dd>The Numeric by Variable of a Smooth</dd>
 
         <dt>
 
@@ -6671,6 +6769,13 @@
 
         </dt>
         <dd>Which of a Structural Term's Free Parameters a Penalty Covers</dd>
+
+        <dt>
+
+          <code><a href="structural_refresh_move.html">structural_refresh_move()</a></code>
+
+        </dt>
+        <dd>A Recomputed Block Beside a Structural Term, in the Outer Gradient</dd>
 
         <dt>
 

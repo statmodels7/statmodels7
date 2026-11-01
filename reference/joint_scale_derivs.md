@@ -49,5 +49,6 @@ same rule on \\XX = \mathcal{I}\\ gives \$\$X X_B + X_B X =
 eigenbasis of \\\mathcal{I}\\ by dividing by \\\sqrt{\lambda_i} +
 \sqrt{\lambda_j}\\. The derivatives of \\\mathcal{I}\\ are the family's
 ([`distributions7::distrib_dexpected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html)
-and its siblings, on the link scale). Every derivative is memoized by
-its multiset.
+and its siblings to
+[`distributions7::distrib_d5expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_d5expected_hessian.html),
+on the link scale). Every derivative is memoized by its multiset.

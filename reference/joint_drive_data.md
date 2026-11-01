@@ -18,7 +18,8 @@ joint_drive_data(
   D4 = NULL,
   D5 = NULL,
   order = 2L,
-  theta = NULL
+  theta = NULL,
+  D6 = NULL
 )
 ```
 
@@ -42,17 +43,21 @@ joint_drive_data(
 
   The highest order of the predictor's derivative to be propagated: 1
   for the reverse pass, 2 for the curvature, 3 for the third derivative,
-  4 for the fourth.
+  4 for the fourth, 5 for the fifth.
 
 - theta:
 
   The per-observation parameters at the fitted predictors, from which
   the expected information is read where `scaling` is not zero.
 
+- D6:
+
+  The family's sixth link-scale derivative, read at order 5.
+
 ## Value
 
-A list with `filtered`, `u`, `U1`, `U2` and, to the order given, `U3`
-and `U4`.
+A list with `filtered`, `u`, `U1`, `U2` and, to the order given, `U3`,
+`U4` and `U5`.
 
 ## Details
 

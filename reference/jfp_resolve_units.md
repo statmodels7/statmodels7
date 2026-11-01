@@ -39,8 +39,15 @@ jfp_resolve_units(units, spec, design)
 The constant direction follows the rule of
 [`jfp_constant()`](https://statmodels7.github.io/statmodels7/reference/jfp_constant.md)
 with the setting `intercept` of the term. The level's columns are the
-columns of the equation that no penalized unit covers, read from the
-design at which the units are enumerated.
+columns of the equation that no penalized unit covers and that do not
+move with the coefficients: the columns of a term that recomputes its
+block (the Jacobian of
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
+or of a smoothed
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html))
+are left out, so that the decision is the same at every point at which
+the specification is built. With only such a term in the level the
+constant direction is never included.
 
 ## See also
 

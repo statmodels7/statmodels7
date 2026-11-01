@@ -32,5 +32,7 @@ jfp_terms4(st, v, w)
 A list with `sparse`, a list of per-observation weights keyed as
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 reads its `H` (the matrix is
-\\\sum\_{c,d}X_c^\top\mathrm{diag}(w\\W\_{cd})X_d\\), and `lr`, a list
-of triples `X`, `K`, `Y` (the matrix is \\XKY^\top\\).
+\\\sum\_{c,d}X_c^\top\mathrm{diag}(w\\W\_{cd})X_d\\), `lr`, a list of
+triples `X`, `K`, `Y` (the matrix is \\XKY^\top\\), and `dense`, a list
+of entries `idx`, `X` (the matrix places `X` in the rows `idx` and its
+transpose in the columns `idx`).

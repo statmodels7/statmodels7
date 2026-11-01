@@ -13,7 +13,7 @@ factor of that information, the whitened rows and the leverages."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,10 +103,12 @@ link scale, minus <code><a href="https://statmodels7.github.io/distributions7/re
 a model without a structural term it is the stacked coefficients. For a
 model carrying a filter it is the coefficients followed by the filter's
 free parameters, and the derivative of every predictor in \(u\) is read
-from the forward recursion (<code><a href="jfp_joint_rows.html">jfp_joint_rows()</a></code>); a block in an equation
-that the filter drives moves with the coefficients and is rejected in
-this phase. A model carrying a mixture over latent states is always
-rejected, because its expected information does not exist.</p>
+from the forward recursion (<code><a href="jfp_joint_rows.html">jfp_joint_rows()</a></code>). A block of kind
+<code>"static"</code> in an equation that the filter drives moves with the
+coefficients and is rejected; a block of kind <code>"filter"</code> lies in the
+filter's own subformula and moves with it. A model carrying a mixture over
+latent states is always rejected, because its expected information does
+not exist.</p>
 <p>The derivatives of the expected information are computed at the first
 request and kept in the state, so that the value, the gradient and the
 Hessian at one point call the family once per order.</p>

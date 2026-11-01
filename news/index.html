@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,13 +36,48 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.238.0" id="statmodels7-02380">statmodels7 0.238.0<a class="anchor" aria-label="anchor" href="#statmodels7-02380"></a></h2>
+<ul><li>A <code><a href="https://statmodels7.github.io/modelterms7/reference/jfp.html" class="external-link">modelterms7::jfp()</a></code> block may sit in the subformula of <code>nl()</code>, of a smoothed <code>seg()</code> or of a parameter of <code>gas()</code>. Its rows are the columns of the term’s Jacobian, or the derivatives of the filtered predictors along the block’s directions. A block in the subformula of a filter’s level (omega) is rejected, because its prior grows without bound as the persistence approaches one. A sharp <code>seg()</code>, <code>jump()</code> and <code>jseg()</code> are still rejected.</li>
+<li>
+<code><a href="../reference/reml.html">reml()</a></code> and <code><a href="../reference/reml.html">ml()</a></code> have exact outer derivatives for a <code>jfp()</code> block beside or inside a term that recomputes its block, and in a model with a filter, to the Hessian; with a scaled score (<code>scaling = 1</code> or <code>1/2</code>) in a joint filter the fifth order of the driving vector reads <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_d5expected_hessian.html" class="external-link">distributions7::distrib_d5expected_hessian()</a></code>.</li>
+<li>The penalty of <code>jfp()</code> reads the family’s expected information unmodified, as in Jeffreys’ definition. It therefore also moves the coefficients of the other distribution parameters, by an amount of order 1/n. For a gaussian with the block in the mean, the REML estimate of sigma^2 is RSS/(n - p + 2 a p_tilde).</li>
+<li>The outer gradient includes the derivative of the Jeffreys penalty in the coordinates that the criterion estimates (sigma, theta, nu). Without it the search stopped short of the optimum (gaussian sigma 0.997211 against 0.993326). A parameter whose equation carries a <code>jfp()</code> block stays on the outer criterion; only the block’s coordinates are held at the mode.</li>
+<li>With <code>intercept = NULL</code>, the constant direction of a <code>jfp()</code> level is decided on the columns that do not move, so the decision is the same at the start and at the fitted point.</li>
+<li>The marginal criterion of a model with a penalized filter reads the block of a term that recomputes it (<code>nl()</code>, <code>seg()</code>) at the mode, where it read it at the point where the design was built. The exact outer gradient of these models carries the movement of the block and moves the mode by the full curvature, weighted by the total derivative in the static predictor (penalized and unpenalized filter). Their outer Hessian is a difference of the exact gradient.</li>
+<li>modelterms7 0.127.0 is the minimum version (<code>term_block_deriv3()</code>, <code>term_block_deriv4()</code>).</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.237.1" id="statmodels7-02371">statmodels7 0.237.1<a class="anchor" aria-label="anchor" href="#statmodels7-02371"></a></h2>
+<ul><li>Tests only: a unimodal <code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code> with a mode is fitted from its two starts (modelterms7 0.126.0, now the minimum version).</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.237.0" id="statmodels7-02370">statmodels7 0.237.0<a class="anchor" aria-label="anchor" href="#statmodels7-02370"></a></h2>
+<ul><li>A criterion that cannot be read at the starting hyperparameters because the penalized information is flat in a direction that carries curvature on its diagonal (the null space of a penalty, reached at a boundary) now leaves that direction out of the determinant also when the criterion estimates no coefficient of its own. An increasing <code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code> in sigma on a constant truth stopped with an error in 12 of 18 measured fits and now fits in 18. A coefficient whose column vanishes at the start still stops the fit with its cause, and a fit whose criterion was available at its start is unchanged.</li>
+<li>The search over the versions of a term keeps the warnings of each version in <code>fit@history$variants</code> (column <code>warning</code>) and raises only those of the version chosen.</li>
+<li>modelterms7 0.125.0 is the minimum version (settings of a shape by level).</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.236.1" id="statmodels7-02361">statmodels7 0.236.1<a class="anchor" aria-label="anchor" href="#statmodels7-02361"></a></h2>
+<ul><li>The effect and derivative graphs of <code>s()</code> or <code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code> with a numeric <code>by</code> draw the coefficient (f(x)) of the term (z,f(x)), the contribution at (z = 1), without partial residuals; the title says so.</li>
+<li>The graphs of <code>s()</code> read its variables from the term, not from the call: a smoother passed as an object (<code>s(x, smoother = sm)</code>) was read as a variable of the data.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.236.0" id="statmodels7-02360">statmodels7 0.236.0<a class="anchor" aria-label="anchor" href="#statmodels7-02360"></a></h2>
+<ul><li>The search over the versions of a term runs in stages where <code><a href="https://statmodels7.github.io/modelterms7/reference/term_variant_stages.html" class="external-link">modelterms7::term_variant_stages()</a></code> says the choice has several parts, each stage starting from the version chosen at the stage before. With <code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code> under a factor <code>by</code> and a unimodal or sigmoid shape without a location, the location of each level is searched one level at a time (modelterms7 0.124.0, now the minimum version).</li>
+<li>The graphs of an <code>scs()</code> term read its <code>by</code> variable.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.235.2" id="statmodels7-02352">statmodels7 0.235.2<a class="anchor" aria-label="anchor" href="#statmodels7-02352"></a></h2>
+<ul><li>Tests only: fits with <code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code> and a value or a slope at a point (modelterms7 0.123.0, now the minimum version).</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.235.1" id="statmodels7-02351">statmodels7 0.235.1<a class="anchor" aria-label="anchor" href="#statmodels7-02351"></a></h2>
 <ul><li>Tests only: the test of a Jeffreys block with singular information uses a column of zeros, whose information is exactly zero on every platform; a repeated column left a tiny positive pivot on Linux.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.235.0" id="statmodels7-02350">statmodels7 0.235.0<a class="anchor" aria-label="anchor" href="#statmodels7-02350"></a></h2>
 <ul><li>
-<code><a href="../reference/statmod.html">statmod()</a></code> fits a model whose terms carry a discrete choice (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_pilot.html" class="external-link">modelterms7::term_pilot()</a></code>) by a search: one pilot fit with each such term replaced by its stand-in, then one fit for each version of the term (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_variants.html" class="external-link">modelterms7::term_variants()</a></code>), keeping the best criterion. Several such terms are settled one at a time. The versions tried and their scores are in <code>fit@history$variants</code>, and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> names the version chosen. This is how the mode of <code><a href="https://statmodels7.github.io/modelterms7/reference/shape_unimodal.html" class="external-link">modelterms7::shape_unimodal()</a></code> is chosen when it is not given.</li>
+<code><a href="../reference/statmod.html">statmod()</a></code> fits a model whose terms carry a discrete choice (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_pilot.html" class="external-link">modelterms7::term_pilot()</a></code>) by a search: one pilot fit with each such term replaced by its stand-in, then one fit for each version of the term (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_variants.html" class="external-link">modelterms7::term_variants()</a></code>), keeping the best criterion. Several such terms are settled one at a time. The versions tried and their scores are in <code>fit@history$variants</code>, and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> names the version chosen. This is how the mode of <code><a href="https://statmodels7.github.io/modelterms7/reference/shape_located.html" class="external-link">modelterms7::shape_unimodal()</a></code> is chosen when it is not given.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.234.0" id="statmodels7-02340">statmodels7 0.234.0<a class="anchor" aria-label="anchor" href="#statmodels7-02340"></a></h2>

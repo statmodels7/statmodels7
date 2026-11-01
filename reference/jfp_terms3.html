@@ -11,7 +11,7 @@ that jfp_terms_matrix() assembles and jfp_terms_trace() traces."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,8 +69,10 @@ that <code><a href="jfp_terms_matrix.html">jfp_terms_matrix()</a></code> assembl
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>sparse</code>, a list of per-observation weights keyed as
 <code><a href="statmod_information_at.html">statmod_information_at()</a></code> reads its <code>H</code> (the matrix is
-\(\sum_{c,d}X_c^\top\mathrm{diag}(w\,W_{cd})X_d\)), and <code>lr</code>, a list of
-triples <code>X</code>, <code>K</code>, <code>Y</code> (the matrix is \(XKY^\top\)).</p>
+\(\sum_{c,d}X_c^\top\mathrm{diag}(w\,W_{cd})X_d\)), <code>lr</code>, a list of
+triples <code>X</code>, <code>K</code>, <code>Y</code> (the matrix is \(XKY^\top\)), and <code>dense</code>, a
+list of entries <code>idx</code>, <code>X</code> (the matrix places <code>X</code> in the rows <code>idx</code> and
+its transpose in the columns <code>idx</code>).</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -13,7 +13,7 @@ enters the determinant."><meta property="og:image" content="https://statmodels7.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,8 +78,12 @@ enters the determinant.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The constant direction follows the rule of <code><a href="jfp_constant.html">jfp_constant()</a></code> with the
 setting <code>intercept</code> of the term. The level's columns are the columns of
-the equation that no penalized unit covers, read from the design at which
-the units are enumerated.</p>
+the equation that no penalized unit covers and that do not move with the
+coefficients: the columns of a term that recomputes its block (the
+Jacobian of <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> or of a smoothed <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>)
+are left out, so that the decision is the same at every point at which
+the specification is built. With only such a term in the level the
+constant direction is never included.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

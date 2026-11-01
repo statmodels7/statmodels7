@@ -1800,15 +1800,43 @@ helper functions. Using the package does not require any of it.
   [`jfp_d2expected()`](https://statmodels7.github.io/statmodels7/reference/jfp_dexpected.md)
   : The Derivatives of the Expected Information Kept in a Jeffreys State
 
+- [`jfp_dir()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_J()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_e2()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_W()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_Wk()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_etak()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_etakk()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_cv()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_pfun()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_nonempty()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_setpair()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_full()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_mv_rows()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  [`jfp_jac()`](https://statmodels7.github.io/statmodels7/reference/jfp_dir.md)
+  : The Building Blocks of the Moving Shares
+
 - [`jfp_emethod()`](https://statmodels7.github.io/statmodels7/reference/jfp_emethod.md)
   : The Method of the Expected Information That a Jeffreys Penalty Reads
 
 - [`jfp_eta_dir()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
   [`jfp_dI()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
-  [`jfp_white()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
-  [`jfp_rows_B()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
-  [`jfp_pair_weights()`](https://statmodels7.github.io/statmodels7/reference/jfp_eta_dir.md)
-  : The Pieces From Which the Terms Are Built
+  : The Movement of the Predictors and the Information Along Directions
+
+- [`jfp_fifth_arrays()`](https://statmodels7.github.io/statmodels7/reference/jfp_fifth_arrays.md)
+  : The Driving Score's Derivatives as the Fifth Order Reads Them
+
+- [`jfp_filter_dirs()`](https://statmodels7.github.io/statmodels7/reference/jfp_filter_dirs.md)
+  : The Directions of a Jeffreys Block Inside a Filter
+
+- [`jfp_filter_hessian()`](https://statmodels7.github.io/statmodels7/reference/jfp_filter_hessian.md)
+  : The Hessian's Shares From a Filtered Block's Own Movement
+
+- [`jfp_filter_unit()`](https://statmodels7.github.io/statmodels7/reference/jfp_filter_unit.md)
+  : A Jeffreys Block in the Subformula of a Filter's Parameter
+
+- [`jfp_filter_weights()`](https://statmodels7.github.io/statmodels7/reference/jfp_filter_weights.md)
+  : The Weights of a Jeffreys Block Inside a Filter Along One Direction
 
 - [`jfp_first_weights()`](https://statmodels7.github.io/statmodels7/reference/jfp_first_weights.md)
   : The Weights of the First Derivative of a Jeffreys Block
@@ -1825,13 +1853,28 @@ helper functions. Using the package does not require any of it.
 - [`jfp_joint_rows()`](https://statmodels7.github.io/statmodels7/reference/jfp_joint_rows.md)
   : The Derivative of Every Predictor Beside a Filter
 
+- [`jfp_joint_sparse()`](https://statmodels7.github.io/statmodels7/reference/jfp_joint_sparse.md)
+  : The Weighted Cross Product of the Joint Rows
+
+- [`jfp_leibniz()`](https://statmodels7.github.io/statmodels7/reference/jfp_leibniz.md)
+  : The Leibniz Rule Over Three Factors
+
 - [`jfp_live()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
   [`jfp_add_weights()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
+  [`jfp_add_pair()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
   [`jfp_darray()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
   [`jfp_check_outer()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
   : Small Helpers of the Third and Fourth Derivatives
 
-- [`jfp_outer_ok()`](https://statmodels7.github.io/statmodels7/reference/jfp_outer_ok.md)
+- [`jfp_mv_ctx()`](https://statmodels7.github.io/statmodels7/reference/jfp_mv_ctx.md)
+  [`jfp_mv_white()`](https://statmodels7.github.io/statmodels7/reference/jfp_mv_ctx.md)
+  [`jfp_mv_B()`](https://statmodels7.github.io/statmodels7/reference/jfp_mv_ctx.md)
+  [`jfp_mv_pair()`](https://statmodels7.github.io/statmodels7/reference/jfp_mv_ctx.md)
+  : The Movement of the Third and Fourth Derivatives of a Jeffreys Block
+
+- [`jfp_filter_outer_ok()`](https://statmodels7.github.io/statmodels7/reference/jfp_outer_ok.md)
+  [`jfp_outer_ok()`](https://statmodels7.github.io/statmodels7/reference/jfp_outer_ok.md)
+  [`jfp_refresh_ok()`](https://statmodels7.github.io/statmodels7/reference/jfp_outer_ok.md)
   [`jfp_outer_probe()`](https://statmodels7.github.io/statmodels7/reference/jfp_outer_ok.md)
   : Whether the Outer Derivatives Can Read a Jeffreys Penalty
 
@@ -1840,6 +1883,12 @@ helper functions. Using the package does not require any of it.
 
 - [`jfp_penalty_move()`](https://statmodels7.github.io/statmodels7/reference/jfp_penalty_move.md)
   : How the Jeffreys Curvature Moves With the Coefficients
+
+- [`jfp_refresh_hessian()`](https://statmodels7.github.io/statmodels7/reference/jfp_refresh_hessian.md)
+  : The Hessian's Shares From a Refreshed Block's Own Movement
+
+- [`jfp_refresh_parts()`](https://statmodels7.github.io/statmodels7/reference/jfp_refresh_parts.md)
+  : The Movement of a Jeffreys Block Inside a Refreshed Term
 
 - [`jfp_resolve_units()`](https://statmodels7.github.io/statmodels7/reference/jfp_resolve_units.md)
   : The Constant Direction and the Power of Each Jeffreys Unit
@@ -1853,6 +1902,9 @@ helper functions. Using the package does not require any of it.
 - [`jfp_state_at()`](https://statmodels7.github.io/statmodels7/reference/jfp_state_at.md)
   : The Jeffreys State at Given Coefficients, Kept Between Calls
 
+- [`jfp_subformula_unit()`](https://statmodels7.github.io/statmodels7/reference/jfp_subformula_unit.md)
+  : A Jeffreys Block in the Subformula of a Refreshed Term
+
 - [`jfp_terms3()`](https://statmodels7.github.io/statmodels7/reference/jfp_terms3.md)
   [`jfp_terms4()`](https://statmodels7.github.io/statmodels7/reference/jfp_terms3.md)
   : The Terms of the Third and Fourth Derivatives
@@ -1863,6 +1915,9 @@ helper functions. Using the package does not require any of it.
 
 - [`jfp_value()`](https://statmodels7.github.io/statmodels7/reference/jfp_value.md)
   : The Value of the Jeffreys Penalty
+
+- [`jfp_vk()`](https://statmodels7.github.io/statmodels7/reference/jfp_vk.md)
+  : The Derivatives of a Refreshed Jeffreys Block's Rows
 
 - [`join_gas_terms()`](https://statmodels7.github.io/statmodels7/reference/join_gas_terms.md)
   : Join the Score-Driven Terms of Several Equations
@@ -2129,6 +2184,9 @@ helper functions. Using the package does not require any of it.
 
 - [`null_coordinates()`](https://statmodels7.github.io/statmodels7/reference/null_coordinates.md)
   : The Null Coordinates of a Penalty
+
+- [`numeric_by_variable()`](https://statmodels7.github.io/statmodels7/reference/numeric_by_variable.md)
+  : The Numeric by Variable of a Smooth
 
 - [`observed_indefinite()`](https://statmodels7.github.io/statmodels7/reference/observed_indefinite.md)
   : Whether a Family's Observed Information Can Be Indefinite
@@ -3255,6 +3313,9 @@ helper functions. Using the package does not require any of it.
 
 - [`structural_range_cols()`](https://statmodels7.github.io/statmodels7/reference/structural_range_cols.md)
   : Which of a Structural Term's Free Parameters a Penalty Covers
+
+- [`structural_refresh_move()`](https://statmodels7.github.io/statmodels7/reference/structural_refresh_move.md)
+  : A Recomputed Block Beside a Structural Term, in the Outer Gradient
 
 - [`structural_se_columns()`](https://statmodels7.github.io/statmodels7/reference/structural_se_columns.md)
   : The Derivative Row of an Equation Carrying a Structural Term

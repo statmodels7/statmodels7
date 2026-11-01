@@ -47,10 +47,28 @@ family's expected information to the fourth order, from
 and its siblings of orders two to four. A term with both indices inside
 one derivative of the block's matrix is a weighted cross product of the
 designs and has the sparsity of the information; the others are products
-of low rank through matrices of \\\tilde p^2\\ columns. They are written
-for blocks whose rows do not move, in a model without a filter and
-without a term whose block is recomputed at the coefficients, and they
-signal an error elsewhere.
+of low rank through matrices of \\\tilde p^2\\ columns. Where a term
+recomputes its block at the coefficients
+([`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
+a smoothed
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)),
+the derivatives of the predictors to the fourth order and, for a block
+in the subformula of such a term, the movement of the block's rows enter
+as well
+([`jfp_mv_ctx()`](https://statmodels7.github.io/statmodels7/reference/jfp_mv_ctx.md));
+the derivatives of the term's block come from
+[`modelterms7::term_block_deriv()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html)
+and its siblings up to
+[`modelterms7::term_block_deriv4()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv4.html).
+In a model with a filter the predictors are those of the joint vector
+([`jfp_joint_rows()`](https://statmodels7.github.io/statmodels7/reference/jfp_joint_rows.md)):
+their derivatives come from the filter's kernels along the directions,
+and for a block in the subformula of a filter's parameter the rows'
+derivatives are read along the whitened directions of the block, one
+kernel call per direction
+([`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html),
+[`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html),
+[`modelterms7::term_fifth()`](https://statmodels7.github.io/modelterms7/reference/term_fifth.html)).
 
 The outer criterion reads them: the derivative of its penalized matrix
 along the movement of the mode carries \\-a\\D_3(v)\\, and its second

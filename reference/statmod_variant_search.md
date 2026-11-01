@@ -55,6 +55,10 @@ Every fit is the call of
 as written, evaluated where it was made, with the replacement recorded
 in statmod_variants; the search is not entered again from inside. Where
 several terms carry a choice, each is settled in turn with the earlier
-ones at their chosen version and the later ones at their pilot. The
-versions tried, with their scores, are in `fit@history$variants`, and
+ones at their chosen version and the later ones at their pilot. A term
+whose choice has several parts
+([`modelterms7::term_variant_stages()`](https://statmodels7.github.io/modelterms7/reference/term_variant_stages.html))
+is searched one part at a time, each stage starting from the version
+chosen at the stage before. The versions tried, with their scores and
+the warnings that each fit raised, are in `fit@history$variants`, and
 the fit's `elapsed` covers the whole search.

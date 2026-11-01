@@ -11,7 +11,7 @@ over the stacked coefficients."><meta property="og:image" content="https://statm
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,6 +97,20 @@ coefficients, a base matrix, or the list of <code><a href="jfp_hessian.html">jfp
     <p>Where a block's information is not positive definite the value is
 <code>Inf</code>, so a line search rejects the point, and the gradient and the
 Hessian signal an error.</p>
+<p>The information \(\tilde I_b\) is the family's expected information
+without modification, as in the definition of Jeffreys. It generally
+depends on the other parameters of the distribution as well, so the
+value, the gradient and the Hessian have entries in the coefficients of
+those parameters, and the outer criterion reads the value and its
+derivatives in the coordinates that it estimates (<code><a href="marginal_coords.html">marginal_coords()</a></code>).
+The prior therefore also moves those coordinates, by an amount of order
+\(1/n\): for a gaussian with the block in the mean the REML estimate of
+\(\sigma^2\) is the residual sum of squares divided by
+\(n - p + 2a\tilde p\), and in simulations over seven families the
+median shift of a dispersion or shape parameter was 0.1 to 0.3 standard
+errors at \(n = 50\) and 0.02 to 0.06 at \(n = 1000\). A block in a
+parameter other than the mean moves the mean only when the information of
+that parameter depends on the mean.</p>
 <p><code>"parts"</code> returns the Hessian split as <code><a href="jfp_hessian.html">jfp_hessian()</a></code> gives it, with the
 sign of the penalty: the objective's curvature gains
 <code><a href="statmod_information_at.html">statmod_information_at()</a></code> at <code>H = -weights</code>, plus <code>-refresh</code>, plus

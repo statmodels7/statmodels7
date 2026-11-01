@@ -35,11 +35,24 @@ jfp_joint_rows(spec, design, coef, ev)
 ## Value
 
 A list with `V` (one dense matrix per distribution parameter over the
-kept coordinates), `keep`, `driven` (the equations whose predictor the
-filter writes), and `curv`, a function of the per-observation weights (a
-named list keyed by parameter) returning \\\sum_t\sum_c
-g\_{c,t}\\\partial^2\eta\_{c,t}/\partial u\\\partial u\\ over the kept
-coordinates.
+kept coordinates) and `Vfull` (the same over every coordinate, held
+levels included), `keep`, `driven` (the equations whose predictor the
+filter writes), `curv`, a function of the per-observation weights (a
+named list keyed by parameter) returning \\\sum_t w_t\sum_c
+g\_{c,t}\\\partial^2\eta\_{c,t}/\partial u\\ \partial u\\ over the kept
+coordinates, `curv_full` the same over every coordinate, `third`, a
+function of the weights and of a direction \\d\\ over every coordinate
+returning a list with `curv`, the third derivative contracted against
+\\w_tg\_{c,t}\\ and \\d\\, and `dphi`, the second derivative along
+\\d\\, one matrix per parameter, both over every coordinate
+([`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)),
+`higher`, the same for one, two or three directions (a list) returning
+`curv`, the derivative of order two plus their number contracted against
+the weights and the directions, and `rows`, the derivative of order one
+plus their number along them
+([`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html),
+[`modelterms7::term_fifth()`](https://statmodels7.github.io/modelterms7/reference/term_fifth.html)),
+and `nb`, `mf`, `zn` and `term`.
 
 ## Details
 

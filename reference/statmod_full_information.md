@@ -23,7 +23,8 @@ statmod_full_information_impl(
   params,
   ev,
   expected = FALSE,
-  emethod = NULL
+  emethod = NULL,
+  seed = NULL
 )
 ```
 
@@ -57,6 +58,13 @@ statmod_full_information_impl(
 
   The parameter names and the evaluated predictors, already in hand at
   the caller.
+
+- seed:
+
+  `NULL`, or the rows of the static predictors' derivative, one matrix
+  per parameter over the full width, to read in place of the design's
+  blocks
+  ([`structural_refresh_move()`](https://statmodels7.github.io/statmodels7/reference/structural_refresh_move.md)).
 
 ## Value
 

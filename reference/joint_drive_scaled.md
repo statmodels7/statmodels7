@@ -7,7 +7,7 @@ for a joint filter whose `scaling` is 1/2 or 1.
 ## Usage
 
 ``` r
-joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order)
+joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order, D6 = NULL)
 ```
 
 ## Arguments
@@ -33,6 +33,10 @@ joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order)
 
   As for
   [`joint_drive_data()`](https://statmodels7.github.io/statmodels7/reference/joint_drive_data.md).
+
+- D6:
+
+  The family's sixth link-scale derivative, read at order 5.
 
 ## Value
 

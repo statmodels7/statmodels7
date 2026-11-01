@@ -9,7 +9,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,9 @@
 <span>  const <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  kind <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"static"</span>, <span class="st">"refresh"</span>, <span class="st">"filter"</span><span class="op">)</span>,</span>
 <span>  term <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  slot <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  slot <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  basis <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  C <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -87,6 +89,16 @@ decided by <code><a href="jfp_constant.html">jfp_constant()</a></code>.</p></dd>
 <dd><p>For the kinds <code>"refresh"</code> and <code>"filter"</code>, the term and the
 parameter of the term whose subformula holds the block.</p></dd>
 
+
+<dt id="arg-basis-c">basis, C<a class="anchor" aria-label="anchor" href="#arg-basis-c"></a></dt>
+<dd><p>For the kind <code>"refresh"</code>: the columns of the equation's
+design from which the rows are combined, and the matrix that combines
+them, so that the rows are the refreshed design's columns <code>basis</code> times
+<code>C</code>. For the kind <code>"filter"</code>: positions among the filter's parameters
+and the matrix that combines the derivatives along them. The constant
+direction of the subformula's level, where it is included, is the first
+column of <code>C</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -103,9 +115,11 @@ coefficients, and the constant direction is the column of ones.</p>
 <p>The other kinds describe a block inside the subformula of a term:
 <code>"refresh"</code> for a term whose block is recomputed at the coefficients
 (<code>nl()</code>, a smoothed <code>seg()</code>), and <code>"filter"</code> for a parameter of <code>gas()</code>.
-Their rows move with the coefficients, and <code><a href="jfp_state.html">jfp_state()</a></code> signals an error
-for them: they are reserved for a later phase, and the formulas of the
-engine do not change when they are added.</p>
+Their rows move with the coefficients. For the kind <code>"refresh"</code> they are
+the refreshed design's columns <code>basis</code> times <code>C</code>; for the kind <code>"filter"</code>
+they are the derivatives of the filtered predictors along the columns of
+<code>C</code> placed at the positions <code>basis</code> among the filter's parameters
+(<code><a href="jfp_filter_dirs.html">jfp_filter_dirs()</a></code>).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

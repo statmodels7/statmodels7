@@ -17,7 +17,7 @@ without assembling them."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,9 +95,19 @@ family's expected information to the fourth order, from
 two to four. A term with both indices inside one derivative of the block's
 matrix is a weighted cross product of the designs and has the sparsity of
 the information; the others are products of low rank through matrices of
-\(\tilde p^2\) columns. They are written for blocks whose rows do not
-move, in a model without a filter and without a term whose block is
-recomputed at the coefficients, and they signal an error elsewhere.</p>
+\(\tilde p^2\) columns. Where a term recomputes its block at the
+coefficients (<code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>, a smoothed <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>), the
+derivatives of the predictors to the fourth order and, for a block in the
+subformula of such a term, the movement of the block's rows enter as well
+(<code><a href="jfp_mv_ctx.html">jfp_mv_ctx()</a></code>); the derivatives of the term's block come from
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html" class="external-link">modelterms7::term_block_deriv()</a></code> and its siblings up to
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_block_deriv4.html" class="external-link">modelterms7::term_block_deriv4()</a></code>. In a model with a filter the
+predictors are those of the joint vector (<code><a href="jfp_joint_rows.html">jfp_joint_rows()</a></code>): their
+derivatives come from the filter's kernels along the directions, and for a
+block in the subformula of a filter's parameter the rows' derivatives are
+read along the whitened directions of the block, one kernel call per
+direction (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_fifth.html" class="external-link">modelterms7::term_fifth()</a></code>).</p>
 <p>The outer criterion reads them: the derivative of its penalized matrix
 along the movement of the mode carries \(-a\,D_3(v)\), and its second
 derivative \(-a\,D_4(v, w)\) (<code><a href="statmod_penalty_dbeta.html">statmod_penalty_dbeta()</a></code>,

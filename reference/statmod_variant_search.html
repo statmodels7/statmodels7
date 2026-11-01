@@ -13,7 +13,7 @@ fit whose score (variant_score()) is the smallest."><meta property="og:image" co
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +91,11 @@ them.</p></dd>
 made, with the replacement recorded in statmod_variants; the search is
 not entered again from inside. Where several terms carry a choice, each is
 settled in turn with the earlier ones at their chosen version and the later
-ones at their pilot. The versions tried, with their scores, are in
+ones at their pilot. A term whose choice has several parts
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/term_variant_stages.html" class="external-link">modelterms7::term_variant_stages()</a></code>) is searched one part at a time,
+each stage starting from the version chosen at the stage before. The
+versions tried, with their scores and the warnings that each fit raised,
+are in
 <code>fit@history$variants</code>, and the fit's <code>elapsed</code> covers the whole search.</p>
     </div>
 

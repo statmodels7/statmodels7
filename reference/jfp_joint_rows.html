@@ -11,7 +11,7 @@ parameters, with what the second derivative of a filtered predictor needs."><met
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,11 +74,22 @@ parameters, with what the second derivative of a filtered predictor needs.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>V</code> (one dense matrix per distribution parameter over
-the kept coordinates), <code>keep</code>, <code>driven</code> (the equations whose predictor
-the filter writes), and <code>curv</code>, a function of the per-observation weights
+the kept coordinates) and <code>Vfull</code> (the same over every coordinate,
+held levels included), <code>keep</code>, <code>driven</code> (the equations whose predictor
+the filter writes), <code>curv</code>, a function of the per-observation weights
 (a named list keyed by parameter) returning
-\(\sum_t\sum_c g_{c,t}\,\partial^2\eta_{c,t}/\partial u\,\partial u\)
-over the kept coordinates.</p>
+\(\sum_t w_t\sum_c g_{c,t}\,\partial^2\eta_{c,t}/\partial u\,
+  \partial u\) over the kept coordinates, <code>curv_full</code> the same over every
+coordinate, <code>third</code>, a function of the weights and of a direction
+\(d\) over every coordinate returning a list with <code>curv</code>, the third
+derivative contracted against \(w_tg_{c,t}\) and \(d\), and <code>dphi</code>,
+the second derivative along \(d\), one matrix per parameter, both over
+every coordinate (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code>), <code>higher</code>, the same for
+one, two or three directions (a list) returning <code>curv</code>, the derivative
+of order two plus their number contracted against the weights and the
+directions, and <code>rows</code>, the derivative of order one plus their number
+along them (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/term_fifth.html" class="external-link">modelterms7::term_fifth()</a></code>),
+and <code>nb</code>, <code>mf</code>, <code>zn</code> and <code>term</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

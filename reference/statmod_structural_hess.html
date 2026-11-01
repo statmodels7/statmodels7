@@ -9,7 +9,7 @@ a filter's own parameters, the vector that the determinant spans there."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,11 +116,9 @@ read on the joint vector.</p>
     <div class="section level2">
     <h2 id="blocks-that-move-with-their-coefficients">Blocks that move with their coefficients<a class="anchor" aria-label="anchor" href="#blocks-that-move-with-their-coefficients"></a></h2>
     <p>A block that moves with its coefficients (<code>nl()</code>, <code>seg()</code>) beside the filter
-contributes nothing here, as it contributes nothing to
-<code><a href="statmod_structural_grad.html">statmod_structural_grad()</a></code>: the correction for such a block is written in
-the coefficient-space assembly and has no counterpart on the joint vector.
-Such a model is admitted at both orders, and the result has the
-approximation of the gradient.</p>
+is read by <code><a href="statmod_structural_grad.html">statmod_structural_grad()</a></code> (<code><a href="structural_refresh_move.html">structural_refresh_move()</a></code>) and not
+here: <code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code> returns <code>FALSE</code> at order 2 for such a model, and
+the Hessian is then a difference of the exact gradient.</p>
     </div>
     <div class="section level2">
     <h2 id="cost">Cost<a class="anchor" aria-label="anchor" href="#cost"></a></h2>

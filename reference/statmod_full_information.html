@@ -13,7 +13,7 @@ information conditional on the past."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.235.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,8 @@ information conditional on the past.</p>
 <span>  <span class="va">params</span>,</span>
 <span>  <span class="va">ev</span>,</span>
 <span>  expected <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  emethod <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  emethod <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,6 +100,12 @@ where <code>expected</code> is <code>TRUE</code>.</p></dd>
 <dt id="arg-params-ev">params, ev<a class="anchor" aria-label="anchor" href="#arg-params-ev"></a></dt>
 <dd><p>The parameter names and the evaluated predictors,
 already in hand at the caller.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p><code>NULL</code>, or the rows of the static predictors' derivative, one
+matrix per parameter over the full width, to read in place of the
+design's blocks (<code><a href="structural_refresh_move.html">structural_refresh_move()</a></code>).</p></dd>
 
 </dl></div>
     <div class="section level2">

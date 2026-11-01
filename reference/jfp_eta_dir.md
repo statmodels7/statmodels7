@@ -1,10 +1,9 @@
-# The Pieces From Which the Terms Are Built
+# The Movement of the Predictors and the Information Along Directions
 
 `jfp_eta_dir()` returns the movement of each equation's predictor along
-a direction; `jfp_dI()` a derivative of the family's expected
-information, contracted along directions; `jfp_white()`, `jfp_rows_B()`
-and `jfp_pair_weights()` the three shapes in which a derivative of the
-block's matrix enters (see the comment at the top of `R/jfp_outer.R`).
+a direction, the Jacobian times the direction; `jfp_dI()` a derivative
+of the family's expected information, with some predictor indices fixed
+and the others contracted against per-equation movements.
 
 ## Usage
 
@@ -12,12 +11,6 @@ block's matrix enters (see the comment at the top of `R/jfp_outer.R`).
 jfp_eta_dir(st, v)
 
 jfp_dI(st, q, r, fixed, dirs)
-
-jfp_white(st, bs, dirs)
-
-jfp_rows_B(st, bs, dirs)
-
-jfp_pair_weights(st, bs, Y, dirs)
 ```
 
 ## Arguments
@@ -41,22 +34,10 @@ jfp_pair_weights(st, bs, Y, dirs)
 
 - dirs:
 
-  A list of directions, each as `jfp_eta_dir()` returns it.
-
-- bs:
-
-  A block's entry of the state.
-
-- Y:
-
-  A symmetric \\\tilde p\times\tilde p\\ matrix.
+  A list of movements, each a list of numeric vectors, one per
+  distribution parameter.
 
 ## Value
 
 `jfp_eta_dir()` a list of numeric vectors, one per distribution
-parameter; `jfp_dI()` a numeric vector over the observations;
-`jfp_white()` a \\\tilde p\times\tilde p\\ matrix; `jfp_rows_B()` a
-matrix over the joint vector and the \\\tilde p^2\\ entries;
-`jfp_pair_weights()` a list keyed as
-[`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
-reads its `H`.
+parameter; `jfp_dI()` a numeric vector over the observations.
