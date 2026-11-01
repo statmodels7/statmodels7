@@ -1,3 +1,8 @@
+# statmodels7 0.237.1
+
+* Tests only: a unimodal `modelterms7::scs()` with a mode is fitted from its
+  two starts (modelterms7 0.126.0, now the minimum version).
+
 # statmodels7 0.237.0
 
 * A criterion that cannot be read at the starting hyperparameters because
