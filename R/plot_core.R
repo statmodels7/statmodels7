@@ -619,7 +619,7 @@ term_variables <- function(tm, name) {
     return(unique(c(all.vars(tm@var), all.vars(tm@by))))
   }
   if (S7::S7_inherits(tm, modelterms7::ScteTerm)) {
-    return(unique(unlist(lapply(tm@vars, all.vars))))
+    return(unique(c(unlist(lapply(tm@vars, all.vars)), all.vars(tm@by))))
   }
   # likewise for a smooth, whose call may name a smoother object: the
   # variables are the smoothed ones and the `by`
@@ -639,8 +639,9 @@ term_variables <- function(tm, name) {
 #' The Numeric by Variable of a Smooth
 #'
 #' @description
-#' Returns the name of the numeric `by` variable of a built [modelterms7::s()]
-#' or [modelterms7::scs()] term, whose contribution is \eqn{z\,f(x)}, and an
+#' Returns the name of the numeric `by` variable of a built [modelterms7::s()],
+#' [modelterms7::scs()] or [modelterms7::scte()] term, whose contribution is
+#' \eqn{z\,f(x)}, and an
 #' empty vector for any other term. The graphs of such a term draw the
 #' coefficient \eqn{f(x)}, the contribution at \eqn{z = 1}.
 #'
@@ -651,7 +652,8 @@ term_variables <- function(tm, name) {
 #' @keywords internal
 numeric_by_variable <- function(tm) {
   bp <- tm@build_info
-  num <- if (S7::S7_inherits(tm, modelterms7::ScsTerm)) identical(bp$by_kind, "numeric")
+  num <- if (S7::S7_inherits(tm, modelterms7::ScsTerm) ||
+              S7::S7_inherits(tm, modelterms7::ScteTerm)) identical(bp$by_kind, "numeric")
     else if (S7::S7_inherits(tm, modelterms7::SmoothTerm))
       !is.null(bp$by) && is.null(bp$by_levels)
     else FALSE

@@ -543,13 +543,17 @@ S7::method(plot_data, list(PlotSurface, modelterms7::SmoothTerm)) <-
         factor(levels(f)[1L], levels = levels(f))
       }
     }
+    # a numeric `by` at 1: the surface of the coefficient f(x, z)
+    zby <- numeric_by_variable(x)
+    for (v in zby) grid[[v]] <- 1
     cc <- term_contribution(fit, ctx$param, ctx$name, x, ctx$cols, grid,
                             type@vcov_type)
     cur <- data.frame(x = grid[[vars[[1L]]]], y = grid[[vars[[2L]]]],
                       fit = cc$fit, se = cc$se)
     if (!is.null(group)) cur$group <- grid[[group]]
-    ttl <- sprintf("%s: %s", ctx$param,
-                   if (is.null(ctx$title)) ctx$name else ctx$title)
+    ttl <- sprintf("%s: %s%s", ctx$param,
+                   if (is.null(ctx$title)) ctx$name else ctx$title,
+                   if (length(zby)) sprintf(", at %s = 1", zby) else "")
     if (sliced) {
       cur$lower <- cur$fit - z * cur$se
       cur$upper <- cur$fit + z * cur$se

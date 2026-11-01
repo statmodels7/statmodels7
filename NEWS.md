@@ -1,3 +1,10 @@
+# statmodels7 0.237.5
+
+* The surface graph of a term with a numeric `by` (`te()`,
+  `modelterms7::scte()`) draws the coefficient surface at the `by` equal to
+  1, as the effect graphs of `s()` and `scs()` do; the graphs of `scte()`
+  read its `by` variable (modelterms7 0.126.3, now the minimum version).
+
 # statmodels7 0.237.4
 
 * The outer search starts at the hyperparameters that a term names through
