@@ -1,3 +1,40 @@
+# statmodels7 0.238.0
+
+* A `modelterms7::jfp()` block may sit in the subformula of `nl()`, of a
+  smoothed `seg()` or of a parameter of `gas()`. Its rows are the columns
+  of the term's Jacobian, or the derivatives of the filtered predictors
+  along the block's directions. A block in the subformula of a filter's
+  level (omega) is rejected, because its prior grows without bound as the
+  persistence approaches one. A sharp `seg()`, `jump()` and `jseg()` are
+  still rejected.
+* `reml()` and `ml()` have exact outer derivatives for a `jfp()` block
+  beside or inside a term that recomputes its block, and in a model with a
+  filter, to the Hessian; with a scaled score (`scaling = 1` or `1/2`) in
+  a joint filter the fifth order of the driving vector reads
+  `distributions7::distrib_d5expected_hessian()`.
+* The penalty of `jfp()` reads the family's expected information
+  unmodified, as in Jeffreys' definition. It therefore also moves the
+  coefficients of the other distribution parameters, by an amount of order
+  1/n. For a gaussian with the block in the mean, the REML estimate of
+  sigma^2 is RSS/(n - p + 2 a p_tilde).
+* The outer gradient includes the derivative of the Jeffreys penalty in the
+  coordinates that the criterion estimates (sigma, theta, nu). Without it
+  the search stopped short of the optimum (gaussian sigma 0.997211 against
+  0.993326). A parameter whose equation carries a `jfp()` block stays on
+  the outer criterion; only the block's coordinates are held at the mode.
+* With `intercept = NULL`, the constant direction of a `jfp()` level is
+  decided on the columns that do not move, so the decision is the same at
+  the start and at the fitted point.
+* The marginal criterion of a model with a penalized filter reads the block
+  of a term that recomputes it (`nl()`, `seg()`) at the mode, where it read
+  it at the point where the design was built. The exact outer gradient of
+  these models carries the movement of the block and moves the mode by the
+  full curvature, weighted by the total derivative in the static predictor
+  (penalized and unpenalized filter). Their outer Hessian is a difference
+  of the exact gradient.
+* modelterms7 0.127.0 is the minimum version (`term_block_deriv3()`,
+  `term_block_deriv4()`).
+
 # statmodels7 0.237.1
 
 * Tests only: a unimodal `modelterms7::scs()` with a mode is fitted from its
