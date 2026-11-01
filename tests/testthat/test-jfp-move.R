@@ -273,3 +273,27 @@ test_that("the outer gradient and Hessian are exact with a block that moves", {
   Hn <- (gr(eta + 1e-4) - gr(eta - 1e-4)) / 2e-4
   expect_lt(abs(H - Hn) / abs(Hn), 1e-7)
 })
+
+test_that("the constant direction beside nl() is decided on fixed columns", {
+  set.seed(6)
+  n <- 200
+  d <- data.frame(z = stats::rbinom(n, 1, 0.3), xp = stats::runif(n, 0.2, 3))
+  d$yp <- stats::rpois(n, exp(1.2 - 0.6 * d$xp))
+  P <- distributions7::poisson_distrib()
+  fm <- yp ~ 0 + nl(~ exp(a - r * xp)) + jfp(~ z)
+  sp0 <- statmod_spec(fm, P, d)
+  des0 <- statmod_design(sp0)
+  f <- statmod(fm, distrib = P, data = d)
+  des <- statmod_design(f@spec)
+  # at the start the Jacobian column d/da is the constant; it does not count
+  expect_false(jfp_blocks(sp0, des0)[[1]]$const)
+  expect_false(jfp_blocks(f@spec, des)[[1]]$const)
+  o1 <- statmod_objective(f@spec, f@hyper, des, FALSE)
+  o0 <- statmod_objective(sp0, f@hyper, des0, FALSE)
+  expect_lt(max(abs(o1$gr(o1$stack(f@coefficients)))), 1e-3)
+  expect_lt(max(abs(o0$gr(o0$stack(f@coefficients)))), 1e-3)
+  # a fixed intercept beside nl() still brings the constant in
+  fm2 <- yp ~ 1 + nl(~ exp(-r * xp)) + jfp(~ z)
+  sp2 <- statmod_spec(fm2, P, d)
+  expect_true(jfp_blocks(sp2, statmod_design(sp2))[[1]]$const)
+})

@@ -12,8 +12,12 @@ NULL
 #' @details
 #' The constant direction follows the rule of [jfp_constant()] with the
 #' setting `intercept` of the term. The level's columns are the columns of
-#' the equation that no penalized unit covers, read from the design at which
-#' the units are enumerated.
+#' the equation that no penalized unit covers and that do not move with the
+#' coefficients: the columns of a term that recomputes its block (the
+#' Jacobian of [modelterms7::nl()] or of a smoothed [modelterms7::seg()])
+#' are left out, so that the decision is the same at every point at which
+#' the specification is built. With only such a term in the level the
+#' constant direction is never included.
 #'
 #' @param units The units, as [statmod_penalized_units()] builds them.
 #' @param spec A [StatmodSpec()].
@@ -48,7 +52,14 @@ jfp_resolve_units <- function(units, spec, design) {
     }
     units[[k]]$kind <- "static"
     X <- design[[p]]$X
-    level <- setdiff(seq_len(ncol(X)), covered)
+    # the columns of a term that recomputes its block move with the
+    # coefficients and do not enter the level, so the decision is the same
+    # on every specification of the model
+    moving <- integer(0)
+    for (r in attr(design, "refresh")) {
+      if (identical(r$param, p)) moving <- c(moving, design[[p]]$blocks[[r$term]])
+    }
+    level <- setdiff(seq_len(ncol(X)), c(covered, moving))
     units[[k]]$const <- jfp_constant(
       u$penalty@intercept,
       if (length(level)) X[, level, drop = FALSE] else NULL,
