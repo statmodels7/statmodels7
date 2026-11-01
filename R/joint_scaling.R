@@ -38,8 +38,8 @@ NULL
 #' a Sylvester equation, which is solved in the eigenbasis of
 #' \eqn{\mathcal{I}} by dividing by \eqn{\sqrt{\lambda_i} + \sqrt{\lambda_j}}.
 #' The derivatives of \eqn{\mathcal{I}} are the family's
-#' ([distributions7::distrib_dexpected_hessian()] and its siblings, on the
-#' link scale). Every derivative is memoized by its multiset.
+#' ([distributions7::distrib_dexpected_hessian()] and its siblings to
+#' [distributions7::distrib_d5expected_hessian()], on the link scale). Every derivative is memoized by its multiset.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param theta The per-observation parameters at the fitted predictors.
@@ -67,8 +67,11 @@ joint_scale_derivs <- function(spec, theta, G, d, order) {
     dist, y, theta, scale = "link")
   if (order >= 4L) Es[[4L]] <- distributions7::distrib_d4expected_hessian(
     dist, y, theta, scale = "link")
+  if (order >= 5L) Es[[5L]] <- distributions7::distrib_d5expected_hessian(
+    dist, y, theta, scale = "link")
   keyf <- list(distributions7::dexpected_key, distributions7::d2expected_key,
-               distributions7::d3expected_key, distributions7::d4expected_key)
+               distributions7::d3expected_key, distributions7::d4expected_key,
+               distributions7::d5expected_key)
   # the information's derivative in a multiset of predictors
   I_of <- function(B) {
     out <- array(0, c(n, K, K))
@@ -168,11 +171,13 @@ joint_scale_derivs <- function(spec, theta, G, d, order) {
 #' @param theta The per-observation parameters at the fitted predictors.
 #' @param gl,H,D3,D4,D5 The family's link-scale derivatives.
 #' @param order As for [joint_drive_data()].
+#' @param D6 The family's sixth link-scale derivative, read at order 5.
 #'
 #' @return The list that [joint_drive_data()] returns.
 #'
 #' @keywords internal
-joint_drive_scaled <- function(spec, tm, theta, gl, H, D3, D4, D5, order) {
+joint_drive_scaled <- function(spec, tm, theta, gl, H, D3, D4, D5, order,
+                               D6 = NULL) {
   params <- spec@distrib@params
   P <- length(params)
   G <- match(tm@params, params)
@@ -190,7 +195,8 @@ joint_drive_scaled <- function(spec, tm, theta, gl, H, D3, D4, D5, order) {
               H[[hess_key(params, idx[1L], idx[2L])]],
               D3[[do.call(deriv3_key, c(list(params), as.list(idx)))]],
               D4[[do.call(deriv4_key, c(list(params), as.list(idx)))]],
-              D5[[do.call(deriv5_key, c(list(params), as.list(idx)))]]))
+              D5[[do.call(deriv5_key, c(list(params), as.list(idx)))]],
+              D6[[do.call(deriv6_key, c(list(params), as.list(idx)))]]))
   }
   U_of <- function(T_) {
     m <- length(T_)
@@ -227,5 +233,5 @@ joint_drive_scaled <- function(spec, tm, theta, gl, H, D3, D4, D5, order) {
   }
   list(filtered = G, u = u, U1 = U[[1L]],
        U2 = if (order >= 2L) U[[2L]], U3 = if (order >= 3L) U[[3L]],
-       U4 = if (order >= 4L) U[[4L]])
+       U4 = if (order >= 4L) U[[4L]], U5 = if (order >= 5L) U[[5L]])
 }

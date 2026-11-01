@@ -516,10 +516,6 @@ jfp_filter_outer_ok <- function(spec, design, order = 1L) {
   host <- any(vapply(jfp_blocks(spec, design), function(b)
     identical(b$kind, "filter"), logical(1)))
   if (!order_available(spec@distrib, 3L + order + host)) return(FALSE)
-  if (host && order >= 2L && joint &&
-      filter_scaling(tm@terms[[1L]]) != 0) {
-    return(FALSE)
-  }
   TRUE
 }
 
@@ -543,9 +539,10 @@ jfp_filter_outer_ok <- function(spec, design, order = 1L) {
 #' gradient then reads the filter's third derivative and the family's fourth
 #' ([modelterms7::term_third()]), the Hessian one order more of each; a block
 #' in the subformula of a filter's parameter reads one order more again,
-#' the Hessian through [modelterms7::term_fifth()], which a joint filter with
-#' a scaled score does not supply. A filter together with a term whose block
-#' is recomputed at the coefficients is not covered.
+#' the Hessian through [modelterms7::term_fifth()], with the fifth derivative
+#' of the expected information where the score is scaled
+#' ([distributions7::distrib_d5expected_hessian()]). A filter together with a
+#' term whose block is recomputed at the coefficients is not covered.
 #'
 #' Where a term recomputes its block at the coefficients, `jfp_refresh_ok()`
 #' asks that the block be a Jacobian ([modelterms7::term_jacobian_block()])

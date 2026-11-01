@@ -27,8 +27,7 @@ predictors; those above the order that \code{order} gives may be \code{NULL}.}
 
 \item{order}{The highest order of the predictor's derivative to be
 propagated: 1 for the reverse pass, 2 for the curvature, 3 for the third
-derivative, 4 for the fourth, 5 for the fifth (with \code{scaling} zero
-only).}
+derivative, 4 for the fourth, 5 for the fifth.}
 
 \item{theta}{The per-observation parameters at the fitted predictors,
 from which the expected information is read where \code{scaling} is not

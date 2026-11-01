@@ -36,7 +36,7 @@ For the symmetric root the same rule on \eqn{XX = \mathcal{I}} gives
 a Sylvester equation, which is solved in the eigenbasis of
 \eqn{\mathcal{I}} by dividing by \eqn{\sqrt{\lambda_i} + \sqrt{\lambda_j}}.
 The derivatives of \eqn{\mathcal{I}} are the family's
-(\code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} and its siblings, on the
-link scale). Every derivative is memoized by its multiset.
+(\code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} and its siblings to
+\code{\link[distributions7:distrib_d5expected_hessian]{distributions7::distrib_d5expected_hessian()}}, on the link scale). Every derivative is memoized by its multiset.
 }
 \keyword{internal}

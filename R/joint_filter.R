@@ -396,8 +396,7 @@ joint_fast_context <- function(spec, G, d, E) {
 #'   predictors; those above the order that `order` gives may be `NULL`.
 #' @param order The highest order of the predictor's derivative to be
 #'   propagated: 1 for the reverse pass, 2 for the curvature, 3 for the third
-#'   derivative, 4 for the fourth, 5 for the fifth (with `scaling` zero
-#'   only).
+#'   derivative, 4 for the fourth, 5 for the fifth.
 #' @param theta The per-observation parameters at the fitted predictors,
 #'   from which the expected information is read where `scaling` is not
 #'   zero.
@@ -415,11 +414,8 @@ joint_drive_data <- function(spec, tm, gl, H, D3 = NULL, D4 = NULL, D5 = NULL,
   K <- length(G)
   n <- spec@n_obs
   if (tm@terms[[1L]]@scaling != 0) {
-    if (order >= 5L) {
-      stop("The fifth order of a joint filter with scaling is not available.",
-           call. = FALSE)
-    }
-    return(joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order))
+    return(joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order,
+                              D6 = D6))
   }
   rn <- function(x) rep_len(as.numeric(x), n)
   u <- vapply(G, function(l) rn(gl[[params[l]]]), numeric(n))

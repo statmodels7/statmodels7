@@ -222,6 +222,68 @@ test_that("a Jeffreys block inside a filter's subformula is exact", {
   expect_lt(max(abs(jp$gr(u1))), 1e-5)
 })
 
+test_that("a block in a joint filter with a scaled score is exact at order 4", {
+  # D4 of a block in the subformula of a joint filter reads the fifth order
+  # of the filter, whose driving vector with scaling 1 needs the fifth
+  # derivative of the expected information
+  set.seed(5)
+  n <- 100
+  d <- data.frame(t = 1:n, z = rnorm(n))
+  e <- numeric(n)
+  for (i in 2:n) e[i] <- 0.7 * e[i - 1] + rnorm(1, sd = 0.5)
+  d$y <- e + 0.3 * d$z + rnorm(n, sd = exp(0.2 * sin(d$t / 9)))
+  g1 <- distributions7::gaussian1_distrib()
+  f0 <- statmod(y ~ gas(p = 1, q = 1, kappa1 ~ 1 + z, time = t, scaling = 1) |
+                  sigma ~ gas(p = 1, q = 1, time = t, scaling = 1),
+                distrib = g1, data = d)
+  f <- statmod(y ~ gas(p = 1, q = 1, kappa1 ~ 1 + jfp(~ z), time = t,
+                       scaling = 1) |
+                 sigma ~ gas(p = 1, q = 1, time = t, scaling = 1),
+               distrib = g1, data = d)
+  sp <- f@spec
+  des <- statmod_design(sp)
+  expect_true(jfp_filter_outer_ok(sp, des, 2L))
+  sst <- statmod_structural_state(des)
+  key <- names(sst$zeta)[1]
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  nb <- sum(vapply(des, function(z) z$npar, integer(1)))
+  s0 <- statmod_structural_state(statmod_design(f0@spec))
+  u0 <- c(unlist(f0@coefficients[sp@distrib@params], use.names = FALSE),
+          as.numeric(s0$zeta[[1L]][setdiff(names(s0$zeta[[1L]]),
+                                           s0$held[[1L]])]))
+  expect_length(u0, nb + length(free))
+  obj <- statmod_objective(sp, f@hyper, des)
+  jp <- statmod_joint_pieces(sp, des, obj, f@hyper)
+  cf_at <- function(u) {
+    jp$setz(u[nb + seq_along(free)])
+    obj$split(u[seq_len(nb)])
+  }
+  set.seed(11)
+  u0 <- u0 + 0.05 * rnorm(length(u0))
+  k <- length(u0)
+  v <- rnorm(k)
+  w <- rnorm(k)
+  d3 <- function(u) -jfp_deriv3_dir(jfp_state_at(sp, des, cf_at(u)), v)
+  cdif <- function(f, dir, h = 1e-4) {
+    a <- (f(u0 + h * dir) - f(u0 - h * dir)) / (2 * h)
+    b <- (f(u0 + 2 * h * dir) - f(u0 - 2 * h * dir)) / (4 * h)
+    (4 * a - b) / 3
+  }
+  r4 <- cdif(d3, w)
+  D4 <- -jfp_deriv4_dir(jfp_state_at(sp, des, cf_at(u0)), v, w)
+  expect_lt(max(abs(D4 - r4)) / max(abs(r4)), 1e-8)
+  # the negative control: without the filter's derivatives of the rows
+  ns <- environment(jfp_mv_rows)
+  real <- jfp_mv_rows
+  unlockBinding("jfp_mv_rows", ns)
+  assign("jfp_mv_rows", function(cx, i, S)
+    lapply(real(cx, i, S), function(x) 0 * x), envir = ns)
+  C4 <- -jfp_deriv4_dir(jfp_state_at(sp, des, cf_at(u0)), v, w)
+  assign("jfp_mv_rows", real, envir = ns)
+  lockBinding("jfp_mv_rows", ns)
+  expect_gt(max(abs(C4 - r4)) / max(abs(r4)), 1e-2)
+})
+
 test_that("jfp() inside a structural term other than gas() is rejected", {
   set.seed(1)
   d <- data.frame(t = 1:60, z = rnorm(60))

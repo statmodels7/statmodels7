@@ -44,9 +44,10 @@ criterion only where a penalty covers the filter's own parameters
 gradient then reads the filter's third derivative and the family's fourth
 (\code{\link[modelterms7:term_third]{modelterms7::term_third()}}), the Hessian one order more of each; a block
 in the subformula of a filter's parameter reads one order more again,
-the Hessian through \code{\link[modelterms7:term_fifth]{modelterms7::term_fifth()}}, which a joint filter with
-a scaled score does not supply. A filter together with a term whose block
-is recomputed at the coefficients is not covered.
+the Hessian through \code{\link[modelterms7:term_fifth]{modelterms7::term_fifth()}}, with the fifth derivative
+of the expected information where the score is scaled
+(\code{\link[distributions7:distrib_d5expected_hessian]{distributions7::distrib_d5expected_hessian()}}). A filter together with a
+term whose block is recomputed at the coefficients is not covered.
 
 Where a term recomputes its block at the coefficients, \code{jfp_refresh_ok()}
 asks that the block be a Jacobian (\code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}})
