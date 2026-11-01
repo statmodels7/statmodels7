@@ -23,9 +23,9 @@ factor that the draw left out) fails and is replaced.
 The case bootstrap does not depend on the variance specification of the
 model, and its variance converges to the sandwich variance. It breaks the
 groups of a \code{\link[modelterms7:random]{modelterms7::random()}} term, and a fit with one is rejected:
-\code{\link[=cluster_resample]{cluster_resample()}} resamples the groups. A fit with a structural term or
-a block that moves with its coefficients is rejected as well, and a
-\code{\link[=cv]{cv()}} criterion is rejected with \code{refit = "full"}.
+\code{\link[=cluster_resample]{cluster_resample()}} resamples the groups. A fit with a structural term is
+rejected as well, and a \code{\link[=cv]{cv()}} criterion is rejected with
+\code{refit = "full"}.
 }
 \examples{
 set.seed(1)

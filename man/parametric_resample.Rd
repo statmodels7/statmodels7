@@ -27,10 +27,12 @@ is smaller wherever the shrinkage is strong.
 
 The parametric bootstrap reproduces the variance that the model attributes
 to the estimator. It does not detect a misspecified variance function; the
-scheme of \code{\link[=case_resample]{case_resample()}} does. A fit with a structural term
-(\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}) or a block that moves with
-its coefficients (\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}},
-\code{\link[modelterms7:jseg]{modelterms7::jseg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}}) is rejected.
+scheme of \code{\link[=case_resample]{case_resample()}} does. It is the one scheme available for a fit
+with a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}). A
+block that moves with its coefficients (\code{\link[modelterms7:seg]{modelterms7::seg()}},
+\code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}},
+\code{\link[modelterms7:scs]{modelterms7::scs()}}) is refitted with the restart cycle of
+\code{\link[=boot_refit_breakpoint]{boot_refit_breakpoint()}}.
 }
 \examples{
 set.seed(1)

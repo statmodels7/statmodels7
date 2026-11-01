@@ -56,10 +56,11 @@ is rejected.}
 Every refit starts at the optimum that the fit found: its coefficients,
 including those that the fit estimated on its criterion, and its
 hyperparameters.
-The bootstrap is rejected for a model with a block that moves with its
-coefficients (\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}},
-\code{\link[modelterms7:jseg]{modelterms7::jseg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}}) and for a response that is not
-one number per observation.
+A term whose block moves with its coefficients (\code{\link[modelterms7:seg]{modelterms7::seg()}},
+\code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}},
+\code{\link[modelterms7:scs]{modelterms7::scs()}}) is refitted as \code{\link[=statmod_bootstrap]{statmod_bootstrap()}} refits it, with
+the restart cycle of \code{\link[=boot_refit_breakpoint]{boot_refit_breakpoint()}}. A response that is not one
+number per observation is rejected.
 
 Each replica gives the component \eqn{(\hat\eta^*_b, C^*_b)}: its
 predictors at the rows predicted and the covariance that the effects set
