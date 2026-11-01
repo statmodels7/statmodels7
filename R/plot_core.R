@@ -618,6 +618,9 @@ term_variables <- function(tm, name) {
   if (S7::S7_inherits(tm, modelterms7::ScsTerm)) {
     return(unique(c(all.vars(tm@var), all.vars(tm@by))))
   }
+  if (S7::S7_inherits(tm, modelterms7::ScteTerm)) {
+    return(unique(c(unlist(lapply(tm@vars, all.vars)), all.vars(tm@by))))
+  }
   # likewise for a smooth, whose call may name a smoother object: the
   # variables are the smoothed ones and the `by`
   if (S7::S7_inherits(tm, modelterms7::SmoothTerm)) {
@@ -636,8 +639,9 @@ term_variables <- function(tm, name) {
 #' The Numeric by Variable of a Smooth
 #'
 #' @description
-#' Returns the name of the numeric `by` variable of a built [modelterms7::s()]
-#' or [modelterms7::scs()] term, whose contribution is \eqn{z\,f(x)}, and an
+#' Returns the name of the numeric `by` variable of a built [modelterms7::s()],
+#' [modelterms7::scs()] or [modelterms7::scte()] term, whose contribution is
+#' \eqn{z\,f(x)}, and an
 #' empty vector for any other term. The graphs of such a term draw the
 #' coefficient \eqn{f(x)}, the contribution at \eqn{z = 1}.
 #'
@@ -648,7 +652,8 @@ term_variables <- function(tm, name) {
 #' @keywords internal
 numeric_by_variable <- function(tm) {
   bp <- tm@build_info
-  num <- if (S7::S7_inherits(tm, modelterms7::ScsTerm)) identical(bp$by_kind, "numeric")
+  num <- if (S7::S7_inherits(tm, modelterms7::ScsTerm) ||
+              S7::S7_inherits(tm, modelterms7::ScteTerm)) identical(bp$by_kind, "numeric")
     else if (S7::S7_inherits(tm, modelterms7::SmoothTerm))
       !is.null(bp$by) && is.null(bp$by_levels)
     else FALSE
@@ -739,7 +744,9 @@ term_coef_block <- function(fit, param, name, cols, vcov_type) {
 #' @description
 #' Evaluates \eqn{X b} for the block of a term on `newdata` (or on the
 #' fitting rows when `newdata` is `NULL`), restricted to the columns `cols`,
-#' with the standard error \eqn{\sqrt{x_i' V x_i}} of each row.
+#' with the standard error \eqn{\sqrt{x_i' V x_i}} of each row. For a term
+#' whose block moves with its coefficients the value is [modelterms7::term_value()]
+#' and \eqn{X} is the Jacobian that the standard error reads.
 #'
 #' @param fit A [StatmodFit()].
 #' @param param,name,cols As in [term_coef_block()].
@@ -751,12 +758,19 @@ term_coef_block <- function(fit, param, name, cols, vcov_type) {
 #'
 #' @keywords internal
 term_contribution <- function(fit, param, name, tm, cols, newdata, vcov_type) {
+  cb <- term_coef_block(fit, param, name, cols, vcov_type)
+  # a block that moves with its coefficients is the Jacobian of the
+  # contribution, so the contribution is term_value() and the block enters
+  # the delta method only, as in parts_contribution()
+  moving <- is.null(cols) && refreshes_own_block(tm)
+  if (moving) tm <- modelterms7::term_refresh(tm, cb$coef)
   X <- if (is.null(newdata)) modelterms7::term_matrix(tm)
     else modelterms7::term_predict(tm, newdata = newdata)
   X <- as.matrix(X)
   if (!is.null(cols)) X <- X[, cols, drop = FALSE]
-  cb <- term_coef_block(fit, param, name, cols, vcov_type)
-  list(fit = drop(X %*% cb$coef),
+  fit_v <- if (moving) modelterms7::term_value(tm, coef = cb$coef, newdata = newdata)
+    else drop(X %*% cb$coef)
+  list(fit = as.numeric(fit_v),
        se = sqrt(pmax(rowSums((X %*% cb$vcov) * X), 0)))
 }
 

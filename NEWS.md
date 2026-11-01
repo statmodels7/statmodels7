@@ -12,6 +12,23 @@
   as for any other block, in place of the Bayesian variance.
 * The documentation of `parametric_resample()` and `case_resample()` says
   which models each scheme takes.
+* `modelterms7::scte()`, a tensor product monotone in one or both of its
+  covariates, is fitted in any equation, drawn by default as a surface
+  (`plot_surface()`), and reported as a smooth in `summary()` (modelterms7
+  0.126.1, now the minimum version).
+* The contribution that the graphs of a term read is `term_value()` for a
+  term whose block moves with its coefficients, with the block in the
+  standard error only; the surface graph read it as the block times the
+  coefficients.
+* The outer search starts at the hyperparameters that a term names through
+  `modelterms7::term_hyper_start()`, where it names any; a held value still
+  takes precedence.
+* The surface graph of a term with a numeric `by` (`te()`,
+  `modelterms7::scte()`) draws the coefficient surface at the `by` equal to
+  1, as the effect graphs of `s()` and `scs()` do; the graphs of `scte()`
+  read its `by` variable.
+* modelterms7 0.128.0 is the minimum version (`scte()`,
+  `term_hyper_start()`).
 
 # statmodels7 0.238.0
 

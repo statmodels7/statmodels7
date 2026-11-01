@@ -13,8 +13,9 @@ numeric_by_variable(tm)
 A character vector of length 0 or 1.
 }
 \description{
-Returns the name of the numeric \code{by} variable of a built \code{\link[modelterms7:s]{modelterms7::s()}}
-or \code{\link[modelterms7:scs]{modelterms7::scs()}} term, whose contribution is \eqn{z\,f(x)}, and an
+Returns the name of the numeric \code{by} variable of a built \code{\link[modelterms7:s]{modelterms7::s()}},
+\code{\link[modelterms7:scs]{modelterms7::scs()}} or \code{\link[modelterms7:scte]{modelterms7::scte()}} term, whose contribution is
+\eqn{z\,f(x)}, and an
 empty vector for any other term. The graphs of such a term draw the
 coefficient \eqn{f(x)}, the contribution at \eqn{z = 1}.
 }
