@@ -298,6 +298,14 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
     if (!structural_penalized(spec, design)) return(FALSE)
     tm <- structural_term_of(spec, design)
     if (is.null(tm) || !answers_term_fourth(tm)) return(FALSE)
+    # a block that moves with its coefficients beside the filter is read at
+    # order 1 (structural_refresh_move()) and not at order 2, where the
+    # second movement of the block, of the reverse pass and of the filter's
+    # curvature along it are not written: measured on nl() beside a
+    # penalized gas() the assembled Hessian was 2.4e-03 (negbin2) and
+    # 7.6e-03 (gaussian) out, so the Hessian is a difference of the exact
+    # gradient there
+    if (length(attr(design, "refresh"))) return(FALSE)
   }
   if (structural_penalized(spec, design)) {
     for (u in statmod_penalized(spec, design)) {
@@ -1448,6 +1456,7 @@ d3_key <- function(params, a, b, k, keys) {
 #'
 #' @keywords internal
 joint_design_rows <- function(spec, design, coef) {
+  design <- statmod_design_at(spec, coef, design)
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -1524,6 +1533,7 @@ joint_design_rows <- function(spec, design, coef) {
 #' @keywords internal
 statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
                                     basis = NULL, free = TRUE) {
+  design <- statmod_design_at(spec, coef, design)
   jd <- joint_design_rows(spec, design, coef)
   if (is.null(jd)) return(NULL)
   K <- tryCatch(statmod_marginal_full(spec, design, coef, hyper, NULL),
@@ -1546,6 +1556,18 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
   st <- structural_grad_parts(spec, design, coef, jd, M)
   params <- jd$params
   keep <- jd$keep
+  # a term that recomputes its block: the mode moves by the likelihood's own
+  # curvature, which carries the block's second derivative, and K moves with
+  # the block (structural_refresh_move())
+  rm <- structural_refresh_move(spec, design, coef, jd)
+  msolve <- if (is.null(rm)) function(c) as.numeric(Kinv %*% c) else {
+    Km <- K
+    Km[seq_len(jd$nb), seq_len(jd$nb)] <- Km[seq_len(jd$nb), seq_len(jd$nb)] +
+      rm$Dm
+    Kmf <- tryCatch(chol(Km), error = function(e) NULL)
+    if (is.null(Kmf)) return(NULL)
+    function(c) as.numeric(backsolve(Kmf, forwardsolve(t(Kmf), c)))
+  }
   flat <- unlist(coef[params], use.names = FALSE)
   # the joint twin of penalty_dbeta_trace(): every penalty whose Hessian moves
   # with what it covers moves the determinant as the mode moves, whether it
@@ -1629,10 +1651,11 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
     dS <- penalties7::penalty_dhessian(pen, bt, th)
     c_m <- numeric(length(keep))
     c_m[pos] <- as.numeric(cr[[h]])
-    v <- -as.numeric(Kinv %*% c_m)
+    v <- -msolve(c_m)
     dS_m <- matrix(0, length(keep), length(keep))
     dS_m[pos, pos] <- as_dense(dS[[h]])
     chain <- sum(st$u * v) + structural_chain_extra(spec, design, jd, M, st, v)
+    if (!is.null(rm)) chain <- chain + rm$trace(v, M)
     dtheta <- -as.numeric(gt[[h]]) - (sum(M * dS_m) + chain + jpd(v)) / 2
     out[r] <- out[r] + if (!free) dtheta else {
       eta <- linkfunctions7::linkfun(links[[r]], hyper[[p]][[nm]][[h]])

@@ -685,3 +685,84 @@ refresh_mode_third <- function(spec, params, npar, units, Hl, gl, tv, du, f2,
   }
   out
 }
+
+
+#' A Recomputed Block Beside a Structural Term, in the Outer Gradient
+#'
+#' @description
+#' Returns what the exact outer gradient of the structural branch
+#' ([statmod_structural_grad()]) needs where a term recomputes its block at
+#' the coefficients ([modelterms7::nl()], a smoothed [modelterms7::seg()]):
+#' the block's second-derivative term of the likelihood's curvature, by which
+#' the mode moves, and the movement of \eqn{K} with the block.
+#'
+#' @details
+#' The criterion's \eqn{K} is assembled on the block at the mode and, as on
+#' the route without a structural term, leaves out the term
+#' \eqn{\sum_t\sum_q g_{q,t}\,\partial^2\eta^{\rm s}_{q,t}/\partial u^2} that
+#' the second derivative of the static predictors \eqn{\eta^{\rm s}}
+#' contributes to the likelihood's curvature. The mode moves by the full
+#' curvature, so `Dm` is that term, from [mode_curvature()] with
+#' \eqn{g_{q,t}} the total derivative of the log-likelihood in the static
+#' predictor (the score plus the filter's reverse pass,
+#' [statmod_score_obs()]); the filter carries the block's second derivative
+#' into later levels through that reverse pass.
+#'
+#' Along a direction \eqn{v} the static rows move by
+#' \eqn{D = \partial X/\partial u\,[v]} ([modelterms7::term_block_deriv()]),
+#' and \eqn{K} moves through the filter's Jacobian and curvature, which the
+#' recursion computes from those rows. At fixed predictors and filter
+#' parameters \eqn{K} is a polynomial of degree two in the rows: the Jacobian
+#' is affine in them, and the curvature and \eqn{\sum H V^\top V} are
+#' quadratic. Its derivative along \eqn{D} is therefore exactly
+#' \eqn{(K(V + sD) - K(V - sD))/(2s)} for any \eqn{s}, which `trace()` takes
+#' against \eqn{M} with \eqn{s} scaling \eqn{D} to the size of \eqn{V}. The
+#' movement of \eqn{K} through the predictors and the filter's parameters is
+#' read by [structural_grad_parts()] and [structural_chain_extra()].
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design, refreshed at `coef`.
+#' @param coef The coefficients at the mode.
+#' @param jd The joint rows, from [joint_design_rows()].
+#'
+#' @return `NULL` where no term recomputes its block; otherwise a list with
+#'   `Dm`, a matrix over the coefficients, and `trace`, a function of the
+#'   direction over the joint vector and of \eqn{M}.
+#'
+#' @seealso [u_refresh()], the same movement on the route without a
+#'   structural term.
+#'
+#' @keywords internal
+structural_refresh_move <- function(spec, design, coef, jd) {
+  params <- jd$params
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  nb <- jd$nb
+  units <- refresh_units(spec, design, coef, params, npar, offs)
+  if (!length(units)) return(NULL)
+  w <- spec@weights
+  gv <- statmod_score_obs(spec, coef, design)
+  gl <- lapply(gv, function(x) ifelse(w > 0, x / w, 0))
+  Dm <- mode_curvature(spec, design, coef, params, npar, offs, nb, gl = gl)
+  V0 <- jd$V
+  K_at <- function(seed) {
+    statmod_full_information_impl(spec, coef, design, params, jd$ev,
+                                  seed = seed)
+  }
+  trace <- function(v, M) {
+    vf <- numeric(jd$mf)
+    vf[jd$keep] <- v
+    D <- lapply(V0, function(x) matrix(0, nrow(x), ncol(x)))
+    for (un in units) {
+      D[[un$a]][, un$ra] <- as_dense(modelterms7::term_block_deriv(
+        un$built, coef = un$bt, v = vf[un$ra]))
+    }
+    dmax <- max(vapply(D, function(x) max(abs(x)), numeric(1)))
+    if (dmax == 0) return(0)
+    s <- max(vapply(V0, function(x) max(abs(x)), numeric(1))) / dmax
+    Kp <- K_at(Map(function(a, b) a + s * b, V0, D))
+    Km <- K_at(Map(function(a, b) a - s * b, V0, D))
+    sum(M * (Kp - Km)) / (2 * s)
+  }
+  list(Dm = Dm, trace = trace)
+}

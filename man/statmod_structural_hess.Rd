@@ -61,11 +61,9 @@ read on the joint vector.
 
 \section{Blocks that move with their coefficients}{
 A block that moves with its coefficients (\code{nl()}, \code{seg()}) beside the filter
-contributes nothing here, as it contributes nothing to
-\code{\link[=statmod_structural_grad]{statmod_structural_grad()}}: the correction for such a block is written in
-the coefficient-space assembly and has no counterpart on the joint vector.
-Such a model is admitted at both orders, and the result has the
-approximation of the gradient.
+is read by \code{\link[=statmod_structural_grad]{statmod_structural_grad()}} (\code{\link[=structural_refresh_move]{structural_refresh_move()}}) and not
+here: \code{\link[=outer_gradient_ok]{outer_gradient_ok()}} returns \code{FALSE} at order 2 for such a model, and
+the Hessian is then a difference of the exact gradient.
 }
 
 \section{Cost}{

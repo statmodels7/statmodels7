@@ -1,0 +1,103 @@
+# A term that recomputes its block (nl(), seg()) beside a penalized filter:
+# the exact outer gradient of the structural branch reads the block at the
+# mode, the mode's movement by the likelihood's own curvature, and the
+# movement of K with the block (structural_refresh_move())
+
+structural_refresh_case <- function(fm, distrib) {
+  set.seed(9)
+  S <- 4L
+  Tn <- 30L
+  n <- S * Tn
+  d <- data.frame(t = rep(1:Tn, S), id = factor(rep(1:S, each = Tn)),
+                  xs = stats::runif(n, 0, 3), z = stats::rnorm(n))
+  e <- numeric(n)
+  for (i in 2:n) {
+    e[i] <- if (d$t[i] == 1) 0 else 0.7 * e[i - 1] + stats::rnorm(1, sd = 0.5)
+  }
+  lev <- stats::rnorm(S, sd = 0.5)
+  d$y <- 1.5 * exp(-0.8 * d$xs) + lev[d$id] + e + stats::rnorm(n, sd = 0.5)
+  d$yn <- stats::rnbinom(n, mu = exp(0.5 + 1.5 * exp(-0.8 * d$xs) +
+                                       0.4 * lev[d$id] + 0.5 * e),
+                         size = exp(1 + 0.4 * d$z))
+  f <- suppressWarnings(statmod(fm, distrib = distrib, data = d))
+  sp <- f@spec
+  des <- statmod_design(sp)
+  sst <- statmod_structural_state(des)
+  key <- names(sst$zeta)[1]
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  nb <- sum(vapply(des, function(z) z$npar, integer(1)))
+  obj <- statmod_objective(sp, f@hyper, des)
+  jp <- statmod_joint_pieces(sp, des, obj, f@hyper)
+  u <- c(unlist(f@coefficients[sp@distrib@params], use.names = FALSE),
+         as.numeric(sst$zeta[[key]][free]))
+  cf_at <- function(uu) {
+    jp$setz(uu[nb + seq_along(free)])
+    obj$split(uu[seq_len(nb)])
+  }
+  list(f = f, sp = sp, des = des, nb = nb, jp = jp, u = u, cf_at = cf_at)
+}
+
+test_that("the block's movement beside a penalized filter is exact", {
+  skip_if_not_installed("numDeriv")
+  cases <- list(
+    list(y ~ nl(~ b * exp(-r * xs), start = list(b = 1, r = 0.5)) +
+           gas(p = 1, q = 1, omega ~ random(~ 1 | id), time = t, by = id),
+         distributions7::gaussian1_distrib()),
+    list(yn ~ nl(~ b * exp(-r * xs), start = list(b = 1, r = 0.5)) +
+           gas(p = 1, q = 1, omega ~ 1 + random(~ 1 | id), time = t,
+               by = id) | theta ~ z,
+         distributions7::negbin2_distrib()))
+  for (cs in cases) {
+    k <- structural_refresh_case(cs[[1]], cs[[2]])
+    sp <- k$sp
+    des <- k$des
+    nb <- k$nb
+    # away from the mode, where the scores that weight the block's second
+    # derivative are not small
+    set.seed(2)
+    u <- k$u + 0.1 * stats::rnorm(length(k$u))
+    cf <- k$cf_at(u)
+    K <- statmod_marginal_full(sp, des, cf, k$f@hyper, NULL)
+    desr <- statmod_design_at(sp, cf, des)
+    jd <- joint_design_rows(sp, desr, cf)
+    rm <- structural_refresh_move(sp, desr, cf, jd)
+    expect_false(is.null(rm))
+    # the mode moves by the penalized objective's own curvature
+    Hn <- numDeriv::jacobian(k$jp$gr, u)
+    Hn <- (Hn + t(Hn)) / 2
+    Km <- K
+    Km[seq_len(nb), seq_len(nb)] <- Km[seq_len(nb), seq_len(nb)] + rm$Dm
+    expect_lt(max(abs(Km - Hn)) / max(abs(Hn)), 1e-7)
+    # the control: K alone is the Gauss-Newton matrix of the block
+    expect_gt(max(abs(K - Hn)) / max(abs(Hn)), 1e-4)
+    # K moves along v: the trace against M, against Richardson differences
+    # of K over the joint vector
+    set.seed(1)
+    v <- stats::rnorm(length(u))
+    M <- crossprod(matrix(stats::rnorm(length(u)^2), length(u))) / length(u)
+    Kf <- function(uu) statmod_marginal_full(sp, des, k$cf_at(uu),
+                                             k$f@hyper, NULL)
+    h <- 1e-4
+    dKn <- (4 * (Kf(u + h / 2 * v) - Kf(u - h / 2 * v)) / h -
+              (Kf(u + h * v) - Kf(u - h * v)) / (2 * h)) / 3
+    cf <- k$cf_at(u)
+    st <- structural_grad_parts_impl(sp, desr, cf, jd, M)
+    base <- sum(st$u * v) + structural_chain_extra(sp, desr, jd, M, st, v)
+    mv <- rm$trace(v, M)
+    expect_lt(abs(base + mv - sum(M * dKn)) / abs(sum(M * dKn)), 1e-7)
+    # the control: without the block's movement
+    expect_gt(abs(base - sum(M * dKn)) / abs(sum(M * dKn)), 1e-5)
+  }
+})
+
+test_that("the outer Hessian is a difference beside a recomputed block", {
+  k <- structural_refresh_case(
+    y ~ nl(~ b * exp(-r * xs), start = list(b = 1, r = 0.5)) +
+      gas(p = 1, q = 1, omega ~ random(~ 1 | id), time = t, by = id),
+    distributions7::gaussian1_distrib())
+  des <- k$des
+  idx <- outer_hyper_index(k$sp, statmod_blocks(k$sp, des))
+  m <- reml(information = observed_info())
+  expect_true(outer_gradient_ok(k$sp, des, idx, m, 1L))
+  expect_false(outer_gradient_ok(k$sp, des, idx, m, 2L))
+})
