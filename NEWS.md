@@ -1,3 +1,12 @@
+# statmodels7 0.236.1
+
+* The effect and derivative graphs of `s()` or `modelterms7::scs()` with a
+  numeric `by` draw the coefficient \(f(x)\) of the term \(z\,f(x)\), the
+  contribution at \(z = 1\), without partial residuals; the title says so.
+* The graphs of `s()` read its variables from the term, not from the call:
+  a smoother passed as an object (`s(x, smoother = sm)`) was read as a
+  variable of the data.
+
 # statmodels7 0.236.0
 
 * The search over the versions of a term runs in stages where

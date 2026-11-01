@@ -618,6 +618,11 @@ term_variables <- function(tm, name) {
   if (S7::S7_inherits(tm, modelterms7::ScsTerm)) {
     return(unique(c(all.vars(tm@var), all.vars(tm@by))))
   }
+  # likewise for a smooth, whose call may name a smoother object: the
+  # variables are the smoothed ones and the `by`
+  if (S7::S7_inherits(tm, modelterms7::SmoothTerm)) {
+    return(unique(c(unlist(lapply(tm@vars, all.vars)), all.vars(tm@by))))
+  }
   out <- tryCatch(all.vars(str2lang(name)), error = function(e) character(0))
   # the call of nl() also names the term's own parameters; the variables of
   # the data are those among the ones the build recorded
@@ -625,6 +630,29 @@ term_variables <- function(tm, name) {
     out <- intersect(out, names(tm@build_info$data_vars))
   }
   setdiff(out, c("TRUE", "FALSE"))
+}
+
+
+#' The Numeric by Variable of a Smooth
+#'
+#' @description
+#' Returns the name of the numeric `by` variable of a built [modelterms7::s()]
+#' or [modelterms7::scs()] term, whose contribution is \eqn{z\,f(x)}, and an
+#' empty vector for any other term. The graphs of such a term draw the
+#' coefficient \eqn{f(x)}, the contribution at \eqn{z = 1}.
+#'
+#' @param tm A model term.
+#'
+#' @return A character vector of length 0 or 1.
+#'
+#' @keywords internal
+numeric_by_variable <- function(tm) {
+  bp <- tm@build_info
+  num <- if (S7::S7_inherits(tm, modelterms7::ScsTerm)) identical(bp$by_kind, "numeric")
+    else if (S7::S7_inherits(tm, modelterms7::SmoothTerm))
+      !is.null(bp$by) && is.null(bp$by_levels)
+    else FALSE
+  if (isTRUE(num)) all.vars(tm@by) else character(0)
 }
 
 

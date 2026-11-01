@@ -142,3 +142,29 @@ test_that("the modes of a factor by are searched one level at a time", {
                                                        g = "b"))
   expect_gt(seq(0, 1, length.out = 201)[which.max(mu)], 0.5)
 })
+
+test_that("the graphs of a numeric by draw the coefficient at z = 1", {
+  set.seed(40)
+  d <- data.frame(x = runif(150), z = rnorm(150))
+  d$y <- 1 + d$z * (0.5 + 1.5 * d$x^2) + rnorm(150, sd = 0.2)
+  sm <- basis7::bspline_smooth(k = 7)
+  g <- distributions7::gaussian1_distrib()
+  for (fo in list(y ~ modelterms7::scs(x, modelterms7::shape_increasing(), sm, by = z),
+                  y ~ s(x, smoother = sm, by = z))) {
+    fit <- statmod(fo, distrib = g, data = d)
+    nm <- names(fit@spec@terms$mu)[2L]
+    tm <- fit@spec@terms$mu[[nm]]
+    expect_identical(term_variables(tm, nm), c("x", "z"))
+    expect_identical(numeric_by_variable(tm), "z")
+    pd <- plot_data(plot_effect(), tm, fit,
+                    list(param = "mu", name = nm, vars = term_variables(tm, nm),
+                         cols = NULL, data = d))
+    cf <- coef(fit)$mu[modelterms7::term_coef_names(tm)]
+    ref <- modelterms7::term_value(tm, coef = cf,
+                                   newdata = data.frame(x = pd$curve$x, z = 1))
+    expect_equal(pd$curve$fit, ref, tolerance = 1e-12)
+    expect_identical(nrow(pd$points), 0L)
+    expect_match(attr(pd, "labels")$title, "at z = 1")
+    expect_s3_class(plot(fit, plot_type = plot_derivative(), term = nm, data = d), "ggplot")
+  }
+})
