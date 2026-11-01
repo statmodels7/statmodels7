@@ -12,8 +12,12 @@ NULL
 #' @details
 #' The constant direction follows the rule of [jfp_constant()] with the
 #' setting `intercept` of the term. The level's columns are the columns of
-#' the equation that no penalized unit covers, read from the design at which
-#' the units are enumerated.
+#' the equation that no penalized unit covers and that do not move with the
+#' coefficients: the columns of a term that recomputes its block (the
+#' Jacobian of [modelterms7::nl()] or of a smoothed [modelterms7::seg()])
+#' are left out, so that the decision is the same at every point at which
+#' the specification is built. With only such a term in the level the
+#' constant direction is never included.
 #'
 #' @param units The units, as [statmod_penalized_units()] builds them.
 #' @param spec A [StatmodSpec()].
@@ -40,15 +44,202 @@ jfp_resolve_units <- function(units, spec, design) {
         covered <- c(covered, v$cols)
       }
     }
-    X <- design[[p]]$X
-    level <- setdiff(seq_len(ncol(X)), covered)
     units[[k]]$power <- u$penalty@power
+    if (isTRUE(u$structural)) {
+      units[[k]] <- c(units[[k]], jfp_filter_unit(u, spec))
+      next
+    }
+    if (!S7::S7_inherits(spec@terms[[p]][[u$term]],
+                         modelterms7::JeffreysTerm)) {
+      units[[k]] <- c(units[[k]], jfp_subformula_unit(u, spec, design))
+      next
+    }
+    units[[k]]$kind <- "static"
+    X <- design[[p]]$X
+    # the columns of a term that recomputes its block move with the
+    # coefficients and do not enter the level, so the decision is the same
+    # on every specification of the model
+    moving <- integer(0)
+    for (r in attr(design, "refresh")) {
+      if (identical(r$param, p)) moving <- c(moving, design[[p]]$blocks[[r$term]])
+    }
+    level <- setdiff(seq_len(ncol(X)), c(covered, moving))
     units[[k]]$const <- jfp_constant(
       u$penalty@intercept,
       if (length(level)) X[, level, drop = FALSE] else NULL,
       X[, u$cols, drop = FALSE])
   }
   units
+}
+
+
+#' A Jeffreys Block in the Subformula of a Refreshed Term
+#'
+#' @description
+#' Resolves a Jeffreys unit that a term such as [modelterms7::nl()] or a
+#' smoothed [modelterms7::seg()] carries up from the subformula of one of its
+#' parameters: the term's columns from which the block's rows are combined,
+#' and whether the constant direction of the subformula enters them.
+#'
+#' @details
+#' The level of the subformula is its unpenalized sub-terms, read from
+#' [modelterms7::term_components()]. The constant direction is the derivative
+#' of the predictor along a constant shift of the parameter, which is the
+#' combination \eqn{X_{\rm level}\gamma} of the level's refreshed columns
+#' with \eqn{Z_{\rm level}\gamma = 1}; the span is tested on the
+#' subformula's own design, by [jfp_constant()].
+#'
+#' A term whose block is a working linearization (a sharp
+#' [modelterms7::jump()] or [modelterms7::jseg()]) is rejected, and so is the
+#' break-point subformula of a sharp [modelterms7::seg()], whose rows jump
+#' when the break-point crosses an observation. A parameter whose own
+#' development moves is rejected as well.
+#'
+#' @param u The unit.
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#'
+#' @return A list with `kind` (`"refresh"`), `const`, `basis` and `C`, as
+#'   [jfp_block()] takes them.
+#'
+#' @keywords internal
+jfp_subformula_unit <- function(u, spec, design) {
+  p <- u$param
+  tm <- spec@terms[[p]][[u$term]]
+  rf <- Filter(function(r) identical(r$param, p) && identical(r$term, u$term),
+               attr(design, "refresh"))
+  no <- function(why) {
+    stop(sprintf("jfp() inside the subformula of '%s' is not available: %s.",
+                 u$term, why), call. = FALSE)
+  }
+  if (!length(rf)) no("the term's block is not recomputed at the coefficients")
+  if (isTRUE(rf[[1L]]$frozen)) {
+    no("the term's block is a working linearization with a frozen weight")
+  }
+  comp <- modelterms7::term_components(tm)
+  hit <- NULL
+  for (cp in comp) {
+    for (j in seq_along(cp$sub_index)) {
+      if (identical(as.integer(cp$sub_index[[j]]), as.integer(u$within))) {
+        hit <- list(cp = cp, j = j)
+      }
+    }
+  }
+  if (is.null(hit)) no("its columns are not one sub-term of one parameter")
+  cp <- hit$cp
+  if (isTRUE(tm@build_info$mobile[[cp$name]])) {
+    no(sprintf("the development of '%s' moves with the coefficients",
+               cp$name))
+  }
+  if (S7::S7_inherits(tm, modelterms7::SegTerm) &&
+      startsWith(cp$name, "psi") && is.null(tm@spec$smoothed)) {
+    no("the rows of a sharp break-point's subformula jump at the observations")
+  }
+  lev <- which(vapply(seq_along(cp$subs), function(j) {
+    j != hit$j && !length(modelterms7::term_penalties(cp$subs[[j]]))
+  }, logical(1)))
+  ZA <- as_dense(modelterms7::term_matrix(cp$subs[[hit$j]]))
+  Zl <- if (length(lev)) {
+    do.call(cbind, lapply(cp$subs[lev], function(s)
+      as_dense(modelterms7::term_matrix(s))))
+  } else NULL
+  const <- jfp_constant(u$penalty@intercept, Zl, ZA)
+  tcols <- design[[p]]$blocks[[u$term]]
+  pA <- length(u$within)
+  if (!const) {
+    return(list(kind = "refresh", const = FALSE,
+                basis = tcols[u$within], C = diag(pA)))
+  }
+  li <- unlist(cp$sub_index[lev], use.names = FALSE)
+  gam <- qr.coef(qr(Zl), rep(1, nrow(Zl)))
+  gam[is.na(gam)] <- 0
+  C <- matrix(0, length(li) + pA, pA + 1L)
+  C[seq_along(li), 1L] <- gam
+  C[length(li) + seq_len(pA), 1L + seq_len(pA)] <- diag(pA)
+  list(kind = "refresh", const = TRUE, basis = tcols[c(li, u$within)],
+       C = C)
+}
+
+
+#' A Jeffreys Block in the Subformula of a Filter's Parameter
+#'
+#' @description
+#' Resolves a Jeffreys unit that a [modelterms7::gas()] term carries up from
+#' the subformula of one of its parameters: the positions among the term's
+#' parameters from which the block's rows are combined, and whether the
+#' constant direction of the subformula enters them.
+#'
+#' @details
+#' The rows are the derivatives of the filtered predictors along the block's
+#' coordinates, columns of the forward Jacobian of the recursion. The level of
+#' the subformula is its unpenalized sub-terms, read from
+#' [modelterms7::term_components()], and the constant direction is the
+#' combination \eqn{\gamma} of the level's coordinates with
+#' \eqn{Z_{\rm level}\gamma = 1}, the derivative of the predictors along a
+#' constant shift of the parameter. The span is tested on the subformula's own
+#' design, by [jfp_constant()].
+#'
+#' @param u The unit, structural, with `within` the block's positions among
+#'   the term's parameters.
+#' @param spec A [StatmodSpec()].
+#'
+#' @return A list with `kind` (`"filter"`), `const`, `basis` (positions among
+#'   the term's parameters) and `C`, as [jfp_block()] takes them.
+#'
+#' @keywords internal
+jfp_filter_unit <- function(u, spec) {
+  tm <- spec@terms[[u$param]][[u$term]]
+  no <- function(why) {
+    stop(sprintf("jfp() inside the subformula of '%s' is not available: %s.",
+                 u$term, why), call. = FALSE)
+  }
+  comp <- modelterms7::term_components(tm)
+  hit <- NULL
+  for (cp in comp) {
+    for (j in seq_along(cp$sub_index)) {
+      if (identical(as.integer(cp$sub_index[[j]]), as.integer(u$within))) {
+        hit <- list(cp = cp, j = j)
+      }
+    }
+  }
+  if (is.null(hit)) no("its columns are not one sub-term of one parameter")
+  cp <- hit$cp
+  # the level of the filter: the rows of the block grow like 1 / (1 - b)
+  # with the persistence b, so a log|I| = -a p log(1 - b) + ... is an
+  # implicit prior that cannot be integrated at b = 1 (misure_jfp/RISULTATI.md,
+  # phase 4, section 2; decided by Giovanni 2026-11-01)
+  if (identical(sub("^.*\\.", "", cp$name), "omega")) {
+    stop(sprintf(paste0(
+      "jfp() cannot be used in the subformula of omega, the level of the ",
+      "filter in '%s'.\n  The rows of its block grow like 1/(1 - b) with ",
+      "the persistence b of the filter, so the\n  penalty acts as a prior ",
+      "on the persistence that cannot be integrated at b = 1,\n  and the ",
+      "fit runs to persistence 1. A jfp() block can be placed in the ",
+      "subformula\n  of a loading (kappa) or of a partial autocorrelation ",
+      "(pacf)."), u$term), call. = FALSE)
+  }
+  lev <- which(vapply(seq_along(cp$subs), function(j) {
+    j != hit$j && !length(modelterms7::term_penalties(cp$subs[[j]]))
+  }, logical(1)))
+  ZA <- as_dense(modelterms7::term_matrix(cp$subs[[hit$j]]))
+  Zl <- if (length(lev)) {
+    do.call(cbind, lapply(cp$subs[lev], function(s)
+      as_dense(modelterms7::term_matrix(s))))
+  } else NULL
+  const <- jfp_constant(u$penalty@intercept, Zl, ZA)
+  pA <- length(u$within)
+  if (!const) {
+    return(list(kind = "filter", const = FALSE, basis = as.integer(u$within),
+                C = diag(pA)))
+  }
+  li <- unlist(cp$sub_index[lev], use.names = FALSE)
+  gam <- qr.coef(qr(Zl), rep(1, nrow(Zl)))
+  gam[is.na(gam)] <- 0
+  C <- matrix(0, length(li) + pA, pA + 1L)
+  C[seq_along(li), 1L] <- gam
+  C[length(li) + seq_len(pA), 1L + seq_len(pA)] <- diag(pA)
+  list(kind = "filter", const = TRUE,
+       basis = as.integer(c(li, u$within)), C = C)
 }
 
 
@@ -72,8 +263,12 @@ jfp_blocks <- function(spec, design, keys = NULL) {
   for (u in statmod_penalized(spec, design)) {
     if (!isTRUE(u$jeffreys)) next
     if (!is.null(keys) && !u$key %in% keys) next
-    out[[length(out) + 1L]] <- jfp_block(u$param, u$cols, power = u$power,
-                                         const = u$const)
+    out[[length(out) + 1L]] <- if (u$kind %in% c("refresh", "filter")) {
+      jfp_block(u$param, u$cols, power = u$power, const = u$const,
+                kind = u$kind, term = u$term, basis = u$basis, C = u$C)
+    } else {
+      jfp_block(u$param, u$cols, power = u$power, const = u$const)
+    }
   }
   out
 }
@@ -162,6 +357,21 @@ jfp_state_at <- function(spec, design, coef, keys = NULL) {
 #' Where a block's information is not positive definite the value is
 #' `Inf`, so a line search rejects the point, and the gradient and the
 #' Hessian signal an error.
+#'
+#' The information \eqn{\tilde I_b} is the family's expected information
+#' without modification, as in the definition of Jeffreys. It generally
+#' depends on the other parameters of the distribution as well, so the
+#' value, the gradient and the Hessian have entries in the coefficients of
+#' those parameters, and the outer criterion reads the value and its
+#' derivatives in the coordinates that it estimates ([marginal_coords()]).
+#' The prior therefore also moves those coordinates, by an amount of order
+#' \eqn{1/n}: for a gaussian with the block in the mean the REML estimate of
+#' \eqn{\sigma^2} is the residual sum of squares divided by
+#' \eqn{n - p + 2a\tilde p}, and in simulations over seven families the
+#' median shift of a dispersion or shape parameter was 0.1 to 0.3 standard
+#' errors at \eqn{n = 50} and 0.02 to 0.06 at \eqn{n = 1000}. A block in a
+#' parameter other than the mean moves the mean only when the information of
+#' that parameter depends on the mean.
 #'
 #' `"parts"` returns the Hessian split as [jfp_hessian()] gives it, with the
 #' sign of the penalty: the objective's curvature gains
@@ -291,6 +501,25 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 }
 
 
+#' @rdname jfp_outer_ok
+#' @keywords internal
+jfp_filter_outer_ok <- function(spec, design, order = 1L) {
+  su <- attr(design, "structural")
+  if (length(su) != 1L) return(FALSE)
+  if (length(attr(design, "refresh"))) return(FALSE)
+  if (!structural_penalized(spec, design)) return(FALSE)
+  tm <- structural_term_of(spec, design)
+  joint <- S7::S7_inherits(tm, modelterms7::GasJoint)
+  if (is.null(tm) || !(joint || S7::S7_inherits(tm, modelterms7::GasTerm))) {
+    return(FALSE)
+  }
+  host <- any(vapply(jfp_blocks(spec, design), function(b)
+    identical(b$kind, "filter"), logical(1)))
+  if (!order_available(spec@distrib, 3L + order + host)) return(FALSE)
+  TRUE
+}
+
+
 #' Whether the Outer Derivatives Can Read a Jeffreys Penalty
 #'
 #' @description
@@ -301,9 +530,29 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 #' The gradient reads the third derivative of the penalty, so the third
 #' derivative of the family's expected information, and the Hessian the
 #' fourth; each is probed once at a random point with the method that
-#' [jfp_emethod()] selects. The derivatives are written for a model without a
-#' filter and without a term whose block is recomputed at the coefficients,
-#' and the function returns `FALSE` there.
+#' [jfp_emethod()] selects.
+#'
+#' Beside a filter ([modelterms7::gas()], a single or a joint one) the
+#' derivatives are written on the joint vector, which is the vector of the
+#' criterion only where a penalty covers the filter's own parameters
+#' ([structural_penalized()]); elsewhere the function returns `FALSE`. The
+#' gradient then reads the filter's third derivative and the family's fourth
+#' ([modelterms7::term_third()]), the Hessian one order more of each; a block
+#' in the subformula of a filter's parameter reads one order more again,
+#' the Hessian through [modelterms7::term_fifth()], with the fifth derivative
+#' of the expected information where the score is scaled
+#' ([distributions7::distrib_d5expected_hessian()]). A filter together with a
+#' term whose block is recomputed at the coefficients is not covered.
+#'
+#' Where a term recomputes its block at the coefficients, `jfp_refresh_ok()`
+#' asks that the block be a Jacobian ([modelterms7::term_jacobian_block()])
+#' and that the term's class have its own method for the derivative of its
+#' block that the order reads: [modelterms7::term_block_deriv2()] for the
+#' gradient and [modelterms7::term_block_deriv3()] for the Hessian, one
+#' order more for the term that holds a Jeffreys block in its subformula,
+#' whose rows move. The method is called once at the term's coefficients, so
+#' that a term that signals an error there (an [modelterms7::nl()] parameter
+#' whose development moves, a step's fourth derivative) is read as `FALSE`.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -313,9 +562,11 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 #'
 #' @keywords internal
 jfp_outer_ok <- function(spec, design, order = 1L) {
-  if (length(attr(design, "structural"))) return(FALSE)
-  rf <- attr(design, "refresh")
-  if (!is.null(rf) && length(rf)) return(FALSE)
+  if (length(attr(design, "structural")) &&
+      !jfp_filter_outer_ok(spec, design, order)) {
+    return(FALSE)
+  }
+  if (!jfp_refresh_ok(spec, design, order)) return(FALSE)
   d <- spec@distrib
   mem <- .jfp_outer_memory
   if (!is.null(mem$distrib) && identical(mem$distrib, d) &&
@@ -338,6 +589,43 @@ jfp_outer_ok <- function(spec, design, order = 1L) {
   ans <- jfp_outer_probe(d, order)
   mem$value[[as.character(order)]] <- ans
   ans
+}
+
+#' @rdname jfp_outer_ok
+#' @keywords internal
+jfp_refresh_ok <- function(spec, design, order = 1L) {
+  rf <- attr(design, "refresh")
+  if (is.null(rf) || !length(rf)) return(TRUE)
+  sst <- attr(design, "state")
+  if (is.null(sst)) return(FALSE)
+  hosts <- vapply(jfp_blocks(spec, design), function(b)
+    if (identical(b$kind, "refresh")) paste(b$param, b$term, sep = ":") else
+      "", character(1))
+  gens <- list(modelterms7::term_block_deriv2, modelterms7::term_block_deriv3,
+               modelterms7::term_block_deriv4)
+  for (r in rf) {
+    tm <- sst$terms[[r$param]][[r$term]]
+    if (is.null(tm)) return(FALSE)
+    if (!isTRUE(modelterms7::term_jacobian_block(tm))) return(FALSE)
+    k <- order + 1L + (paste(r$param, r$term, sep = ":") %in% hosts)
+    if (k > 4L) return(FALSE)
+    gen <- gens[[k - 1L]]
+    if (identical(S7::method(gen, S7::S7_class(tm)),
+                  S7::method(gen, modelterms7::model_term))) {
+      return(FALSE)
+    }
+    m <- length(modelterms7::term_coef_names(tm))
+    z <- rep(0.37, m)
+    ok <- tryCatch({
+      switch(k - 1L,
+        gen(tm, v = z, u = z),
+        gen(tm, v = z, u = z, s = z),
+        gen(tm, v = z, u = z, s = z, r = z))
+      TRUE
+    }, error = function(e) FALSE)
+    if (!ok) return(FALSE)
+  }
+  TRUE
 }
 
 # The one-slot memory of jfp_outer_ok(): the family last probed and the

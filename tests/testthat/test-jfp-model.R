@@ -136,14 +136,182 @@ test_that("lowrank_solve() equals the dense solve", {
                tolerance = 1e-10)
 })
 
-test_that("jfp() inside a subformula is rejected in this phase", {
+test_that("a Jeffreys block inside a filter's subformula is exact", {
+  skip_if_not_installed("numDeriv")
+  set.seed(4)
+  n <- 80
+  d <- data.frame(t = 1:n, g = factor(rep(1:2, n / 2)), x = rnorm(n))
+  e <- numeric(n)
+  for (i in 2:n) e[i] <- 0.7 * e[i - 1] + rnorm(1, sd = 0.6)
+  d$y <- 0.3 * d$x + e + rnorm(n, sd = 0.5)
+  g1 <- distributions7::gaussian1_distrib()
+  # the point: the fit of the same model without jfp(), whose coordinates
+  # are in the same order
+  f0 <- statmod(y ~ x + gas(p = 1, q = 1, kappa1 ~ 1 + g, time = t), g1, d)
+  f <- statmod(y ~ x + gas(p = 1, q = 1, kappa1 ~ 1 + jfp(~ g), time = t),
+               g1, d)
+  sp <- f@spec
+  des <- statmod_design(sp)
+  b <- jfp_blocks(sp, des)
+  expect_identical(b[[1L]]$kind, "filter")
+  expect_true(b[[1L]]$const)
+  sst <- statmod_structural_state(des)
+  key <- names(sst$zeta)[1]
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  nb <- sum(vapply(des, function(z) z$npar, integer(1)))
+  # the fit's own point, read before the evaluations below move the state
+  u1 <- c(unlist(f@coefficients[sp@distrib@params], use.names = FALSE),
+          as.numeric(sst$zeta[[key]][free]))
+  s0 <- statmod_structural_state(statmod_design(f0@spec))
+  u0 <- c(unlist(f0@coefficients[sp@distrib@params], use.names = FALSE),
+          as.numeric(s0$zeta[[1L]][setdiff(names(s0$zeta[[1L]]),
+                                           s0$held[[1L]])]))
+  expect_length(u0, nb + length(free))
+  obj <- statmod_objective(sp, f@hyper, des)
+  jp <- statmod_joint_pieces(sp, des, obj, f@hyper)
+  cf_at <- function(u) {
+    jp$setz(u[nb + seq_along(free)])
+    obj$split(u[seq_len(nb)])
+  }
+  val <- function(u) jfp_penalty(sp, des, cf_at(u), "value")
+  gr <- function(u) jfp_penalty(sp, des, cf_at(u), "gradient", joint = TRUE)
+  g <- gr(u0)
+  gn <- numDeriv::grad(val, u0)
+  expect_lt(max(abs(g - gn)) / max(abs(gn)), 1e-7)
+  hn <- numDeriv::jacobian(gr, u0)
+  hn <- (hn + t(hn)) / 2
+  h <- jfp_penalty(sp, des, cf_at(u0), "hessian", joint = TRUE)
+  expect_lt(max(abs(h - hn)) / max(abs(hn)), 1e-7)
+  # the negative control: without the movement of the block's rows
+  st <- jfp_state_at(sp, des, cf_at(u0))
+  hp <- jfp_hessian(st)
+  expect_gt(max(abs(-(hp$hessian - hp$refresh) - hn)) / max(abs(hn)), 1e-1)
+  # the outer orders: D3 against a central difference of the exact Hessian,
+  # D4 against one of the exact D3, along random directions
+  set.seed(11)
+  k <- length(u0)
+  v <- rnorm(k)
+  w <- rnorm(k)
+  hh <- function(u) jfp_penalty(sp, des, cf_at(u), "hessian", joint = TRUE)
+  d3 <- function(u) -jfp_deriv3_dir(jfp_state_at(sp, des, cf_at(u)), v)
+  cdif <- function(f, dir, h = 1e-4) {
+    a <- (f(u0 + h * dir) - f(u0 - h * dir)) / (2 * h)
+    b <- (f(u0 + 2 * h * dir) - f(u0 - 2 * h * dir)) / (4 * h)
+    (4 * a - b) / 3
+  }
+  r3 <- cdif(hh, v)
+  r4 <- cdif(d3, w)
+  D3 <- d3(u0)
+  D4 <- -jfp_deriv4_dir(jfp_state_at(sp, des, cf_at(u0)), v, w)
+  expect_lt(max(abs(D3 - r3)) / max(abs(r3)), 1e-8)
+  expect_lt(max(abs(D4 - r4)) / max(abs(r4)), 1e-8)
+  M <- crossprod(matrix(rnorm(k * k), k)) / k
+  expect_equal(-jfp_deriv4(jfp_state_at(sp, des, cf_at(u0)), M, v, w),
+               sum(M * D4), tolerance = 1e-10)
+  # the negative control: without the filter's derivatives of the rows
+  ns <- environment(jfp_mv_rows)
+  real <- jfp_mv_rows
+  unlockBinding("jfp_mv_rows", ns)
+  assign("jfp_mv_rows", function(cx, i, S)
+    lapply(real(cx, i, S), function(x) 0 * x), envir = ns)
+  C3 <- d3(u0)
+  assign("jfp_mv_rows", real, envir = ns)
+  lockBinding("jfp_mv_rows", ns)
+  expect_gt(max(abs(C3 - r3)) / max(abs(r3)), 1e-2)
+  # the fit is stationary over the joint vector, the Jeffreys part included
+  expect_lt(max(abs(jp$gr(u1))), 1e-5)
+})
+
+test_that("a block in a joint filter with a scaled score is exact at order 4", {
+  # D4 of a block in the subformula of a joint filter reads the fifth order
+  # of the filter, whose driving vector with scaling 1 needs the fifth
+  # derivative of the expected information
+  set.seed(5)
+  n <- 100
+  d <- data.frame(t = 1:n, z = rnorm(n))
+  e <- numeric(n)
+  for (i in 2:n) e[i] <- 0.7 * e[i - 1] + rnorm(1, sd = 0.5)
+  d$y <- e + 0.3 * d$z + rnorm(n, sd = exp(0.2 * sin(d$t / 9)))
+  g1 <- distributions7::gaussian1_distrib()
+  f0 <- statmod(y ~ gas(p = 1, q = 1, kappa1 ~ 1 + z, time = t, scaling = 1) |
+                  sigma ~ gas(p = 1, q = 1, time = t, scaling = 1),
+                distrib = g1, data = d)
+  f <- statmod(y ~ gas(p = 1, q = 1, kappa1 ~ 1 + jfp(~ z), time = t,
+                       scaling = 1) |
+                 sigma ~ gas(p = 1, q = 1, time = t, scaling = 1),
+               distrib = g1, data = d)
+  sp <- f@spec
+  des <- statmod_design(sp)
+  expect_true(jfp_filter_outer_ok(sp, des, 2L))
+  sst <- statmod_structural_state(des)
+  key <- names(sst$zeta)[1]
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  nb <- sum(vapply(des, function(z) z$npar, integer(1)))
+  s0 <- statmod_structural_state(statmod_design(f0@spec))
+  u0 <- c(unlist(f0@coefficients[sp@distrib@params], use.names = FALSE),
+          as.numeric(s0$zeta[[1L]][setdiff(names(s0$zeta[[1L]]),
+                                           s0$held[[1L]])]))
+  expect_length(u0, nb + length(free))
+  obj <- statmod_objective(sp, f@hyper, des)
+  jp <- statmod_joint_pieces(sp, des, obj, f@hyper)
+  cf_at <- function(u) {
+    jp$setz(u[nb + seq_along(free)])
+    obj$split(u[seq_len(nb)])
+  }
+  set.seed(11)
+  u0 <- u0 + 0.05 * rnorm(length(u0))
+  k <- length(u0)
+  v <- rnorm(k)
+  w <- rnorm(k)
+  d3 <- function(u) -jfp_deriv3_dir(jfp_state_at(sp, des, cf_at(u)), v)
+  cdif <- function(f, dir, h = 1e-4) {
+    a <- (f(u0 + h * dir) - f(u0 - h * dir)) / (2 * h)
+    b <- (f(u0 + 2 * h * dir) - f(u0 - 2 * h * dir)) / (4 * h)
+    (4 * a - b) / 3
+  }
+  r4 <- cdif(d3, w)
+  D4 <- -jfp_deriv4_dir(jfp_state_at(sp, des, cf_at(u0)), v, w)
+  expect_lt(max(abs(D4 - r4)) / max(abs(r4)), 1e-8)
+  # the negative control: without the filter's derivatives of the rows
+  ns <- environment(jfp_mv_rows)
+  real <- jfp_mv_rows
+  unlockBinding("jfp_mv_rows", ns)
+  assign("jfp_mv_rows", function(cx, i, S)
+    lapply(real(cx, i, S), function(x) 0 * x), envir = ns)
+  C4 <- -jfp_deriv4_dir(jfp_state_at(sp, des, cf_at(u0)), v, w)
+  assign("jfp_mv_rows", real, envir = ns)
+  lockBinding("jfp_mv_rows", ns)
+  expect_gt(max(abs(C4 - r4)) / max(abs(r4)), 1e-2)
+})
+
+test_that("jfp() inside a structural term other than gas() is rejected", {
   set.seed(1)
-  d <- data.frame(x = runif(40), g = rnorm(40))
-  d$y <- 2 * exp(-d$x) + rnorm(40, sd = 0.1)
-  expect_error(statmod(y ~ 0 + nl(~ a * exp(-r * x), a ~ 1 + jfp(~ g)),
+  d <- data.frame(t = 1:60, z = rnorm(60))
+  d$y <- rnorm(60)
+  expect_error(statmod(y ~ regime(k = 2, time = t, mu ~ 1 + jfp(~ z)),
                        distrib = distributions7::gaussian1_distrib(),
-                       data = d),
-               "not implemented yet")
+                       data = d))
+})
+
+test_that("jfp() in the subformula of a filter's level is rejected", {
+  set.seed(1)
+  d <- data.frame(t = 1:60, z = rnorm(60))
+  d$y <- rpois(60, 2)
+  pois <- distributions7::poisson_distrib()
+  expect_error(statmod(y ~ gas(p = 1, q = 1, omega ~ 1 + jfp(~ z), time = t),
+                       distrib = pois, data = d),
+               "cannot be integrated at b = 1")
+  expect_error(statmod(y ~ gas(p = 1, q = 1, omega ~ 0 + jfp(~ z), time = t),
+                       distrib = pois, data = d),
+               "subformula of omega")
+  # in a joint filter, the level of one of its equations
+  g1 <- distributions7::gaussian1_distrib()
+  d$y2 <- rnorm(60)
+  expect_error(statmod(y2 ~ gas(p = 1, q = 1, omega ~ 1 + jfp(~ z),
+                                time = t) |
+                         sigma ~ gas(p = 1, q = 1, time = t),
+                       distrib = g1, data = d),
+               "subformula of omega")
 })
 
 test_that("a Jeffreys block beside a filter in another equation is exact", {
@@ -270,4 +438,125 @@ test_that("the outer gradient and Hessian of reml() and ml() are exact", {
   lab <- coef_labels(f@spec, statmod_design(f@spec))
   expect_equal(attr(logLik(f, loglik_type = "marginal"), "df"),
                sum(!lab$penalized) + 1 + 1)
+})
+
+test_that("a block in a subformula of nl() moves, and its derivatives are exact", {
+  skip_if_not_installed("numDeriv")
+  set.seed(2)
+  n <- 150
+  d <- data.frame(x = runif(n, 0.2, 3), g = rnorm(n))
+  d$y <- rpois(n, exp(log(3 + 0.5 * d$g) - 0.6 * d$x))
+  fm <- y ~ 0 + nl(~ exp(a - r * x), a ~ 1 + jfp(~ g))
+  sp <- statmod_spec(fm, distributions7::poisson_distrib(), d)
+  des <- statmod_design(sp)
+  units <- statmod_penalized(sp, des)
+  expect_identical(units[[1]]$kind, "refresh")
+  expect_true(units[[1]]$const)
+  bl <- jfp_blocks(sp, des)
+  u0 <- c(1.1, 0.15, 0.55)
+  ref <- function(u) {
+    cf <- list(mu = u)
+    th <- statmod_eta(sp, des, cf)$theta
+    X <- as.matrix(statmod_design_at(sp, cf, des)$mu$X)[, bl[[1]]$basis] %*%
+      bl[[1]]$C
+    E <- distributions7::distrib_expected_hessian(sp@distrib, sp@response, th,
+                                                  scale = "link")
+    0.5 * as.numeric(determinant(crossprod(X * (-E$mu_mu), X))$modulus)
+  }
+  st_at <- function(u) jfp_state(sp, des, list(mu = u), bl)
+  g <- jfp_gradient(st_at(u0))
+  gn <- numDeriv::grad(ref, u0)
+  expect_lt(max(abs(g - gn)) / max(abs(gn)), 1e-7)
+  hj <- numDeriv::jacobian(function(u) jfp_gradient(st_at(u)), u0)
+  h <- jfp_hessian(st_at(u0))$hessian
+  expect_lt(max(abs(h - (hj + t(hj)) / 2)) / max(abs(hj)), 1e-7)
+  # the negative control: the same block read as though its rows were fixed
+  st0 <- st_at(u0)
+  st0$blocks[[1]]$block$kind <- "static"
+  expect_gt(max(abs(jfp_gradient(st0) - gn)) / max(abs(gn)), 1e-2)
+})
+
+test_that("jfp() inside nl() keeps a separated slope finite", {
+  set.seed(6)
+  n <- 200
+  d <- data.frame(x = runif(n, -2, 2), h = rbinom(n, 1, 0.3))
+  d$y <- rbinom(n, 1, plogis(2 * (d$x - 0.3)))
+  d$y[d$h == 1] <- as.numeric(d$x[d$h == 1] > 0.5)
+  B <- distributions7::bernoulli_distrib()
+  f <- statmod(y ~ 0 + nl(~ b * (x - e), b ~ 1 + jfp(~ h),
+                          start = list(b = 1, e = 0)), distrib = B, data = d)
+  cf <- unlist(coef(f))
+  expect_true(all(is.finite(cf)))
+  expect_lt(abs(cf[["mu.nl.b.jfp.h"]]), 50)
+  expect_identical(statmod_certificate(f)$state, "converged")
+  obj <- statmod_objective(f@spec, f@hyper, statmod_design(f@spec))
+  expect_lt(max(abs(obj$gr(obj$stack(f@coefficients)))), 1e-3)
+})
+
+test_that("the subformulas that move discontinuously are rejected", {
+  set.seed(6)
+  n <- 120
+  d <- data.frame(x = runif(n, -2, 2), h = rbinom(n, 1, 0.3))
+  d$y <- 1 + 0.5 * d$x + 1.5 * pmax(d$x - 0.2 - 0.6 * d$h, 0) +
+    rnorm(n, sd = 0.3)
+  G <- distributions7::gaussian1_distrib()
+  expect_error(statmod(y ~ seg(x, psi ~ 1 + jfp(~ h)), distrib = G, data = d),
+               "sharp break-point")
+  f <- suppressWarnings(statmod(y ~ seg(x, psi ~ 1 + jfp(~ h),
+                                         smoothed = numericals7::smooth_probit()),
+                                distrib = G, data = d))
+  expect_true(all(is.finite(unlist(coef(f)))))
+})
+
+test_that("the outer criterion reaches the gaussian closed form beside jfp()", {
+  # with the full information the Jeffreys value is
+  # const - 2 a p_tilde log sigma, so the REML optimum is
+  # sigma^2 = RSS / (n - p + 2 a p_tilde)
+  set.seed(1)
+  n <- 200
+  d <- data.frame(x = rnorm(n), z = rnorm(n))
+  d$y <- 1 + 0.5 * d$x + 0.3 * d$z + rnorm(n)
+  f <- statmod(y ~ x + jfp(~ z) | sigma ~ 1,
+               distrib = distributions7::gaussian1_distrib(), data = d)
+  rss <- sum(stats::residuals(stats::lm(y ~ x + z, d))^2)
+  an <- sqrt(rss / (n - 3 + 2 * 0.5 * 2))
+  expect_equal(exp(f@coefficients$sigma[[1L]]), an, tolerance = 1e-7)
+  expect_identical(statmod_certificate(f)$state, "converged")
+  # the gradient at the optimum, and without the value's derivative (the
+  # defect): 2 a p_tilde
+  spec <- f@spec
+  design <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  gam <- marginal_coords(spec, design, reml())
+  basis <- integrated_basis(spec, design, "reml", gamma = TRUE)
+  # on the specification that holds sigma, as the outer search reads it
+  sp <- statmod_hold(spec, gam, f@coefficients$sigma)
+  g <- statmod_marginal_grad(sp, design, f@coefficients, f@hyper, reml(),
+                             idx, basis, gam = gam)
+  jg <- jfp_penalty(spec, design, f@coefficients, "gradient")
+  expect_lt(abs(g), 1e-5)
+  expect_equal(g + jg[gam$where], 2, tolerance = 1e-6)
+})
+
+test_that("a jfp block keeps its parameter on the outer criterion", {
+  set.seed(1)
+  n <- 100
+  d <- data.frame(x = rnorm(n), w = rnorm(n))
+  d$y <- 1 + 0.5 * d$x + rnorm(n, sd = exp(0.3 * d$w))
+  G <- distributions7::gaussian1_distrib()
+  route <- function(fm) {
+    sp <- statmod_spec(fm, G, d)
+    des <- statmod_design(sp)
+    marginal_coords(sp, des, reml())
+  }
+  a <- route(y ~ x | sigma ~ jfp(~ w))
+  b <- route(y ~ x | sigma ~ w)
+  # the same parameter on the criterion, nothing skipped; the block's own
+  # coordinate stays at the mode
+  expect_identical(unique(a$param), unique(b$param))
+  expect_length(a$skipped, 0L)
+  expect_identical(a$name, "(Intercept)")
+  expect_identical(b$name, c("(Intercept)", "w"))
+  f <- statmod(y ~ x | sigma ~ jfp(~ w), distrib = G, data = d)
+  expect_identical(statmod_certificate(f)$state, "converged")
 })

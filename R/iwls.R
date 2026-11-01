@@ -1955,9 +1955,11 @@ lowrank_solve <- function(A, V, u, damp = 0) {
   if (!all(is.finite(V))) return(NULL)
   if (damp > 0) Matrix::diag(A) <- Matrix::diag(A) + damp
   if (isS4(A)) {
-    ch <- tryCatch(Matrix::Cholesky(Matrix::forceSymmetric(
+    # CHOLMOD reports a matrix it cannot factor as a warning, and the
+    # caller reads NULL as the assembled route's turn
+    ch <- suppressWarnings(tryCatch(Matrix::Cholesky(Matrix::forceSymmetric(
       methods::as(A, "CsparseMatrix")), LDL = FALSE, perm = TRUE),
-      error = function(e) NULL)
+      error = function(e) NULL))
     if (is.null(ch)) return(NULL)
     sol <- function(b) as.matrix(Matrix::solve(ch, b, system = "A"))
   } else {

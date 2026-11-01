@@ -191,6 +191,14 @@ marginal_coords <- function(spec, design, method) {
         if (is.null(ix)) next
         inside <- ix %in% pos
         if (!any(inside)) next
+        # a Jeffreys block has no hyperparameter and does not decide the
+        # parameter's route (Giovanni, 2026-11-01): its own coordinates stay
+        # at the mode, and the rest of the equation is read on the criterion
+        # as it would be with the block's columns unpenalized
+        if (isTRUE(u$jeffreys)) {
+          free[match(ix[inside], pos)] <- FALSE
+          next
+        }
         pen <- u$penalty
         kink <- tryCatch(penalty_has_kink(pen), error = function(e) TRUE)
         if (isTRUE(kink)) {

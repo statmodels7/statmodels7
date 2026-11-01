@@ -11,7 +11,9 @@ jfp_block(
   const = FALSE,
   kind = c("static", "refresh", "filter"),
   term = NULL,
-  slot = NULL
+  slot = NULL,
+  basis = NULL,
+  C = NULL
 )
 }
 \arguments{
@@ -30,6 +32,14 @@ decided by \code{\link[=jfp_constant]{jfp_constant()}}.}
 
 \item{term, slot}{For the kinds \code{"refresh"} and \code{"filter"}, the term and the
 parameter of the term whose subformula holds the block.}
+
+\item{basis, C}{For the kind \code{"refresh"}: the columns of the equation's
+design from which the rows are combined, and the matrix that combines
+them, so that the rows are the refreshed design's columns \code{basis} times
+\code{C}. For the kind \code{"filter"}: positions among the filter's parameters
+and the matrix that combines the derivatives along them. The constant
+direction of the subformula's level, where it is included, is the first
+column of \code{C}.}
 }
 \value{
 A list of class \code{jfp_block} with the arguments as fields.
@@ -49,9 +59,11 @@ coefficients, and the constant direction is the column of ones.
 The other kinds describe a block inside the subformula of a term:
 \code{"refresh"} for a term whose block is recomputed at the coefficients
 (\code{nl()}, a smoothed \code{seg()}), and \code{"filter"} for a parameter of \code{gas()}.
-Their rows move with the coefficients, and \code{\link[=jfp_state]{jfp_state()}} signals an error
-for them: they are reserved for a later phase, and the formulas of the
-engine do not change when they are added.
+Their rows move with the coefficients. For the kind \code{"refresh"} they are
+the refreshed design's columns \code{basis} times \code{C}; for the kind \code{"filter"}
+they are the derivatives of the filtered predictors along the columns of
+\code{C} placed at the positions \code{basis} among the filter's parameters
+(\code{\link[=jfp_filter_dirs]{jfp_filter_dirs()}}).
 }
 \seealso{
 \code{\link[=jfp_state]{jfp_state()}}, \code{\link[=jfp_constant]{jfp_constant()}}

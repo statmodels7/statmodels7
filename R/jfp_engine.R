@@ -15,9 +15,11 @@
 #' The other kinds describe a block inside the subformula of a term:
 #' `"refresh"` for a term whose block is recomputed at the coefficients
 #' (`nl()`, a smoothed `seg()`), and `"filter"` for a parameter of `gas()`.
-#' Their rows move with the coefficients, and [jfp_state()] signals an error
-#' for them: they are reserved for a later phase, and the formulas of the
-#' engine do not change when they are added.
+#' Their rows move with the coefficients. For the kind `"refresh"` they are
+#' the refreshed design's columns `basis` times `C`; for the kind `"filter"`
+#' they are the derivatives of the filtered predictors along the columns of
+#' `C` placed at the positions `basis` among the filter's parameters
+#' ([jfp_filter_dirs()]).
 #'
 #' @param param The name of the distribution parameter whose predictor the
 #'   block enters.
@@ -29,6 +31,13 @@
 #' @param kind One of `"static"`, `"refresh"` or `"filter"`.
 #' @param term,slot For the kinds `"refresh"` and `"filter"`, the term and the
 #'   parameter of the term whose subformula holds the block.
+#' @param basis,C For the kind `"refresh"`: the columns of the equation's
+#'   design from which the rows are combined, and the matrix that combines
+#'   them, so that the rows are the refreshed design's columns `basis` times
+#'   `C`. For the kind `"filter"`: positions among the filter's parameters
+#'   and the matrix that combines the derivatives along them. The constant
+#'   direction of the subformula's level, where it is included, is the first
+#'   column of `C`.
 #'
 #' @return A list of class `jfp_block` with the arguments as fields.
 #'
@@ -37,7 +46,7 @@
 #' @keywords internal
 jfp_block <- function(param, cols, power = 0.5, const = FALSE,
                       kind = c("static", "refresh", "filter"), term = NULL,
-                      slot = NULL) {
+                      slot = NULL, basis = NULL, C = NULL) {
   kind <- match.arg(kind)
   if (!is.character(param) || length(param) != 1L) {
     stop("'param' must be a single parameter name.", call. = FALSE)
@@ -48,7 +57,8 @@ jfp_block <- function(param, cols, power = 0.5, const = FALSE,
   }
   structure(list(param = param, cols = as.integer(cols), power = power,
                  const = isTRUE(const), kind = kind, term = term,
-                 slot = slot),
+                 slot = slot, basis = if (is.null(basis)) NULL else
+                   as.integer(basis), C = C),
             class = "jfp_block")
 }
 
@@ -135,10 +145,12 @@ ones_in_span <- function(X, tol = 1e-7) {
 #' a model without a structural term it is the stacked coefficients. For a
 #' model carrying a filter it is the coefficients followed by the filter's
 #' free parameters, and the derivative of every predictor in \eqn{u} is read
-#' from the forward recursion ([jfp_joint_rows()]); a block in an equation
-#' that the filter drives moves with the coefficients and is rejected in
-#' this phase. A model carrying a mixture over latent states is always
-#' rejected, because its expected information does not exist.
+#' from the forward recursion ([jfp_joint_rows()]). A block of kind
+#' `"static"` in an equation that the filter drives moves with the
+#' coefficients and is rejected; a block of kind `"filter"` lies in the
+#' filter's own subformula and moves with it. A model carrying a mixture over
+#' latent states is always rejected, because its expected information does
+#' not exist.
 #'
 #' The derivatives of the expected information are computed at the first
 #' request and kept in the state, so that the value, the gradient and the
@@ -197,12 +209,19 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
     st$total <- length(st$joint$keep)
     driven <- st$joint$driven
     for (b in blocks) {
-      if (b$param %in% driven) {
+      if (b$param %in% driven && b$kind != "filter") {
         stop(sprintf(paste0("A Jeffreys block in '%s', an equation that a ",
                             "filter drives, moves with\n  the coefficients, ",
                             "which is not implemented yet."), b$param),
              call. = FALSE)
       }
+    }
+  }
+  for (b in blocks) {
+    if (b$kind == "filter" &&
+        (is.null(st$joint) || !identical(b$term, st$joint$term))) {
+      stop("A Jeffreys block of kind 'filter' needs the filter that holds it.",
+           call. = FALSE)
     }
   }
   st$blocks <- lapply(blocks, function(b) jfp_block_state(st, b))
@@ -230,11 +249,22 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
 #' @param ev What [statmod_eta()] returns at `coef`.
 #'
 #' @return A list with `V` (one dense matrix per distribution parameter over
-#'   the kept coordinates), `keep`, `driven` (the equations whose predictor
-#'   the filter writes), and `curv`, a function of the per-observation weights
+#'   the kept coordinates) and `Vfull` (the same over every coordinate,
+#'   held levels included), `keep`, `driven` (the equations whose predictor
+#'   the filter writes), `curv`, a function of the per-observation weights
 #'   (a named list keyed by parameter) returning
-#'   \eqn{\sum_t\sum_c g_{c,t}\,\partial^2\eta_{c,t}/\partial u\,\partial u}
-#'   over the kept coordinates.
+#'   \eqn{\sum_t w_t\sum_c g_{c,t}\,\partial^2\eta_{c,t}/\partial u\,
+#'   \partial u} over the kept coordinates, `curv_full` the same over every
+#'   coordinate, `third`, a function of the weights and of a direction
+#'   \eqn{d} over every coordinate returning a list with `curv`, the third
+#'   derivative contracted against \eqn{w_tg_{c,t}} and \eqn{d}, and `dphi`,
+#'   the second derivative along \eqn{d}, one matrix per parameter, both over
+#'   every coordinate ([modelterms7::term_third()]), `higher`, the same for
+#'   one, two or three directions (a list) returning `curv`, the derivative
+#'   of order two plus their number contracted against the weights and the
+#'   directions, and `rows`, the derivative of order one plus their number
+#'   along them ([modelterms7::term_fourth()], [modelterms7::term_fifth()]),
+#'   and `nb`, `mf`, `zn` and `term`.
 #'
 #' @keywords internal
 jfp_joint_rows <- function(spec, design, coef, ev) {
@@ -266,10 +296,13 @@ jfp_joint_rows <- function(spec, design, coef, ev) {
     V[[match(f$param, params)]] <- cv$jacobian
   }
   keep <- jd$keep
+  Vfull <- V
   V <- lapply(V, function(M) M[, keep, drop = FALSE])
   w <- spec@weights
   n <- spec@n_obs
-  curv <- function(g) {
+  # `scale` FALSE reads g as already weighted
+  curv_full <- function(g, scale = TRUE) {
+    w <- if (scale) w else 1
     out <- if (joint) {
       gg <- stats::setNames(lapply(f$params, function(p) w * g[[p]]),
                             f$params)
@@ -279,9 +312,129 @@ jfp_joint_rows <- function(spec, design, coef, ev) {
       filter_curvature(spec, design, f, match(f$param, params), Vs, gl, H,
                        D3, ev$theta, g = w * rep_len(g[[f$param]], n))$curvature
     }
-    as_dense(out)[keep, keep, drop = FALSE]
+    as_dense(out)
   }
-  list(V = V, keep = keep, driven = driven, curv = curv, nb = jd$nb)
+  curv <- function(g) curv_full(g)[keep, keep, drop = FALSE]
+  fam <- vector("list", 6L)
+  fam_at <- function(k) {
+    if (is.null(fam[[k]])) {
+      fam[[k]] <<- switch(k - 3L,
+        distributions7::distrib_deriv4(spec@distrib, spec@response, ev$theta,
+                                       scale = "link", threads = spec@threads),
+        distributions7::distrib_deriv5(spec@distrib, spec@response, ev$theta,
+                                       scale = "link"),
+        distributions7::distrib_deriv6(spec@distrib, spec@response, ev$theta,
+                                       scale = "link"))
+    }
+    fam[[k]]
+  }
+  # the derivative of order 2 + length(dirs) of the filtered predictors,
+  # along the directions (over the full width) and contracted against w g,
+  # with the derivative of order 1 + length(dirs) along all of them, one
+  # row per observation and per equation (`rows`); one to three directions
+  higher <- function(g, dirs, scale = TRUE) {
+    w <- if (scale) w else 1
+    order <- length(dirs) + 2L
+    D4 <- fam_at(4L)
+    D5 <- if (order >= 4L) fam_at(5L)
+    D6 <- if (order >= 5L) fam_at(6L)
+    rows <- lapply(params, function(p) matrix(0, n, jd$mf))
+    if (joint) {
+      bd <- joint_drive_data(spec, f$tm, gl, H, D3, D4, D5, order = order,
+                             theta = ev$theta, D6 = D6)
+      gg <- matrix(vapply(f$params, function(p) w * rep_len(g[[p]], n),
+                          numeric(n)), n, length(f$params))
+      seed <- stats::setNames(Vs, params)
+      out <- switch(order - 2L,
+        modelterms7::term_third(f$tm, f$eta_static, NULL, NULL, NULL, f$psi,
+                                gg, seed, bd, dirs[[1L]]),
+        modelterms7::term_fourth(f$tm, f$eta_static, NULL, NULL, NULL,
+                                 f$psi, gg, seed, bd, dirs),
+        modelterms7::term_fifth(f$tm, f$eta_static, NULL, NULL, f$psi, gg,
+                                seed, bd, dirs))
+      for (k in seq_along(f$params)) {
+        rows[[match(f$params[k], params)]] <- as_dense(switch(order - 2L,
+          out$dphi[[k]][[1L]], out$dpsi[[k]], out$domega[[k]]))
+      }
+    } else {
+      ap <- match(f$param, params)
+      dr <- filter_driving(spec, ev$theta, ap, filter_scaling(f$tm), gl, H,
+                           D3, D4, D5, D6)
+      sd_at <- rep_len(dr$gl[[f$param]], n)
+      cd_at <- rep_len(dr$H[[hess_key(params, ap, ap)]], n)
+      gv <- w * rep_len(g[[f$param]], n)
+      if (order <= 4L) {
+        mk <- .structural_blocks(params, ap, Vs, dr$H, dr$D3, dr$D4, n,
+                                 dr$D5)
+        bd <- structural_blocks_data(params, ap, Vs, dr$H, dr$D3, n,
+                                     D4 = dr$D4, D5 = dr$D5)
+      }
+      out <- switch(order - 2L,
+        modelterms7::term_third(
+          f$tm, f$eta_static, spec@response, function(e, i) sd_at[i],
+          function(e, i) cd_at[i], f$psi, gv, Vs[[ap]], mk(dirs[[1L]]),
+          dirs[[1L]], score_values = sd_at, curvature_values = cd_at,
+          blocks_data = bd, threads = spec@threads),
+        modelterms7::term_fourth(
+          f$tm, f$eta_static, spec@response, function(e, i) sd_at[i],
+          function(e, i) cd_at[i], f$psi, gv, Vs[[ap]], mk(dirs), dirs,
+          score_values = sd_at, curvature_values = cd_at, blocks_data = bd,
+          threads = spec@threads),
+        modelterms7::term_fifth(
+          f$tm, f$eta_static, spec@response, function(e, i) sd_at[i], f$psi,
+          gv, Vs[[ap]], jfp_fifth_arrays(params, ap, Vs, dr, n), dirs,
+          score_values = sd_at))
+      rows[[ap]] <- as_dense(switch(order - 2L, out$dphi, out$dpsi,
+                                    out$domega))
+    }
+    list(curv = as_dense(out$curvature), rows = rows)
+  }
+  third <- function(g, dir) {
+    out <- higher(g, list(dir))
+    list(curv = out$curv, dphi = out$rows)
+  }
+  list(V = V, Vfull = Vfull, keep = keep, driven = driven, curv = curv,
+       curv_full = curv_full, third = third, higher = higher, nb = jd$nb,
+       mf = jd$mf,
+       zn = jd$zn, term = f$term)
+}
+
+
+#' The Driving Score's Derivatives as the Fifth Order Reads Them
+#'
+#' @description
+#' Returns the arrays that [modelterms7::term_fifth()] reads for a filter in
+#' one equation: the derivatives of the driving score of orders one to five
+#' in the predictors of every equation, one row per observation, the
+#' filter's own parameter included.
+#'
+#' @param params The distribution parameters.
+#' @param ap The index of the filter's parameter.
+#' @param Vs The static rows, one matrix per parameter.
+#' @param dr What [filter_driving()] returns, to the sixth order.
+#' @param n The number of observations.
+#'
+#' @return A list with `H`, `D3`, `D4`, `D5`, `D6` (matrices with one column
+#'   per tuple of parameters, the first index running fastest), `Vs` and
+#'   `ap`.
+#'
+#' @keywords internal
+jfp_fifth_arrays <- function(params, ap, Vs, dr, n) {
+  np <- length(params)
+  one <- function(k, L, key) {
+    tup <- as.matrix(expand.grid(rep(list(seq_len(np)), k)))
+    out <- matrix(0, n, nrow(tup))
+    for (j in seq_len(nrow(tup))) {
+      kk <- do.call(key, c(list(params, ap), unname(as.list(tup[j, ]))))
+      out[, j] <- rep_len(as.numeric(L[[kk]]), n)
+    }
+    out
+  }
+  list(H = one(1L, dr$H, hess_key), D3 = one(2L, dr$D3, deriv3_key),
+       D4 = one(3L, dr$D4, deriv4_key), D5 = one(4L, dr$D5, deriv5_key),
+       D6 = one(5L, dr$D6, deriv6_key),
+       Vs = lapply(Vs, function(x) if (is.matrix(x)) x else as_dense(x)),
+       ap = ap)
 }
 
 
@@ -315,7 +468,8 @@ jfp_block_state <- function(st, b) {
   U <- if (all(is.finite(info))) {
     tryCatch(chol(info), error = function(e) NULL)
   } else NULL
-  out <- list(block = b, index = st$offs[match(b$param, params)] + b$cols,
+  out <- list(block = b, index = if (b$kind == "filter") NULL else
+                st$offs[match(b$param, params)] + b$cols,
               rows = rows, info = info, U = U, ok = !is.null(U))
   if (!out$ok) {
     out$logdet <- -Inf
@@ -337,7 +491,77 @@ jfp_block_state <- function(st, b) {
   out$Z <- Z
   out$G <- G
   out$logdet <- 2 * sum(log(diag(U)))
+  if (b$kind == "refresh") out <- c(out, jfp_refresh_parts(st, b))
+  # the whitened directions d_i = C_full U^-1 e_i: the block's rows along
+  # them are Z, and C I^-1 C' = sum_i d_i d_i'
+  if (b$kind == "filter") out$D <- jfp_filter_dirs(st, b) %*% Ui
   out
+}
+
+
+#' The Movement of a Jeffreys Block Inside a Refreshed Term
+#'
+#' @description
+#' Returns, for a block inside a subformula of a term whose block is
+#' recomputed at the coefficients ([modelterms7::nl()], [modelterms7::seg()]),
+#' the term at the coefficients and the derivative of each of the block's
+#' basis columns in the term's coefficients.
+#'
+#' @details
+#' The block's columns are columns of the term's Jacobian, so
+#' \eqn{\partial X_{t,i}/\partial\beta_l = \partial^2\eta_t/\partial
+#' \beta_i\partial\beta_l}, which is column \eqn{l} of the block's derivative
+#' along \eqn{e_i}, [modelterms7::term_block_deriv()]. One call per basis
+#' column gives every derivative the gradient and the Hessian read.
+#'
+#' @param st The state under construction, from [jfp_state()].
+#' @param b A [jfp_block()] of kind `"refresh"`.
+#'
+#' @return A list with `tm`, `bt`, `tcols` (the term's columns in its
+#'   equation), `tidx` (their positions in the joint vector), `pos` (the basis
+#'   columns among the term's) and `D` (one matrix per basis column,
+#'   observations by the term's coefficients).
+#'
+#' @keywords internal
+jfp_refresh_parts <- function(st, b) {
+  p <- b$param
+  a <- match(p, st$params)
+  tcols <- st$design[[p]]$blocks[[b$term]]
+  sst <- attr(st$design, "state")
+  bt <- st$coef[[p]][tcols]
+  tm <- modelterms7::term_refresh(sst$terms[[p]][[b$term]], bt)
+  pos <- match(b$basis, tcols)
+  if (anyNA(pos)) {
+    stop("A Jeffreys block's columns must lie in the term that holds it.",
+         call. = FALSE)
+  }
+  D <- lapply(pos, function(i) {
+    e <- numeric(length(tcols))
+    e[i] <- 1
+    as.matrix(modelterms7::term_block_deriv(tm, coef = bt, v = e))
+  })
+  list(tm = tm, bt = bt, tcols = tcols, tidx = st$offs[a] + tcols, pos = pos,
+       D = D)
+}
+
+
+#' The Derivatives of a Refreshed Jeffreys Block's Rows
+#'
+#' @description
+#' `jfp_vk()` returns the derivative of the block's rows in one of the term's
+#' coefficients, an observations by \eqn{\tilde p} matrix, read from the
+#' state's `D`.
+#'
+#' @param bs A block's entry of the state, of kind `"refresh"`.
+#' @param l A position among the term's coefficients.
+#'
+#' @return A numeric matrix.
+#'
+#' @keywords internal
+jfp_vk <- function(bs, l) {
+  Dl <- vapply(bs$D, function(Di) Di[, l], numeric(nrow(bs$D[[1L]])))
+  Dl <- matrix(Dl, ncol = length(bs$D))
+  Dl %*% bs$block$C
 }
 
 
@@ -360,6 +584,24 @@ jfp_block_state <- function(st, b) {
 #'
 #' @keywords internal
 jfp_rows <- function(st, b) {
+  if (b$kind == "filter") {
+    Cf <- jfp_filter_dirs(st, b)
+    rows <- vector("list", length(st$params))
+    for (q in match(st$joint$driven, st$params)) {
+      X <- st$joint$Vfull[[q]] %*% Cf
+      dimnames(X) <- NULL
+      rows[[q]] <- X
+    }
+    return(rows)
+  }
+  if (b$kind == "refresh") {
+    a <- match(b$param, st$params)
+    X <- as_dense(st$design[[b$param]]$X[, b$basis, drop = FALSE]) %*% b$C
+    dimnames(X) <- NULL
+    rows <- vector("list", length(st$params))
+    rows[[a]] <- X
+    return(rows)
+  }
   if (b$kind != "static") {
     stop(sprintf(paste0("A Jeffreys block of kind '%s' moves with the ",
                         "coefficients, which is not\n  implemented yet."),
@@ -381,6 +623,33 @@ jfp_rows <- function(st, b) {
   rows <- vector("list", length(params))
   rows[[a]] <- X
   rows
+}
+
+
+#' The Directions of a Jeffreys Block Inside a Filter
+#'
+#' @description
+#' Returns the block's directions over every coordinate of the joint vector
+#' (the coefficients followed by all the filter's parameters, held levels
+#' included): the columns of `C` placed at the block's positions among the
+#' filter's parameters, so that the block's rows are the derivatives of the
+#' predictors along these directions.
+#'
+#' @param st The state under construction, from [jfp_state()].
+#' @param b A [jfp_block()] of kind `"filter"`.
+#'
+#' @return A numeric matrix, the coordinates by the block's columns.
+#'
+#' @keywords internal
+jfp_filter_dirs <- function(st, b) {
+  jr <- st$joint
+  if (any(b$basis < 1L | b$basis > length(jr$zn))) {
+    stop("A Jeffreys block's positions must lie among the filter's parameters.",
+         call. = FALSE)
+  }
+  Cf <- matrix(0, jr$mf, ncol(b$C))
+  Cf[jr$nb + b$basis, ] <- b$C
+  Cf
 }
 
 
@@ -434,6 +703,60 @@ jfp_gradient <- function(st) {
       u_vector(st$spec, st$design, st$coef, NULL, params, st$npar, st$offs,
                st$total, d3 = dE, G = bs$G, key = key,
                rows = if (is.null(st$joint)) NULL else st$joint$V)
+    if (bs$block$kind == "refresh") {
+      # 2 tr(I^-1 sum_t w I_t V_t' dV_t/du_l): the term's own contraction of
+      # its block's derivative against A = w I (V I^-1) C' on the basis
+      a <- match(bs$block$param, params)
+      It <- -st$spec@weights *
+        rep_len(st$E[[hess_key(params, a, a)]], st$spec@n_obs)
+      P <- bs$Z[[a]] %*% t(backsolve(bs$U, diag(ncol(bs$U))))
+      A <- matrix(0, st$spec@n_obs, length(bs$tcols))
+      A[, bs$pos] <- It * (P %*% t(bs$block$C))
+      out[bs$tidx] <- out[bs$tidx] + bs$block$power * 2 *
+        as.numeric(modelterms7::term_block_contract(bs$tm, coef = bs$bt,
+                                                    A = A))
+    }
+    if (bs$block$kind == "filter") {
+      # 2 tr(I^-1 sum_t w sum_qr I_qr V_q' dV_r/du_l) = 2 sum_i d_i' C(g_i),
+      # C(g) the second derivative of the predictors contracted against
+      # w g_r, g_{i,r} = sum_q I_qr Z_{q,i}
+      keep <- st$joint$keep
+      for (i in seq_len(ncol(bs$D))) {
+        Cg <- st$joint$curv_full(jfp_filter_weights(st, bs, i))
+        out <- out + bs$block$power * 2 *
+          as.numeric(crossprod(bs$D[, i], Cg))[keep]
+      }
+    }
+  }
+  out
+}
+
+
+#' The Weights of a Jeffreys Block Inside a Filter Along One Direction
+#'
+#' @description
+#' Returns \eqn{g_{i,r} = \sum_q\mathcal I_{qr}Z_{q,i}} for every equation
+#' \eqn{r}, the per-observation weights against which the derivatives of the
+#' filtered predictors along the whitened direction \eqn{d_i} are contracted.
+#'
+#' @param st A state, from [jfp_state()].
+#' @param bs A block's entry of the state, of kind `"filter"`.
+#' @param i The direction.
+#' @param Z The whitened rows to read, `bs$Z` by default.
+#'
+#' @return A named list of numeric vectors, one per distribution parameter.
+#'
+#' @keywords internal
+jfp_filter_weights <- function(st, bs, i, Z = bs$Z) {
+  params <- st$params
+  n <- st$spec@n_obs
+  live <- which(!vapply(bs$rows, is.null, logical(1)))
+  out <- stats::setNames(lapply(params, function(p) numeric(n)), params)
+  for (r in live) {
+    for (q in live) {
+      out[[r]] <- out[[r]] - rep_len(st$E[[hess_key(params, q, r)]], n) *
+        Z[[q]][, i]
+    }
   }
   out
 }
@@ -529,6 +852,11 @@ jfp_hessian <- function(st, assemble = TRUE) {
       refresh <- if (is.null(refresh)) D else refresh + D
     }
 
+    if (bs$block$kind %in% c("refresh", "filter")) {
+      rp <- if (bs$block$kind == "refresh") jfp_refresh_hessian(st, bs, dE)
+            else jfp_filter_hessian(st, bs, dE)
+      refresh <- if (is.null(refresh)) a * rp$H else refresh + a * rp$H
+    }
     # B: one column per entry i <= j of the whitened derivative
     p <- ncol(bs$Z[[live[1L]]])
     ij <- which(upper.tri(diag(p), diag = TRUE), arr.ind = TRUE)
@@ -553,6 +881,8 @@ jfp_hessian <- function(st, assemble = TRUE) {
         B <- B + crossprod(st$joint$V[[cc]], w * Fc)
       }
     }
+    if (bs$block$kind == "refresh") B[bs$tidx, ] <- B[bs$tidx, ] + rp$BV
+    if (bs$block$kind == "filter") B <- B + rp$BV
     lowrank[[i]] <- sqrt(a) * B
   }
   lowrank <- do.call(cbind, lowrank)
@@ -667,4 +997,187 @@ jfp_check_ok <- function(st) {
                  bad[1L]), call. = FALSE)
   }
   invisible(NULL)
+}
+
+
+#' The Hessian's Shares From a Refreshed Block's Own Movement
+#'
+#' @description
+#' Computes the terms of \eqn{\partial_{kl}\log|\tilde I|} that the movement
+#' of the block's rows contributes, for a block inside a subformula of a term
+#' whose block is recomputed at the coefficients.
+#'
+#' @details
+#' With \eqn{\tilde I = \sum_t w_tI_t\tilde V_t^\top\tilde V_t} over the
+#' block's equation, \eqn{P = \tilde V\tilde I^{-1}} and \eqn{I_{c,t}} the
+#' derivative of \eqn{I_t} in the predictor of equation \eqn{c},
+#' \eqn{\mathrm{tr}(\tilde I^{-1}\partial_{kl}\tilde I)} gains
+#' \deqn{2\sum_t w_t\Big[\sum_c I_{c,t}\big(X_c[t,k]R_{tl} + X_c[t,l]R_{tk}\big)
+#'   + I_t\,\mathrm{tr}\big(P_t^\top\,\partial_{kl}\tilde V_t\big)
+#'   + I_t\,\partial_k\tilde V_t\,\tilde I^{-1}\partial_l\tilde V_t^\top\Big],}
+#' with \eqn{R_{tl} = P_t\,\partial_l\tilde V_t^\top}; the rows move in the
+#' term's own coefficients only. \eqn{\partial_{kl}\tilde V} is read from
+#' [modelterms7::term_block_deriv2()] by the symmetry of the third derivative
+#' of the predictor. The product
+#' \eqn{\mathrm{tr}(\tilde I^{-1}\partial_k\tilde I\,\tilde I^{-1}
+#' \partial_l\tilde I)} gains the whitened derivative
+#' \eqn{\sum_t w_tI_t(W_{k,t}^\top Z_t + Z_t^\top W_{k,t})},
+#' \eqn{W_k = \partial_k\tilde V\,U^{-1}}, in the rows of the low-rank
+#' factor.
+#'
+#' @param st A state, from [jfp_state()].
+#' @param bs A block's entry of the state, of kind `"refresh"`.
+#' @param dE The derivative of the expected information, from
+#'   [jfp_dexpected()].
+#'
+#' @return A list with `H`, a matrix over the joint vector, and `BV`, the rows
+#'   to add to the low-rank factor at the term's positions.
+#'
+#' @keywords internal
+jfp_refresh_hessian <- function(st, bs, dE) {
+  params <- st$params
+  np <- length(params)
+  n <- st$spec@n_obs
+  w <- st$spec@weights
+  a <- match(bs$block$param, params)
+  It <- -rep_len(st$E[[hess_key(params, a, a)]], n)
+  Ui <- backsolve(bs$U, diag(ncol(bs$U)))
+  Z <- bs$Z[[a]]
+  P <- Z %*% t(Ui)
+  m <- length(bs$tcols)
+  ti <- bs$tidx
+  # the derivative of the rows in each of the term's coefficients
+  Vk <- lapply(seq_len(m), function(l) jfp_vk(bs, l))
+  R <- vapply(Vk, function(V) rowSums(P * V), numeric(n))
+  R <- matrix(R, n, m)
+  H <- matrix(0, st$total, st$total)
+  # 2 sum_c X_c' diag(w I_c) R, placed in the term's columns, plus transpose
+  for (cc in seq_len(np)) {
+    if (st$npar[cc] == 0L) next
+    Ic <- -rep_len(dE[[distributions7::dexpected_key(params, a, a, cc)]], n)
+    blk <- 2 * as.matrix(crossprod(st$design[[params[cc]]]$X, (w * Ic) * R))
+    rows <- st$offs[cc] + seq_len(st$npar[cc])
+    H[rows, ti] <- H[rows, ti] + blk
+  }
+  H <- H + t(H)
+  # 2 sum_t w I_t tr(P_t' d_kl V_t), from the second derivative of the basis
+  # columns: d2 X[t, i] / d beta_k d beta_l is column l of the block's second
+  # derivative along (e_i, e_k)
+  Ac <- (w * It) * (P %*% t(bs$block$C))
+  for (k in seq_len(m)) {
+    ek <- numeric(m)
+    ek[k] <- 1
+    col <- numeric(m)
+    for (j in seq_along(bs$pos)) {
+      ej <- numeric(m)
+      ej[bs$pos[j]] <- 1
+      D2 <- as.matrix(modelterms7::term_block_deriv2(bs$tm, coef = bs$bt,
+                                                     v = ej, u = ek))
+      col <- col + as.numeric(crossprod(D2, Ac[, j]))
+    }
+    H[ti[k], ti] <- H[ti[k], ti] + 2 * col
+  }
+  # 2 sum_t w I_t dV_k I^-1 dV_l'
+  W <- lapply(Vk, function(V) V %*% Ui)
+  G <- matrix(0, m, m)
+  for (k in seq_len(m)) {
+    for (l in k:m) {
+      G[k, l] <- 2 * sum(w * It * rowSums(W[[k]] * W[[l]]))
+      G[l, k] <- G[k, l]
+    }
+  }
+  H[ti, ti] <- H[ti, ti] + G
+  # the rows of the low-rank factor: the whitened derivative's own share,
+  # in the convention of jfp_hessian() (upper triangle, sqrt(2) off it)
+  p <- ncol(Z)
+  ij <- which(upper.tri(diag(p), diag = TRUE), arr.ind = TRUE)
+  gam <- ifelse(ij[, 1L] == ij[, 2L], 1, sqrt(2))
+  BV <- t(vapply(W, function(Wk) {
+    Ak <- crossprod(Wk * (w * It), Z)
+    Ak <- Ak + t(Ak)
+    gam * Ak[ij]
+  }, numeric(nrow(ij))))
+  BV <- matrix(BV, m, nrow(ij))
+  list(H = (H + t(H)) / 2, BV = BV)
+}
+
+
+#' The Hessian's Shares From a Filtered Block's Own Movement
+#'
+#' @description
+#' Computes the terms of \eqn{\partial_{kl}\log|\tilde I|} that the movement
+#' of the block's rows contributes, for a block inside the subformula of a
+#' filter's parameter, whose rows are derivatives of the filtered predictors.
+#'
+#' @details
+#' With the whitened directions \eqn{d_i = C U^{-1}e_i} the block's rows are
+#' \eqn{Z_{q,t,i} = \partial\eta_{q,t}[d_i]}, \eqn{C\tilde I^{-1}C^\top =
+#' \sum_i d_id_i^\top}, and the derivative of the rows in \eqn{u_k} is
+#' \eqn{R^{(i)}_{q,t,k} = \partial^2\eta_{q,t}[d_i, k]}. Then
+#' \eqn{\mathrm{tr}(\tilde I^{-1}\partial_{kl}\tilde I)} gains
+#' \deqn{2\sum_t w_t\sum_{q,r}\sum_i\Big[\sum_c\partial_c\mathcal I_{qr}
+#'   \big(V_{c,t,k}Z_{q,t,i}R^{(i)}_{r,t,l} + (k\leftrightarrow l)\big)
+#'   + \mathcal I_{qr}Z_{q,t,i}\,\partial^3\eta_{r,t}[d_i,k,l]
+#'   + \mathcal I_{qr}R^{(i)}_{q,t,k}R^{(i)}_{r,t,l}\Big],}
+#' and the whitened derivative \eqn{U^{-\top}\partial_k\tilde I U^{-1}} gains
+#' \eqn{X^{(a)}_{kb} + X^{(b)}_{ka}} with \eqn{X^{(a)}_{kb} = \sum_t w_t
+#' \sum_{q,r}\mathcal I_{qr}R^{(a)}_{q,t,k}Z_{r,t,b}}. One call of
+#' [modelterms7::term_third()] per direction gives both
+#' \eqn{\partial^3\eta[d_i,\cdot,\cdot]} and \eqn{R^{(i)}}, so the second
+#' derivatives of the rows are never held for more than one direction.
+#'
+#' @param st A state, from [jfp_state()].
+#' @param bs A block's entry of the state, of kind `"filter"`.
+#' @param dE The derivative of the expected information, from
+#'   [jfp_dexpected()].
+#'
+#' @return A list with `H`, a matrix over the joint vector, and `BV`, the rows
+#'   to add to the low-rank factor, in the convention of [jfp_hessian()].
+#'
+#' @keywords internal
+jfp_filter_hessian <- function(st, bs, dE) {
+  params <- st$params
+  np <- length(params)
+  n <- st$spec@n_obs
+  w <- st$spec@weights
+  keep <- st$joint$keep
+  total <- st$total
+  live <- which(!vapply(bs$rows, is.null, logical(1)))
+  p <- ncol(bs$D)
+  Iqr <- function(q, r) -rep_len(st$E[[hess_key(params, q, r)]], n)
+  H <- matrix(0, total, total)
+  X <- vector("list", p)
+  for (i in seq_len(p)) {
+    th <- st$joint$third(jfp_filter_weights(st, bs, i), bs$D[, i])
+    H <- H + 2 * th$curv[keep, keep, drop = FALSE]
+    R <- lapply(th$dphi, function(M) M[, keep, drop = FALSE])
+    Xc <- matrix(0, total, total)
+    Xi <- matrix(0, total, p)
+    for (q in live) {
+      for (r in live) {
+        Ir <- w * Iqr(q, r)
+        # the rows' derivatives on both factors
+        H <- H + 2 * crossprod(R[[q]], Ir * R[[r]])
+        Xi <- Xi + crossprod(R[[q]], Ir * bs$Z[[r]])
+        for (cc in seq_len(np)) {
+          dv <- -rep_len(dE[[distributions7::dexpected_key(params, q, r,
+                                                            cc)]], n)
+          if (!any(dv != 0)) next
+          Xc <- Xc + crossprod(st$joint$V[[cc]], (w * dv * bs$Z[[q]][, i]) *
+                                 R[[r]])
+        }
+      }
+    }
+    H <- H + 2 * (Xc + t(Xc))
+    X[[i]] <- Xi
+  }
+  ij <- which(upper.tri(diag(p), diag = TRUE), arr.ind = TRUE)
+  gam <- ifelse(ij[, 1L] == ij[, 2L], 1, sqrt(2))
+  BV <- matrix(0, total, nrow(ij))
+  for (e in seq_len(nrow(ij))) {
+    a <- ij[e, 1L]
+    b <- ij[e, 2L]
+    BV[, e] <- gam[e] * (X[[a]][, b] + X[[b]][, a])
+  }
+  list(H = (H + t(H)) / 2, BV = BV)
 }

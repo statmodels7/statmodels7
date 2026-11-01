@@ -4,7 +4,7 @@
 \alias{joint_drive_scaled}
 \title{The Scaled Driving Vector's Derivatives in Every Predictor}
 \usage{
-joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order)
+joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order, D6 = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -16,6 +16,8 @@ joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order)
 \item{gl, H, D3, D4, D5}{The family's link-scale derivatives.}
 
 \item{order}{As for \code{\link[=joint_drive_data]{joint_drive_data()}}.}
+
+\item{D6}{The family's sixth link-scale derivative, read at order 5.}
 }
 \value{
 The list that \code{\link[=joint_drive_data]{joint_drive_data()}} returns.

@@ -20,7 +20,8 @@ statmod_full_information_impl(
   params,
   ev,
   expected = FALSE,
-  emethod = NULL
+  emethod = NULL,
+  seed = NULL
 )
 }
 \arguments{
@@ -38,6 +39,10 @@ where \code{expected} is \code{TRUE}.}
 
 \item{params, ev}{The parameter names and the evaluated predictors,
 already in hand at the caller.}
+
+\item{seed}{\code{NULL}, or the rows of the static predictors' derivative, one
+matrix per parameter over the full width, to read in place of the
+design's blocks (\code{\link[=structural_refresh_move]{structural_refresh_move()}}).}
 }
 \value{
 A square matrix over the coefficients followed by the term's free

@@ -396,24 +396,26 @@ joint_fast_context <- function(spec, G, d, E) {
 #'   predictors; those above the order that `order` gives may be `NULL`.
 #' @param order The highest order of the predictor's derivative to be
 #'   propagated: 1 for the reverse pass, 2 for the curvature, 3 for the third
-#'   derivative, 4 for the fourth.
+#'   derivative, 4 for the fourth, 5 for the fifth.
 #' @param theta The per-observation parameters at the fitted predictors,
 #'   from which the expected information is read where `scaling` is not
 #'   zero.
+#' @param D6 The family's sixth link-scale derivative, read at order 5.
 #'
 #' @return A list with `filtered`, `u`, `U1`, `U2` and, to the order given,
-#'   `U3` and `U4`.
+#'   `U3`, `U4` and `U5`.
 #'
 #' @keywords internal
 joint_drive_data <- function(spec, tm, gl, H, D3 = NULL, D4 = NULL, D5 = NULL,
-                             order = 2L, theta = NULL) {
+                             order = 2L, theta = NULL, D6 = NULL) {
   params <- spec@distrib@params
   P <- length(params)
   G <- match(tm@params, params)
   K <- length(G)
   n <- spec@n_obs
   if (tm@terms[[1L]]@scaling != 0) {
-    return(joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order))
+    return(joint_drive_scaled(spec, tm, theta, gl, H, D3, D4, D5, order,
+                              D6 = D6))
   }
   rn <- function(x) rep_len(as.numeric(x), n)
   u <- vapply(G, function(l) rn(gl[[params[l]]]), numeric(n))
@@ -421,6 +423,7 @@ joint_drive_data <- function(spec, tm, gl, H, D3 = NULL, D4 = NULL, D5 = NULL,
   U2 <- if (order >= 2L) array(0, c(n, K, P, P))
   U3 <- if (order >= 3L) array(0, c(n, K, P, P, P))
   U4 <- if (order >= 4L) array(0, c(n, K, P, P, P, P))
+  U5 <- if (order >= 5L) array(0, c(n, K, P, P, P, P, P))
   for (l in seq_len(K)) {
     L <- G[l]
     for (a in seq_len(P)) {
@@ -434,13 +437,18 @@ joint_drive_data <- function(spec, tm, gl, H, D3 = NULL, D4 = NULL, D5 = NULL,
           if (order < 4L) next
           for (e in seq_len(P)) {
             U4[, l, a, b, c, e] <- rn(D5[[deriv5_key(params, L, a, b, c, e)]])
+            if (order < 5L) next
+            for (h in seq_len(P)) {
+              U5[, l, a, b, c, e, h] <-
+                rn(D6[[deriv6_key(params, L, a, b, c, e, h)]])
+            }
           }
         }
       }
     }
   }
   list(filtered = G, u = matrix(u, n, K), U1 = U1, U2 = U2, U3 = U3,
-       U4 = U4)
+       U4 = U4, U5 = U5)
 }
 
 

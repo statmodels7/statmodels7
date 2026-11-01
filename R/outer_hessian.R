@@ -1897,11 +1897,9 @@ structural_outer_pieces <- function(spec, design, coef, hyper, idx, jd) {
 #' # Blocks that move with their coefficients
 #'
 #' A block that moves with its coefficients (`nl()`, `seg()`) beside the filter
-#' contributes nothing here, as it contributes nothing to
-#' [statmod_structural_grad()]: the correction for such a block is written in
-#' the coefficient-space assembly and has no counterpart on the joint vector.
-#' Such a model is admitted at both orders, and the result has the
-#' approximation of the gradient.
+#' is read by [statmod_structural_grad()] ([structural_refresh_move()]) and not
+#' here: [outer_gradient_ok()] returns `FALSE` at order 2 for such a model, and
+#' the Hessian is then a difference of the exact gradient.
 #'
 #' # Cost
 #'
@@ -1981,6 +1979,16 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
   msolve <- function(z) as.numeric(Kinv %*% z)
   bhat <- lapply(seq_len(nh), function(m) -msolve(pieces$c[[m]]))
   Tm <- lapply(bhat, function(v) structural_dk_matrix(spec, design, jd, st, v))
+  # the Jeffreys blocks move the penalized matrix with the mode, on the joint
+  # vector: their first movement here, the second and the first along the
+  # pair's own movement in the trace below
+  has_jfp <- any(vapply(statmod_penalized(spec, design), function(u)
+    isTRUE(u$jeffreys), logical(1)))
+  if (has_jfp && !jfp_outer_ok(spec, design, 2L)) return(NULL)
+  if (has_jfp) {
+    Tm <- lapply(seq_len(nh), function(m)
+      Tm[[m]] + jfp_penalty_move(spec, design, coef, bhat[[m]]))
+  }
   Km <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Tm[[m]])
 
   out <- matrix(0, nh, nh)
@@ -1997,6 +2005,12 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
                                 bhat[[m]], bhat[[l]]) +
         sum(st$u * bml) +
         structural_chain_extra(spec, design, jd, M, st, bml)
+      if (has_jfp) {
+        tr_dKm <- tr_dKm +
+          jfp_penalty_move(spec, design, coef, bhat[[m]], w = bhat[[l]],
+                           M = M) +
+          jfp_penalty_move(spec, design, coef, bml, M = M)
+      }
       v <- -pieces$rho2[m, l] +
         sum(bhat[[m]] * as.numeric(K %*% bhat[[l]])) +
         sum((M %*% Km[[l]]) * t(M %*% Km[[m]])) / 2 -

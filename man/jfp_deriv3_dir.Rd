@@ -41,9 +41,19 @@ family's expected information to the fourth order, from
 two to four. A term with both indices inside one derivative of the block's
 matrix is a weighted cross product of the designs and has the sparsity of
 the information; the others are products of low rank through matrices of
-\eqn{\tilde p^2} columns. They are written for blocks whose rows do not
-move, in a model without a filter and without a term whose block is
-recomputed at the coefficients, and they signal an error elsewhere.
+\eqn{\tilde p^2} columns. Where a term recomputes its block at the
+coefficients (\code{\link[modelterms7:nl]{modelterms7::nl()}}, a smoothed \code{\link[modelterms7:seg]{modelterms7::seg()}}), the
+derivatives of the predictors to the fourth order and, for a block in the
+subformula of such a term, the movement of the block's rows enter as well
+(\code{\link[=jfp_mv_ctx]{jfp_mv_ctx()}}); the derivatives of the term's block come from
+\code{\link[modelterms7:term_block_deriv]{modelterms7::term_block_deriv()}} and its siblings up to
+\code{\link[modelterms7:term_block_deriv4]{modelterms7::term_block_deriv4()}}. In a model with a filter the
+predictors are those of the joint vector (\code{\link[=jfp_joint_rows]{jfp_joint_rows()}}): their
+derivatives come from the filter's kernels along the directions, and for a
+block in the subformula of a filter's parameter the rows' derivatives are
+read along the whitened directions of the block, one kernel call per
+direction (\code{\link[modelterms7:term_third]{modelterms7::term_third()}}, \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}},
+\code{\link[modelterms7:term_fifth]{modelterms7::term_fifth()}}).
 
 The outer criterion reads them: the derivative of its penalized matrix
 along the movement of the mode carries \eqn{-a\,D_3(v)}, and its second

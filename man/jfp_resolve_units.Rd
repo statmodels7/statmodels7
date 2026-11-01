@@ -25,8 +25,12 @@ enters the determinant.
 \details{
 The constant direction follows the rule of \code{\link[=jfp_constant]{jfp_constant()}} with the
 setting \code{intercept} of the term. The level's columns are the columns of
-the equation that no penalized unit covers, read from the design at which
-the units are enumerated.
+the equation that no penalized unit covers and that do not move with the
+coefficients: the columns of a term that recomputes its block (the
+Jacobian of \code{\link[modelterms7:nl]{modelterms7::nl()}} or of a smoothed \code{\link[modelterms7:seg]{modelterms7::seg()}})
+are left out, so that the decision is the same at every point at which
+the specification is built. With only such a term in the level the
+constant direction is never included.
 }
 \seealso{
 \code{\link[=jfp_blocks]{jfp_blocks()}}

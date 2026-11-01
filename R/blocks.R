@@ -778,9 +778,15 @@ statmod_penalty_keys <- function(spec) {
           # for its class signal an error
           jeffreys = S7::S7_inherits(e$penalty,
                                      modelterms7::JeffreysPenalty))
+        # a Jeffreys block in a subformula of a term whose block is
+        # recomputed at the coefficients, or of a filter's parameter, is
+        # resolved with the design, by jfp_resolve_units(); in another
+        # structural term it is not written yet
+        tmj <- spec@terms[[p]][[nm]]
         if (out[[length(out)]]$jeffreys &&
-            !S7::S7_inherits(spec@terms[[p]][[nm]],
-                             modelterms7::JeffreysTerm)) {
+            S7::S7_inherits(tmj, modelterms7::structural_term) &&
+            !S7::S7_inherits(tmj, modelterms7::GasTerm) &&
+            !S7::S7_inherits(tmj, modelterms7::GasJoint)) {
           stop(sprintf(paste0("jfp() inside the subformula of '%s' is not ",
                               "implemented yet."), nm), call. = FALSE)
         }

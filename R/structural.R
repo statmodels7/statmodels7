@@ -749,6 +749,9 @@ statmod_full_information <- function(spec, coef,
                                      design = statmod_design(spec),
                                      expected = FALSE, emethod = NULL) {
   params <- spec@distrib@params
+  # the block of a term that recomputes it (nl(), seg()) at the coefficients
+  # asked for, not at those the design was built at
+  design <- statmod_design_at(spec, coef, design)
   ev <- statmod_eta(spec, design, coef)
   if (!length(ev$filters) && !length(ev$regimes)) {
     return(statmod_information_at(spec, coef, design, expected = expected,
@@ -775,9 +778,13 @@ statmod_full_information <- function(spec, coef,
 #' @rdname statmod_full_information
 #' @param params,ev The parameter names and the evaluated predictors,
 #'   already in hand at the caller.
+#' @param seed `NULL`, or the rows of the static predictors' derivative, one
+#'   matrix per parameter over the full width, to read in place of the
+#'   design's blocks ([structural_refresh_move()]).
 #' @keywords internal
 statmod_full_information_impl <- function(spec, coef, design, params, ev,
-                                          expected = FALSE, emethod = NULL) {
+                                          expected = FALSE, emethod = NULL,
+                                          seed = NULL) {
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   nb <- sum(npar)
@@ -813,6 +820,7 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev,
     }
     M
   })
+  if (!is.null(seed)) Vs <- seed
 
   gl <- distributions7::distrib_gradient(spec@distrib, spec@response,
                                          ev$theta, scale = "link", threads = spec@threads)

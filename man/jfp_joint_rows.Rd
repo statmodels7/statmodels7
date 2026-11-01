@@ -17,11 +17,22 @@ jfp_joint_rows(spec, design, coef, ev)
 }
 \value{
 A list with \code{V} (one dense matrix per distribution parameter over
-the kept coordinates), \code{keep}, \code{driven} (the equations whose predictor
-the filter writes), and \code{curv}, a function of the per-observation weights
+the kept coordinates) and \code{Vfull} (the same over every coordinate,
+held levels included), \code{keep}, \code{driven} (the equations whose predictor
+the filter writes), \code{curv}, a function of the per-observation weights
 (a named list keyed by parameter) returning
-\eqn{\sum_t\sum_c g_{c,t}\,\partial^2\eta_{c,t}/\partial u\,\partial u}
-over the kept coordinates.
+\eqn{\sum_t w_t\sum_c g_{c,t}\,\partial^2\eta_{c,t}/\partial u\,
+  \partial u} over the kept coordinates, \code{curv_full} the same over every
+coordinate, \code{third}, a function of the weights and of a direction
+\eqn{d} over every coordinate returning a list with \code{curv}, the third
+derivative contracted against \eqn{w_tg_{c,t}} and \eqn{d}, and \code{dphi},
+the second derivative along \eqn{d}, one matrix per parameter, both over
+every coordinate (\code{\link[modelterms7:term_third]{modelterms7::term_third()}}), \code{higher}, the same for
+one, two or three directions (a list) returning \code{curv}, the derivative
+of order two plus their number contracted against the weights and the
+directions, and \code{rows}, the derivative of order one plus their number
+along them (\code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}, \code{\link[modelterms7:term_fifth]{modelterms7::term_fifth()}}),
+and \code{nb}, \code{mf}, \code{zn} and \code{term}.
 }
 \description{
 Returns, for a model carrying a filter, the derivative of each equation's
