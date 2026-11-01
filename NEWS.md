@@ -14,8 +14,7 @@
   which models each scheme takes.
 * `modelterms7::scte()`, a tensor product monotone in one or both of its
   covariates, is fitted in any equation, drawn by default as a surface
-  (`plot_surface()`), and reported as a smooth in `summary()` (modelterms7
-  0.126.1, now the minimum version).
+  (`plot_surface()`), and reported as a smooth in `summary()`.
 * The contribution that the graphs of a term read is `term_value()` for a
   term whose block moves with its coefficients, with the block in the
   standard error only; the surface graph read it as the block times the
