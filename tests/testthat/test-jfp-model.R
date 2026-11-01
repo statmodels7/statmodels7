@@ -199,6 +199,27 @@ test_that("jfp() inside a structural term other than gas() is rejected", {
                        data = d))
 })
 
+test_that("jfp() in the subformula of a filter's level is rejected", {
+  set.seed(1)
+  d <- data.frame(t = 1:60, z = rnorm(60))
+  d$y <- rpois(60, 2)
+  pois <- distributions7::poisson_distrib()
+  expect_error(statmod(y ~ gas(p = 1, q = 1, omega ~ 1 + jfp(~ z), time = t),
+                       distrib = pois, data = d),
+               "cannot be integrated at b = 1")
+  expect_error(statmod(y ~ gas(p = 1, q = 1, omega ~ 0 + jfp(~ z), time = t),
+                       distrib = pois, data = d),
+               "subformula of omega")
+  # in a joint filter, the level of one of its equations
+  g1 <- distributions7::gaussian1_distrib()
+  d$y2 <- rnorm(60)
+  expect_error(statmod(y2 ~ gas(p = 1, q = 1, omega ~ 1 + jfp(~ z),
+                                time = t) |
+                         sigma ~ gas(p = 1, q = 1, time = t),
+                       distrib = g1, data = d),
+               "subformula of omega")
+})
+
 test_that("a Jeffreys block beside a filter in another equation is exact", {
   skip_if_not_installed("numDeriv")
   set.seed(8)

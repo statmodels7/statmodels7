@@ -204,6 +204,20 @@ jfp_filter_unit <- function(u, spec) {
   }
   if (is.null(hit)) no("its columns are not one sub-term of one parameter")
   cp <- hit$cp
+  # the level of the filter: the rows of the block grow like 1 / (1 - b)
+  # with the persistence b, so a log|I| = -a p log(1 - b) + ... is an
+  # implicit prior that cannot be integrated at b = 1 (misure_jfp/RISULTATI.md,
+  # phase 4, section 2; decided by Giovanni 2026-11-01)
+  if (identical(sub("^.*\\.", "", cp$name), "omega")) {
+    stop(sprintf(paste0(
+      "jfp() cannot be used in the subformula of omega, the level of the ",
+      "filter in '%s'.\n  The rows of its block grow like 1/(1 - b) with ",
+      "the persistence b of the filter, so the\n  penalty acts as a prior ",
+      "on the persistence that cannot be integrated at b = 1,\n  and the ",
+      "fit runs to persistence 1. A jfp() block can be placed in the ",
+      "subformula\n  of a loading (kappa) or of a partial autocorrelation ",
+      "(pacf)."), u$term), call. = FALSE)
+  }
   lev <- which(vapply(seq_along(cp$subs), function(j) {
     j != hit$j && !length(modelterms7::term_penalties(cp$subs[[j]]))
   }, logical(1)))
