@@ -820,6 +820,17 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
                                  ctx_emethod(ctx))) +
     as_dense(ctx_penalty(ctx, spec, design, coef, hyper)) + Dm
   sc <- statmod_score_at(spec, coef, design, index = gam$where)
+  # ⚠️ EXCEPT A JEFFREYS PENALTY, whose value a log|I_tilde| reads every
+  # predictor through the information, so its derivative in such a
+  # coefficient is not zero and enters beside the score. Without it the
+  # search stopped where the gradient of the criterion WITHOUT that piece
+  # vanished: gaussian1, n = 200, y ~ x + jfp(~ z), sigma 0.997211 against
+  # the optimum sqrt(RSS/(n - p + 2 a p_tilde)) = 0.993326, with a gradient
+  # of exactly 2 a p_tilde left there (misure_jfp/effetto_incrociato,
+  # section 2). Its second derivative is in Hm, through ctx_penalty().
+  jg <- tryCatch(jfp_penalty(spec, design, coef, "gradient"),
+                 error = function(e) NULL)
+  if (!is.null(jg) && length(jg) == total) sc <- sc - jg[gam$where]
   gout <- numeric(length(gam$where))
   # every coordinate the mode's curvature pins other than a boundary: the
   # estimated coefficients, the ones the model does not identify and the ones

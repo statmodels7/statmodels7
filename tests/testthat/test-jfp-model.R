@@ -449,3 +449,41 @@ test_that("the subformulas that move discontinuously are rejected", {
                                 distrib = G, data = d))
   expect_true(all(is.finite(unlist(coef(f)))))
 })
+
+test_that("the outer criterion reaches the gaussian closed form beside jfp()", {
+  # with the full information (no factor divided out) the Jeffreys value is
+  # const - 2 a p_tilde log sigma, so the REML optimum is
+  # sigma^2 = RSS / (n - p + 2 a p_tilde)
+  ns <- environment(jfp_scale_setup)
+  real <- jfp_scale_setup
+  unlockBinding("jfp_scale_setup", ns)
+  assign("jfp_scale_setup", function(st) list(), envir = ns)
+  on.exit({
+    assign("jfp_scale_setup", real, envir = ns)
+    lockBinding("jfp_scale_setup", ns)
+  }, add = TRUE)
+  set.seed(1)
+  n <- 200
+  d <- data.frame(x = rnorm(n), z = rnorm(n))
+  d$y <- 1 + 0.5 * d$x + 0.3 * d$z + rnorm(n)
+  f <- statmod(y ~ x + jfp(~ z) | sigma ~ 1,
+               distrib = distributions7::gaussian1_distrib(), data = d)
+  rss <- sum(stats::residuals(stats::lm(y ~ x + z, d))^2)
+  an <- sqrt(rss / (n - 3 + 2 * 0.5 * 2))
+  expect_equal(exp(f@coefficients$sigma[[1L]]), an, tolerance = 1e-7)
+  expect_identical(statmod_certificate(f)$state, "converged")
+  # the gradient at the optimum, and without the value's derivative (the
+  # defect): 2 a p_tilde
+  spec <- f@spec
+  design <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  gam <- marginal_coords(spec, design, reml())
+  basis <- integrated_basis(spec, design, "reml", gamma = TRUE)
+  # on the specification that holds sigma, as the outer search reads it
+  sp <- statmod_hold(spec, gam, f@coefficients$sigma)
+  g <- statmod_marginal_grad(sp, design, f@coefficients, f@hyper, reml(),
+                             idx, basis, gam = gam)
+  jg <- jfp_penalty(spec, design, f@coefficients, "gradient")
+  expect_lt(abs(g), 1e-5)
+  expect_equal(g + jg[gam$where], 2, tolerance = 1e-6)
+})
