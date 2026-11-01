@@ -45,6 +45,10 @@ jfp_resolve_units <- function(units, spec, design) {
       }
     }
     units[[k]]$power <- u$penalty@power
+    if (isTRUE(u$structural)) {
+      units[[k]] <- c(units[[k]], jfp_filter_unit(u, spec))
+      next
+    }
     if (!S7::S7_inherits(spec@terms[[p]][[u$term]],
                          modelterms7::JeffreysTerm)) {
       units[[k]] <- c(units[[k]], jfp_subformula_unit(u, spec, design))
@@ -157,6 +161,74 @@ jfp_subformula_unit <- function(u, spec, design) {
 }
 
 
+#' A Jeffreys Block in the Subformula of a Filter's Parameter
+#'
+#' @description
+#' Resolves a Jeffreys unit that a [modelterms7::gas()] term carries up from
+#' the subformula of one of its parameters: the positions among the term's
+#' parameters from which the block's rows are combined, and whether the
+#' constant direction of the subformula enters them.
+#'
+#' @details
+#' The rows are the derivatives of the filtered predictors along the block's
+#' coordinates, columns of the forward Jacobian of the recursion. The level of
+#' the subformula is its unpenalized sub-terms, read from
+#' [modelterms7::term_components()], and the constant direction is the
+#' combination \eqn{\gamma} of the level's coordinates with
+#' \eqn{Z_{\rm level}\gamma = 1}, the derivative of the predictors along a
+#' constant shift of the parameter. The span is tested on the subformula's own
+#' design, by [jfp_constant()].
+#'
+#' @param u The unit, structural, with `within` the block's positions among
+#'   the term's parameters.
+#' @param spec A [StatmodSpec()].
+#'
+#' @return A list with `kind` (`"filter"`), `const`, `basis` (positions among
+#'   the term's parameters) and `C`, as [jfp_block()] takes them.
+#'
+#' @keywords internal
+jfp_filter_unit <- function(u, spec) {
+  tm <- spec@terms[[u$param]][[u$term]]
+  no <- function(why) {
+    stop(sprintf("jfp() inside the subformula of '%s' is not available: %s.",
+                 u$term, why), call. = FALSE)
+  }
+  comp <- modelterms7::term_components(tm)
+  hit <- NULL
+  for (cp in comp) {
+    for (j in seq_along(cp$sub_index)) {
+      if (identical(as.integer(cp$sub_index[[j]]), as.integer(u$within))) {
+        hit <- list(cp = cp, j = j)
+      }
+    }
+  }
+  if (is.null(hit)) no("its columns are not one sub-term of one parameter")
+  cp <- hit$cp
+  lev <- which(vapply(seq_along(cp$subs), function(j) {
+    j != hit$j && !length(modelterms7::term_penalties(cp$subs[[j]]))
+  }, logical(1)))
+  ZA <- as_dense(modelterms7::term_matrix(cp$subs[[hit$j]]))
+  Zl <- if (length(lev)) {
+    do.call(cbind, lapply(cp$subs[lev], function(s)
+      as_dense(modelterms7::term_matrix(s))))
+  } else NULL
+  const <- jfp_constant(u$penalty@intercept, Zl, ZA)
+  pA <- length(u$within)
+  if (!const) {
+    return(list(kind = "filter", const = FALSE, basis = as.integer(u$within),
+                C = diag(pA)))
+  }
+  li <- unlist(cp$sub_index[lev], use.names = FALSE)
+  gam <- qr.coef(qr(Zl), rep(1, nrow(Zl)))
+  gam[is.na(gam)] <- 0
+  C <- matrix(0, length(li) + pA, pA + 1L)
+  C[seq_along(li), 1L] <- gam
+  C[length(li) + seq_len(pA), 1L + seq_len(pA)] <- diag(pA)
+  list(kind = "filter", const = TRUE,
+       basis = as.integer(c(li, u$within)), C = C)
+}
+
+
 #' The Jeffreys Blocks of a Model
 #'
 #' @description
@@ -177,9 +249,9 @@ jfp_blocks <- function(spec, design, keys = NULL) {
   for (u in statmod_penalized(spec, design)) {
     if (!isTRUE(u$jeffreys)) next
     if (!is.null(keys) && !u$key %in% keys) next
-    out[[length(out) + 1L]] <- if (identical(u$kind, "refresh")) {
+    out[[length(out) + 1L]] <- if (u$kind %in% c("refresh", "filter")) {
       jfp_block(u$param, u$cols, power = u$power, const = u$const,
-                kind = "refresh", term = u$term, basis = u$basis, C = u$C)
+                kind = u$kind, term = u$term, basis = u$basis, C = u$C)
     } else {
       jfp_block(u$param, u$cols, power = u$power, const = u$const)
     }

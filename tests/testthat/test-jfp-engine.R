@@ -180,7 +180,7 @@ test_that("the engine rejects what it does not compute", {
   des <- statmod_design(sp)
   cf <- list(mu = c(0, 0))
   expect_error(jfp_state(sp, des, cf, jfp_block("mu", 2L, kind = "filter")),
-               "not\n  implemented yet")
+               "needs the filter that holds it")
   expect_error(jfp_state(sp, des, cf, jfp_block("mu", 3L)), "positions")
   expect_error(jfp_state(sp, des, cf, jfp_block("sigma", 1L)), "no parameter")
 })

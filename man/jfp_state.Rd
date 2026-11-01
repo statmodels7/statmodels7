@@ -47,10 +47,12 @@ The point is the joint vector \eqn{u} of \code{\link[=statmod_full_information]{
 a model without a structural term it is the stacked coefficients. For a
 model carrying a filter it is the coefficients followed by the filter's
 free parameters, and the derivative of every predictor in \eqn{u} is read
-from the forward recursion (\code{\link[=jfp_joint_rows]{jfp_joint_rows()}}); a block in an equation
-that the filter drives moves with the coefficients and is rejected in
-this phase. A model carrying a mixture over latent states is always
-rejected, because its expected information does not exist.
+from the forward recursion (\code{\link[=jfp_joint_rows]{jfp_joint_rows()}}). A block of kind
+\code{"static"} in an equation that the filter drives moves with the
+coefficients and is rejected; a block of kind \code{"filter"} lies in the
+filter's own subformula and moves with it. A model carrying a mixture over
+latent states is always rejected, because its expected information does
+not exist.
 
 The derivatives of the expected information are computed at the first
 request and kept in the state, so that the value, the gradient and the

@@ -136,14 +136,67 @@ test_that("lowrank_solve() equals the dense solve", {
                tolerance = 1e-10)
 })
 
-test_that("jfp() inside the subformula of gas() is rejected in this phase", {
+test_that("a Jeffreys block inside a filter's subformula is exact", {
+  skip_if_not_installed("numDeriv")
+  set.seed(4)
+  n <- 80
+  d <- data.frame(t = 1:n, g = factor(rep(1:2, n / 2)), x = rnorm(n))
+  e <- numeric(n)
+  for (i in 2:n) e[i] <- 0.7 * e[i - 1] + rnorm(1, sd = 0.6)
+  d$y <- 0.3 * d$x + e + rnorm(n, sd = 0.5)
+  g1 <- distributions7::gaussian1_distrib()
+  # the point: the fit of the same model without jfp(), whose coordinates
+  # are in the same order
+  f0 <- statmod(y ~ x + gas(p = 1, q = 1, kappa1 ~ 1 + g, time = t), g1, d)
+  f <- statmod(y ~ x + gas(p = 1, q = 1, kappa1 ~ 1 + jfp(~ g), time = t),
+               g1, d)
+  sp <- f@spec
+  des <- statmod_design(sp)
+  b <- jfp_blocks(sp, des)
+  expect_identical(b[[1L]]$kind, "filter")
+  expect_true(b[[1L]]$const)
+  sst <- statmod_structural_state(des)
+  key <- names(sst$zeta)[1]
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  nb <- sum(vapply(des, function(z) z$npar, integer(1)))
+  # the fit's own point, read before the evaluations below move the state
+  u1 <- c(unlist(f@coefficients[sp@distrib@params], use.names = FALSE),
+          as.numeric(sst$zeta[[key]][free]))
+  s0 <- statmod_structural_state(statmod_design(f0@spec))
+  u0 <- c(unlist(f0@coefficients[sp@distrib@params], use.names = FALSE),
+          as.numeric(s0$zeta[[1L]][setdiff(names(s0$zeta[[1L]]),
+                                           s0$held[[1L]])]))
+  expect_length(u0, nb + length(free))
+  obj <- statmod_objective(sp, f@hyper, des)
+  jp <- statmod_joint_pieces(sp, des, obj, f@hyper)
+  cf_at <- function(u) {
+    jp$setz(u[nb + seq_along(free)])
+    obj$split(u[seq_len(nb)])
+  }
+  val <- function(u) jfp_penalty(sp, des, cf_at(u), "value")
+  gr <- function(u) jfp_penalty(sp, des, cf_at(u), "gradient", joint = TRUE)
+  g <- gr(u0)
+  gn <- numDeriv::grad(val, u0)
+  expect_lt(max(abs(g - gn)) / max(abs(gn)), 1e-7)
+  hn <- numDeriv::jacobian(gr, u0)
+  hn <- (hn + t(hn)) / 2
+  h <- jfp_penalty(sp, des, cf_at(u0), "hessian", joint = TRUE)
+  expect_lt(max(abs(h - hn)) / max(abs(hn)), 1e-7)
+  # the negative control: without the movement of the block's rows
+  st <- jfp_state_at(sp, des, cf_at(u0))
+  hp <- jfp_hessian(st)
+  expect_gt(max(abs(-(hp$hessian - hp$refresh) - hn)) / max(abs(hn)), 1e-1)
+  # the fit is stationary over the joint vector, the Jeffreys part included
+  expect_lt(max(abs(jp$gr(u1))), 1e-5)
+})
+
+test_that("jfp() inside a structural term other than gas() is rejected", {
   set.seed(1)
-  d <- data.frame(t = 1:60, g = rnorm(60))
+  d <- data.frame(t = 1:60, z = rnorm(60))
   d$y <- rnorm(60)
-  expect_error(statmod(y ~ gas(p = 1, q = 1, kappa1 ~ 1 + jfp(~ g), time = t),
+  expect_error(statmod(y ~ regime(k = 2, time = t, mu ~ 1 + jfp(~ z)),
                        distrib = distributions7::gaussian1_distrib(),
-                       data = d),
-               "not implemented yet")
+                       data = d))
 })
 
 test_that("a Jeffreys block beside a filter in another equation is exact", {

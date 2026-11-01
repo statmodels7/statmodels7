@@ -1044,6 +1044,9 @@ statmod_structural_penalty <- function(spec, design, hyper,
     # though it were the whole. joint_penalty_at() places all of it at once.
     if (isTRUE(u$mixed)) next
     if (!isTRUE(u$structural)) next
+    # a Jeffreys block in a filter's subformula reads the whole model and is
+    # placed by joint_penalty_at() and statmod_penalty_at()
+    if (isTRUE(u$jeffreys)) next
     z <- sst$zeta[[u$term]]
     b <- as.numeric(z[u$cols])
     th <- as.list(hyper[[u$param]][[u$key]])
