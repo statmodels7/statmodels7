@@ -23,6 +23,8 @@ A list with \code{fit} and \code{se}, numeric vectors.
 \description{
 Evaluates \eqn{X b} for the block of a term on \code{newdata} (or on the
 fitting rows when \code{newdata} is \code{NULL}), restricted to the columns \code{cols},
-with the standard error \eqn{\sqrt{x_i' V x_i}} of each row.
+with the standard error \eqn{\sqrt{x_i' V x_i}} of each row. For a term
+whose block moves with its coefficients the value is \code{\link[modelterms7:term_value]{modelterms7::term_value()}}
+and \eqn{X} is the Jacobian that the standard error reads.
 }
 \keyword{internal}

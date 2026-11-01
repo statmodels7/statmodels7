@@ -801,7 +801,7 @@ criterion_plot_data <- function(type, x, fit, ctx, ...) {
 
 for (.cls in list(modelterms7::SmoothTerm, modelterms7::PenalizedTerm,
                   modelterms7::RandomTerm, modelterms7::RandomSmoothTerm,
-                  modelterms7::ScsTerm)) {
+                  modelterms7::ScsTerm, modelterms7::ScteTerm)) {
   S7::method(plot_data, list(PlotCriterion, .cls)) <- criterion_plot_data
 }
 rm(.cls)
@@ -1061,3 +1061,14 @@ S7::method(plot_layers, PlotCriterion) <- function(type, data, ...) {
     plot_key(colour = stats::setNames(c("#1f5fa8", "#b2182b", "grey55"),
                                       c(k_crit, k_fit, k_edf)))))
 }
+
+
+# A SHAPE-CONSTRAINED TENSOR PRODUCT is drawn as the surface of te(): the
+# method reads the two variables from the term's `vars` and the contribution
+# through term_contribution(), which reads term_value() for a block that moves
+S7::method(plot_data, list(PlotSurface, modelterms7::ScteTerm)) <-
+  function(type, x, fit, ctx, ...) {
+    S7::method(plot_data, list(PlotSurface, modelterms7::SmoothTerm))(type, x, fit, ctx, ...)
+  }
+
+S7::method(default_plot, modelterms7::ScteTerm) <- function(term, ...) plot_surface()
