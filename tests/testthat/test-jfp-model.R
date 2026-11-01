@@ -487,3 +487,26 @@ test_that("the outer criterion reaches the gaussian closed form beside jfp()", {
   expect_lt(abs(g), 1e-5)
   expect_equal(g + jg[gam$where], 2, tolerance = 1e-6)
 })
+
+test_that("a jfp block keeps its parameter on the outer criterion", {
+  set.seed(1)
+  n <- 100
+  d <- data.frame(x = rnorm(n), w = rnorm(n))
+  d$y <- 1 + 0.5 * d$x + rnorm(n, sd = exp(0.3 * d$w))
+  G <- distributions7::gaussian1_distrib()
+  route <- function(fm) {
+    sp <- statmod_spec(fm, G, d)
+    des <- statmod_design(sp)
+    marginal_coords(sp, des, reml())
+  }
+  a <- route(y ~ x | sigma ~ jfp(~ w))
+  b <- route(y ~ x | sigma ~ w)
+  # the same parameter on the criterion, nothing skipped; the block's own
+  # coordinate stays at the mode
+  expect_identical(unique(a$param), unique(b$param))
+  expect_length(a$skipped, 0L)
+  expect_identical(a$name, "(Intercept)")
+  expect_identical(b$name, c("(Intercept)", "w"))
+  f <- statmod(y ~ x | sigma ~ jfp(~ w), distrib = G, data = d)
+  expect_identical(statmod_certificate(f)$state, "converged")
+})
