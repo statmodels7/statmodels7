@@ -688,7 +688,20 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   if (is.null(mode_pen)) return(NULL)
   # how the mode moves: the penalized likelihood's own curvature, which for a
   # refreshable block is not the Gauss-Newton matrix the design gives
-  Dm <- mode_curvature(spec, design, coef, params, npar, offs, total)
+  # beside a filter the block's second derivative reaches the curvature
+  # through the filter's reverse pass as well, so it is weighted by the total
+  # derivative in the static predictor (statmod_score_obs()) and not by the
+  # family's score: measured on nl() beside an unpenalized gas(), the
+  # gradient was 2.9e-03 out with the score alone
+  gl_mode <- NULL
+  if (any(vapply(attr(design0, "structural"),
+                 function(su) identical(su$kind, "filter"), logical(1)))) {
+    w <- spec@weights
+    gl_mode <- lapply(statmod_score_obs(spec, coef, design),
+                      function(x) ifelse(w > 0, x / w, 0))
+  }
+  Dm <- mode_curvature(spec, design, coef, params, npar, offs, total,
+                       gl = gl_mode)
   # a coordinate pinned in K other than at a boundary (a coefficient the
   # criterion estimates, one the model does not identify), and one that a
   # break-point term's kink holds at the mode, stays where it is when the

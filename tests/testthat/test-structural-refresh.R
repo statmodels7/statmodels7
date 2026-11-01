@@ -101,3 +101,45 @@ test_that("the outer Hessian is a difference beside a recomputed block", {
   expect_true(outer_gradient_ok(k$sp, des, idx, m, 1L))
   expect_false(outer_gradient_ok(k$sp, des, idx, m, 2L))
 })
+
+test_that("beside an unpenalized filter the mode moves by the total score", {
+  skip_if_not_installed("numDeriv")
+  # mode_curvature() weighted by the total derivative in the static
+  # predictor (statmod_score_obs()) gives the joint objective's curvature;
+  # weighted by the family's score alone it does not
+  k <- structural_refresh_case(
+    yn ~ nl(~ b * exp(-r * xs), start = list(b = 1, r = 0.5)) +
+      gas(p = 1, q = 1, time = t, by = id) | theta ~ random(~ 1 | id),
+    distributions7::negbin2_distrib())
+  sp <- k$sp
+  des <- k$des
+  nb <- k$nb
+  set.seed(2)
+  u <- k$u + 0.1 * stats::rnorm(length(k$u))
+  cf <- k$cf_at(u)
+  desr <- statmod_design_at(sp, cf, des)
+  params <- sp@distrib@params
+  npar <- vapply(desr, function(z) z$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  w <- sp@weights
+  gl <- lapply(statmod_score_obs(sp, cf, desr), function(x) x / w)
+  J <- statmod_full_information(sp, cf, des)
+  S <- as_dense(statmod_penalty_at(sp, cf, k$f@hyper, des, "hessian"))
+  ib <- seq_len(nb)
+  Jt <- J
+  Jt[ib, ib] <- Jt[ib, ib] + S +
+    mode_curvature(sp, desr, cf, params, npar, offs, nb, gl = gl)
+  Js <- J
+  Js[ib, ib] <- Js[ib, ib] + S +
+    mode_curvature(sp, desr, cf, params, npar, offs, nb)
+  Hn <- numDeriv::jacobian(k$jp$gr, u)
+  Hn <- (Hn + t(Hn)) / 2
+  # on the block's own entries, where the two weightings differ
+  blk <- unlist(lapply(attr(desr, "refresh"), function(r)
+    offs[match(r$param, params)] + desr[[r$param]]$blocks[[r$term]]))
+  e_t <- max(abs((Jt - Hn)[blk, blk])) / max(abs(Hn[blk, blk]))
+  e_s <- max(abs((Js - Hn)[blk, blk])) / max(abs(Hn[blk, blk]))
+  expect_lt(max(abs(Jt - Hn)) / max(abs(Hn)), 1e-7)
+  expect_lt(e_t, 1e-7)
+  expect_gt(e_s, 100 * e_t)
+})
