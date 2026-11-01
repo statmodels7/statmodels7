@@ -358,6 +358,21 @@ jfp_state_at <- function(spec, design, coef, keys = NULL) {
 #' `Inf`, so a line search rejects the point, and the gradient and the
 #' Hessian signal an error.
 #'
+#' The information \eqn{\tilde I_b} is the family's expected information
+#' without modification, as in the definition of Jeffreys. It generally
+#' depends on the other parameters of the distribution as well, so the
+#' value, the gradient and the Hessian have entries in the coefficients of
+#' those parameters, and the outer criterion reads the value and its
+#' derivatives in the coordinates that it estimates ([marginal_coords()]).
+#' The prior therefore also moves those coordinates, by an amount of order
+#' \eqn{1/n}: for a gaussian with the block in the mean the REML estimate of
+#' \eqn{\sigma^2} is the residual sum of squares divided by
+#' \eqn{n - p + 2a\tilde p}, and in simulations over seven families the
+#' median shift of a dispersion or shape parameter was 0.1 to 0.3 standard
+#' errors at \eqn{n = 50} and 0.02 to 0.06 at \eqn{n = 1000}. A block in a
+#' parameter other than the mean moves the mean only when the information of
+#' that parameter depends on the mean.
+#'
 #' `"parts"` returns the Hessian split as [jfp_hessian()] gives it, with the
 #' sign of the penalty: the objective's curvature gains
 #' [statmod_information_at()] at `H = -weights`, plus `-refresh`, plus
