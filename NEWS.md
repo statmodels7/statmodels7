@@ -1,3 +1,9 @@
+# statmodels7 0.237.4
+
+* The outer search starts at the hyperparameters that a term names through
+  `modelterms7::term_hyper_start()`, where it names any; a held value still
+  takes precedence (modelterms7 0.126.2, now the minimum version).
+
 # statmodels7 0.237.3
 
 * `modelterms7::scte()`, a tensor product monotone in one or both of its
