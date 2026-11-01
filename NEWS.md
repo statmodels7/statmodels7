@@ -1,3 +1,8 @@
+# statmodels7 0.235.2
+
+* Tests only: fits with `modelterms7::scs()` and a value or a slope at a
+  point (modelterms7 0.123.0, now the minimum version).
+
 # statmodels7 0.235.1
 
 * Tests only: the test of a Jeffreys block with singular information uses a
