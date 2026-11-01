@@ -1,3 +1,19 @@
+# statmodels7 0.237.0
+
+* A criterion that cannot be read at the starting hyperparameters because
+  the penalized information is flat in a direction that carries curvature
+  on its diagonal (the null space of a penalty, reached at a boundary) now
+  leaves that direction out of the determinant also when the criterion
+  estimates no coefficient of its own. An increasing `modelterms7::scs()`
+  in sigma on a constant truth stopped with an error in 12 of 18 measured
+  fits and now fits in 18. A coefficient whose column vanishes at the start
+  still stops the fit with its cause, and a fit whose criterion was
+  available at its start is unchanged.
+* The search over the versions of a term keeps the warnings of each
+  version in `fit@history$variants` (column `warning`) and raises only
+  those of the version chosen.
+* modelterms7 0.125.0 is the minimum version (settings of a shape by level).
+
 # statmodels7 0.236.1
 
 * The effect and derivative graphs of `s()` or `modelterms7::scs()` with a

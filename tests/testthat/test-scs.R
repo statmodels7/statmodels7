@@ -168,3 +168,56 @@ test_that("the graphs of a numeric by draw the coefficient at z = 1", {
     expect_s3_class(plot(fit, plot_type = plot_derivative(), term = nm, data = d), "ggplot")
   }
 })
+
+test_that("the warnings of a discarded version stay in the history", {
+  set.seed(39)
+  d <- data.frame(x = runif(80))
+  d$y <- exp(-((d$x - 0.3) / 0.2)^2) + rnorm(80, sd = 0.1)
+  fit <- expect_no_warning(statmod(y ~ modelterms7::scs(x, modelterms7::shape_unimodal(),
+                                                        basis7::bspline_smooth(k = 6)),
+                                   distrib = distributions7::gaussian1_distrib(), data = d))
+  va <- fit@history$variants
+  expect_true("warning" %in% names(va))
+  expect_identical(va$warning[va$chosen], "")
+})
+
+test_that("the settings of a shape may be shared or differ across the levels", {
+  set.seed(41)
+  d <- data.frame(x = runif(200), g = gl(2, 100, labels = c("a", "b")))
+  d$y <- exp(-((d$x - c(a = 0.35, b = 0.6)[as.character(d$g)]) / 0.2)^2) + rnorm(200, sd = 0.1)
+  sm <- basis7::bspline_smooth(k = 7)
+  g0 <- distributions7::gaussian1_distrib()
+  fs <- statmod(y ~ g + modelterms7::scs(x, modelterms7::shape_unimodal(mode_by = "shared"), sm,
+                                         by = g), distrib = g0, data = d)
+  va <- fs@history$variants
+  expect_true(all(grepl("^M = ", va$version)))
+  tm <- Filter(function(t) S7::S7_inherits(t, modelterms7::ScsTerm), fs@spec@terms$mu)[[1L]]
+  expect_identical(length(tm@build_info$pieces), 1L)
+  # a convex mean with one left slope for both levels
+  d$y2 <- exp(1.5 * d$x) + c(a = 0, b = 1)[as.character(d$g)] * d$x^2 + rnorm(200, sd = 0.1)
+  ft <- statmod(y2 ~ g + modelterms7::scs(x, modelterms7::shape_convex(left_slope_by = "shared"),
+                                          sm, by = g), distrib = g0, data = d)
+  expect_identical(statmod_certificate(ft)$state, "converged")
+  grid <- expand.grid(x = seq(min(d$x), max(d$x), length.out = 101), g = c("a", "b"))
+  mu <- predict(ft, what = "mu", newdata = grid)
+  expect_true(all(tapply(mu, grid$g, function(v) min(diff(diff(v)))) >= -1e-10))
+  # minimum slopes by level
+  d$y3 <- c(a = 0.5, b = 2)[as.character(d$g)] * d$x + rnorm(200, sd = 0.1)
+  fm <- statmod(y3 ~ g + modelterms7::scs(x, modelterms7::shape_increasing(min_slope = c(a = 0.2, b = 1)),
+                                          sm, by = g), distrib = g0, data = d)
+  sl <- tapply(predict(fm, what = "mu", newdata = grid), grid$g, function(v) min(diff(v)) / diff(grid$x[1:2]))
+  expect_true(sl[["a"]] >= 0.2 - 1e-8 && sl[["b"]] >= 1 - 1e-8)
+})
+
+test_that("an increasing shape in sigma on a constant truth fits", {
+  set.seed(1)
+  d <- data.frame(x = runif(240))
+  d$y <- sin(3 * d$x) + rnorm(240, sd = 0.15)
+  sm <- basis7::bspline_smooth(k = 8)
+  fit <- suppressWarnings(statmod(y ~ s(x, smoother = sm) |
+                                    sigma ~ modelterms7::scs(x, modelterms7::shape_increasing(), sm),
+                                  distrib = distributions7::gaussian1_distrib(), data = d))
+  s <- predict(fit, what = "sigma", newdata = data.frame(x = c(0.1, 0.5, 0.9)))
+  expect_true(all(diff(s) >= -1e-10))
+  expect_lt(abs(log(s[3] / 0.15)), 0.2)
+})

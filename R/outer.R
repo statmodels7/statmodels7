@@ -1533,16 +1533,27 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # than with the number of columns. Where the criterion estimates a
       # coefficient, it runs on a model with no smooth hyperparameter as
       # well, and there a flat direction of K -- which the fit only warned
-      # about before -- makes log|K| undefined at the start. The set is read
-      # ONCE, at this first fit, and held for the whole search, so the
-      # criterion does not change dimension from one point to the next.
-      if (is.null(m) && ng && !is.null(res)) {
+      # about before -- makes log|K| undefined at the start. The same holds
+      # with smooth hyperparameters when the flat direction is in a penalty's
+      # null space, where no smoothing parameter reaches it: an increasing
+      # scs() in sigma on a constant truth runs its slopes to the boundary
+      # together, and the start stopped with an error in 12 of 18 measured
+      # fits. There the flat direction carries curvature on its diagonal
+      # (deficient_coords()); a coefficient whose column has VANISHED at the
+      # start (vanished_coords(), an nl() rate whose amplitude starts at
+      # zero) sits on a degenerate point rather than a boundary, and without
+      # a coefficient of the criterion's own the start keeps stopping with
+      # its cause. The set is read ONCE, at this first fit, and held for the
+      # whole search, so the criterion does not change dimension from one
+      # point to the next; a fit whose criterion is available at its start
+      # is not affected.
+      if (is.null(m) && !is.null(res)) {
         Kf <- tryCatch(statmod_penalized_at(sp, cf, design, hy, expected,
                                             emethod),
                        error = function(e) NULL)
         fl <- if (is.null(Kf)) integer(0) else
           sort(unique(c(deficient_coords(Kf),
-                        vanished_coords(sp, cf, design, Kf))))
+                        if (ng) vanished_coords(sp, cf, design, Kf))))
         fl <- setdiff(fl, gam$where)
         if (length(fl)) {
           # left free in the inner fit, where the objective still depends on

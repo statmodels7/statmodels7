@@ -74,7 +74,8 @@ variant_score <- function(fit) {
 #' ones at their pilot. A term whose choice has several parts
 #' ([modelterms7::term_variant_stages()]) is searched one part at a time,
 #' each stage starting from the version chosen at the stage before. The
-#' versions tried, with their scores, are in
+#' versions tried, with their scores and the warnings that each fit raised,
+#' are in
 #' `fit@history$variants`, and the fit's `elapsed` covers the whole search.
 #'
 #' @param cl The call of [statmod()].
@@ -124,16 +125,26 @@ statmod_variant_search <- function(cl, caller, auto) {
       }
       for (vn in names(vars)) {
         set_override(a$key, vars[[vn]])
-        f <- tryCatch(eval(cl, caller), error = function(e) e)
+        # THE WARNINGS OF A VERSION ARE ITS OWN: they are collected here and
+        # only those of the version chosen reach the caller. A unimodal
+        # scs() placed away from the mode collapses to a flat curve and
+        # warned that a coefficient was not identified, about a model the
+        # search then discarded.
+        warns <- character(0)
+        f <- tryCatch(withCallingHandlers(eval(cl, caller), warning = function(w) {
+          warns <<- c(warns, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }), error = function(e) e)
         bad <- inherits(f, "error")
         sc <- if (bad) NA_real_ else variant_score(f)
         rows[[length(rows) + 1L]] <- data.frame(
           param = a$param, term = a$name, version = vn, score = sc,
           chosen = FALSE, error = if (bad) conditionMessage(f) else "",
-          stringsAsFactors = FALSE)
+          warning = paste(warns, collapse = "
+"), stringsAsFactors = FALSE)
         if (is.finite(sc) && (is.null(best) || sc < best$score)) {
           best <- list(score = sc, fit = f, term = vars[[vn]], name = vn,
-                       row = length(rows))
+                       row = length(rows), warnings = warns)
         }
       }
     }
@@ -145,6 +156,7 @@ statmod_variant_search <- function(cl, caller, auto) {
     chosen[[a$key]] <- best$term
     best_fit <- best$fit
   }
+  for (w in unique(best$warnings)) warning(w, call. = FALSE)
   best_fit@history$variants <- do.call(rbind, rows)
   best_fit@elapsed <- proc.time()[["elapsed"]] - t0
   best_fit
