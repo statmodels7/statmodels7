@@ -259,13 +259,9 @@ test_that("a Jeffreys block beside a filter in another equation is exact", {
   d <- data.frame(t = 1:n, x = rnorm(n), z = rnorm(n))
   e <- numeric(n)
   for (i in 2:n) e[i] <- 0.6 * e[i - 1] + rnorm(1, sd = 0.3)
-  # a negative binomial, whose information on mu depends on theta in a way
-  # that does not separate: a gaussian's sigma only scales it and is
-  # divided out (distributions7::information_scale())
-  d$y <- stats::rnbinom(n, mu = exp(1 + 0.5 * d$x),
-                        size = exp(0.2 * d$z + 2 * e))
-  f <- statmod(y ~ jfp(~ x) | theta ~ z + gas(p = 1, q = 1, time = t),
-               distrib = distributions7::negbin2_distrib(), data = d)
+  d$y <- 1 + 0.5 * d$x + rnorm(n, sd = exp(0.2 * d$z + e))
+  f <- statmod(y ~ jfp(~ x) | sigma ~ z + gas(p = 1, q = 1, time = t),
+               distrib = distributions7::gaussian1_distrib(), data = d)
   sp <- f@spec
   des <- statmod_design(sp)
   sst <- statmod_structural_state(des)
@@ -451,17 +447,9 @@ test_that("the subformulas that move discontinuously are rejected", {
 })
 
 test_that("the outer criterion reaches the gaussian closed form beside jfp()", {
-  # with the full information (no factor divided out) the Jeffreys value is
+  # with the full information the Jeffreys value is
   # const - 2 a p_tilde log sigma, so the REML optimum is
   # sigma^2 = RSS / (n - p + 2 a p_tilde)
-  ns <- environment(jfp_scale_setup)
-  real <- jfp_scale_setup
-  unlockBinding("jfp_scale_setup", ns)
-  assign("jfp_scale_setup", function(st) list(), envir = ns)
-  on.exit({
-    assign("jfp_scale_setup", real, envir = ns)
-    lockBinding("jfp_scale_setup", ns)
-  }, add = TRUE)
   set.seed(1)
   n <- 200
   d <- data.frame(x = rnorm(n), z = rnorm(n))

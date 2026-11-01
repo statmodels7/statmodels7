@@ -370,11 +370,16 @@ jfp_add_pair <- function(acc, pair, coef) {
 jfp_darray <- function(st, k) {
   slot <- paste0("dE", k)
   if (is.null(st[[slot]])) {
+    d <- st$spec@distrib
+    y <- st$spec@response
+    th <- st$ev$theta
     st[[slot]] <- switch(k,
       jfp_dexpected(st),
       jfp_d2expected(st),
-      jfp_scale_apply(st, 3L),
-      jfp_scale_apply(st, 4L))
+      distributions7::distrib_d3expected_hessian(d, y, th, scale = "link",
+                                                 method = st$emethod),
+      distributions7::distrib_d4expected_hessian(d, y, th, scale = "link",
+                                                 method = st$emethod))
   }
   st[[slot]]
 }
