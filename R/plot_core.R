@@ -614,9 +614,9 @@ term_variables <- function(tm, name) {
     return(all.vars(tm@formula))
   }
   # the shape of scs() may be an object named in the call, which is not a
-  # variable of the data; the covariate is the term's own expression
+  # variable of the data; the variables are the covariate and the `by`
   if (S7::S7_inherits(tm, modelterms7::ScsTerm)) {
-    return(all.vars(tm@var))
+    return(unique(c(all.vars(tm@var), all.vars(tm@by))))
   }
   out <- tryCatch(all.vars(str2lang(name)), error = function(e) character(0))
   # the call of nl() also names the term's own parameters; the variables of

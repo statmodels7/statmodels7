@@ -1,3 +1,13 @@
+# statmodels7 0.236.0
+
+* The search over the versions of a term runs in stages where
+  `modelterms7::term_variant_stages()` says the choice has several parts,
+  each stage starting from the version chosen at the stage before. With
+  `modelterms7::scs()` under a factor `by` and a unimodal or sigmoid shape
+  without a location, the location of each level is searched one level at
+  a time (modelterms7 0.124.0, now the minimum version).
+* The graphs of an `scs()` term read its `by` variable.
+
 # statmodels7 0.235.2
 
 * Tests only: fits with `modelterms7::scs()` and a value or a slope at a

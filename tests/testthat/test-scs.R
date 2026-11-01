@@ -85,3 +85,60 @@ test_that("a slope at a point holds in a fitted convex mean", {
   grid <- seq(min(d$x), max(d$x), length.out = 401)
   expect_true(all(diff(diff(mu(grid))) >= -1e-10))
 })
+
+test_that("a factor by fits one monotone curve per level", {
+  set.seed(37)
+  d <- data.frame(x = runif(180), g = gl(3, 60, labels = c("a", "b", "c")))
+  d$y <- c(a = 0, b = 0.5, c = 1)[as.character(d$g)] +
+    ifelse(d$g == "a", 2 * d$x, ifelse(d$g == "b", d$x^2, plogis((d$x - 0.5) / 0.1))) +
+    rnorm(180, sd = 0.12)
+  sm <- basis7::bspline_smooth(k = 7)
+  fit <- statmod(y ~ g + modelterms7::scs(x, modelterms7::shape_increasing(), sm, by = g),
+                 distrib = distributions7::gaussian1_distrib(), data = d)
+  expect_identical(statmod_certificate(fit)$state, "converged")
+  grid <- expand.grid(x = seq(min(d$x), max(d$x), length.out = 201), g = levels(d$g))
+  mu <- predict(fit, what = "mu", newdata = grid)
+  expect_true(all(tapply(mu, grid$g, function(v) min(diff(v))) >= -1e-10))
+  expect_equal(predict(fit, what = "mu", newdata = d), predict(fit, what = "mu"),
+               tolerance = 1e-10)
+})
+
+test_that("a numeric by equal to 2 fits as the smooth without by", {
+  set.seed(38)
+  d <- data.frame(x = runif(120), z = 2)
+  d$y <- exp(2 * d$x) / 3 + rnorm(120, sd = 0.2)
+  sm <- basis7::bspline_smooth(k = 7)
+  g <- distributions7::gaussian1_distrib()
+  fz <- statmod(y ~ 0 + modelterms7::scs(x, modelterms7::shape_increasing(), sm, by = z),
+                distrib = g, data = d)
+  f1 <- statmod(y ~ modelterms7::scs(x, modelterms7::shape_increasing(), sm),
+                distrib = g, data = d)
+  expect_equal(as.numeric(logLik(fz)), as.numeric(logLik(f1)), tolerance = 1e-8)
+  expect_equal(predict(fz, what = "mu"), predict(f1, what = "mu"), tolerance = 1e-8)
+  # the free level enters z f(x) scaled by 2: the REML constant is -log 2
+  expect_equal(fz@criterion - f1@criterion, -log(2), tolerance = 1e-6)
+})
+
+test_that("the modes of a factor by are searched one level at a time", {
+  set.seed(39)
+  d <- data.frame(x = runif(160), g = gl(2, 80, labels = c("a", "b")))
+  d$y <- exp(-((d$x - c(a = 0.3, b = 0.7)[as.character(d$g)]) / 0.2)^2) +
+    rnorm(160, sd = 0.1)
+  sm <- basis7::bspline_smooth(k = 6)
+  fit <- statmod(y ~ g + modelterms7::scs(x, modelterms7::shape_unimodal(), sm, by = g),
+                 distrib = distributions7::gaussian1_distrib(), data = d)
+  va <- fit@history$variants
+  lev <- sub(":.*", "", va$version)
+  expect_identical(unique(lev), c("a", "b"))
+  expect_identical(sum(va$chosen), 1L)
+  expect_identical(va$score[va$chosen], min(va$score))
+  tm <- Filter(function(t) S7::S7_inherits(t, modelterms7::ScsTerm), fit@spec@terms$mu)[[1L]]
+  idx <- tm@spec$index_by
+  expect_identical(names(idx), c("a", "b"))
+  # the chosen version carries the indices of the term that was fitted
+  best <- va$version[va$chosen]
+  expect_identical(idx[[sub(":.*", "", best)]], as.integer(sub(".*M = ", "", best)))
+  mu <- predict(fit, what = "mu", newdata = data.frame(x = seq(0, 1, length.out = 201),
+                                                       g = "b"))
+  expect_gt(seq(0, 1, length.out = 201)[which.max(mu)], 0.5)
+})
