@@ -736,6 +736,9 @@ structural_outer_check <- function(method, design) {
 #'   for the expected information conditional on the past.
 #' @param emethod The `method` of [distributions7::expected_info()], read only
 #'   where `expected` is `TRUE`.
+#' @param refresh `TRUE` (the default) to read the block of a term that
+#'   recomputes it at `coef`; `FALSE` to read the design as passed, as the
+#'   inner joint fit does, whose objective holds the block for a pass.
 #'
 #' @return A square matrix over the coefficients followed by the term's free
 #'   parameters (a level held because an intercept carries it leaves the
@@ -747,11 +750,15 @@ structural_outer_check <- function(method, design) {
 #' @keywords internal
 statmod_full_information <- function(spec, coef,
                                      design = statmod_design(spec),
-                                     expected = FALSE, emethod = NULL) {
+                                     expected = FALSE, emethod = NULL,
+                                     refresh = TRUE) {
   params <- spec@distrib@params
   # the block of a term that recomputes it (nl(), seg()) at the coefficients
-  # asked for, not at those the design was built at
-  design <- statmod_design_at(spec, coef, design)
+  # asked for, not at those the design was built at. The inner joint Newton
+  # reads the design as passed: refreshed there, its matrix no longer
+  # matched the objective of the same pass, and jump() beside gas() with
+  # sigma ~ s(tt) ran for hours where it took 25 s
+  if (refresh) design <- statmod_design_at(spec, coef, design)
   ev <- statmod_eta(spec, design, coef)
   if (!length(ev$filters) && !length(ev$regimes)) {
     return(statmod_information_at(spec, coef, design, expected = expected,
@@ -1829,7 +1836,7 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
     cf <- obj$split(b)
     H <- statmod_full_information(spec, cf, design,
                                   info_expected(information),
-                                  info_emethod(information))
+                                  info_emethod(information), refresh = FALSE)
     P <- matrix(0, nrow(H), ncol(H))
     # as_dense() for the reason statmod_full_information() records: this
     # matrix spans the coefficients AND the term's own parameters, so it is
