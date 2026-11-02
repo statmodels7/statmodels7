@@ -1,4 +1,4 @@
-# statmodels7 (development version)
+# statmodels7 0.240.0
 
 * The outer criterion beside a filter and a term that recomputes its block
   (`nl()`, `seg()`, `jump()`, `jseg()`) reads the block at the coefficients,
@@ -27,6 +27,11 @@
   `"gauss_newton"` is the fit as before. On the nonlinear models of the book
   the three settings reach the same mode; Theoph with two random effects
   126 inner iterations with `"gauss_newton"` and 37 with `"full"`.
+* A model without a `modelterms7::jfp()` block no longer enumerates its
+  penalties for a Jeffreys block at every evaluation of the objective; the
+  specification records once whether it carries one. An `scs()` fit with a
+  factor `by` takes 7.1 s where it took 8.9 s, with identical coefficients.
+* modelterms7 0.129.0 is the minimum version (`nl(curvature =)`).
 
 # statmodels7 0.239.0
 
