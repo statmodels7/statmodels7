@@ -10,7 +10,8 @@ statmod_full_information(
   coef,
   design = statmod_design(spec),
   expected = FALSE,
-  emethod = NULL
+  emethod = NULL,
+  refresh = TRUE
 )
 
 statmod_full_information_impl(
@@ -36,6 +37,10 @@ for the expected information conditional on the past.}
 
 \item{emethod}{The \code{method} of \code{\link[distributions7:expected_info]{distributions7::expected_info()}}, read only
 where \code{expected} is \code{TRUE}.}
+
+\item{refresh}{\code{TRUE} (the default) to read the block of a term that
+recomputes it at \code{coef}; \code{FALSE} to read the design as passed, as the
+inner joint fit does, whose objective holds the block for a pass.}
 
 \item{params, ev}{The parameter names and the evaluated predictors,
 already in hand at the caller.}

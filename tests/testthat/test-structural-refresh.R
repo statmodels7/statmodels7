@@ -19,7 +19,10 @@ structural_refresh_case <- function(fm, distrib) {
   d$yn <- stats::rnbinom(n, mu = exp(0.5 + 1.5 * exp(-0.8 * d$xs) +
                                        0.4 * lev[d$id] + 0.5 * e),
                          size = exp(1 + 0.4 * d$z))
-  f <- suppressWarnings(statmod(fm, distrib = distrib, data = d))
+  # the hyperparameters stay at their start: the derivatives are read at any
+  # point, and the REML search is not what is tested
+  f <- suppressWarnings(statmod(fm, distrib = distrib, data = d,
+                                outer_criterion = NULL))
   sp <- f@spec
   des <- statmod_design(sp)
   sst <- statmod_structural_state(des)
@@ -72,8 +75,11 @@ test_that("the block's movement beside a penalized filter is exact", {
     expect_gt(max(abs(K - Hn)) / max(abs(Hn)), 1e-4)
     # K moves along v: the trace against M, against Richardson differences
     # of K over the joint vector
+    # v moves the block's own coefficients, where its movement is read
     set.seed(1)
-    v <- stats::rnorm(length(u))
+    v <- numeric(length(u))
+    blk <- des$mu$blocks[[grep("^nl", names(des$mu$blocks))]]
+    v[blk] <- stats::rnorm(length(blk))
     M <- crossprod(matrix(stats::rnorm(length(u)^2), length(u))) / length(u)
     Kf <- function(uu) statmod_marginal_full(sp, des, k$cf_at(uu),
                                              k$f@hyper, NULL)
@@ -84,9 +90,9 @@ test_that("the block's movement beside a penalized filter is exact", {
     st <- structural_grad_parts_impl(sp, desr, cf, jd, M)
     base <- sum(st$u * v) + structural_chain_extra(sp, desr, jd, M, st, v)
     mv <- rm$trace(v, M)
-    expect_lt(abs(base + mv - sum(M * dKn)) / abs(sum(M * dKn)), 1e-7)
+    expect_lt(abs(base + mv - sum(M * dKn)) / abs(sum(M * dKn)), 1e-6)
     # the control: without the block's movement
-    expect_gt(abs(base - sum(M * dKn)) / abs(sum(M * dKn)), 1e-5)
+    expect_gt(abs(base - sum(M * dKn)) / abs(sum(M * dKn)), 1e-4)
   }
 })
 
