@@ -120,11 +120,20 @@ jfp_mv_ctx <- function(st, bs, ds) {
       st$units <- refresh_units(st$spec, st$design, st$coef, st$params,
                                 st$npar, st$offs)
     }
-    if (length(st$units)) {
+    driven <- match(st$joint$driven, st$params)
+    if (length(st$units) &&
+        (filt || !all(vapply(st$units, function(u) u$a %in% driven,
+                             logical(1))))) {
       stop("The third derivative of a Jeffreys penalty beside a filter and ",
-           "a term whose block moves is not implemented.", call. = FALSE)
+           "a term whose block moves is implemented only for a block that ",
+           "moves in an equation
+  that the filter drives, with the ",
+           "Jeffreys block outside the filter.", call. = FALSE)
     }
-    cx$units <- lapply(match(st$joint$driven, st$params), function(a)
+    # a block that moves in a driven equation enters through the filter
+    # (jfp_static_rows(), jfp_static_curv())
+    cx$static <- length(st$units) > 0L
+    cx$units <- lapply(driven, function(a)
       list(a = a, ra = seq_len(st$total), filter = TRUE))
     cx$keep <- st$joint$keep
     cx$mf <- st$joint$mf
@@ -570,7 +579,15 @@ jfp_mv_Wk <- function(cx, S, eq = cx$a) {
 jfp_mv_etak <- function(cx, i, S) {
   un <- cx$units[[i]]
   if (isTRUE(un$filter)) {
-    return(jfp_mv_rows(cx, NULL, S)[[un$a]][, cx$keep, drop = FALSE])
+    out <- jfp_mv_rows(cx, NULL, S)[[un$a]]
+    if (isTRUE(cx$static)) {
+      key <- paste0("SR|", paste(S, collapse = ""))
+      if (is.null(cx$memo[[key]])) {
+        cx$memo[[key]] <- jfp_static_rows(cx$st, jfp_mv_full(cx, S))
+      }
+      out <- out + cx$memo[[key]][[un$a]]
+    }
+    return(out[, cx$keep, drop = FALSE])
   }
   key <- paste0("E", i, "|", paste(S, collapse = ""))
   if (is.null(cx$memo[[key]])) {
@@ -595,11 +612,14 @@ jfp_mv_etakk <- function(cx, i, S, g) {
     gg[[un$a]] <- g
     keep <- cx$keep
     G <- if (!length(S)) {
-      cx$st$joint$curv_full(gg, scale = FALSE)[keep, keep, drop = FALSE]
+      cx$st$joint$curv_full(gg, scale = FALSE)
     } else {
-      cx$st$joint$higher(gg, jfp_mv_full(cx, S),
-                         scale = FALSE)$curv[keep, keep, drop = FALSE]
+      cx$st$joint$higher(gg, jfp_mv_full(cx, S), scale = FALSE)$curv
     }
+    if (isTRUE(cx$static)) {
+      G <- G + jfp_static_curv(cx$st, gg, jfp_mv_full(cx, S))
+    }
+    G <- G[keep, keep, drop = FALSE]
     return((G + t(G)) / 2)
   }
   m <- length(un$ra)
@@ -730,4 +750,314 @@ jfp_jac <- function(st, cc) {
   if (st$npar[cc] == 0L) return(NULL)
   list(idx = st$offs[cc] + seq_len(st$npar[cc]),
        X = st$design[[st$params[cc]]]$X)
+}
+
+
+#' A Recomputed Block Beside a Filter in the Jeffreys Derivatives
+#'
+#' @description
+#' Returns the parts of the derivatives of the predictors that come from a
+#' term whose block is recomputed at the coefficients ([modelterms7::nl()],
+#' a smoothed [modelterms7::seg()]) in a model with a filter:
+#' `jfp_static_rows()` the part of
+#' \eqn{\partial^{1+|S|}\eta/\partial u\,\partial S} for one or two
+#' directions, one matrix per equation over every coordinate, and
+#' `jfp_static_curv()` the part of \eqn{\sum_t\sum_c g_{c,t}\,
+#' \partial^{2+|S|}\eta_{c,t}/\partial u^2\partial S} for none, one or two
+#' directions. `jfp_movers()` returns the terms, and `jfp_static_aug()` the
+#' predictors' derivatives with further unknowns whose static rows are
+#' given.
+#'
+#' @details
+#' A filter writes \eqn{\eta = F(s, \psi)} from the static predictors
+#' \eqn{s(u)} of every equation and its own parameters. The kernels of the
+#' filter ([jfp_joint_rows()]) differentiate \eqn{F} with the static rows
+#' \eqn{R = \partial s/\partial u} held at their value, which is the whole
+#' derivative only where \eqn{s} is linear in \eqn{u}. Where a block moves,
+#' the derivatives of \eqn{s} of order two and more are
+#' \eqn{s''[a, b] = \partial R[a]\,b} and so on
+#' ([modelterms7::term_block_deriv()] and its siblings), and the derivative
+#' of \eqn{\eta} along a set of indices is the sum over the partitions of the
+#' set into blocks, a block of one index entering \eqn{F} as a full
+#' direction and a block of \eqn{j \ge 2} indices as the static perturbation
+#' \eqn{s^{(j)}} along them. The kernels return every such term once the
+#' perturbations are placed as further unknowns: a column with the static
+#' rows \eqn{x} and no part in \eqn{\psi} is a direction along which \eqn{F}
+#' moves by \eqn{x} alone, so its entry in the kernels' result is the
+#' derivative of \eqn{F} with \eqn{x} in one argument. A free index that
+#' lies in a block of two or more indices is carried by one such column per
+#' value of the index.
+#'
+#' The partitions written out are those of \eqn{\{k, v\}} and
+#' \eqn{\{k, v, w\}} for the rows, and of \eqn{\{k, l\}},
+#' \eqn{\{k, l, v\}} and \eqn{\{k, l, v, w\}} for the contraction, without
+#' the partition into singletons, which is the kernels' own result. In an
+#' equation that no filter drives \eqn{F} is the identity in that
+#' equation's static predictor, so the unknown's column enters there only
+#' through the contraction of the Jacobian.
+#'
+#' @param st A state, from [jfp_state()], of a model with a filter.
+#' @param dirs A list of directions over every coordinate (the full width of
+#'   the filter's rows).
+#' @param g A named list of per-observation weights, already multiplied by
+#'   the observation weights.
+#' @param cols A list of column blocks, each a list with `name` and `rows`
+#'   (one matrix or `NULL` per distribution parameter).
+#'
+#' @return `jfp_static_rows()` one matrix per distribution parameter over
+#'   every coordinate; `jfp_static_curv()` a square matrix over every
+#'   coordinate; `jfp_movers()` the units of [refresh_units()];
+#'   `jfp_static_aug()` what [jfp_joint_rows()] returns, with `pos` (the
+#'   columns of each block), `oi` (the columns of the original coordinates),
+#'   `pad()` (a direction over the original coordinates placed on the wider
+#'   width) and `unit()` (the direction of one added column).
+#'
+#' @keywords internal
+jfp_movers <- function(st) {
+  if (is.null(st$units)) {
+    st$units <- refresh_units(st$spec, st$design, st$coef, st$params,
+                              st$npar, st$offs)
+  }
+  st$units
+}
+
+#' @rdname jfp_movers
+#' @keywords internal
+jfp_static_aug <- function(st, cols) {
+  n <- st$spec@n_obs
+  np <- length(st$params)
+  pos <- list()
+  ext <- lapply(seq_len(np), function(cc) matrix(0, n, 0L))
+  q <- 0L
+  for (b in cols) {
+    j <- max(vapply(b$rows, function(x) if (is.null(x)) 0L else ncol(x),
+                    integer(1)))
+    for (cc in seq_len(np)) {
+      x <- b$rows[[cc]]
+      ext[[cc]] <- cbind(ext[[cc]], if (is.null(x)) matrix(0, n, j) else x)
+    }
+    pos[[b$name]] <- st$joint$nb + q + seq_len(j)
+    q <- q + j
+  }
+  out <- jfp_joint_rows(st$spec, st$design0, st$coef, st$ev, extra = ext)
+  nb <- st$joint$nb
+  mf <- st$joint$mf
+  oi <- c(seq_len(nb), nb + q + seq_len(mf - nb))
+  out$pos <- pos
+  out$oi <- oi
+  out$pad <- function(d) {
+    x <- numeric(mf + q)
+    x[oi] <- d
+    x
+  }
+  out$unit <- function(j) {
+    x <- numeric(mf + q)
+    x[j] <- 1
+    x
+  }
+  out
+}
+
+#' @rdname jfp_movers
+#' @param name The name of a block of columns.
+#' @param f A function of a unit returning the block's static rows in the
+#'   unit's equation.
+#' @keywords internal
+jfp_static_block <- function(st, name, f) {
+  units <- jfp_movers(st)
+  np <- length(st$params)
+  lapply(seq_along(units), function(i) {
+    un <- units[[i]]
+    rows <- vector("list", np)
+    rows[un$a] <- list(as_dense(f(un)))
+    list(name = paste0(name, i), rows = rows)
+  })
+}
+
+#' @rdname jfp_movers
+#' @keywords internal
+jfp_static_pairs <- function(st, name, f) {
+  units <- jfp_movers(st)
+  np <- length(st$params)
+  lapply(seq_along(units), function(i) {
+    un <- units[[i]]
+    m <- length(un$ra)
+    # column (k - 1) m + l: the static predictor's derivative in the unit's
+    # coordinates k and l, with f's further directions
+    X <- do.call(cbind, lapply(seq_len(m), function(k) {
+      ek <- numeric(m)
+      ek[k] <- 1
+      as_dense(f(un, ek))
+    }))
+    rows <- vector("list", np)
+    rows[un$a] <- list(X)
+    list(name = paste0(name, i), rows = rows)
+  })
+}
+
+#' @rdname jfp_movers
+#' @param v,w Directions over every coordinate.
+#' @keywords internal
+jfp_static_xvw <- function(st, v, w) {
+  n <- st$spec@n_obs
+  rows <- vector("list", length(st$params))
+  for (un in jfp_movers(st)) {
+    x <- as.numeric(as_dense(modelterms7::term_block_deriv(
+      un$built, coef = un$bt, v = v[un$ra])) %*% w[un$ra])
+    rows[[un$a]] <- if (is.null(rows[[un$a]])) matrix(x, n, 1L) else
+      rows[[un$a]] + x
+  }
+  list(name = "xvw", rows = rows)
+}
+
+#' @rdname jfp_movers
+#' @keywords internal
+jfp_static_rows <- function(st, dirs) {
+  units <- jfp_movers(st)
+  np <- length(st$params)
+  n <- st$spec@n_obs
+  mf <- st$joint$mf
+  out <- lapply(seq_len(np), function(cc) matrix(0, n, mf))
+  v <- dirs[[1L]]
+  D1 <- function(d) function(un) modelterms7::term_block_deriv(
+    un$built, coef = un$bt, v = d[un$ra])
+  if (length(dirs) == 1L) {
+    A <- jfp_static_aug(st, jfp_static_block(st, "Dv", D1(v)))
+    for (cc in seq_len(np)) {
+      for (i in seq_along(units)) {
+        ra <- units[[i]]$ra
+        out[[cc]][, ra] <- out[[cc]][, ra] +
+          A$Vfull[[cc]][, A$pos[[paste0("Dv", i)]], drop = FALSE]
+      }
+    }
+    return(out)
+  }
+  w <- dirs[[2L]]
+  A <- jfp_static_aug(st, c(
+    list(jfp_static_xvw(st, v, w)),
+    jfp_static_block(st, "Dv", D1(v)), jfp_static_block(st, "Dw", D1(w)),
+    jfp_static_block(st, "D2", function(un) modelterms7::term_block_deriv2(
+      un$built, coef = un$bt, v = v[un$ra], u = w[un$ra]))))
+  zero <- stats::setNames(lapply(st$params, function(p) numeric(n)),
+                          st$params)
+  # {v, w} as one block; {k, w} with v; {k, v} with w; {k, v, w}
+  rx <- A$higher(zero, list(A$unit(A$pos$xvw)), scale = FALSE)$rows
+  rv <- A$higher(zero, list(A$pad(v)), scale = FALSE)$rows
+  rw <- A$higher(zero, list(A$pad(w)), scale = FALSE)$rows
+  for (cc in seq_len(np)) {
+    out[[cc]] <- out[[cc]] + rx[[cc]][, A$oi, drop = FALSE]
+    for (i in seq_along(units)) {
+      ra <- units[[i]]$ra
+      out[[cc]][, ra] <- out[[cc]][, ra] +
+        rv[[cc]][, A$pos[[paste0("Dw", i)]], drop = FALSE] +
+        rw[[cc]][, A$pos[[paste0("Dv", i)]], drop = FALSE] +
+        A$Vfull[[cc]][, A$pos[[paste0("D2", i)]], drop = FALSE]
+    }
+  }
+  out
+}
+
+#' @rdname jfp_movers
+#' @keywords internal
+jfp_static_curv <- function(st, g, dirs = list()) {
+  units <- jfp_movers(st)
+  np <- length(st$params)
+  n <- st$spec@n_obs
+  mf <- st$joint$mf
+  out <- matrix(0, mf, mf)
+  # the Jacobian's added columns contracted against the weights
+  gjac <- function(A, nm) {
+    s <- 0
+    for (cc in seq_len(np)) {
+      gc <- g[[st$params[cc]]]
+      if (is.null(gc) || !any(gc != 0)) next
+      s <- s + as.numeric(crossprod(rep_len(gc, n),
+                                    A$Vfull[[cc]][, A$pos[[nm]],
+                                                  drop = FALSE]))
+    }
+    s
+  }
+  # a vector over a unit's coordinate pairs, added to its square block
+  addsq <- function(x, i) {
+    ra <- units[[i]]$ra
+    m <- length(ra)
+    X <- matrix(x, m, m, byrow = TRUE)
+    out[ra, ra] <<- out[ra, ra] + (X + t(X)) / 2
+  }
+  D1 <- function(d) function(un) modelterms7::term_block_deriv(
+    un$built, coef = un$bt, v = d[un$ra])
+  Xkl <- function(un, ek) modelterms7::term_block_deriv(un$built,
+                                                         coef = un$bt, v = ek)
+  X3 <- function(d) function(un, ek) modelterms7::term_block_deriv2(
+    un$built, coef = un$bt, v = d[un$ra], u = ek)
+  if (!length(dirs)) {
+    # {k, l}
+    A <- jfp_static_aug(st, jfp_static_pairs(st, "X", Xkl))
+    for (i in seq_along(units)) addsq(gjac(A, paste0("X", i)), i)
+    return((out + t(out)) / 2)
+  }
+  v <- dirs[[1L]]
+  A1 <- matrix(0, mf, mf)
+  if (length(dirs) == 1L) {
+    A <- jfp_static_aug(st, c(jfp_static_block(st, "Dv", D1(v)),
+                              jfp_static_pairs(st, "X", Xkl),
+                              jfp_static_pairs(st, "X3v", X3(v))))
+    cA <- A$curv_full(g, scale = FALSE)
+    pv <- A$pad(v)
+    for (i in seq_along(units)) {
+      ra <- units[[i]]$ra
+      # {k, v} with l, and {l, v} with k by the transpose
+      A1[ra, ] <- A1[ra, ] + cA[A$pos[[paste0("Dv", i)]], A$oi, drop = FALSE]
+      # {k, l} with v, and {k, l, v}
+      addsq(as.numeric(cA[A$pos[[paste0("X", i)]], , drop = FALSE] %*% pv) +
+              gjac(A, paste0("X3v", i)), i)
+    }
+    out <- out + A1 + t(A1)
+    return((out + t(out)) / 2)
+  }
+  w <- dirs[[2L]]
+  X4 <- function(un, ek) modelterms7::term_block_deriv3(
+    un$built, coef = un$bt, v = v[un$ra], u = w[un$ra], s = ek)
+  A <- jfp_static_aug(st, c(
+    list(jfp_static_xvw(st, v, w)),
+    jfp_static_block(st, "Dv", D1(v)), jfp_static_block(st, "Dw", D1(w)),
+    jfp_static_block(st, "D2", function(un) modelterms7::term_block_deriv2(
+      un$built, coef = un$bt, v = v[un$ra], u = w[un$ra])),
+    jfp_static_pairs(st, "X", Xkl), jfp_static_pairs(st, "X3v", X3(v)),
+    jfp_static_pairs(st, "X3w", X3(w)), jfp_static_pairs(st, "X4", X4)))
+  pv <- A$pad(v)
+  pw <- A$pad(w)
+  hx <- A$higher(g, list(A$unit(A$pos$xvw)), scale = FALSE)$curv
+  hv <- A$higher(g, list(pv), scale = FALSE)$curv
+  hw <- A$higher(g, list(pw), scale = FALSE)$curv
+  cA <- A$curv_full(g, scale = FALSE)
+  # {v, w} with k and l apart
+  out <- out + hx[A$oi, A$oi]
+  ra_all <- integer(0)
+  pv_all <- integer(0)
+  pw_all <- integer(0)
+  for (i in seq_along(units)) {
+    ra <- units[[i]]$ra
+    # {k, v} with l and w, {k, w} with l and v, {k, v, w} with l, and the
+    # same with k and l exchanged by the transpose
+    A1[ra, ] <- A1[ra, ] +
+      hw[A$pos[[paste0("Dv", i)]], A$oi, drop = FALSE] +
+      hv[A$pos[[paste0("Dw", i)]], A$oi, drop = FALSE] +
+      cA[A$pos[[paste0("D2", i)]], A$oi, drop = FALSE]
+    ra_all <- c(ra_all, ra)
+    pv_all <- c(pv_all, A$pos[[paste0("Dv", i)]])
+    pw_all <- c(pw_all, A$pos[[paste0("Dw", i)]])
+    # k and l in one block: {k, l} with v and w, {k, l} with {v, w},
+    # {k, l, v} with w, {k, l, w} with v, {k, l, v, w}
+    addsq(as.numeric(hw[A$pos[[paste0("X", i)]], , drop = FALSE] %*% pv) +
+            as.numeric(cA[A$pos[[paste0("X", i)]], A$pos$xvw]) +
+            as.numeric(cA[A$pos[[paste0("X3v", i)]], , drop = FALSE] %*% pw) +
+            as.numeric(cA[A$pos[[paste0("X3w", i)]], , drop = FALSE] %*% pv) +
+            gjac(A, paste0("X4", i)), i)
+  }
+  out <- out + A1 + t(A1)
+  # {k, v} with {l, w}, and {k, w} with {l, v}
+  C <- cA[pv_all, pw_all, drop = FALSE]
+  out[ra_all, ra_all] <- out[ra_all, ra_all] + C + t(C)
+  (out + t(out)) / 2
 }

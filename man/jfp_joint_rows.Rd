@@ -4,7 +4,7 @@
 \alias{jfp_joint_rows}
 \title{The Derivative of Every Predictor Beside a Filter}
 \usage{
-jfp_joint_rows(spec, design, coef, ev)
+jfp_joint_rows(spec, design, coef, ev, extra = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -14,6 +14,10 @@ jfp_joint_rows(spec, design, coef, ev)
 \item{coef}{The coefficients.}
 
 \item{ev}{What \code{\link[=statmod_eta]{statmod_eta()}} returns at \code{coef}.}
+
+\item{extra}{\code{NULL}, or one matrix per distribution parameter with the
+static rows of further unknowns, placed after the coefficients and
+before the filter's parameters; every coordinate is then kept.}
 }
 \value{
 A list with \code{V} (one dense matrix per distribution parameter over

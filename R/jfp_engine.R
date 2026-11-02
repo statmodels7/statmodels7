@@ -202,6 +202,7 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
   st$nb <- sum(npar)
   st$total <- sum(npar)
   st$joint <- NULL
+  st$design0 <- design0
   st$emethod <- emethod
   st$E <- statmod_family_hessian(spec, ev$theta, TRUE, emethod)
   if (length(ev$filters)) {
@@ -247,6 +248,9 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
 #' @param design The design as it arrived, carrying the structural state.
 #' @param coef The coefficients.
 #' @param ev What [statmod_eta()] returns at `coef`.
+#' @param extra `NULL`, or one matrix per distribution parameter with the
+#'   static rows of further unknowns, placed after the coefficients and
+#'   before the filter's parameters; every coordinate is then kept.
 #'
 #' @return A list with `V` (one dense matrix per distribution parameter over
 #'   the kept coordinates) and `Vfull` (the same over every coordinate,
@@ -267,11 +271,23 @@ jfp_state <- function(spec, design, coef, blocks, emethod = NULL) {
 #'   and `nb`, `mf`, `zn` and `term`.
 #'
 #' @keywords internal
-jfp_joint_rows <- function(spec, design, coef, ev) {
+jfp_joint_rows <- function(spec, design, coef, ev, extra = NULL) {
   jd <- joint_design_rows(spec, design, coef)
   params <- spec@distrib@params
   f <- jd$f
   Vs <- jd$V
+  if (!is.null(extra)) {
+    # further unknowns placed before the filter's parameters, whose static
+    # rows are the given columns ([jfp_static_rows()])
+    q <- ncol(extra[[1L]])
+    Vs <- lapply(seq_along(Vs), function(cc) {
+      cbind(Vs[[cc]][, seq_len(jd$nb), drop = FALSE], extra[[cc]],
+            Vs[[cc]][, jd$nb + seq_len(jd$np), drop = FALSE])
+    })
+    jd$nb <- jd$nb + q
+    jd$mf <- jd$mf + q
+    jd$keep <- seq_len(jd$mf)
+  }
   gl <- distributions7::distrib_gradient(spec@distrib, spec@response,
                                          ev$theta, scale = "link",
                                          threads = spec@threads)
@@ -843,12 +859,21 @@ jfp_hessian <- function(st, assemble = TRUE) {
     if ((!is.null(rf) && length(rf)) || !is.null(st$joint)) {
       s <- jfp_first_weights(st, bs, dE)
       D <- matrix(0, st$total, st$total)
-      if (!is.null(rf) && length(rf)) {
+      if (!is.null(rf) && length(rf) && is.null(st$joint)) {
         nb <- st$nb
         D[seq_len(nb), seq_len(nb)] <- -a * mode_curvature(
           spec, st$design, st$coef, params, npar, offs, nb, gl = s)
       }
-      if (!is.null(st$joint)) D <- D + a * st$joint$curv(s)
+      if (!is.null(st$joint)) {
+        D <- D + a * st$joint$curv(s)
+        # beside a filter a moving block's second derivative reaches the
+        # filtered predictors through the filter, not as it stands
+        if (!is.null(rf) && length(rf)) {
+          ws <- lapply(s, function(x) w * rep_len(x, n))
+          keep <- st$joint$keep
+          D <- D + a * jfp_static_curv(st, ws)[keep, keep, drop = FALSE]
+        }
+      }
       refresh <- if (is.null(refresh)) D else refresh + D
     }
 
