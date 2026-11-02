@@ -15,7 +15,7 @@ uncertainty of its own."><meta property="og:image" content="https://statmodels7.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -117,10 +117,11 @@ is rejected.</p></dd>
 </dl><p>Every refit starts at the optimum that the fit found: its coefficients,
 including those that the fit estimated on its criterion, and its
 hyperparameters.
-The bootstrap is rejected for a model with a block that moves with its
-coefficients (<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>,
-<code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>) and for a response that is not
-one number per observation.</p>
+A term whose block moves with its coefficients (<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code>) is refitted as <code><a href="statmod_bootstrap.html">statmod_bootstrap()</a></code> refits it, with
+the restart cycle of <code><a href="boot_refit_breakpoint.html">boot_refit_breakpoint()</a></code>. A response that is not one
+number per observation is rejected.</p>
 <p>Each replica gives the component \((\hat\eta^*_b, C^*_b)\): its
 predictors at the rows predicted and the covariance that the effects set
 aside add, at its own hyperparameters. The interval is the mixture's, which

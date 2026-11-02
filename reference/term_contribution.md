@@ -2,7 +2,10 @@
 
 Evaluates \\X b\\ for the block of a term on `newdata` (or on the
 fitting rows when `newdata` is `NULL`), restricted to the columns
-`cols`, with the standard error \\\sqrt{x_i' V x_i}\\ of each row.
+`cols`, with the standard error \\\sqrt{x_i' V x_i}\\ of each row. For a
+term whose block moves with its coefficients the value is
+[`modelterms7::term_value()`](https://statmodels7.github.io/modelterms7/reference/term_value.html)
+and \\X\\ is the Jacobian that the standard error reads.
 
 ## Usage
 

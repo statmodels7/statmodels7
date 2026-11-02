@@ -9,7 +9,7 @@ replacement and refits the model on them."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,9 +62,9 @@ factor that the draw left out) fails and is replaced.</p>
 <p>The case bootstrap does not depend on the variance specification of the
 model, and its variance converges to the sandwich variance. It breaks the
 groups of a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term, and a fit with one is rejected:
-<code><a href="cluster_resample.html">cluster_resample()</a></code> resamples the groups. A fit with a structural term or
-a block that moves with its coefficients is rejected as well, and a
-<code><a href="cv.html">cv()</a></code> criterion is rejected with <code>refit = "full"</code>.</p>
+<code><a href="cluster_resample.html">cluster_resample()</a></code> resamples the groups. A fit with a structural term is
+rejected as well, and a <code><a href="cv.html">cv()</a></code> criterion is rejected with
+<code>refit = "full"</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -34,15 +34,17 @@ The parametric bootstrap reproduces the variance that the model
 attributes to the estimator. It does not detect a misspecified variance
 function; the scheme of
 [`case_resample()`](https://statmodels7.github.io/statmodels7/reference/case_resample.md)
-does. A fit with a structural term
+does. It is the one scheme available for a fit with a structural term
 ([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
-[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html))
-or a block that moves with its coefficients
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)).
+A block that moves with its coefficients
 ([`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html),
-[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html))
-is rejected.
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
+[`modelterms7::scs()`](https://statmodels7.github.io/modelterms7/reference/scs.html))
+is refitted with the restart cycle of
+[`boot_refit_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/boot_refit_breakpoint.md).
 
 ## See also
 

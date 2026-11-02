@@ -29,8 +29,8 @@ the groups of a
 [`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
 term, and a fit with one is rejected:
 [`cluster_resample()`](https://statmodels7.github.io/statmodels7/reference/cluster_resample.md)
-resamples the groups. A fit with a structural term or a block that moves
-with its coefficients is rejected as well, and a
+resamples the groups. A fit with a structural term is rejected as well,
+and a
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
 criterion is rejected with `refit = "full"`.
 

@@ -94,6 +94,17 @@ the default. Both read \\K^{-1}\\ and not the Bayesian variance of
 which for a coordinate that the marginal criterion estimates holds the
 curvature of that criterion.
 
+A term whose block moves with its coefficients
+([`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
+[`modelterms7::scs()`](https://statmodels7.github.io/modelterms7/reference/scs.html))
+enters through the Jacobian of its contribution at the estimate, which
+is the block that the fit stores, so the hat matrix is the tangent-plane
+leverage of St. Laurent and Cook (1992). A model with a structural term
+([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html))
+and a sharp break-point whose position is not held are rejected.
+
 The matrix \\W_i\\ and the matrix \\K\\ are both read on `information`.
 With
 [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html)
@@ -112,6 +123,10 @@ times the block of one of its copies.
 
 Hoaglin, D. C. and Welsch, R. E. (1978). The hat matrix in regression
 and ANOVA. *The American Statistician*, 32(1), 17–22.
+
+St. Laurent, R. T. and Cook, R. D. (1992). Leverage and superleverage in
+nonlinear regression. *Journal of the American Statistical Association*,
+87, 985–990.
 
 ## See also
 

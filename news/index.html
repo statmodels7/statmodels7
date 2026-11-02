@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,20 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.239.0" id="statmodels7-02390">statmodels7 0.239.0<a class="anchor" aria-label="anchor" href="#statmodels7-02390"></a></h2>
+<ul><li>
+<code><a href="../reference/statmod_leverage.html">statmod_leverage()</a></code> and <code><a href="../reference/pred_bootstrap.html">pred_bootstrap()</a></code> accept a term whose block moves with its coefficients (<code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>, <code>seg()</code>, <code>jump()</code>, <code>jseg()</code>, <code>scs()</code>). The leverage reads the Jacobian at the estimate that the fit stores, the tangent-plane leverage of St. Laurent and Cook (1992), which the HC2 and HC3 sandwiches already read; the bootstrap refits such a term with the restart cycle that <code><a href="../reference/statmod_bootstrap.html">statmod_bootstrap()</a></code> uses. A structural term and a sharp break-point whose position is not held are still rejected.</li>
+<li>
+<code><a href="../reference/plot_influence.html">plot_influence()</a></code> reads the inverse penalized information for such a term, as for any other block, in place of the Bayesian variance.</li>
+<li>The documentation of <code><a href="../reference/parametric_resample.html">parametric_resample()</a></code> and <code><a href="../reference/case_resample.html">case_resample()</a></code> says which models each scheme takes.</li>
+<li>
+<code><a href="https://statmodels7.github.io/modelterms7/reference/scte.html" class="external-link">modelterms7::scte()</a></code>, a tensor product monotone in one or both of its covariates, is fitted in any equation, drawn by default as a surface (<code><a href="../reference/plot_surface.html">plot_surface()</a></code>), and reported as a smooth in <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>.</li>
+<li>The contribution that the graphs of a term read is <code>term_value()</code> for a term whose block moves with its coefficients, with the block in the standard error only; the surface graph read it as the block times the coefficients.</li>
+<li>The outer search starts at the hyperparameters that a term names through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_hyper_start.html" class="external-link">modelterms7::term_hyper_start()</a></code>, where it names any; a held value still takes precedence.</li>
+<li>The surface graph of a term with a numeric <code>by</code> (<code>te()</code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/scte.html" class="external-link">modelterms7::scte()</a></code>) draws the coefficient surface at the <code>by</code> equal to 1, as the effect graphs of <code>s()</code> and <code>scs()</code> do; the graphs of <code>scte()</code> read its <code>by</code> variable.</li>
+<li>modelterms7 0.128.0 is the minimum version (<code>scte()</code>, <code>term_hyper_start()</code>).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.238.1" id="statmodels7-02381">statmodels7 0.238.1<a class="anchor" aria-label="anchor" href="#statmodels7-02381"></a></h2>
 <ul><li>The inner joint fit of a model with a filter reads the design as passed in its Newton matrix, as before 0.238.0; the block of a term that recomputes it is read at the coefficients only by the outer criterion and its derivatives. A <code>jump()</code> beside <code>gas()</code> with <code>sigma ~ s(tt)</code> ran for hours in 0.238.0 and fits in 25 s again.</li>

@@ -15,7 +15,7 @@ effective parameters that observation \(i\) uses."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,6 +127,13 @@ leverage that <code><a href="plot_influence.html">plot_influence()</a></code> co
 \(K^{-1}\) and not the Bayesian variance of <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, which
 for a coordinate that the marginal criterion estimates holds the
 curvature of that criterion.</p>
+<p>A term whose block moves with its coefficients (<code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code>) enters through the Jacobian of
+its contribution at the estimate, which is the block that the fit stores,
+so the hat matrix is the tangent-plane leverage of St. Laurent and Cook
+(1992). A model with a structural term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>) and a sharp break-point whose position is not held
+are rejected.</p>
 <p>The matrix \(W_i\) and the matrix \(K\) are both read on <code>information</code>.
 With <code><a href="https://statmodels7.github.io/distributions7/reference/expected_info.html" class="external-link">distributions7::expected_info()</a></code> the hat matrix is a projection and
 its trace is \(P\) when there is no penalty. With
@@ -142,6 +149,9 @@ one of the row as a unit, \(w_i\) times the block of one of its copies.</p>
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Hoaglin, D. C. and Welsch, R. E. (1978). The hat matrix in regression and
 ANOVA. <em>The American Statistician</em>, 32(1), 17–22.</p>
+<p>St. Laurent, R. T. and Cook, R. D. (1992). Leverage and superleverage in
+nonlinear regression. <em>Journal of the American Statistical Association</em>,
+87, 985–990.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

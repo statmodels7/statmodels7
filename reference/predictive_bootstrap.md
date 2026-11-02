@@ -79,13 +79,17 @@ keeps its estimate. The replica is then refitted in one of two ways:
 
 Every refit starts at the optimum that the fit found: its coefficients,
 including those that the fit estimated on its criterion, and its
-hyperparameters. The bootstrap is rejected for a model with a block that
-moves with its coefficients
+hyperparameters. A term whose block moves with its coefficients
 ([`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html),
-[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html))
-and for a response that is not one number per observation.
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
+[`modelterms7::scs()`](https://statmodels7.github.io/modelterms7/reference/scs.html))
+is refitted as
+[`statmod_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/statmod_bootstrap.md)
+refits it, with the restart cycle of
+[`boot_refit_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/boot_refit_breakpoint.md).
+A response that is not one number per observation is rejected.
 
 Each replica gives the component \\(\hat\eta^\*\_b, C^\*\_b)\\: its
 predictors at the rows predicted and the covariance that the effects set
