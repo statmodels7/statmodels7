@@ -62,7 +62,14 @@ with the fifth derivative of the expected information where the score is
 scaled
 ([`distributions7::distrib_d5expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_d5expected_hessian.html)).
 A filter together with a term whose block is recomputed at the
-coefficients is not covered.
+coefficients is covered where every such term is
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
+or
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
+in an equation that the filter drives and no Jeffreys block lies in the
+filter's subformula; its block's derivatives then reach the filtered
+predictors through the filter
+([`jfp_static_rows()`](https://statmodels7.github.io/statmodels7/reference/jfp_movers.md)).
 
 Where a term recomputes its block at the coefficients,
 `jfp_refresh_ok()` asks that the block be a Jacobian

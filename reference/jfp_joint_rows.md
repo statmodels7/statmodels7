@@ -8,7 +8,7 @@ predictor needs.
 ## Usage
 
 ``` r
-jfp_joint_rows(spec, design, coef, ev)
+jfp_joint_rows(spec, design, coef, ev, extra = NULL)
 ```
 
 ## Arguments
@@ -31,6 +31,12 @@ jfp_joint_rows(spec, design, coef, ev)
   What
   [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
   returns at `coef`.
+
+- extra:
+
+  `NULL`, or one matrix per distribution parameter with the static rows
+  of further unknowns, placed after the coefficients and before the
+  filter's parameters; every coordinate is then kept.
 
 ## Value
 

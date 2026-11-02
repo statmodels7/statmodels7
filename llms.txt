@@ -1870,6 +1870,15 @@ helper functions. Using the package does not require any of it.
   [`jfp_check_outer()`](https://statmodels7.github.io/statmodels7/reference/jfp_live.md)
   : Small Helpers of the Third and Fourth Derivatives
 
+- [`jfp_movers()`](https://statmodels7.github.io/statmodels7/reference/jfp_movers.md)
+  [`jfp_static_aug()`](https://statmodels7.github.io/statmodels7/reference/jfp_movers.md)
+  [`jfp_static_block()`](https://statmodels7.github.io/statmodels7/reference/jfp_movers.md)
+  [`jfp_static_pairs()`](https://statmodels7.github.io/statmodels7/reference/jfp_movers.md)
+  [`jfp_static_xvw()`](https://statmodels7.github.io/statmodels7/reference/jfp_movers.md)
+  [`jfp_static_rows()`](https://statmodels7.github.io/statmodels7/reference/jfp_movers.md)
+  [`jfp_static_curv()`](https://statmodels7.github.io/statmodels7/reference/jfp_movers.md)
+  : A Recomputed Block Beside a Filter in the Jeffreys Derivatives
+
 - [`jfp_mv_ctx()`](https://statmodels7.github.io/statmodels7/reference/jfp_mv_ctx.md)
   [`jfp_mv_white()`](https://statmodels7.github.io/statmodels7/reference/jfp_mv_ctx.md)
   [`jfp_mv_B()`](https://statmodels7.github.io/statmodels7/reference/jfp_mv_ctx.md)
