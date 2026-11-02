@@ -551,7 +551,6 @@ jfp_penalty_move <- function(spec, design, coef, v, w = NULL, M = NULL) {
 jfp_filter_outer_ok <- function(spec, design, order = 1L) {
   su <- attr(design, "structural")
   if (length(su) != 1L) return(FALSE)
-  if (length(attr(design, "refresh"))) return(FALSE)
   if (!structural_penalized(spec, design)) return(FALSE)
   tm <- structural_term_of(spec, design)
   joint <- S7::S7_inherits(tm, modelterms7::GasJoint)
@@ -560,6 +559,17 @@ jfp_filter_outer_ok <- function(spec, design, order = 1L) {
   }
   host <- any(vapply(jfp_blocks(spec, design), function(b)
     identical(b$kind, "filter"), logical(1)))
+  # a term whose block moves: verified for nl() and seg() in an equation
+  # that the filter drives, with the Jeffreys block outside the filter
+  # (jfp_static_rows(), jfp_static_curv())
+  rf <- attr(design, "refresh")
+  if (length(rf)) {
+    if (host || !refresh_order2_ok(design)) return(FALSE)
+    driven <- if (joint) tm@params else su[[1L]]$param
+    if (!all(vapply(rf, function(r) r$param %in% driven, logical(1)))) {
+      return(FALSE)
+    }
+  }
   if (!order_available(spec@distrib, 3L + order + host)) return(FALSE)
   TRUE
 }
@@ -587,7 +597,11 @@ jfp_filter_outer_ok <- function(spec, design, order = 1L) {
 #' the Hessian through [modelterms7::term_fifth()], with the fifth derivative
 #' of the expected information where the score is scaled
 #' ([distributions7::distrib_d5expected_hessian()]). A filter together with a
-#' term whose block is recomputed at the coefficients is not covered.
+#' term whose block is recomputed at the coefficients is covered where every
+#' such term is [modelterms7::nl()] or [modelterms7::seg()] in an equation
+#' that the filter drives and no Jeffreys block lies in the filter's
+#' subformula; its block's derivatives then reach the filtered predictors
+#' through the filter ([jfp_static_rows()]).
 #'
 #' Where a term recomputes its block at the coefficients, `jfp_refresh_ok()`
 #' asks that the block be a Jacobian ([modelterms7::term_jacobian_block()])

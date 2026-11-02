@@ -5,6 +5,12 @@
   every term whose block moves has its own `term_block_deriv3()`; elsewhere
   it differences the exact gradient. The base method's zeros were read
   instead (Poisson `scs()` + `jfp(~ z)`, 5.5e-4 relative).
+* The outer criterion of a model with a Jeffreys block outside a filter,
+  beside an `nl()` or `seg()` term in an equation that the filter drives
+  (`y ~ nl(...) + gas(...) | theta ~ jfp(~ z)`), has an exact gradient and
+  Hessian: the block's derivatives reach the filtered predictors through
+  the filter in the third and fourth derivatives of the penalty. The search
+  differenced the criterion before.
 * Beside a filter and a term whose block moves in an equation that the
   filter drives, the Hessian of a Jeffreys penalty carries the block's
   second derivative through the filter; it read it as it stands.

@@ -47,7 +47,11 @@ in the subformula of a filter's parameter reads one order more again,
 the Hessian through \code{\link[modelterms7:term_fifth]{modelterms7::term_fifth()}}, with the fifth derivative
 of the expected information where the score is scaled
 (\code{\link[distributions7:distrib_d5expected_hessian]{distributions7::distrib_d5expected_hessian()}}). A filter together with a
-term whose block is recomputed at the coefficients is not covered.
+term whose block is recomputed at the coefficients is covered where every
+such term is \code{\link[modelterms7:nl]{modelterms7::nl()}} or \code{\link[modelterms7:seg]{modelterms7::seg()}} in an equation
+that the filter drives and no Jeffreys block lies in the filter's
+subformula; its block's derivatives then reach the filtered predictors
+through the filter (\code{\link[=jfp_static_rows]{jfp_static_rows()}}).
 
 Where a term recomputes its block at the coefficients, \code{jfp_refresh_ok()}
 asks that the block be a Jacobian (\code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}})
