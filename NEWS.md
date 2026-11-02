@@ -1,4 +1,4 @@
-# statmodels7 (development version)
+# statmodels7 0.241.0
 
 * On the observed route the outer Hessian of a model with a
   `modelterms7::jfp()` block reads the block's fourth derivative only where
