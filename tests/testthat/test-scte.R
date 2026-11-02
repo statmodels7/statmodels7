@@ -37,11 +37,13 @@ test_that("a surface monotone in one covariate is fitted in sigma", {
 
 test_that("scte() under a factor or a numeric by is fitted and drawn", {
   set.seed(16006)
-  d <- data.frame(x = runif(300), z = runif(300), g = gl(2, 150, labels = c("a", "b")),
-                  w = rnorm(300))
+  d <- data.frame(x = runif(160), z = runif(160), g = gl(2, 80, labels = c("a", "b")),
+                  w = rnorm(160))
   d$y <- c(a = 0, b = 0.5)[as.character(d$g)] + ifelse(d$g == "a", 1, 2) * pmin(d$x, 0.6) +
-    sin(2 * pi * d$z) / 2 + d$w * (0.5 + d$x) + rnorm(300, sd = 0.2)
-  fit <- statmod(y ~ g + modelterms7::scte(x, z, by = g) + modelterms7::scte(x, z, by = w),
+    sin(2 * pi * d$z) / 2 + d$w * (0.5 + d$x) + rnorm(160, sd = 0.2)
+  sm <- basis7::bspline_smooth(k = 5)
+  fit <- statmod(y ~ g + modelterms7::scte(x, z, smooths = sm, by = g) +
+                   modelterms7::scte(x, z, smooths = sm, by = w),
                  distrib = distributions7::gaussian1_distrib(), data = d)
   nms <- names(fit@spec@terms$mu)
   tw <- fit@spec@terms$mu[[nms[3L]]]

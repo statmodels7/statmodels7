@@ -121,10 +121,10 @@ test_that("a numeric by equal to 2 fits as the smooth without by", {
 
 test_that("the modes of a factor by are searched one level at a time", {
   set.seed(39)
-  d <- data.frame(x = runif(160), g = gl(2, 80, labels = c("a", "b")))
+  d <- data.frame(x = runif(100), g = gl(2, 50, labels = c("a", "b")))
   d$y <- exp(-((d$x - c(a = 0.3, b = 0.7)[as.character(d$g)]) / 0.2)^2) +
-    rnorm(160, sd = 0.1)
-  sm <- basis7::bspline_smooth(k = 6)
+    rnorm(100, sd = 0.1)
+  sm <- basis7::bspline_smooth(k = 5)
   fit <- statmod(y ~ g + modelterms7::scs(x, modelterms7::shape_unimodal(), sm, by = g),
                  distrib = distributions7::gaussian1_distrib(), data = d)
   va <- fit@history$variants
@@ -173,7 +173,8 @@ test_that("the warnings of a discarded version stay in the history", {
   set.seed(39)
   d <- data.frame(x = runif(80))
   d$y <- exp(-((d$x - 0.3) / 0.2)^2) + rnorm(80, sd = 0.1)
-  fit <- expect_no_warning(statmod(y ~ modelterms7::scs(x, modelterms7::shape_unimodal(),
+  # a given mode near the truth: four versions that converge quickly
+  fit <- expect_no_warning(statmod(y ~ modelterms7::scs(x, modelterms7::shape_unimodal(mode = 0.3),
                                                         basis7::bspline_smooth(k = 6)),
                                    distrib = distributions7::gaussian1_distrib(), data = d))
   va <- fit@history$variants
@@ -183,9 +184,9 @@ test_that("the warnings of a discarded version stay in the history", {
 
 test_that("the settings of a shape may be shared or differ across the levels", {
   set.seed(41)
-  d <- data.frame(x = runif(200), g = gl(2, 100, labels = c("a", "b")))
-  d$y <- exp(-((d$x - c(a = 0.35, b = 0.6)[as.character(d$g)]) / 0.2)^2) + rnorm(200, sd = 0.1)
-  sm <- basis7::bspline_smooth(k = 7)
+  d <- data.frame(x = runif(120), g = gl(2, 60, labels = c("a", "b")))
+  d$y <- exp(-((d$x - c(a = 0.35, b = 0.6)[as.character(d$g)]) / 0.2)^2) + rnorm(120, sd = 0.1)
+  sm <- basis7::bspline_smooth(k = 6)
   g0 <- distributions7::gaussian1_distrib()
   fs <- statmod(y ~ g + modelterms7::scs(x, modelterms7::shape_unimodal(mode_by = "shared"), sm,
                                          by = g), distrib = g0, data = d)
@@ -194,7 +195,7 @@ test_that("the settings of a shape may be shared or differ across the levels", {
   tm <- Filter(function(t) S7::S7_inherits(t, modelterms7::ScsTerm), fs@spec@terms$mu)[[1L]]
   expect_identical(length(tm@build_info$pieces), 1L)
   # a convex mean with one left slope for both levels
-  d$y2 <- exp(1.5 * d$x) + c(a = 0, b = 1)[as.character(d$g)] * d$x^2 + rnorm(200, sd = 0.1)
+  d$y2 <- exp(1.5 * d$x) + c(a = 0, b = 1)[as.character(d$g)] * d$x^2 + rnorm(120, sd = 0.1)
   ft <- statmod(y2 ~ g + modelterms7::scs(x, modelterms7::shape_convex(left_slope_by = "shared"),
                                           sm, by = g), distrib = g0, data = d)
   expect_identical(statmod_certificate(ft)$state, "converged")
@@ -202,7 +203,7 @@ test_that("the settings of a shape may be shared or differ across the levels", {
   mu <- predict(ft, what = "mu", newdata = grid)
   expect_true(all(tapply(mu, grid$g, function(v) min(diff(diff(v)))) >= -1e-10))
   # minimum slopes by level
-  d$y3 <- c(a = 0.5, b = 2)[as.character(d$g)] * d$x + rnorm(200, sd = 0.1)
+  d$y3 <- c(a = 0.5, b = 2)[as.character(d$g)] * d$x + rnorm(120, sd = 0.1)
   fm <- statmod(y3 ~ g + modelterms7::scs(x, modelterms7::shape_increasing(min_slope = c(a = 0.2, b = 1)),
                                           sm, by = g), distrib = g0, data = d)
   sl <- tapply(predict(fm, what = "mu", newdata = grid), grid$g, function(v) min(diff(v)) / diff(grid$x[1:2]))

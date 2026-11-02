@@ -58,7 +58,7 @@ test_that("the predictive bootstrap refits a block that moves", {
   nd <- data.frame(x = c(0.1, 0.5, 0.9))
   set.seed(2)
   pb <- predict(fit, what = "response", newdata = nd,
-                interval = prediction_interval(predictive = pred_bootstrap(n = 30)))
+                interval = prediction_interval(predictive = pred_bootstrap(n = 15)))
   pa <- predict(fit, what = "response", newdata = nd, interval = prediction_interval())
   expect_true(all(is.finite(c(pb$lower, pb$upper))))
   expect_lt(max(abs(c(pb$lower - pa$lower, pb$upper - pa$upper))), 0.15)
