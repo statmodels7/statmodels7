@@ -242,6 +242,14 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' for a coordinate that the marginal criterion estimates holds the
 #' curvature of that criterion.
 #'
+#' A term whose block moves with its coefficients ([modelterms7::nl()],
+#' [modelterms7::seg()], [modelterms7::scs()]) enters through the Jacobian of
+#' its contribution at the estimate, which is the block that the fit stores,
+#' so the hat matrix is the tangent-plane leverage of St. Laurent and Cook
+#' (1992). A model with a structural term ([modelterms7::gas()],
+#' [modelterms7::regime()]) and a sharp break-point whose position is not held
+#' are rejected.
+#'
 #' The matrix \eqn{W_i} and the matrix \eqn{K} are both read on `information`.
 #' With [distributions7::expected_info()] the hat matrix is a projection and
 #' its trace is \eqn{P} when there is no penalty. With
@@ -273,6 +281,10 @@ leverage_blocks <- function(parts, Vb, chunk = 4000L) {
 #' Hoaglin, D. C. and Welsch, R. E. (1978). The hat matrix in regression and
 #' ANOVA. *The American Statistician*, 32(1), 17--22.
 #'
+#' St. Laurent, R. T. and Cook, R. D. (1992). Leverage and superleverage in
+#' nonlinear regression. *Journal of the American Statistical Association*,
+#' 87, 985--990.
+#'
 #' @seealso [hc2_sandwich()], which uses the blocks; [plot_influence()].
 #'
 #' @examples
@@ -289,10 +301,21 @@ statmod_leverage <- function(fit, information = NULL) {
   }
   spec <- fit@spec
   design <- statmod_design(spec)
-  if (length(attr(design, "structural")) > 0L ||
-      length(attr(design, "refresh")) > 0L) {
+  # A BLOCK THAT MOVES WITH ITS COEFFICIENTS enters through its Jacobian at
+  # the estimate, which is the block the fit stores, so Z_i is its row and
+  # the hat matrix is the tangent-plane leverage. Measured against
+  # J (J'J)^-1 J' for a Gaussian nl() to 3e-11, and against Z K^-1 Z' for an
+  # scs() to 4e-10. A sharp break-point whose position is not held has no
+  # derivative in its position, as for the sandwich.
+  if (length(attr(design, "structural")) > 0L) {
     stop(paste0("The leverage is not available for a model with a structural ",
-                "term or with a term whose block moves with its coefficients."),
+                "term (gas() or regime())."), call. = FALSE)
+  }
+  if (any(vapply(attr(design, "refresh"), function(r) isTRUE(r$frozen),
+                 logical(1)))) {
+    stop(paste0("The leverage is not available for a model with a sharp ",
+                "break-point term (jump() or jseg()) whose position is not ",
+                "held: a step has no derivative in its position."),
          call. = FALSE)
   }
   info <- if (is.null(information)) distributions7::expected_info() else

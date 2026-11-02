@@ -2231,7 +2231,8 @@ term_block_kind <- function(term) {
   if (!length(ent) && !length(term_tags_deep(term))) return("parametric")
   if (S7::S7_inherits(term, modelterms7::RandomTerm)) return("random")
   if (S7::S7_inherits(term, modelterms7::SmoothTerm) ||
-      S7::S7_inherits(term, modelterms7::ScsTerm)) return("smooth")
+      S7::S7_inherits(term, modelterms7::ScsTerm) ||
+      S7::S7_inherits(term, modelterms7::ScteTerm)) return("smooth")
   if (any(vapply(ent, function(e) penalty_has_kink(e$penalty), logical(1)))) {
     return("selection")
   }

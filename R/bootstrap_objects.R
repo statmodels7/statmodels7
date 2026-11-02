@@ -132,10 +132,12 @@ ClusterResample <- S7::new_class("ClusterResample", parent = resample_method,
 #'
 #' The parametric bootstrap reproduces the variance that the model attributes
 #' to the estimator. It does not detect a misspecified variance function; the
-#' scheme of [case_resample()] does. A fit with a structural term
-#' ([modelterms7::gas()], [modelterms7::regime()]) or a block that moves with
-#' its coefficients ([modelterms7::seg()], [modelterms7::jump()],
-#' [modelterms7::jseg()], [modelterms7::nl()]) is rejected.
+#' scheme of [case_resample()] does. It is the one scheme available for a fit
+#' with a structural term ([modelterms7::gas()], [modelterms7::regime()]). A
+#' block that moves with its coefficients ([modelterms7::seg()],
+#' [modelterms7::jump()], [modelterms7::jseg()], [modelterms7::nl()],
+#' [modelterms7::scs()]) is refitted with the restart cycle of
+#' [boot_refit_breakpoint()].
 #'
 #' @return A `ParametricResample` object, inheriting from [resample_method].
 #'
@@ -168,9 +170,9 @@ parametric_resample <- function() ParametricResample(name = "parametric")
 #' The case bootstrap does not depend on the variance specification of the
 #' model, and its variance converges to the sandwich variance. It breaks the
 #' groups of a [modelterms7::random()] term, and a fit with one is rejected:
-#' [cluster_resample()] resamples the groups. A fit with a structural term or
-#' a block that moves with its coefficients is rejected as well, and a
-#' [cv()] criterion is rejected with `refit = "full"`.
+#' [cluster_resample()] resamples the groups. A fit with a structural term is
+#' rejected as well, and a [cv()] criterion is rejected with
+#' `refit = "full"`.
 #'
 #' @return A `CaseResample` object, inheriting from [resample_method].
 #'

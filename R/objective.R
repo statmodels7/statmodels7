@@ -1115,6 +1115,12 @@ statmod_hyper_start <- function(spec, design = NULL) {
   held_by_id <- statmod_held_ids(units)
   for (u in units) {
     th <- penalty_theta_start(u$penalty)
+    # a term may name where the search starts (modelterms7::term_hyper_start(),
+    # the starting smoothing parameter of a version of scs()); a held value
+    # below still takes precedence
+    ts <- tryCatch(modelterms7::term_hyper_start(spec@terms[[u$param]][[u$term]]),
+                   error = function(e) NULL)
+    for (h in intersect(names(ts), names(th))) th[[h]] <- as.numeric(ts[[h]])
     # A HELD value is not a start, it is the answer: the term said so, and
     # nothing below estimates it away. A hyperparameter the term did not
     # name keeps the probe value, which is a placeholder until a criterion

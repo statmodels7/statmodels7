@@ -31,7 +31,7 @@ test_that("a unimodal scs() with a mode is fitted from its two starts", {
   d <- uni_data()
   fit <- statmod(y ~ modelterms7::scs(x, modelterms7::shape_unimodal(mode = 0.4)),
                  distrib = distributions7::gaussian1_distrib(), data = d)
-  expect_identical(fit@history$variants$version, c("start: sides", "start: spline"))
+  expect_identical(fit@history$variants$version, c("start: sides", "start: spline", "start: sides, lambda 0.01", "start: spline, lambda 0.01"))
   mu <- predict(fit, what = "mu", newdata = data.frame(x = seq(0.02, 0.98, length.out = 301)))
   expect_lt(abs(seq(0.02, 0.98, length.out = 301)[which.max(mu)] - 0.4), 0.15)
 })
@@ -45,4 +45,16 @@ test_that("variant_score() makes every criterion a minimum", {
   f2 <- statmod(y ~ x, distrib = distributions7::gaussian1_distrib(), data = d,
                 outer_criterion = NULL)
   expect_identical(variant_score(f2), f2@objective)
+})
+
+test_that("a version's starting smoothing parameter reaches the outer search", {
+  d <- uni_data()
+  v <- modelterms7::scs(x, modelterms7::shape_unimodal(index = 4L))
+  v@spec$lambda_start <- 0.01
+  v@spec$start_rule <- "sides"
+  spec <- statmod_spec(y ~ modelterms7::scs(x, modelterms7::shape_unimodal(index = 4L)),
+                       distrib = distributions7::gaussian1_distrib(), data = d)
+  spec@terms$mu[[2L]] <- modelterms7::term_build(v, d)
+  h <- statmod_hyper_start(spec)
+  expect_equal(unlist(h$mu)[[1L]], 0.01)
 })

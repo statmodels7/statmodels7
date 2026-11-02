@@ -36,10 +36,11 @@ NULL
 #' Every refit starts at the optimum that the fit found: its coefficients,
 #' including those that the fit estimated on its criterion, and its
 #' hyperparameters.
-#' The bootstrap is rejected for a model with a block that moves with its
-#' coefficients ([modelterms7::seg()], [modelterms7::jump()],
-#' [modelterms7::jseg()], [modelterms7::nl()]) and for a response that is not
-#' one number per observation.
+#' A term whose block moves with its coefficients ([modelterms7::seg()],
+#' [modelterms7::jump()], [modelterms7::jseg()], [modelterms7::nl()],
+#' [modelterms7::scs()]) is refitted as [statmod_bootstrap()] refits it, with
+#' the restart cycle of [boot_refit_breakpoint()]. A response that is not one
+#' number per observation is rejected.
 #'
 #' Each replica gives the component \eqn{(\hat\eta^*_b, C^*_b)}: its
 #' predictors at the rows predicted and the covariance that the effects set
@@ -80,14 +81,6 @@ NULL
 predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
   spec0 <- object@spec
   design0 <- statmod_design(spec0)
-  if (length(attr(design0, "refresh"))) {
-    stop(paste0("pred_bootstrap() is not available for a term ",
-                "whose block moves with\n  its coefficients (seg(), jump(), ",
-                "jseg(), nl()): a replica would refit\n  its break-points ",
-                "or its nonlinear parameters from where the fit left them,\n",
-                "  which is a different estimator. pred_averaged() ",
-                "is available."), call. = FALSE)
-  }
   y0 <- spec0@response
   if (!is.numeric(y0) || !is.null(dim(y0)) ||
       length(y0) != spec0@n_obs) {

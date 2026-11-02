@@ -1212,7 +1212,9 @@ influence_deltas <- function(fit, param, information = NULL, adjust = TRUE) {
   vt <- bayesian_vcov(information = information)
   V <- vcov(fit, vcov_type = vt, readable = FALSE)
   design <- statmod_design(spec)
-  if (!length(attr(design, "structural")) && !length(attr(design, "refresh"))) {
+  # a block that moves with its coefficients stores its Jacobian at the
+  # estimate, so K is read for it as for any other block
+  if (!length(attr(design, "structural"))) {
     # K^-1 itself, as statmod_leverage() reads it: the Bayesian variance holds
     # the curvature of the marginal criterion for a coordinate that criterion
     # estimates (a Gaussian scale under REML), which is not the projection
