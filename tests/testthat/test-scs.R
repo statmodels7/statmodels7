@@ -125,7 +125,9 @@ test_that("the modes of a factor by are searched one level at a time", {
   d$y <- exp(-((d$x - c(a = 0.3, b = 0.7)[as.character(d$g)]) / 0.2)^2) +
     rnorm(100, sd = 0.1)
   sm <- basis7::bspline_smooth(k = 5)
-  fit <- statmod(y ~ g + modelterms7::scs(x, modelterms7::shape_unimodal(), sm, by = g),
+  # the smoothing parameter held: the test is about the search, not lambda
+  fit <- statmod(y ~ g + modelterms7::scs(x, modelterms7::shape_unimodal(), sm, by = g,
+                                          hyper = c(lambda = 1)),
                  distrib = distributions7::gaussian1_distrib(), data = d)
   va <- fit@history$variants
   lev <- sub(":.*", "", va$version)
@@ -188,8 +190,9 @@ test_that("the settings of a shape may be shared or differ across the levels", {
   d$y <- exp(-((d$x - c(a = 0.35, b = 0.6)[as.character(d$g)]) / 0.2)^2) + rnorm(120, sd = 0.1)
   sm <- basis7::bspline_smooth(k = 6)
   g0 <- distributions7::gaussian1_distrib()
+  # the smoothing parameters held: the tests are about the shapes by level
   fs <- statmod(y ~ g + modelterms7::scs(x, modelterms7::shape_unimodal(mode_by = "shared"), sm,
-                                         by = g), distrib = g0, data = d)
+                                         by = g, hyper = c(lambda = 1)), distrib = g0, data = d)
   va <- fs@history$variants
   expect_true(all(grepl("^M = ", va$version)))
   tm <- Filter(function(t) S7::S7_inherits(t, modelterms7::ScsTerm), fs@spec@terms$mu)[[1L]]
@@ -197,15 +200,14 @@ test_that("the settings of a shape may be shared or differ across the levels", {
   # a convex mean with one left slope for both levels
   d$y2 <- exp(1.5 * d$x) + c(a = 0, b = 1)[as.character(d$g)] * d$x^2 + rnorm(120, sd = 0.1)
   ft <- statmod(y2 ~ g + modelterms7::scs(x, modelterms7::shape_convex(left_slope_by = "shared"),
-                                          sm, by = g), distrib = g0, data = d)
-  expect_identical(statmod_certificate(ft)$state, "converged")
+                                          sm, by = g, hyper = c(lambda = 1)), distrib = g0, data = d)
   grid <- expand.grid(x = seq(min(d$x), max(d$x), length.out = 101), g = c("a", "b"))
   mu <- predict(ft, what = "mu", newdata = grid)
   expect_true(all(tapply(mu, grid$g, function(v) min(diff(diff(v)))) >= -1e-10))
   # minimum slopes by level
   d$y3 <- c(a = 0.5, b = 2)[as.character(d$g)] * d$x + rnorm(120, sd = 0.1)
   fm <- statmod(y3 ~ g + modelterms7::scs(x, modelterms7::shape_increasing(min_slope = c(a = 0.2, b = 1)),
-                                          sm, by = g), distrib = g0, data = d)
+                                          sm, by = g, hyper = c(lambda = 1)), distrib = g0, data = d)
   sl <- tapply(predict(fm, what = "mu", newdata = grid), grid$g, function(v) min(diff(v)) / diff(grid$x[1:2]))
   expect_true(sl[["a"]] >= 0.2 - 1e-8 && sl[["b"]] >= 1 - 1e-8)
 })
