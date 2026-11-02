@@ -504,6 +504,9 @@ assemble_blocks <- function(blocks, sparse) {
 #' @param cores The number of separate R processes for the independent fits of
 #'   a cross-validation and of a kinked path's product grid, a single integer.
 #'   It is distinct from `threads`, the number of threads inside one process.
+#' @param jeffreys Whether a term of an equation, or a sub-term of one of its
+#'   subformulas, carries a [modelterms7::JeffreysPenalty()], a single logical;
+#'   `NA`, the default, where it has not been read from `terms`.
 #'
 #' @return An object of class `StatmodSpec` with one property per argument
 #'   above and the properties described next. `linpar` holds the options of
@@ -514,7 +517,8 @@ assemble_blocks <- function(blocks, sparse) {
 #'   set them. `held_coef` holds coefficients held at a value, by name, empty
 #'   by default. `held_hyper` holds hyperparameters at a value, by term and
 #'   name, empty by default. `threads` and `cores` hold the thread and process counts
-#'   that [statmod()] sets.
+#'   that [statmod()] sets. `jeffreys` is set by [statmod_spec()] and read by
+#'   [spec_jeffreys()].
 #'
 #' @seealso [statmod_spec()], the constructor to use,
 #'   [statmod_design()] for what is assembled from one.
@@ -577,7 +581,12 @@ StatmodSpec <- S7::new_class("StatmodSpec",
     # folds. A fold's own spec is built fresh and takes the defaults, which
     # is what keeps the two levels from nesting: a fit inside a separate
     # process is sequential by construction.
-    cores = S7::new_property(S7::class_integer, default = 1L)
+    cores = S7::new_property(S7::class_integer, default = 1L),
+    # whether any term or subformula carries a Jeffreys penalty, read once
+    # from the terms when the specification is built: the objective asks at
+    # every evaluation, and a refresh or a rebuild replaces a term by one
+    # with the same penalties, so the answer does not change with them
+    jeffreys = S7::new_property(S7::class_logical, default = NA)
   )
 )
 
@@ -863,7 +872,8 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
     equations = stripped, terms = terms_by_param,
     response = response, n_obs = as.integer(n),
     weights = weights, offsets = offsets, intercepts = intercepts,
-    newdata = NULL, linpar = linpar
+    newdata = NULL, linpar = linpar,
+    jeffreys = jfp_in_terms(terms_by_param)
   )
   static_filter_starts(spec, split, data, weights_arg, offsets_arg,
                        distrib_arg, env, linpar)

@@ -21,7 +21,8 @@ StatmodSpec(
   held_coef = list(),
   held_hyper = list(),
   threads = 1L,
-  cores = 1L
+  cores = 1L,
+  jeffreys = NA
 )
 }
 \arguments{
@@ -70,6 +71,10 @@ default.}
 \item{cores}{The number of separate R processes for the independent fits of
 a cross-validation and of a kinked path's product grid, a single integer.
 It is distinct from \code{threads}, the number of threads inside one process.}
+
+\item{jeffreys}{Whether a term of an equation, or a sub-term of one of its
+subformulas, carries a \code{\link[modelterms7:JeffreysPenalty]{modelterms7::JeffreysPenalty()}}, a single logical;
+\code{NA}, the default, where it has not been read from \code{terms}.}
 }
 \value{
 An object of class \code{StatmodSpec} with one property per argument
@@ -81,7 +86,8 @@ that a respecification reads, \code{NULL} until \code{\link[=statmod_respec]{sta
 set them. \code{held_coef} holds coefficients held at a value, by name, empty
 by default. \code{held_hyper} holds hyperparameters at a value, by term and
 name, empty by default. \code{threads} and \code{cores} hold the thread and process counts
-that \code{\link[=statmod]{statmod()}} sets.
+that \code{\link[=statmod]{statmod()}} sets. \code{jeffreys} is set by \code{\link[=statmod_spec]{statmod_spec()}} and read by
+\code{\link[=spec_jeffreys]{spec_jeffreys()}}.
 }
 \description{
 The specification holds everything that the formula, the data and the

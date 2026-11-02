@@ -560,3 +560,26 @@ test_that("a jfp block keeps its parameter on the outer criterion", {
   f <- statmod(y ~ x | sigma ~ jfp(~ w), distrib = G, data = d)
   expect_identical(statmod_certificate(f)$state, "converged")
 })
+
+test_that("a model without jfp() does not enumerate the penalized units", {
+  set.seed(4)
+  d <- data.frame(x = stats::runif(40, 0.2, 3), g = stats::rnorm(40),
+                  z = stats::rbinom(40, 1, 0.4))
+  d$y <- stats::rpois(40, exp(1 - 0.4 * d$x + 0.3 * d$g))
+  P <- distributions7::poisson_distrib()
+  s0 <- statmod_spec(y ~ s(x) + g, P, d)
+  expect_false(s0@jeffreys)
+  expect_true(statmod_spec(y ~ s(x) + jfp(~ g), P, d)@jeffreys)
+  # in the subformula of a term, through term_penalties()
+  s2 <- statmod_spec(y ~ 0 + nl(~ exp(a - r * x), a ~ 1 + jfp(~ g)), P, d)
+  expect_true(s2@jeffreys)
+  # where the property was not set the terms are read
+  expect_true(spec_jeffreys(S7::set_props(s2, jeffreys = NA)))
+  expect_false(spec_jeffreys(S7::set_props(s0, jeffreys = NA)))
+  # with the property FALSE the Jeffreys state is NULL without enumerating
+  local_mocked_bindings(statmod_penalized = function(...) stop("enumerated"))
+  ds <- statmod_design(s0)
+  expect_null(jfp_state_at(s0, ds, list(mu = rep(0, ds$mu$npar))))
+  expect_identical(jfp_blocks(s0, ds), list())
+  expect_error(jfp_blocks(s2, statmod_design(s2)), "enumerated")
+})

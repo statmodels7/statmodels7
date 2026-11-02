@@ -259,6 +259,7 @@ jfp_filter_unit <- function(u, spec) {
 #'
 #' @keywords internal
 jfp_blocks <- function(spec, design, keys = NULL) {
+  if (!spec_jeffreys(spec)) return(list())
   out <- list()
   for (u in statmod_penalized(spec, design)) {
     if (!isTRUE(u$jeffreys)) next
@@ -271,6 +272,50 @@ jfp_blocks <- function(spec, design, keys = NULL) {
     }
   }
   out
+}
+
+
+#' Whether a Model Carries a Jeffreys Penalty
+#'
+#' @description
+#' `jfp_in_terms()` returns whether a term of an equation, or a sub-term of
+#' one of its subformulas, carries a [modelterms7::JeffreysPenalty()], read
+#' from [modelterms7::term_penalties()]. `spec_jeffreys()` returns the
+#' property `jeffreys` of the specification, which [statmod_spec()] sets with
+#' `jfp_in_terms()`, and reads the terms where the property is `NA`.
+#'
+#' @details
+#' The answer depends on which penalties the terms declare and not on their
+#' coefficients, so a refresh, which replaces a term by the same term at
+#' other coefficients, leaves it valid. [jfp_blocks()] reads it before
+#' enumerating the penalized units, which the objective would otherwise do at
+#' every evaluation on a design that keeps no memo of them.
+#'
+#' @param terms A named list with one entry per parameter, each a named list
+#'   of built terms.
+#' @param spec A [StatmodSpec()].
+#'
+#' @return A single logical.
+#'
+#' @keywords internal
+jfp_in_terms <- function(terms) {
+  for (tp in terms) {
+    for (tm in tp) {
+      for (e in modelterms7::term_penalties(tm)) {
+        if (S7::S7_inherits(e$penalty, modelterms7::JeffreysPenalty)) {
+          return(TRUE)
+        }
+      }
+    }
+  }
+  FALSE
+}
+
+#' @rdname jfp_in_terms
+#' @keywords internal
+spec_jeffreys <- function(spec) {
+  j <- spec@jeffreys
+  if (is.na(j)) jfp_in_terms(spec@terms) else j
 }
 
 
