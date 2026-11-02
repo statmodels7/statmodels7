@@ -446,3 +446,39 @@ statmod_fitted_spec <- function(spec, coef, design) {
   spec@terms <- tms
   spec
 }
+
+
+#' The nl() Blocks Whose Full Curvature an Inner Fit Uses
+#'
+#' @description
+#' Returns the refreshable units of the design that belong to an
+#' [modelterms7::nl()] term whose `curvature` setting is `"full"` or
+#' `"auto"`, each with that setting as the element `curvature`.
+#'
+#' @details
+#' A frozen unit (a sharp break-point's working linearization) has no second
+#' derivative and is not among them, and neither is a unit of another term.
+#' A term built before the setting existed is read as `"auto"`.
+#'
+#' @param design The design, as [statmod_design()] returns it.
+#'
+#' @return A list of units, possibly empty.
+#'
+#' @keywords internal
+nl_curvature_units <- function(design) {
+  rf <- attr(design, "refresh")
+  st <- attr(design, "state")
+  if (!length(rf) || is.null(st)) return(list())
+  out <- list()
+  for (r in rf) {
+    if (isTRUE(r$frozen)) next
+    tm <- st$terms[[r$param]][[r$term]]
+    if (is.null(tm) || !S7::S7_inherits(tm, modelterms7::NlTerm)) next
+    cv <- tm@spec$curvature
+    if (is.null(cv)) cv <- "auto"
+    if (identical(cv, "gauss_newton")) next
+    r$curvature <- cv
+    out[[length(out) + 1L]] <- r
+  }
+  out
+}

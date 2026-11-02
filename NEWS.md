@@ -1,3 +1,21 @@
+# statmodels7 (development version)
+
+* The outer criterion beside a filter and a term that recomputes its block
+  (`nl()`, `seg()`, `jump()`, `jseg()`) reads the block at the coefficients,
+  and its gradient and Hessian are exact: the mode moves by the full
+  curvature, weighted by the total derivative in the static predictor, and
+  the information moves with the block's rows.
+* Beside a penalized filter, the break-point that `jump()` or `jseg()` holds
+  is left out of the outer gradient and Hessian, as it is left out of the
+  criterion's determinant; the gradient was missing there. The degrees of
+  freedom of the filter count the held coordinate as one.
+* The inner joint Newton of a model with a filter adds the curvature of an
+  `nl()` block weighted by the total score, as its `curvature` setting
+  specifies: always for `"full"`, never for `"gauss_newton"`, and for
+  `"auto"` except at a step where the full matrix has no Cholesky factor, or
+  after a run whose line search found no acceptable step on the full
+  matrix.
+
 # statmodels7 0.238.1
 
 * The inner joint fit of a model with a filter reads the design as passed

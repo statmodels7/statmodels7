@@ -1359,6 +1359,8 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #'   derivative, a named list keyed by parameter, or `NULL` (the default) for
 #'   the family's score on the link scale at `coef`. The Jeffreys engine
 #'   ([jfp_hessian()]) passes its own weights here.
+#' @param units The refreshable units to include, a subset of the design's
+#'   `"refresh"` attribute, or `NULL` (the default) for all of them.
 #'
 #' @return A symmetric matrix over the stacked coefficients, with nonzero
 #'   entries only on the blocks of refreshable terms.
@@ -1368,9 +1370,9 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #'
 #' @keywords internal
 mode_curvature <- function(spec, design, coef, params, npar, offs, total,
-                           gl = NULL) {
+                           gl = NULL, units = NULL) {
   D <- matrix(0, total, total)
-  rf <- attr(design, "refresh")
+  rf <- if (is.null(units)) attr(design, "refresh") else units
   st <- attr(design, "state")
   if (is.null(rf) || !length(rf) || is.null(st)) return(D)
   n <- spec@n_obs

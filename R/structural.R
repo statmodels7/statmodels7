@@ -1448,23 +1448,39 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
   # starts, where the intercept spelling of the same model, whose level IS
   # a coefficient, converges at -637.40.
   lv <- joint_level_chart(spec, jp)
-  if (is.null(lv)) {
-    res <- with_gradient_check(
-      paste0("joint:", length(u0)),
-      optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, hess = jp$he))
-    par <- res@par
-  } else {
-    res <- with_gradient_check(
-      paste0("joint-level:", length(u0)),
-      optimizers7::minimize(
-        optimizer, function(v) jp$fn(lv$to(v)), lv$from(u0),
-        gr = function(v) lv$grad(v, jp$gr(lv$to(v))),
-        hess = function(v) {
-          u <- lv$to(v)
-          lv$hess(v, jp$gr(u), jp$he(u))
-        }))
-    par <- lv$to(res@par)
+  run <- function(u0) {
+    if (is.null(lv)) {
+      res <- with_gradient_check(
+        paste0("joint:", length(u0)),
+        optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, hess = jp$he))
+      list(res = res, par = res@par)
+    } else {
+      res <- with_gradient_check(
+        paste0("joint-level:", length(u0)),
+        optimizers7::minimize(
+          optimizer, function(v) jp$fn(lv$to(v)), lv$from(u0),
+          gr = function(v) lv$grad(v, jp$gr(lv$to(v))),
+          hess = function(v) {
+            u <- lv$to(v)
+            lv$hess(v, jp$gr(u), jp$he(u))
+          }))
+      list(res = res, par = lv$to(res@par))
+    }
   }
+  out <- run(u0)
+  # "auto" of nl(curvature =): where the step on the full curvature finds no
+  # acceptable length in the line search, the run continues from that point
+  # on the Gauss-Newton matrix of the "auto" blocks
+  if (isTRUE(jp$auto) && !isTRUE(out$res@converged) &&
+      grepl("no acceptable step", out$res@message, fixed = TRUE)) {
+    jp$curvature$gauss_newton <- TRUE
+    jp$curvature$fallbacks[["search"]] <-
+      jp$curvature$fallbacks[["search"]] + 1L
+    out <- run(out$par)
+    jp$curvature$gauss_newton <- FALSE
+  }
+  res <- out$res
+  par <- out$par
   jp$setz(par[jp$ix])
   if (verbose) {
     vb_say("%d coefficients and %d parameters of %s: %d iterations, converged %s",
@@ -1472,7 +1488,8 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
            as.integer(res@iterations), res@converged)
   }
   list(par = par[seq_len(jp$nb)], value = res@value,
-       converged = isTRUE(res@converged), iterations = res@iterations)
+       converged = isTRUE(res@converged), iterations = res@iterations,
+       curvature_fallbacks = jp$curvature$fallbacks)
 }
 
 
@@ -1836,13 +1853,62 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
     # run converged at an objective of -16059, 16734 below the maximum
     if (is.null(v) || !all(is.finite(v))) rep(NA_real_, length(u)) else v
   }
+  # THE CURVATURE OF AN nl() BLOCK (its `curvature` setting, see
+  # nl_curvature_units()). The Gauss-Newton matrix leaves out the total score
+  # times the block's second derivative; beside a filter the weight is the
+  # derivative in the static predictor, score and the filter's inverse step
+  # (statmod_score_obs()). Measured on nl() in theta beside gas() in mu, the
+  # Gauss-Newton run took over 1200 s and the full one 10.5 s. The design is
+  # then read at the coefficients, as the objective reads it; a frozen block
+  # (a sharp jump() or jseg()) is not among these units, and with none of
+  # them the design is read as passed.
+  cu <- nl_curvature_units(design)
+  curv <- new.env(parent = emptyenv())
+  curv$gauss_newton <- FALSE
+  curv$fallbacks <- c(cholesky = 0L, search = 0L)
+  curv_add <- function(H, cf) {
+    units <- if (curv$gauss_newton) {
+      Filter(function(r) identical(r$curvature, "full"), cu)
+    } else cu
+    if (!length(units)) return(H)
+    params <- spec@distrib@params
+    des <- statmod_design_at(spec, cf, design)
+    npar <- vapply(params, function(p) {
+      if (is.null(des[[p]])) 0L else as.integer(des[[p]]$npar)
+    }, integer(1))
+    offs <- cumsum(npar) - npar
+    w <- spec@weights
+    gl <- lapply(statmod_score_obs(spec, cf, des),
+                 function(x) ifelse(w > 0, x / w, 0))
+    D <- mode_curvature(spec, des, cf, params, npar, offs, nb, gl = gl,
+                        units = units)
+    Hf <- H
+    Hf[seq_len(nb), seq_len(nb)] <- Hf[seq_len(nb), seq_len(nb)] + D
+    auto <- Filter(function(r) identical(r$curvature, "auto"), units)
+    if (length(auto) && is.null(tryCatch(chol(Hf), error = function(e) NULL))) {
+      # "auto": the full matrix has no Cholesky factor at this step, so the
+      # step is taken on the Gauss-Newton matrix of the "auto" blocks, even
+      # where that matrix has none either (the filter's own parameters): the
+      # optimizer's modification of the full matrix crawled there, measured
+      # on nl() + gas() in mu with theta ~ z, 428 iterations against 68
+      curv$fallbacks[["cholesky"]] <- curv$fallbacks[["cholesky"]] + 1L
+      full <- Filter(function(r) identical(r$curvature, "full"), units)
+      if (!length(full)) return(H)
+      D <- mode_curvature(spec, des, cf, params, npar, offs, nb, gl = gl,
+                          units = full)
+      Hf <- H
+      Hf[seq_len(nb), seq_len(nb)] <- Hf[seq_len(nb), seq_len(nb)] + D
+    }
+    Hf
+  }
   he <- function(u) {
     b <- u[seq_len(nb)]
     setz(u[ix])
     cf <- obj$split(b)
     H <- statmod_full_information(spec, cf, design,
                                   info_expected(information),
-                                  info_emethod(information), refresh = FALSE)
+                                  info_emethod(information),
+                                  refresh = length(cu) > 0L)
     P <- matrix(0, nrow(H), ncol(H))
     # as_dense() for the reason statmod_full_information() records: this
     # matrix spans the coefficients AND the term's own parameters, so it is
@@ -1857,12 +1923,15 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
     if (mixed) {
       P <- P + joint_penalty_at(spec, design, cf, hyper, "hessian", njoint)
     }
-    H + P
+    if (length(cu)) curv_add(H + P, cf) else H + P
   }
 
   list(fn = fn, gr = gr, he = he, raw = raw, setz = setz,
        zeta = function() as.numeric(sst$zeta[[key]][free]),
-       ix = ix, nb = nb, free = free, key = key, param = su[[1L]]$param)
+       ix = ix, nb = nb, free = free, key = key, param = su[[1L]]$param,
+       curvature = curv,
+       auto = any(vapply(cu, function(r) identical(r$curvature, "auto"),
+                         logical(1))))
 }
 
 
