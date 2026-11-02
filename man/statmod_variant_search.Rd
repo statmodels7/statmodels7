@@ -39,7 +39,11 @@ Every fit is the call of \code{\link[=statmod]{statmod()}} as written, evaluated
 made, with the replacement recorded in \link{statmod_variants}; the search is
 not entered again from inside. Where several terms carry a choice, each is
 settled in turn with the earlier ones at their chosen version and the later
-ones at their pilot. The versions tried, with their scores, are in
+ones at their pilot. A term whose choice has several parts
+(\code{\link[modelterms7:term_variant_stages]{modelterms7::term_variant_stages()}}) is searched one part at a time,
+each stage starting from the version chosen at the stage before. The
+versions tried, with their scores and the warnings that each fit raised,
+are in
 \code{fit@history$variants}, and the fit's \code{elapsed} covers the whole search.
 }
 \keyword{internal}

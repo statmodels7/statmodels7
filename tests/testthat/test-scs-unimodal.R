@@ -27,11 +27,11 @@ test_that("a unimodal scs() without a mode is fitted by a search", {
   expect_null(statmod_variants$override)
 })
 
-test_that("a unimodal scs() with a mode is fitted once", {
+test_that("a unimodal scs() with a mode is fitted from its two starts", {
   d <- uni_data()
   fit <- statmod(y ~ modelterms7::scs(x, modelterms7::shape_unimodal(mode = 0.4)),
                  distrib = distributions7::gaussian1_distrib(), data = d)
-  expect_null(fit@history$variants)
+  expect_identical(fit@history$variants$version, c("start: sides", "start: spline"))
   mu <- predict(fit, what = "mu", newdata = data.frame(x = seq(0.02, 0.98, length.out = 301)))
   expect_lt(abs(seq(0.02, 0.98, length.out = 301)[which.max(mu)] - 0.4), 0.15)
 })

@@ -126,6 +126,8 @@ S7::method(plot_data, list(PlotDerivative, modelterms7::SmoothTerm)) <-
                    var), call. = FALSE)
     }
     grid <- effect_grid(data, var, vars_all, type@n_grid)
+    # a numeric `by` at 1: the derivative of the coefficient f(x)
+    for (v in numeric_by_variable(x)) grid[[v]] <- 1
     group <- attr(grid, "group")
     lo <- min(data[[var]], na.rm = TRUE)
     hi <- max(data[[var]], na.rm = TRUE)
@@ -155,9 +157,11 @@ S7::method(plot_data, list(PlotDerivative, modelterms7::SmoothTerm)) <-
       stringsAsFactors = FALSE)
     out <- list(curve = curve, critical = critical)
     attr(out, "labels") <- list(
-      title = sprintf("%s: %s, %s derivative", ctx$param,
+      title = sprintf("%s: %s, %s derivative%s", ctx$param,
                       if (is.null(ctx$title)) ctx$name else ctx$title,
-                      if (type@order == 1) "first" else "second"),
+                      if (type@order == 1) "first" else "second",
+                      if (length(numeric_by_variable(x)))
+                        sprintf(", at %s = 1", numeric_by_variable(x)) else ""),
       x = var,
       y = sprintf("%s derivative of the effect",
                   if (type@order == 1) "first" else "second"),
@@ -180,6 +184,8 @@ S7::method(plot_data, list(PlotDerivative, modelterms7::ScsTerm)) <-
                    var), call. = FALSE)
     }
     grid <- effect_grid(data, var, vars_all, type@n_grid)
+    # a numeric `by` at 1: the derivative of the coefficient f(x)
+    for (v in numeric_by_variable(x)) grid[[v]] <- 1
     lo <- min(data[[var]], na.rm = TRUE)
     hi <- max(data[[var]], na.rm = TRUE)
     cb <- term_coef_block(fit, ctx$param, ctx$name, ctx$cols, type@vcov_type)
@@ -198,9 +204,11 @@ S7::method(plot_data, list(PlotDerivative, modelterms7::ScsTerm)) <-
                            stringsAsFactors = FALSE)
     out <- list(curve = curve, critical = critical)
     attr(out, "labels") <- list(
-      title = sprintf("%s: %s, %s derivative", ctx$param,
+      title = sprintf("%s: %s, %s derivative%s", ctx$param,
                       if (is.null(ctx$title)) ctx$name else ctx$title,
-                      if (type@order == 1) "first" else "second"),
+                      if (type@order == 1) "first" else "second",
+                      if (length(numeric_by_variable(x)))
+                        sprintf(", at %s = 1", numeric_by_variable(x)) else ""),
       x = var,
       y = sprintf("%s derivative of the effect",
                   if (type@order == 1) "first" else "second"),

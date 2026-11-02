@@ -1,3 +1,96 @@
+# statmodels7 0.238.1
+
+* The inner joint fit of a model with a filter reads the design as passed
+  in its Newton matrix, as before 0.238.0; the block of a term that
+  recomputes it is read at the coefficients only by the outer criterion
+  and its derivatives. A `jump()` beside `gas()` with `sigma ~ s(tt)` ran
+  for hours in 0.238.0 and fits in 25 s again.
+* Tests only: the test of a recomputed block beside a filter fits at the
+  starting hyperparameters and moves the block's own coefficients, where
+  the platforms disagreed on a control near its threshold.
+
+# statmodels7 0.238.0
+
+* A `modelterms7::jfp()` block may sit in the subformula of `nl()`, of a
+  smoothed `seg()` or of a parameter of `gas()`. Its rows are the columns
+  of the term's Jacobian, or the derivatives of the filtered predictors
+  along the block's directions. A block in the subformula of a filter's
+  level (omega) is rejected, because its prior grows without bound as the
+  persistence approaches one. A sharp `seg()`, `jump()` and `jseg()` are
+  still rejected.
+* `reml()` and `ml()` have exact outer derivatives for a `jfp()` block
+  beside or inside a term that recomputes its block, and in a model with a
+  filter, to the Hessian; with a scaled score (`scaling = 1` or `1/2`) in
+  a joint filter the fifth order of the driving vector reads
+  `distributions7::distrib_d5expected_hessian()`.
+* The penalty of `jfp()` reads the family's expected information
+  unmodified, as in Jeffreys' definition. It therefore also moves the
+  coefficients of the other distribution parameters, by an amount of order
+  1/n. For a gaussian with the block in the mean, the REML estimate of
+  sigma^2 is RSS/(n - p + 2 a p_tilde).
+* The outer gradient includes the derivative of the Jeffreys penalty in the
+  coordinates that the criterion estimates (sigma, theta, nu). Without it
+  the search stopped short of the optimum (gaussian sigma 0.997211 against
+  0.993326). A parameter whose equation carries a `jfp()` block stays on
+  the outer criterion; only the block's coordinates are held at the mode.
+* With `intercept = NULL`, the constant direction of a `jfp()` level is
+  decided on the columns that do not move, so the decision is the same at
+  the start and at the fitted point.
+* The marginal criterion of a model with a penalized filter reads the block
+  of a term that recomputes it (`nl()`, `seg()`) at the mode, where it read
+  it at the point where the design was built. The exact outer gradient of
+  these models carries the movement of the block and moves the mode by the
+  full curvature, weighted by the total derivative in the static predictor
+  (penalized and unpenalized filter). Their outer Hessian is a difference
+  of the exact gradient.
+* modelterms7 0.127.0 is the minimum version (`term_block_deriv3()`,
+  `term_block_deriv4()`).
+
+# statmodels7 0.237.1
+
+* Tests only: a unimodal `modelterms7::scs()` with a mode is fitted from its
+  two starts (modelterms7 0.126.0, now the minimum version).
+
+# statmodels7 0.237.0
+
+* A criterion that cannot be read at the starting hyperparameters because
+  the penalized information is flat in a direction that carries curvature
+  on its diagonal (the null space of a penalty, reached at a boundary) now
+  leaves that direction out of the determinant also when the criterion
+  estimates no coefficient of its own. An increasing `modelterms7::scs()`
+  in sigma on a constant truth stopped with an error in 12 of 18 measured
+  fits and now fits in 18. A coefficient whose column vanishes at the start
+  still stops the fit with its cause, and a fit whose criterion was
+  available at its start is unchanged.
+* The search over the versions of a term keeps the warnings of each
+  version in `fit@history$variants` (column `warning`) and raises only
+  those of the version chosen.
+* modelterms7 0.125.0 is the minimum version (settings of a shape by level).
+
+# statmodels7 0.236.1
+
+* The effect and derivative graphs of `s()` or `modelterms7::scs()` with a
+  numeric `by` draw the coefficient \(f(x)\) of the term \(z\,f(x)\), the
+  contribution at \(z = 1\), without partial residuals; the title says so.
+* The graphs of `s()` read its variables from the term, not from the call:
+  a smoother passed as an object (`s(x, smoother = sm)`) was read as a
+  variable of the data.
+
+# statmodels7 0.236.0
+
+* The search over the versions of a term runs in stages where
+  `modelterms7::term_variant_stages()` says the choice has several parts,
+  each stage starting from the version chosen at the stage before. With
+  `modelterms7::scs()` under a factor `by` and a unimodal or sigmoid shape
+  without a location, the location of each level is searched one level at
+  a time (modelterms7 0.124.0, now the minimum version).
+* The graphs of an `scs()` term read its `by` variable.
+
+# statmodels7 0.235.2
+
+* Tests only: fits with `modelterms7::scs()` and a value or a slope at a
+  point (modelterms7 0.123.0, now the minimum version).
+
 # statmodels7 0.235.1
 
 * Tests only: the test of a Jeffreys block with singular information uses a

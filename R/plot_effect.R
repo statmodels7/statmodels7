@@ -167,7 +167,11 @@ S7::method(plot_data, list(PlotEffect, TermSum)) <-
 effect_data <- function(type, parts, fit, ctx) {
   vars_all <- unique(unlist(lapply(parts, function(p)
     term_variables(p$term, p$name))))
-  plotted <- ctx$vars
+  # A NUMERIC `by` IS HELD AT 1: the term is z f(x), and the graph draws the
+  # coefficient f(x), as mgcv does
+  zby <- unique(unlist(lapply(parts, function(p)
+    if (is.null(p$cols)) numeric_by_variable(p$term))))
+  plotted <- setdiff(ctx$vars, zby)
   data <- plot_needs_data(ctx, fit, type, vars = vars_all)
   # the variable on the axis: the first that is a numeric vector or a factor
   usable <- Filter(function(v) {
@@ -194,6 +198,7 @@ effect_data <- function(type, parts, fit, ctx) {
     if (is.null(p$cols)) term_variables(p$term, p$name)
     else linpar_partners(p$term, var))))
   grid <- effect_grid(data, var, vars_all, type@n_grid, cross = cross)
+  for (v in zby) grid[[v]] <- 1
   group <- attr(grid, "group")
   z <- stats::qnorm((1 + type@level) / 2)
   kind <- if (is.numeric(data[[var]])) "numeric" else "factor"
@@ -217,7 +222,9 @@ effect_data <- function(type, parts, fit, ctx) {
     if (!is.null(group)) curve$group <- grid[[group]]
     points <- data.frame(x = numeric(0), y = numeric(0))
     bins <- points
-    if (type@residuals || !is.null(type@binned)) {
+    # partial residuals are on the scale of z f(x), not of f, so a graph of
+    # the coefficient has none
+    if ((type@residuals || !is.null(type@binned)) && !length(zby)) {
       ofit <- parts_contribution(fit, ctx$param, parts, NULL, type@vcov_type)
       wr <- working_residuals(fit, ctx$param, type@information)
       keep <- fit@spec@weights > 0 & is.finite(wr)
@@ -233,15 +240,19 @@ effect_data <- function(type, parts, fit, ctx) {
         bins <- bins[stats::complete.cases(bins), , drop = FALSE]
       }
     }
-    ylab <- sprintf("effect on the link scale of %s", ctx$param)
+    ylab <- if (length(zby)) sprintf("coefficient of %s on the link scale of %s",
+                                     paste(zby, collapse = ", "), ctx$param)
+            else sprintf("effect on the link scale of %s", ctx$param)
   }
   rug <- if (type@rug && kind == "numeric") data.frame(x = data[[var]])
     else data.frame(x = numeric(0))
   out <- list(curve = curve, points = points, bins = bins, rug = rug)
   attr(out, "kind") <- kind
-  attr(out, "labels") <- list(title = sprintf("%s: %s", ctx$param,
+  attr(out, "labels") <- list(title = sprintf("%s: %s%s", ctx$param,
                                               if (is.null(ctx$title)) ctx$name
-                                              else ctx$title),
+                                              else ctx$title,
+                                              if (length(zby)) sprintf(", at %s = 1",
+                                                paste(zby, collapse = " = ")) else ""),
                               x = var, y = ylab,
                               colour = group, fill = group)
   out
