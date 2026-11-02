@@ -26,10 +26,15 @@ structural_refresh_case <- function(fm, distrib) {
   d$yn <- stats::rnbinom(n, mu = exp(0.5 + 1.5 * exp(-0.8 * d$xs) +
                                        0.4 * lev[d$id] + 0.5 * e),
                          size = exp(1 + 0.4 * d$z))
-  # the hyperparameters stay at their start: the derivatives are read at any
-  # point, and the REML search is not what is tested
+  # the hyperparameters stay at their start, and the joint Newton stops after
+  # 30 iterations: the derivatives are read at any point, away from the mode,
+  # and neither the REML search nor the mode is what is tested (on the
+  # negative binomial case the joint Newton runs to its 200 iterations at
+  # every pass, 28 s of the file's 47)
   f <- suppressWarnings(statmod(fm, distrib = distrib, data = d,
-                                outer_criterion = NULL))
+                                outer_criterion = NULL,
+                                inner_optimizer = optimizers7::newton(
+                                  maxit = 30)))
   sp <- f@spec
   des <- statmod_design(sp)
   sst <- statmod_structural_state(des)

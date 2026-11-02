@@ -6,7 +6,7 @@
 nl_curvature_data <- function() {
   set.seed(31)
   S <- 4L
-  Tn <- 30L
+  Tn <- 25L
   n <- S * Tn
   d <- data.frame(t = rep(seq_len(Tn), S), id = factor(rep(seq_len(S), each = Tn)),
                   xs = runif(n, 0, 3))
