@@ -1,5 +1,17 @@
 # Changelog
 
+## statmodels7 0.240.1
+
+- The outer Hessian of a model with
+  [`modelterms7::jfp()`](https://statmodels7.github.io/modelterms7/reference/jfp.html)
+  beside
+  [`modelterms7::scs()`](https://statmodels7.github.io/modelterms7/reference/scs.html)
+  or
+  [`modelterms7::scte()`](https://statmodels7.github.io/modelterms7/reference/scte.html)
+  reads the third derivative of their block, which modelterms7 0.130.0
+  supplies; it read zeros before, 8e-4 relative off on the test model.
+- modelterms7 0.130.0 is the minimum version.
+
 ## statmodels7 0.240.0
 
 - The outer criterion beside a filter and a term that recomputes its

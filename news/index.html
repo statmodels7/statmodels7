@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.240.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.240.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.240.1" id="statmodels7-02401">statmodels7 0.240.1<a class="anchor" aria-label="anchor" href="#statmodels7-02401"></a></h2>
+<ul><li>The outer Hessian of a model with <code><a href="https://statmodels7.github.io/modelterms7/reference/jfp.html" class="external-link">modelterms7::jfp()</a></code> beside <code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code> or <code><a href="https://statmodels7.github.io/modelterms7/reference/scte.html" class="external-link">modelterms7::scte()</a></code> reads the third derivative of their block, which modelterms7 0.130.0 supplies; it read zeros before, 8e-4 relative off on the test model.</li>
+<li>modelterms7 0.130.0 is the minimum version.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.240.0" id="statmodels7-02400">statmodels7 0.240.0<a class="anchor" aria-label="anchor" href="#statmodels7-02400"></a></h2>
 <ul><li>The outer criterion beside a filter and a term that recomputes its block (<code>nl()</code>, <code>seg()</code>, <code>jump()</code>, <code>jseg()</code>) reads the block at the coefficients, and its gradient and Hessian are exact: the mode moves by the full curvature, weighted by the total derivative in the static predictor, and the information moves with the block’s rows.</li>
