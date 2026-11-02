@@ -138,6 +138,20 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
                                 basis, inner, gam = gam))
   }
+  # ⚠️ ON THE OBSERVED ROUTE TOO, a Jeffreys block reads its fourth
+  # derivative only where jfp_outer_ok() admits order 2, which asks a term
+  # whose block moves for its own term_block_deriv3(). The base method
+  # returns zeros, and read here they gave an exact-looking Hessian that was
+  # out: Poisson y ~ scs(x, shape_increasing(), k = 6) + jfp(~ z), n = 300,
+  # ml(observed_info()), -0.1747445 against -0.17464926 from differences of
+  # the gradient with the mode refitted (5.5e-4 relative). Where order 2 is
+  # not admitted the exact gradient is differenced instead.
+  if (!expected && any(vapply(statmod_penalized(spec, design), function(u)
+        isTRUE(u$jeffreys), logical(1))) &&
+      !jfp_outer_ok(spec, design, 2L)) {
+    return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
+                                basis, inner, gam = gam))
+  }
   # the block AT THE MODE, for the reason statmod_marginal_grad() records: the
   # leverage diagonal and the contractions must read the same block K was
   # assembled on, and for a refreshable term the design as it arrives is the

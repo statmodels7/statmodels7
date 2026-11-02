@@ -1,3 +1,14 @@
+# statmodels7 (development version)
+
+* On the observed route the outer Hessian of a model with a
+  `modelterms7::jfp()` block reads the block's fourth derivative only where
+  every term whose block moves has its own `term_block_deriv3()`; elsewhere
+  it differences the exact gradient. The base method's zeros were read
+  instead (Poisson `scs()` + `jfp(~ z)`, 5.5e-4 relative).
+* Beside a filter and a term whose block moves in an equation that the
+  filter drives, the Hessian of a Jeffreys penalty carries the block's
+  second derivative through the filter; it read it as it stands.
+
 # statmodels7 0.240.0
 
 * The outer criterion beside a filter and a term that recomputes its block
