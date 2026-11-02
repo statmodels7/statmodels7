@@ -17,9 +17,8 @@
 * The inner joint Newton of a model with a filter adds the curvature of an
   `nl()` block weighted by the total score, as its `curvature` setting
   specifies: always for `"full"`, never for `"gauss_newton"`, and for
-  `"auto"` except at a step where the full matrix has no Cholesky factor, or
-  after a run whose line search found no acceptable step on the full
-  matrix.
+  `"auto"` until a line search finds no acceptable step on the full
+  matrix, after which the run continues on the Gauss-Newton matrix.
 
 # statmodels7 0.238.1
 

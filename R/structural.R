@@ -1470,7 +1470,8 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
   out <- run(u0)
   # "auto" of nl(curvature =): where the step on the full curvature finds no
   # acceptable length in the line search, the run continues from that point
-  # on the Gauss-Newton matrix of the "auto" blocks
+  # on the Gauss-Newton matrix of the "auto" blocks (see curv_add() in
+  # statmod_joint_pieces())
   if (isTRUE(jp$auto) && !isTRUE(out$res@converged) &&
       grepl("no acceptable step", out$res@message, fixed = TRUE)) {
     jp$curvature$gauss_newton <- TRUE
@@ -1869,7 +1870,15 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
   nl_refresh <- length(nl_curvature_units(design, all = TRUE)) > 0L
   curv <- new.env(parent = emptyenv())
   curv$gauss_newton <- FALSE
-  curv$fallbacks <- c(cholesky = 0L, search = 0L)
+  curv$fallbacks <- c(search = 0L)
+  # "auto" takes the full step like "full"; statmod_fit_joint() sets
+  # curv$gauss_newton after a run whose line search found no acceptable step
+  # on it, and the "auto" blocks then carry the Gauss-Newton matrix alone.
+  # No Cholesky test (Giovanni, 2026-11-02): a test on the whole joint
+  # matrix, on the coefficients or on the nl() block fell back at most steps
+  # beside a filter, whose own parameters leave the joint matrix indefinite,
+  # and on nl() in theta beside gas() in mu the first two stopped at logLik
+  # -520.7332 against -517.3707 (misure_jfp/RISULTATI.md, Fase 8)
   curv_add <- function(H, cf) {
     units <- if (curv$gauss_newton) {
       Filter(function(r) identical(r$curvature, "full"), cu)
@@ -1886,24 +1895,8 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
                  function(x) ifelse(w > 0, x / w, 0))
     D <- mode_curvature(spec, des, cf, params, npar, offs, nb, gl = gl,
                         units = units)
-    Hf <- H
-    Hf[seq_len(nb), seq_len(nb)] <- Hf[seq_len(nb), seq_len(nb)] + D
-    auto <- Filter(function(r) identical(r$curvature, "auto"), units)
-    if (length(auto) && is.null(tryCatch(chol(Hf), error = function(e) NULL))) {
-      # "auto": the full matrix has no Cholesky factor at this step, so the
-      # step is taken on the Gauss-Newton matrix of the "auto" blocks, even
-      # where that matrix has none either (the filter's own parameters): the
-      # optimizer's modification of the full matrix crawled there, measured
-      # on nl() + gas() in mu with theta ~ z, 428 iterations against 68
-      curv$fallbacks[["cholesky"]] <- curv$fallbacks[["cholesky"]] + 1L
-      full <- Filter(function(r) identical(r$curvature, "full"), units)
-      if (!length(full)) return(H)
-      D <- mode_curvature(spec, des, cf, params, npar, offs, nb, gl = gl,
-                          units = full)
-      Hf <- H
-      Hf[seq_len(nb), seq_len(nb)] <- Hf[seq_len(nb), seq_len(nb)] + D
-    }
-    Hf
+    H[seq_len(nb), seq_len(nb)] <- H[seq_len(nb), seq_len(nb)] + D
+    H
   }
   he <- function(u) {
     b <- u[seq_len(nb)]

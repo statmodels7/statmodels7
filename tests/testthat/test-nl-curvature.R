@@ -1,7 +1,7 @@
 # nl(curvature =) on the inner joint Newton beside a filter: the three
 # settings reach the same mode, "auto" falls back to the Gauss-Newton matrix
-# where the full one has no Cholesky factor, and the outer gradient does not
-# depend on the setting.
+# after a failed line search, and the outer gradient does not depend on the
+# setting.
 
 nl_curvature_data <- function() {
   set.seed(31)
@@ -58,42 +58,34 @@ test_that("the curvature units follow the setting", {
   }
 })
 
-test_that("auto falls back where the full matrix has no factor", {
+test_that("auto falls back to Gauss-Newton after a failed line search", {
+  # No measured fit has had its line search fail on the full step, so the
+  # failure is built deliberately: an Armijo search that accepts only a
+  # decrease of 0.999999 of the linear prediction and stops after one
+  # halving rejects the full step from the start of the run. The run is
+  # then repeated on the Gauss-Newton matrix, which the counter records.
   d <- nl_curvature_data()
   f <- nl_curvature_fit("auto", d)
   sp <- f@spec
   des <- statmod_design(sp)
   obj <- statmod_objective(sp, f@hyper, des, FALSE)
+  beta <- unlist(lapply(sp@distrib@params, function(p) {
+    b <- f@coefficients[[p]]
+    b + 0.3
+  }), use.names = FALSE)
+  strict <- optimizers7::newton(
+    line_search = optimizers7::armijo(c1 = 0.999999, max_step = 1))
+  r <- statmod_fit_joint(sp, des, obj, beta, f@hyper, optimizer = strict)
+  expect_identical(r$curvature_fallbacks[["search"]], 1L)
+  # the Gauss-Newton matrix is the full one without the block's term
   jp <- statmod_joint_pieces(sp, des, obj, f@hyper)
-  nb <- jp$nb
   u0 <- c(unlist(f@coefficients[sp@distrib@params], use.names = FALSE),
           jp$zeta())
-  # a point far from the mode in the nonlinear parameters, where the score
-  # times the block's second derivative makes the full matrix indefinite
-  bn <- grep("^mu\\.nl", unlist(lapply(sp@distrib@params, function(p)
-    paste0(p, ".", des[[p]]$coef_names))))
-  found <- FALSE
-  for (s in c(2, 4, 8, -2, -4)) {
-    u <- u0
-    u[bn] <- u[bn] + s
-    jp$curvature$fallbacks[] <- 0L
-    H <- jp$he(u)
-    if (jp$curvature$fallbacks[["cholesky"]] > 0L) {
-      found <- TRUE
-      break
-    }
-  }
-  expect_true(found)
-  # the fallback is the Gauss-Newton matrix
+  Hf <- jp$he(u0)
   jp$curvature$gauss_newton <- TRUE
-  expect_equal(H, jp$he(u), tolerance = 1e-12)
-  jp$curvature$gauss_newton <- FALSE
-  # and at the mode the full matrix is taken
-  jp$curvature$fallbacks[] <- 0L
-  Hm <- jp$he(u0)
-  expect_identical(jp$curvature$fallbacks[["cholesky"]], 0L)
-  jp$curvature$gauss_newton <- TRUE
-  expect_gt(max(abs(Hm - jp$he(u0))), 1e-6)
+  Hg <- jp$he(u0)
+  expect_gt(max(abs(Hf - Hg)), 1e-6)
+  expect_equal(Hf[-seq_len(jp$nb), ], Hg[-seq_len(jp$nb), ], tolerance = 1e-12)
 })
 
 test_that("the outer gradient does not depend on the setting", {
