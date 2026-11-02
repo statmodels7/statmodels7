@@ -920,6 +920,17 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   is rejected or shrunk below a tenth, the Newton step on it is tried by
 #'   [iwls_newton_step()] and the one that decreases the objective more is
 #'   taken.
+#' @param full_at `NULL`, or a function of the coefficients and of a logical
+#'   `gauss_newton` returning the Hessian on which the step is taken first:
+#'   the curvature of `newton_at` restricted to the [modelterms7::nl()]
+#'   blocks whose setting `curvature` is `"full"` or `"auto"`, or, with
+#'   `gauss_newton = TRUE`, to the `"full"` blocks alone; `NULL` where no
+#'   block remains. Where it returns a matrix the Newton step on it is taken
+#'   by [iwls_newton_step()] before the scoring step, on the coordinates that
+#'   the scoring solve does not leave out as aliased. Where that step finds no
+#'   acceptable length the iteration takes the scoring step, and the run
+#'   continues with `gauss_newton = TRUE`, so the `"auto"` blocks carry the
+#'   scoring curvature from there on.
 #' @param switch_at `NULL`, or a function, like `pieces_at`, that builds the
 #'   pieces on the observed information. After `switch_after` iterations without
 #'   convergence, or earlier when [iwls_slow()] reports a slow contraction of
@@ -934,9 +945,12 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   moves with its coefficients, where a long step can carry the predictor
 #'   out of the range in which the family is defined.
 #'
-#' @return A list of ten: the six below; `note`, the reason for which a run
+#' @return A list of eleven: the six below; `note`, the reason for which a run
 #'   stopped or `NULL`; `aliased`, the coordinates that the pivot left out;
-#'   `switched`, the iteration at which the run moved to `switch_at`, or 0; and
+#'   `switched`, the iteration at which the run moved to `switch_at`, or 0;
+#'   `curvature`, a named integer vector of two counts, `full` the number of
+#'   iterations at which the step on `full_at` was taken and `search` the
+#'   number at which its line search found no acceptable length; and
 #'   `fallback`, a named integer vector of four counts. The count `indefinite`
 #'   is the number of iterations at which the observed penalized information was
 #'   not positive definite, `search` the number at which the expected pieces
@@ -966,7 +980,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
                      groups = NULL, frozen = integer(0), backup_at = NULL,
                      damp_on_reject = TRUE, kinks_at = NULL,
                      newton_at = NULL, switch_at = NULL,
-                     switch_after = Inf, guard = FALSE) {
+                     switch_after = Inf, guard = FALSE, full_at = NULL) {
   beta <- start
   tol_def <- iwls_definite_tol(method)
   # the iteration at which the run moved to the observed information, 0 if
@@ -992,6 +1006,11 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   damp_tries <- 0L
   # how often the expected pieces stepped in, and for what
   fallback <- c(indefinite = 0L, search = 0L, error = 0L, newton = 0L)
+  # the step on the full curvature of the nl() blocks (full_at), and how
+  # often its line search failed; after a failure the "auto" blocks carry
+  # the scoring curvature for the rest of the run
+  curv <- c(full = 0L, search = 0L)
+  curv_gn <- FALSE
   # the constrained fit on the subspace a kink leaves free, once one has run
   # from the current point; reset by every ordinary step that is accepted
   tied <- NULL
@@ -1128,6 +1147,36 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     # are the same to 10 digits at 1/4 to 1/6 of the time where the observed
     # information is indefinite (skew t 92.5 -> 15.4 s, pseudohuber2 254.4 ->
     # 57.2 s), and the repaired step's search did not fail once.
+    # THE FULL CURVATURE OF AN nl() BLOCK FIRST, under its setting
+    # `curvature = "full"` or `"auto"` (Giovanni, 2026-11-02): the Newton step
+    # on the scoring curvature plus the block's second derivative weighted by
+    # the score. The scoring solve is still made, for the coordinates that
+    # its pivot leaves out as aliased, and the Newton step leaves them where
+    # they are. Where the step finds no acceptable length the iteration takes
+    # the scoring step below, and the "auto" blocks keep the scoring
+    # curvature from then on, as on the route beside a filter
+    # (statmod_fit_joint()).
+    st <- NULL
+    Hf <- if (is.null(full_at)) NULL else full_at(beta, curv_gn)
+    if (!is.null(Hf)) {
+      sol0 <- tryCatch(iwls_solve(pc, -g, solver_how(method@solver), damp,
+                                  frozen, tol = solver_tol(method@solver),
+                                  floor = solver_floor(method@solver)),
+                       error = function(e) NULL)
+      nt <- if (is.null(sol0)) NULL else
+        iwls_newton_step(obj, beta, value, g, Hf,
+                         sort(union(frozen, sol0$dropped)),
+                         method@step_halving, exact = TRUE)
+      if (!is.null(nt) && nt$ok) {
+        st <- c(nt[c("ok", "cand", "vnew", "step_used")],
+                list(sol = sol0, errors = 0L))
+        curv[["full"]] <- curv[["full"]] + 1L
+      } else {
+        curv[["search"]] <- curv[["search"]] + 1L
+        curv_gn <- TRUE
+      }
+    }
+    if (is.null(st)) {
     if (!is.null(backup_at) && !pieces_definite(pc, tol_def)) {
       fallback[["indefinite"]] <- fallback[["indefinite"]] + 1L
     }
@@ -1160,6 +1209,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
           nt[c("ok", "cand", "vnew", "step_used")]
         fallback[["newton"]] <- fallback[["newton"]] + 1L
       }
+    }
     }
     sol <- st$sol
     # the coordinates the pivot left out, kept from the LAST step taken: a
@@ -1357,7 +1407,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   }
   list(par = beta, value = value, converged = converged,
        iterations = it, score = score, note = note, aliased = aliased,
-       fallback = fallback, switched = switched,
+       fallback = fallback, switched = switched, curvature = curv,
        history = if (length(hist)) do.call(rbind, hist) else NULL)
 }
 
@@ -1579,6 +1629,11 @@ armijo_ok <- function(vnew, value, step, gd, c1 = 1e-4) {
 #' differs from the one of [optimizers7::newton()], which raises each
 #' eigenvalue below the floor to the floor without taking absolute values.
 #'
+#' With `exact = TRUE` a Cholesky factorization is tried first, and where it
+#' succeeds the increment is the Newton step on the unmodified Hessian, as in
+#' [optimizers7::newton()]; the repair is applied only where the
+#' factorization fails.
+#'
 #' @param obj The objective.
 #' @param beta The current coefficients.
 #' @param value The objective there.
@@ -1586,6 +1641,7 @@ armijo_ok <- function(vnew, value, step, gd, c1 = 1e-4) {
 #' @param H The full Hessian there.
 #' @param frozen The held positions.
 #' @param halvings The budget of step halvings.
+#' @param exact Whether a positive definite Hessian is used unmodified.
 #'
 #' @return `NULL` where the Hessian is not usable, and otherwise a list of
 #'   `ok`, `cand`, `vnew` and `step_used`.
@@ -1593,18 +1649,29 @@ armijo_ok <- function(vnew, value, step, gd, c1 = 1e-4) {
 #' @seealso [iwls_fit()], its caller.
 #'
 #' @keywords internal
-iwls_newton_step <- function(obj, beta, value, g, H, frozen, halvings) {
+iwls_newton_step <- function(obj, beta, value, g, H, frozen, halvings,
+                             exact = FALSE) {
   H <- tryCatch(as_dense(H), error = function(e) NULL)
   if (is.null(H) || !all(is.finite(H))) return(NULL)
   free <- setdiff(seq_along(beta), frozen)
   if (!length(free)) return(NULL)
-  e <- eigen((H[free, free, drop = FALSE] + t(H[free, free, drop = FALSE])) / 2,
-             symmetric = TRUE)
-  lam <- abs(e$values)
-  if (!length(lam) || max(lam) <= 0) return(NULL)
-  lam <- pmax(lam, 1e-8 * max(lam))
+  Hs <- (H[free, free, drop = FALSE] + t(H[free, free, drop = FALSE])) / 2
   delta <- numeric(length(beta))
-  delta[free] <- -as.numeric(e$vectors %*% (crossprod(e$vectors, g[free]) / lam))
+  # the unmodified Newton step where the Hessian has a Cholesky factor: the
+  # floor below, relative to the largest eigenvalue, shortens a direction of
+  # small but positive curvature, and on nl() with a random effect in Vm
+  # (Michaelis-Menten, eigenvalues 2.9e-5 to 2.1e6) the full step then
+  # converged linearly, 283 iterations of one inner fit (misure_jfp/fase9)
+  R <- if (exact) tryCatch(chol(Hs), error = function(e) NULL) else NULL
+  if (!is.null(R)) {
+    delta[free] <- -backsolve(R, forwardsolve(t(R), g[free]))
+  } else {
+    e <- eigen(Hs, symmetric = TRUE)
+    lam <- abs(e$values)
+    if (!length(lam) || max(lam) <= 0) return(NULL)
+    lam <- pmax(lam, 1e-8 * max(lam))
+    delta[free] <- -as.numeric(e$vectors %*% (crossprod(e$vectors, g[free]) / lam))
+  }
   gd <- sum(g * delta)
   step_used <- 1
   for (h in seq_len(as.integer(halvings) + 1L)) {

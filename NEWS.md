@@ -19,6 +19,14 @@
   specifies: always for `"full"`, never for `"gauss_newton"`, and for
   `"auto"` until a line search finds no acceptable step on the full
   matrix, after which the run continues on the Gauss-Newton matrix.
+* Without a filter, the inner scoring fit takes first the Newton step on the
+  full curvature of an `nl()` block whose `curvature` setting is `"full"` or
+  `"auto"`, on the coordinates that the scoring solve does not leave out as
+  aliased; where its line search fails the iteration takes the scoring
+  step, and `"auto"` keeps the scoring step for the rest of the run.
+  `"gauss_newton"` is the fit as before. On the nonlinear models of the book
+  the three settings reach the same mode; Theoph with two random effects
+  126 inner iterations with `"gauss_newton"` and 37 with `"full"`.
 
 # statmodels7 0.238.1
 

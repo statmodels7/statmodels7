@@ -19,7 +19,8 @@ iwls_fit(
   newton_at = NULL,
   switch_at = NULL,
   switch_after = Inf,
-  guard = FALSE
+  guard = FALSE,
+  full_at = NULL
 )
 }
 \arguments{
@@ -96,11 +97,26 @@ raises an error is read as a rejected step, also where there is no
 \code{backup_at}. \code{\link[=fit_smooth]{fit_smooth()}} sets it for a design with a term whose block
 moves with its coefficients, where a long step can carry the predictor
 out of the range in which the family is defined.}
+
+\item{full_at}{\code{NULL}, or a function of the coefficients and of a logical
+\code{gauss_newton} returning the Hessian on which the step is taken first:
+the curvature of \code{newton_at} restricted to the \code{\link[modelterms7:nl]{modelterms7::nl()}}
+blocks whose setting \code{curvature} is \code{"full"} or \code{"auto"}, or, with
+\code{gauss_newton = TRUE}, to the \code{"full"} blocks alone; \code{NULL} where no
+block remains. Where it returns a matrix the Newton step on it is taken
+by \code{\link[=iwls_newton_step]{iwls_newton_step()}} before the scoring step, on the coordinates that
+the scoring solve does not leave out as aliased. Where that step finds no
+acceptable length the iteration takes the scoring step, and the run
+continues with \code{gauss_newton = TRUE}, so the \code{"auto"} blocks carry the
+scoring curvature from there on.}
 }
 \value{
-A list of ten: the six below; \code{note}, the reason for which a run
+A list of eleven: the six below; \code{note}, the reason for which a run
 stopped or \code{NULL}; \code{aliased}, the coordinates that the pivot left out;
-\code{switched}, the iteration at which the run moved to \code{switch_at}, or 0; and
+\code{switched}, the iteration at which the run moved to \code{switch_at}, or 0;
+\code{curvature}, a named integer vector of two counts, \code{full} the number of
+iterations at which the step on \code{full_at} was taken and \code{search} the
+number at which its line search found no acceptable length; and
 \code{fallback}, a named integer vector of four counts. The count \code{indefinite}
 is the number of iterations at which the observed penalized information was
 not positive definite, \code{search} the number at which the expected pieces

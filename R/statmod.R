@@ -2134,6 +2134,9 @@ criterion_tol <- function(crit) {
 #'       run stopped where it did not stop on its rule, or that it was read
 #'       as converged by the dimensionless rule, and `NULL` otherwise; `NULL`
 #'       for an \pkg{optimizers7} method.}
+#'     \item{`curvature`}{for [iwls()], the counts of the step on the full
+#'       curvature of the [modelterms7::nl()] blocks that [iwls_fit()]
+#'       returns; absent for an \pkg{optimizers7} method.}
 #'   }
 #'
 #' @seealso [statmod_alternate()], the caller,
@@ -2256,6 +2259,27 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
         he(b) + D[idx, idx, drop = FALSE]
       }
     }
+    # THE STEP ON THE FULL CURVATURE OF AN nl() BLOCK COMES FIRST where its
+    # setting `curvature` is "full" or "auto" (nl_curvature_units()); "auto"
+    # blocks return to the scoring curvature after a failed line search, and
+    # "gauss_newton" leaves the run as it was (iwls_fit())
+    full_at <- NULL
+    cu <- nl_curvature_units(design)
+    if (length(cu)) {
+      params <- spec@distrib@params
+      npar <- vapply(params, function(p) design[[p]]$npar, integer(1))
+      offs <- cumsum(npar) - npar
+      cu_full <- Filter(function(r) identical(r$curvature, "full"), cu)
+      full_at <- function(b, gauss_newton) {
+        units <- if (gauss_newton) cu_full else cu
+        if (!length(units)) return(NULL)
+        v <- beta
+        v[idx] <- b
+        D <- mode_curvature(spec, design, obj$split(v), params, npar, offs,
+                            sum(npar), units = units)
+        he(b) + D[idx, idx, drop = FALSE]
+      }
+    }
     # the equations' coordinate ranges, restated in the subset's own
     # numbering: the stopping rule's scale is per equation, and the
     # objective's split speaks the full vector's coordinates
@@ -2268,7 +2292,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
                     backup_at = backup_at,
                     damp_on_reject = !has_sharp_breakpoint(spec),
                     kinks_at = kinks_at, newton_at = newton_at,
-                    switch_at = switch_at,
+                    full_at = full_at, switch_at = switch_at,
                     switch_after = if (is.null(switch_at)) Inf else sw,
                     # A MOVING BLOCK CAN STEP OUT OF THE FAMILY'S DOMAIN: a
                     # long trial step of scs() overflows exp() and gives a
@@ -2281,7 +2305,8 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     # are carried back to the fit's before anything outside reads them
     return(list(par = out, value = obj$fn(out), converged = res$converged,
                 iterations = res$iterations, history = res$history,
-                aliased = idx[res$aliased], note = res$note))
+                aliased = idx[res$aliased], note = res$note,
+                curvature = res$curvature))
   }
 
   # an optimizers7 method solves nothing by a pivot and names no coordinate

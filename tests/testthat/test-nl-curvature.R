@@ -1,7 +1,7 @@
 # nl(curvature =) on the inner joint Newton beside a filter: the three
 # settings reach the same mode, "auto" falls back to the Gauss-Newton matrix
 # after a failed line search, and the outer gradient does not depend on the
-# setting.
+# setting. Then the same on the route without a filter (iwls_fit()).
 
 nl_curvature_data <- function() {
   set.seed(31)
@@ -103,4 +103,73 @@ test_that("the outer gradient does not depend on the setting", {
   gg <- grad_at(nl_curvature_fit("gauss_newton", d))
   expect_true(all(is.finite(ga)))
   expect_lt(max(abs(ga - gg)), 1e-6)
+})
+
+
+# the route without a filter: every iwls_fit() call of one statmod() fit
+nl_iwls_fit <- function(cv, fail_full = FALSE) {
+  puro <- Puromycin[Puromycin$state == "treated", ]
+  runs <- list()
+  orig_fit <- iwls_fit
+  orig_step <- iwls_newton_step
+  testthat::local_mocked_bindings(iwls_fit = function(...) {
+    r <- orig_fit(...)
+    runs[[length(runs) + 1L]] <<- r
+    r
+  })
+  if (fail_full) {
+    # the full step's line search fails at every iteration: the Newton step
+    # taken first is reported as finding no acceptable length
+    testthat::local_mocked_bindings(iwls_newton_step = function(obj, beta,
+                                                                value, g, H,
+                                                                frozen,
+                                                                halvings,
+                                                                exact = FALSE) {
+      if (exact) {
+        return(list(ok = FALSE, cand = beta, vnew = value, step_used = 0))
+      }
+      orig_step(obj, beta, value, g, H, frozen, halvings)
+    })
+  }
+  fm <- eval(bquote(rate ~ 0 + nl(~ Vm * conc / (K + conc),
+                                  links = list(Vm = linkfunctions7::log_link(),
+                                               K = linkfunctions7::log_link()),
+                                  start = list(Vm = 150, K = 0.1),
+                                  curvature = .(cv))))
+  f <- statmod(fm, distributions7::gaussian1_distrib(), data = puro,
+               outer_criterion = NULL)
+  cnt <- Reduce(`+`, lapply(runs, function(r) r$curvature))
+  list(fit = f, curvature = cnt, runs = runs)
+}
+
+test_that("without a filter the three settings reach the same mode", {
+  r <- lapply(c(auto = "auto", full = "full", gn = "gauss_newton"),
+              nl_iwls_fit)
+  cf <- lapply(r, function(x) unlist(x$fit@coefficients))
+  expect_lt(max(abs(cf$full - cf$gn)), 1e-6)
+  expect_lt(max(abs(cf$auto - cf$gn)), 1e-6)
+  # the full step is taken first under "full" and "auto", never under
+  # "gauss_newton", and no line search failed
+  expect_gt(r$full$curvature[["full"]], 0L)
+  expect_identical(r$auto$curvature, r$full$curvature)
+  expect_identical(r$gn$curvature, c(full = 0L, search = 0L))
+})
+
+test_that("without a filter a failed full step falls back to scoring", {
+  ra <- nl_iwls_fit("auto", fail_full = TRUE)
+  rf <- nl_iwls_fit("full", fail_full = TRUE)
+  rg <- nl_iwls_fit("gauss_newton")
+  # "auto" leaves the full step after its first failure in each run;
+  # "full" tries it at every iteration and takes the scoring step instead
+  fails_a <- vapply(ra$runs, function(r) r$curvature[["search"]], integer(1))
+  expect_true(all(fails_a <= 1L))
+  expect_gt(sum(fails_a), 0L)
+  expect_identical(ra$curvature[["full"]], 0L)
+  fails_f <- vapply(rf$runs, function(r) r$curvature[["search"]], integer(1))
+  expect_gt(max(fails_f), 1L)
+  expect_identical(rf$curvature[["full"]], 0L)
+  # the scoring steps reach the mode of "gauss_newton"
+  cg <- unlist(rg$fit@coefficients)
+  expect_lt(max(abs(unlist(ra$fit@coefficients) - cg)), 1e-6)
+  expect_lt(max(abs(unlist(rf$fit@coefficients) - cg)), 1e-6)
 })

@@ -40,6 +40,9 @@ solve left out, \code{integer(0)} for an \pkg{optimizers7} method.}
 run stopped where it did not stop on its rule, or that it was read
 as converged by the dimensionless rule, and \code{NULL} otherwise; \code{NULL}
 for an \pkg{optimizers7} method.}
+\item{\code{curvature}}{for \code{\link[=iwls]{iwls()}}, the counts of the step on the full
+curvature of the \code{\link[modelterms7:nl]{modelterms7::nl()}} blocks that \code{\link[=iwls_fit]{iwls_fit()}}
+returns; absent for an \pkg{optimizers7} method.}
 }
 }
 \description{

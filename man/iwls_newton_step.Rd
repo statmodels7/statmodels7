@@ -4,7 +4,7 @@
 \alias{iwls_newton_step}
 \title{One Newton Step on the Full Hessian and Its Line Search}
 \usage{
-iwls_newton_step(obj, beta, value, g, H, frozen, halvings)
+iwls_newton_step(obj, beta, value, g, H, frozen, halvings, exact = FALSE)
 }
 \arguments{
 \item{obj}{The objective.}
@@ -20,6 +20,8 @@ iwls_newton_step(obj, beta, value, g, H, frozen, halvings)
 \item{frozen}{The held positions.}
 
 \item{halvings}{The budget of step halvings.}
+
+\item{exact}{Whether a positive definite Hessian is used unmodified.}
 }
 \value{
 \code{NULL} where the Hessian is not usable, and otherwise a list of
@@ -37,6 +39,11 @@ replaced by their absolute values and floored at \eqn{10^{-8}} times the
 largest, which keeps the increment a descent direction. The repair
 differs from the one of \code{\link[optimizers7:newton]{optimizers7::newton()}}, which raises each
 eigenvalue below the floor to the floor without taking absolute values.
+
+With \code{exact = TRUE} a Cholesky factorization is tried first, and where it
+succeeds the increment is the Newton step on the unmodified Hessian, as in
+\code{\link[optimizers7:newton]{optimizers7::newton()}}; the repair is applied only where the
+factorization fails.
 }
 \seealso{
 \code{\link[=iwls_fit]{iwls_fit()}}, its caller.
