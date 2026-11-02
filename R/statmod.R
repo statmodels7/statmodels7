@@ -3401,6 +3401,20 @@ joint_smoother_diag <- function(spec, coef, design, hyper, expected = FALSE,
         !identical(dim(K), dim(M))) {
       NULL
     } else {
+      # a coefficient that a term holds (a held break-point's slot, a row of
+      # zeros) counts one, as on the coefficient route below; left in, its
+      # zero row made the joint matrix singular and the count missing
+      hp <- term_held_stack(spec, design)
+      if (length(hp)) {
+        K <- as_dense(K)
+        M <- as_dense(M)
+        K[hp, ] <- 0
+        K[, hp] <- 0
+        K[cbind(hp, hp)] <- 1
+        M[hp, ] <- 0
+        M[, hp] <- 0
+        M[cbind(hp, hp)] <- 1
+      }
       # solve_pd for the reason the coefficient route gives: a smoothing
       # parameter a criterion sends to 1e15 separates the scales without
       # flattening a direction, and its equilibrated test forgives that.

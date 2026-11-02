@@ -954,9 +954,9 @@ structural_refresh_second <- function(spec, design, coef, jd, M, rm, bhat) {
 #'
 #' @description
 #' Returns `TRUE` where every term that recomputes its block is one for which
-#' [structural_refresh_second()] has been verified: [modelterms7::nl()] and
-#' [modelterms7::seg()], smoothed or not. [modelterms7::jump()],
-#' [modelterms7::jseg()] and other terms answer `FALSE`.
+#' [structural_refresh_second()] has been verified: [modelterms7::nl()],
+#' [modelterms7::seg()], [modelterms7::jump()] and [modelterms7::jseg()],
+#' smoothed or not. Other terms answer `FALSE`.
 #'
 #' @param design The design.
 #'
@@ -971,7 +971,7 @@ refresh_order2_ok <- function(design) {
   for (r in rf) {
     tm <- st$terms[[r$param]][[r$term]]
     ok <- S7::S7_inherits(tm, modelterms7::NlTerm) ||
-      (S7::S7_inherits(tm, modelterms7::SegTerm) && identical(tm@kind, "seg"))
+      S7::S7_inherits(tm, modelterms7::SegTerm)
     if (!isTRUE(ok)) return(FALSE)
   }
   TRUE

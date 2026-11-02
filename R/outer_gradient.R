@@ -299,12 +299,11 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
     tm <- structural_term_of(spec, design)
     if (is.null(tm) || !answers_term_fourth(tm)) return(FALSE)
     # a block that moves with its coefficients beside the filter is read at
-    # order 2 by structural_refresh_second(), verified for nl() and seg()
-    # (smoothed and sharp): against Richardson of the exact gradient with the
-    # mode refitted, 1.6e-11 to 3.7e-09, where leaving the block's movement
-    # out was 2.4e-03 (negbin2) and 7.6e-03 (gaussian) out. jump(), jseg()
-    # and the other terms that recompute a block keep the difference of the
-    # exact gradient
+    # order 2 by structural_refresh_second(), verified for nl(), seg(),
+    # jump() and jseg() (smoothed and sharp): against Richardson of the exact
+    # gradient with the mode refitted, 6.8e-12 to 3.7e-09, where leaving the
+    # block's movement out was 5.0e-04 to 2.7e-02 out. Other terms that
+    # recompute a block keep the difference of the exact gradient
     if (!refresh_order2_ok(design)) return(FALSE)
   }
   if (structural_penalized(spec, design)) {
@@ -1552,9 +1551,27 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
   K <- tryCatch(statmod_marginal_full(spec, design, coef, hyper, NULL),
                 error = function(e) NULL)
   if (is.null(K)) return(NULL)
+  # the coordinates that the criterion's value leaves out of its determinant
+  # (statmod_marginal()), a break-point that jump() holds among them: they
+  # are constant, so the mode does not move in them and M is zero there.
+  # Without this the held break-point's zero row left K singular and the
+  # gradient missing beside a penalized filter
+  K0 <- K
+  K <- pin_boundary(K, if (is.null(basis)) laplace_pinned(spec, design)
+                       else integer(0))
+  held <- attr(K, "held_at")
+  # the mode moves in every coordinate except the constant ones: a kinked
+  # coefficient away from zero is left out of the determinant but moves
+  # (ctx_penalized()), as before
+  fixed <- setdiff(held, setdiff(kinked_coords(spec, design),
+                                 zero_kinked(spec, design, coef)))
   Kfac <- tryCatch(chol(K), error = function(e) NULL)
   if (is.null(Kfac)) return(NULL)
   Kinv <- chol2inv(Kfac)
+  if (length(held)) {
+    Kinv[held, ] <- 0
+    Kinv[, held] <- 0
+  }
   sst <- statmod_structural_state(design)
   keyt <- jd$f$term
   freep <- setdiff(jd$zn, sst$held[[keyt]])
@@ -1573,13 +1590,25 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
   # curvature, which carries the block's second derivative, and K moves with
   # the block (structural_refresh_move())
   rm <- structural_refresh_move(spec, design, coef, jd)
-  msolve <- if (is.null(rm)) function(c) as.numeric(Kinv %*% c) else {
-    Km <- K
-    Km[seq_len(jd$nb), seq_len(jd$nb)] <- Km[seq_len(jd$nb), seq_len(jd$nb)] +
-      rm$Dm
+  msolve <- if (is.null(rm) && identical(fixed, held)) {
+    function(c) as.numeric(Kinv %*% c)
+  } else {
+    Km <- K0
+    if (!is.null(rm)) {
+      Km[seq_len(jd$nb), seq_len(jd$nb)] <-
+        Km[seq_len(jd$nb), seq_len(jd$nb)] + rm$Dm
+    }
+    if (length(fixed)) {
+      Km[fixed, ] <- 0
+      Km[, fixed] <- 0
+      Km[cbind(fixed, fixed)] <- 1
+    }
     Kmf <- tryCatch(chol(Km), error = function(e) NULL)
     if (is.null(Kmf)) return(NULL)
-    function(c) as.numeric(backsolve(Kmf, forwardsolve(t(Kmf), c)))
+    function(c) {
+      c[fixed] <- 0
+      as.numeric(backsolve(Kmf, forwardsolve(t(Kmf), c)))
+    }
   }
   flat <- unlist(coef[params], use.names = FALSE)
   # the joint twin of penalty_dbeta_trace(): every penalty whose Hessian moves

@@ -176,13 +176,31 @@ test_that("the outer Hessian is exact beside a recomputed block", {
   m <- reml(information = observed_info())
   expect_true(outer_gradient_ok(k$sp, des, idx, m, 1L))
   expect_true(outer_gradient_ok(k$sp, des, idx, m, 2L))
-  # jump() keeps the difference of the exact gradient at order 2
+})
+
+test_that("a held break-point beside a penalized filter leaves K", {
+  # jump() holds its break-point's slot, whose row of K is zero; the
+  # criterion's value leaves it out of the determinant, and so do the
+  # gradient, the Hessian and the joint smoother
   kj <- structural_refresh_case(
     y ~ jump(xs) + gas(p = 1, q = 1, omega ~ random(~ 1 | id), time = t,
                        by = id),
     distributions7::gaussian1_distrib())
-  idj <- outer_hyper_index(kj$sp, statmod_blocks(kj$sp, kj$des))
-  expect_false(outer_gradient_ok(kj$sp, kj$des, idj, m, 2L))
+  sp <- kj$sp
+  des <- kj$des
+  cf <- kj$cf_at(kj$u)
+  hy <- kj$f@hyper
+  m <- reml(information = observed_info())
+  idj <- outer_hyper_index(sp, statmod_blocks(sp, des))
+  expect_true(length(term_held_stack(sp, des)) > 0)
+  expect_true(outer_gradient_ok(sp, des, idj, m, 2L))
+  g <- statmod_structural_grad(sp, des, cf, hy, m, idj)
+  expect_true(!is.null(g) && all(is.finite(g)))
+  h <- statmod_structural_hess(sp, des, cf, hy, m, idj)
+  expect_true(!is.null(h) && all(is.finite(h)))
+  js <- joint_smoother_diag(sp, cf, des, hy)
+  expect_false(isTRUE(js$failed))
+  expect_equal(unname(js$beta[term_held_stack(sp, des)]), 1)
 })
 
 test_that("beside an unpenalized filter the mode moves by the total score", {

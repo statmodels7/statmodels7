@@ -1932,9 +1932,27 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
   K <- tryCatch(statmod_marginal_full(spec, design, coef, hyper, NULL),
                 error = function(e) NULL)
   if (is.null(K)) return(NULL)
+  # the coordinates that the criterion's value leaves out of its determinant
+  # (statmod_marginal()), a break-point that jump() holds among them: they
+  # are constant, so the mode does not move in them and M is zero there.
+  # Without this the held break-point's zero row left K singular and the
+  # gradient missing beside a penalized filter
+  K0 <- K
+  K <- pin_boundary(K, if (is.null(basis)) laplace_pinned(spec, design)
+                       else integer(0))
+  held <- attr(K, "held_at")
+  # the mode moves in every coordinate except the constant ones: a kinked
+  # coefficient away from zero is left out of the determinant but moves
+  # (ctx_penalized()), as before
+  fixed <- setdiff(held, setdiff(kinked_coords(spec, design),
+                                 zero_kinked(spec, design, coef)))
   Kfac <- tryCatch(chol(K), error = function(e) NULL)
   if (is.null(Kfac)) return(NULL)
   Kinv <- chol2inv(Kfac)
+  if (length(held)) {
+    Kinv[held, ] <- 0
+    Kinv[, held] <- 0
+  }
   sst <- statmod_structural_state(design)
   keyt <- jd$f$term
   freep <- setdiff(jd$zn, sst$held[[keyt]])
@@ -1965,14 +1983,25 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
   # moves with the block (structural_refresh_second())
   rm <- structural_refresh_move(spec, design, coef, jd)
   Kmode <- K
-  if (is.null(rm)) {
+  if (is.null(rm) && identical(fixed, held)) {
     msolve <- function(z) as.numeric(Kinv %*% z)
   } else {
-    ib <- seq_len(jd$nb)
-    Kmode[ib, ib] <- Kmode[ib, ib] + rm$Dm
+    Kmode <- K0
+    if (!is.null(rm)) {
+      ib <- seq_len(jd$nb)
+      Kmode[ib, ib] <- Kmode[ib, ib] + rm$Dm
+    }
+    if (length(fixed)) {
+      Kmode[fixed, ] <- 0
+      Kmode[, fixed] <- 0
+      Kmode[cbind(fixed, fixed)] <- 1
+    }
     Kmf <- tryCatch(chol(Kmode), error = function(e) NULL)
     if (is.null(Kmf)) return(NULL)
-    msolve <- function(z) as.numeric(backsolve(Kmf, forwardsolve(t(Kmf), z)))
+    msolve <- function(z) {
+      z[fixed] <- 0
+      as.numeric(backsolve(Kmf, forwardsolve(t(Kmf), z)))
+    }
   }
   bhat <- lapply(seq_len(nh), function(m) -msolve(pieces$c[[m]]))
   Tm <- lapply(bhat, function(v) structural_dk_matrix(spec, design, jd, st, v))
