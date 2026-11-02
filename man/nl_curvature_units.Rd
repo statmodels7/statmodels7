@@ -4,10 +4,13 @@
 \alias{nl_curvature_units}
 \title{The nl() Blocks Whose Full Curvature an Inner Fit Uses}
 \usage{
-nl_curvature_units(design)
+nl_curvature_units(design, all = FALSE)
 }
 \arguments{
 \item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
+
+\item{all}{\code{TRUE} to include the units whose setting is
+\code{"gauss_newton"} as well.}
 }
 \value{
 A list of units, possibly empty.

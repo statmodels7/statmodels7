@@ -9,6 +9,11 @@
   is left out of the outer gradient and Hessian, as it is left out of the
   criterion's determinant; the gradient was missing there. The degrees of
   freedom of the filter count the held coordinate as one.
+* The inner joint Newton of a model with a filter reads the block of an
+  `nl()` term at the coefficients, as its objective does; read as passed
+  since 0.238.1, the Gauss-Newton matrix was the Jacobian at the start of
+  the run, and `nl()` + `gas()` in mu with `theta ~ jfp(~ z)` took over
+  1800 s against 145 s.
 * The inner joint Newton of a model with a filter adds the curvature of an
   `nl()` block weighted by the total score, as its `curvature` setting
   specifies: always for `"full"`, never for `"gauss_newton"`, and for

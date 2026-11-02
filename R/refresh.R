@@ -461,11 +461,13 @@ statmod_fitted_spec <- function(spec, coef, design) {
 #' A term built before the setting existed is read as `"auto"`.
 #'
 #' @param design The design, as [statmod_design()] returns it.
+#' @param all `TRUE` to include the units whose setting is
+#'   `"gauss_newton"` as well.
 #'
 #' @return A list of units, possibly empty.
 #'
 #' @keywords internal
-nl_curvature_units <- function(design) {
+nl_curvature_units <- function(design, all = FALSE) {
   rf <- attr(design, "refresh")
   st <- attr(design, "state")
   if (!length(rf) || is.null(st)) return(list())
@@ -476,7 +478,7 @@ nl_curvature_units <- function(design) {
     if (is.null(tm) || !S7::S7_inherits(tm, modelterms7::NlTerm)) next
     cv <- tm@spec$curvature
     if (is.null(cv)) cv <- "auto"
-    if (identical(cv, "gauss_newton")) next
+    if (!all && identical(cv, "gauss_newton")) next
     r$curvature <- cv
     out[[length(out) + 1L]] <- r
   }

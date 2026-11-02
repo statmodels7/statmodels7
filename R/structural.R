@@ -1858,11 +1858,15 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
   # times the block's second derivative; beside a filter the weight is the
   # derivative in the static predictor, score and the filter's inverse step
   # (statmod_score_obs()). Measured on nl() in theta beside gas() in mu, the
-  # Gauss-Newton run took over 1200 s and the full one 10.5 s. The design is
-  # then read at the coefficients, as the objective reads it; a frozen block
-  # (a sharp jump() or jseg()) is not among these units, and with none of
-  # them the design is read as passed.
+  # Gauss-Newton run took over 1200 s and the full one 10.5 s.
   cu <- nl_curvature_units(design)
+  # THE BLOCK OF AN nl() TERM IS READ AT THE COEFFICIENTS, as the objective
+  # reads it (statmod_design_at()), whatever the setting: read as passed,
+  # its Gauss-Newton matrix was the Jacobian at the start of the run, and
+  # nl() + gas() in mu with theta ~ jfp(~ z) took over 1800 s against 129 s.
+  # A frozen block (a sharp jump() or jseg()) is not an nl() unit, and with
+  # none of them the design is read as passed (see 0.238.1)
+  nl_refresh <- length(nl_curvature_units(design, all = TRUE)) > 0L
   curv <- new.env(parent = emptyenv())
   curv$gauss_newton <- FALSE
   curv$fallbacks <- c(cholesky = 0L, search = 0L)
@@ -1908,7 +1912,7 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter",
     H <- statmod_full_information(spec, cf, design,
                                   info_expected(information),
                                   info_emethod(information),
-                                  refresh = length(cu) > 0L)
+                                  refresh = nl_refresh)
     P <- matrix(0, nrow(H), ncol(H))
     # as_dense() for the reason statmod_full_information() records: this
     # matrix spans the coefficients AND the term's own parameters, so it is
