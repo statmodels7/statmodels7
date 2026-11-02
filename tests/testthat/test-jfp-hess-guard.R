@@ -44,3 +44,57 @@ test_that("the observed outer Hessian beside jfp() checks order 2", {
   # the two routes read the same second derivative
   expect_lt(max(abs(H - Hs)) / max(abs(H)), 1e-5)
 })
+
+test_that("beside scs() without its own third derivative the Hessian falls back", {
+  set.seed(6)
+  n <- 200
+  d <- data.frame(z = stats::rbinom(n, 1, 0.3), x = stats::runif(n))
+  d$y <- stats::rpois(n, exp(0.3 + 1.2 * d$x^2 + 0.5 * d$z))
+  P <- distributions7::poisson_distrib()
+  fm <- y ~ modelterms7::scs(x, modelterms7::shape_increasing(),
+                             basis7::bspline_smooth(k = 5)) +
+    modelterms7::jfp(~ z)
+  method <- ml(information = observed_info())
+  fit0 <- statmod(fm, distrib = P, data = d, outer_criterion = NULL)
+  spec <- fit0@spec
+  design <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  basis <- integrated_basis(spec, design, method@kind)
+  cf <- fit0@coefficients
+  hy <- fit0@hyper
+  calls <- 0L
+  stencil <- statmod_hess_stencil
+  spy <- function(...) {
+    calls <<- calls + 1L
+    stencil(...)
+  }
+  hess <- function() testthat::with_mocked_bindings(
+    statmod_marginal_hess(spec, design, cf, hy, method, idx, basis),
+    statmod_hess_stencil = spy)
+  # scs() has its own term_block_deriv3(): the assembly answers
+  expect_true(jfp_outer_ok(spec, design, 2L))
+  H <- hess()
+  expect_identical(calls, 0L)
+  # its method removed, so that the class inherits the base one, which
+  # returns zeros
+  rf <- attr(design, "refresh")[[1L]]
+  cls <- S7::S7_class(attr(design, "state")$terms[[rf$param]][[rf$term]])
+  gen <- modelterms7::term_block_deriv3
+  own <- S7::method(gen, cls)
+  tab <- gen@methods
+  key <- Filter(function(k) identical(get(k, envir = tab), own), ls(tab))
+  expect_length(key, 1L)
+  rm(list = key, envir = tab)
+  on.exit(assign(key, own, envir = tab), add = TRUE)
+  expect_false(jfp_outer_ok(spec, design, 2L))
+  Hs <- hess()
+  expect_identical(calls, 1L)
+  expect_identical(Hs, stencil(spec, design, cf, hy, method, idx, basis))
+  # what the guard keeps out: the assembly on the base method's zeros
+  Hz <- testthat::with_mocked_bindings(
+    statmod_marginal_hess(spec, design, cf, hy, method, idx, basis),
+    jfp_outer_ok = function(spec, design, order = 1L) TRUE)
+  expect_gt(max(abs(Hz - H)) / max(abs(H)), 1e-4)
+  assign(key, own, envir = tab)
+  expect_true(jfp_outer_ok(spec, design, 2L))
+})
