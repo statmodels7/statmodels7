@@ -8,7 +8,17 @@ returns, where a term's block moves with its coefficients.
 ## Usage
 
 ``` r
-mode_curvature(spec, design, coef, params, npar, offs, total, gl = NULL)
+mode_curvature(
+  spec,
+  design,
+  coef,
+  params,
+  npar,
+  offs,
+  total,
+  gl = NULL,
+  units = NULL
+)
 ```
 
 ## Arguments
@@ -37,6 +47,11 @@ mode_curvature(spec, design, coef, params, npar, offs, total, gl = NULL)
   family's score on the link scale at `coef`. The Jeffreys engine
   ([`jfp_hessian()`](https://statmodels7.github.io/statmodels7/reference/jfp_hessian.md))
   passes its own weights here.
+
+- units:
+
+  The refreshable units to include, a subset of the design's `"refresh"`
+  attribute, or `NULL` (the default) for all of them.
 
 ## Value
 

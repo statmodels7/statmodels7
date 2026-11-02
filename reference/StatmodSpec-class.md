@@ -33,7 +33,8 @@ StatmodSpec(
   held_coef = list(),
   held_hyper = list(),
   threads = 1L,
-  cores = 1L
+  cores = 1L,
+  jeffreys = NA
 )
 ```
 
@@ -117,6 +118,14 @@ StatmodSpec(
   integer. It is distinct from `threads`, the number of threads inside
   one process.
 
+- jeffreys:
+
+  Whether a term of an equation, or a sub-term of one of its
+  subformulas, carries a
+  [`modelterms7::JeffreysPenalty()`](https://statmodels7.github.io/modelterms7/reference/JeffreysPenalty.html),
+  a single logical; `NA`, the default, where it has not been read from
+  `terms`.
+
 ## Value
 
 An object of class `StatmodSpec` with one property per argument above
@@ -131,7 +140,10 @@ name, empty by default. `held_hyper` holds hyperparameters at a value,
 by term and name, empty by default. `threads` and `cores` hold the
 thread and process counts that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-sets.
+sets. `jeffreys` is set by
+[`statmod_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_spec.md)
+and read by
+[`spec_jeffreys()`](https://statmodels7.github.io/statmodels7/reference/jfp_in_terms.md).
 
 ## See also
 

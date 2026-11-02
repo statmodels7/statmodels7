@@ -1,5 +1,43 @@
 # Changelog
 
+## statmodels7 0.240.0
+
+- The outer criterion beside a filter and a term that recomputes its
+  block (`nl()`, `seg()`, `jump()`, `jseg()`) reads the block at the
+  coefficients, and its gradient and Hessian are exact: the mode moves
+  by the full curvature, weighted by the total derivative in the static
+  predictor, and the information moves with the block’s rows.
+- Beside a penalized filter, the break-point that `jump()` or `jseg()`
+  holds is left out of the outer gradient and Hessian, as it is left out
+  of the criterion’s determinant; the gradient was missing there. The
+  degrees of freedom of the filter count the held coordinate as one.
+- The inner joint Newton of a model with a filter reads the block of an
+  `nl()` term at the coefficients, as its objective does; read as passed
+  since 0.238.1, the Gauss-Newton matrix was the Jacobian at the start
+  of the run, and `nl()` + `gas()` in mu with `theta ~ jfp(~ z)` took
+  over 1800 s against 145 s.
+- The inner joint Newton of a model with a filter adds the curvature of
+  an `nl()` block weighted by the total score, as its `curvature`
+  setting specifies: always for `"full"`, never for `"gauss_newton"`,
+  and for `"auto"` until a line search finds no acceptable step on the
+  full matrix, after which the run continues on the Gauss-Newton matrix.
+- Without a filter, the inner scoring fit takes first the Newton step on
+  the full curvature of an `nl()` block whose `curvature` setting is
+  `"full"` or `"auto"`, on the coordinates that the scoring solve does
+  not leave out as aliased; where its line search fails the iteration
+  takes the scoring step, and `"auto"` keeps the scoring step for the
+  rest of the run. `"gauss_newton"` is the fit as before. On the
+  nonlinear models of the book the three settings reach the same mode;
+  Theoph with two random effects 126 inner iterations with
+  `"gauss_newton"` and 37 with `"full"`.
+- A model without a
+  [`modelterms7::jfp()`](https://statmodels7.github.io/modelterms7/reference/jfp.html)
+  block no longer enumerates its penalties for a Jeffreys block at every
+  evaluation of the objective; the specification records once whether it
+  carries one. An `scs()` fit with a factor `by` takes 7.1 s where it
+  took 8.9 s, with identical coefficients.
+- modelterms7 0.129.0 is the minimum version (`nl(curvature =)`).
+
 ## statmodels7 0.239.0
 
 - [`statmod_leverage()`](https://statmodels7.github.io/statmodels7/reference/statmod_leverage.md)

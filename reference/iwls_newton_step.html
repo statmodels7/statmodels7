@@ -11,7 +11,7 @@ budget of halvings is spent."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.240.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ budget of halvings is spent.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_newton_step</span><span class="op">(</span><span class="va">obj</span>, <span class="va">beta</span>, <span class="va">value</span>, <span class="va">g</span>, <span class="va">H</span>, <span class="va">frozen</span>, <span class="va">halvings</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_newton_step</span><span class="op">(</span><span class="va">obj</span>, <span class="va">beta</span>, <span class="va">value</span>, <span class="va">g</span>, <span class="va">H</span>, <span class="va">frozen</span>, <span class="va">halvings</span>, exact <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -82,6 +82,10 @@ budget of halvings is spent.</p>
 <dt id="arg-halvings">halvings<a class="anchor" aria-label="anchor" href="#arg-halvings"></a></dt>
 <dd><p>The budget of step halvings.</p></dd>
 
+
+<dt id="arg-exact">exact<a class="anchor" aria-label="anchor" href="#arg-exact"></a></dt>
+<dd><p>Whether a positive definite Hessian is used unmodified.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -96,6 +100,10 @@ replaced by their absolute values and floored at \(10^{-8}\) times the
 largest, which keeps the increment a descent direction. The repair
 differs from the one of <code><a href="https://statmodels7.github.io/optimizers7/reference/newton.html" class="external-link">optimizers7::newton()</a></code>, which raises each
 eigenvalue below the floor to the floor without taking absolute values.</p>
+<p>With <code>exact = TRUE</code> a Cholesky factorization is tried first, and where it
+succeeds the increment is the Newton step on the unmodified Hessian, as in
+<code><a href="https://statmodels7.github.io/optimizers7/reference/newton.html" class="external-link">optimizers7::newton()</a></code>; the repair is applied only where the
+factorization fails.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -397,6 +397,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/jfp_first_weights.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/jfp_gradient.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/jfp_hessian.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/jfp_in_terms.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/jfp_joint_extra.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/jfp_joint_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/jfp_joint_sparse.html</loc></url>
@@ -500,6 +501,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/nested_prepare.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/nested_prior.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/nested_random_terms.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/nl_curvature_units.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/nobs.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/null_basis.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/null_coordinates.html</loc></url>
@@ -720,6 +722,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_direction.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_hessian.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_mode_third.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_order2_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_units.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/regime_entry.html</loc></url>
@@ -918,6 +921,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/stop_cv_nothing.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/strip_labeller.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_blocks4.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_blocks_data.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_callbacks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.html</loc></url>
@@ -939,6 +943,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_psi.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_range_cols.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_refresh_move.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_refresh_second.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_se_columns.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_start_fixups.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_tail_names.html</loc></url>

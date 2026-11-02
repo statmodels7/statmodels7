@@ -11,7 +11,7 @@ coefficients and the history of the run."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.240.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,8 @@ coefficients and the history of the run.</p>
 <span>  newton_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  switch_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  switch_after <span class="op">=</span> <span class="cn">Inf</span>,</span>
-<span>  guard <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  guard <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  full_at <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -174,12 +175,29 @@ raises an error is read as a rejected step, also where there is no
 moves with its coefficients, where a long step can carry the predictor
 out of the range in which the family is defined.</p></dd>
 
+
+<dt id="arg-full-at">full_at<a class="anchor" aria-label="anchor" href="#arg-full-at"></a></dt>
+<dd><p><code>NULL</code>, or a function of the coefficients and of a logical
+<code>gauss_newton</code> returning the Hessian on which the step is taken first:
+the curvature of <code>newton_at</code> restricted to the <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>
+blocks whose setting <code>curvature</code> is <code>"full"</code> or <code>"auto"</code>, or, with
+<code>gauss_newton = TRUE</code>, to the <code>"full"</code> blocks alone; <code>NULL</code> where no
+block remains. Where it returns a matrix the Newton step on it is taken
+by <code><a href="iwls_newton_step.html">iwls_newton_step()</a></code> before the scoring step, on the coordinates that
+the scoring solve does not leave out as aliased. Where that step finds no
+acceptable length the iteration takes the scoring step, and the run
+continues with <code>gauss_newton = TRUE</code>, so the <code>"auto"</code> blocks carry the
+scoring curvature from there on.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of ten: the six below; <code>note</code>, the reason for which a run
+    <p>A list of eleven: the six below; <code>note</code>, the reason for which a run
 stopped or <code>NULL</code>; <code>aliased</code>, the coordinates that the pivot left out;
-<code>switched</code>, the iteration at which the run moved to <code>switch_at</code>, or 0; and
+<code>switched</code>, the iteration at which the run moved to <code>switch_at</code>, or 0;
+<code>curvature</code>, a named integer vector of two counts, <code>full</code> the number of
+iterations at which the step on <code>full_at</code> was taken and <code>search</code> the
+number at which its line search found no acceptable length; and
 <code>fallback</code>, a named integer vector of four counts. The count <code>indefinite</code>
 is the number of iterations at which the observed penalized information was
 not positive definite, <code>search</code> the number at which the expected pieces

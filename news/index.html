@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.240.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,16 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.240.0" id="statmodels7-02400">statmodels7 0.240.0<a class="anchor" aria-label="anchor" href="#statmodels7-02400"></a></h2>
+<ul><li>The outer criterion beside a filter and a term that recomputes its block (<code>nl()</code>, <code>seg()</code>, <code>jump()</code>, <code>jseg()</code>) reads the block at the coefficients, and its gradient and Hessian are exact: the mode moves by the full curvature, weighted by the total derivative in the static predictor, and the information moves with the block’s rows.</li>
+<li>Beside a penalized filter, the break-point that <code>jump()</code> or <code>jseg()</code> holds is left out of the outer gradient and Hessian, as it is left out of the criterion’s determinant; the gradient was missing there. The degrees of freedom of the filter count the held coordinate as one.</li>
+<li>The inner joint Newton of a model with a filter reads the block of an <code>nl()</code> term at the coefficients, as its objective does; read as passed since 0.238.1, the Gauss-Newton matrix was the Jacobian at the start of the run, and <code>nl()</code> + <code>gas()</code> in mu with <code>theta ~ jfp(~ z)</code> took over 1800 s against 145 s.</li>
+<li>The inner joint Newton of a model with a filter adds the curvature of an <code>nl()</code> block weighted by the total score, as its <code>curvature</code> setting specifies: always for <code>"full"</code>, never for <code>"gauss_newton"</code>, and for <code>"auto"</code> until a line search finds no acceptable step on the full matrix, after which the run continues on the Gauss-Newton matrix.</li>
+<li>Without a filter, the inner scoring fit takes first the Newton step on the full curvature of an <code>nl()</code> block whose <code>curvature</code> setting is <code>"full"</code> or <code>"auto"</code>, on the coordinates that the scoring solve does not leave out as aliased; where its line search fails the iteration takes the scoring step, and <code>"auto"</code> keeps the scoring step for the rest of the run. <code>"gauss_newton"</code> is the fit as before. On the nonlinear models of the book the three settings reach the same mode; Theoph with two random effects 126 inner iterations with <code>"gauss_newton"</code> and 37 with <code>"full"</code>.</li>
+<li>A model without a <code><a href="https://statmodels7.github.io/modelterms7/reference/jfp.html" class="external-link">modelterms7::jfp()</a></code> block no longer enumerates its penalties for a Jeffreys block at every evaluation of the objective; the specification records once whether it carries one. An <code>scs()</code> fit with a factor <code>by</code> takes 7.1 s where it took 8.9 s, with identical coefficients.</li>
+<li>modelterms7 0.129.0 is the minimum version (<code>nl(curvature =)</code>).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.239.0" id="statmodels7-02390">statmodels7 0.239.0<a class="anchor" aria-label="anchor" href="#statmodels7-02390"></a></h2>
 <ul><li>

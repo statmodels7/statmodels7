@@ -89,6 +89,16 @@ A list with the following elements:
   rule, or that it was read as converged by the dimensionless rule, and
   `NULL` otherwise; `NULL` for an optimizers7 method.
 
+- `curvature`:
+
+  for
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
+  the counts of the step on the full curvature of the
+  [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
+  blocks that
+  [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
+  returns; absent for an optimizers7 method.
+
 ## Details
 
 The objective handed to the optimizer is the full one restricted to

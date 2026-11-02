@@ -23,7 +23,8 @@ iwls_fit(
   newton_at = NULL,
   switch_at = NULL,
   switch_after = Inf,
-  guard = FALSE
+  guard = FALSE,
+  full_at = NULL
 )
 ```
 
@@ -152,12 +153,32 @@ iwls_fit(
   coefficients, where a long step can carry the predictor out of the
   range in which the family is defined.
 
+- full_at:
+
+  `NULL`, or a function of the coefficients and of a logical
+  `gauss_newton` returning the Hessian on which the step is taken first:
+  the curvature of `newton_at` restricted to the
+  [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
+  blocks whose setting `curvature` is `"full"` or `"auto"`, or, with
+  `gauss_newton = TRUE`, to the `"full"` blocks alone; `NULL` where no
+  block remains. Where it returns a matrix the Newton step on it is
+  taken by
+  [`iwls_newton_step()`](https://statmodels7.github.io/statmodels7/reference/iwls_newton_step.md)
+  before the scoring step, on the coordinates that the scoring solve
+  does not leave out as aliased. Where that step finds no acceptable
+  length the iteration takes the scoring step, and the run continues
+  with `gauss_newton = TRUE`, so the `"auto"` blocks carry the scoring
+  curvature from there on.
+
 ## Value
 
-A list of ten: the six below; `note`, the reason for which a run stopped
-or `NULL`; `aliased`, the coordinates that the pivot left out;
+A list of eleven: the six below; `note`, the reason for which a run
+stopped or `NULL`; `aliased`, the coordinates that the pivot left out;
 `switched`, the iteration at which the run moved to `switch_at`, or 0;
-and `fallback`, a named integer vector of four counts. The count
+`curvature`, a named integer vector of two counts, `full` the number of
+iterations at which the step on `full_at` was taken and `search` the
+number at which its line search found no acceptable length; and
+`fallback`, a named integer vector of four counts. The count
 `indefinite` is the number of iterations at which the observed penalized
 information was not positive definite, `search` the number at which the
 expected pieces stepped in for a step that found no acceptable point,

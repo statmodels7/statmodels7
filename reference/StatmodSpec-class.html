@@ -21,7 +21,7 @@ validates. This raw constructor takes the pieces already made."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.240.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,8 @@ validates. This raw constructor takes the pieces already made.</p>
 <span>  held_coef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  held_hyper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  threads <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  cores <span class="op">=</span> <span class="fl">1L</span></span>
+<span>  cores <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  jeffreys <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -164,6 +165,12 @@ default.</p></dd>
 a cross-validation and of a kinked path's product grid, a single integer.
 It is distinct from <code>threads</code>, the number of threads inside one process.</p></dd>
 
+
+<dt id="arg-jeffreys">jeffreys<a class="anchor" aria-label="anchor" href="#arg-jeffreys"></a></dt>
+<dd><p>Whether a term of an equation, or a sub-term of one of its
+subformulas, carries a <code><a href="https://statmodels7.github.io/modelterms7/reference/JeffreysPenalty.html" class="external-link">modelterms7::JeffreysPenalty()</a></code>, a single logical;
+<code>NA</code>, the default, where it has not been read from <code>terms</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -176,7 +183,8 @@ that a respecification reads, <code>NULL</code> until <code><a href="statmod_res
 set them. <code>held_coef</code> holds coefficients held at a value, by name, empty
 by default. <code>held_hyper</code> holds hyperparameters at a value, by term and
 name, empty by default. <code>threads</code> and <code>cores</code> hold the thread and process counts
-that <code><a href="statmod.html">statmod()</a></code> sets.</p>
+that <code><a href="statmod.html">statmod()</a></code> sets. <code>jeffreys</code> is set by <code><a href="statmod_spec.html">statmod_spec()</a></code> and read by
+<code><a href="jfp_in_terms.html">spec_jeffreys()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

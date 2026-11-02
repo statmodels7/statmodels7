@@ -11,7 +11,7 @@ statmod_alternate()."><meta property="og:image" content="https://statmodels7.git
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.239.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.240.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,6 +116,11 @@ solve left out, <code>integer(0)</code> for an <span class="pkg">optimizers7</sp
 run stopped where it did not stop on its rule, or that it was read
 as converged by the dimensionless rule, and <code>NULL</code> otherwise; <code>NULL</code>
 for an <span class="pkg">optimizers7</span> method.</p></dd>
+
+<dt><code>curvature</code></dt>
+<dd><p>for <code><a href="iwls.html">iwls()</a></code>, the counts of the step on the full
+curvature of the <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> blocks that <code><a href="iwls_fit.html">iwls_fit()</a></code>
+returns; absent for an <span class="pkg">optimizers7</span> method.</p></dd>
 
 
 </dl></div>

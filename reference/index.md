@@ -1590,6 +1590,10 @@ helper functions. Using the package does not require any of it.
 - [`jfp_hessian()`](https://statmodels7.github.io/statmodels7/reference/jfp_hessian.md)
   : The Hessian of the Jeffreys Penalty in the Joint Vector
 
+- [`jfp_in_terms()`](https://statmodels7.github.io/statmodels7/reference/jfp_in_terms.md)
+  [`spec_jeffreys()`](https://statmodels7.github.io/statmodels7/reference/jfp_in_terms.md)
+  : Whether a Model Carries a Jeffreys Penalty
+
 - [`jfp_joint_extra()`](https://statmodels7.github.io/statmodels7/reference/jfp_joint_extra.md)
   : The Jeffreys Penalty Over a Filter's Own Parameters
 
@@ -1917,6 +1921,9 @@ helper functions. Using the package does not require any of it.
 
 - [`nested_random_terms()`](https://statmodels7.github.io/statmodels7/reference/nested_random_terms.md)
   : The Random-Effect Terms Written Inside a Subformula
+
+- [`nl_curvature_units()`](https://statmodels7.github.io/statmodels7/reference/nl_curvature_units.md)
+  : The nl() Blocks Whose Full Curvature an Inner Fit Uses
 
 - [`nobs(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/nobs.StatmodFit.md)
   : The Number of Observations in a Fitted Model
@@ -2460,6 +2467,9 @@ helper functions. Using the package does not require any of it.
 - [`refresh_mode_third()`](https://statmodels7.github.io/statmodels7/reference/refresh_mode_third.md)
   : How a Moving Block Enters the Mode's Second Movement
 
+- [`refresh_order2_ok()`](https://statmodels7.github.io/statmodels7/reference/refresh_order2_ok.md)
+  : Whether the Outer Hessian Reads Every Recomputed Block
+
 - [`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md)
   : The Terms Whose Block Moves With Their Coefficients
 
@@ -2990,6 +3000,9 @@ helper functions. Using the package does not require any of it.
 - [`strip_labeller()`](https://statmodels7.github.io/statmodels7/reference/strip_labeller.md)
   : The Headings of the Panels of a Graph
 
+- [`structural_blocks4()`](https://statmodels7.github.io/statmodels7/reference/structural_blocks4.md)
+  : The Fourth-Order Blocks of One Filter
+
 - [`structural_blocks_data()`](https://statmodels7.github.io/statmodels7/reference/structural_blocks_data.md)
   : The Same Pieces as Data for the Compiled Recursion
 
@@ -3059,6 +3072,9 @@ helper functions. Using the package does not require any of it.
 
 - [`structural_refresh_move()`](https://statmodels7.github.io/statmodels7/reference/structural_refresh_move.md)
   : A Recomputed Block Beside a Structural Term, in the Outer Gradient
+
+- [`structural_refresh_second()`](https://statmodels7.github.io/statmodels7/reference/structural_refresh_second.md)
+  : A Recomputed Block Beside a Structural Term, in the Outer Hessian
 
 - [`structural_se_columns()`](https://statmodels7.github.io/statmodels7/reference/structural_se_columns.md)
   : The Derivative Row of an Equation Carrying a Structural Term

@@ -7,7 +7,7 @@ budget of halvings is spent.
 ## Usage
 
 ``` r
-iwls_newton_step(obj, beta, value, g, H, frozen, halvings)
+iwls_newton_step(obj, beta, value, g, H, frozen, halvings, exact = FALSE)
 ```
 
 ## Arguments
@@ -40,6 +40,10 @@ iwls_newton_step(obj, beta, value, g, H, frozen, halvings)
 
   The budget of step halvings.
 
+- exact:
+
+  Whether a positive definite Hessian is used unmodified.
+
 ## Value
 
 `NULL` where the Hessian is not usable, and otherwise a list of `ok`,
@@ -55,6 +59,12 @@ differs from the one of
 [`optimizers7::newton()`](https://statmodels7.github.io/optimizers7/reference/newton.html),
 which raises each eigenvalue below the floor to the floor without taking
 absolute values.
+
+With `exact = TRUE` a Cholesky factorization is tried first, and where
+it succeeds the increment is the Newton step on the unmodified Hessian,
+as in
+[`optimizers7::newton()`](https://statmodels7.github.io/optimizers7/reference/newton.html);
+the repair is applied only where the factorization fails.
 
 ## See also
 
