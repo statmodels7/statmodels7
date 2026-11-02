@@ -13,7 +13,8 @@ statmod_full_information(
   coef,
   design = statmod_design(spec),
   expected = FALSE,
-  emethod = NULL
+  emethod = NULL,
+  refresh = TRUE
 )
 
 statmod_full_information_impl(
@@ -53,6 +54,12 @@ statmod_full_information_impl(
   The `method` of
   [`distributions7::expected_info()`](https://statmodels7.github.io/distributions7/reference/expected_info.html),
   read only where `expected` is `TRUE`.
+
+- refresh:
+
+  `TRUE` (the default) to read the block of a term that recomputes it at
+  `coef`; `FALSE` to read the design as passed, as the inner joint fit
+  does, whose objective holds the block for a pass.
 
 - params, ev:
 

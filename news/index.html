@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.238.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.238.1" id="statmodels7-02381">statmodels7 0.238.1<a class="anchor" aria-label="anchor" href="#statmodels7-02381"></a></h2>
+<ul><li>The inner joint fit of a model with a filter reads the design as passed in its Newton matrix, as before 0.238.0; the block of a term that recomputes it is read at the coefficients only by the outer criterion and its derivatives. A <code>jump()</code> beside <code>gas()</code> with <code>sigma ~ s(tt)</code> ran for hours in 0.238.0 and fits in 25 s again.</li>
+<li>Tests only: the test of a recomputed block beside a filter fits at the starting hyperparameters and moves the block’s own coefficients, where the platforms disagreed on a control near its threshold.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.238.0" id="statmodels7-02380">statmodels7 0.238.0<a class="anchor" aria-label="anchor" href="#statmodels7-02380"></a></h2>
 <ul><li>A <code><a href="https://statmodels7.github.io/modelterms7/reference/jfp.html" class="external-link">modelterms7::jfp()</a></code> block may sit in the subformula of <code>nl()</code>, of a smoothed <code>seg()</code> or of a parameter of <code>gas()</code>. Its rows are the columns of the term’s Jacobian, or the derivatives of the filtered predictors along the block’s directions. A block in the subformula of a filter’s level (omega) is rejected, because its prior grows without bound as the persistence approaches one. A sharp <code>seg()</code>, <code>jump()</code> and <code>jseg()</code> are still rejected.</li>

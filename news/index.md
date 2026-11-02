@@ -1,5 +1,16 @@
 # Changelog
 
+## statmodels7 0.238.1
+
+- The inner joint fit of a model with a filter reads the design as
+  passed in its Newton matrix, as before 0.238.0; the block of a term
+  that recomputes it is read at the coefficients only by the outer
+  criterion and its derivatives. A `jump()` beside `gas()` with
+  `sigma ~ s(tt)` ran for hours in 0.238.0 and fits in 25 s again.
+- Tests only: the test of a recomputed block beside a filter fits at the
+  starting hyperparameters and moves the block’s own coefficients, where
+  the platforms disagreed on a control near its threshold.
+
 ## statmodels7 0.238.0
 
 - A
