@@ -82,9 +82,8 @@ test_that("a random intercept does not hold the level", {
   # the two spellings of a level per cluster are one model: with the
   # intercept the level is held and the intercept is the population value;
   # without it the level carries the population value through the
-  # recursion. Under ml() they reach the same maximum. Under reml() they do
-  # not, because the intercept is integrated out as a fixed effect and the
-  # level is not (misure_jfp/by_omega/RISULTATI.md).
+  # recursion. Under ml() they reach the same maximum; under reml() too,
+  # which test-reml-free-level.R checks.
   fit_ml <- function(fm) statmod(fm, distributions7::gaussian1_distrib(), dp,
                                  outer_criterion = ml())
   a <- fit_ml(y ~ x + random(~ 1 | id) + gas(p = 1, q = 1, time = t,

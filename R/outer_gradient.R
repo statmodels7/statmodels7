@@ -101,6 +101,14 @@ NULL
 outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
                               gamma = FALSE) {
   if (!nrow(idx) && !isTRUE(gamma)) return(FALSE)
+  # a free level that reml() integrates beside a block that moves with its
+  # coefficients: u_refresh() reads the trace against the coefficients'
+  # block and has no term for the level's column, so the search runs
+  # without the gradient there
+  if (length(free_level_equations(spec, design, method)) &&
+      length(attr(design, "refresh"))) {
+    return(FALSE)
+  }
   # THE ORDER THE FAMILY CARRIES.  The exact gradient reads dK/dbeta, which is
   # the family's THIRD derivative, and the Hessian reads the fourth; a family
   # with fewer is not refused here, the search falling back on a difference,
@@ -711,6 +719,17 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   msolve <- ms$solve
   M <- ctx_trace_matrix(ctx, pen, basis, expected)
   if (is.null(M)) return(NULL)
+  # a free level that reml() integrates beside the coefficients: the
+  # determinant is of the matrix with the level's column appended
+  # (level_augmented()), so the traces read its inverse
+  lev <- level_augmented(ctx, spec, design0, coef, hyper, method, basis)
+  levp <- NULL
+  if (!is.null(lev)) {
+    if (!isTRUE(lev$ok)) return(NULL)
+    levp <- level_trace_pieces(lev, spec, design0, coef)
+    if (is.null(levp)) return(NULL)
+    M <- levp$Mb
+  }
   # ⚠️ THE CRITERION PINS A SATURATED COORDINATE, SO ITS GRADIENT MUST TOO.
   # pin_boundary() replaces the row and column of a coordinate whose curvature
   # is not finite by the identity's, so in the criterion that block is a
@@ -732,7 +751,9 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # parameter against the same leverage diagonal -- so only the array and the
   # key it is read by change.
   km <- ctx_kmove(ctx, spec, design, coef, hyper, method)
-  G <- ctx_leverage(ctx, design, M, params, npar, offs, spec@threads)
+  G <- if (is.null(levp)) {
+    ctx_leverage(ctx, design, M, params, npar, offs, spec@threads)
+  } else NULL
 
   # ⚠️ A FILTER THE DETERMINANT DOES NOT SPAN STILL MOVES WITH THE MODE.
   # With no penalty over its own parameters the criterion's K is over the
@@ -765,11 +786,20 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
     if (is.null(joint)) return(NULL)
     msolve <- joint$solve
   }
+  # the augmented contraction is written against the joint rows only
+  if (!is.null(levp) && is.null(joint)) return(NULL)
   u <- if (is.null(joint)) {
     u_vector(spec, design, coef, M, params, npar, offs, total,
              d3 = km$deriv, key = km$key, G = G) +
       u_refresh(spec, design, coef, M, params, npar, offs, total, expected,
                 ctx_emethod(ctx))
+  } else if (!is.null(levp)) {
+    # the augmented design's diagonals against the joint rows; the level's
+    # column is constant, so the rows are those of the coefficients and the
+    # filter, unchanged
+    u_vector(spec, design, coef, levp$M, params, levp$npar, levp$offs,
+             sum(levp$npar), d3 = km$deriv, key = km$key, G = levp$G,
+             rows = joint$rows)
   } else {
     uj <- u_vector(spec, design, coef, M, params, npar, offs, total,
                    d3 = km$deriv, key = km$key, G = G, rows = joint$rows)

@@ -244,6 +244,23 @@ outer_path_defaults <- function() {
 #' multivariate family the default names no parameter, and an explicit
 #' `marginal` other than `"none"` is an error.
 #'
+#' # A free structural level
+#'
+#' The level of [modelterms7::gas()], the first level of
+#' [modelterms7::regime()] and each level of a joint filter add a constant to
+#' their equation's predictor. Beside an intercept the level is held at zero
+#' and the intercept is integrated as an unpenalized coefficient. Where the
+#' level is free, `reml()` integrates it in the same way, as the constant that
+#' it adds to the predictor, which for [modelterms7::gas()] is the stationary
+#' level \eqn{\omega / (1 - \sum_j \xi_j)}. The two spellings
+#' `y ~ x + random(~ 1 | g) + gas(...)` and
+#' `y ~ 0 + x + random(~ 1 | g) + gas(...)` therefore give the same criterion
+#' and the same estimates. Where a penalty covers the term's own parameters,
+#' as in `gas(omega ~ random(~ 1 | g))`, the criterion integrates every free
+#' parameter of the term. A developed level contributes its constant
+#' coordinate only. `ml()` integrates the penalized directions and is not
+#' affected.
+#'
 #' # Which hyperparameters
 #'
 #' The criterion estimates the hyperparameters of the terms fitted in one
@@ -1190,6 +1207,19 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
     # gradient never reaches (every trial point of a line search) and there
     # is nothing to share at those. The cheap route below is sparse where the
     # matrix is, which serves the criterion-only points as well.
+    # A FREE STRUCTURAL LEVEL IS INTEGRATED AS THE CONSTANT IT ADDS to the
+    # predictor, one more column of ones in its equation, as an intercept is:
+    # y ~ x + random(~ 1 | g) + gas() and y ~ 0 + x + random(~ 1 | g) +
+    # gas() are one model, and with the level left out of the determinant
+    # their criteria differed by 0.16 at a common variance
+    # (misure_jfp/by_omega/RISULTATI.md, option 2)
+    lev <- level_augmented(ctx, spec, design, coef, hyper, method, basis)
+    if (!is.null(lev)) {
+      if (!isTRUE(lev$ok)) return(NULL)
+      return(list(value = ll - rho + lev$q / 2 * log(2 * pi) - lev$logdet / 2,
+                  loglik = ll, penalty = rho, logdet = lev$logdet,
+                  q = lev$q))
+    }
     H <- ctx_information(ctx, spec, design, coef, hyper, expected, emethod)
     # a Jeffreys curvature in two parts, the sparse one factored and the
     # product of low rank by the determinant lemma; NULL where the model
@@ -1239,6 +1269,225 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
   logdet <- ld$logdet
   list(value = ll - rho + q / 2 * log(2 * pi) - logdet / 2,
        loglik = ll, penalty = rho, logdet = logdet, q = q)
+}
+
+
+#' The Free Levels That reml() Integrates Beside the Coefficients
+#'
+#' @description
+#' Returns the equations whose structural level is free and is integrated by
+#' [reml()] as one more column of that equation's design, or `character(0)`
+#' where nothing is added.
+#'
+#' @details
+#' A score-driven level, the first level of [modelterms7::regime()] and each
+#' level of a joint filter add a constant to their equation's predictor.
+#' Where an intercept is present the level is held ([statmod_held_levels()])
+#' and the intercept is integrated as an unpenalized coefficient. Where the
+#' level is free, it plays the intercept's part, and the criterion integrates
+#' it in the same way: as the constant that it adds to the predictor, a
+#' column of ones in its equation. For [modelterms7::gas()] that constant is
+#' the stationary level \eqn{\omega / (1 - \sum_j \xi_j)}, so
+#' `y ~ x + random(~ 1 | g) + gas()` and `y ~ 0 + x + random(~ 1 | g) +
+#' gas()` give the same criterion at every hyperparameter.
+#'
+#' The rule applies to [reml()] on the route over the coefficients, where no
+#' penalty covers the term's own parameters; where one does,
+#' [statmod_marginal_full()] already integrates every free parameter of the
+#' term. [ml()] integrates the penalized directions only and is unchanged. A
+#' developed level contributes its constant coordinate, the one that
+#' [modelterms7::term_level_param()] names. A model carrying a Jeffreys
+#' penalty is left on its own route, whose curvature is factored in two
+#' parts.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param method An [OuterMethod()], or `NULL` to skip the check of its kind.
+#' @param basis The integrated subspace, `NULL` under [reml()].
+#'
+#' @return A character vector of distribution parameters, one per free level.
+#'
+#' @seealso [level_augmented()], [statmod_marginal()]
+#'
+#' @keywords internal
+free_level_equations <- function(spec, design, method = NULL, basis = NULL) {
+  if (!is.null(method) && !identical(method@kind, "reml")) {
+    return(character(0))
+  }
+  if (!is.null(basis)) return(character(0))
+  su <- attr(design, "structural")
+  sst <- statmod_structural_state(design)
+  if (is.null(sst) || length(su) != 1L) return(character(0))
+  if (structural_penalized(spec, design)) return(character(0))
+  if (any(vapply(statmod_penalized(spec, design), function(u)
+        isTRUE(u$jeffreys), logical(1)))) {
+    return(character(0))
+  }
+  key <- su[[1L]]$term
+  tm <- spec@terms[[su[[1L]]$param]][[key]]
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  lv <- intersect(modelterms7::term_level_param(tm), free)
+  if (!length(lv)) return(character(0))
+  # a joint filter prefixes each level with its equation; a single term's
+  # level sits in the term's own equation
+  if (is_joint_filter(tm)) {
+    vapply(lv, function(l)
+      tm@params[startsWith(l, paste0(tm@params, "."))][1L], character(1),
+      USE.NAMES = FALSE)
+  } else {
+    rep(su[[1L]]$param, length(lv))
+  }
+}
+
+
+#' The Criterion's Matrix With the Free Levels Appended
+#'
+#' @description
+#' Assembles the matrix of [reml()] over the coefficients followed by one
+#' column of ones per free level ([free_level_equations()]), factors it and
+#' returns the pieces that the criterion and its exact gradient read.
+#'
+#' @details
+#' The matrix is assembled as the coefficients' own is, on the static design:
+#' the information \eqn{-X'WX} with the family's second derivatives at the
+#' fitted predictors, plus the penalty's Hessian on the coefficients. The
+#' level's column is a column of ones in its equation, so its rows are the
+#' column sums of the weighted design blocks. The coordinates that
+#' [laplace_pinned()] names, and any with a non-finite curvature, are pinned
+#' as [statmod_marginal()] pins them.
+#'
+#' The result is cached in the evaluation context, so the criterion and its
+#' gradient factor the matrix once at a point.
+#'
+#' @param ctx An evaluation context from [outer_context()], or `NULL`.
+#' @param spec,design,coef,hyper,method,basis As for [statmod_marginal()].
+#'
+#' @return `NULL` where no level is appended. Otherwise a list with `ok`
+#'   (whether the determinant exists), `logdet`, `q`, `K` (the pinned matrix,
+#'   coefficients first), `eq` (the equation of each appended column),
+#'   `npar`, `offs` and `total` (the coefficients' bookkeeping).
+#'
+#' @seealso [free_level_equations()], [level_trace_pieces()]
+#'
+#' @keywords internal
+level_augmented <- function(ctx, spec, design, coef, hyper, method, basis) {
+  eq <- free_level_equations(spec, design, method, basis)
+  if (!length(eq)) return(NULL)
+  build <- function() {
+    params <- spec@distrib@params
+    de <- statmod_design_at(spec, coef, design)
+    npar <- vapply(de, function(d) d$npar, integer(1))
+    offs <- cumsum(npar) - npar
+    total <- sum(npar)
+    n <- spec@n_obs
+    w <- spec@weights
+    H <- as_dense(ctx_information(ctx, spec, design, coef, hyper, FALSE,
+                                  NULL))
+    S <- as_dense(ctx_penalty(ctx, spec, design, coef, hyper))
+    ev <- statmod_eta(spec, de, coef)
+    Hc <- if (length(ev$regimes)) {
+      regime_hessian_sum(spec, ev, FALSE, NULL)
+    } else {
+      statmod_family_hessian(spec, ev$theta, FALSE, NULL)
+    }
+    L <- length(eq)
+    C <- matrix(0, total, L)
+    D <- matrix(0, L, L)
+    for (j in seq_len(L)) {
+      pj <- match(eq[j], params)
+      for (a in seq_along(params)) {
+        if (npar[a] == 0L) next
+        wa <- w * rep_len(Hc[[hess_key(params, a, pj)]], n)
+        C[offs[a] + seq_len(npar[a]), j] <-
+          -as.numeric(crossprod(de[[params[a]]]$X, wa))
+      }
+      for (k in seq_len(L)) {
+        pk <- match(eq[k], params)
+        D[j, k] <- -sum(w * rep_len(Hc[[hess_key(params, pj, pk)]], n))
+      }
+    }
+    K <- rbind(cbind(H + S, C), cbind(t(C), D))
+    K <- pin_boundary(zap_nonfinite(K), laplace_pinned(spec, design))
+    held <- attr(K, "held")
+    ld <- pd_logdet(K)
+    list(ok = isTRUE(ld$ok), logdet = ld$logdet,
+         q = nrow(K) - (if (is.null(held)) 0L else held),
+         K = K, eq = eq, npar = npar, offs = offs, total = total)
+  }
+  if (!ctx_usable(ctx, coef, hyper)) return(build())
+  if (is.null(ctx$level_aug)) {
+    assign("level_aug", list(value = build()), envir = ctx)
+  }
+  ctx$level_aug$value
+}
+
+
+#' The Trace Pieces of the Gradient on the Matrix With the Free Levels
+#'
+#' @description
+#' Inverts the matrix of [level_augmented()] and returns what
+#' [statmod_marginal_grad()] traces against: the inverse over the
+#' coefficients, and the per-observation diagonals of the inverse on the
+#' design with the level columns appended.
+#'
+#' @details
+#' The determinant moves with the mode through the family's third
+#' derivative contracted with the per-observation diagonals
+#' \eqn{x_i' M x_i} of the augmented design, which is [u_vector()]'s formula
+#' with that design; the level's column is constant, so it has no derivative
+#' of its own. The penalty does not cover the level, so the traces against
+#' the penalty's derivatives read the coefficients' block of the inverse.
+#'
+#' @param lev The result of [level_augmented()].
+#' @param spec,design,coef As for [statmod_marginal_grad()].
+#'
+#' @return A list with `Mb` (the inverse over the coefficients), `M`, `G`,
+#'   `npar` and `offs` (the inverse, the diagonals and the bookkeeping on the
+#'   augmented design), or `NULL` where the matrix cannot be inverted.
+#'
+#' @seealso [level_augmented()], [block_leverage()]
+#'
+#' @keywords internal
+level_trace_pieces <- function(lev, spec, design, coef) {
+  ch <- tryCatch(chol(lev$K), error = function(e) NULL)
+  if (is.null(ch)) return(NULL)
+  Mt <- chol2inv(ch)
+  held <- attr(lev$K, "held_at")
+  if (length(held)) {
+    Mt[held, ] <- 0
+    Mt[, held] <- 0
+  }
+  params <- spec@distrib@params
+  de <- statmod_design_at(spec, coef, design)
+  n <- spec@n_obs
+  extra <- vapply(params, function(p) sum(lev$eq == p), integer(1))
+  npar2 <- lev$npar + extra
+  offs2 <- cumsum(npar2) - npar2
+  # the position of each row of Mt in the augmented design's own order: the
+  # coefficients of an equation, then its level's column
+  pos <- integer(nrow(Mt))
+  for (a in seq_along(params)) {
+    pos[lev$offs[a] + seq_len(lev$npar[a])] <- offs2[a] + seq_len(lev$npar[a])
+  }
+  for (j in seq_along(lev$eq)) {
+    a <- match(lev$eq[j], params)
+    pos[lev$total + j] <- offs2[a] + npar2[a]
+  }
+  M <- matrix(0, sum(npar2), sum(npar2))
+  M[pos, pos] <- Mt
+  d2 <- de
+  for (a in which(extra > 0L)) {
+    X <- d2[[params[a]]]$X
+    one <- matrix(1, n, 1L)
+    d2[[params[a]]]$X <- if (methods::is(X, "Matrix")) {
+      cbind(X, Matrix::Matrix(one, sparse = FALSE))
+    } else {
+      cbind(as_dense(X), one)
+    }
+  }
+  G <- block_leverage(d2, M, params, npar2, offs2, spec@threads)
+  list(Mb = Mt[seq_len(lev$total), seq_len(lev$total), drop = FALSE],
+       M = M, G = G, npar = npar2, offs = offs2)
 }
 
 

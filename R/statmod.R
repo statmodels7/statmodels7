@@ -193,6 +193,14 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' and one departure per group. A subformula written for \eqn{\omega} itself,
 #' `gas(omega ~ random(~ 1 | id), by = id)`, is kept in both cases.
 #'
+#' Under [reml()] a free level is integrated as the constant that it adds to
+#' the predictor, \eqn{\omega / (1 - \sum_j \xi_j)} for
+#' [modelterms7::gas()], as an intercept is integrated. The spellings
+#' `y ~ x + random(~ 1 | g) + gas(...)` and
+#' `y ~ 0 + x + random(~ 1 | g) + gas(...)` therefore give the same
+#' criterion, the same variance of the random intercepts and the same
+#' log-likelihood.
+#'
 #' # The fitting scheme
 #'
 #' The terms split in two by a property that each one already reports.

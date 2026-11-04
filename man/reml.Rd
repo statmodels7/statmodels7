@@ -195,6 +195,23 @@ multivariate family the default names no parameter, and an explicit
 \code{marginal} other than \code{"none"} is an error.
 }
 
+\section{A free structural level}{
+The level of \code{\link[modelterms7:gas]{modelterms7::gas()}}, the first level of
+\code{\link[modelterms7:regime]{modelterms7::regime()}} and each level of a joint filter add a constant to
+their equation's predictor. Beside an intercept the level is held at zero
+and the intercept is integrated as an unpenalized coefficient. Where the
+level is free, \code{reml()} integrates it in the same way, as the constant that
+it adds to the predictor, which for \code{\link[modelterms7:gas]{modelterms7::gas()}} is the stationary
+level \eqn{\omega / (1 - \sum_j \xi_j)}. The two spellings
+\code{y ~ x + random(~ 1 | g) + gas(...)} and
+\code{y ~ 0 + x + random(~ 1 | g) + gas(...)} therefore give the same criterion
+and the same estimates. Where a penalty covers the term's own parameters,
+as in \code{gas(omega ~ random(~ 1 | g))}, the criterion integrates every free
+parameter of the term. A developed level contributes its constant
+coordinate only. \code{ml()} integrates the penalized directions and is not
+affected.
+}
+
 \section{Which hyperparameters}{
 The criterion estimates the hyperparameters of the terms fitted in one
 system, meaning the terms whose penalty is twice differentiable. A lasso, a
