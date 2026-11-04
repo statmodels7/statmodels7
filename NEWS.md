@@ -1,8 +1,9 @@
 # statmodels7 0.241.1
 
 * Tests only: a `modelterms7::scte()` surface convex in one covariate and
-  concave in the other is fitted and keeps both shapes. modelterms7 0.131.0
-  is the minimum version.
+  concave in the other is fitted and keeps both shapes, and a value along a
+  line holds on the fitted surface. modelterms7 0.133.0 is the minimum
+  version.
 
 # statmodels7 0.241.0
 

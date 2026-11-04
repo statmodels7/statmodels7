@@ -39,6 +39,19 @@ test_that("a surface convex in one covariate and concave in the other is fitted"
   expect_lt(sqrt(mean((mu - tr(gr$x, gr$z))^2)), 0.04)
 })
 
+test_that("a value along a line holds on the fitted surface", {
+  set.seed(16008)
+  d <- data.frame(x = runif(300), z = runif(300))
+  d$y <- 1 + 2 * d$x * (1 + d$z) + rnorm(300, sd = 0.1)
+  sm <- basis7::bspline_smooth(k = 6, lower = 0, upper = 1)
+  fit <- statmod(y ~ modelterms7::scte(x, z, shapes = list(
+                   modelterms7::shape_increasing(value = c(at = 0, value = 0)), NULL), smooths = sm),
+                 distrib = distributions7::gaussian1_distrib(), data = d)
+  m0 <- predict(fit, what = "mu", newdata = data.frame(x = 0, z = seq(0, 1, 0.1)))
+  expect_lt(diff(range(m0)), 1e-10)
+  expect_lt(abs(m0[1L] - 1), 0.05)
+})
+
 test_that("a surface monotone in one covariate is fitted in sigma", {
   set.seed(16005)
   d <- data.frame(x = runif(300), z = runif(300))
