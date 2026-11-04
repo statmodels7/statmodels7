@@ -5641,9 +5641,13 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
   # The coefficients are named as a recession's are, so that summary() leaves
   # their standard errors off and prints the term's smoothing parameter as
   # not determined.
+  # An interaction of scte() at its bound (Giovanni, 2026-11-04) leaves the
+  # state as the outer criterion reads it: the term is not at its vertex and
+  # its smoothing parameters still act on the walks of the main slopes.
   vx <- tryCatch(statmod_vertex(fit), error = function(e) list())
   if (length(vx)) {
-    if (out$state %in% c("converged", "unknown")) out$state <- "boundary"
+    whole <- any(vapply(vx, function(v) !identical(v$part, "interaction"), logical(1)))
+    if (whole && out$state %in% c("converged", "unknown")) out$state <- "boundary"
     out$reason <- c(out$reason, vapply(vx, function(v) v$message, ""))
     bc <- unlist(lapply(vx, function(v) v$coef))
     out$boundary <- union(out$boundary, sub(":", "/", bc, fixed = TRUE))

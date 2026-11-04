@@ -4,6 +4,10 @@
   warning of `statmod()` or as aliased in the notes of `summary()`: its
   columns vanish, the pivot drops one of them for that reason, and the note
   on the vertex names every coefficient of the term.
+* The interaction of `scte()` under two monotone shapes at its bound (an
+  additive surface) is named in a note of `summary()` and in the reasons of
+  the certificate, its coefficients carry no standard error, and the ridge
+  warning leaves them out. The state of the certificate is unchanged.
 
 # statmodels7 0.244.0
 

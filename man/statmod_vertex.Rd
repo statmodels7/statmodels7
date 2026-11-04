@@ -17,8 +17,10 @@ them.}
 }
 \value{
 A list of lists with \code{param}, \code{term}, \code{coef} (the names as
-\verb{<param>:<coefficient>}), \code{complete} (every level of the term at the
-vertex) and \code{message}.
+\verb{<param>:<coefficient>}), \code{part} (\code{"term"}, or \code{"interaction"} for the
+interaction of \code{\link[modelterms7:scte]{modelterms7::scte()}} under two monotone shapes at its
+bound), \code{complete} (every level of the term at the vertex) and
+\code{message}.
 }
 \description{
 Returns one entry per term of a fit with levels at the vertex of their

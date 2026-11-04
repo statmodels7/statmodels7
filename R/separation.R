@@ -390,8 +390,10 @@ separation_message <- function(sep) {
 #'   them.
 #'
 #' @return A list of lists with `param`, `term`, `coef` (the names as
-#'   `<param>:<coefficient>`), `complete` (every level of the term at the
-#'   vertex) and `message`.
+#'   `<param>:<coefficient>`), `part` (`"term"`, or `"interaction"` for the
+#'   interaction of [modelterms7::scte()] under two monotone shapes at its
+#'   bound), `complete` (every level of the term at the vertex) and
+#'   `message`.
 #'
 #' @keywords internal
 statmod_vertex <- function(fit) spec_vertex(fit@spec)
@@ -409,14 +411,23 @@ spec_vertex <- function(spec) {
       # from the fit's own vector, and at the vertex one always is
       v <- tryCatch(modelterms7::term_vertex(tm), error = function(e) character(0))
       if (!length(v)) next
-      out[[length(out) + 1L]] <- list(
-        param = p, term = nm, coef = paste0(p, ":", v),
-        complete = isTRUE(attr(v, "complete")),
-        message = sprintf(paste0(
+      part <- attr(v, "part")
+      if (is.null(part)) part <- "term"
+      msg <- if (identical(part, "interaction")) {
+        sprintf(paste0(
+          "the interaction of '%s' in '%s' is at its bound: every element ",
+          "that both shapes constrain is at zero, so the fitted surface is ",
+          "additive on the scale of the link"), nm, p)
+      } else {
+        sprintf(paste0(
           "'%s' in '%s' is at the vertex of its shape: every coordinate that ",
           "the shape constrains is at its bound, so the fitted curve is the one ",
           "at the bound and the data go against the shape; its smoothing ",
-          "parameter has no effect there"), nm, p))
+          "parameter has no effect there"), nm, p)
+      }
+      out[[length(out) + 1L]] <- list(
+        param = p, term = nm, coef = paste0(p, ":", v), part = part,
+        complete = isTRUE(attr(v, "complete")), message = msg)
     }
   }
   out

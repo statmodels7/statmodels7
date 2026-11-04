@@ -90,3 +90,23 @@ test_that("scte() under a factor or a numeric by is fitted and drawn", {
   expect_true(all(diff(modelterms7::term_value(tw, coef = coef(fit)$mu[modelterms7::term_coef_names(tw)],
                                                newdata = gr)) >= -1e-10))
 })
+
+test_that("an interaction at its bound is named in a note and leaves the state alone", {
+  set.seed(16004)
+  d <- data.frame(x = runif(300), z = runif(300))
+  d$y <- pmin(d$x, 0.5) + 2 * pmin(d$z, 0.4) + rnorm(300, sd = 0.2)
+  w <- character(0)
+  fit <- withCallingHandlers(
+    statmod(y ~ modelterms7::scte(x, z, shapes = list(modelterms7::shape_increasing(),
+                                                      modelterms7::shape_increasing())),
+            distrib = distributions7::gaussian1_distrib(), data = d),
+    warning = function(e) { w <<- c(w, conditionMessage(e)); invokeRestart("muffleWarning") })
+  ct <- statmod_certificate(fit)
+  expect_length(ct$vertex, 1L)
+  expect_identical(ct$vertex[[1L]]$part, "interaction")
+  expect_false(any(grepl("vertex of its shape", ct$reason)))
+  expect_false(any(grepl("not identified", w)))
+  nt <- suppressWarnings(summary(fit))@notes
+  expect_true(any(grepl("interaction of", nt)))
+  expect_false(any(grepl("not estimated", nt)))
+})
