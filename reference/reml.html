@@ -19,7 +19,7 @@ the default of statmod()."><meta property="og:image" content="https://statmodels
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.243.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.244.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -236,6 +236,23 @@ parameter, and a parameter named explicitly is estimated on the criterion,
 and the coordinates that the kinked penalty covers are excluded. For a
 multivariate family the default names no parameter, and an explicit
 <code>marginal</code> other than <code>"none"</code> is an error.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="a-free-structural-level">A free structural level<a class="anchor" aria-label="anchor" href="#a-free-structural-level"></a></h2>
+    <p>The level of <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, the first level of
+<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code> and each level of a joint filter add a constant to
+their equation's predictor. Beside an intercept the level is held at zero
+and the intercept is integrated as an unpenalized coefficient. Where the
+level is free, <code>reml()</code> integrates it in the same way, as the constant that
+it adds to the predictor, which for <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> is the stationary
+level \(\omega / (1 - \sum_j \xi_j)\). The two spellings
+<code>y ~ x + random(~ 1 | g) + gas(...)</code> and
+<code>y ~ 0 + x + random(~ 1 | g) + gas(...)</code> therefore give the same criterion
+and the same estimates. Where a penalty covers the term's own parameters,
+as in <code>gas(omega ~ random(~ 1 | g))</code>, the criterion integrates every free
+parameter of the term. A developed level contributes its constant
+coordinate only. <code>ml()</code> integrates the penalized directions and is not
+affected.</p>
     </div>
     <div class="section level2">
     <h2 id="which-hyperparameters">Which hyperparameters<a class="anchor" aria-label="anchor" href="#which-hyperparameters"></a></h2>

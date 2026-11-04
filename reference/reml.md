@@ -248,6 +248,27 @@ criterion, and the coordinates that the kinked penalty covers are
 excluded. For a multivariate family the default names no parameter, and
 an explicit `marginal` other than `"none"` is an error.
 
+## A free structural level
+
+The level of
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
+the first level of
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)
+and each level of a joint filter add a constant to their equation's
+predictor. Beside an intercept the level is held at zero and the
+intercept is integrated as an unpenalized coefficient. Where the level
+is free, `reml()` integrates it in the same way, as the constant that it
+adds to the predictor, which for
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
+is the stationary level \\\omega / (1 - \sum_j \xi_j)\\. The two
+spellings `y ~ x + random(~ 1 | g) + gas(...)` and
+`y ~ 0 + x + random(~ 1 | g) + gas(...)` therefore give the same
+criterion and the same estimates. Where a penalty covers the term's own
+parameters, as in `gas(omega ~ random(~ 1 | g))`, the criterion
+integrates every free parameter of the term. A developed level
+contributes its constant coordinate only. `ml()` integrates the
+penalized directions and is not affected.
+
 ## Which hyperparameters
 
 The criterion estimates the hyperparameters of the terms fitted in one

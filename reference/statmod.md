@@ -295,8 +295,12 @@ A structural term whose level adds a constant to the predictor, the
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
 or the first level of
 [`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html),
-is confounded with an intercept in the same equation. The intercept is
-kept and the level held at zero, reported as `omega (held)` for
+is confounded with an intercept in the same equation, meaning an
+unpenalized intercept or a set of unpenalized columns spanning the
+constant. A random intercept does not count, because its penalty
+identifies it: beside `random(~ 1 | g)` alone the level is estimated as
+the population value. With such an intercept the intercept is kept and
+the level held at zero, reported as `omega (held)` for
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
 and as `level1 (held)` for
 [`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html);
@@ -308,6 +312,26 @@ term the intercept is the stationary level \\\omega / (1 - \sum_j
 persistences \\\xi_j\\. The page of
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
 gives the identity.
+
+The shorthand `gas(by = ~f)` gives the subformula `f` to the parameters
+of the filter. Beside an intercept it leaves the level out: \\\omega\\
+is not developed and is held at zero, and a level for each cluster is a
+random intercept that the user writes in the equation, as in
+`y ~ x + random(~ 1 | id) + gas(by = ~ random(~ 1 | id))`. Without an
+intercept the shorthand develops \\\omega\\ too, with a population value
+and one departure per group. A subformula written for \\\omega\\ itself,
+`gas(omega ~ random(~ 1 | id), by = id)`, is kept in both cases.
+
+Under
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+a free level is integrated as the constant that it adds to the
+predictor, \\\omega / (1 - \sum_j \xi_j)\\ for
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
+as an intercept is integrated. The spellings
+`y ~ x + random(~ 1 | g) + gas(...)` and
+`y ~ 0 + x + random(~ 1 | g) + gas(...)` therefore give the same
+criterion, the same variance of the random intercepts and the same
+log-likelihood.
 
 ## The fitting scheme
 

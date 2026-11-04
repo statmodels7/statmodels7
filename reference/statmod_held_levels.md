@@ -44,9 +44,14 @@ express the same fits, since a constant cannot express the dynamics or
 the difference between one regime and another, and the parameters that
 express them remain free.
 
-The function tests the span of the equation's design and not a column
-named `"(Intercept)"`: a factor coded without one, or any set of columns
-summing to a constant, spans the constant just as well.
+The function tests the span of the equation's unpenalized columns and
+not a column named `"(Intercept)"`: a factor coded without one, or any
+set of unpenalized columns summing to a constant, spans the constant
+just as well. Penalized columns do not count, because their penalty
+identifies the direction that they share with the level: with
+`y ~ 0 + x + random(~ 1 | id) + gas(by = id)` the random intercepts span
+the constant, and the level is estimated as the population value while
+the random intercepts carry the departures from it.
 [`modelterms7::term_level_param()`](https://statmodels7.github.io/modelterms7/reference/term_level_param.html)
 gives which parameter of the term is the level.
 
@@ -54,13 +59,13 @@ For a developed level, the same test applies to a subspace. With
 `omega ~ Z gamma` the confounding is no longer with one constant but
 with whatever `span(Z)` shares with the span of the equation's design.
 The constant coordinates are held as above. For the rest, an unpenalized
-coordinate whose column lies in the equation's span is flagged with a
-warning and is not held: holding it would change the model where the
-confounding is not exact (a time-varying shared column is exactly flat
-only when its lags stay in the development's span, which depends on
-\\q\\ and on the column). A penalized coordinate is identified by its
-penalty. Where the direction really is flat, the variance matrix shows
-it.
+coordinate whose column lies in the span of the equation's unpenalized
+columns is flagged with a warning and is not held: holding it would
+change the model where the confounding is not exact (a time-varying
+shared column is exactly flat only when its lags stay in the
+development's span, which depends on \\q\\ and on the column). A
+penalized coordinate is identified by its penalty. Where the direction
+really is flat, the variance matrix shows it.
 
 ## See also
 

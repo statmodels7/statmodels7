@@ -293,6 +293,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_conflicts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_duration.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/formula.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/free_level_equations.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/free_of_kinks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/free_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/freeze_resolution.html</loc></url>
@@ -459,6 +460,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kinked_path.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/label_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/laplace_pinned.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/level_augmented.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/level_trace_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/leverage_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/leverage_information.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/leverage_inverse.html</loc></url>
@@ -782,6 +785,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/separation_message.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/shape_floor.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/short_keys.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/shorthand_level_dropped.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/shrinkage_data.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sigma.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sim_groups.html</loc></url>
@@ -797,6 +801,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solve_svd.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solver_how.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solver_tol.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/spans_constant.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_fit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_fit_structural.html</loc></url>
@@ -986,6 +991,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unit_of_term.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unit_positions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/unpenalized_design.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unpenalized_estimates.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vanished_coords.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/variant_score.html</loc></url>

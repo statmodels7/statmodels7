@@ -1,5 +1,36 @@
 # Changelog
 
+## statmodels7 0.244.0
+
+- The level of a structural term (the `omega` of `gas()`, the first
+  level of `regime()` and each level of a joint filter) is held at zero
+  only when the unpenalized columns of its equation span the constant.
+  Penalized columns no longer count, so in
+  `y ~ 0 + x + random(~ 1 | id) + gas(by = id)` the level is estimated
+  as the population value and the random intercepts are the departures
+  from it. Before, the level was held and the random intercepts carried
+  the mean, shrunk towards zero.
+- The shorthand `gas(by = ~f)` leaves the level out of the development
+  when the equation has an intercept: `omega` is held at zero with no
+  departures, and a level for each cluster is a `random(~ 1 | g)` term
+  in the equation. Without an intercept the shorthand develops `omega`
+  as well. A subformula written for `omega` itself is kept in both
+  cases. Requires modelterms7 0.135.0, in which the shorthand also
+  groups the filter by the grouping variable of its random terms.
+- [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  integrates a free structural level (the `omega` of `gas()`, the first
+  level of `regime()`, each level of a joint filter) as the constant
+  that it adds to the predictor, one more column of ones in its
+  equation, as it integrates an intercept. For `gas()` the constant is
+  `omega / (1 - sum(xi))`. `y ~ x + random(~ 1 | g) + gas()` and
+  `y ~ 0 + x + random(~ 1 | g) + gas()` now give the same criterion and
+  the same estimates; before, the second left the level out of the
+  determinant and its random-intercept variance was close to the one
+  that
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  gives. The exact outer gradient covers the new matrix for `gas()` and
+  joint filters.
+
 ## statmodels7 0.243.0
 
 - A shape-constrained term

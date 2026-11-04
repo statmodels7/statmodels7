@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.243.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.244.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -274,7 +274,11 @@ which are filtered jointly as one recursion.</p>
 <p>A structural term whose level adds a constant to the predictor, the
 \(\omega\) of <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> or the first level of
 <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>, is confounded with an intercept in the same
-equation. The intercept is kept and the level held at zero, reported as
+equation, meaning an unpenalized intercept or a set of unpenalized columns
+spanning the constant. A random intercept does not count, because its
+penalty identifies it: beside <code>random(~ 1 | g)</code> alone the level is
+estimated as the population value. With such an intercept the intercept
+is kept and the level held at zero, reported as
 <code>omega (held)</code> for <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> and as <code>level1 (held)</code> for
 <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>; writing <code>0 + gas(...)</code> estimates the level
 instead. The two spellings are the same model with the same
@@ -283,6 +287,21 @@ quantities: for a score-driven term the intercept is the stationary level
 \(\omega / (1 - \sum_j \xi_j)\), which is \(\omega\) divided by one
 minus the sum of the persistences \(\xi_j\). The page of
 <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> gives the identity.</p>
+<p>The shorthand <code>gas(by = ~f)</code> gives the subformula <code>f</code> to the parameters
+of the filter. Beside an intercept it leaves the level out: \(\omega\)
+is not developed and is held at zero, and a level for each cluster is a
+random intercept that the user writes in the equation, as in
+<code>y ~ x + random(~ 1 | id) + gas(by = ~ random(~ 1 | id))</code>. Without an
+intercept the shorthand develops \(\omega\) too, with a population value
+and one departure per group. A subformula written for \(\omega\) itself,
+<code>gas(omega ~ random(~ 1 | id), by = id)</code>, is kept in both cases.</p>
+<p>Under <code><a href="reml.html">reml()</a></code> a free level is integrated as the constant that it adds to
+the predictor, \(\omega / (1 - \sum_j \xi_j)\) for
+<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, as an intercept is integrated. The spellings
+<code>y ~ x + random(~ 1 | g) + gas(...)</code> and
+<code>y ~ 0 + x + random(~ 1 | g) + gas(...)</code> therefore give the same
+criterion, the same variance of the random intercepts and the same
+log-likelihood.</p>
     </div>
     <div class="section level2">
     <h2 id="the-fitting-scheme">The fitting scheme<a class="anchor" aria-label="anchor" href="#the-fitting-scheme"></a></h2>

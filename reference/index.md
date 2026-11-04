@@ -1283,6 +1283,9 @@ helper functions. Using the package does not require any of it.
 - [`formula(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/formula.StatmodFit.md)
   : The Formula of a Fitted Model
 
+- [`free_level_equations()`](https://statmodels7.github.io/statmodels7/reference/free_level_equations.md)
+  : The Free Levels That reml() Integrates Beside the Coefficients
+
 - [`free_of_kinks()`](https://statmodels7.github.io/statmodels7/reference/free_of_kinks.md)
   : A Score Over the Coordinates That a Kink Leaves Free
 
@@ -1797,6 +1800,12 @@ helper functions. Using the package does not require any of it.
 
 - [`laplace_pinned()`](https://statmodels7.github.io/statmodels7/reference/laplace_pinned.md)
   : The Coordinates That the Marginal Determinant Leaves Out
+
+- [`level_augmented()`](https://statmodels7.github.io/statmodels7/reference/level_augmented.md)
+  : The Criterion's Matrix With the Free Levels Appended
+
+- [`level_trace_pieces()`](https://statmodels7.github.io/statmodels7/reference/level_trace_pieces.md)
+  : The Trace Pieces of the Gradient on the Matrix With the Free Levels
 
 - [`leverage_blocks()`](https://statmodels7.github.io/statmodels7/reference/leverage_blocks.md)
   : The Leverage Block of Each Observation
@@ -2646,6 +2655,9 @@ helper functions. Using the package does not require any of it.
 - [`short_keys()`](https://statmodels7.github.io/statmodels7/reference/short_keys.md)
   : A Term Key Shortened for Display
 
+- [`shorthand_level_dropped()`](https://statmodels7.github.io/statmodels7/reference/shorthand_level_dropped.md)
+  : The Level of a Shorthand gas() Beside an Intercept
+
 - [`shrinkage_data()`](https://statmodels7.github.io/statmodels7/reference/shrinkage_data.md)
   : The Data of a Shrinkage Graph
 
@@ -2682,6 +2694,9 @@ helper functions. Using the package does not require any of it.
 - [`solver_tol()`](https://statmodels7.github.io/statmodels7/reference/solver_tol.md)
   [`solver_floor()`](https://statmodels7.github.io/statmodels7/reference/solver_tol.md)
   : The Tolerances of a Solver
+
+- [`spans_constant()`](https://statmodels7.github.io/statmodels7/reference/spans_constant.md)
+  : Whether a Design Spans the Constant
 
 - [`sparse_augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.md)
   : Solve a Scoring Step From a Sparse Square-Root Design
@@ -3201,6 +3216,9 @@ helper functions. Using the package does not require any of it.
 
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
   : The Message for an Unrecognized Prediction Target
+
+- [`unpenalized_design()`](https://statmodels7.github.io/statmodels7/reference/unpenalized_design.md)
+  : The Unpenalized Columns of an Equation
 
 - [`unpenalized_estimates()`](https://statmodels7.github.io/statmodels7/reference/unpenalized_estimates.md)
   : A Newton Step Without the Penalty of a Term

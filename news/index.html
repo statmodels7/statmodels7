@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.243.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.244.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,13 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.244.0" id="statmodels7-02440">statmodels7 0.244.0<a class="anchor" aria-label="anchor" href="#statmodels7-02440"></a></h2>
+<ul><li>The level of a structural term (the <code>omega</code> of <code>gas()</code>, the first level of <code>regime()</code> and each level of a joint filter) is held at zero only when the unpenalized columns of its equation span the constant. Penalized columns no longer count, so in <code>y ~ 0 + x + random(~ 1 | id) + gas(by = id)</code> the level is estimated as the population value and the random intercepts are the departures from it. Before, the level was held and the random intercepts carried the mean, shrunk towards zero.</li>
+<li>The shorthand <code>gas(by = ~f)</code> leaves the level out of the development when the equation has an intercept: <code>omega</code> is held at zero with no departures, and a level for each cluster is a <code>random(~ 1 | g)</code> term in the equation. Without an intercept the shorthand develops <code>omega</code> as well. A subformula written for <code>omega</code> itself is kept in both cases. Requires modelterms7 0.135.0, in which the shorthand also groups the filter by the grouping variable of its random terms.</li>
+<li>
+<code><a href="../reference/reml.html">reml()</a></code> integrates a free structural level (the <code>omega</code> of <code>gas()</code>, the first level of <code>regime()</code>, each level of a joint filter) as the constant that it adds to the predictor, one more column of ones in its equation, as it integrates an intercept. For <code>gas()</code> the constant is <code>omega / (1 - sum(xi))</code>. <code>y ~ x + random(~ 1 | g) + gas()</code> and <code>y ~ 0 + x + random(~ 1 | g) + gas()</code> now give the same criterion and the same estimates; before, the second left the level out of the determinant and its random-intercept variance was close to the one that <code><a href="../reference/reml.html">ml()</a></code> gives. The exact outer gradient covers the new matrix for <code>gas()</code> and joint filters.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.243.0" id="statmodels7-02430">statmodels7 0.243.0<a class="anchor" aria-label="anchor" href="#statmodels7-02430"></a></h2>
 <ul><li>A shape-constrained term (<code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/scte.html" class="external-link">modelterms7::scte()</a></code>) at the vertex of its shape, where the data go against the shape and every constrained coordinate is at its bound, is reported: the certificate’s state is <code>"boundary"</code> and its reason names the term, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> leaves the coefficients at the bound without a standard error and prints each smoothing parameter whose penalty covers only them as not determined. Before, the state was <code>"unknown"</code> and the smoothing parameter printed the starting value that the flat criterion had left.</li>
