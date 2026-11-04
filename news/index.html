@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.244.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.244.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.244.1" id="statmodels7-02441">statmodels7 0.244.1<a class="anchor" aria-label="anchor" href="#statmodels7-02441"></a></h2>
+<ul><li>A term at the vertex of its shape is no longer reported as a ridge in the warning of <code><a href="../reference/statmod.html">statmod()</a></code> or as aliased in the notes of <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>: its columns vanish, the pivot drops one of them for that reason, and the note on the vertex names every coefficient of the term.</li>
+<li>The interaction of <code>scte()</code> under two monotone shapes at its bound (an additive surface) is named in a note of <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> and in the reasons of the certificate, its coefficients carry no standard error, and the ridge warning leaves them out. The state of the certificate is unchanged.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.244.0" id="statmodels7-02440">statmodels7 0.244.0<a class="anchor" aria-label="anchor" href="#statmodels7-02440"></a></h2>
 <ul><li>The level of a structural term (the <code>omega</code> of <code>gas()</code>, the first level of <code>regime()</code> and each level of a joint filter) is held at zero only when the unpenalized columns of its equation span the constant. Penalized columns no longer count, so in <code>y ~ 0 + x + random(~ 1 | id) + gas(by = id)</code> the level is estimated as the population value and the random intercepts are the departures from it. Before, the level was held and the random intercepts carried the mean, shrunk towards zero.</li>

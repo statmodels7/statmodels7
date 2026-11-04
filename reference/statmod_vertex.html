@@ -11,7 +11,7 @@ coefficients concerned and a sentence that names them."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.244.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.244.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,9 @@ coefficients concerned and a sentence that names them.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_vertex</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_vertex</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">spec_vertex</span><span class="op">(</span><span class="va">spec</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,12 +60,19 @@ coefficients concerned and a sentence that names them.</p>
 <dl><dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
 <dd><p>A <a href="StatmodFit-class.html">StatmodFit</a>.</p></dd>
 
+
+<dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
+<dd><p>The specification of a fit, with its terms as the fit left
+them.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of lists with <code>param</code>, <code>term</code>, <code>coef</code> (the names as
-<code>&lt;param&gt;:&lt;coefficient&gt;</code>), <code>complete</code> (every level of the term at the
-vertex) and <code>message</code>.</p>
+<code>&lt;param&gt;:&lt;coefficient&gt;</code>), <code>part</code> (<code>"term"</code>, or <code>"interaction"</code> for the
+interaction of <code><a href="https://statmodels7.github.io/modelterms7/reference/scte.html" class="external-link">modelterms7::scte()</a></code> under two monotone shapes at its
+bound), <code>complete</code> (every level of the term at the vertex) and
+<code>message</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -72,6 +81,8 @@ so the fitted curve is the one at the bound (constant, linear for a plain
 curvature, or of slope <code>min_slope</code>) and the data go against the shape. The
 columns of the block on those coordinates vanish and the penalty is zero,
 so the term's smoothing parameter has no effect on the fit.</p>
+<p><code>spec_vertex()</code> does the same on the terms of a fitted specification, as
+<code><a href="statmod.html">statmod()</a></code> needs before the fit exists.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,5 +1,21 @@
 # Changelog
 
+## statmodels7 0.244.1
+
+- A term at the vertex of its shape is no longer reported as a ridge in
+  the warning of
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  or as aliased in the notes of
+  [`summary()`](https://rdrr.io/r/base/summary.html): its columns
+  vanish, the pivot drops one of them for that reason, and the note on
+  the vertex names every coefficient of the term.
+- The interaction of `scte()` under two monotone shapes at its bound (an
+  additive surface) is named in a note of
+  [`summary()`](https://rdrr.io/r/base/summary.html) and in the reasons
+  of the certificate, its coefficients carry no standard error, and the
+  ridge warning leaves them out. The state of the certificate is
+  unchanged.
+
 ## statmodels7 0.244.0
 
 - The level of a structural term (the `omega` of `gas()`, the first

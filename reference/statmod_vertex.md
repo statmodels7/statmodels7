@@ -10,6 +10,8 @@ names them.
 
 ``` r
 statmod_vertex(fit)
+
+spec_vertex(spec)
 ```
 
 ## Arguments
@@ -19,11 +21,18 @@ statmod_vertex(fit)
   A
   [StatmodFit](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
+- spec:
+
+  The specification of a fit, with its terms as the fit left them.
+
 ## Value
 
 A list of lists with `param`, `term`, `coef` (the names as
-`<param>:<coefficient>`), `complete` (every level of the term at the
-vertex) and `message`.
+`<param>:<coefficient>`), `part` (`"term"`, or `"interaction"` for the
+interaction of
+[`modelterms7::scte()`](https://statmodels7.github.io/modelterms7/reference/scte.html)
+under two monotone shapes at its bound), `complete` (every level of the
+term at the vertex) and `message`.
 
 ## Details
 
@@ -33,3 +42,7 @@ a plain curvature, or of slope `min_slope`) and the data go against the
 shape. The columns of the block on those coordinates vanish and the
 penalty is zero, so the term's smoothing parameter has no effect on the
 fit.
+
+`spec_vertex()` does the same on the terms of a fitted specification, as
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+needs before the fit exists.
