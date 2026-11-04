@@ -1,4 +1,4 @@
-# statmodels7 (development version)
+# statmodels7 0.242.0
 
 * The derivatives of the scaling matrix of a joint `gas()` filter with
   `scaling = 1` or `1/2`, and of its scaled driving vector, are compiled
