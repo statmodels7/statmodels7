@@ -193,7 +193,11 @@ which are filtered jointly as one recursion.
 A structural term whose level adds a constant to the predictor, the
 \eqn{\omega} of \code{\link[modelterms7:gas]{modelterms7::gas()}} or the first level of
 \code{\link[modelterms7:regime]{modelterms7::regime()}}, is confounded with an intercept in the same
-equation. The intercept is kept and the level held at zero, reported as
+equation, meaning an unpenalized intercept or a set of unpenalized columns
+spanning the constant. A random intercept does not count, because its
+penalty identifies it: beside \code{random(~ 1 | g)} alone the level is
+estimated as the population value. With such an intercept the intercept
+is kept and the level held at zero, reported as
 \code{omega (held)} for \code{\link[modelterms7:gas]{modelterms7::gas()}} and as \code{level1 (held)} for
 \code{\link[modelterms7:regime]{modelterms7::regime()}}; writing \code{0 + gas(...)} estimates the level
 instead. The two spellings are the same model with the same
@@ -202,6 +206,15 @@ quantities: for a score-driven term the intercept is the stationary level
 \eqn{\omega / (1 - \sum_j \xi_j)}, which is \eqn{\omega} divided by one
 minus the sum of the persistences \eqn{\xi_j}. The page of
 \code{\link[modelterms7:gas]{modelterms7::gas()}} gives the identity.
+
+The shorthand \code{gas(by = ~f)} gives the subformula \code{f} to the parameters
+of the filter. Beside an intercept it leaves the level out: \eqn{\omega}
+is not developed and is held at zero, and a level for each cluster is a
+random intercept that the user writes in the equation, as in
+\code{y ~ x + random(~ 1 | id) + gas(by = ~ random(~ 1 | id))}. Without an
+intercept the shorthand develops \eqn{\omega} too, with a population value
+and one departure per group. A subformula written for \eqn{\omega} itself,
+\code{gas(omega ~ random(~ 1 | id), by = id)}, is kept in both cases.
 }
 
 \section{The fitting scheme}{

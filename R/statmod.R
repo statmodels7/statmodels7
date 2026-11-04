@@ -170,7 +170,11 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' A structural term whose level adds a constant to the predictor, the
 #' \eqn{\omega} of [modelterms7::gas()] or the first level of
 #' [modelterms7::regime()], is confounded with an intercept in the same
-#' equation. The intercept is kept and the level held at zero, reported as
+#' equation, meaning an unpenalized intercept or a set of unpenalized columns
+#' spanning the constant. A random intercept does not count, because its
+#' penalty identifies it: beside `random(~ 1 | g)` alone the level is
+#' estimated as the population value. With such an intercept the intercept
+#' is kept and the level held at zero, reported as
 #' `omega (held)` for [modelterms7::gas()] and as `level1 (held)` for
 #' [modelterms7::regime()]; writing `0 + gas(...)` estimates the level
 #' instead. The two spellings are the same model with the same
@@ -179,6 +183,15 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' \eqn{\omega / (1 - \sum_j \xi_j)}, which is \eqn{\omega} divided by one
 #' minus the sum of the persistences \eqn{\xi_j}. The page of
 #' [modelterms7::gas()] gives the identity.
+#'
+#' The shorthand `gas(by = ~f)` gives the subformula `f` to the parameters
+#' of the filter. Beside an intercept it leaves the level out: \eqn{\omega}
+#' is not developed and is held at zero, and a level for each cluster is a
+#' random intercept that the user writes in the equation, as in
+#' `y ~ x + random(~ 1 | id) + gas(by = ~ random(~ 1 | id))`. Without an
+#' intercept the shorthand develops \eqn{\omega} too, with a population value
+#' and one departure per group. A subformula written for \eqn{\omega} itself,
+#' `gas(omega ~ random(~ 1 | id), by = id)`, is kept in both cases.
 #'
 #' # The fitting scheme
 #'

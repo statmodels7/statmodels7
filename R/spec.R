@@ -1298,9 +1298,20 @@ statmod_terms <- function(equations, data, env, response = NULL,
     ov <- statmod_variants$override[[p]]
     for (nm in intersect(names(ov), names(out$terms))) out$terms[[nm]] <- ov[[nm]]
     intercepts[[p]] <- out$intercept
-    out_terms[[p]] <- lapply(out$terms, function(tm)
-      modelterms7::term_build(seg_grid_start(tm, data, response), data))
-    names(out_terms[[p]]) <- names(out$terms)
+    build <- function(tm)
+      modelterms7::term_build(seg_grid_start(tm, data, response), data)
+    # the additive terms are built first, since whether a shorthand gas()
+    # develops its level depends on the columns that they span
+    struct <- vapply(out$terms, S7::S7_inherits, logical(1),
+                     modelterms7::structural_term)
+    built <- stats::setNames(vector("list", length(out$terms)),
+                             names(out$terms))
+    for (k in which(!struct)) built[[k]] <- build(out$terms[[k]])
+    for (k in which(struct)) {
+      built[[k]] <- build(shorthand_level_dropped(out$terms[[k]],
+                                                  built[!struct], nrow(data)))
+    }
+    out_terms[[p]] <- built
   }
   reject_unfittable(out_terms)
   reject_duplicate_names(out_terms)
@@ -1467,6 +1478,113 @@ reject_unfittable <- function(terms) {
 }
 
 
+#' The Unpenalized Columns of an Equation
+#'
+#' @description
+#' Returns the columns of an equation's design that no penalty of their term
+#' reaches.
+#'
+#' @details
+#' Each built additive term reports its penalties through
+#' [modelterms7::term_penalties()], whose `index` gives the columns of the
+#' term's block that a penalty covers. The remaining columns are free, and
+#' they are the ones that can carry a constant without a penalty identifying
+#' it. A random intercept spans the constant, but its columns are penalized,
+#' so it does not count as an intercept here.
+#'
+#' @param terms A named list of built additive terms of one equation.
+#' @param X The equation's design, the terms' blocks side by side, or `NULL`
+#'   to take each block from [modelterms7::term_matrix()].
+#' @param blocks The column range of each term in `X`, as
+#'   [statmod_design()] records it; ignored when `X` is `NULL`.
+#' @param n The number of rows.
+#'
+#' @return A dense matrix with `n` rows, possibly with no column.
+#'
+#' @seealso [spans_constant()], [statmod_held_levels()]
+#'
+#' @keywords internal
+unpenalized_design <- function(terms, X = NULL, blocks = NULL, n) {
+  cols <- lapply(names(terms), function(k) {
+    tm <- terms[[k]]
+    B <- if (is.null(X)) modelterms7::term_matrix(tm) else {
+      b <- blocks[[k]]
+      if (!length(b)) return(NULL)
+      X[, b, drop = FALSE]
+    }
+    if (is.null(B) || !ncol(B)) return(NULL)
+    pen <- unlist(lapply(modelterms7::term_penalties(tm),
+                         function(e) e$index))
+    keep <- setdiff(seq_len(ncol(B)), pen)
+    if (!length(keep)) return(NULL)
+    as.matrix(B[, keep, drop = FALSE])
+  })
+  cols <- cols[!vapply(cols, is.null, logical(1))]
+  if (!length(cols)) return(matrix(0, n, 0L))
+  do.call(cbind, cols)
+}
+
+#' Whether a Design Spans the Constant
+#'
+#' @description
+#' Returns `TRUE` when regressing the constant on the columns of a design
+#' leaves no residual.
+#'
+#' @param X A matrix, possibly with no column.
+#' @param n The number of rows.
+#'
+#' @return A single logical.
+#'
+#' @seealso [unpenalized_design()]
+#'
+#' @keywords internal
+spans_constant <- function(X, n) {
+  ncol(X) > 0L && max(abs(qr.resid(qr(X), rep(1, n)))) < 1e-8
+}
+
+#' The Level of a Shorthand gas() Beside an Intercept
+#'
+#' @description
+#' Removes the development of the level from a [modelterms7::gas()] term
+#' whose subformulas came from the shorthand `by = ~f`, when the equation's
+#' unpenalized columns span the constant.
+#'
+#' @details
+#' The shorthand gives the same subformula to every parameter of the filter.
+#' Beside an intercept, a development of the level \eqn{\omega} would
+#' duplicate it: its population value is confounded with the intercept and
+#' would be held, and its departures per group would be a second set of
+#' group levels, penalized through \eqn{\omega} with a weight that falls as
+#' the persistence approaches one. The level is therefore left undeveloped
+#' and [statmod_held_levels()] holds it at zero; a level per cluster is a
+#' random intercept in the equation. Without an intercept the development
+#' stays, and \eqn{\omega} carries a population value and the departures. A
+#' development of \eqn{\omega} written as its own subformula is kept in
+#' either case.
+#'
+#' @param term An unbuilt term.
+#' @param others The built additive terms of the same equation.
+#' @param n The number of rows.
+#'
+#' @return `term`, with the level's subformula removed where the rule above
+#'   applies.
+#'
+#' @seealso [statmod_terms()], the caller
+#'
+#' @keywords internal
+shorthand_level_dropped <- function(term, others, n) {
+  if (!S7::S7_inherits(term, modelterms7::GasTerm) ||
+      !isTRUE(term@shorthand)) {
+    return(term)
+  }
+  lv <- modelterms7::term_level_param(term)
+  if (!length(lv) || !any(lv %in% names(term@submodels))) return(term)
+  if (!spans_constant(unpenalized_design(others, n = n), n)) return(term)
+  term@submodels <- term@submodels[setdiff(names(term@submodels), lv)]
+  term
+}
+
+
 #' Which Structural Levels a Linear Intercept Already Carries
 #'
 #' @description
@@ -1492,9 +1610,14 @@ reject_unfittable <- function(terms) {
 #' difference between one regime and another, and the parameters that express
 #' them remain free.
 #'
-#' The function tests the span of the equation's design and not a column
-#' named `"(Intercept)"`: a factor coded without one, or any set of
-#' columns summing to a constant, spans the constant just as well.
+#' The function tests the span of the equation's unpenalized columns and
+#' not a column named `"(Intercept)"`: a factor coded without one, or any
+#' set of unpenalized columns summing to a constant, spans the constant just
+#' as well. Penalized columns do not count, because their penalty identifies
+#' the direction that they share with the level: with
+#' `y ~ 0 + x + random(~ 1 | id) + gas(by = id)` the random intercepts span
+#' the constant, and the level is estimated as the population value while
+#' the random intercepts carry the departures from it.
 #' [modelterms7::term_level_param()] gives which parameter of the term is
 #' the level.
 #'
@@ -1502,7 +1625,8 @@ reject_unfittable <- function(terms) {
 #' `omega ~ Z gamma` the confounding is no longer with one constant but with
 #' whatever `span(Z)` shares with the span of the equation's design. The
 #' constant coordinates are held as above. For the rest, an unpenalized
-#' coordinate whose column lies in the equation's span is flagged with a
+#' coordinate whose column lies in the span of the equation's unpenalized
+#' columns is flagged with a
 #' warning and is not held: holding it would change the model where the
 #' confounding is not exact (a time-varying shared column is exactly flat
 #' only when its lags stay in the development's span, which depends on
@@ -1519,6 +1643,12 @@ reject_unfittable <- function(terms) {
 #'
 #' @keywords internal
 statmod_held_levels <- function(spec, design) {
+  # the additive terms of an equation, keyed as the design's blocks are
+  equation_additive <- function(spec, p) {
+    tms <- spec@terms[[p]]
+    tms[!vapply(tms, S7::S7_inherits, logical(1),
+                modelterms7::structural_term)]
+  }
   su <- attr(design, "structural")
   out <- list()
   if (is.null(su) || !length(su)) return(out)
@@ -1536,17 +1666,24 @@ statmod_held_levels <- function(spec, design) {
       for (k in seq_along(tm@params)) {
         lvk <- lv[startsWith(lv, paste0(tm@params[k], "."))]
         if (!length(lvk)) next
-        Xk <- design[[tm@params[k]]]$X
-        if (is.null(Xk) || !ncol(Xk)) next
-        if (max(abs(qr.resid(qr(Xk), rep(1, n)))) < 1e-8) {
+        dk <- design[[tm@params[k]]]
+        if (is.null(dk$X) || !ncol(dk$X)) next
+        Xk <- unpenalized_design(equation_additive(spec, tm@params[k]),
+                                 dk$X, dk$blocks, n)
+        if (spans_constant(Xk, n)) {
           out[[u$term]] <- c(out[[u$term]], lvk)
         }
       }
       next
     }
     lvl <- modelterms7::term_level_param(tm)
-    X <- design[[u$param]]$X
-    if (is.null(X) || !ncol(X)) next
+    du <- design[[u$param]]
+    if (is.null(du$X) || !ncol(du$X)) next
+    # only the unpenalized columns can carry the constant without a penalty
+    # identifying it
+    X <- unpenalized_design(equation_additive(spec, u$param), du$X,
+                            du$blocks, n)
+    if (!ncol(X)) next
     qrX <- qr(X)
     # the constant lies in the span exactly when regressing it on the design
     # leaves nothing behind
@@ -1574,7 +1711,8 @@ statmod_held_levels <- function(spec, design) {
       if (max(abs(qr.resid(qrX, col))) < 1e-8 * max(abs(col), 1)) {
         warning(sprintf(
           paste("the development of the level of '%s' carries '%s', whose",
-                "column the design of '%s' already spans; the two may be",
+                "column the unpenalized design of '%s' already spans; the",
+                "two may be",
                 "confounded, and the coordinate carries no penalty to",
                 "identify it."),
           u$term, cnm, u$param), call. = FALSE)

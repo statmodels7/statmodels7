@@ -1,3 +1,20 @@
+# statmodels7 0.244.0
+
+* The level of a structural term (the `omega` of `gas()`, the first level of
+  `regime()` and each level of a joint filter) is held at zero only when the
+  unpenalized columns of its equation span the constant. Penalized columns
+  no longer count, so in `y ~ 0 + x + random(~ 1 | id) + gas(by = id)` the
+  level is estimated as the population value and the random intercepts are
+  the departures from it. Before, the level was held and the random
+  intercepts carried the mean, shrunk towards zero.
+* The shorthand `gas(by = ~f)` leaves the level out of the development when
+  the equation has an intercept: `omega` is held at zero with no departures,
+  and a level for each cluster is a `random(~ 1 | g)` term in the equation.
+  Without an intercept the shorthand develops `omega` as well. A subformula
+  written for `omega` itself is kept in both cases. Requires modelterms7
+  0.135.0, in which the shorthand also groups the filter by the grouping
+  variable of its random terms.
+
 # statmodels7 0.243.0
 
 * A shape-constrained term (`modelterms7::scs()`, `modelterms7::scte()`) at
