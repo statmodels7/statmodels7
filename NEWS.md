@@ -1,3 +1,9 @@
+# statmodels7 0.241.1
+
+* Tests only: a `modelterms7::scte()` surface convex in one covariate and
+  concave in the other is fitted and keeps both shapes. modelterms7 0.131.0
+  is the minimum version.
+
 # statmodels7 0.241.0
 
 * On the observed route the outer Hessian of a model with a

@@ -24,6 +24,21 @@ test_that("a doubly increasing surface is fitted and drawn", {
   expect_identical(term_block_kind(tm), "smooth")
 })
 
+test_that("a surface convex in one covariate and concave in the other is fitted", {
+  set.seed(16007)
+  d <- data.frame(x = runif(300), z = runif(300))
+  tr <- function(x, z) (x - 0.5)^2 * (1 + z) - (z - 0.5)^2 * (1 + x)
+  d$y <- tr(d$x, d$z) + rnorm(300, sd = 0.1)
+  fit <- statmod(y ~ modelterms7::scte(x, z, shapes = list(modelterms7::shape_convex(),
+                                                           modelterms7::shape_concave())),
+                 distrib = distributions7::gaussian1_distrib(), data = d)
+  gr <- expand.grid(x = seq(0.05, 0.95, length.out = 21), z = seq(0.05, 0.95, length.out = 21))
+  mu <- matrix(predict(fit, what = "mu", newdata = gr), 21, 21)
+  expect_true(all(diff(mu, differences = 2) >= -1e-10))
+  expect_true(all(t(diff(t(mu), differences = 2)) <= 1e-10))
+  expect_lt(sqrt(mean((mu - tr(gr$x, gr$z))^2)), 0.04)
+})
+
 test_that("a surface monotone in one covariate is fitted in sigma", {
   set.seed(16005)
   d <- data.frame(x = runif(300), z = runif(300))
