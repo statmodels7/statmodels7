@@ -1,3 +1,19 @@
+# statmodels7 0.243.0
+
+* A shape-constrained term (`modelterms7::scs()`, `modelterms7::scte()`) at
+  the vertex of its shape, where the data go against the shape and every
+  constrained coordinate is at its bound, is reported: the certificate's
+  state is `"boundary"` and its reason names the term, `summary()` leaves
+  the coefficients at the bound without a standard error and prints each
+  smoothing parameter whose penalty covers only them as not determined.
+  Before, the state was `"unknown"` and the smoothing parameter printed the
+  starting value that the flat criterion had left.
+* The effective degrees of freedom of such a term are the free coordinates
+  of its shape (modelterms7 0.134.0): `edf()` had failed on a singular
+  matrix and `logLik()` had counted every column, so the total read 11
+  where it is 2 on a fit with one smooth, and cAIC was 18 too high.
+* modelterms7 0.134.0 is the minimum version.
+
 # statmodels7 0.242.0
 
 * The derivatives of the scaling matrix of a joint `gas()` filter with

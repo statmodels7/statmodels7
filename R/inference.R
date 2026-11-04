@@ -2794,6 +2794,16 @@ summary.StatmodFit <- function(object, level = 0.95,
     else cert$separation$boundary_coef
   sep_rows <- edge_rows[rownames(ci)[edge_rows] %in% sep_coef]
   edge_rows <- setdiff(edge_rows, sep_rows)
+  vtx <- if (is.null(cert)) list() else cert$vertex
+  vtx_rows <- edge_rows[rownames(ci)[edge_rows] %in%
+                          unlist(lapply(vtx, function(v) v$coef))]
+  edge_rows <- setdiff(edge_rows, vtx_rows)
+  vtx_msg <- if (length(vtx_rows)) {
+    sprintf("%s %s no standard error, interval or test: %s.",
+            paste(rownames(ci)[vtx_rows], collapse = ", "),
+            if (length(vtx_rows) == 1L) "carries" else "carry",
+            paste(vapply(vtx, function(v) v$message, ""), collapse = "; "))
+  } else character(0)
   sep_msg <- character(0)
   if (length(sep_rows)) {
     rec <- vapply(cert$separation$directions, function(d)
@@ -2858,7 +2868,7 @@ summary.StatmodFit <- function(object, level = 0.95,
             if (length(object@aliased) == 1L) "Its" else "Their",
             paste(object@aliased, collapse = ", "))
   } else character(0)
-  notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, sep_msg, edge_msg,
+  notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, sep_msg, vtx_msg, edge_msg,
              sed$note,
              test_msg,
              tryCatch(class_notes(spec, design), error = function(e) character(0)))
@@ -3418,6 +3428,11 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
                            V = NULL, st = NULL, at_edge = character(0),
                            test = wald_test()) {
   rows <- ci[ci$parameter == p, , drop = FALSE]
+  # the coefficients at the vertex of their shape, by term
+  vertex_of <- list()
+  for (v in tryCatch(statmod_vertex(fit), error = function(e) list())) {
+    vertex_of[[paste(v$param, v$term, sep = "\r")]] <- sub("^[^:]*:", "", v$coef)
+  }
   cols <- c("name", "estimate", "se", "statistic", "p_value", "lower",
             "upper", "role")
   # `source` says what put the number there -- a criterion by name, or the
@@ -3591,6 +3606,38 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
                          linkfunctions7::linkinv(link, eta + z * se_eta)))
           r$lower[[i]] <- ends[[1L]]
           r$upper[[i]] <- ends[[2L]]
+        }
+      }
+      # AT THE VERTEX OF A SHAPE a smoothing parameter whose penalty covers
+      # only coordinates at the vertex has no effect on the fit: they are all
+      # at their bound, where the penalty is zero and the block vanishes, so
+      # the value that the search left is not an estimate of anything. A
+      # smoothing parameter that also covers other coordinates (the free rows
+      # of scte(), the levels of a shared `by` that are not at the vertex)
+      # stays determined.
+      vx <- vertex_of[[paste(p, nm, sep = "\r")]]
+      if (length(vx) && is.null(e$class_key)) {
+        cn <- modelterms7::term_coef_names(spec@terms[[p]][[nm]])[e$index]
+        away <- !(cn %in% vx)
+        # the part of the penalty that one smoothing parameter scales, as the
+        # difference of the Hessian at two of its values (the penalties of a
+        # shape are linear in each), the others at one
+        hs <- function(v) tryCatch(as.matrix(penalties7::penalty_hessian(
+          u$penalty, numeric(length(cn)), v)), error = function(err) NULL)
+        base <- stats::setNames(as.list(rep(1, length(th))), names(th))
+        H1 <- hs(base)
+        nd <- vapply(names(th), function(h) {
+          two <- base
+          two[[h]] <- 2
+          H2 <- hs(two)
+          S <- if (is.null(H1) || is.null(H2)) NULL else H2 - H1
+          !is.null(S) && all(dim(S) == length(cn)) &&
+            all(S[away, , drop = FALSE] == 0) && all(S[, away, drop = FALSE] == 0)
+        }, logical(1))
+        if (any(nd)) {
+          r$estimate[nd] <- NA_real_
+          r$se[nd] <- r$lower[nd] <- r$upper[nd] <- NA_real_
+          r$source[nd] <- "not determined"
         }
       }
       # WHERE THE HYPERPARAMETERS ARE A CHART and not the quantities, the
@@ -5450,6 +5497,15 @@ drop_common_prefix <- function(nms) {
 #' Weibull limit in one level of a factor is an example: the eigenvector moves
 #' only that level.
 #'
+#' A shape-constrained term at the vertex of its shape
+#' ([modelterms7::term_vertex()]), every coordinate that the shape constrains
+#' at its bound because the data go against the shape, makes a state of
+#' `"converged"` or `"unknown"` into `"boundary"`. `reason` names the term,
+#' `boundary_coef` its coefficients at the bound, `vertex` lists the terms,
+#' and [summary()] reports those coefficients without a standard error and
+#' each smoothing parameter whose penalty covers only them as not
+#' determined.
+#'
 #' A fit that [statmod()] has recorded with a coordinate at the edge of its
 #' chart whose return raises the log-likelihood has the state `"not converged"`
 #' whatever the readings above give, and `reason` names the coordinate.
@@ -5575,6 +5631,21 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
       out$boundary_coef <- union(out$boundary_coef, sep$boundary_coef)
     }
     out$separation <- sep
+  }
+  # A TERM AT THE VERTEX OF ITS SHAPE (Giovanni, 2026-11-04) makes the state
+  # "boundary": its constrained coordinates have run to their bound, where
+  # the block vanishes and the criterion is flat in the smoothing parameter.
+  # The coefficients are named as a recession's are, so that summary() leaves
+  # their standard errors off and prints the term's smoothing parameter as
+  # not determined.
+  vx <- tryCatch(statmod_vertex(fit), error = function(e) list())
+  if (length(vx)) {
+    if (out$state %in% c("converged", "unknown")) out$state <- "boundary"
+    out$reason <- c(out$reason, vapply(vx, function(v) v$message, ""))
+    bc <- unlist(lapply(vx, function(v) v$coef))
+    out$boundary <- union(out$boundary, sub(":", "/", bc, fixed = TRUE))
+    out$boundary_coef <- union(out$boundary_coef, bc)
+    out$vertex <- vx
   }
   out
 }

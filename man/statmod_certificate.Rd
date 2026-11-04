@@ -211,6 +211,15 @@ the verdict and the state is \code{"boundary"}. A Burr XII shape that runs to it
 Weibull limit in one level of a factor is an example: the eigenvector moves
 only that level.
 
+A shape-constrained term at the vertex of its shape
+(\code{\link[modelterms7:term_vertex]{modelterms7::term_vertex()}}), every coordinate that the shape constrains
+at its bound because the data go against the shape, makes a state of
+\code{"converged"} or \code{"unknown"} into \code{"boundary"}. \code{reason} names the term,
+\code{boundary_coef} its coefficients at the bound, \code{vertex} lists the terms,
+and \code{\link[=summary]{summary()}} reports those coefficients without a standard error and
+each smoothing parameter whose penalty covers only them as not
+determined.
+
 A fit that \code{\link[=statmod]{statmod()}} has recorded with a coordinate at the edge of its
 chart whose return raises the log-likelihood has the state \code{"not converged"}
 whatever the readings above give, and \code{reason} names the coordinate.

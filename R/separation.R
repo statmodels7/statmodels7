@@ -366,3 +366,50 @@ separation_message <- function(sep) {
     }
   }, character(1))
 }
+
+
+#' The Terms at the Vertex of Their Shape
+#'
+#' @description
+#' Returns one entry per term of a fit with levels at the vertex of their
+#' shape ([modelterms7::term_vertex()]): the equation, the term, the
+#' coefficients concerned and a sentence that names them.
+#'
+#' @details
+#' At the vertex every coordinate that the shape constrains is at its bound,
+#' so the fitted curve is the one at the bound (constant, linear for a plain
+#' curvature, or of slope `min_slope`) and the data go against the shape. The
+#' columns of the block on those coordinates vanish and the penalty is zero,
+#' so the term's smoothing parameter has no effect on the fit.
+#'
+#' @param fit A [StatmodFit].
+#'
+#' @return A list of lists with `param`, `term`, `coef` (the names as
+#'   `<param>:<coefficient>`), `complete` (every level of the term at the
+#'   vertex) and `message`.
+#'
+#' @keywords internal
+statmod_vertex <- function(fit) {
+  spec <- fit@spec
+  out <- list()
+  for (p in names(spec@terms)) {
+    for (nm in names(spec@terms[[p]])) {
+      tm <- spec@terms[[p]][[nm]]
+      if (!modelterms7::term_is_built(tm)) next
+      # the coefficients that the term carries, which are those of the fit:
+      # a coordinate that the summary reports as not identified is missing
+      # from the fit's own vector, and at the vertex one always is
+      v <- tryCatch(modelterms7::term_vertex(tm), error = function(e) character(0))
+      if (!length(v)) next
+      out[[length(out) + 1L]] <- list(
+        param = p, term = nm, coef = paste0(p, ":", v),
+        complete = isTRUE(attr(v, "complete")),
+        message = sprintf(paste0(
+          "'%s' in '%s' is at the vertex of its shape: every coordinate that ",
+          "the shape constrains is at its bound, so the fitted curve is the one ",
+          "at the bound and the data go against the shape; its smoothing ",
+          "parameter has no effect there"), nm, p))
+    }
+  }
+  out
+}
