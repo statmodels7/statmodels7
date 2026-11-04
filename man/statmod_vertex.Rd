@@ -2,12 +2,18 @@
 % Please edit documentation in R/separation.R
 \name{statmod_vertex}
 \alias{statmod_vertex}
+\alias{spec_vertex}
 \title{The Terms at the Vertex of Their Shape}
 \usage{
 statmod_vertex(fit)
+
+spec_vertex(spec)
 }
 \arguments{
 \item{fit}{A \link{StatmodFit}.}
+
+\item{spec}{The specification of a fit, with its terms as the fit left
+them.}
 }
 \value{
 A list of lists with \code{param}, \code{term}, \code{coef} (the names as
@@ -25,5 +31,8 @@ so the fitted curve is the one at the bound (constant, linear for a plain
 curvature, or of slope \code{min_slope}) and the data go against the shape. The
 columns of the block on those coordinates vanish and the penalty is zero,
 so the term's smoothing parameter has no effect on the fit.
+
+\code{spec_vertex()} does the same on the terms of a fitted specification, as
+\code{\link[=statmod]{statmod()}} needs before the fit exists.
 }
 \keyword{internal}

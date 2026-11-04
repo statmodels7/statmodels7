@@ -18,7 +18,9 @@ test_that("a doubly increasing surface is fitted and drawn", {
   expect_true(S7::S7_inherits(default_plot(tm), PlotSurface))
   pd <- plot_data(plot_surface(), tm, fit,
                   list(param = "mu", name = nm, vars = c("x", "z"), cols = NULL, data = d))
-  tv <- modelterms7::term_value(tm, coef = coef(fit)$mu[modelterms7::term_coef_names(tm)],
+  # the coefficients that the term carries: one that the summary reports as
+  # missing (a column at its bound) is missing from coef(fit)
+  tv <- modelterms7::term_value(tm, coef = tm@build_info$coef,
                                 newdata = data.frame(x = pd$surface$x, z = pd$surface$y))
   expect_equal(pd$surface$fit, tv, tolerance = 1e-12)
   expect_identical(term_block_kind(tm), "smooth")

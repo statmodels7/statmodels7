@@ -382,7 +382,12 @@ separation_message <- function(sep) {
 #' columns of the block on those coordinates vanish and the penalty is zero,
 #' so the term's smoothing parameter has no effect on the fit.
 #'
+#' `spec_vertex()` does the same on the terms of a fitted specification, as
+#' [statmod()] needs before the fit exists.
+#'
 #' @param fit A [StatmodFit].
+#' @param spec The specification of a fit, with its terms as the fit left
+#'   them.
 #'
 #' @return A list of lists with `param`, `term`, `coef` (the names as
 #'   `<param>:<coefficient>`), `complete` (every level of the term at the
@@ -391,7 +396,8 @@ separation_message <- function(sep) {
 #' @keywords internal
 statmod_vertex <- function(fit) spec_vertex(fit@spec)
 
-# the same, on the terms of a fitted specification
+#' @rdname statmod_vertex
+#' @keywords internal
 spec_vertex <- function(spec) {
   out <- list()
   for (p in names(spec@terms)) {
