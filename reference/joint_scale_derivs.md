@@ -1,8 +1,8 @@
 # The Derivatives of the Scaling Matrix in the Predictors
 
-Returns a function of a multiset of predictor indices that gives the
-derivative of \\S = \mathcal{I}\_{GG}^{-d}\\ in those predictors, one
-matrix per observation, for \\d\\ equal to 1/2 or 1.
+Returns the derivatives of \\S = \mathcal{I}\_{GG}^{-d}\\ in every
+multiset of predictor indices up to the order given, one matrix per
+observation, for \\d\\ equal to 1/2 or 1.
 
 ## Usage
 
@@ -35,7 +35,13 @@ joint_scale_derivs(spec, theta, G, d, order)
 
 ## Value
 
-A function of an integer vector of predictor positions.
+A list with `S`, the derivatives of orders 0 to `order` (arrays \\n
+\times K \times K \times C_k\\ with \\C_k\\ the number of multisets of
+size \\k\\, in the order of
+[`joint_scale_tables()`](https://statmodels7.github.io/statmodels7/reference/joint_scale_tables.md)),
+and `tables`, what
+[`joint_scale_tables()`](https://statmodels7.github.io/statmodels7/reference/joint_scale_tables.md)
+returns.
 
 ## Details
 
@@ -51,4 +57,6 @@ eigenbasis of \\\mathcal{I}\\ by dividing by \\\sqrt{\lambda_i} +
 ([`distributions7::distrib_dexpected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html)
 and its siblings to
 [`distributions7::distrib_d5expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_d5expected_hessian.html),
-on the link scale). Every derivative is memoized by its multiset.
+on the link scale). The eigendecomposition (LAPACK's `dsyev`, one per
+observation) and each order are compiled, one function per order with
+its terms written out.

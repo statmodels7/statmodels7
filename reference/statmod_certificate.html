@@ -17,7 +17,7 @@ dimensionless readings that summary.StatmodFit() prints.'><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.241.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.243.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -254,6 +254,14 @@ written on the original coordinates in <code>boundary</code> and in <code>ridge<
 the verdict and the state is <code>"boundary"</code>. A Burr XII shape that runs to its
 Weibull limit in one level of a factor is an example: the eigenvector moves
 only that level.</p>
+<p>A shape-constrained term at the vertex of its shape
+(<code><a href="https://statmodels7.github.io/modelterms7/reference/term_vertex.html" class="external-link">modelterms7::term_vertex()</a></code>), every coordinate that the shape constrains
+at its bound because the data go against the shape, makes a state of
+<code>"converged"</code> or <code>"unknown"</code> into <code>"boundary"</code>. <code>reason</code> names the term,
+<code>boundary_coef</code> its coefficients at the bound, <code>vertex</code> lists the terms,
+and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> reports those coefficients without a standard error and
+each smoothing parameter whose penalty covers only them as not
+determined.</p>
 <p>A fit that <code><a href="statmod.html">statmod()</a></code> has recorded with a coordinate at the edge of its
 chart whose return raises the log-likelihood has the state <code>"not converged"</code>
 whatever the readings above give, and <code>reason</code> names the coordinate.</p>

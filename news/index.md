@@ -1,5 +1,46 @@
 # Changelog
 
+## statmodels7 0.243.0
+
+- A shape-constrained term
+  ([`modelterms7::scs()`](https://statmodels7.github.io/modelterms7/reference/scs.html),
+  [`modelterms7::scte()`](https://statmodels7.github.io/modelterms7/reference/scte.html))
+  at the vertex of its shape, where the data go against the shape and
+  every constrained coordinate is at its bound, is reported: the
+  certificate’s state is `"boundary"` and its reason names the term,
+  [`summary()`](https://rdrr.io/r/base/summary.html) leaves the
+  coefficients at the bound without a standard error and prints each
+  smoothing parameter whose penalty covers only them as not determined.
+  Before, the state was `"unknown"` and the smoothing parameter printed
+  the starting value that the flat criterion had left.
+- The effective degrees of freedom of such a term are the free
+  coordinates of its shape (modelterms7 0.134.0): `edf()` had failed on
+  a singular matrix and
+  [`logLik()`](https://rdrr.io/r/stats/logLik.html) had counted every
+  column, so the total read 11 where it is 2 on a fit with one smooth,
+  and cAIC was 18 too high.
+- modelterms7 0.134.0 is the minimum version.
+
+## statmodels7 0.242.0
+
+- The derivatives of the scaling matrix of a joint `gas()` filter with
+  `scaling = 1` or `1/2`, and of its scaled driving vector, are compiled
+  (`src/joint_scaling.cpp`, one function per order with its Leibniz
+  terms written out, LAPACK’s `dsyev` for the eigenbasis). They were
+  computed in R with one [`eigen()`](https://rdrr.io/r/base/eigen.html)
+  per observation. On a 6 x 40 gaussian panel with a `jfp()` block in a
+  filter’s loading the outer Hessian goes from 10.0 s to 7.0 s
+  (scaling 1) and from 11.2 s to 6.8 s (scaling 1/2); the results agree
+  with the R route to 1e-15 relative.
+- The outer criterion of a model with a Jeffreys block outside a filter,
+  beside an `nl()` term in an equation that the filter does not drive
+  (`y ~ gas(...) | theta ~ nl(...) + jfp(~ z)`), has an exact gradient
+  and Hessian. The filter reads that equation’s predictor through the
+  score, and the block’s derivatives reach the filtered predictors and
+  the equation’s own predictor in the third and fourth derivatives of
+  the penalty. The search differenced the criterion before, and it still
+  does with a smoothed `seg()` in such an equation.
+
 ## statmodels7 0.241.1
 
 - Tests only: a

@@ -1750,6 +1750,9 @@ helper functions. Using the package does not require any of it.
 - [`joint_scale_matrix()`](https://statmodels7.github.io/statmodels7/reference/joint_scale_matrix.md)
   : The Scaling Matrix of a Joint Filter and Its First Derivative
 
+- [`joint_scale_tables()`](https://statmodels7.github.io/statmodels7/reference/joint_scale_tables.md)
+  : The Multisets of Predictor Indices and Their Sub-Multisets
+
 - [`joint_scores()`](https://statmodels7.github.io/statmodels7/reference/joint_scores.md)
   : The Scores of the Observations in the Joint Vector of Unknowns
 
@@ -2992,6 +2995,9 @@ helper functions. Using the package does not require any of it.
 - [`statmod_variants`](https://statmodels7.github.io/statmodels7/reference/statmod_variant_search.md)
   [`statmod_variant_search()`](https://statmodels7.github.io/statmodels7/reference/statmod_variant_search.md)
   : A Fit Searched over the Versions of a Term
+
+- [`statmod_vertex()`](https://statmodels7.github.io/statmodels7/reference/statmod_vertex.md)
+  : The Terms at the Vertex of Their Shape
 
 - [`statmodels7`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   [`statmodels7-package`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)

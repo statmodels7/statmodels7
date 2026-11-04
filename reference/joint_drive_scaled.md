@@ -53,5 +53,6 @@ A}\\ g\_{c;A},\$\$ where \\g\_{c;A}\\ is the family's derivative of
 order \\1 + \|A\|\\ with indices \\c\\ and \\A\\, and the derivatives of
 \\S\\ come from
 [`joint_scale_derivs()`](https://statmodels7.github.io/statmodels7/reference/joint_scale_derivs.md).
-The entries are symmetric in \\T\\, so each multiset is computed once
-and copied to its permutations.
+Each order is compiled, one function per order; the entries are
+symmetric in \\T\\, so each multiset is computed once and copied to its
+permutations.

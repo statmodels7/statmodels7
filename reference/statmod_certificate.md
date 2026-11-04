@@ -263,6 +263,16 @@ state is `"boundary"`. A Burr XII shape that runs to its Weibull limit
 in one level of a factor is an example: the eigenvector moves only that
 level.
 
+A shape-constrained term at the vertex of its shape
+([`modelterms7::term_vertex()`](https://statmodels7.github.io/modelterms7/reference/term_vertex.html)),
+every coordinate that the shape constrains at its bound because the data
+go against the shape, makes a state of `"converged"` or `"unknown"` into
+`"boundary"`. `reason` names the term, `boundary_coef` its coefficients
+at the bound, `vertex` lists the terms, and
+[`summary()`](https://rdrr.io/r/base/summary.html) reports those
+coefficients without a standard error and each smoothing parameter whose
+penalty covers only them as not determined.
+
 A fit that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 has recorded with a coordinate at the edge of its chart whose return

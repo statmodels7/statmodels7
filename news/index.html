@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.241.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.243.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,17 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.243.0" id="statmodels7-02430">statmodels7 0.243.0<a class="anchor" aria-label="anchor" href="#statmodels7-02430"></a></h2>
+<ul><li>A shape-constrained term (<code><a href="https://statmodels7.github.io/modelterms7/reference/scs.html" class="external-link">modelterms7::scs()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/scte.html" class="external-link">modelterms7::scte()</a></code>) at the vertex of its shape, where the data go against the shape and every constrained coordinate is at its bound, is reported: the certificate’s state is <code>"boundary"</code> and its reason names the term, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> leaves the coefficients at the bound without a standard error and prints each smoothing parameter whose penalty covers only them as not determined. Before, the state was <code>"unknown"</code> and the smoothing parameter printed the starting value that the flat criterion had left.</li>
+<li>The effective degrees of freedom of such a term are the free coordinates of its shape (modelterms7 0.134.0): <code>edf()</code> had failed on a singular matrix and <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> had counted every column, so the total read 11 where it is 2 on a fit with one smooth, and cAIC was 18 too high.</li>
+<li>modelterms7 0.134.0 is the minimum version.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.242.0" id="statmodels7-02420">statmodels7 0.242.0<a class="anchor" aria-label="anchor" href="#statmodels7-02420"></a></h2>
+<ul><li>The derivatives of the scaling matrix of a joint <code>gas()</code> filter with <code>scaling = 1</code> or <code>1/2</code>, and of its scaled driving vector, are compiled (<code>src/joint_scaling.cpp</code>, one function per order with its Leibniz terms written out, LAPACK’s <code>dsyev</code> for the eigenbasis). They were computed in R with one <code><a href="https://rdrr.io/r/base/eigen.html" class="external-link">eigen()</a></code> per observation. On a 6 x 40 gaussian panel with a <code>jfp()</code> block in a filter’s loading the outer Hessian goes from 10.0 s to 7.0 s (scaling 1) and from 11.2 s to 6.8 s (scaling 1/2); the results agree with the R route to 1e-15 relative.</li>
+<li>The outer criterion of a model with a Jeffreys block outside a filter, beside an <code>nl()</code> term in an equation that the filter does not drive (<code>y ~ gas(...) | theta ~ nl(...) + jfp(~ z)</code>), has an exact gradient and Hessian. The filter reads that equation’s predictor through the score, and the block’s derivatives reach the filtered predictors and the equation’s own predictor in the third and fourth derivatives of the penalty. The search differenced the criterion before, and it still does with a smoothed <code>seg()</code> in such an equation.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.241.1" id="statmodels7-02411">statmodels7 0.241.1<a class="anchor" aria-label="anchor" href="#statmodels7-02411"></a></h2>
 <ul><li>Tests only: a <code><a href="https://statmodels7.github.io/modelterms7/reference/scte.html" class="external-link">modelterms7::scte()</a></code> surface convex in one covariate and concave in the other is fitted and keeps both shapes, and a value along a line holds on the fitted surface. modelterms7 0.133.0 is the minimum version.</li>

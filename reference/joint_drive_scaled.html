@@ -9,7 +9,7 @@ scaling is 1/2 or 1."><meta property="og:image" content="https://statmodels7.git
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.241.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.243.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,8 +89,9 @@ $$U_{l;T} = \sum_{A \subseteq T} \sum_c S_{lc;T \setminus A}\,
   g_{c;A},$$
 where \(g_{c;A}\) is the family's derivative of order \(1 + |A|\)
 with indices \(c\) and \(A\), and the derivatives of \(S\) come
-from <code><a href="joint_scale_derivs.html">joint_scale_derivs()</a></code>. The entries are symmetric in \(T\), so each
-multiset is computed once and copied to its permutations.</p>
+from <code><a href="joint_scale_derivs.html">joint_scale_derivs()</a></code>. Each order is compiled, one function per
+order; the entries are symmetric in \(T\), so each multiset is computed
+once and copied to its permutations.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
