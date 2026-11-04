@@ -389,8 +389,10 @@ separation_message <- function(sep) {
 #'   vertex) and `message`.
 #'
 #' @keywords internal
-statmod_vertex <- function(fit) {
-  spec <- fit@spec
+statmod_vertex <- function(fit) spec_vertex(fit@spec)
+
+# the same, on the terms of a fitted specification
+spec_vertex <- function(spec) {
   out <- list()
   for (p in names(spec@terms)) {
     for (nm in names(spec@terms[[p]])) {

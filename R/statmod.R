@@ -1092,10 +1092,16 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # a coefficient a term holds is not estimated by the information and is
   # not a column the model fails to identify: its column is zero by design
   alias <- setdiff(alias, term_held_stack(spec, design))
-  warn_aliased(aliased_labels(spec, design, alias))
+  alias_lab <- aliased_labels(spec, design, alias)
   # the terms as the fit left them, so a break-point and a nonlinear
   # parameter are read off the fitted object and prediction reapplies them
   spec <- statmod_fitted_spec(spec, coef, design)
+  # a coefficient at the vertex of a shape has a vanished column, which the
+  # pivot drops for that reason alone; the certificate and the summary name
+  # it as a vertex, so the warning leaves it out
+  warn_aliased(setdiff(alias_lab, unlist(lapply(
+    tryCatch(spec_vertex(spec), error = function(e) list()),
+    function(v) v$coef))))
   # WHICH INFORMATION THE STORED COUNT READS. aic() and bic() price a fit as
   # -2 l + k tau, and tau is the trace read on the information their own
   # `information` names; the count stored beside that criterion is the same

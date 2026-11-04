@@ -2857,16 +2857,19 @@ summary.StatmodFit <- function(object, level = 0.95,
 
   ll <- logLik.StatmodFit(object)
   df <- attr(ll, "df")
-  aliased_msg <- if (length(object@aliased)) {
+  # a coefficient at the vertex of a shape has a vanished column, which the
+  # pivot drops for that reason alone; the note on the vertex names it
+  al <- setdiff(object@aliased, unlist(lapply(vtx, function(v) v$coef)))
+  aliased_msg <- if (length(al)) {
     sprintf(paste0("%d coefficient%s not estimated: the design carries the",
                    " same information in\n  other columns, so the pivot that",
                    " fitted the model left %s out. %s estimate,\n  standard",
                    " error and interval are reported as missing (%s)."),
-            length(object@aliased),
-            if (length(object@aliased) == 1L) " is" else "s are",
-            if (length(object@aliased) == 1L) "it" else "them",
-            if (length(object@aliased) == 1L) "Its" else "Their",
-            paste(object@aliased, collapse = ", "))
+            length(al),
+            if (length(al) == 1L) " is" else "s are",
+            if (length(al) == 1L) "it" else "them",
+            if (length(al) == 1L) "Its" else "Their",
+            paste(al, collapse = ", "))
   } else character(0)
   notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, sep_msg, vtx_msg, edge_msg,
              sed$note,

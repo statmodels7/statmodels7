@@ -15,7 +15,14 @@ test_that("a term at the vertex is reported and counts its free coordinates", {
 ")
   for (cs in list(list(f = yd ~ modelterms7::scs(x, modelterms7::shape_increasing()), df = 2),
                   list(f = yc ~ modelterms7::scs(x, modelterms7::shape_convex()), df = 3))) {
-    fit <- suppressWarnings(statmod(cs$f, distrib = G, data = d))
+    w <- character(0)
+    fit <- withCallingHandlers(statmod(cs$f, distrib = G, data = d),
+                               warning = function(e) {
+                                 w <<- c(w, conditionMessage(e))
+                                 invokeRestart("muffleWarning")
+                               })
+    # the vanished columns are named as a vertex, not as a ridge or an alias
+    expect_false(any(grepl("not identified", w)))
     ct <- statmod_certificate(fit)
     expect_identical(ct$state, "boundary")
     expect_length(ct$vertex, 1L)
@@ -23,6 +30,7 @@ test_that("a term at the vertex is reported and counts its free coordinates", {
     s <- suppressWarnings(summary(fit))
     expect_equal(s@df, cs$df, tolerance = 1e-6)
     expect_true(any(grepl("vertex of its shape", s@notes)))
+    expect_false(any(grepl("not estimated", s@notes)))
     expect_match(printed(s), "lambda [not determined]", fixed = TRUE)
   }
   # a level at the vertex beside one that is not leaves the shared smoothing

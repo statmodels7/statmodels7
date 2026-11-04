@@ -1,3 +1,10 @@
+# statmodels7 0.244.1
+
+* A term at the vertex of its shape is no longer reported as a ridge in the
+  warning of `statmod()` or as aliased in the notes of `summary()`: its
+  columns vanish, the pivot drops one of them for that reason, and the note
+  on the vertex names every coefficient of the term.
+
 # statmodels7 0.244.0
 
 * The level of a structural term (the `omega` of `gas()`, the first level of
