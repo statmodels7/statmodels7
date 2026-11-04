@@ -58,6 +58,204 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// jsc_s0_cpp
+List jsc_s0_cpp(NumericVector I0, int n, int K, double d);
+RcppExport SEXP _statmodels7_jsc_s0_cpp(SEXP I0SEXP, SEXP nSEXP, SEXP KSEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type I0(I0SEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_s0_cpp(I0, n, K, d));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_u0_cpp
+NumericVector jsc_u0_cpp(NumericVector S0, NumericVector g0, int n, int K);
+RcppExport SEXP _statmodels7_jsc_u0_cpp(SEXP S0SEXP, SEXP g0SEXP, SEXP nSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type S0(S0SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type g0(g0SEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_u0_cpp(S0, g0, n, K));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_s1_cpp
+List jsc_s1_cpp(NumericVector Im, List M, List S, IntegerMatrix tab, NumericVector Q, NumericVector r, int n, int K, double d);
+RcppExport SEXP _statmodels7_jsc_s1_cpp(SEXP ImSEXP, SEXP MSEXP, SEXP SSEXP, SEXP tabSEXP, SEXP QSEXP, SEXP rSEXP, SEXP nSEXP, SEXP KSEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type Im(ImSEXP);
+    Rcpp::traits::input_parameter< List >::type M(MSEXP);
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_s1_cpp(Im, M, S, tab, Q, r, n, K, d));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_u1_cpp
+NumericVector jsc_u1_cpp(List S, List g, IntegerMatrix tab, int n, int K);
+RcppExport SEXP _statmodels7_jsc_u1_cpp(SEXP SSEXP, SEXP gSEXP, SEXP tabSEXP, SEXP nSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< List >::type g(gSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_u1_cpp(S, g, tab, n, K));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_s2_cpp
+List jsc_s2_cpp(NumericVector Im, List M, List S, IntegerMatrix tab, NumericVector Q, NumericVector r, int n, int K, double d);
+RcppExport SEXP _statmodels7_jsc_s2_cpp(SEXP ImSEXP, SEXP MSEXP, SEXP SSEXP, SEXP tabSEXP, SEXP QSEXP, SEXP rSEXP, SEXP nSEXP, SEXP KSEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type Im(ImSEXP);
+    Rcpp::traits::input_parameter< List >::type M(MSEXP);
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_s2_cpp(Im, M, S, tab, Q, r, n, K, d));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_u2_cpp
+NumericVector jsc_u2_cpp(List S, List g, IntegerMatrix tab, int n, int K);
+RcppExport SEXP _statmodels7_jsc_u2_cpp(SEXP SSEXP, SEXP gSEXP, SEXP tabSEXP, SEXP nSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< List >::type g(gSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_u2_cpp(S, g, tab, n, K));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_s3_cpp
+List jsc_s3_cpp(NumericVector Im, List M, List S, IntegerMatrix tab, NumericVector Q, NumericVector r, int n, int K, double d);
+RcppExport SEXP _statmodels7_jsc_s3_cpp(SEXP ImSEXP, SEXP MSEXP, SEXP SSEXP, SEXP tabSEXP, SEXP QSEXP, SEXP rSEXP, SEXP nSEXP, SEXP KSEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type Im(ImSEXP);
+    Rcpp::traits::input_parameter< List >::type M(MSEXP);
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_s3_cpp(Im, M, S, tab, Q, r, n, K, d));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_u3_cpp
+NumericVector jsc_u3_cpp(List S, List g, IntegerMatrix tab, int n, int K);
+RcppExport SEXP _statmodels7_jsc_u3_cpp(SEXP SSEXP, SEXP gSEXP, SEXP tabSEXP, SEXP nSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< List >::type g(gSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_u3_cpp(S, g, tab, n, K));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_s4_cpp
+List jsc_s4_cpp(NumericVector Im, List M, List S, IntegerMatrix tab, NumericVector Q, NumericVector r, int n, int K, double d);
+RcppExport SEXP _statmodels7_jsc_s4_cpp(SEXP ImSEXP, SEXP MSEXP, SEXP SSEXP, SEXP tabSEXP, SEXP QSEXP, SEXP rSEXP, SEXP nSEXP, SEXP KSEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type Im(ImSEXP);
+    Rcpp::traits::input_parameter< List >::type M(MSEXP);
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_s4_cpp(Im, M, S, tab, Q, r, n, K, d));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_u4_cpp
+NumericVector jsc_u4_cpp(List S, List g, IntegerMatrix tab, int n, int K);
+RcppExport SEXP _statmodels7_jsc_u4_cpp(SEXP SSEXP, SEXP gSEXP, SEXP tabSEXP, SEXP nSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< List >::type g(gSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_u4_cpp(S, g, tab, n, K));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_s5_cpp
+List jsc_s5_cpp(NumericVector Im, List M, List S, IntegerMatrix tab, NumericVector Q, NumericVector r, int n, int K, double d);
+RcppExport SEXP _statmodels7_jsc_s5_cpp(SEXP ImSEXP, SEXP MSEXP, SEXP SSEXP, SEXP tabSEXP, SEXP QSEXP, SEXP rSEXP, SEXP nSEXP, SEXP KSEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type Im(ImSEXP);
+    Rcpp::traits::input_parameter< List >::type M(MSEXP);
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_s5_cpp(Im, M, S, tab, Q, r, n, K, d));
+    return rcpp_result_gen;
+END_RCPP
+}
+// jsc_u5_cpp
+NumericVector jsc_u5_cpp(List S, List g, IntegerMatrix tab, int n, int K);
+RcppExport SEXP _statmodels7_jsc_u5_cpp(SEXP SSEXP, SEXP gSEXP, SEXP tabSEXP, SEXP nSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type S(SSEXP);
+    Rcpp::traits::input_parameter< List >::type g(gSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tab(tabSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(jsc_u5_cpp(S, g, tab, n, K));
+    return rcpp_result_gen;
+END_RCPP
+}
 // chol_rcond_cpp
 double chol_rcond_cpp(NumericMatrix R, double anorm);
 RcppExport SEXP _statmodels7_chol_rcond_cpp(SEXP RSEXP, SEXP anormSEXP) {
@@ -159,6 +357,18 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 12},
     {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 16},
+    {"_statmodels7_jsc_s0_cpp", (DL_FUNC) &_statmodels7_jsc_s0_cpp, 4},
+    {"_statmodels7_jsc_u0_cpp", (DL_FUNC) &_statmodels7_jsc_u0_cpp, 4},
+    {"_statmodels7_jsc_s1_cpp", (DL_FUNC) &_statmodels7_jsc_s1_cpp, 9},
+    {"_statmodels7_jsc_u1_cpp", (DL_FUNC) &_statmodels7_jsc_u1_cpp, 5},
+    {"_statmodels7_jsc_s2_cpp", (DL_FUNC) &_statmodels7_jsc_s2_cpp, 9},
+    {"_statmodels7_jsc_u2_cpp", (DL_FUNC) &_statmodels7_jsc_u2_cpp, 5},
+    {"_statmodels7_jsc_s3_cpp", (DL_FUNC) &_statmodels7_jsc_s3_cpp, 9},
+    {"_statmodels7_jsc_u3_cpp", (DL_FUNC) &_statmodels7_jsc_u3_cpp, 5},
+    {"_statmodels7_jsc_s4_cpp", (DL_FUNC) &_statmodels7_jsc_s4_cpp, 9},
+    {"_statmodels7_jsc_u4_cpp", (DL_FUNC) &_statmodels7_jsc_u4_cpp, 5},
+    {"_statmodels7_jsc_s5_cpp", (DL_FUNC) &_statmodels7_jsc_s5_cpp, 9},
+    {"_statmodels7_jsc_u5_cpp", (DL_FUNC) &_statmodels7_jsc_u5_cpp, 5},
     {"_statmodels7_chol_rcond_cpp", (DL_FUNC) &_statmodels7_chol_rcond_cpp, 2},
     {"_statmodels7_leverage_pairs_cpp", (DL_FUNC) &_statmodels7_leverage_pairs_cpp, 11},
     {"_statmodels7_qr_factor_cpp", (DL_FUNC) &_statmodels7_qr_factor_cpp, 2},

@@ -3,29 +3,82 @@ NULL
 
 # ------------------------------------------------- the scaled driving vector
 #
-# Matrices over the filtered parameters are held as arrays n x K x K, one
-# matrix per observation, so that every step below is one vectorized
-# operation over the observations.
+# Matrices over the filtered parameters are held per order k as arrays
+# n x K x K x C_k, one matrix per observation and per multiset of k
+# predictor indices; the compiled functions of src/joint_scaling.cpp, one per
+# order, compute every multiset of their order.
 
-.jm_mult <- function(A, B) {
-  K <- dim(A)[2L]
-  out <- array(0, dim(A))
-  for (i in seq_len(K)) for (j in seq_len(K)) {
-    s <- 0
-    for (k in seq_len(K)) s <- s + A[, i, k] * B[, k, j]
-    out[, i, j] <- s
-  }
+.jsc_cache <- new.env(parent = emptyenv())
+
+#' The Multisets of Predictor Indices and Their Sub-Multisets
+#'
+#' @description
+#' Returns, for \eqn{P} predictors and the orders 0 to `order`, the multisets
+#' of each size, the table of sub-multisets that the compiled functions of
+#' [joint_scale_derivs()] read, and the position of each ordered tuple's
+#' multiset.
+#'
+#' @details
+#' The multisets of size \eqn{k} are the sorted tuples over \eqn{1, \dots,
+#' P}, in lexicographic order. The table of order \eqn{m} has one row per
+#' multiset \eqn{B} and one column per subset of its positions, a bit mask
+#' with position \eqn{j} as bit \eqn{j - 1}; the entry is the zero-based
+#' index of the sub-multiset among the multisets of its size. The map of
+#' order \eqn{m} gives, for each tuple in the order of [expand.grid()] (the
+#' first index running fastest), the one-based index of its multiset. The
+#' result is cached by \eqn{P} and `order`.
+#'
+#' @param P The number of predictors.
+#' @param order The highest size.
+#'
+#' @return A list with `ms` (the multisets, one matrix per size from 0),
+#'   `tab` (one integer matrix per order from 1) and `map` (one integer
+#'   vector per order from 1).
+#'
+#' @keywords internal
+joint_scale_tables <- function(P, order) {
+  ck <- paste(P, order, sep = ".")
+  hit <- .jsc_cache[[ck]]
+  if (!is.null(hit)) return(hit)
+  key <- function(x) paste(x, collapse = ".")
+  ms <- lapply(0:order, function(k) {
+    if (!k) return(matrix(integer(0), 1L, 0L))
+    rows <- as.matrix(do.call(expand.grid, rep(list(seq_len(P)), k)))
+    rows <- rows[apply(rows, 1L, function(r) !is.unsorted(r)), , drop = FALSE]
+    rows <- rows[do.call(base::order, unname(as.data.frame(rows))), , drop = FALSE]
+    unname(rows)
+  })
+  keys <- lapply(ms, function(x) apply(x, 1L, key))
+  keys[[1L]] <- ""
+  tab <- lapply(seq_len(order), function(m) {
+    B <- ms[[m + 1L]]
+    out <- matrix(0L, nrow(B), 2^m)
+    for (b in seq_len(nrow(B))) {
+      for (mask in 0:(2^m - 1L)) {
+        inA <- bitwAnd(mask, 2^(seq_len(m) - 1L)) > 0
+        k <- sum(inA)
+        out[b, mask + 1L] <- if (!k) 0L else
+          match(key(sort(B[b, inA])), keys[[k + 1L]]) - 1L
+      }
+    }
+    out
+  })
+  map <- lapply(seq_len(order), function(m) {
+    tup <- as.matrix(do.call(expand.grid, rep(list(seq_len(P)), m)))
+    match(apply(tup, 1L, function(r) key(sort(r))), keys[[m + 1L]])
+  })
+  out <- list(ms = ms, tab = tab, map = map)
+  .jsc_cache[[ck]] <- out
   out
 }
 
-.jm_t <- function(A) aperm(A, c(1L, 3L, 2L))
 
 #' The Derivatives of the Scaling Matrix in the Predictors
 #'
 #' @description
-#' Returns a function of a multiset of predictor indices that gives the
-#' derivative of \eqn{S = \mathcal{I}_{GG}^{-d}} in those predictors, one
-#' matrix per observation, for \eqn{d} equal to 1/2 or 1.
+#' Returns the derivatives of \eqn{S = \mathcal{I}_{GG}^{-d}} in every
+#' multiset of predictor indices up to the order given, one matrix per
+#' observation, for \eqn{d} equal to 1/2 or 1.
 #'
 #' @details
 #' With \eqn{M = \mathcal{I}} for \eqn{d = 1} and \eqn{M = \mathcal{I}^{1/2}}
@@ -39,7 +92,9 @@ NULL
 #' \eqn{\mathcal{I}} by dividing by \eqn{\sqrt{\lambda_i} + \sqrt{\lambda_j}}.
 #' The derivatives of \eqn{\mathcal{I}} are the family's
 #' ([distributions7::distrib_dexpected_hessian()] and its siblings to
-#' [distributions7::distrib_d5expected_hessian()], on the link scale). Every derivative is memoized by its multiset.
+#' [distributions7::distrib_d5expected_hessian()], on the link scale). The
+#' eigendecomposition (LAPACK's `dsyev`, one per observation) and each order
+#' are compiled, one function per order with its terms written out.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param theta The per-observation parameters at the fitted predictors.
@@ -47,16 +102,21 @@ NULL
 #' @param d The power, 1/2 or 1.
 #' @param order The highest order of derivative of \eqn{\mathcal{I}} read.
 #'
-#' @return A function of an integer vector of predictor positions.
+#' @return A list with `S`, the derivatives of orders 0 to `order` (arrays
+#'   \eqn{n \times K \times K \times C_k} with \eqn{C_k} the number of
+#'   multisets of size \eqn{k}, in the order of [joint_scale_tables()]), and
+#'   `tables`, what [joint_scale_tables()] returns.
 #'
 #' @keywords internal
 joint_scale_derivs <- function(spec, theta, G, d, order) {
   dist <- spec@distrib
   y <- spec@response
   params <- dist@params
+  P <- length(params)
   n <- spec@n_obs
   K <- length(G)
   rn <- function(x) rep_len(as.numeric(x), n)
+  tables <- joint_scale_tables(P, order)
   E0 <- distributions7::distrib_expected_hessian(dist, y, theta, scale = "link")
   Es <- list()
   if (order >= 1L) Es[[1L]] <- distributions7::distrib_dexpected_hessian(
@@ -72,80 +132,44 @@ joint_scale_derivs <- function(spec, theta, G, d, order) {
   keyf <- list(distributions7::dexpected_key, distributions7::d2expected_key,
                distributions7::d3expected_key, distributions7::d4expected_key,
                distributions7::d5expected_key)
-  # the information's derivative in a multiset of predictors
-  I_of <- function(B) {
-    out <- array(0, c(n, K, K))
-    for (a in seq_len(K)) for (b in seq_len(K)) {
-      out[, a, b] <- if (!length(B)) {
-        -rn(E0[[hess_key(params, G[a], G[b])]])
-      } else {
-        -rn(Es[[length(B)]][[do.call(keyf[[length(B)]],
-                                     c(list(params, G[a], G[b]),
-                                       as.list(B)))]])
+  # the information's derivatives of order k, one matrix per multiset
+  I_of <- function(k) {
+    B <- tables$ms[[k + 1L]]
+    out <- array(0, c(n, K, K, nrow(B)))
+    for (b in seq_len(nrow(B))) {
+      for (a in seq_len(K)) for (c in a:K) {
+        v <- if (!k) {
+          -rn(E0[[hess_key(params, G[a], G[c])]])
+        } else {
+          -rn(Es[[k]][[do.call(keyf[[k]], c(list(params, G[a], G[c]),
+                                             as.list(B[b, ])))]])
+        }
+        out[, a, c, b] <- v
+        out[, c, a, b] <- v
       }
     }
     out
   }
-  I0 <- I_of(integer(0))
-  # the eigenbasis of the information, observation by observation
-  Q <- array(0, c(n, K, K))
-  r <- matrix(0, n, K)
-  for (i in seq_len(n)) {
-    ev <- eigen(matrix(I0[i, , ], K, K), symmetric = TRUE)
-    if (any(ev$values <= 0)) {
-      stop("the expected information of the filtered parameters is not positive definite.",
-           call. = FALSE)
-    }
-    Q[i, , ] <- ev$vectors
-    r[i, ] <- if (d == 0.5) sqrt(ev$values) else ev$values
+  s0 <- jsc_s0_cpp(I_of(0L), n, K, d)
+  if (!s0$ok) {
+    stop("the expected information of the filtered parameters is not positive definite.",
+         call. = FALSE)
   }
-  diag_of <- function(v) {
-    out <- array(0, c(n, K, K))
-    for (k in seq_len(K)) out[, k, k] <- v[, k]
-    out
+  S <- list(s0$S)
+  M <- list()
+  for (k in seq_len(order)) {
+    Ik <- I_of(k)
+    tab <- tables$tab[[k]]
+    res <- switch(k,
+      jsc_s1_cpp(Ik, M, S, tab, s0$Q, s0$r, n, K, d),
+      jsc_s2_cpp(Ik, M, S, tab, s0$Q, s0$r, n, K, d),
+      jsc_s3_cpp(Ik, M, S, tab, s0$Q, s0$r, n, K, d),
+      jsc_s4_cpp(Ik, M, S, tab, s0$Q, s0$r, n, K, d),
+      jsc_s5_cpp(Ik, M, S, tab, s0$Q, s0$r, n, K, d))
+    M[[k]] <- res$M
+    S[[k + 1L]] <- res$S
   }
-  M0 <- .jm_mult(.jm_mult(Q, diag_of(r)), .jm_t(Q))
-  S0 <- .jm_mult(.jm_mult(Q, diag_of(1 / r)), .jm_t(Q))
-  den <- array(0, c(n, K, K))
-  for (a in seq_len(K)) for (b in seq_len(K)) den[, a, b] <- r[, a] + r[, b]
-  key <- function(B) paste(sort(B), collapse = ".")
-  subsets <- function(m) {
-    if (!m) return(list())
-    lapply(seq_len(2^m - 1L), function(mask)
-      which(bitwAnd(mask, 2^(seq_len(m) - 1L)) > 0))
-  }
-  memo_M <- new.env()
-  memo_S <- new.env()
-  M_of <- function(B) {
-    if (!length(B)) return(M0)
-    k <- key(B)
-    if (!is.null(memo_M[[k]])) return(memo_M[[k]])
-    v <- if (d == 1) I_of(B) else {
-      R <- I_of(B)
-      for (A in subsets(length(B))) {
-        if (length(A) == length(B)) next
-        R <- R - .jm_mult(M_of(B[A]), M_of(B[-A]))
-      }
-      .jm_mult(.jm_mult(Q, .jm_mult(.jm_mult(.jm_t(Q), R), Q) / den),
-               .jm_t(Q))
-    }
-    memo_M[[k]] <- v
-    v
-  }
-  S_of <- function(B) {
-    if (!length(B)) return(S0)
-    k <- key(B)
-    if (!is.null(memo_S[[k]])) return(memo_S[[k]])
-    acc <- array(0, c(n, K, K))
-    for (A in subsets(length(B))) {
-      acc <- acc + .jm_mult(M_of(B[A]),
-                            if (length(A) == length(B)) S0 else S_of(B[-A]))
-    }
-    v <- -.jm_mult(S0, acc)
-    memo_S[[k]] <- v
-    v
-  }
-  S_of
+  list(S = S, tables = tables)
 }
 
 
@@ -163,8 +187,9 @@ joint_scale_derivs <- function(spec, theta, G, d, order) {
 #'   g_{c;A},}
 #' where \eqn{g_{c;A}} is the family's derivative of order \eqn{1 + |A|}
 #' with indices \eqn{c} and \eqn{A}, and the derivatives of \eqn{S} come
-#' from [joint_scale_derivs()]. The entries are symmetric in \eqn{T}, so each
-#' multiset is computed once and copied to its permutations.
+#' from [joint_scale_derivs()]. Each order is compiled, one function per
+#' order; the entries are symmetric in \eqn{T}, so each multiset is computed
+#' once and copied to its permutations.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param tm The joint filter.
@@ -185,51 +210,36 @@ joint_drive_scaled <- function(spec, tm, theta, gl, H, D3, D4, D5, order,
   n <- spec@n_obs
   d <- tm@terms[[1L]]@scaling
   rn <- function(x) rep_len(as.numeric(x), n)
-  S_of <- joint_scale_derivs(spec, theta, G, d, order)
-  # the family's derivative with index c and the multiset A
-  g_of <- function(c, A) {
-    m <- length(A)
-    idx <- c(G[c], A)
-    rn(switch(m + 1L,
-              gl[[params[G[c]]]],
-              H[[hess_key(params, idx[1L], idx[2L])]],
-              D3[[do.call(deriv3_key, c(list(params), as.list(idx)))]],
-              D4[[do.call(deriv4_key, c(list(params), as.list(idx)))]],
-              D5[[do.call(deriv5_key, c(list(params), as.list(idx)))]],
-              D6[[do.call(deriv6_key, c(list(params), as.list(idx)))]]))
-  }
-  U_of <- function(T_) {
-    m <- length(T_)
-    out <- matrix(0, n, K)
-    for (mask in 0:(2^m - 1L)) {
-      inA <- bitwAnd(mask, 2^(seq_len(m) - 1L)) > 0
-      S <- S_of(T_[!inA])
+  sc <- joint_scale_derivs(spec, theta, G, d, order)
+  tables <- sc$tables
+  # the family's derivatives with index c and a multiset of size k
+  fam <- list(H, D3, D4, D5, D6)
+  keyf <- list(hess_key, deriv3_key, deriv4_key, deriv5_key, deriv6_key)
+  g_of <- function(k) {
+    B <- tables$ms[[k + 1L]]
+    out <- array(0, c(n, K, nrow(B)))
+    for (b in seq_len(nrow(B))) {
       for (c in seq_len(K)) {
-        gc <- g_of(c, T_[inA])
-        for (l in seq_len(K)) out[, l] <- out[, l] + S[, l, c] * gc
+        out[, c, b] <- if (!k) rn(gl[[params[G[c]]]]) else
+          rn(fam[[k]][[do.call(keyf[[k]], c(list(params, G[c]),
+                                              as.list(B[b, ])))]])
       }
     }
     out
   }
-  u <- U_of(integer(0))
+  g <- lapply(0:order, g_of)
+  u <- matrix(jsc_u0_cpp(sc$S[[1L]], g[[1L]], n, K), n, K)
   U <- list()
   for (r in seq_len(order)) {
-    A <- array(0, c(n, K, rep(P, r)))
-    tup <- as.matrix(do.call(expand.grid, rep(list(seq_len(P)), r)))
-    done <- new.env()
-    for (k in seq_len(nrow(tup))) {
-      T_ <- as.integer(tup[k, ])
-      kk <- paste(sort(T_), collapse = ".")
-      v <- done[[kk]]
-      if (is.null(v)) {
-        v <- U_of(sort(T_))
-        done[[kk]] <- v
-      }
-      for (l in seq_len(K)) {
-        A[cbind(seq_len(n), l, matrix(T_, n, r, byrow = TRUE))] <- v[, l]
-      }
-    }
-    U[[r]] <- A
+    tab <- tables$tab[[r]]
+    Sr <- sc$S[seq_len(r + 1L)]
+    gr <- g[seq_len(r + 1L)]
+    Uc <- switch(r,
+      jsc_u1_cpp(Sr, gr, tab, n, K), jsc_u2_cpp(Sr, gr, tab, n, K),
+      jsc_u3_cpp(Sr, gr, tab, n, K), jsc_u4_cpp(Sr, gr, tab, n, K),
+      jsc_u5_cpp(Sr, gr, tab, n, K))
+    Uc <- array(Uc, c(n, K, nrow(tab)))[, , tables$map[[r]], drop = FALSE]
+    U[[r]] <- array(Uc, c(n, K, rep(P, r)))
   }
   list(filtered = G, u = u, U1 = U[[1L]],
        U2 = if (order >= 2L) U[[2L]], U3 = if (order >= 3L) U[[3L]],

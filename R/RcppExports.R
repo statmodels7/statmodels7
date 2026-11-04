@@ -9,6 +9,54 @@ coord_descent_sparse <- function(Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope
     .Call(`_statmodels7_coord_descent_sparse`, Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance, means)
 }
 
+jsc_s0_cpp <- function(I0, n, K, d) {
+    .Call(`_statmodels7_jsc_s0_cpp`, I0, n, K, d)
+}
+
+jsc_u0_cpp <- function(S0, g0, n, K) {
+    .Call(`_statmodels7_jsc_u0_cpp`, S0, g0, n, K)
+}
+
+jsc_s1_cpp <- function(Im, M, S, tab, Q, r, n, K, d) {
+    .Call(`_statmodels7_jsc_s1_cpp`, Im, M, S, tab, Q, r, n, K, d)
+}
+
+jsc_u1_cpp <- function(S, g, tab, n, K) {
+    .Call(`_statmodels7_jsc_u1_cpp`, S, g, tab, n, K)
+}
+
+jsc_s2_cpp <- function(Im, M, S, tab, Q, r, n, K, d) {
+    .Call(`_statmodels7_jsc_s2_cpp`, Im, M, S, tab, Q, r, n, K, d)
+}
+
+jsc_u2_cpp <- function(S, g, tab, n, K) {
+    .Call(`_statmodels7_jsc_u2_cpp`, S, g, tab, n, K)
+}
+
+jsc_s3_cpp <- function(Im, M, S, tab, Q, r, n, K, d) {
+    .Call(`_statmodels7_jsc_s3_cpp`, Im, M, S, tab, Q, r, n, K, d)
+}
+
+jsc_u3_cpp <- function(S, g, tab, n, K) {
+    .Call(`_statmodels7_jsc_u3_cpp`, S, g, tab, n, K)
+}
+
+jsc_s4_cpp <- function(Im, M, S, tab, Q, r, n, K, d) {
+    .Call(`_statmodels7_jsc_s4_cpp`, Im, M, S, tab, Q, r, n, K, d)
+}
+
+jsc_u4_cpp <- function(S, g, tab, n, K) {
+    .Call(`_statmodels7_jsc_u4_cpp`, S, g, tab, n, K)
+}
+
+jsc_s5_cpp <- function(Im, M, S, tab, Q, r, n, K, d) {
+    .Call(`_statmodels7_jsc_s5_cpp`, Im, M, S, tab, Q, r, n, K, d)
+}
+
+jsc_u5_cpp <- function(S, g, tab, n, K) {
+    .Call(`_statmodels7_jsc_u5_cpp`, S, g, tab, n, K)
+}
+
 chol_rcond_cpp <- function(R, anorm) {
     .Call(`_statmodels7_chol_rcond_cpp`, R, anorm)
 }

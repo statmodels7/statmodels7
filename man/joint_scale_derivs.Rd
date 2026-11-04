@@ -18,12 +18,15 @@ joint_scale_derivs(spec, theta, G, d, order)
 \item{order}{The highest order of derivative of \eqn{\mathcal{I}} read.}
 }
 \value{
-A function of an integer vector of predictor positions.
+A list with \code{S}, the derivatives of orders 0 to \code{order} (arrays
+\eqn{n \times K \times K \times C_k} with \eqn{C_k} the number of
+multisets of size \eqn{k}, in the order of \code{\link[=joint_scale_tables]{joint_scale_tables()}}), and
+\code{tables}, what \code{\link[=joint_scale_tables]{joint_scale_tables()}} returns.
 }
 \description{
-Returns a function of a multiset of predictor indices that gives the
-derivative of \eqn{S = \mathcal{I}_{GG}^{-d}} in those predictors, one
-matrix per observation, for \eqn{d} equal to 1/2 or 1.
+Returns the derivatives of \eqn{S = \mathcal{I}_{GG}^{-d}} in every
+multiset of predictor indices up to the order given, one matrix per
+observation, for \eqn{d} equal to 1/2 or 1.
 }
 \details{
 With \eqn{M = \mathcal{I}} for \eqn{d = 1} and \eqn{M = \mathcal{I}^{1/2}}
@@ -37,6 +40,8 @@ a Sylvester equation, which is solved in the eigenbasis of
 \eqn{\mathcal{I}} by dividing by \eqn{\sqrt{\lambda_i} + \sqrt{\lambda_j}}.
 The derivatives of \eqn{\mathcal{I}} are the family's
 (\code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} and its siblings to
-\code{\link[distributions7:distrib_d5expected_hessian]{distributions7::distrib_d5expected_hessian()}}, on the link scale). Every derivative is memoized by its multiset.
+\code{\link[distributions7:distrib_d5expected_hessian]{distributions7::distrib_d5expected_hessian()}}, on the link scale). The
+eigendecomposition (LAPACK's \code{dsyev}, one per observation) and each order
+are compiled, one function per order with its terms written out.
 }
 \keyword{internal}

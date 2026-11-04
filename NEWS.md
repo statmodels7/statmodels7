@@ -1,3 +1,14 @@
+# statmodels7 (development version)
+
+* The derivatives of the scaling matrix of a joint `gas()` filter with
+  `scaling = 1` or `1/2`, and of its scaled driving vector, are compiled
+  (`src/joint_scaling.cpp`, one function per order with its Leibniz terms
+  written out, LAPACK's `dsyev` for the eigenbasis). They were computed in R
+  with one `eigen()` per observation. On a 6 x 40 gaussian panel with a
+  `jfp()` block in a filter's loading the outer Hessian goes from 10.0 s to
+  7.0 s (scaling 1) and from 11.2 s to 6.8 s (scaling 1/2); the results agree
+  with the R route to 1e-15 relative.
+
 # statmodels7 0.241.1
 
 * Tests only: a `modelterms7::scte()` surface convex in one covariate and

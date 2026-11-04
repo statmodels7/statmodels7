@@ -34,7 +34,8 @@ predictors gives
   g_{c;A},}
 where \eqn{g_{c;A}} is the family's derivative of order \eqn{1 + |A|}
 with indices \eqn{c} and \eqn{A}, and the derivatives of \eqn{S} come
-from \code{\link[=joint_scale_derivs]{joint_scale_derivs()}}. The entries are symmetric in \eqn{T}, so each
-multiset is computed once and copied to its permutations.
+from \code{\link[=joint_scale_derivs]{joint_scale_derivs()}}. Each order is compiled, one function per
+order; the entries are symmetric in \eqn{T}, so each multiset is computed
+once and copied to its permutations.
 }
 \keyword{internal}
