@@ -121,19 +121,20 @@ jfp_mv_ctx <- function(st, bs, ds) {
                                 st$npar, st$offs)
     }
     driven <- match(st$joint$driven, st$params)
-    if (length(st$units) &&
-        (filt || !all(vapply(st$units, function(u) u$a %in% driven,
-                             logical(1))))) {
+    if (length(st$units) && filt) {
       stop("The third derivative of a Jeffreys penalty beside a filter and ",
-           "a term whose block moves is implemented only for a block that ",
-           "moves in an equation
-  that the filter drives, with the ",
-           "Jeffreys block outside the filter.", call. = FALSE)
+           "a term whose block moves is implemented only for a Jeffreys ",
+           "block outside the filter.", call. = FALSE)
     }
-    # a block that moves in a driven equation enters through the filter
-    # (jfp_static_rows(), jfp_static_curv())
+    # a block that moves enters through the filter's static predictors
+    # (jfp_static_rows(), jfp_static_curv()), in a driven equation and in
+    # one that the filter does not drive, whose predictor the filter reads
+    # through the score; an equation that carries a moving block has a unit
+    # of its own even where the filter does not drive it
     cx$static <- length(st$units) > 0L
-    cx$units <- lapply(driven, function(a)
+    eqs <- union(driven, vapply(st$units, function(u) as.integer(u$a),
+                                integer(1)))
+    cx$units <- lapply(eqs, function(a)
       list(a = a, ra = seq_len(st$total), filter = TRUE))
     cx$keep <- st$joint$keep
     cx$mf <- st$joint$mf

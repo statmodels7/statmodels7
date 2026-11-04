@@ -88,20 +88,24 @@ test_that("a Jeffreys penalty beside a filter and a moving block is exact", {
   }
 })
 
-test_that("a moving block outside the driven equations keeps the refusal", {
+test_that("a Jeffreys block inside the filter beside a moving block keeps the refusal", {
   set.seed(3)
   S <- 3L
   Tn <- 25L
   n <- S * Tn
   d <- data.frame(t = rep(1:Tn, S), id = factor(rep(1:S, each = Tn)),
                   xs = stats::runif(n, 0, 3), z = stats::rnorm(n))
-  d$yn <- stats::rnbinom(n, mu = 3, size = exp(1 + 0.5 * exp(-d$xs)))
-  sp <- statmod_spec(yn ~ gas(p = 1, q = 1, omega ~ 1 + random(~ 1 | id),
-                              time = t, by = id) |
-                       theta ~ nl(~ c1 * exp(-r * xs),
-                                  start = list(c1 = 0.5, r = 0.5)) + jfp(~ z),
+  d$yn <- stats::rnbinom(n, mu = exp(0.5 + exp(-0.8 * d$xs)), size = 3)
+  sp <- statmod_spec(yn ~ nl(~ b * exp(-r * xs), start = list(b = 1, r = 0.5)) +
+                       gas(p = 1, q = 1, kappa1 ~ 1 + jfp(~ z), time = t,
+                           by = id),
                      distributions7::negbin2_distrib(), d)
   des <- statmod_design(sp)
   expect_false(jfp_filter_outer_ok(sp, des, 1L))
   expect_false(jfp_filter_outer_ok(sp, des, 2L))
+  # the same model without the moving block is admitted
+  sp0 <- statmod_spec(yn ~ gas(p = 1, q = 1, kappa1 ~ 1 + jfp(~ z), time = t,
+                               by = id),
+                      distributions7::negbin2_distrib(), d)
+  expect_true(jfp_filter_outer_ok(sp0, statmod_design(sp0), 1L))
 })

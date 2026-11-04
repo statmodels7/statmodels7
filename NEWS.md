@@ -8,6 +8,14 @@
   `jfp()` block in a filter's loading the outer Hessian goes from 10.0 s to
   7.0 s (scaling 1) and from 11.2 s to 6.8 s (scaling 1/2); the results agree
   with the R route to 1e-15 relative.
+* The outer criterion of a model with a Jeffreys block outside a filter,
+  beside an `nl()` term in an equation that the filter does not drive
+  (`y ~ gas(...) | theta ~ nl(...) + jfp(~ z)`), has an exact gradient and
+  Hessian. The filter reads that equation's predictor through the score, and
+  the block's derivatives reach the filtered predictors and the equation's
+  own predictor in the third and fourth derivatives of the penalty. The
+  search differenced the criterion before, and it still does with a
+  smoothed `seg()` in such an equation.
 
 # statmodels7 0.241.1
 

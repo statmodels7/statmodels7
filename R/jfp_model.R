@@ -560,14 +560,21 @@ jfp_filter_outer_ok <- function(spec, design, order = 1L) {
   host <- any(vapply(jfp_blocks(spec, design), function(b)
     identical(b$kind, "filter"), logical(1)))
   # a term whose block moves: verified for nl() and seg() in an equation
-  # that the filter drives, with the Jeffreys block outside the filter
-  # (jfp_static_rows(), jfp_static_curv())
+  # that the filter drives, and for nl() in one that it does not drive, with
+  # the Jeffreys block outside the filter (jfp_static_rows(),
+  # jfp_static_curv()). A smoothed seg() in an equation that the filter does
+  # not drive has exact penalty derivatives (test-jfp-filter-move-theta-seg.R)
+  # but no check of the criterion: a fit of the test panel took over half an
+  # hour (misure_jfp/RISULTATI.md, Fase 11)
   rf <- attr(design, "refresh")
   if (length(rf)) {
     if (host || !refresh_order2_ok(design)) return(FALSE)
     driven <- if (joint) tm@params else su[[1L]]$param
-    if (!all(vapply(rf, function(r) r$param %in% driven, logical(1)))) {
-      return(FALSE)
+    sst <- attr(design, "state")
+    for (r in rf) {
+      if (r$param %in% driven) next
+      tr <- sst$terms[[r$param]][[r$term]]
+      if (!isTRUE(S7::S7_inherits(tr, modelterms7::NlTerm))) return(FALSE)
     }
   }
   if (!order_available(spec@distrib, 3L + order + host)) return(FALSE)
@@ -597,11 +604,13 @@ jfp_filter_outer_ok <- function(spec, design, order = 1L) {
 #' the Hessian through [modelterms7::term_fifth()], with the fifth derivative
 #' of the expected information where the score is scaled
 #' ([distributions7::distrib_d5expected_hessian()]). A filter together with a
-#' term whose block is recomputed at the coefficients is covered where every
-#' such term is [modelterms7::nl()] or [modelterms7::seg()] in an equation
-#' that the filter drives and no Jeffreys block lies in the filter's
-#' subformula; its block's derivatives then reach the filtered predictors
-#' through the filter ([jfp_static_rows()]).
+#' term whose block is recomputed at the coefficients is covered where no
+#' Jeffreys block lies in the filter's subformula and every such term is
+#' [modelterms7::nl()] or [modelterms7::seg()] in an equation that the filter
+#' drives, or [modelterms7::nl()] in an equation that it does not drive;
+#' its block's derivatives then reach the
+#' filtered predictors through the filter, which reads the predictors of
+#' every equation ([jfp_static_rows()]).
 #'
 #' Where a term recomputes its block at the coefficients, `jfp_refresh_ok()`
 #' asks that the block be a Jacobian ([modelterms7::term_jacobian_block()])
