@@ -58,7 +58,9 @@ test_that("g'delta really is negative in a fit", {
   n <- 200
   dd <- data.frame(x = stats::runif(n, -1, 1))
   dd$y <- stats::rpois(n, exp(0.4 + 0.9 * dd$x))
-  statmod(y ~ x, distributions7::poisson_distrib(), dd)
+  # the route that calls iwls_solve(); the compiled fit performs the same
+  # solve in C (test-engine.R)
+  statmod(y ~ x, distributions7::poisson_distrib(), dd, engine = "r")
   expect_gt(length(seen$gd), 0L)
   expect_true(all(seen$gd < 0))
 })

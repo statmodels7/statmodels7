@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include "par_for.h"
+#include "qr_factor_core.h"
 
 using namespace Rcpp;
 
@@ -33,53 +34,7 @@ using namespace Rcpp;
 NumericMatrix qr_factor_cpp(NumericMatrix A, int threads) {
     const int m = A.nrow(), p = A.ncol();
     NumericMatrix B = clone(A);
-    double* Bp = B.begin();
-    std::vector<double> v(m > 0 ? m : 1);
-    const int kmax = (m < p) ? m : p;
-
-    // measured on this machine: the per-step region costs ~44 us to open,
-    // and a trailing update runs at roughly one element per nanosecond, so
-    // a step is worth splitting from about a quarter of a million elements
-    const double kMinWork = 2.6e5;
-
-    for (int j = 0; j < kmax; ++j) {
-        const int len = m - j;
-        double* col = Bp + (std::size_t) j * m + j;
-        double nrm = 0.0;
-        for (int i = 0; i < len; ++i) nrm += col[i] * col[i];
-        nrm = std::sqrt(nrm);
-        if (!R_FINITE(nrm) || nrm == 0.0) continue;
-        const double alpha = (col[0] >= 0.0) ? -nrm : nrm;
-        for (int i = 0; i < len; ++i) v[i] = col[i];
-        v[0] -= alpha;
-        double vtv = 0.0;
-        for (int i = 0; i < len; ++i) vtv += v[i] * v[i];
-        if (vtv == 0.0) continue;
-        col[0] = alpha;
-        for (int i = 1; i < len; ++i) col[i] = 0.0;
-
-        const int ntrail = p - j - 1;
-        if (ntrail <= 0) continue;
-        const double* vp = v.data();
-        const double inv = 2.0 / vtv;
-        auto body = [&](std::size_t t) {
-            const int k = j + 1 + (int) t;
-            double* ck = Bp + (std::size_t) k * m + j;
-            double s = 0.0;
-            for (int i = 0; i < len; ++i) s += vp[i] * ck[i];
-            s *= inv;
-            for (int i = 0; i < len; ++i) ck[i] -= s * vp[i];
-        };
-        const double work = (double) ntrail * (double) len;
-        sm7::par_for((std::size_t) ntrail, (work >= kMinWork) ? threads : 1,
-                     body);
-    }
-
     NumericMatrix R(p, p);
-    for (int j = 0; j < p; ++j) {
-        for (int i = 0; i <= j && i < kmax; ++i) {
-            R(i, j) = Bp[(std::size_t) j * m + i];
-        }
-    }
+    sm7::qr_factor_core(B.begin(), m, p, threads, R.begin());
     return R;
 }

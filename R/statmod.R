@@ -424,6 +424,10 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   make the result depend on the count. For any two values of `cores` the
 #'   result is identical bit for bit: the folds are seeded per fold and
 #'   collected in fold order.
+#' @param engine The route of the inner fit: `"auto"` (the default) runs
+#'   the compiled fit on the models that it covers and [iwls_fit()] on the
+#'   others; `"r"` runs [iwls_fit()] on every model. The two routes perform
+#'   the same operations in the same order.
 #' @param ... Not used. A named argument signals an error. A hyperparameter
 #'   is held in the term that carries the penalty.
 #'
@@ -464,7 +468,8 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     # argument's own promise and R reports "promise already
                     # under evaluation"
                     start = NULL, linpar_control = linpar_options(),
-                    verbose = 0, threads = 1, cores = 1, ...) {
+                    verbose = 0, threads = 1, cores = 1,
+                    engine = c("auto", "r"), ...) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
   caller <- parent.frame()
@@ -487,6 +492,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   asked <- !missing(outer_criterion)
   asked_sparse <- !missing(sparse_criterion)
   vb <- verbosity(verbose)
+  engine <- match.arg(engine)
   budget <- method_budget(inner_optimizer)
   maxit <- budget$maxit
   tol <- budget$tol
@@ -514,6 +520,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   }
   spec@threads <- n_thr
   spec@cores <- n_cores
+  spec@engine <- engine
   design <- statmod_design(spec)
   # a marginal criterion left at auto_info() is settled against the family
   # and the structural terms here, as an iwls() left at "auto" is below
@@ -2314,18 +2321,29 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     groups <- lapply(gfull, function(ix) match(intersect(ix, idx), idx))
     groups <- Filter(length, groups)
     frozen <- match(intersect(hf$where, idx), idx)
-    res <- iwls_fit(sub, beta[idx], method, spec@n_obs, pieces_at,
-                    verbose = vb$inner, groups = groups, frozen = frozen,
-                    backup_at = backup_at,
-                    damp_on_reject = !has_sharp_breakpoint(spec),
-                    kinks_at = kinks_at, newton_at = newton_at,
-                    full_at = full_at, switch_at = switch_at,
-                    switch_after = if (is.null(switch_at)) Inf else sw,
-                    # A MOVING BLOCK CAN STEP OUT OF THE FAMILY'S DOMAIN: a
-                    # long trial step of scs() overflows exp() and gives a
-                    # NaN predictor, and the density then stops the fit; the
-                    # step is rejected and halved instead (misure_scs/fase2)
-                    guard = length(attr(design, "refresh")) > 0L)
+    # the compiled inner fit where every component of the model has a
+    # compiled route (R/engine.R); NULL sends the fit to iwls_fit()
+    res <- if (whole && is.null(kinks_at) && is.null(newton_at) &&
+               is.null(full_at)) {
+      engine_inner_fit(spec, design, obj, beta, hyper, method, groups,
+                       frozen, vb$inner,
+                       damp_on_reject = !has_sharp_breakpoint(spec),
+                       guard = length(attr(design, "refresh")) > 0L)
+    }
+    if (is.null(res)) {
+      res <- iwls_fit(sub, beta[idx], method, spec@n_obs, pieces_at,
+                      verbose = vb$inner, groups = groups, frozen = frozen,
+                      backup_at = backup_at,
+                      damp_on_reject = !has_sharp_breakpoint(spec),
+                      kinks_at = kinks_at, newton_at = newton_at,
+                      full_at = full_at, switch_at = switch_at,
+                      switch_after = if (is.null(switch_at)) Inf else sw,
+                      # A MOVING BLOCK CAN STEP OUT OF THE FAMILY'S DOMAIN: a
+                      # long trial step of scs() overflows exp() and gives a
+                      # NaN predictor, and the density then stops the fit; the
+                      # step is rejected and halved instead (misure_scs/fase2)
+                      guard = length(attr(design, "refresh")) > 0L)
+    }
     out <- beta
     out[idx] <- res$par
     # the block was solved in its own numbering, so the aliased coordinates

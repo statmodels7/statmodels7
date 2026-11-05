@@ -44,7 +44,9 @@ Imports:
     stats,
     utils
 LinkingTo:
+    distributions7,
     Rcpp,
+    RcppEigen,
     RcppParallel
 SystemRequirements: GNU make
 Suggests:
@@ -110,6 +112,7 @@ Collate:
     'outer_criteria.R'
     'path.R'
     'coord.R'
+    'engine.R'
     'filter_driving.R'
     'jfp_engine.R'
     'jfp_model.R'

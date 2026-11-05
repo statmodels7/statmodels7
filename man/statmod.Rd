@@ -20,6 +20,7 @@ statmod(
   verbose = 0,
   threads = 1,
   cores = 1,
+  engine = c("auto", "r"),
   ...
 )
 }
@@ -153,6 +154,11 @@ point, and splitting a chain would slow the single-process default or
 make the result depend on the count. For any two values of \code{cores} the
 result is identical bit for bit: the folds are seeded per fold and
 collected in fold order.}
+
+\item{engine}{The route of the inner fit: \code{"auto"} (the default) runs
+the compiled fit on the models that it covers and \code{\link[=iwls_fit]{iwls_fit()}} on the
+others; \code{"r"} runs \code{\link[=iwls_fit]{iwls_fit()}} on every model. The two routes perform
+the same operations in the same order.}
 
 \item{...}{Not used. A named argument signals an error. A hyperparameter
 is held in the term that carries the penalty.}

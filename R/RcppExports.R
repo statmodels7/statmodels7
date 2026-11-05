@@ -9,6 +9,18 @@ coord_descent_sparse <- function(Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope
     .Call(`_statmodels7_coord_descent_sparse`, Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance, means)
 }
 
+engine_family_probe <- function(family, links) {
+    .Call(`_statmodels7_engine_family_probe`, family, links)
+}
+
+engine_iwls_fit <- function(model, pen, method, start, frozen, groups, verbose) {
+    .Call(`_statmodels7_engine_iwls_fit`, model, pen, method, start, frozen, groups, verbose)
+}
+
+engine_point_probe <- function(model, pen, beta) {
+    .Call(`_statmodels7_engine_point_probe`, model, pen, beta)
+}
+
 jsc_s0_cpp <- function(I0, n, K, d) {
     .Call(`_statmodels7_jsc_s0_cpp`, I0, n, K, d)
 }

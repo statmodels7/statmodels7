@@ -22,6 +22,7 @@ StatmodSpec(
   held_hyper = list(),
   threads = 1L,
   cores = 1L,
+  engine = "auto",
   jeffreys = NA
 )
 }
@@ -71,6 +72,10 @@ default.}
 \item{cores}{The number of separate R processes for the independent fits of
 a cross-validation and of a kinked path's product grid, a single integer.
 It is distinct from \code{threads}, the number of threads inside one process.}
+
+\item{engine}{The route of the inner fit, \code{"auto"} (the compiled fit on
+the models that it covers) or \code{"r"} (\code{\link[=iwls_fit]{iwls_fit()}} on every model), as
+\code{\link[=statmod]{statmod()}} takes it.}
 
 \item{jeffreys}{Whether a term of an equation, or a sub-term of one of its
 subformulas, carries a \code{\link[modelterms7:JeffreysPenalty]{modelterms7::JeffreysPenalty()}}, a single logical;
