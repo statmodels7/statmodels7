@@ -13,7 +13,9 @@
 #' @details
 #' A model is covered when `spec@engine` is `"auto"`; the method is an
 #' [iwls()] without a `criterion` whose expected information is the closed
-#' form (`method = NULL`) or [distributions7::expect_opg()]; the block is the
+#' form (`method = NULL`), [distributions7::expect_opg()],
+#' [distributions7::expect_mc()] or [distributions7::expect_integrate()] (the
+#' same object for the information and its backup); the block is the
 #' whole coefficient vector, with no break-point kink, no moving block and no
 #' nonlinear curvature unit; the family is a univariate family of the
 #' registry without a wrapper and every link has a compiled route; no term
@@ -22,6 +24,9 @@
 #'
 #' Where the R route would signal an error the compiled fit stops and
 #' `engine_inner_fit()` returns `NULL`, so that [iwls_fit()] reproduces it.
+#' With [distributions7::expect_mc()] the random stream is then restored to
+#' its state before the compiled fit, so that [iwls_fit()] makes the same
+#' draws as when it runs alone.
 #'
 #' @param spec,design,obj,hyper As in [fit_smooth()].
 #' @param beta The full starting vector, with the held values written in.
@@ -42,10 +47,25 @@ engine_inner_fit <- function(spec, design, obj, beta, hyper, method, groups,
   if (is.null(rt)) return(NULL)
   rt$method$damp_on_reject <- isTRUE(damp_on_reject)
   rt$method$guard <- isTRUE(guard)
+  # a simulated expected information draws from R's stream: where the
+  # compiled fit stops part way, the stream is put back where it was, so
+  # that iwls_fit() makes the draws that the R route makes
+  mc <- identical(rt$method$emethod, 2L)
+  if (mc) {
+    had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+    seed <- if (had_seed) get(".Random.seed", envir = globalenv(), inherits = FALSE)
+  }
   res <- engine_iwls_fit(rt$model, rt$pen, rt$method, as.numeric(beta),
                          as.integer(frozen), lapply(groups, as.integer),
                          isTRUE(verbose))
-  if (!identical(res$status, 0L)) return(NULL)
+  if (!identical(res$status, 0L)) {
+    if (mc) {
+      if (had_seed) assign(".Random.seed", seed, envir = globalenv())
+      else if (exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+        rm(".Random.seed", envir = globalenv())
+    }
+    return(NULL)
+  }
   note <- switch(as.character(res$note_kind),
     "1" = paste0("the score is not finite at iteration ", res$note_it,
                  ", so the run stopped at the last usable point"),
@@ -82,16 +102,20 @@ engine_route <- function(spec, design, obj, beta, hyper, method) {
   if (!S7::S7_inherits(method, Iwls) || !is.null(method@criterion)) {
     return(NULL)
   }
-  # the expectation methods with a compiled route: the closed form (NULL)
-  # and the outer product of the scores
+  # the expectation methods with a compiled route: the closed form (NULL),
+  # the outer product of the scores, simulation and integration; the
+  # information and its backup must use the same one
   em <- c(list(info_emethod(method@hessian)),
           if (!is.null(method@backup)) list(info_emethod(method@backup)))
   ecode <- vapply(em, function(m) {
     if (is.null(m)) 0L
     else if (S7::S7_inherits(m, distributions7::ExpectOPG)) 1L
+    else if (S7::S7_inherits(m, distributions7::ExpectMC)) 2L
+    else if (S7::S7_inherits(m, distributions7::ExpectIntegrate)) 3L
     else NA_integer_
   }, integer(1))
   if (anyNA(ecode) || length(unique(ecode)) > 1L) return(NULL)
+  if (length(em) > 1L && !identical(em[[1L]], em[[2L]])) return(NULL)
   if (has_sharp_breakpoint(spec) || length(attr(design, "refresh")) ||
       length(nl_curvature_units(design)) ||
       !is.null(statmod_structural_state(design))) {
@@ -195,7 +219,15 @@ engine_route <- function(spec, design, obj, beta, hyper, method) {
     backup = !is.null(method@backup),
     switching = isTRUE(method@switching) && length(sw) && is.finite(sw),
     polish = isTRUE(iwls_polish()),
-    emethod = ecode[[1L]]
+    emethod = ecode[[1L]],
+    escore = ecode[[1L]] >= 2L && identical(em[[1L]]@identity, "score"),
+    nsim = if (ecode[[1L]] == 2L) as.numeric(em[[1L]]@nsim) else NA_real_,
+    etol = if (ecode[[1L]] == 3L) {
+      m <- em[[1L]]
+      as.numeric(c(m@quad_atol, m@quad_rtol, m@max_panels, m@series_atol,
+                   m@series_rtol, m@max_terms))
+    } else rep(NA_real_, 6L),
+    support = as.numeric(d@bounds)
   )
   list(model = model, pen = list(S = S, C = C, units = pu), method = mcfg)
 }
@@ -234,7 +266,7 @@ engine_penalty_units <- function(spec, design, units, hyper) {
                        lam = lam, a = lam / 2, c1 = r / 2 * log(lam),
                        c2 = r / 2 * log(2 * pi), c3 = pen@penalty_logpdet / 2)
     } else if (S7::S7_inherits(pen, penalties7::AdditivePenalty)) {
-      a <- penalties7:::additive_sum(pen, th)
+      a <- penalties7::additive_sum(pen, th)
       out[[k]] <- list(kind = 2L, idx = idx, map = NULL, S = engine_matrix(a$S),
                        c1 = 0.5 * a$logpdet, c2 = pen@rank / 2 * log(2 * pi),
                        matrices = lapply(pen@matrices, engine_matrix),
@@ -245,8 +277,8 @@ engine_penalty_units <- function(spec, design, units, hyper) {
       if (!all(c("parent_distrib", "fixed_params") %in% S7::prop_names(par))) {
         return(NULL)
       }
-      full <- distributions7:::fixed_full_theta(par, th)
-      lj <- if (is.null(mp)) NA_real_ else penalties7:::dp_log_jacobian(pen)
+      full <- distributions7::fixed_full_theta(par, th)
+      lj <- if (is.null(mp)) NA_real_ else penalties7::dp_log_jacobian(pen)
       parent <- par@parent_distrib
       if (identical(attr(S7::S7_class(parent), "name"), "Gaussian1Distrib") &&
           pen@block == 1L) {
@@ -256,7 +288,7 @@ engine_penalty_units <- function(spec, design, units, hyper) {
         if (length(out[[k]]$mu) != 1L || length(out[[k]]$sigma) != 1L) return(NULL)
       } else if (S7::S7_inherits(parent, distributions7::MvGaussianDistrib) &&
                  pen@block == parent@n_dim) {
-        pc <- distributions7:::mvg_pieces(parent, full)
+        pc <- distributions7::mvg_pieces(parent, full)
         l <- unname(unclass(parameters7::param_factor(pc$s, pc$eta)))
         out[[k]] <- list(kind = 4L, idx = idx, map = mp, block = as.integer(pen@block),
                          mu = as.numeric(pc$mu), L = as.matrix(l),

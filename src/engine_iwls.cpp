@@ -29,6 +29,7 @@
 #include <d7_link_scale.h>
 #include <string>
 #include <chrono>
+#include <cfloat>
 
 using namespace sm7e;
 typedef Eigen::SparseMatrix<double> SpMat;
@@ -49,6 +50,8 @@ typedef void (*lf7_inv12p_t)(int, const double*, double, double*, double*,
                              double*);
 typedef double (*lf7_clamp_t)(double, double, double);
 typedef double (*lf7_fun1p_t)(int, const double*, double);
+typedef int (*d7_expect_t)(int, int, int, int, const double*, const double*,
+                           double, const double*, double*);
 
 struct Registry {
     bool ok = false;
@@ -63,6 +66,7 @@ struct Registry {
     lf7_inv12p_t inv12p = nullptr;
     lf7_clamp_t clamp = nullptr;
     lf7_fun1p_t fun = nullptr;
+    d7_expect_t expect = nullptr;
 };
 
 Registry& registry() {
@@ -82,6 +86,7 @@ Registry& registry() {
         r.inv12p = (lf7_inv12p_t) R_GetCCallable("linkfunctions7", "lf7_inv12p");
         r.clamp = (lf7_clamp_t) R_GetCCallable("linkfunctions7", "lf7_clamp");
         r.fun = (lf7_fun1p_t) R_GetCCallable("linkfunctions7", "lf7_fun1p");
+        r.expect = (d7_expect_t) R_GetCCallable("distributions7", "d7_expect");
         r.ok = true;
     }
     return r;
@@ -184,7 +189,12 @@ struct Method {
     bool switching = false;          // config C: switch_at exists
     bool damp_on_reject = true, guard = false;
     bool polish = true;              // iwls_polish()
-    int emethod = 0;                 // expected information: 0 closed form, 1 OPG
+    int emethod = 0;                 // expected information: 0 closed form, 1 OPG,
+                                     // 2 simulation, 3 integration
+    bool escore = false;             // 2, 3: the score identity
+    double nsim = 0;                 // 2: the draws per setting
+    double etol[6] = {0, 0, 0, 0, 0, 0};  // 3: quad_vec and series_vec's limits
+    double support[2] = {0, 0};      // the family's support
 };
 
 // R's error, which the caller reproduces by running the R route
@@ -440,9 +450,39 @@ public:
         value = value_at(P);
         return true;
     }
+    // D22: two families whose R density tests a condition over the whole
+    // vector and switches every observation's formula on it, where the
+    // registry decides observation by observation. Where R's switch would
+    // differ from the registry the fit is handed to iwls_fit(): weibull3
+    // (registry id 21) when any scale exp(log(mean) - lgamma(1 + 1/sigma))
+    // is not finite and positive; betabinom2 (id 42) when the criterion of
+    // betabinom_log_mass() holds for some observations in the support and
+    // not for others.
+    void vector_branch_check(Point& P) {
+        const int n = M.n;
+        if (M.fam == 21) {
+            for (int i = 0; i < n; ++i) {
+                const double* t = theta_obs(P, i);
+                const double b = std::exp(std::log(t[0]) - R::lgammafn(1 + 1 / t[1]));
+                if (!(R_FINITE(b) && b > 0)) throw RError();
+            }
+        } else if (M.fam == 42) {
+            int seen = -1;
+            for (int i = 0; i < n; ++i) {
+                const double* t = theta_obs(P, i);
+                const double y = M.y[i], size = t[2];
+                if (!(y >= 0 && y <= size && y == std::nearbyint(y))) continue;
+                const double s = t[0] + t[1];
+                const int c = R_FINITE(s) && R::lgammafn(s + size) * DBL_EPSILON < 1e-8;
+                if (seen < 0) seen = c;
+                else if (c != seen) throw RError();
+            }
+        }
+    }
     double value_at(Point& P) {
         Timer tm(T_FN);
         const int n = M.n;
+        if (M.fam == 21 || M.fam == 42) vector_branch_check(P);
         std::vector<double> v(n);
         for (int i = 0; i < n; ++i)
             v[i] = M.w[i] * reg.logpdf(M.fam, M.y[i], theta_obs(P, i));
@@ -516,6 +556,25 @@ public:
         return true;
     }
 
+    // distrib_expected_hessian(method = expect_mc() / expect_integrate()) at
+    // every observation, on the parameter scale, through d7_expect(); called
+    // at every evaluation, as the R route calls it, since a simulation draws
+    // anew each time
+    std::vector<double> Eall;
+    void expect_all(Point& P) {
+        const int n = M.n, K = M.K, ncol = K + M.nc;
+        std::vector<double> th((std::size_t) n * ncol);
+        for (int i = 0; i < n; ++i) {
+            const double* t = theta_obs(P, i);
+            for (int c = 0; c < ncol; ++c) th[i + (std::size_t) n * c] = t[c];
+        }
+        Eall.assign((std::size_t) n * K * K, 0.0);
+        const int method = me.emethod == 2 ? (me.escore ? 1 : 0) : (me.escore ? 3 : 2);
+        const int st = reg.expect(M.fam, method, n, ncol, th.data(), me.support, me.nsim,
+                                  me.etol, Eall.data());
+        if (st != 0) throw RError();
+    }
+
     // the K x K link-scale Hessian of the log density at observation i
     void hess_obs(Point& P, int i, bool expected, double* out) {
         const int n = M.n, K = M.K;
@@ -535,6 +594,9 @@ public:
                     H[b + a * K] = v;
                 }
             d7ls::link_info(K, H, h1, h2, out);
+        } else if (expected && me.emethod >= 2) {
+            // the parameter-scale expected Hessian of expect_all()
+            d7ls::link_info(K, Eall.data() + (std::size_t) i * K * K, h1, h2, out);
         } else if (expected) {
             reg.info(M.fam, P.ebuf.data() + (std::size_t) i * M.pmax, H);
             d7ls::link_info(K, H, h1, h2, out);
@@ -564,6 +626,7 @@ public:
         Point& P = point(beta);
         if (!P.inb) return false;
         if (expected && me.emethod == 0) ensure_eparts(P); else ensure_parts(P);
+        if (expected && me.emethod >= 2) expect_all(P);
         Timer tm(T_PIECES);
         const int n = M.n, K = M.K, p = M.p;
         // H (link scale), per observation K x K; Om = -w H
@@ -1468,6 +1531,14 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
     me.guard = Rcpp::as<bool>(method["guard"]);
     me.polish = Rcpp::as<bool>(method["polish"]);
     me.emethod = Rcpp::as<int>(method["emethod"]);
+    me.escore = Rcpp::as<bool>(method["escore"]);
+    me.nsim = Rcpp::as<double>(method["nsim"]);
+    {
+        Rcpp::NumericVector et = method["etol"], sp = method["support"];
+        for (int k = 0; k < 6; ++k) me.etol[k] = et[k];
+        me.support[0] = sp[0];
+        me.support[1] = sp[1];
+    }
 
     const int p = M.p;
     const double nn = (double) M.n;

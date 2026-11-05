@@ -75,6 +75,33 @@ test_that("a kinked penalty and a user criterion are left to iwls_fit()", {
     method = iwls(criterion = optimizers7::crit_grad(1e-6))))
 })
 
+test_that("a simulated or integrated expected information fits alike", {
+  d <- engine_data(n = 150)
+  # the simulation draws from R's stream at every evaluation: the same seed
+  # before each route, and the same state of the stream after
+  twin_seeded <- function(...) {
+    set.seed(4)
+    fa <- statmod(..., engine = "auto")
+    sa <- stats::runif(1)
+    set.seed(4)
+    fr <- statmod(..., engine = "r")
+    sr <- stats::runif(1)
+    expect_equal(unlist(coef(fa)), unlist(coef(fr)), tolerance = 1e-10)
+    expect_identical(sa, sr)
+  }
+  for (m in list(distributions7::expect_mc(nsim = 200),
+                 distributions7::expect_mc(nsim = 200, identity = "score"),
+                 distributions7::expect_integrate(),
+                 distributions7::expect_integrate(identity = "score"))) {
+    for (inf in list(expected_info(method = m), auto_info(method = m))) {
+      twin_seeded(yg ~ x + z, distrib = distributions7::gamma1_distrib(),
+                  data = d, inner_information = inf)
+      twin_seeded(yc ~ x, distrib = distributions7::poisson_distrib(),
+                  data = d, inner_information = inf)
+    }
+  }
+})
+
 test_that("the outer product of the scores fits alike", {
   d <- engine_data()
   f <- yg ~ x + s(z, bspline_smooth(k = 6))
