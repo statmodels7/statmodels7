@@ -47,3 +47,26 @@ test_that("an exactly collinear column is still refused", {
   C <- Matrix::Diagonal(x = rep(0, 3))
   expect_null(statmodels7:::sparse_augmented_solve(R, C, rnorm(3), "qr"))
 })
+
+test_that("a nearly collinear column is aliased on the sparse route as on the dense one", {
+  # the third column's part orthogonal to the others is about 2e-10 of its
+  # norm: above p eps, which the sparse route used to test against, and
+  # below the solver's 1e-7, which the dense pivoted QR tests against
+  set.seed(4)
+  x <- runif(50)
+  M <- cbind(1, x, x + 1e-10 * rnorm(50))
+  u <- as.numeric(crossprod(M, rnorm(50)))
+  C <- matrix(0, nrow = 3, ncol = 3)
+  dense <- statmodels7:::augmented_solve(M, C, u, "qr")
+  sparse <- statmodels7:::augmented_solve(Matrix::Matrix(M, sparse = TRUE),
+                                          Matrix::Diagonal(x = rep(0, 3)), u, "qr")
+  expect_identical(dense$dropped, 3L)
+  expect_identical(sparse$dropped, dense$dropped)
+  expect_identical(sparse$rank, dense$rank)
+  # well separated columns stay on the sparse route at full rank
+  M2 <- cbind(1, x, x^2)
+  ok <- statmodels7:::sparse_augmented_solve(Matrix::Matrix(M2, sparse = TRUE),
+                                             Matrix::Diagonal(x = rep(0, 3)),
+                                             u, "qr")
+  expect_identical(ok$rank, 3L)
+})

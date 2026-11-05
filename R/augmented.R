@@ -412,7 +412,7 @@ diagonal_sqrt <- function(S, p) {
 #' @keywords internal
 augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
   if (isS4(R) || isS4(C)) {
-    out <- sparse_augmented_solve(R, C, u, how)
+    out <- sparse_augmented_solve(R, C, u, how, tol = tol)
     # it declines rather than dropping anything, so a solve it returns has
     # nothing aliased
     if (!is.null(out)) return(c(out, list(dropped = integer(0))))
@@ -526,8 +526,10 @@ augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
 #' The rank is read off the diagonal of the triangular factor, since a sparse
 #' QR does not report a rank. The test is on the Jacobi-equilibrated
 #' diagonal, in which each entry is divided by its column's norm, and the
-#' route returns `NULL` when the smallest ratio is at most
-#' `ncol(A) * .Machine$double.eps` times the largest.
+#' route returns `NULL` when the smallest ratio is at most `tol` times the
+#' largest. `tol` is the solver's, the threshold that the dense route's
+#' pivoted QR applies to the same ratio, so that a matrix is full rank or
+#' deficient whichever route solves it.
 #'
 #' Without the equilibration the raw diagonal would reject matrices that the
 #' dense route finds at full rank, because their columns differ in size (a
@@ -549,6 +551,8 @@ augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
 #'   with `p` rows.
 #' @param how The decomposition requested. Only `"qr"` is served; `"svd"` has
 #'   no sparse counterpart, so the function returns `NULL` for it.
+#' @param tol The rank tolerance, as [augmented_solve()] takes it; `NULL`
+#'   means `1e-7`, the default of [solve_qr()].
 #'
 #' @return A list with `delta` (numeric, length `p`) and `rank` (integer,
 #'   equal to `p`), or `NULL` when the route yields no solution: `how` is
@@ -560,8 +564,9 @@ augmented_solve <- function(R, C, u, how, threads = 1L, tol = NULL) {
 #' @seealso [augmented_solve()], the caller and the dense fallback.
 #'
 #' @keywords internal
-sparse_augmented_solve <- function(R, C, u, how) {
+sparse_augmented_solve <- function(R, C, u, how, tol = NULL) {
   if (!identical(how, "qr")) return(NULL)
+  qtol <- if (is.null(tol)) 1e-7 else tol
   A <- tryCatch(Matrix::rbind2(as_sparse(R), as_sparse(C)),
                 error = function(e) NULL)
   if (is.null(A) || nrow(A) < ncol(A)) return(NULL)
@@ -600,7 +605,7 @@ sparse_augmented_solve <- function(R, C, u, how) {
   }
   eq <- dg / cn
   if (!all(is.finite(eq)) || max(eq) == 0) return(NULL)
-  if (min(eq) <= ncol(A) * .Machine$double.eps * max(eq)) return(NULL)
+  if (min(eq) <= qtol * max(eq)) return(NULL)
   d <- tryCatch({
     if (is.matrix(u)) {
       z <- Matrix::solve(Matrix::t(Rf), u[ord, , drop = FALSE])

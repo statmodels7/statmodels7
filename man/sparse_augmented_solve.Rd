@@ -4,7 +4,7 @@
 \alias{sparse_augmented_solve}
 \title{Solve a Scoring Step From a Sparse Square-Root Design}
 \usage{
-sparse_augmented_solve(R, C, u, how)
+sparse_augmented_solve(R, C, u, how, tol = NULL)
 }
 \arguments{
 \item{R}{The square-root design, \eqn{nK \times p}, sparse or dense.}
@@ -16,6 +16,9 @@ with \code{p} rows.}
 
 \item{how}{The decomposition requested. Only \code{"qr"} is served; \code{"svd"} has
 no sparse counterpart, so the function returns \code{NULL} for it.}
+
+\item{tol}{The rank tolerance, as \code{\link[=augmented_solve]{augmented_solve()}} takes it; \code{NULL}
+means \code{1e-7}, the default of \code{\link[=solve_qr]{solve_qr()}}.}
 }
 \value{
 A list with \code{delta} (numeric, length \code{p}) and \code{rank} (integer,
@@ -52,8 +55,10 @@ against it is a general solve instead of two triangular ones.
 The rank is read off the diagonal of the triangular factor, since a sparse
 QR does not report a rank. The test is on the Jacobi-equilibrated
 diagonal, in which each entry is divided by its column's norm, and the
-route returns \code{NULL} when the smallest ratio is at most
-\code{ncol(A) * .Machine$double.eps} times the largest.
+route returns \code{NULL} when the smallest ratio is at most \code{tol} times the
+largest. \code{tol} is the solver's, the threshold that the dense route's
+pivoted QR applies to the same ratio, so that a matrix is full rank or
+deficient whichever route solves it.
 
 Without the equilibration the raw diagonal would reject matrices that the
 dense route finds at full rank, because their columns differ in size (a

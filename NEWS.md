@@ -1,3 +1,13 @@
+# statmodels7 0.244.2
+
+* The rank test of the sparse route of the inner solve uses the solver's
+  tolerance (`solve_qr(tol = 1e-7)`), the threshold that the dense pivoted
+  QR applies to the same ratio. A nearly collinear column whose ratio lay
+  between `ncol * .Machine$double.eps` and the tolerance was solved at full
+  rank on a sparse design and aliased on a dense one; it is now aliased on
+  both. On the reference battery 2 of 1434 inner systems are in that range,
+  and the fit is unchanged.
+
 # statmodels7 0.244.1
 
 * A term at the vertex of its shape is no longer reported as a ridge in the
