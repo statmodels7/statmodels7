@@ -1076,7 +1076,18 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
     H <- statmod_information_at(spec, coef, design, expected, emethod)
     S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
     S <- zap_nonfinite(S)
+    # ⚠️ THE MODE DOES NOT MOVE IN A PINNED OR UNIDENTIFIED COORDINATE, and
+    # solve(H + S) cannot be formed where one exists. Measured on poisson
+    # y ~ x + s(x), whose linear column is aliased with s(x)'s null space:
+    # solve() stopped at a reciprocal condition of 1.1e-16 and the correction
+    # came back 0 with no message, while the criterion's Hessian beside it
+    # was finite. The matrix is pinned as ctx_penalized() pins the mode's
+    # (the fit's pinned coordinates, then those found deficient), and the
+    # pinned rows of its inverse are zeroed, which is what mode_solver()
+    # does to every movement of the mode. Where solve() succeeds nothing
+    # changes.
     Vb <- tryCatch(solve(H + S), error = function(e) NULL)
+    if (is.null(Vb)) Vb <- pinned_inverse(H + S, pinned_coords(spec, mc$design))
   }
   if (is.null(Vb)) return(zero)
 
@@ -1105,6 +1116,48 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   per <- tapply(contrib, paste(idx$parameter, idx$term, sep = "\r"), sum)
   total <- sum((J %*% Vth %*% t(J)) * t(H))
   list(total = total, per = per, n_hyper = nrow(idx))
+}
+
+
+#' The Inverse of a Penalized Information with Pinned Coordinates
+#'
+#' @description
+#' Inverts a penalized information after pinning the given coordinates, and
+#' those found deficient, to the identity, and returns the inverse with the
+#' pinned rows and columns set to zero.
+#'
+#' @details
+#' The coordinates are pinned by [pin_boundary()], as [ctx_penalized()] pins
+#' the matrix that governs the movement of the mode. If the Cholesky
+#' factorization fails, the coordinates that [deficient_coords()] reports
+#' are pinned as well and the factorization is repeated. The zero rows and
+#' columns state that the mode does not move in a pinned coordinate, as in
+#' [mode_solver()].
+#'
+#' @param K The penalized information, a square matrix.
+#' @param hold The coordinates to pin.
+#'
+#' @return A matrix of the dimension of `K`, or `NULL` if no factorization
+#'   exists after the deficient coordinates are pinned.
+#'
+#' @seealso [statmod_edf_correction()], the caller.
+#'
+#' @keywords internal
+pinned_inverse <- function(K, hold = integer(0)) {
+  K0 <- as_dense(K)
+  Kp <- pin_boundary(K0, hold)
+  V <- tryCatch(chol2inv(chol(Kp)), error = function(e) NULL)
+  if (is.null(V)) {
+    fl <- deficient_coords(Kp, attr(Kp, "held_at"))
+    if (!length(fl)) return(NULL)
+    Kp <- pin_boundary(K0, c(hold, fl))
+    V <- tryCatch(chol2inv(chol(Kp)), error = function(e) NULL)
+    if (is.null(V)) return(NULL)
+  }
+  j <- attr(Kp, "held_at")
+  V[j, ] <- 0
+  V[, j] <- 0
+  V
 }
 
 

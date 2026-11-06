@@ -4,12 +4,16 @@
 \alias{pd_logdet_dense}
 \title{The Dense Route of pd_logdet}
 \usage{
-pd_logdet_dense(M, scale = NULL)
+pd_logdet_dense(M, scale = NULL, free = NULL)
 }
 \arguments{
 \item{M}{A dense symmetric matrix.}
 
 \item{scale}{A reference magnitude.}
+
+\item{free}{The coordinates that are not pinned, from \code{\link[=pinned_free]{pinned_free()}}, or
+\code{NULL}. Where given, the Cholesky route is accepted on the condition of
+the block of these coordinates, read off the same factor.}
 }
 \value{
 A list with \code{logdet} and \code{ok}; \code{factor}, the Cholesky factor, when

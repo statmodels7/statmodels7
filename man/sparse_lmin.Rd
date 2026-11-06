@@ -4,12 +4,14 @@
 \alias{sparse_lmin}
 \title{The Smallest Eigenvalue of a Sparse Factor's Matrix, Estimated}
 \usage{
-sparse_lmin(L, p)
+sparse_lmin(L, p, free = NULL)
 }
 \arguments{
 \item{L}{A \code{CHMfactor}.}
 
 \item{p}{The order of the matrix.}
+
+\item{free}{The coordinates whose block is estimated, or \code{NULL} for all.}
 }
 \value{
 A single number, or \code{NA_real_} where the estimate failed.
@@ -34,6 +36,12 @@ estimate is: to separate a matrix comfortably positive definite from one
 that is not, two situations whose smallest eigenvalues differ by many orders
 of magnitude. An error of a factor of two in the estimate does not change
 that verdict.
+
+Where \code{free} is given, the estimate is of the block of those coordinates:
+the other coordinates are pinned to the identity and decoupled, so the
+inverse of the matrix is the inverse of that block beside the identity,
+and zeroing them in the argument and in the result of each solve gives
+the inverse of the block.
 }
 \seealso{
 \code{\link[=pd_factor]{pd_factor()}}, \code{\link[=pd_logdet]{pd_logdet()}}

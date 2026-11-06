@@ -1264,6 +1264,22 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
                 q = 0L))
   }
   ld <- pd_logdet(M)
+  # ⚠️ THE SAME RETRY AS THE GRADIENT'S MATRIX. ctx_penalized() pins the
+  # coordinates that deficient_coords() finds when the pinned matrix has no
+  # factor, and the gradient and the Hessian are read off that matrix; the
+  # criterion did not, so on poisson y ~ x + s(x) called without the fit's
+  # `pinned` attribute it was NULL while its gradient and Hessian were
+  # finite. Only where ctx_penalized() retries: no kinked coordinate and no
+  # integrated basis.
+  if (!isTRUE(ld$ok) && is.null(basis) &&
+      !length(kinked_coords(spec, design))) {
+    fl <- deficient_coords(M, attr(M, "held_at"))
+    if (length(fl)) {
+      M <- pin_boundary(M, c(attr(M, "held_at"), fl))
+      held <- attr(M, "held")
+      ld <- pd_logdet(M)
+    }
+  }
   if (!isTRUE(ld$ok)) return(NULL)
   q <- nrow(M) - (if (is.null(held)) 0L else held)
   logdet <- ld$logdet

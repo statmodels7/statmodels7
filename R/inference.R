@@ -1233,16 +1233,34 @@ worth_sparse <- function(M, min_dim = 100L, max_density = 0.10) {
 #' of magnitude. An error of a factor of two in the estimate does not change
 #' that verdict.
 #'
+#' Where `free` is given, the estimate is of the block of those coordinates:
+#' the other coordinates are pinned to the identity and decoupled, so the
+#' inverse of the matrix is the inverse of that block beside the identity,
+#' and zeroing them in the argument and in the result of each solve gives
+#' the inverse of the block.
+#'
 #' @param L A `CHMfactor`.
 #' @param p The order of the matrix.
+#' @param free The coordinates whose block is estimated, or `NULL` for all.
 #'
 #' @return A single number, or `NA_real_` where the estimate failed.
 #'
 #' @seealso [pd_factor()], [pd_logdet()]
 #'
 #' @keywords internal
-sparse_lmin <- function(L, p) {
-  ax <- function(x) as.matrix(Matrix::solve(L, as.matrix(x)))
+sparse_lmin <- function(L, p, free = NULL) {
+  ax <- if (is.null(free)) {
+    function(x) as.matrix(Matrix::solve(L, as.matrix(x)))
+  } else {
+    out <- setdiff(seq_len(p), free)
+    function(x) {
+      x <- as.matrix(x)
+      x[out, ] <- 0
+      r <- as.matrix(Matrix::solve(L, x))
+      r[out, ] <- 0
+      r
+    }
+  }
   est <- tryCatch(
     Matrix::onenormest(A.x = ax, At.x = ax, n = p, t = 1, silent = TRUE)$est,
     error = function(e) NA_real_)
@@ -1286,10 +1304,14 @@ pd_factor <- function(M, scale = NULL) {
                         sparse = FALSE)
   if (!length(ncol(M)) || !ncol(M)) return(no())
 
+  # the coordinates pin_boundary() set to the identity, read before any
+  # conversion drops the attribute; see pinned_free()
+  free <- pinned_free(M)
   if (worth_sparse(M)) {
     p <- ncol(M)
     if (!all(is.finite(M@x))) return(no())
-    anorm <- max(Matrix::colSums(abs(M)))
+    cs <- Matrix::colSums(abs(M))
+    anorm <- max(if (is.null(free)) cs else c(0, cs[free]))
     ref <- if (is.null(scale) || !is.finite(scale) || scale <= 0) anorm
            else min(scale, anorm)
     Ms <- tryCatch(Matrix::forceSymmetric(M), error = function(e) NULL)
@@ -1303,8 +1325,10 @@ pd_factor <- function(M, scale = NULL) {
       suppressWarnings(tryCatch(Matrix::Cholesky(Ms, LDL = FALSE, super = NA),
                                 error = function(e) NULL))
     if (!is.null(L)) {
-      lmin <- sparse_lmin(L, p)
-      if (is.finite(lmin) && lmin > sqrt(.Machine$double.eps) * ref) {
+      lmin <- if (!is.null(free) && !length(free)) Inf else
+        sparse_lmin(L, p, free)
+      if (identical(lmin, Inf) ||
+          (is.finite(lmin) && lmin > sqrt(.Machine$double.eps) * ref)) {
         ld <- tryCatch(2 * as.numeric(Matrix::determinant(
           L, logarithm = TRUE, sqrt = TRUE)$modulus),
           error = function(e) NA_real_)
@@ -1316,8 +1340,50 @@ pd_factor <- function(M, scale = NULL) {
     # inconclusive: the dense route asks the matrix, which is what settles it
   }
 
-  d <- pd_logdet_dense(as_dense(M), scale)
+  d <- pd_logdet_dense(as_dense(M), scale, free)
   c(d, list(sparse = FALSE))
+}
+
+
+#' The Coordinates of a Pinned Matrix That Are Not Pinned
+#'
+#' @description
+#' Returns the coordinates of a matrix that [pin_boundary()] did not set to
+#' the identity, or `NULL` where nothing is pinned or the pinned rows are not
+#' decoupled from the rest.
+#'
+#' @details
+#' A pinned coordinate is a row and a column of the identity, so the matrix
+#' is the block of the other coordinates beside an identity block, and its
+#' smallest eigenvalue is at most 1. The condition test of [pd_factor()]
+#' compares the smallest eigenvalue with \eqn{\sqrt{\epsilon}} times the norm
+#' of the matrix, so on the whole matrix it rejected every Cholesky factor
+#' once the norm passed \eqn{1/\sqrt{\epsilon}}, whatever the conditioning of
+#' the block. The test is therefore read on the block of the coordinates
+#' returned here. The rows named by the attribute `held_at` are checked to
+#' be rows of the identity, so a matrix that was changed after it was pinned
+#' keeps the test on the whole matrix.
+#'
+#' @param M A matrix, dense or sparse, possibly carrying the attribute
+#'   `held_at`.
+#'
+#' @return An integer vector, possibly empty, or `NULL`.
+#'
+#' @seealso [pd_factor()], [pd_logdet_dense()], [pin_boundary()]
+#'
+#' @keywords internal
+pinned_free <- function(M) {
+  j <- attr(M, "held_at")
+  p <- ncol(M)
+  if (!length(j) || !length(p)) return(NULL)
+  j <- as.integer(j)
+  if (anyNA(j) || any(j < 1L | j > p)) return(NULL)
+  rows <- tryCatch(as.matrix(M[j, , drop = FALSE]), error = function(e) NULL)
+  if (is.null(rows)) return(NULL)
+  ident <- matrix(0, length(j), p)
+  ident[cbind(seq_along(j), j)] <- 1
+  if (!identical(unname(rows), ident)) return(NULL)
+  setdiff(seq_len(p), j)
 }
 
 
@@ -1380,6 +1446,9 @@ pd_logdet <- function(M, scale = NULL) {
 #'
 #' @param M A dense symmetric matrix.
 #' @param scale A reference magnitude.
+#' @param free The coordinates that are not pinned, from [pinned_free()], or
+#'   `NULL`. Where given, the Cholesky route is accepted on the condition of
+#'   the block of these coordinates, read off the same factor.
 #'
 #' @return A list with `logdet` and `ok`; `factor`, the Cholesky factor, when
 #'   the Cholesky route accepted the matrix; and `min_ev` and `max_ev` when the
@@ -1388,11 +1457,16 @@ pd_logdet <- function(M, scale = NULL) {
 #' @seealso [pd_logdet()]
 #'
 #' @keywords internal
-pd_logdet_dense <- function(M, scale = NULL) {
+pd_logdet_dense <- function(M, scale = NULL, free = NULL) {
   if (!ncol(M) || !all(is.finite(M))) return(list(logdet = NA_real_, ok = FALSE))
   anorm <- max(colSums(abs(M)))
-  ref <- if (is.null(scale) || !is.finite(scale) || scale <= 0) anorm
-         else min(scale, anorm)
+  # the norm and the condition of the block that is not pinned, where one is
+  # given: the pinned rows of the factor are rows of the identity, so the
+  # factor's block is the factor of the matrix's block
+  af <- if (is.null(free)) anorm else
+    max(c(0, colSums(abs(M[, free, drop = FALSE]))))
+  ref <- if (is.null(scale) || !is.finite(scale) || scale <= 0) af
+         else min(scale, af)
   # ⚠️ The two thresholds are NOT solve_pd()'s, and the difference is the
   # quantity. Inverting a matrix at a condition number of 1e14 loses most of
   # the answer, so solve_pd() refuses there; a log-DETERMINANT is a sum of
@@ -1403,11 +1477,16 @@ pd_logdet_dense <- function(M, scale = NULL) {
   # in double precision whatever the factorization reports.
   ch <- tryCatch(chol(M), error = function(e) NULL)
   if (!is.null(ch)) {
-    rc <- tryCatch(chol_rcond_cpp(ch, anorm), error = function(e) NA_real_)
-    lmin <- if (is.na(rc)) 0 else rc * anorm
+    rc <- if (!is.null(free) && !length(free)) Inf else
+      if (is.null(free)) tryCatch(chol_rcond_cpp(ch, anorm),
+                                  error = function(e) NA_real_)
+      else tryCatch(chol_rcond_cpp(ch[free, free, drop = FALSE], af),
+                    error = function(e) NA_real_)
+    lmin <- if (is.na(rc)) 0 else if (identical(rc, Inf)) Inf else rc * af
     # comfortably clear of the floor: chol's answer is its own evidence, and
     # this is the common case, so the eigendecomposition is never computed
-    if (is.finite(lmin) && lmin > sqrt(.Machine$double.eps) * ref) {
+    if (identical(lmin, Inf) ||
+        (is.finite(lmin) && lmin > sqrt(.Machine$double.eps) * ref)) {
       # the factor travels with the answer so that a caller wanting the
       # inverse as well does not compute a second one of the same matrix
       return(list(logdet = 2 * sum(log(diag(ch))), ok = TRUE, factor = ch))

@@ -62,7 +62,9 @@ inputs.
 \details{
 A model is covered when \code{spec@engine} is \code{"auto"}; the method is an
 \code{\link[=iwls]{iwls()}} without a \code{criterion} whose expected information is the closed
-form (\code{method = NULL}) or \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}}; the block is the
+form (\code{method = NULL}), \code{\link[distributions7:expect_opg]{distributions7::expect_opg()}},
+\code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} or \code{\link[distributions7:expect_integrate]{distributions7::expect_integrate()}} (the
+same object for the information and its backup); the block is the
 whole coefficient vector, with no break-point kink, no moving block and no
 nonlinear curvature unit; the family is a univariate family of the
 registry without a wrapper and every link has a compiled route; no term
@@ -71,6 +73,9 @@ and every penalized unit is one that \code{engine_penalty_units()} describes.
 
 Where the R route would signal an error the compiled fit stops and
 \code{engine_inner_fit()} returns \code{NULL}, so that \code{\link[=iwls_fit]{iwls_fit()}} reproduces it.
+With \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} the random stream is then restored to
+its state before the compiled fit, so that \code{\link[=iwls_fit]{iwls_fit()}} makes the same
+draws as when it runs alone.
 
 \code{engine_penalty_units()} describes each penalized unit to the compiled
 fit by the quantities that its \code{penalty_value()} and \code{penalty_gradient()}
