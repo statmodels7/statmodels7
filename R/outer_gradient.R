@@ -650,6 +650,17 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
     return(statmod_structural_grad(spec, design, coef, hyper, method, idx,
                                    basis, free))
   }
+  # the compiled route, where it covers the point (engine_outer_at())
+  eo <- engine_outer_at(ctx, spec, design, coef, hyper, method, basis)
+  if (!is.null(eo)) {
+    mb <- engine_outer_members(spec, design, idx, hyper)
+    if (!is.null(mb)) {
+      gw <- if (is.null(gam)) integer(0) else as.integer(gam$where)
+      r <- engine_outer_grad(eo, mb$mrow, mb$munit, mb$mname, mb$mchain, mb$nh, gw,
+                             isTRUE(free))
+      if (identical(r$status, 0L)) return(r$gradient)
+    }
+  }
   # ⚠️ THE BLOCK AT THE MODE, not the block as it was built.
   # statmod_information_at() refreshes internally, so K -- and therefore M --
   # is assembled on the refreshed block; block_leverage() and u_vector()'s

@@ -3,6 +3,7 @@
 \name{engine_inner_fit}
 \alias{engine_inner_fit}
 \alias{engine_route}
+\alias{engine_model}
 \alias{engine_penalty_units}
 \alias{engine_matrix}
 \title{The Compiled Inner Fit}
@@ -23,6 +24,8 @@ engine_inner_fit(
 
 engine_route(spec, design, obj, beta, hyper, method)
 
+engine_model(spec, design, coef, hyper, how)
+
 engine_penalty_units(spec, design, units, hyper)
 
 engine_matrix(x)
@@ -39,6 +42,11 @@ engine_matrix(x)
 \item{verbose}{Whether to print the iterations.}
 
 \item{damp_on_reject, guard}{As in \code{\link[=iwls_fit]{iwls_fit()}}.}
+
+\item{coef}{The coefficients, split by distribution parameter.}
+
+\item{how}{The solver of the inner fit, \code{"qr"}, \code{"svd"} or \code{"chol"},
+which decides whether the square root of the penalty is formed.}
 
 \item{units}{The penalized units, \code{\link[=statmod_penalized]{statmod_penalized()}}.}
 
@@ -76,6 +84,13 @@ Where the R route would signal an error the compiled fit stops and
 With \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} the random stream is then restored to
 its state before the compiled fit, so that \code{\link[=iwls_fit]{iwls_fit()}} makes the same
 draws as when it runs alone.
+
+\code{engine_model()} returns the data of the model as the compiled routes
+read them, \code{list(model, pen, covered)}, or \code{NULL} where the model is not
+covered: the family, its links and the design blocks, and the penalty at
+\code{hyper} (its units, its Hessian and, for the QR and SVD solvers, its
+square root). \code{covered} is the highest derivative order of the family in
+the registry.
 
 \code{engine_penalty_units()} describes each penalized unit to the compiled
 fit by the quantities that its \code{penalty_value()} and \code{penalty_gradient()}

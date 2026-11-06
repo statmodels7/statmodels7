@@ -147,6 +147,14 @@ struct PenUnit {
     Dense L, Sinv;
     bool inverted = false;
     double logdet = 0, p2pi = 0;
+    double rank = -1;                // kind 1: the penalty's rank (phase 3)
+    int chart = 0;                   // kind 4 (phase 3): 1 log-Cholesky, 2 compound
+                                     // symmetry, 3 AR(1); 0 not described
+    std::vector<double> ceta, ch;    // the chart's free values; CS and AR(1): the
+                                     // scale's and the correlation's h0, h1, h2
+    int add_m = 0;                   // kind 2 (phase 3): the blocks, 0 not described
+    double add_tol = 1e-10;          // its rank tolerance
+    std::vector<Dense> add_block;    // one block of each component
 };
 
 struct Model {
@@ -1441,6 +1449,7 @@ void engine_setup(Engine& E, Rcpp::List model, Rcpp::List pen) {
             u.c1 = Rcpp::as<double>(ul["c1"]);
             u.c2 = Rcpp::as<double>(ul["c2"]);
             u.c3 = Rcpp::as<double>(ul["c3"]);
+            if (ul.containsElementNamed("rank")) u.rank = Rcpp::as<double>(ul["rank"]);
         } else if (u.kind == 2) {
             read_any(ul["S"], u.S);
             u.c1 = Rcpp::as<double>(ul["c1"]);
@@ -1449,6 +1458,19 @@ void engine_setup(Engine& E, Rcpp::List model, Rcpp::List pen) {
             for (int h = 0; h < ms.size(); ++h) { MatAny mm; read_any(ms[h], mm); u.mats.push_back(mm); }
             Rcpp::NumericVector lm = ul["lams"];
             u.lams.assign(lm.begin(), lm.end());
+            if (ul.containsElementNamed("add")) {
+                Rcpp::List al = ul["add"];
+                u.add_m = Rcpp::as<int>(al["m"]);
+                u.rank = Rcpp::as<double>(al["rank"]);
+                u.add_tol = Rcpp::as<double>(al["tol"]);
+                Rcpp::List bm = al["block_mats"];
+                for (int h = 0; h < bm.size(); ++h) {
+                    Rcpp::NumericMatrix B(bm[h]);
+                    Dense D(B.nrow(), B.ncol());
+                    std::copy(B.begin(), B.end(), D.v.begin());
+                    u.add_block.push_back(D);
+                }
+            }
         } else if (u.kind == 3) {
             u.mu = Rcpp::as<double>(ul["mu"]);
             u.sigma = Rcpp::as<double>(ul["sigma"]);
@@ -1466,6 +1488,13 @@ void engine_setup(Engine& E, Rcpp::List model, Rcpp::List pen) {
             u.logdet = Rcpp::as<double>(ul["logdet"]);
             u.p2pi = Rcpp::as<double>(ul["p2pi"]);
             u.lj = Rcpp::as<double>(ul["lj"]);
+            if (ul.containsElementNamed("chart")) {
+                Rcpp::List cl = ul["chart"];
+                u.chart = Rcpp::as<int>(cl["code"]);
+                Rcpp::NumericVector ce = cl["eta"], chh = cl["h"];
+                u.ceta.assign(ce.begin(), ce.end());
+                u.ch.assign(chh.begin(), chh.end());
+            }
         }
         M.units.push_back(u);
     }
@@ -1799,4 +1828,91 @@ Rcpp::List engine_point_probe(Rcpp::List model, Rcpp::List pen, Rcpp::NumericVec
                               Rcpp::Named("theta") = Rcpp::wrap(P.th),
                               Rcpp::Named("h1") = Rcpp::wrap(P.h1),
                               Rcpp::Named("eta") = Rcpp::wrap(P.eta));
+}
+
+#include "engine_outer.h"
+
+// The outer context at one point (phase 3): `model` and `pen` as for the
+// inner fit, `beta` the mode, `hold` the pinned coordinates (1-based),
+// `basis` the integrated basis of ml() or NULL, `order` 2 where the Hessian
+// may be asked. Returns list(status, ctx, why): status 0 with the context,
+// 2 where the point goes to the R route.
+// [[Rcpp::export]]
+Rcpp::List engine_outer_new(Rcpp::List model, Rcpp::List pen, Rcpp::NumericVector beta,
+                            Rcpp::IntegerVector hold, SEXP basis, int order) {
+    Rcpp::XPtr<Outer> X(new Outer(), true);
+    Outer& O = *X;
+    O.model = model;
+    O.pen = pen;
+    try {
+        engine_setup(O.E, model, pen);
+        for (int h : hold) O.hold.push_back(h - 1);
+        if (!Rf_isNull(basis)) {
+            Rcpp::NumericMatrix Bm(basis);
+            O.ml = true;
+            O.B = Dense(Bm.nrow(), Bm.ncol());
+            std::copy(Bm.begin(), Bm.end(), O.B.v.begin());
+        }
+        std::vector<double> b(beta.begin(), beta.end());
+        O.setup(b, order >= 2);
+    } catch (RError&) {
+        O.give_back("the R route signals an error");
+    }
+    return Rcpp::List::create(Rcpp::Named("status") = O.status, Rcpp::Named("ctx") = X,
+                              Rcpp::Named("why") = O.why);
+}
+
+// [[Rcpp::export]]
+Rcpp::List engine_outer_value(SEXP ctx) {
+    Rcpp::XPtr<Outer> X(ctx);
+    Outer& O = *X;
+    if (O.status) return Rcpp::List::create(Rcpp::Named("status") = O.status);
+    const double v = O.ll - O.rho + O.q / 2.0 * std::log(2.0 * M_PI) - O.logdet_c / 2.0;
+    return Rcpp::List::create(Rcpp::Named("status") = 0, Rcpp::Named("value") = v,
+                              Rcpp::Named("loglik") = O.ll, Rcpp::Named("penalty") = O.rho,
+                              Rcpp::Named("logdet") = O.logdet_c, Rcpp::Named("q") = O.q);
+}
+
+// members: `mrow`, `munit` 1-based; `mchain` dlinkinv at each member's
+// value; `gam` the estimated coefficients' stacked positions (1-based)
+// [[Rcpp::export]]
+Rcpp::List engine_outer_grad(SEXP ctx, Rcpp::IntegerVector mrow, Rcpp::IntegerVector munit,
+                             Rcpp::IntegerVector mname, Rcpp::NumericVector mchain, int nh,
+                             Rcpp::IntegerVector gam, bool free) {
+    Rcpp::XPtr<Outer> X(ctx);
+    Outer& O = *X;
+    if (O.status) return Rcpp::List::create(Rcpp::Named("status") = O.status);
+    std::vector<int> r, u, g, nmv;
+    for (int v : mrow) r.push_back(v - 1);
+    for (int v : munit) u.push_back(v - 1);
+    for (int v : mname) nmv.push_back(v - 1);
+    for (int v : gam) g.push_back(v - 1);
+    std::vector<double> ch(mchain.begin(), mchain.end()), out;
+    if (!O.gradient(r, u, nmv, ch, nh, g, free, out))
+        return Rcpp::List::create(Rcpp::Named("status") = 2);
+    return Rcpp::List::create(Rcpp::Named("status") = 0,
+                              Rcpp::Named("gradient") = Rcpp::wrap(out));
+}
+
+// [[Rcpp::export]]
+Rcpp::List engine_outer_hess(SEXP ctx, Rcpp::IntegerVector mrow, Rcpp::IntegerVector munit,
+                             Rcpp::IntegerVector mname, Rcpp::NumericVector mchain, int nh,
+                             Rcpp::IntegerVector gam, Rcpp::NumericVector h1,
+                             Rcpp::NumericVector h2) {
+    Rcpp::XPtr<Outer> X(ctx);
+    Outer& O = *X;
+    if (O.status) return Rcpp::List::create(Rcpp::Named("status") = O.status);
+    std::vector<int> r, u, g, nmv;
+    for (int v : mrow) r.push_back(v - 1);
+    for (int v : munit) u.push_back(v - 1);
+    for (int v : mname) nmv.push_back(v - 1);
+    for (int v : gam) g.push_back(v - 1);
+    std::vector<double> ch(mchain.begin(), mchain.end()), a1(h1.begin(), h1.end()),
+        a2(h2.begin(), h2.end());
+    Dense out;
+    if (!O.hessian(r, u, nmv, ch, nh, g, a1, a2, out))
+        return Rcpp::List::create(Rcpp::Named("status") = 2);
+    Rcpp::NumericMatrix R(out.nr, out.nc);
+    std::copy(out.v.begin(), out.v.end(), R.begin());
+    return Rcpp::List::create(Rcpp::Named("status") = 0, Rcpp::Named("hessian") = R);
 }

@@ -152,6 +152,17 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
                                 basis, inner, gam = gam))
   }
+  # the compiled route, where it covers the point (engine_outer_at())
+  eo <- engine_outer_at(ctx, spec, design, coef, hyper, method, basis)
+  if (!is.null(eo)) {
+    mb <- engine_outer_members(spec, design, idx, hyper)
+    if (!is.null(mb)) {
+      gw <- if (is.null(gam)) integer(0) else as.integer(gam$where)
+      r <- engine_outer_hess(eo, mb$mrow, mb$munit, mb$mname, mb$mchain, mb$nh, gw,
+                             mb$h1, mb$h2)
+      if (identical(r$status, 0L)) return(r$hessian)
+    }
+  }
   # the block AT THE MODE, for the reason statmod_marginal_grad() records: the
   # leverage diagonal and the contractions must read the same block K was
   # assembled on, and for a refreshable term the design as it arrives is the

@@ -1190,6 +1190,14 @@ structural_range_cols <- function(spec, design, key, free) {
 #' @keywords internal
 statmod_marginal <- function(spec, design, coef, hyper, method,
                              emethod = NULL, basis = NULL, ctx = NULL) {
+  # the compiled route, where it covers the point (engine_outer_at())
+  eo <- engine_outer_at(ctx, spec, design, coef, hyper, method, basis)
+  if (!is.null(eo)) {
+    r <- engine_outer_value(eo)
+    if (identical(r$status, 0L)) {
+      return(r[c("value", "loglik", "penalty", "logdet", "q")])
+    }
+  }
   expected <- info_expected(method@hessian)
   ll <- statmod_loglik_at(spec, coef, design)
   rho <- statmod_penalty_at(spec, coef, hyper, design, "value")

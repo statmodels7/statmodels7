@@ -116,6 +116,53 @@ engine_route <- function(spec, design, obj, beta, hyper, method) {
   }, integer(1))
   if (anyNA(ecode) || length(unique(ecode)) > 1L) return(NULL)
   if (length(em) > 1L && !identical(em[[1L]], em[[2L]])) return(NULL)
+  how <- solver_how(method@solver)
+  em_ <- engine_model(spec, design, obj$split(beta), hyper, how)
+  if (is.null(em_)) return(NULL)
+  model <- em_$model
+  d <- spec@distrib
+  st <- solver_tol(method@solver)
+  sw <- method@switch_after
+  mcfg <- list(
+    how = how, stol = if (is.null(st)) NA_real_ else as.numeric(st),
+    floor = solver_floor(method@solver),
+    maxit = as.integer(method@maxit), tol = method@tol,
+    step_halving = as.integer(method@step_halving),
+    decrement_limit = method@decrement_limit,
+    switch_after = if (length(sw)) as.numeric(sw) else Inf,
+    switch_rate = if (length(method@switch_rate)) as.numeric(method@switch_rate)
+                  else NA_real_,
+    tol_def = iwls_definite_tol(method),
+    expected = info_expected(method@hessian),
+    backup = !is.null(method@backup),
+    switching = isTRUE(method@switching) && length(sw) && is.finite(sw),
+    polish = isTRUE(iwls_polish()),
+    emethod = ecode[[1L]],
+    escore = ecode[[1L]] >= 2L && identical(em[[1L]]@identity, "score"),
+    nsim = if (ecode[[1L]] == 2L) as.numeric(em[[1L]]@nsim) else NA_real_,
+    etol = if (ecode[[1L]] == 3L) {
+      m <- em[[1L]]
+      as.numeric(c(m@quad_atol, m@quad_rtol, m@max_panels, m@series_atol,
+                   m@series_rtol, m@max_terms))
+    } else rep(NA_real_, 6L),
+    support = as.numeric(d@bounds)
+  )
+  list(model = model, pen = em_$pen, method = mcfg)
+}
+
+#' @rdname engine_inner_fit
+#' @param coef The coefficients, split by distribution parameter.
+#' @param how The solver of the inner fit, `"qr"`, `"svd"` or `"chol"`,
+#'   which decides whether the square root of the penalty is formed.
+#' @details
+#' `engine_model()` returns the data of the model as the compiled routes
+#' read them, `list(model, pen, covered)`, or `NULL` where the model is not
+#' covered: the family, its links and the design blocks, and the penalty at
+#' `hyper` (its units, its Hessian and, for the QR and SVD solvers, its
+#' square root). `covered` is the highest derivative order of the family in
+#' the registry.
+#' @keywords internal
+engine_model <- function(spec, design, coef, hyper, how) {
   if (has_sharp_breakpoint(spec) || length(attr(design, "refresh")) ||
       length(nl_curvature_units(design)) ||
       !is.null(statmod_structural_state(design))) {
@@ -138,7 +185,6 @@ engine_route <- function(spec, design, obj, beta, hyper, method) {
       any(pr$links < 0L)) {
     return(NULL)
   }
-  coef <- obj$split(beta)
   units <- statmod_penalized(spec, design)
   if (any(vapply(units, function(u) {
     isTRUE(u$mixed) || isTRUE(u$jeffreys) || isTRUE(u$structural)
@@ -173,7 +219,6 @@ engine_route <- function(spec, design, obj, beta, hyper, method) {
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian",
                           jeffreys = FALSE)
   Sd <- as_dense(S)
-  how <- solver_how(method@solver)
   C <- if (how %in% c("qr", "svd")) penalty_sqrt(S) else NULL
   if (sparse) {
     S <- methods::as(methods::as(S, "generalMatrix"), "CsparseMatrix")
@@ -203,33 +248,7 @@ engine_route <- function(spec, design, obj, beta, hyper, method) {
     hi = vapply(params, function(pp) as.numeric(bounds[[pp]][2]), numeric(1)),
     links = lk, threads = as.integer(spec@threads)
   )
-  st <- solver_tol(method@solver)
-  sw <- method@switch_after
-  mcfg <- list(
-    how = how, stol = if (is.null(st)) NA_real_ else as.numeric(st),
-    floor = solver_floor(method@solver),
-    maxit = as.integer(method@maxit), tol = method@tol,
-    step_halving = as.integer(method@step_halving),
-    decrement_limit = method@decrement_limit,
-    switch_after = if (length(sw)) as.numeric(sw) else Inf,
-    switch_rate = if (length(method@switch_rate)) as.numeric(method@switch_rate)
-                  else NA_real_,
-    tol_def = iwls_definite_tol(method),
-    expected = info_expected(method@hessian),
-    backup = !is.null(method@backup),
-    switching = isTRUE(method@switching) && length(sw) && is.finite(sw),
-    polish = isTRUE(iwls_polish()),
-    emethod = ecode[[1L]],
-    escore = ecode[[1L]] >= 2L && identical(em[[1L]]@identity, "score"),
-    nsim = if (ecode[[1L]] == 2L) as.numeric(em[[1L]]@nsim) else NA_real_,
-    etol = if (ecode[[1L]] == 3L) {
-      m <- em[[1L]]
-      as.numeric(c(m@quad_atol, m@quad_rtol, m@max_panels, m@series_atol,
-                   m@series_rtol, m@max_terms))
-    } else rep(NA_real_, 6L),
-    support = as.numeric(d@bounds)
-  )
-  list(model = model, pen = list(S = S, C = C, units = pu), method = mcfg)
+  list(model = model, pen = list(S = S, C = C, units = pu), covered = pr$covered)
 }
 
 #' @rdname engine_inner_fit
@@ -263,7 +282,7 @@ engine_penalty_units <- function(spec, design, units, hyper) {
       r <- pen@rank
       out[[k]] <- list(kind = 1L, idx = idx, map = mp,
                        P = engine_matrix(pen@P), M = engine_matrix(pen@penalty_matrix),
-                       lam = lam, a = lam / 2, c1 = r / 2 * log(lam),
+                       lam = lam, a = lam / 2, c1 = r / 2 * log(lam), rank = r,
                        c2 = r / 2 * log(2 * pi), c3 = pen@penalty_logpdet / 2)
     } else if (S7::S7_inherits(pen, penalties7::AdditivePenalty)) {
       a <- penalties7::additive_sum(pen, th)

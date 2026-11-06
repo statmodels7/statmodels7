@@ -21,6 +21,22 @@ engine_point_probe <- function(model, pen, beta) {
     .Call(`_statmodels7_engine_point_probe`, model, pen, beta)
 }
 
+engine_outer_new <- function(model, pen, beta, hold, basis, order) {
+    .Call(`_statmodels7_engine_outer_new`, model, pen, beta, hold, basis, order)
+}
+
+engine_outer_value <- function(ctx) {
+    .Call(`_statmodels7_engine_outer_value`, ctx)
+}
+
+engine_outer_grad <- function(ctx, mrow, munit, mname, mchain, nh, gam, free) {
+    .Call(`_statmodels7_engine_outer_grad`, ctx, mrow, munit, mname, mchain, nh, gam, free)
+}
+
+engine_outer_hess <- function(ctx, mrow, munit, mname, mchain, nh, gam, h1, h2) {
+    .Call(`_statmodels7_engine_outer_hess`, ctx, mrow, munit, mname, mchain, nh, gam, h1, h2)
+}
+
 jsc_s0_cpp <- function(I0, n, K, d) {
     .Call(`_statmodels7_jsc_s0_cpp`, I0, n, K, d)
 }
