@@ -1742,6 +1742,14 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       res <<- statmod_alternate(sp, design, blocks, hy, inner_optimizer,
                                 warm, expected, emethod, maxit, tol,
                                 vb_inner(vb), hold_refresh = TRUE)
+      # a scaled SCAD or MCP is read at the curvature this alternation
+      # settled at, as the final refit reads it: the criterion, its context
+      # and its derivatives at this point belong to that penalty, and the
+      # curvature written from the starting coefficients is another one
+      if (!is.null(res$spec)) {
+        sp <<- res$spec
+        state$sp <- sp
+      }
       cf <<- res$obj$split(res$par)
       # Both criteria are read AT THE MODE -- a Laplace approximation there,
       # or a log-likelihood and an edf there -- so where the inner fit did not

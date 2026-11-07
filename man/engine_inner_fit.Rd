@@ -5,6 +5,7 @@
 \alias{engine_route}
 \alias{engine_model}
 \alias{engine_penalty_units}
+\alias{engine_kink_unit}
 \alias{engine_matrix}
 \title{The Compiled Inner Fit}
 \usage{
@@ -19,7 +20,8 @@ engine_inner_fit(
   frozen,
   verbose,
   damp_on_reject,
-  guard
+  guard,
+  idx = NULL
 )
 
 engine_route(spec, design, obj, beta, hyper, method)
@@ -27,6 +29,8 @@ engine_route(spec, design, obj, beta, hyper, method)
 engine_model(spec, design, coef, hyper, how)
 
 engine_penalty_units(spec, design, units, hyper)
+
+engine_kink_unit(pen, th, index, mp)
 
 engine_matrix(x)
 }
@@ -43,12 +47,19 @@ engine_matrix(x)
 
 \item{damp_on_reject, guard}{As in \code{\link[=iwls_fit]{iwls_fit()}}.}
 
+\item{idx}{\code{NULL} for the whole vector, or the positions of the block
+that \code{\link[=fit_smooth]{fit_smooth()}} fits with the others held, on the assembled route
+that \code{\link[=subset_pieces]{subset_pieces()}} takes.}
+
 \item{coef}{The coefficients, split by distribution parameter.}
 
 \item{how}{The solver of the inner fit, \code{"qr"}, \code{"svd"} or \code{"chol"},
 which decides whether the square root of the penalty is formed.}
 
 \item{units}{The penalized units, \code{\link[=statmod_penalized]{statmod_penalized()}}.}
+
+\item{pen, th, index, mp}{A penalized unit's penalty, its hyperparameters, its
+stacked positions and its map.}
 
 \item{x}{A base matrix or a \code{Matrix} object.}
 }
@@ -103,6 +114,16 @@ gaussian prior of fixed mean, the mean and the standard deviation, or, for
 a multivariate one, the mean, the factor of \code{parameters7::param_factor()},
 the log-determinant and the inverse covariance. It returns \code{NULL} for any
 other unit.
+
+\code{engine_kink_unit()} describes a penalty with a kink to the compiled fit:
+kind 5 for the lasso (a \code{\link[penalties7:DistribPenalty]{penalties7::DistribPenalty()}} whose \code{fixed()}
+parent is a \code{laplace2} at zero), 6 for the elastic net (an \code{enet} parent
+at zero), 7 for \code{\link[penalties7:scad_penalty]{penalties7::scad_penalty()}} and 8 for
+\code{\link[penalties7:scad_penalty]{penalties7::mcp_penalty()}}, with the diagonal of the map, the rate and the
+constants of the density, or the curvature. It returns \code{NULL} for a
+penalty without a kink, and \code{FALSE} for a kinked one that the compiled fit
+does not describe (a map that is not diagonal, a block of more than one
+coordinate, a location other than zero).
 
 \code{engine_matrix()} returns a penalty matrix as the compiled fit reads it:
 a base matrix as it is, any \code{Matrix} object as a \code{dgCMatrix}, since the R

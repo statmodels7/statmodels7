@@ -17,12 +17,20 @@ engine_iwls_fit <- function(model, pen, method, start, frozen, groups, verbose) 
     .Call(`_statmodels7_engine_iwls_fit`, model, pen, method, start, frozen, groups, verbose)
 }
 
+engine_subset_fit <- function(model, pen, method, start, sub, frozen, groups, verbose) {
+    .Call(`_statmodels7_engine_subset_fit`, model, pen, method, start, sub, frozen, groups, verbose)
+}
+
+engine_alternate <- function(model, pen, method, start, kblocks, smooth, smooth_groups, smooth_frozen, held_where, held_value, kinked, pinned, expected, maxit, tol) {
+    .Call(`_statmodels7_engine_alternate`, model, pen, method, start, kblocks, smooth, smooth_groups, smooth_frozen, held_where, held_value, kinked, pinned, expected, maxit, tol)
+}
+
 engine_point_probe <- function(model, pen, beta) {
     .Call(`_statmodels7_engine_point_probe`, model, pen, beta)
 }
 
-engine_outer_new <- function(model, pen, beta, hold, basis, order) {
-    .Call(`_statmodels7_engine_outer_new`, model, pen, beta, hold, basis, order)
+engine_outer_new <- function(model, pen, beta, hold, basis, order, hold_mode = NULL) {
+    .Call(`_statmodels7_engine_outer_new`, model, pen, beta, hold, basis, order, hold_mode)
 }
 
 engine_outer_value <- function(ctx) {
@@ -35,6 +43,18 @@ engine_outer_grad <- function(ctx, mrow, munit, mname, mchain, nh, gam, free) {
 
 engine_outer_hess <- function(ctx, mrow, munit, mname, mchain, nh, gam, h1, h2) {
     .Call(`_statmodels7_engine_outer_hess`, ctx, mrow, munit, mname, mchain, nh, gam, h1, h2)
+}
+
+engine_outer_mvt_need <- function(ctx) {
+    .Call(`_statmodels7_engine_outer_mvt_need`, ctx)
+}
+
+engine_outer_mvt_set <- function(ctx, k, ob) {
+    invisible(.Call(`_statmodels7_engine_outer_mvt_set`, ctx, k, ob))
+}
+
+engine_outer_kinv <- function(ctx, x) {
+    .Call(`_statmodels7_engine_outer_kinv`, ctx, x)
 }
 
 jsc_s0_cpp <- function(I0, n, K, d) {

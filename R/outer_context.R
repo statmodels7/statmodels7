@@ -410,10 +410,14 @@ criterion_resolution <- function(st, spec, design, method, criterion_at) {
   if (!all(is.finite(st$score))) return(NA_real_)
   st$score <- free_of_kinks(st$score, spec, design, st$cf)
   expected <- info_expected(method@hessian)
-  pen <- ctx_penalized(st$ctx, spec, design, st$cf, st$hy, expected)
-  if (is.null(pen)) return(NA_real_)
-  db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% st$score),
-                 error = function(e) NULL)
+  # the compiled context's inverse, where the context of the point covers it
+  db <- if (!expected) engine_ctx_solve(st$ctx, st$score)
+  if (is.null(db)) {
+    pen <- ctx_penalized(st$ctx, spec, design, st$cf, st$hy, expected)
+    if (is.null(pen)) return(NA_real_)
+    db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% st$score),
+                   error = function(e) NULL)
+  }
   if (is.null(db) || !all(is.finite(db))) return(NA_real_)
   # ⚠️ A RESOLUTION IS A CORRECTION'S WORTH OF CRITERION, AND ONLY WHERE THE
   # CORRECTION IS SMALL. What is computed below is how far the criterion moves
@@ -850,11 +854,15 @@ inner_mode_error <- function(ctx, spec, design, coef, hyper, score,
     return(NA_real_)
   }
   score <- free_of_kinks(score, spec, design, coef)
-  pen <- tryCatch(ctx_penalized(ctx, spec, design, coef, hyper, expected),
-                  error = function(e) NULL)
-  if (is.null(pen)) return(NA_real_)
-  db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% score),
-                 error = function(e) NULL)
+  # the compiled context's inverse, where ctx holds one that covers the point
+  db <- if (!expected) engine_ctx_solve(ctx, score)
+  if (is.null(db)) {
+    pen <- tryCatch(ctx_penalized(ctx, spec, design, coef, hyper, expected),
+                    error = function(e) NULL)
+    if (is.null(pen)) return(NA_real_)
+    db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% score),
+                   error = function(e) NULL)
+  }
   if (is.null(db) || !all(is.finite(db))) return(NA_real_)
   v <- 0.5 * sum(score * db)
   if (is.finite(v)) v else NA_real_

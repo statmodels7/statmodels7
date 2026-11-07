@@ -36,8 +36,10 @@ test_that("the theta block of a negbin2 stays on the coordinate descent", {
       r
     }
   )
+  # the R route, whose coord_working() and coord_fit() the mocks count; the
+  # compiled alternation is compared with it in test-engine-kink.R
   fo <- statmod(ff, distributions7::negbin2_distrib(), df,
-                inner_information = observed_info())
+                inner_information = observed_info(), engine = "r")
   # the premise: the observed curvature really is not positive somewhere,
   # so the fallback is exercised and the test cannot pass vacuously
   expect_gt(seen$observed_null, 0L)

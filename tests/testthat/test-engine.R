@@ -66,10 +66,11 @@ test_that("a named information fits alike", {
   }
 })
 
-test_that("a kinked penalty and a user criterion are left to iwls_fit()", {
+test_that("a kinked penalty is covered and a user criterion is left to iwls_fit()", {
   d <- engine_data()
-  expect_null(engine_route_of(y ~ lasso(~ x + z),
-                              distributions7::gaussian1_distrib(), d))
+  # since phase 3b the kinked units have a compiled route (test-engine-kink.R)
+  expect_false(is.null(engine_route_of(y ~ lasso(~ x + z),
+                                       distributions7::gaussian1_distrib(), d)))
   expect_null(engine_route_of(
     y ~ x, distributions7::gaussian1_distrib(), d,
     method = iwls(criterion = optimizers7::crit_grad(1e-6))))

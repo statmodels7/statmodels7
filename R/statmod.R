@@ -1341,6 +1341,15 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     "curvature" %in% S7::prop_names(pen) && length(pen@curvature) > 0L
   }, logical(1)))
 
+  # the compiled alternation where every block has a compiled route
+  # (R/engine_kink.R); NULL runs the passes below from the same point
+  if (!has_refresh && !has_frozen && !has_structural && !joint &&
+      !alternate_route && length(blocks$sparse)) {
+    eng <- engine_alternate_fit(spec, design, blocks, hyper, inner_optimizer,
+                                beta, expected, emethod, maxit, tol, vb, obj)
+    if (!is.null(eng)) return(eng)
+  }
+
   for (pass in seq_len(as.integer(maxit))) {
     if (curv_scaled) {
       sc <- statmod_curv(spec, design, obj$split(beta), expected, emethod)
@@ -2323,12 +2332,12 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     frozen <- match(intersect(hf$where, idx), idx)
     # the compiled inner fit where every component of the model has a
     # compiled route (R/engine.R); NULL sends the fit to iwls_fit()
-    res <- if (whole && is.null(kinks_at) && is.null(newton_at) &&
-               is.null(full_at)) {
+    res <- if (is.null(kinks_at) && is.null(newton_at) && is.null(full_at)) {
       engine_inner_fit(spec, design, obj, beta, hyper, method, groups,
                        frozen, vb$inner,
                        damp_on_reject = !has_sharp_breakpoint(spec),
-                       guard = length(attr(design, "refresh")) > 0L)
+                       guard = length(attr(design, "refresh")) > 0L,
+                       idx = if (!whole) idx)
     }
     if (is.null(res)) {
       res <- iwls_fit(sub, beta[idx], method, spec@n_obs, pieces_at,

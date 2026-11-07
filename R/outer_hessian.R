@@ -154,6 +154,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   }
   # the compiled route, where it covers the point (engine_outer_at())
   eo <- engine_outer_at(ctx, spec, design, coef, hyper, method, basis)
+  if (!is.null(eo)) eo <- engine_outer_complete(eo, spec, design, coef, hyper)
   if (!is.null(eo)) {
     mb <- engine_outer_members(spec, design, idx, hyper)
     if (!is.null(mb)) {

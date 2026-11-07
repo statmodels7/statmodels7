@@ -88,6 +88,49 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// engine_subset_fit
+Rcpp::List engine_subset_fit(Rcpp::List model, Rcpp::List pen, Rcpp::List method, Rcpp::NumericVector start, Rcpp::IntegerVector sub, Rcpp::IntegerVector frozen, Rcpp::List groups, bool verbose);
+RcppExport SEXP _statmodels7_engine_subset_fit(SEXP modelSEXP, SEXP penSEXP, SEXP methodSEXP, SEXP startSEXP, SEXP subSEXP, SEXP frozenSEXP, SEXP groupsSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type pen(penSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type start(startSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type sub(subSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type frozen(frozenSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type groups(groupsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(engine_subset_fit(model, pen, method, start, sub, frozen, groups, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// engine_alternate
+Rcpp::List engine_alternate(Rcpp::List model, Rcpp::List pen, Rcpp::List method, Rcpp::NumericVector start, Rcpp::List kblocks, Rcpp::IntegerVector smooth, Rcpp::List smooth_groups, Rcpp::IntegerVector smooth_frozen, Rcpp::IntegerVector held_where, Rcpp::NumericVector held_value, Rcpp::LogicalVector kinked, Rcpp::IntegerVector pinned, bool expected, int maxit, double tol);
+RcppExport SEXP _statmodels7_engine_alternate(SEXP modelSEXP, SEXP penSEXP, SEXP methodSEXP, SEXP startSEXP, SEXP kblocksSEXP, SEXP smoothSEXP, SEXP smooth_groupsSEXP, SEXP smooth_frozenSEXP, SEXP held_whereSEXP, SEXP held_valueSEXP, SEXP kinkedSEXP, SEXP pinnedSEXP, SEXP expectedSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type pen(penSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type start(startSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type kblocks(kblocksSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type smooth(smoothSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type smooth_groups(smooth_groupsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type smooth_frozen(smooth_frozenSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type held_where(held_whereSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type held_value(held_valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type kinked(kinkedSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type pinned(pinnedSEXP);
+    Rcpp::traits::input_parameter< bool >::type expected(expectedSEXP);
+    Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(engine_alternate(model, pen, method, start, kblocks, smooth, smooth_groups, smooth_frozen, held_where, held_value, kinked, pinned, expected, maxit, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 // engine_point_probe
 Rcpp::List engine_point_probe(Rcpp::List model, Rcpp::List pen, Rcpp::NumericVector beta);
 RcppExport SEXP _statmodels7_engine_point_probe(SEXP modelSEXP, SEXP penSEXP, SEXP betaSEXP) {
@@ -102,8 +145,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // engine_outer_new
-Rcpp::List engine_outer_new(Rcpp::List model, Rcpp::List pen, Rcpp::NumericVector beta, Rcpp::IntegerVector hold, SEXP basis, int order);
-RcppExport SEXP _statmodels7_engine_outer_new(SEXP modelSEXP, SEXP penSEXP, SEXP betaSEXP, SEXP holdSEXP, SEXP basisSEXP, SEXP orderSEXP) {
+Rcpp::List engine_outer_new(Rcpp::List model, Rcpp::List pen, Rcpp::NumericVector beta, Rcpp::IntegerVector hold, SEXP basis, int order, SEXP hold_mode);
+RcppExport SEXP _statmodels7_engine_outer_new(SEXP modelSEXP, SEXP penSEXP, SEXP betaSEXP, SEXP holdSEXP, SEXP basisSEXP, SEXP orderSEXP, SEXP hold_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -113,7 +156,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type hold(holdSEXP);
     Rcpp::traits::input_parameter< SEXP >::type basis(basisSEXP);
     Rcpp::traits::input_parameter< int >::type order(orderSEXP);
-    rcpp_result_gen = Rcpp::wrap(engine_outer_new(model, pen, beta, hold, basis, order));
+    Rcpp::traits::input_parameter< SEXP >::type hold_mode(hold_modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(engine_outer_new(model, pen, beta, hold, basis, order, hold_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -162,6 +206,41 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type h1(h1SEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type h2(h2SEXP);
     rcpp_result_gen = Rcpp::wrap(engine_outer_hess(ctx, mrow, munit, mname, mchain, nh, gam, h1, h2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// engine_outer_mvt_need
+Rcpp::IntegerVector engine_outer_mvt_need(SEXP ctx);
+RcppExport SEXP _statmodels7_engine_outer_mvt_need(SEXP ctxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ctx(ctxSEXP);
+    rcpp_result_gen = Rcpp::wrap(engine_outer_mvt_need(ctx));
+    return rcpp_result_gen;
+END_RCPP
+}
+// engine_outer_mvt_set
+void engine_outer_mvt_set(SEXP ctx, int k, Rcpp::List ob);
+RcppExport SEXP _statmodels7_engine_outer_mvt_set(SEXP ctxSEXP, SEXP kSEXP, SEXP obSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ctx(ctxSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type ob(obSEXP);
+    engine_outer_mvt_set(ctx, k, ob);
+    return R_NilValue;
+END_RCPP
+}
+// engine_outer_kinv
+Rcpp::List engine_outer_kinv(SEXP ctx, Rcpp::NumericVector x);
+RcppExport SEXP _statmodels7_engine_outer_kinv(SEXP ctxSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ctx(ctxSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(engine_outer_kinv(ctx, x));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -466,11 +545,16 @@ static const R_CallMethodDef CallEntries[] = {
     {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 16},
     {"_statmodels7_engine_family_probe", (DL_FUNC) &_statmodels7_engine_family_probe, 2},
     {"_statmodels7_engine_iwls_fit", (DL_FUNC) &_statmodels7_engine_iwls_fit, 7},
+    {"_statmodels7_engine_subset_fit", (DL_FUNC) &_statmodels7_engine_subset_fit, 8},
+    {"_statmodels7_engine_alternate", (DL_FUNC) &_statmodels7_engine_alternate, 15},
     {"_statmodels7_engine_point_probe", (DL_FUNC) &_statmodels7_engine_point_probe, 3},
-    {"_statmodels7_engine_outer_new", (DL_FUNC) &_statmodels7_engine_outer_new, 6},
+    {"_statmodels7_engine_outer_new", (DL_FUNC) &_statmodels7_engine_outer_new, 7},
     {"_statmodels7_engine_outer_value", (DL_FUNC) &_statmodels7_engine_outer_value, 1},
     {"_statmodels7_engine_outer_grad", (DL_FUNC) &_statmodels7_engine_outer_grad, 8},
     {"_statmodels7_engine_outer_hess", (DL_FUNC) &_statmodels7_engine_outer_hess, 9},
+    {"_statmodels7_engine_outer_mvt_need", (DL_FUNC) &_statmodels7_engine_outer_mvt_need, 1},
+    {"_statmodels7_engine_outer_mvt_set", (DL_FUNC) &_statmodels7_engine_outer_mvt_set, 3},
+    {"_statmodels7_engine_outer_kinv", (DL_FUNC) &_statmodels7_engine_outer_kinv, 2},
     {"_statmodels7_jsc_s0_cpp", (DL_FUNC) &_statmodels7_jsc_s0_cpp, 4},
     {"_statmodels7_jsc_u0_cpp", (DL_FUNC) &_statmodels7_jsc_u0_cpp, 4},
     {"_statmodels7_jsc_s1_cpp", (DL_FUNC) &_statmodels7_jsc_s1_cpp, 9},

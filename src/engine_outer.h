@@ -85,6 +85,14 @@ public:
     std::vector<RowNz> rows;        // per equation
     Dense H, S, Kp, Kinv, Mt;       // Mt the trace matrix (held rows zeroed)
     std::vector<int> held_at;       // pinned positions of Kp (no boundary here)
+    // phase 3b: beside a kinked penalty the criterion's matrix is pinned at
+    // the pinned and the kinked coordinates (laplace_pinned()), the mode's at
+    // the pinned coordinates and the kinked ones at zero (zero_kinked()); the
+    // mode's matrix gives Kinv, the movement of the mode and the Hessian's
+    // Jmat, the criterion's the determinant and the trace matrix
+    bool two = false;
+    std::vector<int> hold_mode, held_mode;
+    Dense Kmode, Umode;
     double logdet_c = 0;            // the criterion's log-determinant
     int q = 0;
     double ll = 0, rho = 0;
@@ -362,6 +370,23 @@ public:
         held_at.erase(std::unique(held_at.begin(), held_at.end()), held_at.end());
         pin(Kp, held_at);
         if (!clear_chol(Kp, held_at, Ufac)) { give_back("factor not clearly accepted"); return; }
+        if (two) {
+            if (ml) { give_back("ml beside a kinked penalty"); return; }
+            Kmode = Dense(p, p);
+            for (std::size_t t = 0; t < Kmode.v.size(); ++t) Kmode.v[t] = H.v[t] + S.v[t];
+            held_mode = hold_mode;
+            std::sort(held_mode.begin(), held_mode.end());
+            held_mode.erase(std::unique(held_mode.begin(), held_mode.end()), held_mode.end());
+            pin(Kmode, held_mode);
+            if (!clear_chol(Kmode, held_mode, Umode)) {
+                give_back("mode factor not clearly accepted");
+                return;
+            }
+        } else {
+            Kmode = Kp;
+            held_mode = held_at;
+            Umode = Ufac;
+        }
         if (!ml) {
             logdet_c = logdet_of(Ufac);
             q = p - (int) held_at.size();
@@ -389,9 +414,9 @@ public:
     bool ensure_inverse() {
         if (status) return false;
         if (have_inv) return true;
-        Kinv = chol2inv(Ufac);
+        Kinv = chol2inv(Umode);
         if (!ml) {
-            Mt = Kinv;
+            Mt = two ? chol2inv(Ufac) : Kinv;
         } else if (B.nc == 0) {
             Mt = Dense(p, p);
         } else {
@@ -504,6 +529,25 @@ public:
         Dense rho2;                               // H x H
         std::vector<std::vector<double>> c2;      // H*H x m
         std::vector<Dense> d2S;                   // H*H
+        // a prior whose Hessian moves (kind 9, phase 3b): dS and d2S are
+        // diagonal with an entry per coefficient (dSv, d2Sv), and the
+        // movement in beta is read from three coefficients per position:
+        // dS/dbeta[x] = diag(a3 x), d2S/dbeta2[v, w] = diag(a4 v w),
+        // d(dS/dtheta_h)/dbeta[v] = diag(a3h[h] v); `moving` is false where
+        // beta_quadratic() holds at the point
+        bool vec = false, moving = false;
+        std::vector<std::vector<double>> dSv, d2Sv;
+        std::vector<double> a3, a4;
+        std::vector<std::vector<double>> a3h;
+        // a multivariate t prior (kind 10): dS and d2S block by block
+        // (dSg[h][g], d2Sg[h * H + k][g]), and per group the pieces that the
+        // movement in beta reads: from mvt_yscaled() x = ws and is, from
+        // mvt_dpieces() w, s, and per hyperparameter sd and wd
+        bool grp = false;
+        int G = 0;
+        std::vector<std::vector<Dense>> dSg, d2Sg;
+        std::vector<std::vector<double>> gx, gw, gsd, gwd;   // G x p; H x G; H x G*p
+        std::vector<double> gis, gs;
     };
     std::vector<UnitDer> uder;
     std::vector<char> uder_ok;
@@ -616,11 +660,58 @@ public:
         return r_sum(e.data(), e.size());
     }
 
+    // a unit's derivatives on the coefficients the penalty reads: for a
+    // gaussian prior with a map (kinds 3 and 4) the mapped ones t = A b,
+    // carried back to b by map_der() as map_back() and map_quad_full() carry
+    // the penalty's own derivatives
     bool unit_der(int k, UnitDer& out) {
         const PenUnit& un = E.M.units[k];
-        const int m = (int) un.idx.size();
-        std::vector<double> bu(m);
-        for (int j = 0; j < m; ++j) bu[j] = beta[un.idx[j]];
+        std::vector<double> bu, t;
+        E.unit_t(un, beta, bu, t);
+        const bool mapped = un.has_map && (un.kind == 3 || un.kind == 4);
+        if (!mapped) return unit_der_core(un, bu, out);
+        PenUnit u2 = un;
+        u2.has_map = false;
+        if (!unit_der_core(u2, t, out)) return false;
+        return map_der(un, out);
+    }
+    bool map_der(const PenUnit& un, UnitDer& out) {
+        if (out.vec || out.grp) return false;
+        Dense A;
+        if (!un.map.sp) A = un.map.d;
+        else {
+            A = Dense(un.map.nr, un.map.nc);
+            for (int j = 0; j < un.map.s.outerSize(); ++j)
+                for (SpMat::InnerIterator it(un.map.s, j); it; ++it) A(it.row(), j) = it.value();
+        }
+        const int mt = A.nr, kk = A.nc;
+        if (mt != out.m || kk != (int) un.idx.size()) return false;
+        Dense At = transpose(A);
+        auto back = [&](std::vector<double>& c) {
+            std::vector<double> r(kk);
+            dense_matvec(At, c.data(), r.data());
+            c = r;
+        };
+        auto quad = [&](Dense& X) {
+            Dense D(mt, mt), DA, R;
+            for (int g = 0; g * out.blk < mt; ++g)
+                for (int b = 0; b < out.blk; ++b)
+                    for (int a = 0; a < out.blk; ++a)
+                        D(g * out.blk + a, g * out.blk + b) = X(a, b);
+            dense_matmul(D, A, DA);
+            dense_matmul(At, DA, R);
+            X = R;
+        };
+        for (auto& c : out.c) back(c);
+        for (auto& c : out.c2) back(c);
+        for (auto& X : out.dS) quad(X);
+        for (auto& X : out.d2S) quad(X);
+        out.blk = kk;
+        out.m = kk;
+        return true;
+    }
+    bool unit_der_core(const PenUnit& un, const std::vector<double>& bu, UnitDer& out) {
+        const int m = (int) bu.size();
         out.m = m;
         if (un.kind == 1) {
             if (un.Mg.nr != m || un.rank < 0) return false;
@@ -712,7 +803,174 @@ public:
             out.d2S = {b};
             return true;
         }
-        if (un.kind == 4 && !un.has_map && un.chart > 0) {
+        if (un.kind == 9 && !un.tfree.empty()) {
+            // the t prior: every derivative from the registry at level 4 in
+            // (mu, sigma, nu); a derivative in the response is one in mu with
+            // the sign of y - mu
+            const int Ht = (int) un.tfree.size();
+            const int tid = E.reg.id("StudentT1Distrib");
+            if (tid < 0) return false;
+            out.H = Ht; out.blk = 1; out.vec = true; out.moving = !un.bq;
+            std::vector<double> buf(E.M.pmax), g(3), Hh(9), T(27), Q(81);
+            std::vector<std::vector<double>> gv(Ht, std::vector<double>(m));
+            std::vector<std::vector<double>> hv((std::size_t) Ht * Ht, std::vector<double>(m));
+            out.c.assign(Ht, std::vector<double>(m));
+            out.dSv.assign(Ht, std::vector<double>(m));
+            out.c2.assign((std::size_t) Ht * Ht, std::vector<double>(m));
+            out.d2Sv.assign((std::size_t) Ht * Ht, std::vector<double>(m));
+            out.a3.assign(m, 0.0);
+            out.a4.assign(m, 0.0);
+            out.a3h.assign(Ht, std::vector<double>(m));
+            const double th[3] = {un.mu, un.sigma, un.tnu};
+            for (int j = 0; j < m; ++j) {
+                E.reg.parts(tid, bu[j], th, 4, buf.data());
+                E.reg.grad(tid, buf.data(), g.data());
+                E.reg.hess(tid, buf.data(), Hh.data());
+                oreg.d3(tid, buf.data(), T.data());
+                oreg.d4(tid, buf.data(), Q.data());
+                for (int h = 0; h < Ht; ++h) {
+                    const int a = un.tfree[h];
+                    gv[h][j] = g[a];
+                    out.c[h][j] = Hh[0 + 3 * a];
+                    out.dSv[h][j] = -T[idx3(3, 0, 0, a)];
+                    out.a3h[h][j] = Q[idx4(3, 0, 0, 0, a)];
+                    for (int k = 0; k < Ht; ++k) {
+                        const int b = un.tfree[k];
+                        const std::size_t key = (std::size_t) h * Ht + k;
+                        hv[key][j] = Hh[a + 3 * b];
+                        out.c2[key][j] = T[idx3(3, 0, a, b)];
+                        out.d2Sv[key][j] = -Q[idx4(3, 0, 0, a, b)];
+                    }
+                }
+                out.a3[j] = T[0];
+                out.a4[j] = -Q[0];
+            }
+            out.gt.assign(Ht, 0.0);
+            out.rho2 = Dense(Ht, Ht);
+            for (int h = 0; h < Ht; ++h) {
+                out.gt[h] = -r_sum(gv[h].data(), m);
+                for (int k = 0; k < Ht; ++k)
+                    out.rho2(h, k) = -r_sum(hv[(std::size_t) h * Ht + k].data(), m);
+            }
+            out.dS.assign(Ht, Dense(1, 1));
+            out.d2S.assign((std::size_t) Ht * Ht, Dense(1, 1));
+            return true;
+        }
+        if (un.kind == 10 && un.mo) {
+            const int pp = un.block, Hh = un.mH;
+            if (pp <= 0 || m % pp) return false;
+            const int G = m / pp;
+            out.H = Hh; out.blk = pp; out.grp = true; out.G = G; out.moving = !un.bq;
+            out.gt = un.mgt;
+            out.rho2 = Dense(Hh, Hh);
+            std::copy(un.mrho2.begin(), un.mrho2.end(), out.rho2.v.begin());
+            out.c.assign(Hh, std::vector<double>(m));
+            for (int h = 0; h < Hh; ++h)
+                for (int j = 0; j < m; ++j) out.c[h][j] = un.mc[(std::size_t) h * m + j];
+            out.c2.assign((std::size_t) Hh * Hh, std::vector<double>(m));
+            for (int key = 0; key < Hh * Hh; ++key)
+                for (int j = 0; j < m; ++j) out.c2[key][j] = un.mc2[(std::size_t) key * m + j];
+            const std::size_t pq = (std::size_t) pp * pp;
+            auto blocks = [&](const std::vector<double>& src, int nk,
+                              std::vector<std::vector<Dense>>& dst) {
+                dst.assign(nk, std::vector<Dense>(G, Dense(pp, pp)));
+                for (int k = 0; k < nk; ++k)
+                    for (int g = 0; g < G; ++g)
+                        std::copy(src.begin() + ((std::size_t) k * G + g) * pq,
+                                  src.begin() + ((std::size_t) k * G + g + 1) * pq,
+                                  dst[k][g].v.begin());
+            };
+            blocks(un.mdS, Hh, out.dSg);
+            blocks(un.md2S, Hh * Hh, out.d2Sg);
+            out.dS.assign(Hh, Dense(1, 1));
+            out.d2S.assign((std::size_t) Hh * Hh, Dense(1, 1));
+            // the pieces of the movement, group by group
+            out.gx.assign(G, std::vector<double>(pp));
+            out.gw.assign(G, std::vector<double>(pp));
+            out.gis.assign(G, 0.0);
+            out.gs.assign(G, 0.0);
+            out.gsd.assign(Hh, std::vector<double>(G));
+            out.gwd.assign(Hh, std::vector<double>((std::size_t) G * pp));
+            std::vector<double> ws, r(pp), w2(pp), sq(pp);
+            for (int g = 0; g < G; ++g) {
+                const double* y = bu.data() + (std::size_t) g * pp;
+                double is, cw;
+                Engine::mvt_yscaled(un, y, ws, is, cw);
+                out.gx[g] = ws;
+                out.gis[g] = is;
+                for (int j = 0; j < pp; ++j) r[j] = y[j] - un.muv[j];
+                for (int c = 0; c < pp; ++c) {
+                    double w = 0.0;
+                    for (int l = 0; l < pp; ++l) w += r[l] * un.Sinv(l, c);
+                    out.gw[g][c] = w;
+                }
+                w2 = r;
+                if (!r_trisolve(un.L, false, w2)) return false;
+                for (int j = 0; j < pp; ++j) sq[j] = w2[j] * w2[j];
+                out.gs[g] = un.tnu + r_colsum(sq.data(), pp);
+                for (int h = 0; h < Hh; ++h) {
+                    const Dense& A = un.mai[h];
+                    double sd = 0.0;
+                    for (int c = 0; c < pp; ++c) {
+                        double wd = 0.0;
+                        for (int l = 0; l < pp; ++l) wd += r[l] * A(l, c);
+                        out.gwd[h][(std::size_t) g * pp + c] = wd;
+                        sd += wd * r[c];
+                    }
+                    out.gsd[h][g] = un.mNa[h] != 0.0 ? 1.0 : sd;
+                }
+            }
+            return true;
+        }
+        if (un.kind == 4 && !un.has_map && un.chart == 9) {
+            // a chart that the context does not write, its derivatives from R
+            const int pp = un.block, KK = (int) un.gai.size();
+            if (pp <= 0 || m % pp || (int) un.gai2.size() != KK * KK ||
+                (int) un.gdld.size() != KK || (int) un.gd2ld.size() != KK * KK) return false;
+            const int G = m / pp;
+            std::vector<Dense> ai = un.gai, ai2 = un.gai2;
+            std::vector<double> dld = un.gdld;
+            Dense d2ld(KK, KK);
+            for (int t = 0; t < KK; ++t)
+                for (int s2 = 0; s2 < KK; ++s2) d2ld(t, s2) = un.gd2ld[(std::size_t) t * KK + s2];
+            // the groups' deviations from the mean, group by group
+            std::vector<double> R(m);
+            for (int g = 0; g < G; ++g)
+                for (int c = 0; c < pp; ++c)
+                    R[(std::size_t) g * pp + c] = bu[(std::size_t) g * pp + c] -
+                        (un.muv.size() == (std::size_t) pp ? un.muv[c] : 0.0);
+            // W = R A by group, and sum_g R_g' A R_g
+            auto quad = [&](const Dense& A, std::vector<double>& W) {
+                W.assign(m, 0.0);
+                std::vector<double> q(G);
+                for (int g = 0; g < G; ++g) {
+                    std::vector<double> e(pp);
+                    for (int c = 0; c < pp; ++c) {
+                        double w = 0.0;
+                        for (int a = 0; a < pp; ++a) w += R[(std::size_t) g * pp + a] * A(a, c);
+                        W[(std::size_t) g * pp + c] = w;
+                        e[c] = w * R[(std::size_t) g * pp + c];
+                    }
+                    q[g] = r_sum(e.data(), pp);
+                }
+                return r_sum(q.data(), G);
+            };
+            out.H = KK; out.blk = pp;
+            out.gt.assign(KK, 0.0);
+            out.c.assign(KK, std::vector<double>());
+            out.dS = ai;
+            out.rho2 = Dense(KK, KK);
+            out.c2.assign((std::size_t) KK * KK, std::vector<double>());
+            out.d2S = ai2;
+            for (int t = 0; t < KK; ++t)
+                out.gt[t] = 0.5 * G * dld[t] + 0.5 * quad(ai[t], out.c[t]);
+            for (int t = 0; t < KK; ++t)
+                for (int s = 0; s < KK; ++s)
+                    out.rho2(t, s) = 0.5 * G * d2ld(t, s) +
+                        0.5 * quad(ai2[(std::size_t) t * KK + s], out.c2[(std::size_t) t * KK + s]);
+            return true;
+        }
+        if (un.kind == 4 && !un.has_map && un.chart > 0 && un.chart != 9) {
             Chart ch;
             if (!chart_build(un, ch)) return false;
             const int pp = ch.p, KK = ch.K;
@@ -878,6 +1136,155 @@ public:
         return r_sum(e.data(), e.size());
     }
 
+    // the per-coefficient forms of place() and trace_unit() (kind 9)
+    void place_v(const PenUnit& un, const std::vector<double>& d, Dense& T) {
+        for (std::size_t j = 0; j < d.size(); ++j) T(un.idx[j], un.idx[j]) += d[j];
+    }
+    double trace_v(const PenUnit& un, const std::vector<double>& d) {
+        std::vector<double> e(d.size());
+        for (std::size_t j = 0; j < d.size(); ++j) e[j] = Mt(un.idx[j], un.idx[j]) * d[j];
+        return r_sum(e.data(), e.size());
+    }
+    // the group-block forms of place() and trace_unit() (kind 10)
+    void place_g(const PenUnit& un, const std::vector<Dense>& B, Dense& T) {
+        const int pp = un.block;
+        for (std::size_t g = 0; g < B.size(); ++g)
+            for (int b = 0; b < pp; ++b)
+                for (int a = 0; a < pp; ++a)
+                    T(un.idx[g * pp + a], un.idx[g * pp + b]) += B[g](a, b);
+    }
+    double trace_g(const PenUnit& un, const std::vector<Dense>& B) {
+        const int pp = un.block;
+        std::vector<double> e;
+        e.reserve(B.size() * pp * pp);
+        for (std::size_t g = 0; g < B.size(); ++g)
+            for (int b = 0; b < pp; ++b)
+                for (int a = 0; a < pp; ++a)
+                    e.push_back(Mt(un.idx[g * pp + a], un.idx[g * pp + b]) * B[g](a, b));
+        return r_sum(e.data(), e.size());
+    }
+    // the closed forms of section 6.3 of SPEC_tprior.md, the penalty's (the
+    // negated response derivatives), for group g of a kind 10 unit; v and w
+    // the group's slices of the directions
+    static double dotp(const double* a, const double* b, int p) {
+        double s = 0.0;
+        for (int i = 0; i < p; ++i) s += a[i] * b[i];
+        return s;
+    }
+    void mvt_dSb(const PenUnit& un, const UnitDer& ud, int g, const double* v, Dense& B) {
+        const int p = un.block;
+        const double N = un.tnu + p, is = ud.gis[g];
+        const double* x = ud.gx[g].data();
+        std::vector<double> Ov(p, 0.0);
+        for (int a = 0; a < p; ++a)
+            for (int c = 0; c < p; ++c) Ov[a] += un.Sinv(a, c) * v[c];
+        const double xv = dotp(x, v, p);
+        B = Dense(p, p);
+        for (int b = 0; b < p; ++b)
+            for (int a = 0; a < p; ++a)
+                B(a, b) = -(2 * N * is * (un.Sinv(a, b) * xv + Ov[a] * x[b] + x[a] * Ov[b]) -
+                            8 * N * xv * x[a] * x[b]);
+    }
+    void mvt_d2Sb(const PenUnit& un, const UnitDer& ud, int g, const double* v,
+                  const double* w, Dense& B) {
+        const int p = un.block;
+        const double N = un.tnu + p, is = ud.gis[g];
+        const double* x = ud.gx[g].data();
+        std::vector<double> Ov(p, 0.0), Ow(p, 0.0);
+        for (int a = 0; a < p; ++a)
+            for (int c = 0; c < p; ++c) { Ov[a] += un.Sinv(a, c) * v[c]; Ow[a] += un.Sinv(a, c) * w[c]; }
+        const double xv = dotp(x, v, p), xw = dotp(x, w, p), vOw = dotp(v, Ow.data(), p);
+        B = Dense(p, p);
+        for (int b = 0; b < p; ++b)
+            for (int a = 0; a < p; ++a) {
+                const double O = un.Sinv(a, b);
+                const double t1 = O * vOw + Ov[a] * Ow[b] + Ow[a] * Ov[b];
+                const double t2 = O * xv * xw + Ov[a] * x[b] * xw + Ow[a] * x[b] * xv +
+                                  x[a] * Ov[b] * xw + x[a] * Ow[b] * xv + vOw * x[a] * x[b];
+                B(a, b) = -(2 * N * is * is * t1 - 8 * N * is * t2 + 48 * N * xv * xw * x[a] * x[b]);
+            }
+    }
+    void mvt_dSbt(const PenUnit& un, const UnitDer& ud, int h, int g, const double* v, Dense& B) {
+        const int p = un.block;
+        const double N = un.tnu + p, Na = un.mNa[h], s = ud.gs[g], sd = ud.gsd[h][g];
+        const double* w = ud.gw[g].data();
+        const double* wd = ud.gwd[h].data() + (std::size_t) g * p;
+        const Dense& Oa = un.mai[h];
+        std::vector<double> Ov(p, 0.0), Oav(p, 0.0);
+        for (int a = 0; a < p; ++a)
+            for (int c = 0; c < p; ++c) { Ov[a] += un.Sinv(a, c) * v[c]; Oav[a] += Oa(a, c) * v[c]; }
+        const double wv = dotp(w, v, p), wdv = dotp(wd, v, p);
+        const double s2 = s * s, s3 = s2 * s, s4 = s3 * s;
+        const double k1 = 2 * Na / s2 - 4 * N * sd / s3, k2 = 2 * N / s2;
+        const double k3 = 8 * Na / s3 - 24 * N * sd / s4, k4 = 8 * N / s3;
+        B = Dense(p, p);
+        for (int b = 0; b < p; ++b)
+            for (int a = 0; a < p; ++a) {
+                const double O = un.Sinv(a, b);
+                const double T3 = O * wv + Ov[a] * w[b] + w[a] * Ov[b];
+                const double dT3 = Oa(a, b) * wv + Oav[a] * w[b] + w[a] * Oav[b] +
+                                   O * wdv + Ov[a] * wd[b] + wd[a] * Ov[b];
+                const double ww = wv * w[a] * w[b];
+                const double dww = wdv * w[a] * w[b] + wv * (wd[a] * w[b] + w[a] * wd[b]);
+                B(a, b) = -(k1 * T3 + k2 * dT3 - k3 * ww - k4 * dww);
+            }
+    }
+    // the kind 10 movements of a unit over every group
+    void mvt_blocks(int which, int k, int h, const std::vector<double>& v,
+                    const std::vector<double>* w, std::vector<Dense>& out) {
+        const PenUnit& un = E.M.units[k];
+        const UnitDer& ud = uder[k];
+        const int p = un.block;
+        out.assign(ud.G, Dense());
+        std::vector<double> vg(p), wg(p);
+        for (int g = 0; g < ud.G; ++g) {
+            for (int a = 0; a < p; ++a) {
+                vg[a] = v[un.idx[(std::size_t) g * p + a]];
+                if (w) wg[a] = (*w)[un.idx[(std::size_t) g * p + a]];
+            }
+            if (which == 1) mvt_dSb(un, ud, g, vg.data(), out[g]);
+            else if (which == 2) mvt_d2Sb(un, ud, g, vg.data(), wg.data(), out[g]);
+            else mvt_dSbt(un, ud, h, g, vg.data(), out[g]);
+        }
+    }
+
+    // trp = sum over the moving units of tr(M dS/dbeta[x])
+    double trp(const std::vector<double>& x) {
+        double s = 0.0;
+        for (std::size_t k = 0; k < uder.size(); ++k) {
+            if (!uder_ok[k] || !uder[k].moving) continue;
+            const PenUnit& un = E.M.units[k];
+            const UnitDer& ud = uder[k];
+            if (ud.grp) {
+                std::vector<Dense> B;
+                mvt_blocks(1, (int) k, 0, x, nullptr, B);
+                s = s + trace_g(un, B);
+                continue;
+            }
+            std::vector<double> e(ud.m);
+            for (int j = 0; j < ud.m; ++j)
+                e[j] = Mt(un.idx[j], un.idx[j]) * (ud.a3[j] * x[un.idx[j]]);
+            s = s + r_sum(e.data(), ud.m);
+        }
+        return s;
+    }
+    // P[x] = sum over the moving units of dS/dbeta[x], added into T
+    void add_P(const std::vector<double>& x, Dense& T) {
+        for (std::size_t k = 0; k < uder.size(); ++k) {
+            if (!uder_ok[k] || !uder[k].moving) continue;
+            const PenUnit& un = E.M.units[k];
+            const UnitDer& ud = uder[k];
+            if (ud.grp) {
+                std::vector<Dense> B;
+                mvt_blocks(1, (int) k, 0, x, nullptr, B);
+                place_g(un, B, T);
+                continue;
+            }
+            for (int j = 0; j < ud.m; ++j)
+                T(un.idx[j], un.idx[j]) += ud.a3[j] * x[un.idx[j]];
+        }
+    }
+
     // ---------------------------------------------------- the gradient
     // members: row, unit, name (the hyperparameter's position in its unit),
     // chain (dlinkinv at the member's value); gam: the stacked positions the
@@ -900,16 +1307,17 @@ public:
             for (int j = 0; j < ud.m; ++j) cm[un.idx[j]] = ud.c[h][j];
             dense_matvec(Kinv, cm.data(), v.data());
             for (double& x : v) x = -x;
-            const double tr = trace_unit(un, ud, ud.dS[h]);
+            const double tr = ud.grp ? trace_g(un, ud.dSg[h])
+                            : ud.vec ? trace_v(un, ud.dSv[h]) : trace_unit(un, ud, ud.dS[h]);
             std::vector<double> uv(p);
             for (int j = 0; j < p; ++j) uv[j] = u[j] * v[j];
-            const double dt = -ud.gt[h] - (tr + r_sum(uv.data(), p)) / 2.0;
+            const double dt = -ud.gt[h] - ((tr + r_sum(uv.data(), p)) + trp(v)) / 2.0;
             out[mrow[i]] += free ? dt * mchain[i] : dt;
         }
         if (gam.empty()) return true;
         // the score at the estimated coefficients, and the mode's movement
         Model& M = E.M;
-        std::vector<int> holdv = held_at;
+        std::vector<int> holdv = held_mode;
         for (std::size_t j = 0; j < gam.size(); ++j) {
             const int wj = gam[j];
             int a = -1;
@@ -929,7 +1337,7 @@ public:
             v[wj] = 1.0;
             std::vector<double> ub(p);
             for (int r = 0; r < p; ++r) ub[r] = u[r] * v[r];
-            out[nh + j] = sc[wj - M.offs[a]] - r_sum(ub.data(), p) / 2.0;
+            out[nh + j] = sc[wj - M.offs[a]] - (r_sum(ub.data(), p) + trp(v)) / 2.0;
         }
         return true;
     }
@@ -1013,7 +1421,7 @@ public:
         u_vector();
         ensure_uder();
         const int ng = (int) gam.size(), nv = nh + ng, nm = (int) mrow.size();
-        std::vector<int> holdv = held_at;
+        std::vector<int> holdv = held_mode;
         for (int i = 0; i < nm; ++i)
             if (!uder_ok[munit[i]] || mname[i] < 0 || mname[i] >= uder[munit[i]].H) return false;
         // per row: S_m and c_m
@@ -1022,7 +1430,9 @@ public:
         for (int i = 0; i < nm; ++i) {
             const UnitDer& ud = uder[munit[i]];
             const PenUnit& un = E.M.units[munit[i]];
-            place(un, ud, ud.dS[mname[i]], Sm[mrow[i]]);
+            if (ud.grp) place_g(un, ud.dSg[mname[i]], Sm[mrow[i]]);
+            else if (ud.vec) place_v(un, ud.dSv[mname[i]], Sm[mrow[i]]);
+            else place(un, ud, ud.dS[mname[i]], Sm[mrow[i]]);
             for (int a = 0; a < ud.m; ++a) cm[mrow[i]][un.idx[a]] += ud.c[mname[i]][a];
         }
         // the mode's movements
@@ -1048,6 +1458,7 @@ public:
         for (int m = 0; m < nv; ++m) {
             predictors(bh[m], tv[m]);
             contract3(tv[m], Tm[m]);
+            add_P(bh[m], Tm[m]);
             Dense Km(p, p);
             for (std::size_t t = 0; t < Km.v.size(); ++t) Km.v[t] = Sm[m].v[t] + Tm[m].v[t];
             dense_matmul(Mt, Km, MK[m]);
@@ -1070,7 +1481,9 @@ public:
                             const PenUnit& un = E.M.units[munit[i]];
                             const int key = mname[i] * ud.H + mname[j];
                             rho2 += ud.rho2(mname[i], mname[j]);
-                            trS += trace_unit(un, ud, ud.d2S[key]);
+                            trS += ud.grp ? trace_g(un, ud.d2Sg[key])
+                                 : ud.vec ? trace_v(un, ud.d2Sv[key])
+                                          : trace_unit(un, ud, ud.d2S[key]);
                             for (int a = 0; a < ud.m; ++a) c2[un.idx[a]] += ud.c2[key][a];
                         }
                     }
@@ -1086,10 +1499,55 @@ public:
                 for (int hh : holdv) bml[hh] = 0.0;
                 std::vector<std::vector<double>> tml;
                 predictors(bml, tml);
-                const double tr_dK = trS + trace_form(tv[l], &tv[m]) + trace_form(tml, nullptr);
+                double tr_dK = trS + trace_form(tv[l], &tv[m]) + trace_form(tml, nullptr);
+                // tr(M E_ml) of the moving units: d2S/dbeta2[b_l, b_m] +
+                // dS/dbeta[b_ml] + the movement of the m row's dS along b_l
+                // and of the l row's along b_m
+                for (std::size_t k = 0; k < uder.size(); ++k) {
+                    if (!uder_ok[k] || !uder[k].moving) continue;
+                    const PenUnit& un = E.M.units[k];
+                    const UnitDer& ud = uder[k];
+                    if (ud.grp) {
+                        std::vector<Dense> B, X;
+                        mvt_blocks(2, (int) k, 0, bh[l], &bh[m], B);
+                        mvt_blocks(1, (int) k, 0, bml, nullptr, X);
+                        for (int g = 0; g < ud.G; ++g)
+                            for (std::size_t t = 0; t < B[g].v.size(); ++t) B[g].v[t] += X[g].v[t];
+                        for (int i = 0; i < nm; ++i) {
+                            if (munit[i] != (int) k) continue;
+                            if (mrow[i] == m) {
+                                mvt_blocks(3, (int) k, mname[i], bh[l], nullptr, X);
+                                for (int g = 0; g < ud.G; ++g)
+                                    for (std::size_t t = 0; t < B[g].v.size(); ++t) B[g].v[t] += X[g].v[t];
+                            }
+                            if (mrow[i] == l) {
+                                mvt_blocks(3, (int) k, mname[i], bh[m], nullptr, X);
+                                for (int g = 0; g < ud.G; ++g)
+                                    for (std::size_t t = 0; t < B[g].v.size(); ++t) B[g].v[t] += X[g].v[t];
+                            }
+                        }
+                        tr_dK += trace_g(un, B);
+                        continue;
+                    }
+                    std::vector<double> Ed(ud.m);
+                    for (int j = 0; j < ud.m; ++j) {
+                        const int q = un.idx[j];
+                        Ed[j] = ud.a4[j] * bh[l][q] * bh[m][q] + ud.a3[j] * bml[q];
+                    }
+                    for (int i = 0; i < nm; ++i) {
+                        if (munit[i] != (int) k) continue;
+                        if (mrow[i] == m)
+                            for (int j = 0; j < ud.m; ++j)
+                                Ed[j] += ud.a3h[mname[i]][j] * bh[l][un.idx[j]];
+                        if (mrow[i] == l)
+                            for (int j = 0; j < ud.m; ++j)
+                                Ed[j] += ud.a3h[mname[i]][j] * bh[m][un.idx[j]];
+                    }
+                    tr_dK += trace_v(un, Ed);
+                }
                 double first;
                 if (both) {
-                    dense_matvec(Kp, bh[l].data(), Jb.data());
+                    dense_matvec(Kmode, bh[l].data(), Jb.data());
                     for (int r = 0; r < p; ++r) tmp[r] = bh[m][r] * Jb[r];
                     first = r_sum(tmp.data(), p);
                 } else if (m >= nh) {

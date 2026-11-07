@@ -34,6 +34,9 @@
 #' @param groups,frozen As [fit_smooth()] passes them to [iwls_fit()].
 #' @param verbose Whether to print the iterations.
 #' @param damp_on_reject,guard As in [iwls_fit()].
+#' @param idx `NULL` for the whole vector, or the positions of the block
+#'   that [fit_smooth()] fits with the others held, on the assembled route
+#'   that [subset_pieces()] takes.
 #'
 #' @return `engine_inner_fit()`: the list that [iwls_fit()] returns, or
 #'   `NULL`. `engine_route()`: `NULL`, or a list with the elements `model`,
@@ -42,7 +45,8 @@
 #' @seealso [fit_smooth()], [iwls_fit()], [statmod()] (argument `engine`)
 #' @keywords internal
 engine_inner_fit <- function(spec, design, obj, beta, hyper, method, groups,
-                             frozen, verbose, damp_on_reject, guard) {
+                             frozen, verbose, damp_on_reject, guard,
+                             idx = NULL) {
   rt <- engine_route(spec, design, obj, beta, hyper, method)
   if (is.null(rt)) return(NULL)
   rt$method$damp_on_reject <- isTRUE(damp_on_reject)
@@ -55,9 +59,15 @@ engine_inner_fit <- function(spec, design, obj, beta, hyper, method, groups,
     had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
     seed <- if (had_seed) get(".Random.seed", envir = globalenv(), inherits = FALSE)
   }
-  res <- engine_iwls_fit(rt$model, rt$pen, rt$method, as.numeric(beta),
-                         as.integer(frozen), lapply(groups, as.integer),
-                         isTRUE(verbose))
+  res <- if (is.null(idx)) {
+    engine_iwls_fit(rt$model, rt$pen, rt$method, as.numeric(beta),
+                    as.integer(frozen), lapply(groups, as.integer),
+                    isTRUE(verbose))
+  } else {
+    engine_subset_fit(rt$model, rt$pen, rt$method, as.numeric(beta),
+                      as.integer(idx), as.integer(frozen),
+                      lapply(groups, as.integer), isTRUE(verbose))
+  }
   if (!identical(res$status, 0L)) {
     if (mc) {
       if (had_seed) assign(".Random.seed", seed, envir = globalenv())
@@ -216,6 +226,14 @@ engine_model <- function(spec, design, coef, hyper, how) {
   # gradient (D17), and its Hessian S, for the curvature
   pu <- engine_penalty_units(spec, design, units, hyper)
   if (is.null(pu)) return(NULL)
+  # a penalty that moves (kinds 9 and 10) is written into S at every point,
+  # at positions that no other unit reaches
+  mv <- vapply(pu, function(u) u$kind %in% c(9L, 10L), logical(1))
+  if (any(mv)) {
+    pos <- unlist(lapply(pu[mv], `[[`, "idx"))
+    rest <- unlist(lapply(pu[!mv], `[[`, "idx"))
+    if (anyDuplicated(pos) || any(pos %in% rest)) return(NULL)
+  }
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian",
                           jeffreys = FALSE)
   Sd <- as_dense(S)
@@ -276,6 +294,12 @@ engine_penalty_units <- function(spec, design, units, hyper) {
     th <- as.list(hyper[[u$param]][[u$key]])
     idx <- as.integer(u$index)
     mp <- if ("map" %in% S7::prop_names(pen)) pen@map else NULL
+    ku <- engine_kink_unit(pen, th, idx, mp)
+    if (!is.null(ku)) {
+      if (isFALSE(ku)) return(NULL)
+      out[[k]] <- ku
+      next
+    }
     if (!is.null(mp) && !is.matrix(mp)) mp <- as_dense(mp)
     if (S7::S7_inherits(pen, penalties7::QuadraticPenalty)) {
       lam <- th[[1]]
@@ -305,6 +329,31 @@ engine_penalty_units <- function(spec, design, units, hyper) {
                          mu = as.numeric(full[[1]]), sigma = as.numeric(full[[2]]),
                          lj = as.numeric(lj))
         if (length(out[[k]]$mu) != 1L || length(out[[k]]$sigma) != 1L) return(NULL)
+      } else if (identical(attr(S7::S7_class(parent), "name"), "StudentT1Distrib") &&
+                 pen@block == 1L && is.null(mp)) {
+        # a t prior: its Hessian moves with the coefficients (phase 3b)
+        out[[k]] <- list(kind = 9L, idx = idx, map = NULL,
+                         mu = as.numeric(full[[1]]), sigma = as.numeric(full[[2]]),
+                         nu = as.numeric(full[[3]]))
+        if (length(out[[k]]$mu) != 1L || length(out[[k]]$sigma) != 1L ||
+            length(out[[k]]$nu) != 1L) {
+          return(NULL)
+        }
+      } else if (S7::S7_inherits(parent, distributions7::MvStudentTDistrib) &&
+                 pen@block == parent@n_dim && is.null(mp) && !isTRUE(parent@inverted)) {
+        # a multivariate t prior: its Hessian moves with the coefficients
+        pc <- distributions7:::mvt_pieces(parent, full)
+        l <- unname(unclass(parameters7::param_factor(pc$s, pc$eta)))
+        nu <- as.numeric(pc$nu)
+        p <- pc$p
+        out[[k]] <- list(kind = 10L, idx = idx, map = NULL, block = as.integer(pen@block),
+                         mu = as.numeric(pc$mu), L = as.matrix(l),
+                         sinv = unname(as.matrix(pc$sigma_inv)),
+                         logdet = as.numeric(pc$logdet), nu = nu,
+                         c0 = distributions7:::mvt_cp_d(nu, p, 0L) - (p / 2) * base::log(pi) -
+                           0.5 * pc$logdet,
+                         half = (nu + p) / 2)
+        if (length(nu) != 1L) return(NULL)
       } else if (S7::S7_inherits(parent, distributions7::MvGaussianDistrib) &&
                  pen@block == parent@n_dim) {
         pc <- distributions7::mvg_pieces(parent, full)
@@ -322,6 +371,63 @@ engine_penalty_units <- function(spec, design, units, hyper) {
     }
   }
   out
+}
+
+#' @rdname engine_inner_fit
+#' @param pen,th,index,mp A penalized unit's penalty, its hyperparameters, its
+#'   stacked positions and its map.
+#' @details
+#' `engine_kink_unit()` describes a penalty with a kink to the compiled fit:
+#' kind 5 for the lasso (a [penalties7::DistribPenalty()] whose `fixed()`
+#' parent is a `laplace2` at zero), 6 for the elastic net (an `enet` parent
+#' at zero), 7 for [penalties7::scad_penalty()] and 8 for
+#' [penalties7::mcp_penalty()], with the diagonal of the map, the rate and the
+#' constants of the density, or the curvature. It returns `NULL` for a
+#' penalty without a kink, and `FALSE` for a kinked one that the compiled fit
+#' does not describe (a map that is not diagonal, a block of more than one
+#' coordinate, a location other than zero).
+#' @keywords internal
+engine_kink_unit <- function(pen, th, index, mp) {
+  dg <- NULL
+  if (!is.null(mp)) {
+    if (!methods::is(mp, "diagonalMatrix")) return(FALSE)
+    dg <- as.numeric(Matrix::diag(mp))
+  }
+  if (S7::S7_inherits(pen, penalties7::ScadPenalty) ||
+      S7::S7_inherits(pen, penalties7::McpPenalty)) {
+    scad <- S7::S7_inherits(pen, penalties7::ScadPenalty)
+    th <- as.list(th)
+    m <- if (is.null(mp)) pen@n_coef else nrow(mp)
+    cv <- if (length(pen@curvature)) as.numeric(pen@curvature) else rep(1, m)
+    if (length(cv) != m) return(FALSE)
+    return(list(kind = if (scad) 7L else 8L, idx = index, map = dg,
+                lambda = as.numeric(th$lambda),
+                par = as.numeric(if (scad) th$a else th$gamma),
+                cv = cv, lj = NA_real_))
+  }
+  if (!S7::S7_inherits(pen, penalties7::DistribPenalty)) return(NULL)
+  par <- pen@parent
+  if (!all(c("parent_distrib", "fixed_params") %in% S7::prop_names(par))) {
+    return(NULL)
+  }
+  cls <- attr(S7::S7_class(par@parent_distrib), "name")
+  if (!cls %in% c("Laplace2Distrib", "EnetDistrib")) return(NULL)
+  if (pen@block != 1L) return(FALSE)
+  full <- distributions7::fixed_full_theta(par, th)
+  if (!identical(as.numeric(full[[1]]), 0)) return(FALSE)
+  lj <- if (is.null(mp)) NA_real_ else penalties7::dp_log_jacobian(pen)
+  lam <- as.numeric(full[[2]])
+  if (length(lam) != 1L) return(FALSE)
+  if (cls == "Laplace2Distrib") {
+    return(list(kind = 5L, idx = index, map = dg, lambda = lam,
+                L = base::log(lam / 2), lj = as.numeric(lj)))
+  }
+  al <- as.numeric(full[[3]])
+  # log Z read off the density at zero, where every other term is an exact
+  # zero: log f(0) = -0 - 0 - log Z
+  lz <- -distributions7::distrib_pdf(par@parent_distrib, 0, full, log = TRUE)
+  list(kind = 6L, idx = index, map = dg, lambda = lam, a = lam * al,
+       c = lam * (1 - al), logz = as.numeric(lz), lj = as.numeric(lj))
 }
 
 #' @rdname engine_inner_fit

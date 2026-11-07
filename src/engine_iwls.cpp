@@ -150,12 +150,49 @@ struct PenUnit {
     double rank = -1;                // kind 1: the penalty's rank (phase 3)
     int chart = 0;                   // kind 4 (phase 3): 1 log-Cholesky, 2 compound
                                      // symmetry, 3 AR(1); 0 not described
+    // a chart that the context does not write (code 9): R's derivatives of
+    // Sinv and of log|Sigma| in the free values (mv_matrix_pieces())
+    std::vector<Dense> gai, gai2;    // K, K*K (t * K + s)
+    std::vector<double> gdld, gd2ld; // K, K*K
     std::vector<double> ceta, ch;    // the chart's free values; CS and AR(1): the
                                      // scale's and the correlation's h0, h1, h2
     int add_m = 0;                   // kind 2 (phase 3): the blocks, 0 not described
     double add_tol = 1e-10;          // its rank tolerance
     std::vector<Dense> add_block;    // one block of each component
+    // kinds 5-8 (phase 3b), the penalties with a kink: 5 the lasso (a
+    // laplace2 prior at zero), 6 the elastic net (an enet prior at zero),
+    // 7 SCAD, 8 MCP; a map is NULL or diagonal, held as its diagonal `dg`
+    std::vector<double> dg;          // the map's diagonal, empty without a map
+    double klam = 0;                 // lambda
+    double kL = 0;                   // 5: log(lambda / 2)
+    double ka = 0, kc = 0, klogz = 0;// 6: lambda alpha, lambda (1 - alpha), log Z
+    double kpar = 0;                 // 7: a; 8: gamma
+    std::vector<double> cv;          // 7, 8: the curvature (ones without one)
+    // kind 9 (phase 3b): a DistribPenalty with a univariate Student t prior of
+    // held location (fixed() of student_t1_distrib()), mu and sigma above,
+    // without a map; its Hessian moves with the coefficients
+    double tnu = 0;
+    std::vector<int> tfree;          // outer: the hyperparameters' positions in
+                                     // (sigma, nu), 1 or 2
+    bool bq = false;                 // outer: beta_quadratic() at the point
+    // kind 10 (phase 3b): a multivariate Student t prior of held location
+    // (fixed() of an MvStudentTDistrib, not inverted, without a map); block,
+    // muv, L, Sinv and tnu as above, and the value's constant
+    // (cp0 - (p/2) log(pi)) - logdet/2 and (nu + p)/2
+    double mc0 = 0, mhalf = 0;
+    // outer (kind 10): the penalty's derivatives in its H hyperparameters at
+    // the mode, from R (penalty_grad_theta() ... penalty_d2hessian()), the
+    // dS blocks group by group, and the chart's derivatives of Sinv with the
+    // derivative of N = nu + p, per hyperparameter
+    bool mo = false;
+    int mH = 0;
+    std::vector<double> mgt, mrho2, mc, mc2;     // H, H*H, H*m, H*H*m
+    std::vector<double> mdS, md2S;               // H*G*p*p, H*H*G*p*p
+    std::vector<Dense> mai;                      // H
+    std::vector<double> mNa;                     // H
 };
+
+inline bool kinked_kind(int k) { return k >= 5 && k <= 8; }
 
 struct Model {
     int n = 0, K = 0, p = 0;
@@ -182,6 +219,13 @@ struct Model {
     SpMat Cs;
     std::vector<double> Ccol2;       // colSums(C^2)
     int threads = 1;
+    // a penalty whose Hessian moves with the coefficients (kind 9): S and C
+    // are those of the last point update_penalty() was called at
+    bool moving = false;
+    std::vector<double> Sbeta;       // that point
+    // a sparse S: the entries of the units that do not move, kept once
+    bool ss0 = false;
+    SpMat Ss0;
 };
 
 // the method, settled in R (iwls_resolve()) and read off once
@@ -338,8 +382,136 @@ public:
         bu.resize(u.idx.size());
         for (std::size_t j = 0; j < u.idx.size(); ++j) bu[j] = beta[u.idx[j]];
         if (!u.has_map) { t = bu; return; }
+        if (kinked_kind(u.kind)) {
+            // a diagonal map: Diagonal %*% b is the elementwise product
+            t.resize(bu.size());
+            for (std::size_t j = 0; j < bu.size(); ++j) t[j] = u.dg[j] * bu[j];
+            return;
+        }
         t.assign(u.map.nr, 0.0);
         mat_vec(u.map, bu.data(), t.data());
+    }
+
+    // R's sign()
+    static double rsign(double x) {
+        if (ISNAN(x)) return x;
+        return x > 0 ? 1.0 : (x < 0 ? -1.0 : 0.0);
+    }
+
+    // penalty_value() of a kinked unit at its mapped coefficients t: the
+    // lasso and the elastic net as a DistribPenalty (minus the sum of the log
+    // density of their fixed() parent, minus the map's log-Jacobian), SCAD and
+    // MCP as their own methods (scad_mcp.R), operation by operation
+    double kink_value(const PenUnit& u, const std::vector<double>& t) {
+        const std::size_t m = t.size();
+        std::vector<double> e(m);
+        if (u.kind == 5 || u.kind == 6) {
+            for (std::size_t j = 0; j < m; ++j) {
+                const double z = t[j] - 0.0;
+                if (u.kind == 5) e[j] = u.kL - u.klam * std::fabs(z);
+                else e[j] = ((-u.ka) * std::fabs(z) - (u.kc * (z * z)) / 2) - u.klogz;
+            }
+            const double v = -r_sum(e.data(), m);
+            if (!u.has_map || ISNAN(u.lj)) return v;
+            return v - u.lj;
+        }
+        for (std::size_t j = 0; j < m; ++j) {
+            const double c = u.cv[j], lam = u.klam / c, a = u.kpar, x = std::fabs(t[j]);
+            double val;
+            if (u.kind == 7) {
+                if (x <= lam) val = lam * x;
+                else if (!(x > a * lam)) val = (((2 * a) * lam) * x - x * x - lam * lam) / (2 * (a - 1));
+                else val = ((lam * lam) * (a + 1)) / 2;
+            } else {
+                if (x <= a * lam) val = lam * x - (x * x) / (2 * a);
+                else val = (a * (lam * lam)) / 2;
+            }
+            e[j] = c * val;
+        }
+        return r_sum(e.data(), m);
+    }
+
+    // penalty_gradient() of a kinked unit, on its coefficients (map_back())
+    void kink_gradient(const PenUnit& u, const std::vector<double>& t,
+                       std::vector<double>& g) {
+        const std::size_t m = t.size();
+        for (std::size_t j = 0; j < m; ++j) {
+            double x;
+            if (u.kind == 5 || u.kind == 6) {
+                // -map_back(distrib_grad_y(parent, t) + 0 * t)
+                const double z = t[j] - 0.0, s = rsign(z);
+                double gy = u.kind == 5 ? (-u.klam) * s : (-u.ka) * s - u.kc * z;
+                gy = gy + 0.0 * t[j];
+                x = u.has_map ? -(u.dg[j] * gy) : -gy;
+            } else {
+                const double c = u.cv[j], lam = u.klam / c, a = u.kpar,
+                             ab = std::fabs(t[j]), s = rsign(t[j]);
+                double d1;
+                if (u.kind == 7) {
+                    if (ab <= lam) d1 = lam;
+                    else if (!(ab > a * lam)) d1 = (a * lam - ab) / (a - 1);
+                    else d1 = 0.0;
+                } else {
+                    d1 = ab <= a * lam ? lam - ab / a : 0.0;
+                }
+                const double y = (s * c) * d1;
+                x = u.has_map ? u.dg[j] * y : y;
+            }
+            g[j] = x;
+        }
+    }
+
+    // the diagonal of penalty_hessian() of a kinked unit (map_quad() is
+    // crossprod(D, D * h), so a mapped entry is d * (d * h))
+    void kink_hessian(const PenUnit& u, const std::vector<double>& t,
+                      std::vector<double>& h) {
+        const std::size_t m = t.size();
+        h.resize(m);
+        for (std::size_t j = 0; j < m; ++j) {
+            double in;
+            bool neg = false;
+            if (u.kind == 5) { in = 0.0 + 0.0 * t[j]; neg = true; }
+            else if (u.kind == 6) { in = -u.kc + 0.0 * t[j]; neg = true; }
+            else {
+                const double c = u.cv[j], lam = u.klam / c, a = u.kpar, ab = std::fabs(t[j]);
+                if (u.kind == 7) {
+                    const bool r2 = !(ab <= lam) && !(ab > a * lam);
+                    in = c * (r2 ? -1 / (a - 1) : 0.0);
+                } else {
+                    in = c * (ab <= a * lam ? -1 / a : 0.0);
+                }
+            }
+            double v = u.has_map ? u.dg[j] * (u.dg[j] * in) : in;
+            h[j] = neg ? -v : v;
+        }
+    }
+
+    // mvt_yscaled() of one group's coefficients y (p of them): the residual
+    // divided by m = max(1, max |r|), ws = (rt Sinv) / (m st), is, cw
+    static void mvt_yscaled(const PenUnit& u, const double* y, std::vector<double>& ws,
+                            double& is, double& cw) {
+        const int p = u.block;
+        std::vector<double> r(p), rt(p), w2(p), sq(p);
+        double mx = 1.0;
+        for (int j = 0; j < p; ++j) {
+            r[j] = y[j] - u.muv[j];
+            mx = std::max(mx, std::fabs(r[j]));
+        }
+        for (int j = 0; j < p; ++j) rt[j] = r[j] / mx;
+        for (int j = 0; j < p; ++j) w2[j] = rt[j];
+        if (!r_trisolve(u.L, false, w2)) throw RError();
+        for (int j = 0; j < p; ++j) sq[j] = w2[j] * w2[j];
+        const double qt = r_colsum(sq.data(), p);
+        const double im = 1 / mx, im2 = im * im;
+        const double st = u.tnu * im2 + qt;
+        is = im2 / st;
+        cw = (u.tnu + p) * is;
+        ws.assign(p, 0.0);
+        for (int c = 0; c < p; ++c) {
+            double w = 0.0;
+            for (int l = 0; l < p; ++l) w = w + rt[l] * u.Sinv(l, c);
+            ws[c] = w / (mx * st);
+        }
     }
 
     // penalty_value() of one unit, as its class's method computes it
@@ -361,7 +533,28 @@ public:
             const double q = r_sum(tp.data(), m);
             return (0.5 * q - u.c1) + u.c2;
         }
+        if (kinked_kind(u.kind)) return kink_value(u, t);
         double v;
+        if (u.kind == 10) {
+            // distrib_pdf() of the multivariate t, group by group
+            const int p = u.block, G = (int) (m / p);
+            std::vector<double> ld(G), w(p), sq(p);
+            for (int g = 0; g < G; ++g) {
+                for (int j = 0; j < p; ++j) w[j] = t[(std::size_t) g * p + j] - u.muv[j];
+                if (!r_trisolve(u.L, false, w)) throw RError();
+                for (int j = 0; j < p; ++j) sq[j] = w[j] * w[j];
+                const double q = r_colsum(sq.data(), p);
+                ld[g] = u.mc0 - u.mhalf * std::log1p(q / u.tnu);
+            }
+            return -r_sum(ld.data(), G);
+        }
+        if (u.kind == 9) {
+            // distrib_pdf() of the t: dt((y - mu) / sigma, nu, log) - log(sigma)
+            std::vector<double> lp(m);
+            for (std::size_t i = 0; i < m; ++i)
+                lp[i] = R::dt((t[i] - u.mu) / u.sigma, u.tnu, 1) - std::log(u.sigma);
+            return -r_sum(lp.data(), m);
+        }
         if (u.kind == 3) {
             std::vector<double> lp(m);
             const double th[2] = {u.mu, u.sigma};
@@ -395,7 +588,9 @@ public:
         unit_t(u, beta, bu, t);
         const std::size_t k = u.idx.size(), m = t.size();
         std::vector<double> g(k);
-        if (u.kind == 1) {
+        if (kinked_kind(u.kind)) {
+            kink_gradient(u, t, g);
+        } else if (u.kind == 1) {
             std::vector<double> y(u.Mg.nr);
             mat_vec(u.Mg, bu.data(), y.data());
             for (std::size_t j = 0; j < k; ++j) g[j] = u.lam * y[j];
@@ -411,7 +606,29 @@ public:
         } else {
             // distrib_grad_y() + 0 * a, flattened, then -map_back()
             std::vector<double> gy(m);
-            if (u.kind == 3) {
+            if (u.kind == 10) {
+                // distrib_grad_y(): -(nu + p) * ws of mvt_yscaled(), + 0 * a
+                const int p = u.block, G = (int) (m / p);
+                std::vector<double> ws(p);
+                double is, cw;
+                for (int gg = 0; gg < G; ++gg) {
+                    mvt_yscaled(u, t.data() + (std::size_t) gg * p, ws, is, cw);
+                    for (int j = 0; j < p; ++j) {
+                        const std::size_t e = (std::size_t) gg * p + j;
+                        gy[e] = (-(u.tnu + p)) * ws[j] + 0.0 * t[e];
+                    }
+                }
+            } else if (u.kind == 9) {
+                // student_t1_dy1_cpp(), + 0 * a
+                const double s = u.sigma, ik = 1.0 / (u.tnu - 0.0);
+                for (std::size_t i = 0; i < m; ++i) {
+                    const double z = (t[i] - u.mu) / s;
+                    const double q = z * z * ik;
+                    const double tt = 1.0 / (1.0 + q);
+                    const double zt = (std::fabs(z) <= 1.0) ? z * tt : 1.0 / (1.0 / z + z * ik);
+                    gy[i] = -zt*(ik + 1)/s + 0.0 * t[i];
+                }
+            } else if (u.kind == 3) {
                 const double s2 = u.sigma * u.sigma;
                 for (std::size_t i = 0; i < m; ++i)
                     gy[i] = (-(t[i] - u.mu)) / s2 + 0.0 * t[i];
@@ -616,6 +833,38 @@ public:
         }
     }
 
+    // ------------------------------------------------------- the subset
+    // fit_smooth() on a subset (phase 3b): the loop works on the positions
+    // `sub` (0-based, ascending) with every other coordinate held at `base`;
+    // empty `sub` is the whole vector
+    std::vector<int> sub;
+    std::vector<double> base;
+    int np() const { return sub.empty() ? M.p : (int) sub.size(); }
+    void expand(const std::vector<double>& b, std::vector<double>& v) const {
+        if (sub.empty()) { v = b; return; }
+        v = base;
+        for (std::size_t j = 0; j < sub.size(); ++j) v[sub[j]] = b[j];
+    }
+    // the full objective at the expanded point, as fit_smooth()'s fn()
+    bool fn_s(const std::vector<double>& b, double& value) {
+        if (sub.empty()) return fn(b, value);
+        std::vector<double> v;
+        expand(b, v);
+        return fn(v, value);
+    }
+    // obj$gr_sub(): the score over the subset's columns and the stacked
+    // penalty gradient read at them; every entry of obj$gr() is its own column
+    // product, so the subset of the full gradient is the same double
+    bool gr_s(const std::vector<double>& b, std::vector<double>& g) {
+        if (sub.empty()) return gr(b, g);
+        std::vector<double> v, gf;
+        expand(b, v);
+        if (!gr(v, gf)) return false;
+        g.resize(sub.size());
+        for (std::size_t j = 0; j < sub.size(); ++j) g[j] = gf[sub[j]];
+        return true;
+    }
+
     // ---------------------------------------------------------- pieces
     struct Pieces {
         bool sqrt = false;
@@ -629,10 +878,160 @@ public:
         mutable SpMat K;
     };
 
+    // penalty_sqrt(S) of a dense S: the zero matrix gives no rows, a diagonal
+    // one diagonal_sqrt(), any other the eigen route on (S + t(S)) / 2; false
+    // (NULL) when S is indefinite beyond the tolerance
+    bool penalty_sqrt_dense(const Dense& S, Dense& C) {
+        const int p = S.nc;
+        if (p == 0) { C = Dense(0, 0); return true; }
+        bool zero = true, diag = true;
+        for (int j = 0; j < p; ++j)
+            for (int i = 0; i < p; ++i) {
+                const double v = S(i, j);
+                if (!(v == 0.0)) { zero = false; if (i != j) diag = false; }
+            }
+        if (zero) { C = Dense(0, p); return true; }
+        std::vector<int> keep;
+        if (diag) {
+            // diagonal_sqrt()
+            std::vector<double> d(p);
+            double mx = 0.0, mn = R_PosInf;
+            for (int j = 0; j < p; ++j) {
+                d[j] = S(j, j);
+                mx = std::max(mx, std::fabs(d[j]));
+                mn = std::min(mn, d[j]);
+            }
+            const double tol = p * DBL_EPSILON * mx;
+            if (mn < -std::max(tol, 1e-10 * mx)) return false;
+            for (int j = 0; j < p; ++j) if (d[j] > tol) keep.push_back(j);
+            C = Dense((int) keep.size(), p);
+            for (std::size_t r = 0; r < keep.size(); ++r)
+                C((int) r, keep[r]) = std::sqrt(d[keep[r]]);
+            return true;
+        }
+        Dense A(p, p);
+        for (int j = 0; j < p; ++j)
+            for (int i = 0; i < p; ++i) A(i, j) = (S(i, j) + S(j, i)) / 2;
+        std::vector<double> ev;
+        Dense V;
+        if (!r_eigen_sym(A, false, ev, V)) throw RError();
+        double mx = 0.0, mn = R_PosInf;
+        for (double v : ev) { mx = std::max(mx, std::fabs(v)); mn = std::min(mn, v); }
+        const double tol = p * DBL_EPSILON * mx;
+        if (mn < -std::max(tol, 1e-10 * mx)) return false;
+        for (int k = 0; k < p; ++k) if (ev[k] > tol) keep.push_back(k);
+        C = Dense((int) keep.size(), p);
+        for (std::size_t r = 0; r < keep.size(); ++r) {
+            const double sq = std::sqrt(ev[keep[r]]);
+            for (int j = 0; j < p; ++j) C((int) r, j) = sq * V(j, keep[r]);
+        }
+        return true;
+    }
+
+    // statmod_penalty_at(..., "hessian") and penalty_sqrt() at beta, for a
+    // penalty that moves: the moving units' diagonal entries, 0 + their
+    // block, are written into S (no other unit reaches their positions), and
+    // C is formed anew
+    void update_penalty(const std::vector<double>& beta) {
+        if (!M.moving || same_beta(M.Sbeta, beta)) return;
+        // the moving units' entries, 0 + their block; on a dense S written
+        // in place, on a sparse one (statmod_penalty_at()'s accumulator
+        // follows the design) S is the other units' entries and these, the
+        // exact zeros not stored, as the subassignment of the R route stores
+        // them
+        std::vector<Trip> mv;
+        auto put = [&](int i, int j, double v) {
+            if (M.sparse) mv.emplace_back(i, j, v);
+            else M.Sd(i, j) = v;
+        };
+        for (const PenUnit& u : M.units) {
+            if (u.kind == 10) {
+                // -dp_blockdiag(distrib_hess_y()): the block of group g is
+                // -((-cw) Sinv + (2 N) ws ws')
+                const int p = u.block, G = (int) (u.idx.size() / p);
+                const double N = u.tnu + p;
+                std::vector<double> y(p), ws(p);
+                double is, cw;
+                for (int g = 0; g < G; ++g) {
+                    for (int j = 0; j < p; ++j) y[j] = beta[u.idx[(std::size_t) g * p + j]];
+                    mvt_yscaled(u, y.data(), ws, is, cw);
+                    for (int b = 0; b < p; ++b)
+                        for (int a = 0; a < p; ++a) {
+                            const double h = ((-cw) * u.Sinv(a, b)) + ((2 * N) * (ws[a] * ws[b]));
+                            put(u.idx[(std::size_t) g * p + a], u.idx[(std::size_t) g * p + b],
+                                0.0 + (-h));
+                        }
+                }
+                continue;
+            }
+            if (u.kind != 9) continue;
+            const double s = u.sigma, ik = 1.0 / (u.tnu - 0.0);
+            for (std::size_t j = 0; j < u.idx.size(); ++j) {
+                const double b = beta[u.idx[j]];
+                const double z = (b - u.mu) / s;
+                const double q = z * z * ik;
+                const double t = 1.0 / (1.0 + q);
+                const double uu = (q < 1.0) ? q * t : 1.0 / (1.0 + 1.0 / q);
+                const double h = t*(-ik*t + ik*uu - t + uu)/std::pow(s, 2);
+                put(u.idx[j], u.idx[j], 0.0 + (-(h + 0.0 * b)));
+            }
+        }
+        if (M.sparse) {
+            if (!M.ss0) {
+                std::vector<char> moving_pos(M.p, 0);
+                for (const PenUnit& u : M.units)
+                    if (u.kind == 9 || u.kind == 10) for (int i : u.idx) moving_pos[i] = 1;
+                std::vector<Trip> keep;
+                for (int j = 0; j < M.Ss.outerSize(); ++j)
+                    for (SpMat::InnerIterator it(M.Ss, j); it; ++it)
+                        if (!moving_pos[it.row()] && !moving_pos[j])
+                            keep.emplace_back((int) it.row(), j, it.value());
+                M.Ss0 = SpMat(M.p, M.p);
+                M.Ss0.setFromTriplets(keep.begin(), keep.end());
+                M.ss0 = true;
+            }
+            std::vector<Trip> all;
+            for (int j = 0; j < M.Ss0.outerSize(); ++j)
+                for (SpMat::InnerIterator it(M.Ss0, j); it; ++it)
+                    all.emplace_back((int) it.row(), j, it.value());
+            for (const Trip& t : mv) if (t.value() != 0.0) all.push_back(t);
+            M.Ss = SpMat(M.p, M.p);
+            M.Ss.setFromTriplets(all.begin(), all.end());
+        }
+        if (me.how == "qr" || me.how == "svd") {
+            Dense C;
+            M.hasC = penalty_sqrt_dense(M.sparse ? dense_of(M.Ss) : M.Sd, C);
+            M.Ccol2.assign(M.p, 0.0);
+            M.Csp = false;
+            if (M.hasC && M.sparse) {
+                // a diagonal S stored sparse gives a sparse factor
+                // (diagonal_sqrt()), any other S a dense one
+                bool diag = true;
+                for (int j = 0; j < M.Ss.outerSize() && diag; ++j)
+                    for (SpMat::InnerIterator it(M.Ss, j); it; ++it)
+                        if (it.row() != j && it.value() != 0.0) { diag = false; break; }
+                if (diag && M.Ss.nonZeros() > 0) {
+                    M.Csp = true;
+                    M.Cs = dense_to_sparse_mat(C);
+                }
+            }
+            if (M.hasC) {
+                M.Cd = C;
+                for (int j = 0; j < M.p; ++j) {
+                    ldouble sq = 0.0;
+                    for (int i = 0; i < M.Cd.nr; ++i) sq += M.Cd(i, j) * M.Cd(i, j);
+                    M.Ccol2[j] = (double) sq;
+                }
+            }
+        }
+        M.Sbeta = beta;
+    }
+
     // iwls_pieces(): false where R signals an error
     bool pieces(const std::vector<double>& beta, bool expected, Pieces& pc) {
         Point& P = point(beta);
         if (!P.inb) return false;
+        update_penalty(beta);
         if (expected && me.emethod == 0) ensure_eparts(P); else ensure_parts(P);
         if (expected && me.emethod >= 2) expect_all(P);
         Timer tm(T_PIECES);
@@ -772,6 +1171,59 @@ public:
         return true;
     }
 
+    // subset_pieces(): H over the subset's columns (information_subset(),
+    // one product per pair of equations and column pair, the diagonal blocks
+    // in full) plus S[sub, sub], always on the assembled route
+    bool pieces_s(const std::vector<double>& b, bool expected, Pieces& pc) {
+        if (sub.empty()) return pieces(b, expected, pc);
+        std::vector<double> beta;
+        expand(b, beta);
+        Point& P = point(beta);
+        if (!P.inb) return false;
+        update_penalty(beta);
+        if (expected && me.emethod == 0) ensure_eparts(P); else ensure_parts(P);
+        if (expected && me.emethod >= 2) expect_all(P);
+        Timer tm(T_PIECES);
+        const int n = M.n, K = M.K, ps = (int) sub.size();
+        std::vector<double> Hall((std::size_t) n * K * K);
+        for (int i = 0; i < n; ++i)
+            hess_obs(P, i, expected, Hall.data() + (std::size_t) i * K * K);
+        pc = Pieces();
+        pc.sqrt = false;
+        std::vector<int> pos(M.p, -1);
+        for (int j = 0; j < ps; ++j) pos[sub[j]] = j;
+        pc.Ad = Dense(ps, ps);
+        std::vector<double> wv(n), xw(n);
+        for (int a = 0; a < K; ++a) {
+            const Block& Xa = M.X[a];
+            if (Xa.m == 0) continue;
+            for (int bq = a; bq < K; ++bq) {
+                const Block& Xb = M.X[bq];
+                if (Xb.m == 0) continue;
+                for (int i = 0; i < n; ++i)
+                    wv[i] = M.w[i] * Hall[(std::size_t) i * K * K + a + bq * K];
+                for (int j = 0; j < Xa.m; ++j) {
+                    const int pj = pos[M.offs[a] + j];
+                    if (pj < 0) continue;
+                    const double* xj = Xa.d + (std::size_t) j * n;
+                    for (int i = 0; i < n; ++i) xw[i] = xj[i] * wv[i];
+                    for (int k = 0; k < Xb.m; ++k) {
+                        const int pk = pos[M.offs[bq] + k];
+                        if (pk < 0) continue;
+                        const double* xk = Xb.d + (std::size_t) k * n;
+                        double t = 0.0;
+                        for (int i = 0; i < n; ++i) t = t + xw[i] * xk[i];
+                        pc.Ad(pj, pk) = -t;
+                        if (bq > a) pc.Ad(pk, pj) = -t;
+                    }
+                }
+            }
+        }
+        for (int j = 0; j < ps; ++j)
+            for (int i = 0; i < ps; ++i) pc.Ad(i, j) = pc.Ad(i, j) + M.Sd(sub[i], sub[j]);
+        return true;
+    }
+
     // the structural pattern of the sparse square root R: column offs[b] + c
     // holds rows a * n + i, for a <= b and the nonzero rows i of column c of
     // X_b, in ascending order
@@ -848,7 +1300,7 @@ public:
     double scale(const Pieces& pc) {
         double m = R_NegInf;
         bool any = false;
-        for (int j = 0; j < M.p; ++j) {
+        for (int j = 0; j < np(); ++j) {
             double v = pc.sqrt ? col2_R(pc, j) + (M.hasC ? M.Ccol2[j] : 0.0)
                                : adiag(pc, j);
             if (!R_FINITE(v)) continue;
@@ -861,8 +1313,8 @@ public:
 
     // iwls_info_diag()
     std::vector<double> info_diag(const Pieces& pc) {
-        std::vector<double> d(M.p);
-        for (int j = 0; j < M.p; ++j) d[j] = pc.sqrt ? col2_R(pc, j) : adiag(pc, j);
+        std::vector<double> d(np());
+        for (int j = 0; j < np(); ++j) d[j] = pc.sqrt ? col2_R(pc, j) : adiag(pc, j);
         return d;
     }
 
@@ -1055,7 +1507,7 @@ public:
     // iwls_solve(); err where R would signal an error
     void solve(const Pieces& pc, const std::vector<double>& u, double damp,
                const std::vector<char>& froz, Sol& sol, bool& err) {
-        const int p = M.p;
+        const int p = np();
         sol = Sol();
         sol.delta.assign(p, 0.0);
         if ((me.how == "qr" || me.how == "svd") && pc.sqrt) {
@@ -1231,7 +1683,7 @@ public:
                      const std::vector<double>& g, const Pieces& pc,
                      double damp, const std::vector<char>& froz, bool guard,
                      LineSearch& st) {
-        const int p = M.p;
+        const int p = np();
         std::vector<double> u(p);
         for (int j = 0; j < p; ++j) u[j] = -g[j];
         bool err = false;
@@ -1248,7 +1700,7 @@ public:
         for (int h = 0; h < me.step_halving + 1; ++h) {
             for (int j = 0; j < p; ++j) st.cand[j] = beta[j] + step * delta[j];
             double vnew;
-            if (!fn(st.cand, vnew)) {
+            if (!fn_s(st.cand, vnew)) {
                 if (!guard) throw RError();
                 st.errors += 1;
                 vnew = R_PosInf;
@@ -1263,7 +1715,7 @@ public:
     // iwls_decrement(): NA on an error
     double decrement(const Pieces& pc, const std::vector<double>& g,
                      double damp, const std::vector<char>& froz) {
-        const int p = M.p;
+        const int p = np();
         std::vector<double> u(p);
         for (int j = 0; j < p; ++j) u[j] = -g[j];
         Sol sol;
@@ -1440,8 +1892,26 @@ void engine_setup(Engine& E, Rcpp::List model, Rcpp::List pen) {
         for (int v : ix) u.idx.push_back(v - 1);
         SEXP mp = ul["map"];
         u.has_map = !Rf_isNull(mp);
-        if (u.has_map) read_any(mp, u.map);
-        if (u.kind == 1) {
+        if (u.has_map && !kinked_kind(u.kind)) read_any(mp, u.map);
+        if (kinked_kind(u.kind)) {
+            if (u.has_map) {
+                Rcpp::NumericVector d(mp);
+                u.dg.assign(d.begin(), d.end());
+            }
+            u.klam = Rcpp::as<double>(ul["lambda"]);
+            u.lj = Rcpp::as<double>(ul["lj"]);
+            if (u.kind == 5) u.kL = Rcpp::as<double>(ul["L"]);
+            if (u.kind == 6) {
+                u.ka = Rcpp::as<double>(ul["a"]);
+                u.kc = Rcpp::as<double>(ul["c"]);
+                u.klogz = Rcpp::as<double>(ul["logz"]);
+            }
+            if (u.kind >= 7) {
+                u.kpar = Rcpp::as<double>(ul["par"]);
+                Rcpp::NumericVector cvv = ul["cv"];
+                u.cv.assign(cvv.begin(), cvv.end());
+            }
+        } else if (u.kind == 1) {
             read_any(ul["P"], u.P);
             read_any(ul["M"], u.Mg);
             u.lam = Rcpp::as<double>(ul["lam"]);
@@ -1475,6 +1945,30 @@ void engine_setup(Engine& E, Rcpp::List model, Rcpp::List pen) {
             u.mu = Rcpp::as<double>(ul["mu"]);
             u.sigma = Rcpp::as<double>(ul["sigma"]);
             u.lj = Rcpp::as<double>(ul["lj"]);
+        } else if (u.kind == 10) {
+            u.block = Rcpp::as<int>(ul["block"]);
+            Rcpp::NumericVector mu = ul["mu"];
+            u.muv.assign(mu.begin(), mu.end());
+            Rcpp::NumericMatrix L = ul["L"], Si = ul["sinv"];
+            u.L = Dense(L.nrow(), L.ncol());
+            std::copy(L.begin(), L.end(), u.L.v.begin());
+            u.Sinv = Dense(Si.nrow(), Si.ncol());
+            std::copy(Si.begin(), Si.end(), u.Sinv.v.begin());
+            u.logdet = Rcpp::as<double>(ul["logdet"]);
+            u.tnu = Rcpp::as<double>(ul["nu"]);
+            u.mc0 = Rcpp::as<double>(ul["c0"]);
+            u.mhalf = Rcpp::as<double>(ul["half"]);
+            M.moving = true;
+        } else if (u.kind == 9) {
+            u.mu = Rcpp::as<double>(ul["mu"]);
+            u.sigma = Rcpp::as<double>(ul["sigma"]);
+            u.tnu = Rcpp::as<double>(ul["nu"]);
+            M.moving = true;
+            if (ul.containsElementNamed("tfree")) {
+                Rcpp::IntegerVector tf = ul["tfree"];
+                u.tfree.assign(tf.begin(), tf.end());
+                u.bq = Rcpp::as<bool>(ul["bq"]);
+            }
         } else {
             u.block = Rcpp::as<int>(ul["block"]);
             Rcpp::NumericVector mu = ul["mu"];
@@ -1494,6 +1988,23 @@ void engine_setup(Engine& E, Rcpp::List model, Rcpp::List pen) {
                 Rcpp::NumericVector ce = cl["eta"], chh = cl["h"];
                 u.ceta.assign(ce.begin(), ce.end());
                 u.ch.assign(chh.begin(), chh.end());
+                if (u.chart == 9) {
+                    auto mats = [&](const char* nm, std::vector<Dense>& v) {
+                        Rcpp::List l = cl[nm];
+                        v.clear();
+                        for (int h = 0; h < l.size(); ++h) {
+                            Rcpp::NumericMatrix A(l[h]);
+                            Dense D(A.nrow(), A.ncol());
+                            std::copy(A.begin(), A.end(), D.v.begin());
+                            v.push_back(D);
+                        }
+                    };
+                    mats("ai", u.gai);
+                    mats("ai2", u.gai2);
+                    Rcpp::NumericVector d1 = cl["dld"], d2 = cl["d2ld"];
+                    u.gdld.assign(d1.begin(), d1.end());
+                    u.gd2ld.assign(d2.begin(), d2.end());
+                }
             }
         }
         M.units.push_back(u);
@@ -1523,63 +2034,49 @@ void engine_setup(Engine& E, Rcpp::List model, Rcpp::List pen) {
     }
 
 }
+// the outer description of a kind 10 unit (engine_outer_mvt())
+void read_mvt_outer(PenUnit& u, Rcpp::List ol) {
+    u.mo = true;
+    u.mH = Rcpp::as<int>(ol["H"]);
+    u.bq = Rcpp::as<bool>(ol["bq"]);
+    auto rd = [&](const char* nm, std::vector<double>& v) {
+        Rcpp::NumericVector x = ol[nm];
+        v.assign(x.begin(), x.end());
+    };
+    rd("gt", u.mgt); rd("rho2", u.mrho2); rd("c", u.mc); rd("c2", u.mc2);
+    rd("dS", u.mdS); rd("d2S", u.md2S); rd("Na", u.mNa);
+    u.mai.clear();
+    Rcpp::List ai = ol["ai"];
+    for (int h = 0; h < ai.size(); ++h) {
+        Rcpp::NumericMatrix A(ai[h]);
+        Dense D(A.nrow(), A.ncol());
+        std::copy(A.begin(), A.end(), D.v.begin());
+        u.mai.push_back(D);
+    }
+}
 }  // namespace
 
-// The compiled inner fit. `model`: K design blocks (NULL, a base matrix or a
-// dgCMatrix), the response, weights, offsets, the family's registry name,
-// constants and parameter bounds, the links' registry names and parameters.
-// `pen`: S, C (NULL for none) and the units. `method`: the settled iwls() as a
-// list. Returns status 0 with iwls_fit()'s fields (the note as a code), or
-// status 1 where the R route signals an error.
-// [[Rcpp::export]]
-Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
-                           Rcpp::List method, Rcpp::NumericVector start,
-                           Rcpp::IntegerVector frozen, Rcpp::List groups,
-                           bool verbose) {
-    for (int k = 0; k < T_N; ++k) g_time[k] = 0.0;
-    Engine E;
-    Model& M = E.M;
-    engine_setup(E, model, pen);
-    Method& me = E.me;
-    me.how = Rcpp::as<std::string>(method["how"]);
-    double st = Rcpp::as<double>(method["stol"]);
-    me.has_stol = !ISNAN(st);
-    me.stol = st;
-    me.floor = Rcpp::as<double>(method["floor"]);
-    me.maxit = Rcpp::as<int>(method["maxit"]);
-    me.tol = Rcpp::as<double>(method["tol"]);
-    me.step_halving = Rcpp::as<int>(method["step_halving"]);
-    me.dec_limit = Rcpp::as<double>(method["decrement_limit"]);
-    me.switch_after = Rcpp::as<double>(method["switch_after"]);
-    me.switch_rate = Rcpp::as<double>(method["switch_rate"]);
-    me.tol_def = Rcpp::as<double>(method["tol_def"]);
-    me.kind_expected = Rcpp::as<bool>(method["expected"]);
-    me.backup = Rcpp::as<bool>(method["backup"]);
-    me.switching = Rcpp::as<bool>(method["switching"]);
-    me.damp_on_reject = Rcpp::as<bool>(method["damp_on_reject"]);
-    me.guard = Rcpp::as<bool>(method["guard"]);
-    me.polish = Rcpp::as<bool>(method["polish"]);
-    me.emethod = Rcpp::as<int>(method["emethod"]);
-    me.escore = Rcpp::as<bool>(method["escore"]);
-    me.nsim = Rcpp::as<double>(method["nsim"]);
-    {
-        Rcpp::NumericVector et = method["etol"], sp = method["support"];
-        for (int k = 0; k < 6; ++k) me.etol[k] = et[k];
-        me.support[0] = sp[0];
-        me.support[1] = sp[1];
-    }
+// The iwls_fit() loop on the engine's problem: the whole vector, or the
+// positions E.sub with the others held at E.base (fit_smooth() on a subset).
+// False where the R route signals an error.
+struct IwlsOut {
+    std::vector<double> beta;
+    double value = 0.0, score = R_PosInf, dimless = NA_REAL;
+    bool converged = false;
+    int it = 0, note_kind = 0, note_it = 0, switched = 0;
+    int fb_indef = 0, fb_search = 0, fb_error = 0;
+    std::vector<int> aliased, h_it, h_rank, h_held;
+    std::vector<double> h_obj, h_score, h_step, h_damp;
+    std::vector<std::string> h_route;
+};
 
-    const int p = M.p;
+bool iwls_loop(Engine& E, const std::vector<double>& start, const std::vector<char>& froz,
+               std::vector<std::vector<int>> grp, bool verbose, IwlsOut& o) {
+    Model& M = E.M;
+    Method& me = E.me;
+    (void) M;
+    const int p = E.np();
     const double nn = (double) M.n;
-    std::vector<char> froz(p, 0);
-    for (int f : frozen) froz[f - 1] = 1;
-    std::vector<std::vector<int>> grp;
-    for (int k = 0; k < groups.size(); ++k) {
-        Rcpp::IntegerVector gk = groups[k];
-        std::vector<int> v;
-        for (int j : gk) v.push_back(j - 1);
-        grp.push_back(v);
-    }
     if (grp.empty()) { std::vector<int> v(p); for (int j = 0; j < p; ++j) v[j] = j; grp.push_back(v); }
 
     // pieces_at, backup_at, switch_at as the kind of information each reads
@@ -1588,7 +2085,7 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
     const bool has_switch = me.switching;
     double switch_after = has_switch ? me.switch_after : R_PosInf;
 
-    std::vector<double> beta(start.begin(), start.end());
+    std::vector<double> beta(start);
     const double tol_def = me.tol_def;
     int switched = 0;
     double value = 0.0;
@@ -1609,12 +2106,12 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
     std::vector<std::string> h_route;
 
     try {
-        if (!E.fn(beta, value)) throw RError();
+        if (!E.fn_s(beta, value)) throw RError();
         if (verbose) Rprintf("  %-5s %14s %12s %10s\n", "iter", "objective", "score/n", "step");
         typedef Engine::Pieces Pieces;
         for (it = 1; it <= me.maxit; ++it) {
             std::vector<double> g;
-            if (!E.gr(beta, g)) throw RError();
+            if (!E.gr_s(beta, g)) throw RError();
             std::vector<double> gf(g);
             for (int j = 0; j < p; ++j) if (froz[j]) gf[j] = 0.0;
             bool fin = true;
@@ -1637,12 +2134,12 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
             bool have_pc_met = false;
             Pieces pc_met;
             if (met) {
-                if (!E.pieces(beta, pa_expected, pc_met)) throw RError();
+                if (!E.pieces_s(beta, pa_expected, pc_met)) throw RError();
                 have_pc_met = true;
                 double dec;
                 if (has_backup && !E.definite(pc_met, tol_def)) {
                     Pieces pcd;
-                    if (!E.pieces(beta, backup_expected, pcd)) throw RError();
+                    if (!E.pieces_s(beta, backup_expected, pcd)) throw RError();
                     dec = E.decrement(pcd, g, damp, froz);
                 } else {
                     dec = E.decrement(pc_met, g, damp, froz);
@@ -1656,7 +2153,7 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
                 const Pieces* ppp = &pc_met;
                 bool have_pp = true;
                 if (has_switch && !switched) {
-                    if (!E.pieces(beta, false, pp_own)) throw RError();
+                    if (!E.pieces_s(beta, false, pp_own)) throw RError();
                     ppp = &pp_own;
                 }
                 const Pieces& pp = *ppp;
@@ -1673,7 +2170,7 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
                         std::vector<double> cand(p);
                         for (int j = 0; j < p; ++j) cand[j] = beta[j] + sol.delta[j];
                         double vnew;
-                        if (!E.fn(cand, vnew)) vnew = R_PosInf;
+                        if (!E.fn_s(cand, vnew)) vnew = R_PosInf;
                         if (R_FINITE(vnew) && vnew <= value + 1e-8 * std::max(1.0, std::fabs(value))) {
                             beta = cand;
                             value = vnew;
@@ -1686,7 +2183,7 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
             Pieces pc_own;
             Pieces* pcp = &pc_met;
             if (!have_pc_met) {
-                if (!E.pieces(beta, pa_expected, pc_own)) throw RError();
+                if (!E.pieces_s(beta, pa_expected, pc_own)) throw RError();
                 pcp = &pc_own;
             }
             if (has_backup && !E.definite(*pcp, tol_def)) fb_indef += 1;
@@ -1694,7 +2191,7 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
             E.line_search(beta, value, g, *pcp, damp, froz, me.guard || has_backup, st);
             fb_error += st.errors;
             if (!st.ok && has_backup) {
-                if (!E.pieces(beta, backup_expected, pc_own)) throw RError();
+                if (!E.pieces_s(beta, backup_expected, pc_own)) throw RError();
                 pcp = &pc_own;
                 fb_search += 1;
                 E.line_search(beta, value, g, *pcp, damp, froz, true, st);
@@ -1741,7 +2238,7 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
         if (it > me.maxit) it = me.maxit;
         if (!converged) {
             std::vector<double> gfin;
-            if (!E.gr(beta, gfin)) throw RError();
+            if (!E.gr_s(beta, gfin)) throw RError();
             for (int j = 0; j < p; ++j) if (froz[j]) gfin[j] = 0.0;
             bool fin = true;
             for (double v : gfin) if (!R_FINITE(v)) fin = false;
@@ -1750,7 +2247,7 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
                 converged = Engine::max_abs_div(gfin, nn) < me.tol;
                 if (!converged) {
                     Pieces pf;
-                    if (!E.pieces(beta, pa_expected, pf)) throw RError();
+                    if (!E.pieces_s(beta, pa_expected, pf)) throw RError();
                     std::vector<double> hj = E.info_diag(pf);
                     double out = 0.0;
                     for (const auto& idx : grp) {
@@ -1770,8 +2267,61 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
             }
         }
     } catch (RError&) {
-        return Rcpp::List::create(Rcpp::Named("status") = 1);
+        return false;
     }
+    o.beta = beta; o.value = value; o.score = score; o.dimless = dimless;
+    o.converged = converged; o.it = it; o.note_kind = note_kind; o.note_it = note_it;
+    o.switched = switched; o.fb_indef = fb_indef; o.fb_search = fb_search; o.fb_error = fb_error;
+    o.aliased = aliased; o.h_it = h_it; o.h_rank = h_rank; o.h_held = h_held;
+    o.h_obj = h_obj; o.h_score = h_score; o.h_step = h_step; o.h_damp = h_damp;
+    o.h_route = h_route;
+    return true;
+}
+
+// the settled iwls() as engine_route() describes it
+void read_method(Engine& E, Rcpp::List method) {
+    Method& me = E.me;
+    me.how = Rcpp::as<std::string>(method["how"]);
+    double st = Rcpp::as<double>(method["stol"]);
+    me.has_stol = !ISNAN(st);
+    me.stol = st;
+    me.floor = Rcpp::as<double>(method["floor"]);
+    me.maxit = Rcpp::as<int>(method["maxit"]);
+    me.tol = Rcpp::as<double>(method["tol"]);
+    me.step_halving = Rcpp::as<int>(method["step_halving"]);
+    me.dec_limit = Rcpp::as<double>(method["decrement_limit"]);
+    me.switch_after = Rcpp::as<double>(method["switch_after"]);
+    me.switch_rate = Rcpp::as<double>(method["switch_rate"]);
+    me.tol_def = Rcpp::as<double>(method["tol_def"]);
+    me.kind_expected = Rcpp::as<bool>(method["expected"]);
+    me.backup = Rcpp::as<bool>(method["backup"]);
+    me.switching = Rcpp::as<bool>(method["switching"]);
+    me.damp_on_reject = Rcpp::as<bool>(method["damp_on_reject"]);
+    me.guard = Rcpp::as<bool>(method["guard"]);
+    me.polish = Rcpp::as<bool>(method["polish"]);
+    me.emethod = Rcpp::as<int>(method["emethod"]);
+    me.escore = Rcpp::as<bool>(method["escore"]);
+    me.nsim = Rcpp::as<double>(method["nsim"]);
+    {
+        Rcpp::NumericVector et = method["etol"], sp = method["support"];
+        for (int k = 0; k < 6; ++k) me.etol[k] = et[k];
+        me.support[0] = sp[0];
+        me.support[1] = sp[1];
+    }
+
+}
+
+// iwls_fit()'s fields from the loop's result
+Rcpp::List loop_result(const IwlsOut& o, const Engine& E) {
+    const std::vector<double>& beta = o.beta;
+    const double value = o.value, score = o.score, dimless = o.dimless;
+    const bool converged = o.converged;
+    const int it = o.it, note_kind = o.note_kind, note_it = o.note_it, switched = o.switched;
+    const int fb_indef = o.fb_indef, fb_search = o.fb_search, fb_error = o.fb_error;
+    const std::vector<int>& aliased = o.aliased;
+    const auto& h_it = o.h_it; const auto& h_rank = o.h_rank; const auto& h_held = o.h_held;
+    const auto& h_obj = o.h_obj; const auto& h_score = o.h_score; const auto& h_step = o.h_step;
+    const auto& h_damp = o.h_damp; const auto& h_route = o.h_route;
 
     Rcpp::IntegerVector al(aliased.size());
     for (std::size_t j = 0; j < aliased.size(); ++j) al[j] = aliased[j] + 1;
@@ -1811,6 +2361,251 @@ Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
             Rcpp::Named("fn") = g_time[T_FN]));
 }
 
+// The compiled inner fit. `model`: K design blocks (NULL, a base matrix or a
+// dgCMatrix), the response, weights, offsets, the family's registry name,
+// constants and parameter bounds, the links' registry names and parameters.
+// `pen`: S, C (NULL for none) and the units. `method`: the settled iwls() as a
+// list. Returns status 0 with iwls_fit()'s fields (the note as a code), or
+// status 1 where the R route signals an error.
+// [[Rcpp::export]]
+Rcpp::List engine_iwls_fit(Rcpp::List model, Rcpp::List pen,
+                           Rcpp::List method, Rcpp::NumericVector start,
+                           Rcpp::IntegerVector frozen, Rcpp::List groups,
+                           bool verbose) {
+    for (int k = 0; k < T_N; ++k) g_time[k] = 0.0;
+    Engine E;
+    Model& M = E.M;
+    engine_setup(E, model, pen);
+    read_method(E, method);
+    const int p = M.p;
+    std::vector<char> froz(p, 0);
+    for (int f : frozen) froz[f - 1] = 1;
+    std::vector<std::vector<int>> grp;
+    for (int k = 0; k < groups.size(); ++k) {
+        Rcpp::IntegerVector gk = groups[k];
+        std::vector<int> v;
+        for (int j : gk) v.push_back(j - 1);
+        grp.push_back(v);
+    }
+
+    std::vector<double> start_v(start.begin(), start.end());
+    IwlsOut o;
+    if (!iwls_loop(E, start_v, froz, grp, verbose, o))
+        return Rcpp::List::create(Rcpp::Named("status") = 1);
+    return loop_result(o, E);
+}
+
+// fit_smooth() on a subset (phase 3b): the loop over the positions `sub`
+// (1-based, ascending) with the others held at `start`, on the assembled
+// route, as iwls_fit() runs on subset_pieces(). `frozen` and `groups` are in
+// the subset's numbering, and so are the returned `par` and `aliased`.
+// Status 3 where the compiled subset fit does not apply (a sparse design).
+// [[Rcpp::export]]
+Rcpp::List engine_subset_fit(Rcpp::List model, Rcpp::List pen, Rcpp::List method,
+                             Rcpp::NumericVector start, Rcpp::IntegerVector sub,
+                             Rcpp::IntegerVector frozen, Rcpp::List groups,
+                             bool verbose) {
+    for (int k = 0; k < T_N; ++k) g_time[k] = 0.0;
+    Engine E;
+    Model& M = E.M;
+    engine_setup(E, model, pen);
+    read_method(E, method);
+    if (M.sparse) return Rcpp::List::create(Rcpp::Named("status") = 3);
+    E.base.assign(start.begin(), start.end());
+    for (int j : sub) E.sub.push_back(j - 1);
+    const int ps = (int) E.sub.size();
+    std::vector<char> froz(ps, 0);
+    for (int f : frozen) froz[f - 1] = 1;
+    std::vector<std::vector<int>> grp;
+    for (int k = 0; k < groups.size(); ++k) {
+        Rcpp::IntegerVector gk = groups[k];
+        std::vector<int> v;
+        for (int j : gk) v.push_back(j - 1);
+        grp.push_back(v);
+    }
+    std::vector<double> start_v(ps);
+    for (int j = 0; j < ps; ++j) start_v[j] = E.base[E.sub[j]];
+    IwlsOut o;
+    if (!iwls_loop(E, start_v, froz, grp, verbose, o))
+        return Rcpp::List::create(Rcpp::Named("status") = 1);
+    return loop_result(o, E);
+}
+
+#include "engine_kink.h"
+
+// The compiled alternation of a model with a kinked penalty (phase 3b):
+// statmod_alternate() on the covered route. `kblocks`: one list per kinked
+// block (engine_alternate_blocks()). `smooth`, `held_where` 1-based;
+// `smooth_groups`, `smooth_frozen` in the smooth block's numbering. Returns
+// status 0 with the point, the history and the curvatures, 1 where the R
+// route signals an error, 2 where it takes a branch the engine does not
+// reproduce (the proximal fallback of sparse_fit()).
+// [[Rcpp::export]]
+Rcpp::List engine_alternate(Rcpp::List model, Rcpp::List pen, Rcpp::List method,
+                            Rcpp::NumericVector start, Rcpp::List kblocks,
+                            Rcpp::IntegerVector smooth, Rcpp::List smooth_groups,
+                            Rcpp::IntegerVector smooth_frozen,
+                            Rcpp::IntegerVector held_where,
+                            Rcpp::NumericVector held_value,
+                            Rcpp::LogicalVector kinked, Rcpp::IntegerVector pinned,
+                            bool expected, int maxit, double tol) {
+    for (int k = 0; k < T_N; ++k) g_time[k] = 0.0;
+    Engine E;
+    Model& M = E.M;
+    engine_setup(E, model, pen);
+    read_method(E, method);
+    if (M.sparse) return Rcpp::List::create(Rcpp::Named("status") = 3);
+    Kink Kn(E);
+    Kn.expected = expected;
+    for (int j : smooth) Kn.smooth.push_back(j - 1);
+    for (int k = 0; k < smooth_groups.size(); ++k) {
+        Rcpp::IntegerVector gk = smooth_groups[k];
+        std::vector<int> v;
+        for (int j : gk) v.push_back(j - 1);
+        Kn.smooth_groups.push_back(v);
+    }
+    Kn.smooth_froz.assign(Kn.smooth.size(), 0);
+    for (int f : smooth_frozen) Kn.smooth_froz[f - 1] = 1;
+    for (int j : held_where) Kn.held_where.push_back(j - 1);
+    Kn.held_value.assign(held_value.begin(), held_value.end());
+    Kn.kinked.assign(M.p, 0);
+    for (int j = 0; j < M.p && j < kinked.size(); ++j) Kn.kinked[j] = kinked[j] == TRUE;
+    for (int j : pinned) Kn.pinned.push_back(j - 1);
+    bool curv_scaled = false;
+    for (int b = 0; b < kblocks.size(); ++b) {
+        Rcpp::List bl = kblocks[b];
+        KBlock B;
+        B.unit = Rcpp::as<int>(bl["unit"]) - 1;
+        B.param = Rcpp::as<int>(bl["param"]) - 1;
+        Rcpp::IntegerVector cols = bl["cols"], oth = bl["other"];
+        for (int j : cols) B.cols.push_back(j - 1);
+        for (int j : oth) B.other.push_back(j - 1);
+        B.ctr = Rcpp::as<bool>(bl["ctr"]);
+        B.i0 = B.ctr ? Rcpp::as<int>(bl["i0"]) - 1 : -1;
+        B.curv_todo = Rcpp::as<bool>(bl["curv_todo"]);
+        B.curv_centered = Rcpp::as<bool>(bl["curv_centered"]);
+        B.has_curv = Rcpp::as<bool>(bl["has_curv"]);
+        SEXP pk = bl["prev_kink"];
+        B.has_prev = !Rf_isNull(pk);
+        if (B.has_prev) B.prev_kink = Rcpp::as<double>(pk);
+        B.label = Rcpp::as<std::string>(bl["label"]);
+        B.X = Rcpp::NumericMatrix(Rcpp::as<Rcpp::NumericMatrix>(bl["X"]));
+        SEXP xo = bl["Xo"];
+        if (!Rf_isNull(xo)) {
+            Rcpp::NumericMatrix Xo(xo);
+            B.Xo.assign(Xo.begin(), Xo.end());
+        }
+        if (B.has_curv) curv_scaled = true;
+        Kn.blocks.push_back(B);
+    }
+
+    std::vector<double> beta(start.begin(), start.end());
+    double value = 0.0;
+    bool converged = false;
+    std::vector<int> hb_pass, hb_it, hb_conv;
+    std::vector<std::string> hb_block;
+    std::vector<double> hb_obj, hb_change;
+    std::vector<int> hi_pass, hi_it, hi_rank, hi_held;
+    std::vector<double> hi_obj, hi_score, hi_step, hi_damp;
+    std::vector<std::string> hi_route;
+    int note_kind = 0, note_it = 0;
+    double note_dimless = NA_REAL, note_score = NA_REAL;
+    bool any_smooth = false;
+    std::set<int> aliased;
+    int passes = 0;
+    try {
+        value = Kn.fn(beta);
+        for (int pass = 1; pass <= maxit; ++pass) {
+            passes = pass;
+            if (curv_scaled) {
+                Kn.curvatures(beta);
+                value = Kn.fn(beta);
+            }
+            const double before = value;
+            if (!Kn.smooth.empty()) {
+                for (std::size_t h = 0; h < Kn.held_where.size(); ++h)
+                    beta[Kn.held_where[h]] = Kn.held_value[h];
+                E.sub = Kn.smooth;
+                E.base = beta;
+                std::vector<double> st(E.sub.size());
+                for (std::size_t j = 0; j < E.sub.size(); ++j) st[j] = beta[E.sub[j]];
+                IwlsOut o;
+                const bool ok = iwls_loop(E, st, Kn.smooth_froz, Kn.smooth_groups, false, o);
+                E.sub.clear();
+                if (!ok) throw RError();
+                for (std::size_t j = 0; j < Kn.smooth.size(); ++j) beta[Kn.smooth[j]] = o.beta[j];
+                value = Kn.fn(beta);
+                any_smooth = true;
+                note_kind = o.note_kind; note_it = o.note_it;
+                note_dimless = o.dimless; note_score = o.score;
+                for (int a : o.aliased) aliased.insert(Kn.smooth[a]);
+                hb_pass.push_back(pass); hb_block.push_back("smooth"); hb_obj.push_back(value);
+                hb_change.push_back(before - value); hb_it.push_back(o.it);
+                hb_conv.push_back(o.converged);
+                for (std::size_t r = 0; r < o.h_it.size(); ++r) {
+                    hi_pass.push_back(pass); hi_it.push_back(o.h_it[r]);
+                    hi_obj.push_back(o.h_obj[r]); hi_score.push_back(o.h_score[r]);
+                    hi_step.push_back(o.h_step[r]); hi_rank.push_back(o.h_rank[r]);
+                    hi_route.push_back(o.h_route[r]); hi_held.push_back(o.h_held[r]);
+                    hi_damp.push_back(o.h_damp[r]);
+                }
+            }
+            for (KBlock& B : Kn.blocks) {
+                const double v0 = value;
+                Kink::CoordOut co;
+                if (!Kn.coord_fit(beta, B, co)) {
+                    return Rcpp::List::create(Rcpp::Named("status") = 2);
+                }
+                value = co.value;
+                hb_pass.push_back(pass); hb_block.push_back(B.label); hb_obj.push_back(value);
+                hb_change.push_back(v0 - value); hb_it.push_back(co.iterations);
+                hb_conv.push_back(co.converged);
+            }
+            const double rel = std::fabs(before - value) / std::max(1.0, std::fabs(value));
+            if (rel < tol) {
+                Kn.aliased.assign(aliased.begin(), aliased.end());
+                converged = Kn.settled(beta);
+                break;
+            }
+        }
+    } catch (RError&) {
+        return Rcpp::List::create(Rcpp::Named("status") = 1);
+    }
+    Rcpp::List cvs(Kn.blocks.size());
+    for (std::size_t b = 0; b < Kn.blocks.size(); ++b)
+        cvs[b] = Rcpp::wrap(M.units[Kn.blocks[b].unit].cv);
+    Rcpp::IntegerVector al(aliased.size());
+    {
+        int k = 0;
+        for (int a : aliased) al[k++] = a + 1;
+    }
+    return Rcpp::List::create(
+        Rcpp::Named("status") = 0, Rcpp::Named("par") = Rcpp::wrap(beta),
+        Rcpp::Named("value") = value, Rcpp::Named("converged") = converged,
+        Rcpp::Named("passes") = passes, Rcpp::Named("aliased") = al,
+        Rcpp::Named("note") = Rcpp::List::create(
+            Rcpp::Named("any") = any_smooth, Rcpp::Named("kind") = note_kind,
+            Rcpp::Named("it") = note_it, Rcpp::Named("dimless") = note_dimless,
+            Rcpp::Named("score") = note_score),
+        Rcpp::Named("blocks") = Rcpp::List::create(
+            Rcpp::Named("pass") = Rcpp::wrap(hb_pass), Rcpp::Named("block") = Rcpp::wrap(hb_block),
+            Rcpp::Named("objective") = Rcpp::wrap(hb_obj), Rcpp::Named("change") = Rcpp::wrap(hb_change),
+            Rcpp::Named("iterations") = Rcpp::wrap(hb_it),
+            Rcpp::Named("converged") = Rcpp::LogicalVector(hb_conv.begin(), hb_conv.end())),
+        Rcpp::Named("inner") = Rcpp::List::create(
+            Rcpp::Named("pass") = Rcpp::wrap(hi_pass), Rcpp::Named("iteration") = Rcpp::wrap(hi_it),
+            Rcpp::Named("objective") = Rcpp::wrap(hi_obj), Rcpp::Named("score") = Rcpp::wrap(hi_score),
+            Rcpp::Named("step") = Rcpp::wrap(hi_step), Rcpp::Named("rank") = Rcpp::wrap(hi_rank),
+            Rcpp::Named("route") = Rcpp::wrap(hi_route), Rcpp::Named("held") = Rcpp::wrap(hi_held),
+            Rcpp::Named("damp") = Rcpp::wrap(hi_damp)),
+        Rcpp::Named("curvature") = cvs,
+        Rcpp::Named("timing") = Rcpp::NumericVector::create(
+            Rcpp::Named("point") = g_time[T_POINT], Rcpp::Named("parts") = g_time[T_PARTS],
+            Rcpp::Named("pieces") = g_time[T_PIECES], Rcpp::Named("assembled") = g_time[T_ASM],
+            Rcpp::Named("fn") = g_time[T_FN], Rcpp::Named("coord") = g_time[T_SPQR],
+            Rcpp::Named("settled") = g_time[T_DQR]));
+}
+
 // The engine's objective, gradient and parameters at one point, for the
 // twin tests: what obj$fn(), obj$gr() and statmod_eta() return on the R route.
 // [[Rcpp::export]]
@@ -1839,7 +2634,8 @@ Rcpp::List engine_point_probe(Rcpp::List model, Rcpp::List pen, Rcpp::NumericVec
 // 2 where the point goes to the R route.
 // [[Rcpp::export]]
 Rcpp::List engine_outer_new(Rcpp::List model, Rcpp::List pen, Rcpp::NumericVector beta,
-                            Rcpp::IntegerVector hold, SEXP basis, int order) {
+                            Rcpp::IntegerVector hold, SEXP basis, int order,
+                            SEXP hold_mode = R_NilValue) {
     Rcpp::XPtr<Outer> X(new Outer(), true);
     Outer& O = *X;
     O.model = model;
@@ -1847,6 +2643,11 @@ Rcpp::List engine_outer_new(Rcpp::List model, Rcpp::List pen, Rcpp::NumericVecto
     try {
         engine_setup(O.E, model, pen);
         for (int h : hold) O.hold.push_back(h - 1);
+        if (!Rf_isNull(hold_mode)) {
+            O.two = true;
+            Rcpp::IntegerVector hm(hold_mode);
+            for (int h : hm) O.hold_mode.push_back(h - 1);
+        }
         if (!Rf_isNull(basis)) {
             Rcpp::NumericMatrix Bm(basis);
             O.ml = true;
@@ -1915,4 +2716,40 @@ Rcpp::List engine_outer_hess(SEXP ctx, Rcpp::IntegerVector mrow, Rcpp::IntegerVe
     Rcpp::NumericMatrix R(out.nr, out.nc);
     std::copy(out.v.begin(), out.v.end(), R.begin());
     return Rcpp::List::create(Rcpp::Named("status") = 0, Rcpp::Named("hessian") = R);
+}
+
+// The kind 10 units of an outer context whose derivatives in the
+// hyperparameters have not been given yet (1-based), which the criterion does
+// not read and the gradient and the Hessian do (engine_outer_complete())
+// [[Rcpp::export]]
+Rcpp::IntegerVector engine_outer_mvt_need(SEXP ctx) {
+    Rcpp::XPtr<Outer> X(ctx);
+    Outer& O = *X;
+    Rcpp::IntegerVector out;
+    for (std::size_t k = 0; k < O.E.M.units.size(); ++k) {
+        const PenUnit& u = O.E.M.units[k];
+        if (u.kind == 10 && !u.mo) out.push_back((int) k + 1);
+    }
+    return out;
+}
+
+// [[Rcpp::export]]
+void engine_outer_mvt_set(SEXP ctx, int k, Rcpp::List ob) {
+    Rcpp::XPtr<Outer> X(ctx);
+    Outer& O = *X;
+    read_mvt_outer(O.E.M.units[k - 1], ob);
+    O.have_uder = false;
+}
+
+// K^-1 x with K the mode's pinned matrix of an outer context, the inverse
+// that inner_mode_error() and criterion_resolution() read (engine_ctx_solve())
+// [[Rcpp::export]]
+Rcpp::List engine_outer_kinv(SEXP ctx, Rcpp::NumericVector x) {
+    Rcpp::XPtr<Outer> X(ctx);
+    Outer& O = *X;
+    if (O.status || x.size() != O.p || !O.ensure_inverse())
+        return Rcpp::List::create(Rcpp::Named("status") = 2);
+    std::vector<double> y(O.p);
+    dense_matvec(O.Kinv, x.begin(), y.data());
+    return Rcpp::List::create(Rcpp::Named("status") = 0, Rcpp::Named("x") = Rcpp::wrap(y));
 }

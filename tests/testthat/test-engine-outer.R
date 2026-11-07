@@ -97,6 +97,55 @@ test_that("correlated and structured random effects", {
                             distrib = distributions7::gaussian1_distrib(), data = d))
 })
 
+test_that("a univariate t prior, whose Hessian moves: reml, ml, nu held", {
+  d <- outer_data()
+  tf <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0)
+  th <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0, nu = 1e6)
+  g1 <- distributions7::gaussian1_distrib()
+  expect_outer_twin(statmod(y ~ z + random(~ 1 | g, distrib = tf), distrib = g1, data = d))
+  expect_outer_twin(statmod(y ~ z + random(~ 1 | g, distrib = th), distrib = g1, data = d))
+  expect_outer_twin(statmod(y ~ z + random(~ 1 | g, distrib = tf), distrib = g1, data = d,
+                            outer_criterion = ml()))
+  expect_outer_twin(statmod(yg ~ s(x) + random(~ 1 | g, distrib = tf),
+                            distrib = distributions7::gamma1_distrib(), data = d))
+})
+
+test_that("a multivariate t prior, log-Cholesky and AR(1)", {
+  set.seed(7)
+  m <- 30L
+  g <- factor(rep(seq_len(m), each = 8L))
+  x <- rep(seq(-1, 1, length.out = 8L), m)
+  b <- matrix(stats::rnorm(2 * m, 0, 0.4), m, 2)
+  b[1:3, ] <- c(2.5, -2.4, 2.8, 1.5, -1.8, 1.2)
+  d2 <- data.frame(g = g, x = x, y = 1 + 0.5 * x + b[as.integer(g), 1] +
+                     b[as.integer(g), 2] * x + stats::rnorm(m * 8L, 0, 0.5))
+  mv2 <- distributions7::fixed(distributions7::mvstudent_t1_distrib(2), mu1 = 0, mu2 = 0)
+  g1 <- distributions7::gaussian1_distrib()
+  expect_outer_twin(statmod(y ~ x + random(~ x | g, distrib = mv2), distrib = g1, data = d2))
+  set.seed(9)
+  m <- 16L
+  id <- factor(rep(seq_len(m), each = 10))
+  time <- rep(rep(1:5, each = 2), m)
+  bb <- matrix(stats::rt(5 * m, df = 4) * 0.5, m, 5)
+  d5 <- data.frame(id = id, time_g = factor(time))
+  d5$y <- 1 + 0.2 * time + bb[cbind(as.integer(id), time)] + stats::rnorm(nrow(d5), 0, 0.3)
+  ts5 <- distributions7::fixed(distributions7::mvstudent_t1_distrib(
+    n_dim = 5, sigma = parameters7::ar1(5)), mu = 0)
+  expect_outer_twin(statmod(y ~ 1 + random(~ 0 + time_g | id, distrib = ts5), distrib = g1,
+                            data = d5))
+})
+
+test_that("a covariance class on dr_prod and a random smooth", {
+  d <- outer_data()
+  g1 <- distributions7::gaussian1_distrib()
+  # two terms under one covariance label: a class whose default chart is
+  # dr_prod(2), which the context reads from R (chart code 9)
+  expect_outer_twin(statmod(y ~ z + random(~ 1 | u | g) + random(~ 0 + z | u | g),
+                            distrib = g1, data = d))
+  # a smooth repeated over the groups: priors on the mapped coefficients
+  expect_outer_twin(statmod(y ~ s(x) + random(~ s(x) | g), distrib = g1, data = d))
+})
+
 test_that("engine = 'r' leaves the outer criterion to the R route", {
   d <- outer_data()
   f <- statmod(y ~ s(x), distrib = distributions7::gaussian1_distrib(), data = d,
