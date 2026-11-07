@@ -1,3 +1,19 @@
+# statmodels7 0.245.0
+
+* A compiled engine fits the covered models: the inner fit of `iwls()`,
+  the outer criteria `reml()` and `ml()` with their exact gradient and
+  Hessian, the alternation of a lasso, elastic net, SCAD or MCP penalty,
+  and univariate and multivariate t priors run in C++ with the results of
+  the R route. The expected information by `expect_mc()` and
+  `expect_integrate()` is computed in C. `statmod(engine = "r")` forces
+  the R route; the default `"auto"` uses the engine when every component
+  of the model has a compiled route.
+* The condition test of the Cholesky factor of the penalized information
+  reads the block of the coordinates that are not pinned, and
+  `statmod_marginal()` pins deficient coordinates as the inner fit does.
+* `statmod_edf_correction()` uses the pinned inverse where `solve()`
+  fails.
+
 # statmodels7 0.244.2
 
 * The rank test of the sparse route of the inner solve uses the solver's
