@@ -6,7 +6,7 @@ is the same quantity that LAPACK's `dpocon` produces from a dense one.
 ## Usage
 
 ``` r
-sparse_lmin(L, p)
+sparse_lmin(L, p, free = NULL)
 ```
 
 ## Arguments
@@ -18,6 +18,10 @@ sparse_lmin(L, p)
 - p:
 
   The order of the matrix.
+
+- free:
+
+  The coordinates whose block is estimated, or `NULL` for all.
 
 ## Value
 
@@ -43,6 +47,12 @@ dense estimate is: to separate a matrix comfortably positive definite
 from one that is not, two situations whose smallest eigenvalues differ
 by many orders of magnitude. An error of a factor of two in the estimate
 does not change that verdict.
+
+Where `free` is given, the estimate is of the block of those
+coordinates: the other coordinates are pinned to the identity and
+decoupled, so the inverse of the matrix is the inverse of that block
+beside the identity, and zeroing them in the argument and in the result
+of each solve gives the inverse of the block.
 
 ## See also
 

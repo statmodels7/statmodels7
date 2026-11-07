@@ -1,5 +1,38 @@
 # Changelog
 
+## statmodels7 0.245.0
+
+- A compiled engine fits the covered models: the inner fit of
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
+  the outer criteria
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  with their exact gradient and Hessian, the alternation of a lasso,
+  elastic net, SCAD or MCP penalty, and univariate and multivariate t
+  priors run in C++ with the results of the R route. The expected
+  information by `expect_mc()` and `expect_integrate()` is computed
+  in C. `statmod(engine = "r")` forces the R route; the default `"auto"`
+  uses the engine when every component of the model has a compiled
+  route.
+- The condition test of the Cholesky factor of the penalized information
+  reads the block of the coordinates that are not pinned, and
+  [`statmod_marginal()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal.md)
+  pins deficient coordinates as the inner fit does.
+- [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md)
+  uses the pinned inverse where
+  [`solve()`](https://rdrr.io/r/base/solve.html) fails.
+
+## statmodels7 0.244.2
+
+- The rank test of the sparse route of the inner solve uses the solver’s
+  tolerance (`solve_qr(tol = 1e-7)`), the threshold that the dense
+  pivoted QR applies to the same ratio. A nearly collinear column whose
+  ratio lay between `ncol * .Machine$double.eps` and the tolerance was
+  solved at full rank on a sparse design and aliased on a dense one; it
+  is now aliased on both. On the reference battery 2 of 1434 inner
+  systems are in that range, and the fit is unchanged.
+
 ## statmodels7 0.244.1
 
 - A term at the vertex of its shape is no longer reported as a ridge in

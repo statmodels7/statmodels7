@@ -55,13 +55,13 @@ v <- statmodels7_versions()
 v
 #>          package version
 #> 1         basis7  0.18.0
-#> 2 distributions7  0.94.2
-#> 3 linkfunctions7   0.8.2
+#> 2 distributions7  0.95.0
+#> 3 linkfunctions7   0.9.0
 #> 4    modelterms7 0.136.0
-#> 5    numericals7  0.26.0
+#> 5    numericals7  0.27.0
 #> 6    optimizers7  0.21.0
 #> 7    parameters7  0.27.0
-#> 8     penalties7  0.34.0
+#> 8     penalties7  0.35.0
 
 # One row per member, and every column is character.
 nrow(v) == length(statmodels7_packages())

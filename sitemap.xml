@@ -267,6 +267,9 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/effect_data.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/effect_grid.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/effect_spread.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/engine_alternate_fit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/engine_outer_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/entry_owner.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/est_label.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/eval_offsets.html</loc></url>
@@ -570,6 +573,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pin_held_breakpoints.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pin_infeasible.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pinned_coords.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/pinned_free.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/pinned_inverse.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/plot_acf.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/plot_assemble.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/plot_breakpoint.html</loc></url>

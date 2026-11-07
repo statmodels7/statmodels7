@@ -33,6 +33,7 @@ statmod(
   verbose = 0,
   threads = 1,
   cores = 1,
+  engine = c("auto", "r"),
   ...
 )
 ```
@@ -247,6 +248,16 @@ statmod(
   the single-process default or make the result depend on the count. For
   any two values of `cores` the result is identical bit for bit: the
   folds are seeded per fold and collected in fold order.
+
+- engine:
+
+  The route of the inner fit: `"auto"` (the default) runs the compiled
+  fit on the models that it covers and
+  [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
+  on the others; `"r"` runs
+  [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
+  on every model. The two routes perform the same operations in the same
+  order.
 
 - ...:
 

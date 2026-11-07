@@ -34,6 +34,7 @@ StatmodSpec(
   held_hyper = list(),
   threads = 1L,
   cores = 1L,
+  engine = "auto",
   jeffreys = NA
 )
 ```
@@ -117,6 +118,15 @@ StatmodSpec(
   cross-validation and of a kinked path's product grid, a single
   integer. It is distinct from `threads`, the number of threads inside
   one process.
+
+- engine:
+
+  The route of the inner fit, `"auto"` (the compiled fit on the models
+  that it covers) or `"r"`
+  ([`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
+  on every model), as
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  takes it.
 
 - jeffreys:
 

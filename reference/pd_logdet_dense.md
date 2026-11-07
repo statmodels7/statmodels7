@@ -7,7 +7,7 @@ to a dense matrix.
 ## Usage
 
 ``` r
-pd_logdet_dense(M, scale = NULL)
+pd_logdet_dense(M, scale = NULL, free = NULL)
 ```
 
 ## Arguments
@@ -19,6 +19,13 @@ pd_logdet_dense(M, scale = NULL)
 - scale:
 
   A reference magnitude.
+
+- free:
+
+  The coordinates that are not pinned, from
+  [`pinned_free()`](https://statmodels7.github.io/statmodels7/reference/pinned_free.md),
+  or `NULL`. Where given, the Cholesky route is accepted on the
+  condition of the block of these coordinates, read off the same factor.
 
 ## Value
 

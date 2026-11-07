@@ -1208,6 +1208,28 @@ helper functions. Using the package does not require any of it.
 - [`effect_spread()`](https://statmodels7.github.io/statmodels7/reference/effect_spread.md)
   : The Predicted Random Effects of a Term, Summarized
 
+- [`engine_alternate_fit()`](https://statmodels7.github.io/statmodels7/reference/engine_alternate_fit.md)
+  [`engine_alternate_blocks()`](https://statmodels7.github.io/statmodels7/reference/engine_alternate_fit.md)
+  : The Compiled Alternation of a Model with a Kinked Penalty
+
+- [`engine_inner_fit()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md)
+  [`engine_route()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md)
+  [`engine_model()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md)
+  [`engine_penalty_units()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md)
+  [`engine_kink_unit()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md)
+  [`engine_matrix()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md)
+  : The Compiled Inner Fit
+
+- [`engine_outer_at()`](https://statmodels7.github.io/statmodels7/reference/engine_outer_at.md)
+  [`engine_outer_build()`](https://statmodels7.github.io/statmodels7/reference/engine_outer_at.md)
+  [`engine_outer_members()`](https://statmodels7.github.io/statmodels7/reference/engine_outer_at.md)
+  [`engine_ctx_solve()`](https://statmodels7.github.io/statmodels7/reference/engine_outer_at.md)
+  [`engine_flags`](https://statmodels7.github.io/statmodels7/reference/engine_outer_at.md)
+  [`engine_outer_complete()`](https://statmodels7.github.io/statmodels7/reference/engine_outer_at.md)
+  [`engine_outer_mvt()`](https://statmodels7.github.io/statmodels7/reference/engine_outer_at.md)
+  [`engine_outer_chart()`](https://statmodels7.github.io/statmodels7/reference/engine_outer_at.md)
+  : The Outer Criterion on the Compiled Route
+
 - [`entry_owner()`](https://statmodels7.github.io/statmodels7/reference/entry_owner.md)
   : The Sub-Term to Which a Penalty Entry Belongs
 
@@ -2138,6 +2160,12 @@ helper functions. Using the package does not require any of it.
 
 - [`pinned_coords()`](https://statmodels7.github.io/statmodels7/reference/pinned_coords.md)
   : The Coordinates Left Out of the Marginal Determinant
+
+- [`pinned_free()`](https://statmodels7.github.io/statmodels7/reference/pinned_free.md)
+  : The Coordinates of a Pinned Matrix That Are Not Pinned
+
+- [`pinned_inverse()`](https://statmodels7.github.io/statmodels7/reference/pinned_inverse.md)
+  : The Inverse of a Penalized Information with Pinned Coordinates
 
 - [`plot_assemble()`](https://statmodels7.github.io/statmodels7/reference/plot_assemble.md)
   : Assemble a Graph from Its Data and Its Layers

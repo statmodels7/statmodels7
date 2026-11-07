@@ -7,7 +7,7 @@ returns, computed through a sparse QR of \\\[R;\\ C\]\\.
 ## Usage
 
 ``` r
-sparse_augmented_solve(R, C, u, how)
+sparse_augmented_solve(R, C, u, how, tol = NULL)
 ```
 
 ## Arguments
@@ -29,6 +29,13 @@ sparse_augmented_solve(R, C, u, how)
 
   The decomposition requested. Only `"qr"` is served; `"svd"` has no
   sparse counterpart, so the function returns `NULL` for it.
+
+- tol:
+
+  The rank tolerance, as
+  [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
+  takes it; `NULL` means `1e-7`, the default of
+  [`solve_qr()`](https://statmodels7.github.io/statmodels7/reference/solve_qr.md).
 
 ## Value
 
@@ -64,8 +71,10 @@ against it is a general solve instead of two triangular ones.
 The rank is read off the diagonal of the triangular factor, since a
 sparse QR does not report a rank. The test is on the Jacobi-equilibrated
 diagonal, in which each entry is divided by its column's norm, and the
-route returns `NULL` when the smallest ratio is at most
-`ncol(A) * .Machine$double.eps` times the largest.
+route returns `NULL` when the smallest ratio is at most `tol` times the
+largest. `tol` is the solver's, the threshold that the dense route's
+pivoted QR applies to the same ratio, so that a matrix is full rank or
+deficient whichever route solves it.
 
 Without the equilibration the raw diagonal would reject matrices that
 the dense route finds at full rank, because their columns differ in size
