@@ -53,11 +53,13 @@ test_that("the edf correction pins a deficient coordinate", {
 })
 
 test_that("pinned_inverse() zeroes the pinned rows of the inverse", {
-  set.seed(1)
-  X <- matrix(rnorm(40), 10, 4)
-  # an exactly repeated row and column: crossprod() of a repeated column
-  # is not exactly singular under every BLAS
-  K <- crossprod(X)
+  # a unit lower-triangular integer factor and a repeated row and column:
+  # every product and pivot is an exact integer, so the last pivot is exactly
+  # zero under every BLAS (a random crossprod() leaves a rounding residual of
+  # either sign, and OpenBLAS factors it)
+  L <- diag(4)
+  L[lower.tri(L)] <- c(2, -1, 3, 1, -2, 1)
+  K <- tcrossprod(L)
   K <- rbind(cbind(K, K[, 4]), c(K[4, ], K[4, 4]))
   V <- pinned_inverse(K, integer(0))
   j <- which(rowSums(V != 0) == 0)
