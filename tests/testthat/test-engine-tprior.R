@@ -56,8 +56,10 @@ test_that("the compiled value and gradient of a t prior are R's", {
       # in the location is negative and its overflow guards are taken
       b <- beta + stats::rnorm(length(beta), 0, 10^(r %% 5 - 1))
       e <- statmodels7:::engine_point_probe(em$model, em$pen, b)
-      expect_identical(e$value, obj$fn(b))
-      expect_identical(as.numeric(e$gradient), as.numeric(obj$gr(b)))
+      # on the scale of the R route: R forms its sums through the BLAS
+      # (OpenBLAS on ubuntu, FMA on arm64 macOS), the engine in its own loops
+      expect_agrees_on_scale(e$value, obj$fn(b))
+      expect_agrees_on_scale(as.numeric(e$gradient), as.numeric(obj$gr(b)))
     }
   }
 })
@@ -139,8 +141,10 @@ test_that("the compiled value and gradient of a multivariate t prior are R's", {
     for (r in 1:10) {
       b <- beta + stats::rnorm(length(beta), 0, 10^(r %% 5 - 1))
       e <- statmodels7:::engine_point_probe(em$model, em$pen, b)
-      expect_identical(e$value, obj$fn(b))
-      expect_identical(as.numeric(e$gradient), as.numeric(obj$gr(b)))
+      # on the scale of the R route: R forms its sums through the BLAS
+      # (OpenBLAS on ubuntu, FMA on arm64 macOS), the engine in its own loops
+      expect_agrees_on_scale(e$value, obj$fn(b))
+      expect_agrees_on_scale(as.numeric(e$gradient), as.numeric(obj$gr(b)))
     }
   }
 })

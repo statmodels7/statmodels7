@@ -424,9 +424,9 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   make the result depend on the count. For any two values of `cores` the
 #'   result is identical bit for bit: the folds are seeded per fold and
 #'   collected in fold order.
-#' @param engine The route of the inner fit: `"auto"` (the default) runs
-#'   the compiled fit on the models that it covers and [iwls_fit()] on the
-#'   others; `"r"` runs [iwls_fit()] on every model. The two routes perform
+#' @param engine The route of the inner fit: `"r"` (the default) runs
+#'   [iwls_fit()] on every model; `"auto"` runs the compiled fit on the
+#'   models that it covers and [iwls_fit()] on the others. The two routes perform
 #'   the same operations in the same order.
 #' @param ... Not used. A named argument signals an error. A hyperparameter
 #'   is held in the term that carries the penalty.
@@ -469,7 +469,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     # under evaluation"
                     start = NULL, linpar_control = linpar_options(),
                     verbose = 0, threads = 1, cores = 1,
-                    engine = c("auto", "r"), ...) {
+                    engine = c("r", "auto"), ...) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
   caller <- parent.frame()

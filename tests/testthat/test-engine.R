@@ -27,6 +27,7 @@ engine_data <- function(n = 400, seed = 3) {
 # the inputs of engine_route() for a model, as statmod() builds them
 engine_route_of <- function(formula, distrib, data, method = iwls()) {
   spec <- statmodels7:::statmod_spec(formula, distrib, data)
+  spec@engine <- "auto"
   design <- statmodels7:::statmod_design(spec)
   hyper <- statmodels7:::statmod_hyper_start(spec, design)
   method <- statmodels7:::inner_bind(method, spec@distrib, auto_info())
@@ -87,7 +88,9 @@ test_that("a simulated or integrated expected information fits alike", {
     set.seed(4)
     fr <- statmod(..., engine = "r")
     sr <- stats::runif(1)
-    expect_equal(unlist(coef(fa)), unlist(coef(fr)), tolerance = 1e-10)
+    # the expected information differs in its last bits by platform, and the
+    # two fits can stop at different iterates within the inner tolerance
+    expect_equal(unlist(coef(fa)), unlist(coef(fr)), tolerance = 1e-6)
     expect_identical(sa, sr)
   }
   for (m in list(distributions7::expect_mc(nsim = 200),

@@ -55,7 +55,10 @@ test_that("the edf correction pins a deficient coordinate", {
 test_that("pinned_inverse() zeroes the pinned rows of the inverse", {
   set.seed(1)
   X <- matrix(rnorm(40), 10, 4)
-  K <- crossprod(cbind(X, X[, 4]))
+  # an exactly repeated row and column: crossprod() of a repeated column
+  # is not exactly singular under every BLAS
+  K <- crossprod(X)
+  K <- rbind(cbind(K, K[, 4]), c(K[4, ], K[4, 4]))
   V <- pinned_inverse(K, integer(0))
   j <- which(rowSums(V != 0) == 0)
   expect_length(j, 1L)

@@ -4,6 +4,7 @@
 
 outer_twin <- function(fit, method = fit@methods$outer) {
   sp <- fit@spec
+  sp@engine <- "auto"
   dz <- statmod_design(sp)
   attr(dz, "pinned") <- fit@methods$pinned
   gam <- marginal_coords(sp, dz, method)

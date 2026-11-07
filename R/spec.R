@@ -504,9 +504,9 @@ assemble_blocks <- function(blocks, sparse) {
 #' @param cores The number of separate R processes for the independent fits of
 #'   a cross-validation and of a kinked path's product grid, a single integer.
 #'   It is distinct from `threads`, the number of threads inside one process.
-#' @param engine The route of the inner fit, `"auto"` (the compiled fit on
-#'   the models that it covers) or `"r"` ([iwls_fit()] on every model), as
-#'   [statmod()] takes it.
+#' @param engine The route of the inner fit, `"r"` (the default,
+#'   [iwls_fit()] on every model) or `"auto"` (the compiled fit on the models
+#'   that it covers), as [statmod()] takes it.
 #' @param jeffreys Whether a term of an equation, or a sub-term of one of its
 #'   subformulas, carries a [modelterms7::JeffreysPenalty()], a single logical;
 #'   `NA`, the default, where it has not been read from `terms`.
@@ -589,7 +589,7 @@ StatmodSpec <- S7::new_class("StatmodSpec",
     # compiled fit on the models it covers (R/engine.R), "r" runs
     # iwls_fit() on every model. statmod_respec() starts from the
     # specification it is given, so a refit and a fold keep it.
-    engine = S7::new_property(S7::class_character, default = "auto"),
+    engine = S7::new_property(S7::class_character, default = "r"),
     # whether any term or subformula carries a Jeffreys penalty, read once
     # from the terms when the specification is built: the objective asks at
     # every evaluation, and a refresh or a rebuild replaces a term by one

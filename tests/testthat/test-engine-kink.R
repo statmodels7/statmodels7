@@ -71,8 +71,10 @@ test_that("the compiled value and gradient of the kinked units are R's", {
       b <- beta + rnorm(length(beta), 0, 0.3)
       if (r %% 3 == 0) b[sample(length(b), 2)] <- 0
       e <- statmodels7:::engine_point_probe(em$model, em$pen, b)
-      expect_identical(e$value, obj$fn(b))
-      expect_identical(as.numeric(e$gradient), as.numeric(obj$gr(b)))
+      # on the scale of the R route: R forms its sums through the BLAS
+      # (OpenBLAS on ubuntu, FMA on arm64 macOS), the engine in its own loops
+      expect_agrees_on_scale(e$value, obj$fn(b))
+      expect_agrees_on_scale(as.numeric(e$gradient), as.numeric(obj$gr(b)))
     }
   }
 })
