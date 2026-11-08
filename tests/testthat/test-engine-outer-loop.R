@@ -50,9 +50,25 @@ same_fit_value <- function(a, b) {
   FALSE
 }
 
+# TEMPORARY diagnostic: the largest gap over numeric leaves, and the outer
+# evaluations of each route
+gap_detail <- function(a, b) {
+  leaves <- function(x) if (is.list(x)) unlist(lapply(x, leaves), recursive = FALSE) else list(x)
+  la <- leaves(a); lb <- leaves(b)
+  if (length(la) != length(lb)) return(sprintf("leaves %d vs %d", length(la), length(lb)))
+  g <- vapply(seq_along(la), function(k) {
+    x <- la[[k]]; y <- lb[[k]]
+    if (!is.numeric(x) || !is.numeric(y)) return(NA_real_)
+    if (length(x) != length(y)) return(-length(x) * 1000 - length(y))
+    scale_gap(as.vector(x), as.vector(y), floor = 1)
+  }, 0)
+  sprintf("max gap %.3g (min %.3g)", max(g, na.rm = TRUE), min(g, na.rm = TRUE))
+}
+
 expect_same_fit <- function(f) {
   for (p in setdiff(S7::prop_names(f$r), c("elapsed", "methods"))) {
-    expect_true(same_fit_value(S7::prop(f$c, p), S7::prop(f$r, p)), info = p)
+    a <- S7::prop(f$c, p); b <- S7::prop(f$r, p)
+    expect_true(same_fit_value(a, b), info = paste(p, if (!same_fit_value(a, b)) paste(gap_detail(a, b), "evals", nrow(f$c@history$outer), nrow(f$r@history$outer))))
   }
   # the optimizer's line search holds a closure over each run's frame: its
   # class and its rule are compared, the rest of the record exactly
