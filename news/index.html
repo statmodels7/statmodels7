@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.245.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.246.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,12 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.246.0" id="statmodels7-02460">statmodels7 0.246.0<a class="anchor" aria-label="anchor" href="#statmodels7-02460"></a></h2>
+<ul><li>
+<code><a href="../reference/outer_fit.html">outer_fit()</a></code> runs the outer search of a descent optimizer in compiled code, through the headers of optimizers7; the criterion and its derivatives at each point come from the engine where the model is covered. The compiled search is used with <code>engine = "auto"</code>; with the default <code>engine = "r"</code> the whole fit takes the R route.</li>
+<li>Requires optimizers7 (&gt;= 0.22.0).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.245.1" id="statmodels7-02451">statmodels7 0.245.1<a class="anchor" aria-label="anchor" href="#statmodels7-02451"></a></h2>
 <ul><li>

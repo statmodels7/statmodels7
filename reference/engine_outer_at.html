@@ -15,7 +15,7 @@ computes them."><meta property="og:image" content="https://statmodels7.github.io
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.245.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.246.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,8 @@ computes them.</p>
 <span></span>
 <span><span class="fu">engine_outer_build</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span>, <span class="va">basis</span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">engine_outer_pen</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">engine_outer_members</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">idx</span>, <span class="va">hyper</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">engine_ctx_solve</span><span class="op">(</span><span class="va">ctx</span>, <span class="va">x</span><span class="op">)</span></span>
@@ -68,7 +70,15 @@ computes them.</p>
 <span></span>
 <span><span class="fu">engine_outer_mvt</span><span class="op">(</span><span class="va">u</span>, <span class="va">un</span>, <span class="va">coef</span>, <span class="va">spec</span>, <span class="va">hyper</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">engine_outer_chart</span><span class="op">(</span><span class="va">u</span>, <span class="va">hyper</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">engine_outer_chart</span><span class="op">(</span><span class="va">u</span>, <span class="va">hyper</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">outer_search_settings</span><span class="op">(</span><span class="va">optimizer</span>, <span class="va">nv</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">engine_pen_spec</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">idx</span>, <span class="va">hyper</span>, <span class="va">beta</span>, <span class="va">how</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">engine_chart_static</span><span class="op">(</span><span class="va">s</span>, inverted <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">engine_mvt_static</span><span class="op">(</span><span class="va">u</span>, <span class="va">ul</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -107,6 +117,34 @@ multivariate gaussian prior.</p></dd>
 <dt id="arg-un">un<a class="anchor" aria-label="anchor" href="#arg-un"></a></dt>
 <dd><p>The unit's description by <code><a href="engine_inner_fit.html">engine_penalty_units()</a></code>.</p></dd>
 
+
+<dt id="arg-optimizer">optimizer<a class="anchor" aria-label="anchor" href="#arg-optimizer"></a></dt>
+<dd><p>An optimizer of optimizers7.</p></dd>
+
+
+<dt id="arg-nv">nv<a class="anchor" aria-label="anchor" href="#arg-nv"></a></dt>
+<dd><p>The length of the outer vector.</p></dd>
+
+
+<dt id="arg-beta">beta<a class="anchor" aria-label="anchor" href="#arg-beta"></a></dt>
+<dd><p>The stacked coefficients at the start.</p></dd>
+
+
+<dt id="arg-how">how<a class="anchor" aria-label="anchor" href="#arg-how"></a></dt>
+<dd><p>The solver of the inner fit, as for <code><a href="engine_inner_fit.html">engine_model()</a></code>.</p></dd>
+
+
+<dt id="arg-s">s<a class="anchor" aria-label="anchor" href="#arg-s"></a></dt>
+<dd><p>A matrix parameter of parameters7 (a covariance chart).</p></dd>
+
+
+<dt id="arg-inverted">inverted<a class="anchor" aria-label="anchor" href="#arg-inverted"></a></dt>
+<dd><p>Whether the chart is of the precision.</p></dd>
+
+
+<dt id="arg-ul">ul<a class="anchor" aria-label="anchor" href="#arg-ul"></a></dt>
+<dd><p>The unit's description by <code><a href="engine_inner_fit.html">engine_penalty_units()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -139,6 +177,11 @@ of its penalized unit in <code><a href="statmod_penalized.html">statmod_penalize
 hyperparameter's inverse link at its value; and, for each row, the first
 and second derivatives of the inverse link at the first member's value,
 which the Hessian reads.</p>
+<p><code>engine_outer_pen()</code> returns the model and the penalty as the outer
+context reads them, <code>list(model, pen)</code>, or <code>NULL</code> where the point is not
+covered: <code><a href="engine_inner_fit.html">engine_model()</a></code> on the Cholesky route, with the pieces that the
+context reads beside the penalty's units (the positions of a t prior's
+hyperparameters, an additive penalty's blocks, a covariance chart).</p>
 <p><code>engine_ctx_solve()</code> returns \(K^{-1}x\) with \(K\) the mode's pinned
 penalized information, from the compiled context that <code>ctx</code> already holds,
 or <code>NULL</code> where <code>ctx</code> holds none or the context does not cover the point,
@@ -168,6 +211,33 @@ free values of the chart in its own order, which is the order of the
 penalty's hyperparameters, and, for the last two, the inverse links of
 the scale and of the correlation with their first two derivatives at the
 free values. It returns <code>NULL</code> for any other chart.</p>
+<p><code>outer_search_settings()</code> returns the settings of a descent method for
+the compiled outer search (<code><a href="https://statmodels7.github.io/optimizers7/reference/descent_settings.html" class="external-link">optimizers7::descent_settings()</a></code>), or <code>NULL</code>
+where the search runs in R: an optimizer that does not run the descent
+loop, and a stopping rule without a compiled form. The switch
+<code>engine_flags$outer_search</code> turns the compiled search on, <code>engine_flags$outer_point</code>
+the point computed in compiled code within it, and <code>engine_flags$outer_pen</code>
+the penalty built in compiled code at each point; all three are on.</p>
+<p><code>engine_pen_spec()</code> describes the penalty to the compiled construction of
+the outer search (<code>engine_pen_build()</code>): per penalized unit its kind, its
+positions, its description by <code><a href="engine_inner_fit.html">engine_penalty_units()</a></code> for the inner fit
+and for the outer context, its hyperparameters in the order of the
+penalty's parameters, and the static pieces of its kind; and the members of
+the outer index with the links of its rows. It returns <code>NULL</code> where a unit
+is not one that the compiled construction writes (kinds 1 to 4, a kind 4
+unit on a log-Cholesky, compound symmetry or AR(1) chart, no map on kinds 3
+and 4), or where a link has no compiled route.</p>
+<p><code>engine_chart_static()</code> describes a covariance chart to the compiled
+construction (<code>engine_charts.h</code>): its code (1 log-Cholesky, 2 compound
+symmetry, 3 AR(1), 4 <code>dr_prod()</code> over a <code>correlation_matrix()</code>), its
+dimension and number of free values, the orientation, the positions of the
+log-Cholesky factor or of the angles (0-based), and the links of the
+scales and of the correlation. It returns <code>NULL</code> for any other chart, and
+for a <code>dr_prod()</code> whose links are not the log and the doubly bounded link.
+<code>engine_mvt_static()</code> describes a multivariate t prior: its chart, its
+location, the role of each hyperparameter (the chart's free value, 0-based,
+or -1 for <code>nu</code>), and for an odd dimension the coefficients of the series of
+<code>mvt_cp_d()</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

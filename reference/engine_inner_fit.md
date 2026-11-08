@@ -31,6 +31,8 @@ engine_inner_fit(
   idx = NULL
 )
 
+engine_inner_result(res, damp_on_reject, verbose)
+
 engine_route(spec, design, obj, beta, hyper, method)
 
 engine_model(spec, design, coef, hyper, how)
@@ -81,6 +83,10 @@ engine_matrix(x)
   fits with the others held, on the assembled route that
   [`subset_pieces()`](https://statmodels7.github.io/statmodels7/reference/subset_pieces.md)
   takes.
+
+- res:
+
+  The list that the compiled inner fit returns.
 
 - coef:
 
@@ -138,6 +144,12 @@ the random stream is then restored to its state before the compiled fit,
 so that
 [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
 makes the same draws as when it runs alone.
+
+`engine_inner_result()` turns the list of the compiled inner fit into
+the list of
+[`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md):
+the note, the history as a data frame, the trace's last line where
+`verbose`. The compiled outer search reads it for its final refit.
 
 `engine_model()` returns the data of the model as the compiled routes
 read them, `list(model, pen, covered)`, or `NULL` where the model is not

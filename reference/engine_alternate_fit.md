@@ -34,6 +34,19 @@ engine_alternate_fit(
   obj
 )
 
+engine_alternate_result(
+  res,
+  spec,
+  design,
+  units,
+  kb,
+  hyper,
+  expected,
+  emethod,
+  obj,
+  damp
+)
+
 engine_alternate_blocks(spec, design, blocks, units, obj, beta, hf)
 ```
 
@@ -50,10 +63,22 @@ engine_alternate_blocks(spec, design, blocks, units, obj, beta, hf)
   The objective at the start,
   [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md).
 
+- res:
+
+  The list that `engine_alternate()` returns.
+
 - units:
 
   The penalized units,
   [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md).
+
+- kb:
+
+  The kinked blocks, `engine_alternate_blocks()`.
+
+- damp:
+
+  Whether a rejected step is damped (the note's wording).
 
 - hf:
 
@@ -91,6 +116,13 @@ whether
 [`statmod_curv()`](https://statmodels7.github.io/statmodels7/reference/statmod_curv.md)
 writes its curvature and with which centering, the previous point's kink
 on a path, and the columns themselves.
+
+`engine_alternate_result()` turns the list of the compiled alternation
+into the list of
+[`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md):
+the specification with the curvatures that the last pass wrote, the
+objective on it, the note and the histories. The compiled outer search
+reads it for its final refit.
 
 ## See also
 

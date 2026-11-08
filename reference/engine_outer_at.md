@@ -16,6 +16,8 @@ engine_outer_at(ctx, spec, design, coef, hyper, method, basis = NULL)
 
 engine_outer_build(spec, design, coef, hyper, basis)
 
+engine_outer_pen(spec, design, coef, hyper)
+
 engine_outer_members(spec, design, idx, hyper)
 
 engine_ctx_solve(ctx, x)
@@ -27,6 +29,14 @@ engine_outer_complete(eo, spec, design, coef, hyper)
 engine_outer_mvt(u, un, coef, spec, hyper)
 
 engine_outer_chart(u, hyper)
+
+outer_search_settings(optimizer, nv)
+
+engine_pen_spec(spec, design, idx, hyper, beta, how)
+
+engine_chart_static(s, inverted = FALSE)
+
+engine_mvt_static(u, ul)
 ```
 
 ## Format
@@ -65,6 +75,36 @@ engine_outer_chart(u, hyper)
   whose penalty is a multivariate gaussian prior.
 
 - un:
+
+  The unit's description by
+  [`engine_penalty_units()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md).
+
+- optimizer:
+
+  An optimizer of optimizers7.
+
+- nv:
+
+  The length of the outer vector.
+
+- beta:
+
+  The stacked coefficients at the start.
+
+- how:
+
+  The solver of the inner fit, as for
+  [`engine_model()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md).
+
+- s:
+
+  A matrix parameter of parameters7 (a covariance chart).
+
+- inverted:
+
+  Whether the chart is of the precision.
+
+- ul:
 
   The unit's description by
   [`engine_penalty_units()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md).
@@ -112,6 +152,14 @@ and the derivative of its hyperparameter's inverse link at its value;
 and, for each row, the first and second derivatives of the inverse link
 at the first member's value, which the Hessian reads.
 
+`engine_outer_pen()` returns the model and the penalty as the outer
+context reads them, `list(model, pen)`, or `NULL` where the point is not
+covered:
+[`engine_model()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md)
+on the Cholesky route, with the pieces that the context reads beside the
+penalty's units (the positions of a t prior's hyperparameters, an
+additive penalty's blocks, a covariance chart).
+
 `engine_ctx_solve()` returns \\K^{-1}x\\ with \\K\\ the mode's pinned
 penalized information, from the compiled context that `ctx` already
 holds, or `NULL` where `ctx` holds none or the context does not cover
@@ -157,6 +205,40 @@ the free values of the chart in its own order, which is the order of the
 penalty's hyperparameters, and, for the last two, the inverse links of
 the scale and of the correlation with their first two derivatives at the
 free values. It returns `NULL` for any other chart.
+
+`outer_search_settings()` returns the settings of a descent method for
+the compiled outer search
+([`optimizers7::descent_settings()`](https://statmodels7.github.io/optimizers7/reference/descent_settings.html)),
+or `NULL` where the search runs in R: an optimizer that does not run the
+descent loop, and a stopping rule without a compiled form. The switch
+`engine_flags$outer_search` turns the compiled search on,
+`engine_flags$outer_point` the point computed in compiled code within
+it, and `engine_flags$outer_pen` the penalty built in compiled code at
+each point; all three are on.
+
+`engine_pen_spec()` describes the penalty to the compiled construction
+of the outer search (`engine_pen_build()`): per penalized unit its kind,
+its positions, its description by
+[`engine_penalty_units()`](https://statmodels7.github.io/statmodels7/reference/engine_inner_fit.md)
+for the inner fit and for the outer context, its hyperparameters in the
+order of the penalty's parameters, and the static pieces of its kind;
+and the members of the outer index with the links of its rows. It
+returns `NULL` where a unit is not one that the compiled construction
+writes (kinds 1 to 4, a kind 4 unit on a log-Cholesky, compound symmetry
+or AR(1) chart, no map on kinds 3 and 4), or where a link has no
+compiled route.
+
+`engine_chart_static()` describes a covariance chart to the compiled
+construction (`engine_charts.h`): its code (1 log-Cholesky, 2 compound
+symmetry, 3 AR(1), 4 `dr_prod()` over a `correlation_matrix()`), its
+dimension and number of free values, the orientation, the positions of
+the log-Cholesky factor or of the angles (0-based), and the links of the
+scales and of the correlation. It returns `NULL` for any other chart,
+and for a `dr_prod()` whose links are not the log and the doubly bounded
+link. `engine_mvt_static()` describes a multivariate t prior: its chart,
+its location, the role of each hyperparameter (the chart's free value,
+0-based, or -1 for `nu`), and for an odd dimension the coefficients of
+the series of `mvt_cp_d()`.
 
 ## See also
 

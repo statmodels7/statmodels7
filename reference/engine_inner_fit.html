@@ -21,7 +21,7 @@ inputs."><meta property="og:image" content="https://statmodels7.github.io/statmo
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.245.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.246.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,8 @@ inputs.</p>
 <span>  idx <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">engine_inner_result</span><span class="op">(</span><span class="va">res</span>, <span class="va">damp_on_reject</span>, <span class="va">verbose</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">engine_route</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">obj</span>, <span class="va">beta</span>, <span class="va">hyper</span>, <span class="va">method</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">engine_model</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span>, <span class="va">how</span><span class="op">)</span></span>
@@ -121,6 +123,10 @@ inputs.</p>
 <dd><p><code>NULL</code> for the whole vector, or the positions of the block
 that <code><a href="fit_smooth.html">fit_smooth()</a></code> fits with the others held, on the assembled route
 that <code><a href="subset_pieces.html">subset_pieces()</a></code> takes.</p></dd>
+
+
+<dt id="arg-res">res<a class="anchor" aria-label="anchor" href="#arg-res"></a></dt>
+<dd><p>The list that the compiled inner fit returns.</p></dd>
 
 
 <dt id="arg-coef">coef<a class="anchor" aria-label="anchor" href="#arg-coef"></a></dt>
@@ -168,6 +174,10 @@ and every penalized unit is one that <code>engine_penalty_units()</code> describ
 With <code><a href="https://statmodels7.github.io/distributions7/reference/expect_mc.html" class="external-link">distributions7::expect_mc()</a></code> the random stream is then restored to
 its state before the compiled fit, so that <code><a href="iwls_fit.html">iwls_fit()</a></code> makes the same
 draws as when it runs alone.</p>
+<p><code>engine_inner_result()</code> turns the list of the compiled inner fit into the
+list of <code><a href="iwls_fit.html">iwls_fit()</a></code>: the note, the history as a data frame, the trace's
+last line where <code>verbose</code>. The compiled outer search reads it for its
+final refit.</p>
 <p><code>engine_model()</code> returns the data of the model as the compiled routes
 read them, <code>list(model, pen, covered)</code>, or <code>NULL</code> where the model is not
 covered: the family, its links and the design blocks, and the penalty at

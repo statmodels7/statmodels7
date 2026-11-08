@@ -21,7 +21,7 @@ R from the same coefficients."><meta property="og:image" content="https://statmo
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.245.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.246.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,19 @@ R from the same coefficients.</p>
 <span>  <span class="va">obj</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">engine_alternate_result</span><span class="op">(</span></span>
+<span>  <span class="va">res</span>,</span>
+<span>  <span class="va">spec</span>,</span>
+<span>  <span class="va">design</span>,</span>
+<span>  <span class="va">units</span>,</span>
+<span>  <span class="va">kb</span>,</span>
+<span>  <span class="va">hyper</span>,</span>
+<span>  <span class="va">expected</span>,</span>
+<span>  <span class="va">emethod</span>,</span>
+<span>  <span class="va">obj</span>,</span>
+<span>  <span class="va">damp</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">engine_alternate_blocks</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">blocks</span>, <span class="va">units</span>, <span class="va">obj</span>, <span class="va">beta</span>, <span class="va">hf</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -93,8 +106,20 @@ R from the same coefficients.</p>
 <dd><p>The objective at the start, <code><a href="statmod_objective.html">statmod_objective()</a></code>.</p></dd>
 
 
+<dt id="arg-res">res<a class="anchor" aria-label="anchor" href="#arg-res"></a></dt>
+<dd><p>The list that <code>engine_alternate()</code> returns.</p></dd>
+
+
 <dt id="arg-units">units<a class="anchor" aria-label="anchor" href="#arg-units"></a></dt>
 <dd><p>The penalized units, <code><a href="statmod_penalized.html">statmod_penalized()</a></code>.</p></dd>
+
+
+<dt id="arg-kb">kb<a class="anchor" aria-label="anchor" href="#arg-kb"></a></dt>
+<dd><p>The kinked blocks, <code>engine_alternate_blocks()</code>.</p></dd>
+
+
+<dt id="arg-damp">damp<a class="anchor" aria-label="anchor" href="#arg-damp"></a></dt>
+<dd><p>Whether a rejected step is damped (the note's wording).</p></dd>
 
 
 <dt id="arg-hf">hf<a class="anchor" aria-label="anchor" href="#arg-hf"></a></dt>
@@ -125,6 +150,10 @@ the other columns of the equation, whether it is solved with the
 equation's intercept profiled out (<code><a href="coord_centers.html">coord_centers()</a></code>), whether
 <code><a href="statmod_curv.html">statmod_curv()</a></code> writes its curvature and with which centering, the
 previous point's kink on a path, and the columns themselves.</p>
+<p><code>engine_alternate_result()</code> turns the list of the compiled alternation
+into the list of <code><a href="statmod_alternate.html">statmod_alternate()</a></code>: the specification with the
+curvatures that the last pass wrote, the objective on it, the note and the
+histories. The compiled outer search reads it for its final refit.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
