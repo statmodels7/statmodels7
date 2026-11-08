@@ -2,6 +2,7 @@
 % Please edit documentation in R/engine_kink.R
 \name{engine_alternate_fit}
 \alias{engine_alternate_fit}
+\alias{engine_alternate_result}
 \alias{engine_alternate_blocks}
 \title{The Compiled Alternation of a Model with a Kinked Penalty}
 \usage{
@@ -20,6 +21,19 @@ engine_alternate_fit(
   obj
 )
 
+engine_alternate_result(
+  res,
+  spec,
+  design,
+  units,
+  kb,
+  hyper,
+  expected,
+  emethod,
+  obj,
+  damp
+)
+
 engine_alternate_blocks(spec, design, blocks, units, obj, beta, hf)
 }
 \arguments{
@@ -27,7 +41,13 @@ engine_alternate_blocks(spec, design, blocks, units, obj, beta, hf)
 
 \item{obj}{The objective at the start, \code{\link[=statmod_objective]{statmod_objective()}}.}
 
+\item{res}{The list that \code{engine_alternate()} returns.}
+
 \item{units}{The penalized units, \code{\link[=statmod_penalized]{statmod_penalized()}}.}
+
+\item{kb}{The kinked blocks, \code{engine_alternate_blocks()}.}
+
+\item{damp}{Whether a rejected step is damped (the note's wording).}
 
 \item{hf}{The held positions, \code{\link[=held_positions]{held_positions()}}.}
 }
@@ -64,6 +84,11 @@ the other columns of the equation, whether it is solved with the
 equation's intercept profiled out (\code{\link[=coord_centers]{coord_centers()}}), whether
 \code{\link[=statmod_curv]{statmod_curv()}} writes its curvature and with which centering, the
 previous point's kink on a path, and the columns themselves.
+
+\code{engine_alternate_result()} turns the list of the compiled alternation
+into the list of \code{\link[=statmod_alternate]{statmod_alternate()}}: the specification with the
+curvatures that the last pass wrote, the objective on it, the note and the
+histories. The compiled outer search reads it for its final refit.
 }
 \seealso{
 \code{\link[=statmod_alternate]{statmod_alternate()}}, \code{\link[=engine_inner_fit]{engine_inner_fit()}}

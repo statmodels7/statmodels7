@@ -660,6 +660,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
       r <- engine_outer_grad(eo, mb$mrow, mb$munit, mb$mname, mb$mchain, mb$nh, gw,
                              isTRUE(free))
       if (identical(r$status, 0L)) return(r$gradient)
+      if (identical(r$status, 4L)) return(NULL)
     }
   }
   # ⚠️ THE BLOCK AT THE MODE, not the block as it was built.

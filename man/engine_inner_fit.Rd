@@ -2,6 +2,7 @@
 % Please edit documentation in R/engine.R
 \name{engine_inner_fit}
 \alias{engine_inner_fit}
+\alias{engine_inner_result}
 \alias{engine_route}
 \alias{engine_model}
 \alias{engine_penalty_units}
@@ -23,6 +24,8 @@ engine_inner_fit(
   guard,
   idx = NULL
 )
+
+engine_inner_result(res, damp_on_reject, verbose)
 
 engine_route(spec, design, obj, beta, hyper, method)
 
@@ -50,6 +53,8 @@ engine_matrix(x)
 \item{idx}{\code{NULL} for the whole vector, or the positions of the block
 that \code{\link[=fit_smooth]{fit_smooth()}} fits with the others held, on the assembled route
 that \code{\link[=subset_pieces]{subset_pieces()}} takes.}
+
+\item{res}{The list that the compiled inner fit returns.}
 
 \item{coef}{The coefficients, split by distribution parameter.}
 
@@ -95,6 +100,11 @@ Where the R route would signal an error the compiled fit stops and
 With \code{\link[distributions7:expect_mc]{distributions7::expect_mc()}} the random stream is then restored to
 its state before the compiled fit, so that \code{\link[=iwls_fit]{iwls_fit()}} makes the same
 draws as when it runs alone.
+
+\code{engine_inner_result()} turns the list of the compiled inner fit into the
+list of \code{\link[=iwls_fit]{iwls_fit()}}: the note, the history as a data frame, the trace's
+last line where \code{verbose}. The compiled outer search reads it for its
+final refit.
 
 \code{engine_model()} returns the data of the model as the compiled routes
 read them, \code{list(model, pen, covered)}, or \code{NULL} where the model is not

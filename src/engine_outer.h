@@ -11,11 +11,15 @@
 // gradient and the Hessian read them.
 //
 // The context hands a point back to the R route (status 2) wherever the R
-// route takes a branch that it does not reproduce: a non-finite curvature, a
-// Cholesky factor that fails or whose condition is within a factor of 100 of
-// the acceptance threshold (where the R route may take the eigen route or a
-// different estimator decides), and the deficient-coordinate retry. Included
-// once, by engine_iwls.cpp, after the Engine class.
+// route takes a branch that it does not reproduce: a non-finite curvature or
+// a value outside the domain. The factorization follows every route of R's
+// pd_factor() (D37, 2026-11-07): Cholesky accepted at R's own threshold, the
+// eigenvalues otherwise, and the deficient-coordinate retry; where R's
+// criterion or inverse is NULL the entry points answer status 4. Near the
+// threshold the two routes may decide differently on rounding (and R's
+// sparse route reads another condition estimate), so there the comparison
+// with R is at a tolerance scaled on the condition number. Included once, by
+// engine_iwls.cpp, after the Engine class.
 #ifndef SM7_ENGINE_OUTER_H
 #define SM7_ENGINE_OUTER_H
 
@@ -118,6 +122,10 @@ public:
         Point& P = E.cur;
         E.point_at(beta, P);
         if (!P.inb) { give_back("outside the domain"); return; }
+        // where linkinv()'s clamp acted the R route reads a curvature that is
+        // not finite and pins the coordinate as a boundary (pin_boundary());
+        // the context leaves such a point to it
+        if (P.clamped) { give_back("a parameter at its link's clamp"); return; }
         // row-wise nonzeros of each design block
         rows.assign(K, RowNz());
         for (int k = 0; k < K; ++k) {
@@ -311,8 +319,15 @@ public:
     // a Cholesky factor accepted clearly by the test of pd_factor() on the
     // free block, or false (hand back)
     bool clear_chol(const Dense& A, const std::vector<int>& held, Dense& U) {
-        const int m = A.nr;
         if (!r_chol(A, U)) return false;
+        return chol_test(A, held, U, 100.0);
+    }
+
+    // the test of pd_logdet_dense() on the free block, lmin = rcond * ||A_ff||_1
+    // against sqrt(eps) ||A_ff||_1, with a margin (1 is R's own test)
+    bool chol_test(const Dense& A, const std::vector<int>& held, const Dense& U,
+                   double margin) {
+        const int m = A.nr;
         std::vector<char> isheld(m, 0);
         for (int j : held) isheld[j] = 1;
         std::vector<int> fr;
@@ -337,7 +352,67 @@ public:
                          iwork.data(), &info FCONE);
         if (info != 0 || !R_FINITE(rc)) return false;
         const double lmin = rc * af, thr = std::sqrt(DBL_EPSILON) * af;
-        return lmin > 100.0 * thr;
+        return lmin > margin * thr;
+    }
+
+    // pd_factor() / pd_logdet_dense() of a pinned dense matrix (D37): the
+    // Cholesky factor accepted at R's own threshold, otherwise the
+    // eigenvalues, accepted where the smallest exceeds p eps times the
+    // largest; the factor is kept wherever chol() succeeds, since
+    // ctx_penalized() inverts through it on either route
+    struct Pd { bool ok = false; double logdet = 0; bool have_U = false; Dense U; };
+    Pd pd_dense(const Dense& A, const std::vector<int>& held) {
+        Pd o;
+        for (double v : A.v) if (!R_FINITE(v)) return o;
+        if (r_chol(A, o.U)) {
+            o.have_U = true;
+            if (chol_test(A, held, o.U, 1.0)) {
+                o.ok = true;
+                o.logdet = logdet_of(o.U);
+                return o;
+            }
+        }
+        std::vector<double> ev;
+        Dense vv;
+        if (!r_eigen_sym(A, true, ev, vv)) return o;
+        if (ev.empty()) return o;
+        double mn = ev[0], mx = ev[0];
+        for (double e : ev) {
+            if (!R_FINITE(e)) return o;
+            mn = std::min(mn, e);
+            mx = std::max(mx, e);
+        }
+        if (mn > (double) A.nr * DBL_EPSILON * mx) {
+            std::vector<double> lg(ev.size());
+            for (std::size_t j = 0; j < ev.size(); ++j) lg[j] = std::log(ev[j]);
+            o.ok = true;
+            o.logdet = r_sum(lg.data(), (int) lg.size());
+        }
+        return o;
+    }
+
+    // the matrix H + S pinned at `held` (sorted, unique)
+    Dense pinned_sum(const std::vector<int>& held) {
+        Dense A(p, p);
+        for (std::size_t t = 0; t < A.v.size(); ++t) A.v[t] = H.v[t] + S.v[t];
+        pin(A, held);
+        return A;
+    }
+
+    // pd_factor() with the deficient_coords() retry of ctx_penalized() and
+    // statmod_marginal(): where the first factorization fails, the coordinates
+    // the matrix does not identify are pinned too and the matrix factorized
+    // again
+    Pd pd_retry(Dense& A, std::vector<int>& held, bool retry) {
+        Pd r = pd_dense(A, held);
+        if (r.ok || !retry) return r;
+        std::vector<int> fl = Kink::deficient(A, held);
+        if (fl.empty()) return r;
+        held.insert(held.end(), fl.begin(), fl.end());
+        std::sort(held.begin(), held.end());
+        held.erase(std::unique(held.begin(), held.end()), held.end());
+        A = pinned_sum(held);
+        return pd_dense(A, held);
     }
 
     static double logdet_of(const Dense& U) {
@@ -362,48 +437,73 @@ public:
         }
     }
 
+    // D37: every route of R's factorization is taken here; where R's criterion
+    // is NULL the context records it (crit_na) and where R's inverse is NULL
+    // it records that (inv_ok false), and the entry points answer status 4
+    bool crit_na = false, inv_ok = true;
     void factor() {
-        Kp = Dense(p, p);
-        for (std::size_t t = 0; t < Kp.v.size(); ++t) Kp.v[t] = H.v[t] + S.v[t];
         held_at = hold;
         std::sort(held_at.begin(), held_at.end());
         held_at.erase(std::unique(held_at.begin(), held_at.end()), held_at.end());
-        pin(Kp, held_at);
-        if (!clear_chol(Kp, held_at, Ufac)) { give_back("factor not clearly accepted"); return; }
+        // a coordinate whose curvature is not finite is pinned by R as a
+        // boundary (pin_boundary(), boundary_coords()), which the criterion's
+        // gradient reads as a constant row; that branch stays on the R route
+        {
+            std::vector<char> isheld(p, 0);
+            for (int j : held_at) isheld[j] = 1;
+            for (int j = 0; j < p; ++j)
+                if (!isheld[j] && !R_FINITE(H(j, j) + S(j, j))) {
+                    give_back("boundary coordinate");
+                    return;
+                }
+        }
+        Kp = pinned_sum(held_at);
+        // the criterion's matrix: statmod_marginal() retries only without a
+        // kinked penalty and without an integrated basis; ctx_penalized()
+        // retries the same matrix where nothing is kinked
+        Pd pc = pd_retry(Kp, held_at, !two && !ml);
         if (two) {
             if (ml) { give_back("ml beside a kinked penalty"); return; }
-            Kmode = Dense(p, p);
-            for (std::size_t t = 0; t < Kmode.v.size(); ++t) Kmode.v[t] = H.v[t] + S.v[t];
+            // the mode's matrix, ctx_penalized(laplace = FALSE): with the retry
             held_mode = hold_mode;
             std::sort(held_mode.begin(), held_mode.end());
             held_mode.erase(std::unique(held_mode.begin(), held_mode.end()), held_mode.end());
-            pin(Kmode, held_mode);
-            if (!clear_chol(Kmode, held_mode, Umode)) {
-                give_back("mode factor not clearly accepted");
-                return;
-            }
+            Kmode = pinned_sum(held_mode);
+            Pd pm = pd_retry(Kmode, held_mode, true);
+            if (!pm.ok || !pm.have_U) inv_ok = false; else Umode = pm.U;
+            // the trace matrix inverts the criterion's matrix
+            if (!pc.have_U) inv_ok = false; else Ufac = pc.U;
+        } else if (ml) {
+            // the mode's matrix (the inverse) is K pinned at hold, with the retry
+            Kmode = Kp;
+            held_mode = held_at;
+            Pd pm = pd_retry(Kmode, held_mode, true);
+            if (!pm.ok || !pm.have_U) inv_ok = false; else Umode = pm.U;
+            Ufac = Umode;
         } else {
             Kmode = Kp;
             held_mode = held_at;
-            Umode = Ufac;
+            if (!pc.ok || !pc.have_U) inv_ok = false; else { Umode = pc.U; Ufac = pc.U; }
         }
         if (!ml) {
-            logdet_c = logdet_of(Ufac);
+            if (!pc.ok) { crit_na = true; return; }
+            logdet_c = pc.logdet;
             q = p - (int) held_at.size();
         } else {
             const int nb = B.nc;
             q = nb;
-            // the criterion's matrix, B'(H + S)B unpinned
+            // the criterion's matrix, B'(H + S)B, pinned only where its diagonal
+            // is not finite (the context gives such points back before here)
             Dense Kc(p, p);
             for (std::size_t t = 0; t < Kc.v.size(); ++t) Kc.v[t] = H.v[t] + S.v[t];
             Dense KB, BKB, Bt = transpose(B);
             if (nb == 0) { logdet_c = 0; return; }
             dense_matmul(Kc, B, KB);
             dense_matmul(Bt, KB, BKB);
-            Dense Uc;
             std::vector<int> none;
-            if (!clear_chol(BKB, none, Uc)) { give_back("ml factor not clearly accepted"); return; }
-            logdet_c = logdet_of(Uc);
+            Pd pb = pd_dense(BKB, none);
+            if (!pb.ok) { crit_na = true; return; }
+            logdet_c = pb.logdet;
         }
     }
 
@@ -412,7 +512,7 @@ public:
     Dense Ufac;
     bool have_inv = false;
     bool ensure_inverse() {
-        if (status) return false;
+        if (status || !inv_ok) return false;
         if (have_inv) return true;
         Kinv = chol2inv(Umode);
         if (!ml) {

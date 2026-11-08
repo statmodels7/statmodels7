@@ -566,13 +566,18 @@ public:
         return true;
     }
 
-    // deficient_coords() of a symmetric matrix, 0-based positions within it
-    static std::vector<int> deficient(const Dense& K) {
+    // deficient_coords(K, held) of a symmetric matrix, 0-based positions
+    // within it; `held` (0-based) is left out of the test, as setdiff() does
+    static std::vector<int> deficient(const Dense& K,
+                                      const std::vector<int>& held = std::vector<int>()) {
         std::vector<int> outv;
         const int p = K.nr;
         if (p < 2) return outv;
+        std::vector<char> isheld(p, 0);
+        for (int j : held) if (j >= 0 && j < p) isheld[j] = 1;
         std::vector<int> rest;
-        for (int j = 0; j < p; ++j) if (R_FINITE(K(j, j)) && K(j, j) > 0) rest.push_back(j);
+        for (int j = 0; j < p; ++j)
+            if (R_FINITE(K(j, j)) && K(j, j) > 0 && !isheld[j]) rest.push_back(j);
         const int r = (int) rest.size();
         if (r < 2) return outv;
         Dense A(r, r);

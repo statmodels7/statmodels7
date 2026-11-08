@@ -4,12 +4,17 @@
 \name{engine_outer_at}
 \alias{engine_outer_at}
 \alias{engine_outer_build}
+\alias{engine_outer_pen}
 \alias{engine_outer_members}
 \alias{engine_ctx_solve}
 \alias{engine_flags}
 \alias{engine_outer_complete}
 \alias{engine_outer_mvt}
 \alias{engine_outer_chart}
+\alias{outer_search_settings}
+\alias{engine_pen_spec}
+\alias{engine_chart_static}
+\alias{engine_mvt_static}
 \title{The Outer Criterion on the Compiled Route}
 \format{
 \code{engine_flags}: an environment of switches of the compiled route.
@@ -18,6 +23,8 @@
 engine_outer_at(ctx, spec, design, coef, hyper, method, basis = NULL)
 
 engine_outer_build(spec, design, coef, hyper, basis)
+
+engine_outer_pen(spec, design, coef, hyper)
 
 engine_outer_members(spec, design, idx, hyper)
 
@@ -30,6 +37,14 @@ engine_outer_complete(eo, spec, design, coef, hyper)
 engine_outer_mvt(u, un, coef, spec, hyper)
 
 engine_outer_chart(u, hyper)
+
+outer_search_settings(optimizer, nv)
+
+engine_pen_spec(spec, design, idx, hyper, beta, how)
+
+engine_chart_static(s, inverted = FALSE)
+
+engine_mvt_static(u, ul)
 }
 \arguments{
 \item{ctx}{An evaluation context from \code{\link[=outer_context]{outer_context()}}, or \code{NULL}.}
@@ -46,6 +61,20 @@ engine_outer_chart(u, hyper)
 multivariate gaussian prior.}
 
 \item{un}{The unit's description by \code{\link[=engine_penalty_units]{engine_penalty_units()}}.}
+
+\item{optimizer}{An optimizer of optimizers7.}
+
+\item{nv}{The length of the outer vector.}
+
+\item{beta}{The stacked coefficients at the start.}
+
+\item{how}{The solver of the inner fit, as for \code{\link[=engine_model]{engine_model()}}.}
+
+\item{s}{A matrix parameter of parameters7 (a covariance chart).}
+
+\item{inverted}{Whether the chart is of the precision.}
+
+\item{ul}{The unit's description by \code{\link[=engine_penalty_units]{engine_penalty_units()}}.}
 }
 \value{
 \code{engine_outer_at()}: an external pointer, or \code{NULL}.
@@ -85,6 +114,12 @@ hyperparameter's inverse link at its value; and, for each row, the first
 and second derivatives of the inverse link at the first member's value,
 which the Hessian reads.
 
+\code{engine_outer_pen()} returns the model and the penalty as the outer
+context reads them, \code{list(model, pen)}, or \code{NULL} where the point is not
+covered: \code{\link[=engine_model]{engine_model()}} on the Cholesky route, with the pieces that the
+context reads beside the penalty's units (the positions of a t prior's
+hyperparameters, an additive penalty's blocks, a covariance chart).
+
 \code{engine_ctx_solve()} returns \eqn{K^{-1}x} with \eqn{K} the mode's pinned
 penalized information, from the compiled context that \code{ctx} already holds,
 or \code{NULL} where \code{ctx} holds none or the context does not cover the point,
@@ -117,6 +152,36 @@ free values of the chart in its own order, which is the order of the
 penalty's hyperparameters, and, for the last two, the inverse links of
 the scale and of the correlation with their first two derivatives at the
 free values. It returns \code{NULL} for any other chart.
+
+\code{outer_search_settings()} returns the settings of a descent method for
+the compiled outer search (\code{\link[optimizers7:descent_settings]{optimizers7::descent_settings()}}), or \code{NULL}
+where the search runs in R: an optimizer that does not run the descent
+loop, and a stopping rule without a compiled form. The switch
+\code{engine_flags$outer_search} turns the compiled search on, \code{engine_flags$outer_point}
+the point computed in compiled code within it, and \code{engine_flags$outer_pen}
+the penalty built in compiled code at each point; all three are on.
+
+\code{engine_pen_spec()} describes the penalty to the compiled construction of
+the outer search (\code{engine_pen_build()}): per penalized unit its kind, its
+positions, its description by \code{\link[=engine_penalty_units]{engine_penalty_units()}} for the inner fit
+and for the outer context, its hyperparameters in the order of the
+penalty's parameters, and the static pieces of its kind; and the members of
+the outer index with the links of its rows. It returns \code{NULL} where a unit
+is not one that the compiled construction writes (kinds 1 to 4, a kind 4
+unit on a log-Cholesky, compound symmetry or AR(1) chart, no map on kinds 3
+and 4), or where a link has no compiled route.
+
+\code{engine_chart_static()} describes a covariance chart to the compiled
+construction (\code{engine_charts.h}): its code (1 log-Cholesky, 2 compound
+symmetry, 3 AR(1), 4 \code{dr_prod()} over a \code{correlation_matrix()}), its
+dimension and number of free values, the orientation, the positions of the
+log-Cholesky factor or of the angles (0-based), and the links of the
+scales and of the correlation. It returns \code{NULL} for any other chart, and
+for a \code{dr_prod()} whose links are not the log and the doubly bounded link.
+\code{engine_mvt_static()} describes a multivariate t prior: its chart, its
+location, the role of each hyperparameter (the chart's free value, 0-based,
+or -1 for \code{nu}), and for an odd dimension the coefficients of the series of
+\code{mvt_cp_d()}.
 }
 \seealso{
 \code{\link[=engine_inner_fit]{engine_inner_fit()}}, \code{\link[=statmod_marginal]{statmod_marginal()}}

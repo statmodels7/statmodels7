@@ -23,10 +23,16 @@ t_held <- function() distributions7::fixed(distributions7::student_t1_distrib(),
 tprior_twin <- function(formula, distrib, data, ...) {
   hit <- 0L
   orig <- statmodels7:::engine_inner_fit
+  # the compiled outer search runs the compiled inner fit from C++, the
+  # final refit included, so a search with a compiled point counts too
+  orig_s <- statmodels7:::engine_outer_search
   local_mocked_bindings(engine_inner_fit = function(...) {
     r <- orig(...)
     if (!is.null(r)) hit <<- hit + 1L
     r
+  }, engine_outer_search = function(cfg, cb) {
+    if (!is.null(cfg$compiled)) hit <<- hit + 1L
+    orig_s(cfg, cb)
   })
   fa <- statmod(formula, distrib = distrib, data = data, engine = "auto", ...)
   used <- hit
