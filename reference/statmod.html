@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.245.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.245.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@ scales are estimated from the data.</p>
 <span>  verbose <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  threads <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  engine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"r"</span><span class="op">)</span>,</span>
+<span>  engine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"r"</span>, <span class="st">"auto"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -246,9 +246,9 @@ collected in fold order.</p></dd>
 
 
 <dt id="arg-engine">engine<a class="anchor" aria-label="anchor" href="#arg-engine"></a></dt>
-<dd><p>The route of the inner fit: <code>"auto"</code> (the default) runs
-the compiled fit on the models that it covers and <code><a href="iwls_fit.html">iwls_fit()</a></code> on the
-others; <code>"r"</code> runs <code><a href="iwls_fit.html">iwls_fit()</a></code> on every model. The two routes perform
+<dd><p>The route of the inner fit: <code>"r"</code> (the default) runs
+<code><a href="iwls_fit.html">iwls_fit()</a></code> on every model; <code>"auto"</code> runs the compiled fit on the
+models that it covers and <code><a href="iwls_fit.html">iwls_fit()</a></code> on the others. The two routes perform
 the same operations in the same order.</p></dd>
 
 

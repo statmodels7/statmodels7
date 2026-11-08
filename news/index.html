@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.245.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.245.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,12 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.245.1" id="statmodels7-02451">statmodels7 0.245.1<a class="anchor" aria-label="anchor" href="#statmodels7-02451"></a></h2>
+<ul><li>
+<code>statmod(engine =)</code> defaults to <code>"r"</code>: every model is fitted by the R route, as before 0.245.0. The compiled engine is used with <code>engine = "auto"</code>. On ubuntu and arm64 macOS the engine and the R route differ in the last bits, because R forms its sums through the BLAS, and a fit whose information is singular up to rounding (a lasso over two identical columns) can reach another decision.</li>
+<li>Tests only: the engine’s twins compare on the scale of the R route’s values; <code><a href="../reference/pinned_inverse.html">pinned_inverse()</a></code> is tested on an exactly singular matrix.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.245.0" id="statmodels7-02450">statmodels7 0.245.0<a class="anchor" aria-label="anchor" href="#statmodels7-02450"></a></h2>
 <ul><li>A compiled engine fits the covered models: the inner fit of <code><a href="../reference/iwls.html">iwls()</a></code>, the outer criteria <code><a href="../reference/reml.html">reml()</a></code> and <code><a href="../reference/reml.html">ml()</a></code> with their exact gradient and Hessian, the alternation of a lasso, elastic net, SCAD or MCP penalty, and univariate and multivariate t priors run in C++ with the results of the R route. The expected information by <code>expect_mc()</code> and <code>expect_integrate()</code> is computed in C. <code>statmod(engine = "r")</code> forces the R route; the default <code>"auto"</code> uses the engine when every component of the model has a compiled route.</li>

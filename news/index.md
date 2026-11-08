@@ -1,5 +1,18 @@
 # Changelog
 
+## statmodels7 0.245.1
+
+- `statmod(engine =)` defaults to `"r"`: every model is fitted by the R
+  route, as before 0.245.0. The compiled engine is used with
+  `engine = "auto"`. On ubuntu and arm64 macOS the engine and the R
+  route differ in the last bits, because R forms its sums through the
+  BLAS, and a fit whose information is singular up to rounding (a lasso
+  over two identical columns) can reach another decision.
+- Tests only: the engine’s twins compare on the scale of the R route’s
+  values;
+  [`pinned_inverse()`](https://statmodels7.github.io/statmodels7/reference/pinned_inverse.md)
+  is tested on an exactly singular matrix.
+
 ## statmodels7 0.245.0
 
 - A compiled engine fits the covered models: the inner fit of

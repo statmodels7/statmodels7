@@ -34,7 +34,7 @@ StatmodSpec(
   held_hyper = list(),
   threads = 1L,
   cores = 1L,
-  engine = "auto",
+  engine = "r",
   jeffreys = NA
 )
 ```
@@ -121,10 +121,10 @@ StatmodSpec(
 
 - engine:
 
-  The route of the inner fit, `"auto"` (the compiled fit on the models
-  that it covers) or `"r"`
-  ([`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
-  on every model), as
+  The route of the inner fit, `"r"` (the default,
+  [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
+  on every model) or `"auto"` (the compiled fit on the models that it
+  covers), as
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   takes it.
 

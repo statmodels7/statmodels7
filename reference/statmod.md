@@ -33,7 +33,7 @@ statmod(
   verbose = 0,
   threads = 1,
   cores = 1,
-  engine = c("auto", "r"),
+  engine = c("r", "auto"),
   ...
 )
 ```
@@ -251,12 +251,12 @@ statmod(
 
 - engine:
 
-  The route of the inner fit: `"auto"` (the default) runs the compiled
-  fit on the models that it covers and
+  The route of the inner fit: `"r"` (the default) runs
   [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
-  on the others; `"r"` runs
+  on every model; `"auto"` runs the compiled fit on the models that it
+  covers and
   [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
-  on every model. The two routes perform the same operations in the same
+  on the others. The two routes perform the same operations in the same
   order.
 
 - ...:
