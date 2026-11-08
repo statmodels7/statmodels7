@@ -31,9 +31,25 @@ same_value <- function(a, b) {
   identical(a, b) || isTRUE(all.equal(a, b, tolerance = 0, check.environment = FALSE))
 }
 
+# TEMPORARY diagnostic: the size of a difference between the two routes
+gap_report <- function(a, b) {
+  if (same_value(a, b)) return("")
+  one <- function(x, y) {
+    x <- unlist(x); y <- unlist(y)
+    if (!is.numeric(x) || !is.numeric(y)) return("non-numeric")
+    if (length(x) != length(y)) return(sprintf("lengths %d vs %d", length(x), length(y)))
+    sprintf("n %d, max abs %.3g, scale gap %.3g", length(x), max(abs(x - y), na.rm = TRUE), scale_gap(x, y))
+  }
+  if (is.list(a) && is.list(b) && !is.null(names(a)))
+    paste(vapply(intersect(names(a), names(b)), function(k)
+      paste0(k, ": ", one(a[[k]], b[[k]])), ""), collapse = "; ")
+  else one(a, b)
+}
+
 expect_same_fit <- function(f) {
   for (p in setdiff(S7::prop_names(f$r), c("elapsed", "methods"))) {
-    expect_true(same_value(S7::prop(f$c, p), S7::prop(f$r, p)), info = p)
+    a <- S7::prop(f$c, p); b <- S7::prop(f$r, p)
+    expect_true(same_value(a, b), info = paste(p, gap_report(a, b)))
   }
   # the optimizer's line search holds a closure over each run's frame: its
   # class and its rule are compared, the rest of the record exactly
