@@ -1,7 +1,7 @@
 # The outer search in compiled code (engine_outer_search(): the search, the
 # point and the penalty, phase 4) against the R route of outer_fit(): the
-# same fit in every property, and the penalty built in C++ identical to the
-# one R builds, signed zeros included.
+# same fit in every property (numbers to rounding), and the penalty built in
+# C++ identical to the one R builds, signed zeros included.
 
 loop_data <- function(n = 300, groups = 15, seed = 5) {
   set.seed(seed)
@@ -31,31 +31,33 @@ same_value <- function(a, b) {
   identical(a, b) || isTRUE(all.equal(a, b, tolerance = 0, check.environment = FALSE))
 }
 
-# TEMPORARY diagnostic: the size of a difference between the two routes
-gap_report <- function(a, b) {
-  if (same_value(a, b)) return("")
-  one <- function(x, y) {
-    x <- unlist(x); y <- unlist(y)
-    if (!is.numeric(x) || !is.numeric(y)) return("non-numeric")
-    if (length(x) != length(y)) return(sprintf("lengths %d vs %d", length(x), length(y)))
-    sprintf("n %d, max abs %.3g, scale gap %.3g", length(x), max(abs(x - y), na.rm = TRUE), scale_gap(x, y))
+# the same fit up to rounding: numeric leaves agree on the scale of the R
+# route's values to 1e-12 (on Linux the two routes have differed by one ulp
+# in the objective, run to run), every other leaf, the structure and the
+# attributes exactly
+same_fit_value <- function(a, b) {
+  if (same_value(a, b)) return(TRUE)
+  if (is.numeric(a) && is.numeric(b)) return(scale_gap(a, b) <= 1e-12)
+  if (is.list(a) && is.list(b) && !is.object(a) && !is.object(b)) {
+    if (length(a) != length(b) || !identical(names(a), names(b))) return(FALSE)
+    return(all(vapply(seq_along(a), function(k) same_fit_value(a[[k]], b[[k]]), TRUE)))
   }
-  if (is.list(a) && is.list(b) && !is.null(names(a)))
-    paste(vapply(intersect(names(a), names(b)), function(k)
-      paste0(k, ": ", one(a[[k]], b[[k]])), ""), collapse = "; ")
-  else one(a, b)
+  if (is.data.frame(a) && is.data.frame(b)) {
+    if (!identical(dim(a), dim(b)) || !identical(names(a), names(b))) return(FALSE)
+    return(all(vapply(seq_along(a), function(k) same_fit_value(a[[k]], b[[k]]), TRUE)))
+  }
+  FALSE
 }
 
 expect_same_fit <- function(f) {
   for (p in setdiff(S7::prop_names(f$r), c("elapsed", "methods"))) {
-    a <- S7::prop(f$c, p); b <- S7::prop(f$r, p)
-    expect_true(same_value(a, b), info = paste(p, gap_report(a, b)))
+    expect_true(same_fit_value(S7::prop(f$c, p), S7::prop(f$r, p)), info = p)
   }
   # the optimizer's line search holds a closure over each run's frame: its
   # class and its rule are compared, the rest of the record exactly
   mr <- f$r@methods
   mc <- f$c@methods
-  for (k in setdiff(names(mr), "search")) expect_true(same_value(mc[[k]], mr[[k]]), info = k)
+  for (k in setdiff(names(mr), "search")) expect_true(same_fit_value(mc[[k]], mr[[k]]), info = k)
   if (!is.null(mr$search)) {
     expect_identical(class(mc$search), class(mr$search))
     expect_identical(mc$search@criterion@label, mr$search@criterion@label)
