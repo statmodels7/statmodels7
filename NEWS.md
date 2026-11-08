@@ -1,3 +1,12 @@
+# statmodels7 0.246.0
+
+* `outer_fit()` runs the outer search of a descent optimizer in compiled
+  code, through the headers of optimizers7; the criterion and its
+  derivatives at each point come from the engine where the model is
+  covered. The compiled search is used with `engine = "auto"`; with the
+  default `engine = "r"` the whole fit takes the R route.
+* Requires optimizers7 (>= 0.22.0).
+
 # statmodels7 0.245.1
 
 * `statmod(engine =)` defaults to `"r"`: every model is fitted by the R
