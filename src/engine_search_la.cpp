@@ -1,13 +1,13 @@
 // joint_decrement() of the compiled outer search (engine_search.cpp), kept
 // apart from RcppArmadillo: see engine_search_la.h.
-#define USE_FC_LEN_T
-#include <R.h>
-#include <Rinternals.h>
-#include <R_ext/Lapack.h>
-#include <R_ext/RS.h>
 #include <cfloat>
 #include <vector>
 #include "engine_search_la.h"
+#define USE_FC_LEN_T
+#define R_NO_REMAP
+#include <R.h>
+#include <R_ext/Lapack.h>
+#include <R_ext/RS.h>
 
 #ifndef FCONE
 #define FCONE

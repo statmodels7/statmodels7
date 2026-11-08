@@ -31,13 +31,14 @@ same_value <- function(a, b) {
   identical(a, b) || isTRUE(all.equal(a, b, tolerance = 0, check.environment = FALSE))
 }
 
-# the same fit up to rounding: numeric leaves agree on the scale of the R
-# route's values to 1e-12 (on Linux the two routes have differed by one ulp
-# in the objective, run to run), every other leaf, the structure and the
-# attributes exactly
+# the same fit up to rounding: numeric leaves agree to 1e-12 on the scale
+# of the R route's values, floor 1 (on Linux the two routes have differed
+# by one ulp in the objective, run to run, and a block's change is a
+# difference of two objectives near 1e-14); every other leaf, the structure
+# and the attributes exactly
 same_fit_value <- function(a, b) {
   if (same_value(a, b)) return(TRUE)
-  if (is.numeric(a) && is.numeric(b)) return(scale_gap(a, b) <= 1e-12)
+  if (is.numeric(a) && is.numeric(b)) return(scale_gap(a, b, floor = 1) <= 1e-12)
   if (is.list(a) && is.list(b) && !is.object(a) && !is.object(b)) {
     if (length(a) != length(b) || !identical(names(a), names(b))) return(FALSE)
     return(all(vapply(seq_along(a), function(k) same_fit_value(a[[k]], b[[k]]), TRUE)))
