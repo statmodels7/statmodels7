@@ -6,6 +6,11 @@
 // is the reference, and every step here repeats a step there, in its order.
 
 // [[Rcpp::depends(RcppArmadillo)]]
+// R evaluates these expressions one operation at a time; clang (arm64
+// macOS) would otherwise fuse a*b + c into one rounding
+#if defined(__clang__)
+#pragma clang fp contract(off)
+#endif
 #include <RcppArmadillo.h>
 #include <optimizers7/descent_loop.h>
 #include <optimizers7/rules.h>

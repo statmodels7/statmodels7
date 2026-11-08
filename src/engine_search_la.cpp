@@ -1,5 +1,10 @@
 // joint_decrement() of the compiled outer search (engine_search.cpp), kept
 // apart from RcppArmadillo: see engine_search_la.h.
+// R evaluates these expressions one operation at a time; clang (arm64
+// macOS) would otherwise fuse a*b + c into one rounding
+#if defined(__clang__)
+#pragma clang fp contract(off)
+#endif
 #include <cfloat>
 #include <vector>
 #include "engine_search_la.h"
