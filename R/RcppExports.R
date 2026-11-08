@@ -57,6 +57,14 @@ engine_outer_kinv <- function(ctx, x) {
     .Call(`_statmodels7_engine_outer_kinv`, ctx, x)
 }
 
+engine_pen_build <- function(pen_spec, v, b) {
+    .Call(`_statmodels7_engine_pen_build`, pen_spec, v, b)
+}
+
+engine_outer_search <- function(cfg, cb) {
+    .Call(`_statmodels7_engine_outer_search`, cfg, cb)
+}
+
 jsc_s0_cpp <- function(I0, n, K, d) {
     .Call(`_statmodels7_jsc_s0_cpp`, I0, n, K, d)
 }

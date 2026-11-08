@@ -71,7 +71,22 @@ engine_alternate_fit <- function(spec, design, blocks, hyper, inner_optimizer,
                           as.integer(pinned_coords(spec, design)),
                           isTRUE(expected), as.integer(maxit), as.numeric(tol))
   if (!identical(res$status, 0L)) return(NULL)
+  engine_alternate_result(res, spec, design, units, kb, hyper, expected, emethod, obj,
+                          isTRUE(rt$method$damp_on_reject))
+}
 
+#' @rdname engine_alternate_fit
+#' @param res The list that `engine_alternate()` returns.
+#' @param kb The kinked blocks, `engine_alternate_blocks()`.
+#' @param damp Whether a rejected step is damped (the note's wording).
+#' @details
+#' `engine_alternate_result()` turns the list of the compiled alternation
+#' into the list of [statmod_alternate()]: the specification with the
+#' curvatures that the last pass wrote, the objective on it, the note and the
+#' histories. The compiled outer search reads it for its final refit.
+#' @keywords internal
+engine_alternate_result <- function(res, spec, design, units, kb, hyper, expected,
+                                    emethod, obj, damp) {
   # the specification with the curvatures the last pass wrote, and the
   # objective on it, as statmod_alternate() leaves them
   for (b in seq_along(kb)) {
@@ -93,7 +108,7 @@ engine_alternate_fit <- function(spec, design, blocks, hyper, inner_optimizer,
       "1" = paste0("the score is not finite at iteration ", nk$it,
                    ", so the run stopped at the last usable point"),
       "2" = paste0("the line search found no acceptable step at iteration ",
-                   nk$it, if (isTRUE(rt$method$damp_on_reject)) ", even with damping"),
+                   nk$it, if (isTRUE(damp)) ", even with damping"),
       "3" = paste0("the objective stopped moving at iteration ", nk$it),
       "4" = paste0("converged by the dimensionless rule (score ",
                    format(nk$dimless, digits = 3), " against ",

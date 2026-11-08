@@ -270,6 +270,7 @@ struct Point {
     std::vector<double> beta;
     std::vector<double> eta, th, h1, h2;   // n*K, parameter k at k*n
     bool inb = true;
+    bool clamped = false;                  // linkinv()'s clamp acted somewhere
     bool parts = false, eparts = false;
     std::vector<double> buf, ebuf;         // n * pmax
 };
@@ -303,6 +304,7 @@ public:
         P.h1.resize((std::size_t) n * K);
         P.h2.resize((std::size_t) n * K);
         P.parts = P.eparts = false;
+        P.clamped = false;
         for (int k = 0; k < K; ++k) {
             double* e = P.eta.data() + (std::size_t) k * n;
             const Block& B = M.X[k];
@@ -351,6 +353,7 @@ public:
                 double h0;
                 reg.inv12p(M.lid[k], par, e[i], &h0, &a[i], &c[i]);
                 t[i] = reg.clamp(h0, M.llo[k], M.lhi[k]);
+                if (!(t[i] == h0)) P.clamped = true;
                 const double e2 = reg.fun(M.lid[k], par, t[i]);
                 reg.inv12p(M.lid[k], par, e2, &h0, &a[i], &c[i]);
             }
@@ -2668,6 +2671,8 @@ Rcpp::List engine_outer_value(SEXP ctx) {
     Rcpp::XPtr<Outer> X(ctx);
     Outer& O = *X;
     if (O.status) return Rcpp::List::create(Rcpp::Named("status") = O.status);
+    // status 4: the R route's criterion is NULL at this point (D37)
+    if (O.crit_na) return Rcpp::List::create(Rcpp::Named("status") = 4);
     const double v = O.ll - O.rho + O.q / 2.0 * std::log(2.0 * M_PI) - O.logdet_c / 2.0;
     return Rcpp::List::create(Rcpp::Named("status") = 0, Rcpp::Named("value") = v,
                               Rcpp::Named("loglik") = O.ll, Rcpp::Named("penalty") = O.rho,
@@ -2683,6 +2688,8 @@ Rcpp::List engine_outer_grad(SEXP ctx, Rcpp::IntegerVector mrow, Rcpp::IntegerVe
     Rcpp::XPtr<Outer> X(ctx);
     Outer& O = *X;
     if (O.status) return Rcpp::List::create(Rcpp::Named("status") = O.status);
+    // status 4: the R route's inverse, and with it this derivative, is NULL
+    if (!O.inv_ok) return Rcpp::List::create(Rcpp::Named("status") = 4);
     std::vector<int> r, u, g, nmv;
     for (int v : mrow) r.push_back(v - 1);
     for (int v : munit) u.push_back(v - 1);
@@ -2703,6 +2710,8 @@ Rcpp::List engine_outer_hess(SEXP ctx, Rcpp::IntegerVector mrow, Rcpp::IntegerVe
     Rcpp::XPtr<Outer> X(ctx);
     Outer& O = *X;
     if (O.status) return Rcpp::List::create(Rcpp::Named("status") = O.status);
+    // status 4: the R route's inverse, and with it this derivative, is NULL
+    if (!O.inv_ok) return Rcpp::List::create(Rcpp::Named("status") = 4);
     std::vector<int> r, u, g, nmv;
     for (int v : mrow) r.push_back(v - 1);
     for (int v : munit) u.push_back(v - 1);
@@ -2753,3 +2762,21 @@ Rcpp::List engine_outer_kinv(SEXP ctx, Rcpp::NumericVector x) {
     dense_matvec(O.Kinv, x.begin(), y.data());
     return Rcpp::List::create(Rcpp::Named("status") = 0, Rcpp::Named("x") = Rcpp::wrap(y));
 }
+
+#include "engine_pen.h"
+
+// The penalty of `pen_spec` at the outer vector `v` and the coefficients `b`,
+// for the twin test against engine_model() and engine_outer_pen()
+// [[Rcpp::export]]
+Rcpp::List engine_pen_build(Rcpp::List pen_spec, Rcpp::NumericVector v, Rcpp::NumericVector b) {
+    pen7::PenSpec ps = pen7::read_pen_spec(pen_spec);
+    pen7::PenOut o;
+    std::vector<double> vv(v.begin(), v.end()), bb(b.begin(), b.end());
+    if (!pen7::build_pen(ps, vv, bb, o)) return Rcpp::List::create(Rcpp::Named("ok") = false);
+    return Rcpp::List::create(
+        Rcpp::Named("ok") = true, Rcpp::Named("pen") = o.pen, Rcpp::Named("pen_outer") = o.pen_outer,
+        Rcpp::Named("mchain") = Rcpp::NumericVector(o.mchain.begin(), o.mchain.end()), Rcpp::Named("h1") = Rcpp::NumericVector(o.h1.begin(), o.h1.end()),
+        Rcpp::Named("h2") = Rcpp::NumericVector(o.h2.begin(), o.h2.end()), Rcpp::Named("vals") = Rcpp::NumericVector(o.vals.begin(), o.vals.end()));
+}
+
+#include "engine_point_compiled.h"

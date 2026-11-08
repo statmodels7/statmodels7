@@ -76,6 +76,18 @@ engine_inner_fit <- function(spec, design, obj, beta, hyper, method, groups,
     }
     return(NULL)
   }
+  engine_inner_result(res, damp_on_reject, verbose)
+}
+
+#' @rdname engine_inner_fit
+#' @param res The list that the compiled inner fit returns.
+#' @details
+#' `engine_inner_result()` turns the list of the compiled inner fit into the
+#' list of [iwls_fit()]: the note, the history as a data frame, the trace's
+#' last line where `verbose`. The compiled outer search reads it for its
+#' final refit.
+#' @keywords internal
+engine_inner_result <- function(res, damp_on_reject, verbose) {
   note <- switch(as.character(res$note_kind),
     "1" = paste0("the score is not finite at iteration ", res$note_it,
                  ", so the run stopped at the last usable point"),

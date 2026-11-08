@@ -21,10 +21,16 @@ kink_data <- function(n = 300, seed = 11) {
 kink_twin <- function(formula, distrib, data, ...) {
   hit <- 0L
   orig <- statmodels7:::engine_alternate_fit
+  # the compiled outer search runs the compiled alternation from C++, the
+  # final refit included, so a search with a compiled point counts too
+  orig_s <- statmodels7:::engine_outer_search
   local_mocked_bindings(engine_alternate_fit = function(...) {
     r <- orig(...)
     if (!is.null(r)) hit <<- hit + 1L
     r
+  }, engine_outer_search = function(cfg, cb) {
+    if (!is.null(cfg$compiled)) hit <<- hit + 1L
+    orig_s(cfg, cb)
   })
   fa <- statmod(formula, distrib = distrib, data = data, engine = "auto", ...)
   used <- hit
@@ -134,10 +140,16 @@ test_that("a kinked block beside a nonlinear term stays on the R route", {
   d <- kink_data()
   hit <- 0L
   orig <- statmodels7:::engine_alternate_fit
+  # the compiled outer search runs the compiled alternation from C++, the
+  # final refit included, so a search with a compiled point counts too
+  orig_s <- statmodels7:::engine_outer_search
   local_mocked_bindings(engine_alternate_fit = function(...) {
     r <- orig(...)
     if (!is.null(r)) hit <<- hit + 1L
     r
+  }, engine_outer_search = function(cfg, cb) {
+    if (!is.null(cfg$compiled)) hit <<- hit + 1L
+    orig_s(cfg, cb)
   })
   d$yp <- 2 * exp(-1.5 * d$x) * (1 + 0.3 * as.integer(d$g) / 10) + rnorm(nrow(d), 0, 0.1)
   suppressWarnings(statmod(yp ~ 0 + nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g, lambda = 0.5)),

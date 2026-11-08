@@ -1197,6 +1197,8 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
     if (identical(r$status, 0L)) {
       return(r[c("value", "loglik", "penalty", "logdet", "q")])
     }
+    # status 4: the determinant does not exist on any route (D37)
+    if (identical(r$status, 4L)) return(NULL)
   }
   expected <- info_expected(method@hessian)
   ll <- statmod_loglik_at(spec, coef, design)
@@ -1841,7 +1843,9 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
           # them, and out of the determinant alone: the design carries them,
           # and pinned_coords() reads them wherever K is pinned
           attr(design, "pinned") <<- fl
-          m <<- NULL
+          # evaluate()'s own m: `<<-` here reached past outer_fit() and wrote
+          # NULL into the caller's global environment (D8)
+          m <- NULL
           body()
         }
       }
@@ -1851,6 +1855,25 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
         NULL
       }, error = function(e) conditionMessage(e))
       if (!is.null(err)) m <- NULL
+    }
+    # the inner score at the mode, which criterion_resolution() reads. An
+    # error here made the whole search stop (D6); it makes the point
+    # unavailable instead, as an error in body() does
+    sc <- NULL
+    if (!is.null(m)) {
+      sc <- tryCatch(free_score(res$obj$gr(res$par)), error = function(e) e)
+      # a coordinate pinned as deficient is a row of the identity in K, so
+      # criterion_resolution() moved it by its raw score (D4): it is not a
+      # direction the criterion reads, and its score is zeroed here, for the
+      # resolution only (the mode error still reads it, the inner fit leaving
+      # it free)
+      pin <- attr(design, "pinned")
+      if (!inherits(sc, "error") && !is.null(sc) && length(pin)) sc[pin] <- 0
+      if (inherits(sc, "error")) {
+        err <- conditionMessage(sc)
+        m <- NULL
+        sc <- NULL
+      }
     }
     state$evals <- state$evals + 1L
     if (is.null(m)) {
@@ -1864,8 +1887,10 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       if (vb$outer) {
         # the PARAMETER scale, as the accepted line uses: printing eta here
         # made a prior scale look negative
+        # v_value(), as the accepted line: hyper_value() alone read NA for the
+        # coefficients the criterion estimates (D3)
         hv <- tryCatch(paste(signif(vapply(seq_along(labels), function(j)
-          hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", "),
+          v_value(hy, v, j), numeric(1)), 5), collapse = ", "),
           error = function(e) paste(signif(eta, 5), collapse = ", "))
         cat(sprintf("  %6d %16s %12s   %s%s\n", state$evals, "unavailable",
                     "--", hv,
@@ -1921,6 +1946,9 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     state$inner <- res
     state$hyper <- hy
     vfn <- sgn * m$value
+    # the incumbent before this point, put back if its exact gradient turns out
+    # not to exist (derivs(), D5)
+    prev_best <- mget(c("best_v", "best_beta", "best_zeta"), envir = state)
     if (is.finite(vfn) && vfn < state$best_v) {
       state$best_v <- vfn
       state$best_beta <- res$par
@@ -1935,6 +1963,15 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       row[[labels[j]]] <- v_value(hy, v, j)
     }
     state$rows[[length(state$rows) + 1L]] <- row
+    # `par`, `split` and `score` are carried for criterion_resolution(), which
+    # needs the mode the criterion was read at and the score the inner fit
+    # stopped short by. The score costs one gradient of the inner objective
+    # against a whole inner fit, so it is not worth deferring.
+    out <- list(value = m$value, ok = TRUE, ctx = ctx, cf = cf, hy = hy,
+                par = res$par, split = res$obj$split,
+                score = sc, sp = sp, prev_best = prev_best)
+    state$key <- key
+    state$last <- out
     if (vb$outer) {
       # the same columns the inner optimizer prints, and the hyperparameters
       # on ONE scale: the PARAMETER scale, which is what a reader of a fit
@@ -1944,22 +1981,15 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # the trace reports the gradient the search is using, so it asks for one
       # only where the search has one to use: printing it under a
       # derivative-free method would compute the very quantity nobody wants.
-      gv <- if (exact && trace_grad) derivs(1L) else NULL
+      # read after state$last is this point: before, derivs() answered for the
+      # point evaluated before it (D1), and a failure there is not the search's
+      gv <- if (exact && trace_grad) tryCatch(derivs(1L), error = function(e) NULL) else NULL
       gmax <- if (!is.null(gv) && all(is.finite(gv)))
         sprintf("%12.4g", max(abs(gv))) else sprintf("%12s", "--")
       cat(sprintf("  %6d %16.6f %s   %s\n", state$evals, m$value, gmax,
                   paste(signif(vapply(seq_along(labels), function(j)
                     v_value(hy, v, j), numeric(1)), 5), collapse = ", ")))
     }
-    # `par`, `split` and `score` are carried for criterion_resolution(), which
-    # needs the mode the criterion was read at and the score the inner fit
-    # stopped short by. The score costs one gradient of the inner objective
-    # against a whole inner fit, so it is not worth deferring.
-    out <- list(value = m$value, ok = TRUE, ctx = ctx, cf = cf, hy = hy,
-                par = res$par, split = res$obj$split,
-                score = free_score(res$obj$gr(res$par)), sp = sp)
-    state$key <- key
-    state$last <- out
     # RECOMPUTED AT EVERY USABLE POINT rather than once at the start. The mode
     # is least well located at the first evaluation, which is a cold start, so
     # a reading taken there is the worst of the run and governs every step
@@ -2000,6 +2030,17 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     }
     fallback <- function(o) if (o == 1L) rep(0, nv) else
       diag(if (pe) 1 else -1, nv, nv)
+    # A GRADIENT THAT DOES NOT EXIST AT A USABLE POINT MAKES THE POINT
+    # UNAVAILABLE (D5). Read as zeros it was a stationary point to every
+    # gradient rule: measured with a NULL injected at the third gradient, the
+    # search stopped at -80.701 against an optimum of -73.444 with converged
+    # and settled TRUE. The gradient is NaN, which the descent loop reports as
+    # a failed run, and the incumbent the point displaced is put back.
+    no_grad <- function() {
+      for (k in names(st$prev_best)) assign(k, st$prev_best[[k]], envir = state)
+      st$ok <<- FALSE
+      rep(NaN, nv)
+    }
     if (pe) {
       # the prediction-error route computes the gradient on the way to the
       # Hessian, so both are kept rather than the second order being asked for
@@ -2007,13 +2048,13 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       d <- statmod_pe_derivs(spec, design, st$cf, st$hy, method, idx, order,
                              emethod)
       if (is.null(st$grad)) {
-        st$grad <- if (is.null(d$grad)) fallback(1L) else d$grad
+        st$grad <- if (is.null(d$grad)) no_grad() else d$grad
       }
       if (order >= 2L) st$hess <- if (is.null(d$hess)) fallback(2L) else d$hess
     } else if (order == 1L) {
       v <- statmod_marginal_grad(st$sp, design, st$cf, st$hy, method, idx,
                                  basis, ctx = st$ctx, gam = gam)
-      st$grad <- if (is.null(v)) fallback(1L) else v
+      st$grad <- if (is.null(v)) no_grad() else v
     } else {
       v <- statmod_marginal_hess(st$sp, design, st$cf, st$hy, method, idx,
                                  basis, ctx = st$ctx, gam = gam)
@@ -2145,363 +2186,748 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # each of them a whole inner fit.
   # the optimizer's own rule, before the resolution is added to it: the
   # restart below reads its own unit and not this one
-  own_criterion <- optimizer@criterion
-  if (chose_optimizer) {
-    fn(eta0)
-    resolution <- state$resolution
-    # ⚠️ NOT FOR A DERIVATIVE-FREE SEARCH. A simplex or a compass search
-    # reports the best vertex, which stays where it is over every iteration
-    # that only reshapes the simplex, so a rule reading a CHANGE in the
-    # objective fires at the first such iteration whatever the resolution.
-    # Measured on a multivariate t prior over the random slopes of
-    # `sleepstudy`, the default nelder_mead() stopped after 10 evaluations at a
-    # criterion of -898.17, two iterations from its start, where the same
-    # search without the rule runs 773 evaluations. Such a method declares
-    # "stationarity" rather than "gradient", which is what is read here.
-    derivative_free <- identical(optimizers7::optimizer_provides(optimizer),
-                                 "stationarity")
-    if (is.finite(resolution) && resolution > 0 && !derivative_free) {
-      # the RULE keeps the reading from the starting point, being a property of
-      # the optimizer object and settled before the run; only the line search,
-      # which is asked again at every iteration, follows the running summary
-      optimizer <- S7::set_props(
-        optimizer,
-        criterion = optimizers7::crit_any(
-          optimizer@criterion, optimizers7::crit_abs_obj(resolution)))
-    }
-    # ⚠️ THE LINE SEARCH IS GIVEN A TENTH OF IT, and the two reasons both point
-    # the same way. What is computed is the spread between evaluations reached
-    # from DIFFERENT warm starts, while a line search compares trials taken one
-    # after another from nearly the same state, where the criterion is far more
-    # reproducible -- repeated at one hyperparameter from a running warm start
-    # its spread is exactly zero. And the reading is the more aggressive
-    # consumer, ending a whole iteration rather than one comparison. Measured
-    # at the full number on a gaussian smooth: the search stops after 3
-    # evaluations against 29 and gives up 3.2e-06 of criterion against a
-    # resolution of 9.7e-07, so it stops just before it has to; at a tenth it
-    # reaches the same optimum as a search that was told nothing.
-    #
-    # A derivative-free search has no line search, so the property is asked for
-    # rather than assumed.
-    #
-    # ⚠️ AND IT IS GIVEN ITS CLOSURE WHETHER OR NOT THE FIRST READING WAS
-    # USABLE, which is the whole difference between the two consumers.
-    # The criterion's rule is a number settled before the run, so it can only
-    # be built from the reading at the starting point -- a cold start, the
-    # worst-located mode of the whole fit. The line search reads a CLOSURE over
-    # resolution_summary() of every reading so far, so it needs no reading now
-    # and picks up whatever the search refines later.
-    #
-    # Nesting it inside the test above threw that away: measured on
-    # `seg(x, psi ~ random(~1|id))`, whose first reading is refused because the
-    # cold-started mode sits 0.046 above its own minimum, the fit went from 5
-    # evaluations to 18 and from converged to not -- at an identical answer,
-    # cor 0.9932 and rmse 0.0674 either way. Outside the test the closure
-    # serves that fit from the good readings that follow.
-    #
-    # Where no reading is ever usable the closure returns NA, which
-    # optimizers7 reads as no resolution at all -- which is the answer for a
-    # fit whose mode is never located.
-    #
-    if ("line_search" %in% S7::prop_names(optimizer)) {
-      optimizer <- S7::set_props(
-        optimizer,
-        line_search = S7::set_props(
-          optimizer@line_search,
-          resolution = function() state$resolution / 10))
-    }
-    # THE BACKTRACKING BUDGET, and it is a COST decision rather than a
-    # numerical one, which is why it sits outside the resolution's block and
-    # is set whether or not one could be computed.
-    #
-    # optimizers7 defaults to 30 backtracks, which is right for an objective
-    # costing microseconds. Here a trial is a penalized refit, and a line
-    # search that is going to fail spends the whole budget discovering it --
-    # the traces that started this work show two blocks of 31 identical
-    # evaluations, which is that budget burned twice.
-    #
-    # ⚠️ WHAT IT BUYS IS SMALLER THAN THE EVALUATION COUNT SUGGESTS, and the
-    # reason is in evaluate() above: every trial of a line search warm-starts
-    # from the INCUMBENT, the best usable point so far, and as the step
-    # shrinks the trial begins at very nearly its own answer. Measured, removing 22 of 38 evaluations
-    # removed 2.8 s of 30.8 -- 0.13 s each against an average evaluation's
-    # 0.81. An evaluation count is not a cost here.
-    #
-    # ⚠️ AND IT MUST BE MEASURED ON THIS PATH AND NOT ANOTHER. Swept with the
-    # optimizer NAMED -- which turns the resolution above off -- a short budget
-    # flips the convergence flag from TRUE to FALSE on healthy shapes, and that
-    # would have been a bad trade. It does not happen here: measured at 30, 12
-    # and 8 backtracks on a smooth, two smooths with a random effect, and a
-    # random intercept, all three are unchanged in evaluations, criterion to
-    # six decimals, effective degrees of freedom and flag, the resolution rule
-    # stopping the search before the budget is ever reached. What moves is the
-    # expensive shape: a hierarchical break-point model goes from 31
-    # evaluations and 25.6 s to 13 and 20.3, with the criterion 1.3e-04 BETTER
-    # and the edf identical.
-    #
-    # 12 rather than 8 because 12 takes 5.3 s of the 6.6 available and 8 takes
-    # the rest at a criterion the named-optimizer sweep shows starting to
-    # degrade: against a budget of 30 the criterion given up there is 4.8e-05
-    # at 12, 7.8e-04 at 8 and 3.3e-03 at 6, and the last is past the 1.6e-03
-    # that criterion can resolve.
-    if ("line_search" %in% S7::prop_names(optimizer)) {
-      optimizer <- S7::set_props(
-        optimizer,
-        line_search = S7::set_props(optimizer@line_search,
-                                    max_step = outer_backtracks()))
-    }
-    # A TYPICAL SIZE PER COORDINATE where the criterion also estimates
-    # coefficients. newton() reads its lengths in the parameters' own units --
-    # the bound of 5, and the length-one scaling of a direction it had to
-    # repair -- and a hyperparameter's free value carries no units while a
-    # coefficient carries those of its parameter and of its covariate.
-    # Measured on `dist ~ speed` with gaussian2 on the identity link, started
-    # at a variance of 651 where the restricted likelihood is not concave in
-    # it, the repaired steps moved the variance by one unit per evaluation,
-    # 185 evaluations in all; a standard deviation of 1538 on the identity
-    # link took 201 and stopped 0.9 per cent short. A coefficient's typical
-    # size is its conditional standard error at the start, where that exceeds
-    # one, which is the same size in any units; the Hessian is the one the
-    # first iteration reads anyway.
-    if (ng && exact2 && "typical" %in% S7::prop_names(optimizer) &&
-        is.null(optimizer@typical)) {
-      H0 <- tryCatch(he(eta0), error = function(e) NULL)
-      if (!is.null(H0)) {
-        se0 <- 1 / sqrt(abs(diag(as.matrix(H0)))[nh + seq_len(ng)])
-        se0[!is.finite(se0)] <- 1
-        if (any(se0 > 1)) {
-          optimizer <- S7::set_props(
-            optimizer, typical_size = c(rep(1, nh), pmax(1, se0)))
+  # THE SEARCH IN COMPILED CODE where the optimizer is a descent method
+  # with a compiled stopping rule (engine_outer_search(), phase 4): the
+  # same steps, the point computed by the closures below
+  eng <- if (!pe && isTRUE(engine_flags$outer_search) &&
+              is.null(statmod_structural_state(design)) &&
+              !length(attr(design, "structural")))
+    outer_search_settings(optimizer, nv) else NULL
+  if (is.null(eng)) {
+    own_criterion <- optimizer@criterion
+    if (chose_optimizer) {
+      fn(eta0)
+      resolution <- state$resolution
+      # ⚠️ NOT FOR A DERIVATIVE-FREE SEARCH. A simplex or a compass search
+      # reports the best vertex, which stays where it is over every iteration
+      # that only reshapes the simplex, so a rule reading a CHANGE in the
+      # objective fires at the first such iteration whatever the resolution.
+      # Measured on a multivariate t prior over the random slopes of
+      # `sleepstudy`, the default nelder_mead() stopped after 10 evaluations at a
+      # criterion of -898.17, two iterations from its start, where the same
+      # search without the rule runs 773 evaluations. Such a method declares
+      # "stationarity" rather than "gradient", which is what is read here.
+      derivative_free <- identical(optimizers7::optimizer_provides(optimizer),
+                                   "stationarity")
+      if (is.finite(resolution) && resolution > 0 && !derivative_free) {
+        # the RULE keeps the reading from the starting point, being a property of
+        # the optimizer object and settled before the run; only the line search,
+        # which is asked again at every iteration, follows the running summary
+        optimizer <- S7::set_props(
+          optimizer,
+          criterion = optimizers7::crit_any(
+            optimizer@criterion, optimizers7::crit_abs_obj(resolution)))
+      }
+      # ⚠️ THE LINE SEARCH IS GIVEN A TENTH OF IT, and the two reasons both point
+      # the same way. What is computed is the spread between evaluations reached
+      # from DIFFERENT warm starts, while a line search compares trials taken one
+      # after another from nearly the same state, where the criterion is far more
+      # reproducible -- repeated at one hyperparameter from a running warm start
+      # its spread is exactly zero. And the reading is the more aggressive
+      # consumer, ending a whole iteration rather than one comparison. Measured
+      # at the full number on a gaussian smooth: the search stops after 3
+      # evaluations against 29 and gives up 3.2e-06 of criterion against a
+      # resolution of 9.7e-07, so it stops just before it has to; at a tenth it
+      # reaches the same optimum as a search that was told nothing.
+      #
+      # A derivative-free search has no line search, so the property is asked for
+      # rather than assumed.
+      #
+      # ⚠️ AND IT IS GIVEN ITS CLOSURE WHETHER OR NOT THE FIRST READING WAS
+      # USABLE, which is the whole difference between the two consumers.
+      # The criterion's rule is a number settled before the run, so it can only
+      # be built from the reading at the starting point -- a cold start, the
+      # worst-located mode of the whole fit. The line search reads a CLOSURE over
+      # resolution_summary() of every reading so far, so it needs no reading now
+      # and picks up whatever the search refines later.
+      #
+      # Nesting it inside the test above threw that away: measured on
+      # `seg(x, psi ~ random(~1|id))`, whose first reading is refused because the
+      # cold-started mode sits 0.046 above its own minimum, the fit went from 5
+      # evaluations to 18 and from converged to not -- at an identical answer,
+      # cor 0.9932 and rmse 0.0674 either way. Outside the test the closure
+      # serves that fit from the good readings that follow.
+      #
+      # Where no reading is ever usable the closure returns NA, which
+      # optimizers7 reads as no resolution at all -- which is the answer for a
+      # fit whose mode is never located.
+      #
+      if ("line_search" %in% S7::prop_names(optimizer)) {
+        optimizer <- S7::set_props(
+          optimizer,
+          line_search = S7::set_props(
+            optimizer@line_search,
+            resolution = function() state$resolution / 10))
+      }
+      # THE BACKTRACKING BUDGET, and it is a COST decision rather than a
+      # numerical one, which is why it sits outside the resolution's block and
+      # is set whether or not one could be computed.
+      #
+      # optimizers7 defaults to 30 backtracks, which is right for an objective
+      # costing microseconds. Here a trial is a penalized refit, and a line
+      # search that is going to fail spends the whole budget discovering it --
+      # the traces that started this work show two blocks of 31 identical
+      # evaluations, which is that budget burned twice.
+      #
+      # ⚠️ WHAT IT BUYS IS SMALLER THAN THE EVALUATION COUNT SUGGESTS, and the
+      # reason is in evaluate() above: every trial of a line search warm-starts
+      # from the INCUMBENT, the best usable point so far, and as the step
+      # shrinks the trial begins at very nearly its own answer. Measured, removing 22 of 38 evaluations
+      # removed 2.8 s of 30.8 -- 0.13 s each against an average evaluation's
+      # 0.81. An evaluation count is not a cost here.
+      #
+      # ⚠️ AND IT MUST BE MEASURED ON THIS PATH AND NOT ANOTHER. Swept with the
+      # optimizer NAMED -- which turns the resolution above off -- a short budget
+      # flips the convergence flag from TRUE to FALSE on healthy shapes, and that
+      # would have been a bad trade. It does not happen here: measured at 30, 12
+      # and 8 backtracks on a smooth, two smooths with a random effect, and a
+      # random intercept, all three are unchanged in evaluations, criterion to
+      # six decimals, effective degrees of freedom and flag, the resolution rule
+      # stopping the search before the budget is ever reached. What moves is the
+      # expensive shape: a hierarchical break-point model goes from 31
+      # evaluations and 25.6 s to 13 and 20.3, with the criterion 1.3e-04 BETTER
+      # and the edf identical.
+      #
+      # 12 rather than 8 because 12 takes 5.3 s of the 6.6 available and 8 takes
+      # the rest at a criterion the named-optimizer sweep shows starting to
+      # degrade: against a budget of 30 the criterion given up there is 4.8e-05
+      # at 12, 7.8e-04 at 8 and 3.3e-03 at 6, and the last is past the 1.6e-03
+      # that criterion can resolve.
+      if ("line_search" %in% S7::prop_names(optimizer)) {
+        optimizer <- S7::set_props(
+          optimizer,
+          line_search = S7::set_props(optimizer@line_search,
+                                      max_step = outer_backtracks()))
+      }
+      # A TYPICAL SIZE PER COORDINATE where the criterion also estimates
+      # coefficients. newton() reads its lengths in the parameters' own units --
+      # the bound of 5, and the length-one scaling of a direction it had to
+      # repair -- and a hyperparameter's free value carries no units while a
+      # coefficient carries those of its parameter and of its covariate.
+      # Measured on `dist ~ speed` with gaussian2 on the identity link, started
+      # at a variance of 651 where the restricted likelihood is not concave in
+      # it, the repaired steps moved the variance by one unit per evaluation,
+      # 185 evaluations in all; a standard deviation of 1538 on the identity
+      # link took 201 and stopped 0.9 per cent short. A coefficient's typical
+      # size is its conditional standard error at the start, where that exceeds
+      # one, which is the same size in any units; the Hessian is the one the
+      # first iteration reads anyway.
+      # the property is typical_size: the test read "typical", so the block never
+      # ran (D2)
+      if (ng && exact2 && "typical_size" %in% S7::prop_names(optimizer) &&
+          is.null(optimizer@typical_size)) {
+        H0 <- tryCatch(he(eta0), error = function(e) NULL)
+        if (!is.null(H0)) {
+          se0 <- 1 / sqrt(abs(diag(as.matrix(H0)))[nh + seq_len(ng)])
+          se0[!is.finite(se0)] <- 1
+          if (any(se0 > 1)) {
+            optimizer <- S7::set_props(
+              optimizer, typical_size = c(rep(1, nh), pmax(1, se0)))
+          }
         }
       }
     }
-  }
 
-  res <- if (exact2) {
-    mini(optimizer, eta0, gr = gr, hess = he)
-  } else if (exact) {
-    mini(optimizer, eta0, gr = gr)
-  } else {
-    mini(optimizer, eta0)
-  }
-
-  if (ran_out(res)) {
-    use_box <- TRUE
-    res_box <- tryCatch(
-      if (exact2) {
-        mini(optimizer, res@par, gr = gr, hess = he)
-      } else if (exact) {
-        mini(optimizer, res@par, gr = gr)
-      } else {
-        mini(optimizer, res@par)
-      }, error = function(e) NULL)
-    if (!is.null(res_box) && is.finite(res_box@value)) res <- res_box
-  }
-
-  # A LINE SEARCH THAT FAILED AT THE ROUNDING OF THE CRITERION IS A
-  # RESOLUTION STOP. Where no reading of the criterion's resolution exists (a
-  # fit with no penalty, whose hyperparameters are a dispersion's
-  # coefficients) or the reading is smaller than the arithmetic, a Newton
-  # step at the optimum predicts a decrease the criterion cannot show, every
-  # trial is rejected on the last bits, and the run reports no acceptable
-  # step at the optimum. Measured on y ~ x | sigma ~ z on arm64 macOS: twelve
-  # backtracks and the flag FALSE where x86_64 accepted the first trial by a
-  # few ulps. The test is made AFTER the search has failed, so a run that
-  # succeeds is untouched: a floor read before the trials stopped ordinary
-  # gaussian fits at a relative 4e-7 in sigma. The floor is 1e3 eps |f|, and
-  # a wrong direction, which predicts a large decrease, stays a failure.
-  if (chose_optimizer && exact2 && !isTRUE(res@converged) &&
-      identical(res@message, "the line search found no acceptable step")) {
-    floor_res <- 1e3 * .Machine$double.eps *
-      max(1, if (is.finite(res@value)) abs(res@value) else 1)
-    at_floor <- isTRUE(tryCatch({
-      evaluate(res@par)
-      g <- derivs(1L)
-      A <- sgn * derivs(2L)
-      dec <- joint_decrement(g, (A + t(A)) / 2)
-      is.finite(dec) && dec <= floor_res
-    }, error = function(e) FALSE))
-    if (at_floor) {
-      res <- S7::set_props(
-        res, converged = TRUE,
-        criterion_met = "no decrease above the objective's resolution",
-        message = "")
+    res <- if (exact2) {
+      mini(optimizer, eta0, gr = gr, hess = he)
+    } else if (exact) {
+      mini(optimizer, eta0, gr = gr)
+    } else {
+      mini(optimizer, eta0)
     }
-  }
 
-  # WHETHER THE REPORTED POINT IS THE OPTIMUM, which the search's flag does
-  # not say: the flag says whether its stopping rule fired. Beside a kinked
-  # block the criterion carries the coordinate descent's own rounding, of
-  # order 1e-8, which criterion_resolution() does not see, and a line search
-  # asked for a smaller decrease runs out of backtracks at the optimum. The
-  # Newton decrement at the point answers the question in the criterion's
-  # units, as statmod_certificate() does, and a path reads it to decide
-  # whether a point is scored -- the rule inner_mode_error() applies to an
-  # inner fit, one level up. Measured on y ~ s(x) + lasso(...) over six
-  # samples, the path lost 3 to 11 of its 25 points to that message.
-  settled <- isTRUE(res@converged)
-  if (!settled && exact2) {
-    settled <- isTRUE(tryCatch({
-      evaluate(res@par)
-      g <- derivs(1L)
-      A <- sgn * derivs(2L)
-      dec <- joint_decrement(g, (A + t(A)) / 2)
-      is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
-    }, error = function(e) FALSE))
-  }
-
-  # A NEWTON SEARCH THIS PACKAGE CHOSE AND THAT DID NOT SETTLE IS RUN AGAIN BY
-  # LBFGS, from the same start, and the better of the two is kept.
-  # Where the criterion's curvature is indefinite the Newton direction is a
-  # repaired one and the search can crawl: on GAGurine with a Student t and
-  # nu ~ s(Age) it stopped at a REML criterion of -845.09 with the curvature
-  # not negative definite, where lbfgs() and nelder_mead() reach -816.59 --
-  # the smoothing parameter of nu at its edge, so nu constant in age.
-  if (chose_optimizer && !settled && exact &&
-      inherits(optimizer, "optimizers7::Newton")) {
-    # with its own stopping rule and line search: the measured search that
-    # reaches the maximum is lbfgs() as a caller names it, and the budget and
-    # resolution this function gives its own choice stopped it at -818.63
-    alt <- optimizers7::lbfgs()
-    res2 <- tryCatch(mini(alt, eta0, gr = gr),
-                     error = function(e) NULL)
-    if (!is.null(res2) && is.finite(res2@value) &&
-        res2@value < res@value - 1e-8 * max(1, abs(res@value))) {
-      res <- res2
-      optimizer <- alt
-      settled <- isTRUE(res@converged)
-      if (!settled && exact2) {
-        settled <- isTRUE(tryCatch({
-          evaluate(res@par)
-          g <- derivs(1L)
-          A <- sgn * derivs(2L)
-          dec <- joint_decrement(g, (A + t(A)) / 2)
-          is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
-        }, error = function(e) FALSE))
-      }
-    }
-  }
-
-  # A SEARCH THIS PACKAGE CHOSE THAT LEFT ON THE RESOLUTION RULE WITH THE
-  # CRITERION STILL RISING IS RUN AGAIN FROM ITS POINT, with an empty
-  # quasi-Newton memory. The rule reads the decrease the search's own model
-  # predicts, and a model fed one bad curvature pair predicts nothing: on the
-  # battery's gas-panel-omega an unconverged inner point read -654.9 entered
-  # lbfgs()'s memory and the search left after three iterations with the
-  # gradient at 1.2 and the criterion at -609.528, where it rises to
-  # -609.490. The Newton decrement at the point is what decides, in the
-  # criterion's units, against mode_error_limit(); the certificate's 0.01
-  # left that run 0.0028 short. At most three restarts.
-  #
-  # ⚠️ THE RESTART STOPS IN THE DECREMENT'S UNIT AND NOT IN THE RESOLUTION'S.
-  # It is run only where the exact decrement exceeds mode_error_limit(), so
-  # its rule is a gain below that limit and its line search is given a tenth
-  # of it. Given the search's own rule instead, it stopped wherever the first
-  # step's predicted gain fell against a tenth of the resolution read at the
-  # start, which on gas-panel-omega is about 2 REML units and moves by 45 per
-  # cent with a perturbation of one ulp in the rhobit link's derivatives: at
-  # one reading the step went through (0.217 against 0.199) and the criterion
-  # reached -609.4905, at the other it did not (0.217 against 0.287) and the
-  # fit stopped at -609.4932 with a decrement of 2.6e-3. With its own unit the
-  # restart reaches -609.490415 from either, with the decrement at 1e-6.
-  restart_opt <- optimizer
-  if (chose_optimizer && "line_search" %in% S7::prop_names(optimizer)) {
-    restart_opt <- S7::set_props(
-      optimizer,
-      criterion = optimizers7::crit_any(
-        own_criterion, optimizers7::crit_abs_obj(mode_error_limit())),
-      line_search = S7::set_props(
-        optimizer@line_search,
-        resolution = function() mode_error_limit() / 10))
-  }
-  for (attempt in seq_len(3L)) {
-    if (!(chose_optimizer && exact2 && isTRUE(res@converged) &&
-          (attempt > 1L ||
-           identical(res@criterion_met,
-                     "no decrease above the objective's resolution")))) break
-    rising <- isTRUE(tryCatch({
-      evaluate(res@par)
-      g <- derivs(1L)
-      A <- sgn * derivs(2L)
-      dec <- joint_decrement(g, (A + t(A)) / 2)
-      is.finite(dec) && dec > mode_error_limit()
-    }, error = function(e) FALSE))
-    if (!rising) break
-    res2 <- tryCatch(mini(restart_opt, res@par, gr = gr, hess = he),
-                     error = function(e) NULL)
-    if (is.null(res2) || !is.finite(res2@value) ||
-        !(res2@value < res@value - mode_error_limit())) {
-      tryCatch(evaluate(res@par), error = function(e) NULL)
-      break
-    }
-    res <- res2
-    settled <- isTRUE(res@converged)
-  }
-
-  # A HYPERPARAMETER AT THE EDGE OF ITS CHART IS PROBED FROM INSIDE. On the
-  # free scale the criterion's slope carries the chart's own derivative, which
-  # vanishes at the edge, so a search can stop there with a vanishing gradient
-  # at a point that is not a maximum. Measured on nlme::Machines with
-  # random(~1 | Worker) + random(~1 | Worker:Machine), the default search
-  # stopped with the Worker sd at 0.00025 and a REML criterion of -110.63,
-  # where lme() reaches -107.84; with the Worker sd held, the criterion rises
-  # steadily from 0 to 4.78. The probe moves each coordinate past `edge` back
-  # towards its starting value, at four fractions of the distance, with the
-  # rest held, and restarts the search from the best probe where it gains more
-  # than mode_error_limit(). Four fractions and not one: an AR(1) correlation
-  # that ran to rho = 1 gains nothing at rho = 0.985 and loses 23 at its start
-  # of zero, and gains 0.21 at rho = 0.84. See edge_probe_hyper().
-  if (chose_optimizer && nh) {
-    for (attempt in seq_len(3L)) {
-      # a probe that gains less than the threshold is not taken, and must
-      # leave no trace: evaluate() makes any better point the incumbent the
-      # final refit warm-starts from, and on a model with a multimodal inner
-      # problem that moved the convergence flag of a fit whose point and
-      # criterion were unchanged
-      keep <- mget(c("best_v", "best_beta", "best_zeta", "beta"), envir = state)
-      restore <- function() {
-        for (k in names(keep)) assign(k, keep[[k]], envir = state)
-        # and the point the search reported is evaluated once more, so the
-        # design's own state (the blocks refreshed at the last point read)
-        # is that point's and the history ends on it, as it did before
-        tryCatch(evaluate(res@par), error = function(e) NULL)
-      }
-      pr <- edge_probe_hyper(res@par, eta0, nh, res@value, fn)
-      if (is.null(pr)) {
-        restore()
-        break
-      }
-      res2 <- tryCatch(
+    if (ran_out(res)) {
+      use_box <- TRUE
+      res_box <- tryCatch(
         if (exact2) {
-          mini(optimizer, pr, gr = gr, hess = he)
+          mini(optimizer, res@par, gr = gr, hess = he)
         } else if (exact) {
-          mini(optimizer, pr, gr = gr)
+          mini(optimizer, res@par, gr = gr)
         } else {
-          mini(optimizer, pr)
+          mini(optimizer, res@par)
         }, error = function(e) NULL)
+      if (!is.null(res_box) && is.finite(res_box@value)) res <- res_box
+    }
+
+    # A LINE SEARCH THAT FAILED AT THE ROUNDING OF THE CRITERION IS A
+    # RESOLUTION STOP. Where no reading of the criterion's resolution exists (a
+    # fit with no penalty, whose hyperparameters are a dispersion's
+    # coefficients) or the reading is smaller than the arithmetic, a Newton
+    # step at the optimum predicts a decrease the criterion cannot show, every
+    # trial is rejected on the last bits, and the run reports no acceptable
+    # step at the optimum. Measured on y ~ x | sigma ~ z on arm64 macOS: twelve
+    # backtracks and the flag FALSE where x86_64 accepted the first trial by a
+    # few ulps. The test is made AFTER the search has failed, so a run that
+    # succeeds is untouched: a floor read before the trials stopped ordinary
+    # gaussian fits at a relative 4e-7 in sigma. The floor is 1e3 eps |f|, and
+    # a wrong direction, which predicts a large decrease, stays a failure.
+    if (chose_optimizer && exact2 && !isTRUE(res@converged) &&
+        identical(res@message, "the line search found no acceptable step")) {
+      floor_res <- 1e3 * .Machine$double.eps *
+        max(1, if (is.finite(res@value)) abs(res@value) else 1)
+      at_floor <- isTRUE(tryCatch({
+        evaluate(res@par)
+        g <- derivs(1L)
+        A <- sgn * derivs(2L)
+        dec <- joint_decrement(g, (A + t(A)) / 2)
+        is.finite(dec) && dec <= floor_res
+      }, error = function(e) FALSE))
+      if (at_floor) {
+        res <- S7::set_props(
+          res, converged = TRUE,
+          criterion_met = "no decrease above the objective's resolution",
+          message = "")
+      }
+    }
+
+    # WHETHER THE REPORTED POINT IS THE OPTIMUM, which the search's flag does
+    # not say: the flag says whether its stopping rule fired. Beside a kinked
+    # block the criterion carries the coordinate descent's own rounding, of
+    # order 1e-8, which criterion_resolution() does not see, and a line search
+    # asked for a smaller decrease runs out of backtracks at the optimum. The
+    # Newton decrement at the point answers the question in the criterion's
+    # units, as statmod_certificate() does, and a path reads it to decide
+    # whether a point is scored -- the rule inner_mode_error() applies to an
+    # inner fit, one level up. Measured on y ~ s(x) + lasso(...) over six
+    # samples, the path lost 3 to 11 of its 25 points to that message.
+    settled <- isTRUE(res@converged)
+    if (!settled && exact2) {
+      settled <- isTRUE(tryCatch({
+        evaluate(res@par)
+        g <- derivs(1L)
+        A <- sgn * derivs(2L)
+        dec <- joint_decrement(g, (A + t(A)) / 2)
+        is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
+      }, error = function(e) FALSE))
+    }
+
+    # A NEWTON SEARCH THIS PACKAGE CHOSE AND THAT DID NOT SETTLE IS RUN AGAIN BY
+    # LBFGS, from the same start, and the better of the two is kept.
+    # Where the criterion's curvature is indefinite the Newton direction is a
+    # repaired one and the search can crawl: on GAGurine with a Student t and
+    # nu ~ s(Age) it stopped at a REML criterion of -845.09 with the curvature
+    # not negative definite, where lbfgs() and nelder_mead() reach -816.59 --
+    # the smoothing parameter of nu at its edge, so nu constant in age.
+    if (chose_optimizer && !settled && exact &&
+        inherits(optimizer, "optimizers7::Newton")) {
+      # with its own stopping rule and line search: the measured search that
+      # reaches the maximum is lbfgs() as a caller names it, and the budget and
+      # resolution this function gives its own choice stopped it at -818.63
+      alt <- optimizers7::lbfgs()
+      res2 <- tryCatch(mini(alt, eta0, gr = gr),
+                       error = function(e) NULL)
+      if (!is.null(res2) && is.finite(res2@value) &&
+          res2@value < res@value - 1e-8 * max(1, abs(res@value))) {
+        res <- res2
+        optimizer <- alt
+        settled <- isTRUE(res@converged)
+        if (!settled && exact2) {
+          settled <- isTRUE(tryCatch({
+            evaluate(res@par)
+            g <- derivs(1L)
+            A <- sgn * derivs(2L)
+            dec <- joint_decrement(g, (A + t(A)) / 2)
+            is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
+          }, error = function(e) FALSE))
+        }
+      }
+    }
+
+    # A SEARCH THIS PACKAGE CHOSE THAT LEFT ON THE RESOLUTION RULE WITH THE
+    # CRITERION STILL RISING IS RUN AGAIN FROM ITS POINT, with an empty
+    # quasi-Newton memory. The rule reads the decrease the search's own model
+    # predicts, and a model fed one bad curvature pair predicts nothing: on the
+    # battery's gas-panel-omega an unconverged inner point read -654.9 entered
+    # lbfgs()'s memory and the search left after three iterations with the
+    # gradient at 1.2 and the criterion at -609.528, where it rises to
+    # -609.490. The Newton decrement at the point is what decides, in the
+    # criterion's units, against mode_error_limit(); the certificate's 0.01
+    # left that run 0.0028 short. At most three restarts.
+    #
+    # ⚠️ THE RESTART STOPS IN THE DECREMENT'S UNIT AND NOT IN THE RESOLUTION'S.
+    # It is run only where the exact decrement exceeds mode_error_limit(), so
+    # its rule is a gain below that limit and its line search is given a tenth
+    # of it. Given the search's own rule instead, it stopped wherever the first
+    # step's predicted gain fell against a tenth of the resolution read at the
+    # start, which on gas-panel-omega is about 2 REML units and moves by 45 per
+    # cent with a perturbation of one ulp in the rhobit link's derivatives: at
+    # one reading the step went through (0.217 against 0.199) and the criterion
+    # reached -609.4905, at the other it did not (0.217 against 0.287) and the
+    # fit stopped at -609.4932 with a decrement of 2.6e-3. With its own unit the
+    # restart reaches -609.490415 from either, with the decrement at 1e-6.
+    restart_opt <- optimizer
+    if (chose_optimizer && "line_search" %in% S7::prop_names(optimizer)) {
+      restart_opt <- S7::set_props(
+        optimizer,
+        criterion = optimizers7::crit_any(
+          own_criterion, optimizers7::crit_abs_obj(mode_error_limit())),
+        line_search = S7::set_props(
+          optimizer@line_search,
+          resolution = function() mode_error_limit() / 10))
+    }
+    for (attempt in seq_len(3L)) {
+      if (!(chose_optimizer && exact2 && isTRUE(res@converged) &&
+            (attempt > 1L ||
+             identical(res@criterion_met,
+                       "no decrease above the objective's resolution")))) break
+      rising <- isTRUE(tryCatch({
+        evaluate(res@par)
+        g <- derivs(1L)
+        A <- sgn * derivs(2L)
+        dec <- joint_decrement(g, (A + t(A)) / 2)
+        is.finite(dec) && dec > mode_error_limit()
+      }, error = function(e) FALSE))
+      if (!rising) break
+      res2 <- tryCatch(mini(restart_opt, res@par, gr = gr, hess = he),
+                       error = function(e) NULL)
       if (is.null(res2) || !is.finite(res2@value) ||
           !(res2@value < res@value - mode_error_limit())) {
-        restore()
+        tryCatch(evaluate(res@par), error = function(e) NULL)
         break
       }
       res <- res2
       settled <- isTRUE(res@converged)
-      if (!settled && exact2) {
-        settled <- isTRUE(tryCatch({
-          evaluate(res@par)
-          g <- derivs(1L)
-          A <- sgn * derivs(2L)
-          dec <- joint_decrement(g, (A + t(A)) / 2)
-          is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
-        }, error = function(e) FALSE))
+    }
+
+    # A HYPERPARAMETER AT THE EDGE OF ITS CHART IS PROBED FROM INSIDE. On the
+    # free scale the criterion's slope carries the chart's own derivative, which
+    # vanishes at the edge, so a search can stop there with a vanishing gradient
+    # at a point that is not a maximum. Measured on nlme::Machines with
+    # random(~1 | Worker) + random(~1 | Worker:Machine), the default search
+    # stopped with the Worker sd at 0.00025 and a REML criterion of -110.63,
+    # where lme() reaches -107.84; with the Worker sd held, the criterion rises
+    # steadily from 0 to 4.78. The probe moves each coordinate past `edge` back
+    # towards its starting value, at four fractions of the distance, with the
+    # rest held, and restarts the search from the best probe where it gains more
+    # than mode_error_limit(). Four fractions and not one: an AR(1) correlation
+    # that ran to rho = 1 gains nothing at rho = 0.985 and loses 23 at its start
+    # of zero, and gains 0.21 at rho = 0.84. See edge_probe_hyper().
+    if (chose_optimizer && nh) {
+      for (attempt in seq_len(3L)) {
+        # a probe that gains less than the threshold is not taken, and must
+        # leave no trace: evaluate() makes any better point the incumbent the
+        # final refit warm-starts from, and on a model with a multimodal inner
+        # problem that moved the convergence flag of a fit whose point and
+        # criterion were unchanged
+        # and the resolution readings the probes took, which a maximum would
+        # otherwise carry into every later search (D7)
+        keep <- mget(c("best_v", "best_beta", "best_zeta", "beta", "res_seen",
+                       "resolution"), envir = state)
+        restore <- function() {
+          for (k in names(keep)) assign(k, keep[[k]], envir = state)
+          # and the point the search reported is evaluated once more, so the
+          # design's own state (the blocks refreshed at the last point read)
+          # is that point's and the history ends on it, as it did before
+          tryCatch(evaluate(res@par), error = function(e) NULL)
+        }
+        pr <- edge_probe_hyper(res@par, eta0, nh, res@value, fn)
+        if (is.null(pr)) {
+          restore()
+          break
+        }
+        res2 <- tryCatch(
+          if (exact2) {
+            mini(optimizer, pr, gr = gr, hess = he)
+          } else if (exact) {
+            mini(optimizer, pr, gr = gr)
+          } else {
+            mini(optimizer, pr)
+          }, error = function(e) NULL)
+        if (is.null(res2) || !is.finite(res2@value) ||
+            !(res2@value < res@value - mode_error_limit())) {
+          restore()
+          break
+        }
+        res <- res2
+        settled <- isTRUE(res@converged)
+        if (!settled && exact2) {
+          settled <- isTRUE(tryCatch({
+            evaluate(res@par)
+            g <- derivs(1L)
+            A <- sgn * derivs(2L)
+            dec <- joint_decrement(g, (A + t(A)) / 2)
+            is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
+          }, error = function(e) FALSE))
+        }
       }
+    }
+    fin <- list(par = res@par, converged = res@converged,
+                iterations = res@iterations)
+  } else {
+    # the point computation of evaluate() and the trace, as closures that the
+    # compiled search calls; `pt` keeps the last point evaluated
+    pt <- new.env(parent = emptyenv())
+    p_eval <- function(v, warm, first) {
+      eta <- v[seq_len(nh)]
+      hy <- eta_to_hyper(eta, idx, hyper)
+      sp <- spec_at(v)
+      state$sp <- sp
+      m <- NULL
+      res <- NULL
+      cf <- NULL
+      ctx <- NULL
+      err <- NULL
+      body <- function() {
+        res <<- statmod_alternate(sp, design, blocks, hy, inner_optimizer,
+                                  warm, expected, emethod, maxit, tol,
+                                  vb_inner(vb), hold_refresh = TRUE)
+        if (!is.null(res$spec)) {
+          sp <<- res$spec
+          state$sp <- sp
+        }
+        cf <<- res$obj$split(res$par)
+        ctx <<- outer_context(sp, design, cf, hy, emethod)
+        if (!isTRUE(res$converged)) {
+          q <- inner_mode_error(ctx, sp, design, cf, hy,
+                                free_score(tryCatch(res$obj$gr(res$par),
+                                                    error = function(e) NULL)),
+                                expected)
+          if (!is.finite(q) || q > mode_error_limit()) {
+            m <<- NULL
+            return(invisible(NULL))
+          }
+        }
+        m <<- criterion_at(cf, hy, res$par, ctx)
+        invisible(NULL)
+      }
+      if (first) {
+        body()
+        if (is.null(m) && !is.null(res)) {
+          Kf <- tryCatch(statmod_penalized_at(sp, cf, design, hy, expected,
+                                              emethod),
+                         error = function(e) NULL)
+          fl <- if (is.null(Kf)) integer(0) else
+            sort(unique(c(deficient_coords(Kf),
+                          if (ng) vanished_coords(sp, cf, design, Kf))))
+          fl <- setdiff(fl, gam$where)
+          if (length(fl)) {
+            attr(design, "pinned") <<- fl
+            m <- NULL
+            body()
+          }
+        }
+      } else {
+        err <- tryCatch({
+          body()
+          NULL
+        }, error = function(e) conditionMessage(e))
+        if (!is.null(err)) m <- NULL
+      }
+      sc <- NULL
+      if (!is.null(m)) {
+        sc <- tryCatch(free_score(res$obj$gr(res$par)), error = function(e) e)
+        pin <- attr(design, "pinned")
+        if (!inherits(sc, "error") && !is.null(sc) && length(pin)) sc[pin] <- 0
+        if (inherits(sc, "error")) {
+          err <- conditionMessage(sc)
+          m <- NULL
+          sc <- NULL
+        }
+      }
+      if (is.null(m)) {
+        hv <- tryCatch(paste(signif(vapply(seq_along(labels), function(j)
+          v_value(hy, v, j), numeric(1)), 5), collapse = ", "),
+          error = function(e) paste(signif(eta, 5), collapse = ", "))
+        cause <- if (!is.null(err)) {
+          paste0(": ", err)
+        } else if (!is.null(res) && !isTRUE(res$converged)) {
+          ": the inner fit did not converge there"
+        } else {
+          paste0(": the inner fit converged to a point where the ",
+                 "penalized information has no Cholesky factor, as happens ",
+                 "when a parameter is degenerate (a coordinate run to a ",
+                 "boundary, a direction that the data do not identify",
+                 ")")
+        }
+        return(list(ok = FALSE, err = err, hv = hv,
+                    cause = paste0("the ", toupper(method@kind), " criterion is ",
+                                   "unavailable at the starting hyperparameters",
+                                   cause, ". Fit with outer_criterion = NULL and ",
+                                   "inspect the coefficients.")))
+      }
+      pt$st <- list(value = m$value, ok = TRUE, ctx = ctx, cf = cf, hy = hy,
+                    par = res$par, split = res$obj$split, score = sc, sp = sp)
+      list(ok = TRUE, err = NULL, value = m$value, loglik = m$loglik,
+           penalty = m$penalty, par = res$par,
+           vals = vapply(seq_along(labels), function(j) v_value(hy, v, j),
+                         numeric(1)))
+    }
+    p_grad <- function() {
+      st <- pt$st
+      statmod_marginal_grad(st$sp, design, st$cf, st$hy, method, idx, basis,
+                            ctx = st$ctx, gam = gam)
+    }
+    p_hess <- function() {
+      st <- pt$st
+      statmod_marginal_hess(st$sp, design, st$cf, st$hy, method, idx, basis,
+                            ctx = st$ctx, gam = gam)
+    }
+    p_reading <- function() {
+      r <- criterion_resolution(pt$st, pt$st$sp, design, method, criterion_at)
+      list(r = as.numeric(r), mode_error = attr(r, "mode_error"))
+    }
+    say_ok <- function(evals, value, gv, vals) {
+      gmax <- if (!is.null(gv) && all(is.finite(gv)))
+        sprintf("%12.4g", max(abs(gv))) else sprintf("%12s", "--")
+      cat(sprintf("  %6d %16.6f %s   %s\n", evals, value, gmax,
+                  paste(signif(vals, 5), collapse = ", ")))
+    }
+    say_na <- function(evals, hv, err) {
+      if (is.numeric(hv)) hv <- paste(signif(hv, 5), collapse = ", ")
+      cat(sprintf("  %6d %16s %12s   %s%s\n", evals, "unavailable", "--", hv,
+                  if (is.null(err)) "" else paste0("  [", err, "]")))
+    }
+    say_me <- function(q) {
+      vb_say(paste0("no resolution: the inner fit sits %.3g above its own",
+                    " minimum, so the displacement that it implies is not a",
+                    " correction"), q, indent = 5L)
+    }
+    # THE POINT IN COMPILED CODE (stage 2) where the inner fit is one compiled
+    # iwls pass over the whole vector, or the compiled alternation beside a
+    # kinked block (with the penalty built in C++), iwls() as the inner method
+    # with a compiled route, no inner trace. Where a unit has no compiled
+    # construction the penalty at each point is built here (pen_at).
+    compiled <- NULL
+    if (isTRUE(engine_flags$outer_point) && !expected &&
+        !isTRUE(vb$inner) &&
+        S7::S7_inherits(inner_optimizer, Iwls)) {
+      obj0 <- statmod_objective(spec, hyper, design, expected, emethod)
+      im <- iwls_resolve(inner_optimizer, spec@distrib)
+      rt <- tryCatch(engine_route(spec, design, obj0, beta, hyper, im),
+                     error = function(e) NULL)
+      if (!is.null(rt) && !identical(rt$method$emethod, 2L) &&
+          !is.null(engine_outer_pen(spec, design, obj0$split(beta), hyper))) {
+        how <- solver_how(im@solver)
+        rt$method$damp_on_reject <- !has_sharp_breakpoint(spec)
+        rt$method$guard <- length(attr(design, "refresh")) > 0L
+        gfull <- obj0$split(seq_along(beta))
+        # the penalty in compiled code where every unit is covered (stage 3);
+        # the held coefficients: the criterion's from v, the others as they are
+        ps <- if (isTRUE(engine_flags$outer_pen))
+          engine_pen_spec(spec_at(eta0), design, idx, hyper, beta, how) else NULL
+        held <- NULL
+        if (!is.null(ps)) {
+          hf0 <- held_positions(spec_at(eta0), design, obj0, beta)
+          th0 <- term_held_stack(spec, design)
+          # a held break-point's slot keeps the value it has in the warm start
+          src <- ifelse(hf0$where %in% gam$where,
+                        nh + match(hf0$where, gam$where),
+                        ifelse(hf0$where %in% th0, -1L, 0L))
+          held <- list(where = as.integer(hf0$where), src = as.integer(src),
+                       value = as.numeric(hf0$value))
+        }
+        # beside a kinked block: engine_alternate_fit()'s inputs, static over
+        # the search
+        kink <- NULL
+        if (length(blocks$sparse)) {
+          sp0 <- spec_at(eta0)
+          units0 <- statmod_penalized(sp0, design)
+          hf <- held_positions(sp0, design, obj0, beta)
+          kb <- if (is.null(ps) || !is.null(emethod) ||
+                    !identical(as.integer(spec@threads), 1L) || design_sparse(design) ||
+                    !identical(rt$method$emethod, 0L) ||
+                    any(vapply(rt$pen$units, function(u) u$kind %in% c(9L, 10L), logical(1))))
+            NULL else engine_alternate_blocks(sp0, design, blocks, units0, obj0, beta, hf)
+          lab <- tryCatch(coef_labels(sp0, design), error = function(e) NULL)
+          if (!is.null(kb) && !is.null(lab) && nrow(lab) == length(beta)) {
+            sidx <- blocks$smooth
+            kink <- list(
+              kblocks = kb, smooth = as.integer(sidx),
+              sgroups = lapply(Filter(length, lapply(gfull, function(ix)
+                match(intersect(ix, sidx), sidx))), as.integer),
+              sfrozen = as.integer(match(intersect(hf$where, sidx), sidx)),
+              kinked = as.logical(lab$kinked),
+              kc = as.integer(kinked_coords(sp0, design)),
+              expected = isTRUE(expected), maxit = as.integer(maxit), tol = as.numeric(tol))
+            rt$method$guard <- FALSE
+          } else {
+            ps <- NULL
+          }
+        }
+        compiled <- if (length(blocks$sparse) && is.null(kink)) NULL else list(
+          pen_spec = ps, held = held, kink = kink,
+          model = rt$model, method = rt$method,
+          groups = Filter(length, lapply(gfull, as.integer)),
+          gam_where = as.integer(gam$where), held_free = as.integer(held_free),
+          nh = nh, basis = if (is.null(basis)) NULL else as_dense(basis))
+        p_pen <- function(v, warm) {
+          eta <- v[seq_len(nh)]
+          hy <- eta_to_hyper(eta, idx, hyper)
+          sp <- spec_at(v)
+          state$sp <- sp
+          pt$hy <- hy
+          pt$sp <- sp
+          pt$rctx <- NULL
+          hf <- held_positions(sp, design, obj0, warm)
+          cw <- warm
+          cw[hf$where] <- hf$value
+          cf <- obj0$split(cw)
+          emi <- tryCatch(engine_model(sp, design, cf, hy, how), error = function(e) NULL)
+          eo <- engine_outer_pen(sp, design, cf, hy)
+          vals <- vapply(seq_along(labels), function(j) v_value(hy, v, j), numeric(1))
+          list(pen = if (is.null(emi)) NULL else emi$pen,
+               pen_outer = if (is.null(eo)) NULL else eo$pen,
+               mem = engine_outer_members(sp, design, idx, hy),
+               held_where = as.integer(hf$where), held_value = as.numeric(hf$value),
+               hold = as.integer(pinned_coords(sp, design)),
+               pinned = as.integer(attr(design, "pinned")),
+               vals = vals, hv = paste(signif(vals, 5), collapse = ", "))
+        }
+        r_set <- function(v, cv = list()) {
+          pt$hy <- eta_to_hyper(v[seq_len(nh)], idx, hyper)
+          pt$sp <- spec_at(v)
+          # the curvatures the compiled alternation wrote (engine_alternate_fit())
+          for (b in seq_along(cv)) {
+            if (is.null(cv[[b]])) next
+            u <- statmod_penalized(pt$sp, design)[[kink$kblocks[[b]]$unit]]
+            pen <- pt$sp@terms[[u$param]][[u$term]]@penalty
+            if (!identical(as.numeric(pen@curvature), as.numeric(cv[[b]]))) {
+              pt$sp@terms[[u$param]][[u$term]]@penalty <-
+                S7::set_props(pen, curvature = as.numeric(cv[[b]]))
+            }
+          }
+          state$sp <- pt$sp
+          pt$rctx <- NULL
+          invisible(NULL)
+        }
+        pen_outer_at <- function(par) {
+          eo <- engine_outer_pen(pt$sp, design, obj0$split(par), pt$hy)
+          if (is.null(eo)) NULL else eo$pen
+        }
+        r_hold <- function() {
+          # on the specification with the criterion's coefficients held, as
+          # every point reads it (their positions do not move with v)
+          list(lap = as.integer(laplace_pinned(spec_at(eta0), design)),
+               hold = as.integer(pinned_coords(spec_at(eta0), design)),
+               pinned = as.integer(attr(design, "pinned")))
+        }
+        r_ctx <- function(par) {
+          if (is.null(pt$rctx) || !identical(pt$rpar, par)) {
+            pt$rpar <- par
+            pt$rctx <- outer_context(pt$sp, design, obj0$split(par), pt$hy, emethod)
+          }
+          pt$rctx
+        }
+        r_crit <- function(par2) {
+          m <- statmod_marginal(pt$sp, design, obj0$split(par2), pt$hy, method,
+                                emethod, basis, NULL)
+          if (is.null(m)) NULL else m$value
+        }
+        r_grad <- function(par) {
+          statmod_marginal_grad(pt$sp, design, obj0$split(par), pt$hy, method, idx,
+                                basis, ctx = r_ctx(par), gam = gam)
+        }
+        r_hess <- function(par) {
+          statmod_marginal_hess(pt$sp, design, obj0$split(par), pt$hy, method, idx,
+                                basis, ctx = r_ctx(par), gam = gam)
+        }
+        r_mvt <- function(par, need) {
+          units <- statmod_penalized(pt$sp, design)
+          cf <- obj0$split(par)
+          out <- lapply(need, function(k) engine_outer_mvt(units[[k]], NULL, cf, pt$sp, pt$hy))
+          if (any(vapply(out, is.null, logical(1)))) NULL else out
+        }
+      }
+    }
+    out <- engine_outer_search(
+      list(nh = nh, ng = ng, exact = exact, exact2 = exact2,
+           chose = chose_optimizer, verbose = isTRUE(vb$outer),
+           trace_grad = trace_grad, gam_where = as.integer(gam$where),
+           angle = as.logical(angle), beta = as.numeric(beta),
+           eta0 = as.numeric(eta0), own = eng,
+           alt = outer_search_settings(optimizers7::lbfgs(), nv),
+           backtracks = outer_backtracks(),
+           cert_tol = eval(formals(statmod_certificate)$tol),
+           compiled = compiled,
+           # the final refit in compiled code (D40), where the refit's trace
+           # is not asked for
+           refit = !is.null(compiled) && !isTRUE(vb$blocks) && !isTRUE(vb$inner)),
+      c(list(eval = p_eval, grad = p_grad, hess = p_hess, reading = p_reading,
+             say_ok = say_ok, say_na = say_na, say_me = say_me),
+        if (!is.null(compiled))
+          list(pen_at = p_pen, r_crit = r_crit, r_grad = r_grad, r_hess = r_hess,
+               r_mvt = r_mvt, r_set = r_set, r_hold = r_hold,
+               pen_outer_at = pen_outer_at)))
+    if (!is.null(out$error)) stop(out$error, call. = FALSE)
+    # the state the refit and the returned list read
+    state$beta <- out$beta
+    state$handed_back <- out$handed_back
+    state$best_beta <- out$best_beta
+    state$evals <- out$evals
+    state$resolution <- out$resolution
+    state$rows <- lapply(out$rows, function(r) {
+      row <- data.frame(evaluation = as.integer(r[[1L]]), criterion = r[[2L]],
+                        loglik = r[[3L]], penalty = r[[4L]])
+      for (j in seq_along(labels)) row[[labels[j]]] <- r[[4L + j]]
+      row
+    })
+    settled <- out$settled
+    # the optimizer that searched, with the changes the search made to it
+    if (chose_optimizer) {
+      r1 <- out$r1
+      if (is.finite(r1) && r1 > 0) {
+        optimizer <- S7::set_props(
+          optimizer,
+          criterion = optimizers7::crit_any(
+            optimizer@criterion, optimizers7::crit_abs_obj(r1)))
+      }
+      if ("line_search" %in% S7::prop_names(optimizer)) {
+        optimizer <- S7::set_props(
+          optimizer,
+          line_search = S7::set_props(
+            optimizer@line_search,
+            resolution = function() state$resolution / 10,
+            max_step = outer_backtracks()))
+      }
+      if (length(out$typical)) {
+        optimizer <- S7::set_props(optimizer, typical_size = out$typical)
+      }
+      if (identical(out$which_opt, 1L)) optimizer <- optimizers7::lbfgs()
+    }
+    fin <- list(par = out$res$par, converged = out$res$converged,
+                iterations = out$res$iterations)
+    # the final refit in compiled code: the inner fit's list and the
+    # criterion, assembled as statmod_alternate() and statmod_marginal()
+    # return them
+    rf <- out$refit
+    if (length(rf)) {
+      hy_f <- eta_to_hyper(fin$par[seq_len(nh)], idx, hyper)
+      sp_f <- spec_at(fin$par)
+      obj_f <- statmod_objective(sp_f, hy_f, design, expected, emethod)
+      if (identical(rf$kind, "kink")) {
+        inner_f <- engine_alternate_result(
+          rf$raw, sp_f, design, statmod_penalized(sp_f, design), compiled$kink$kblocks,
+          hy_f, expected, emethod, obj_f, isTRUE(compiled$method$damp_on_reject))
+      } else {
+        r <- engine_inner_result(rf$raw, compiled$method$damp_on_reject, FALSE)
+        hist_inner <- list()
+        if (!is.null(r$history)) {
+          h <- r$history
+          h$pass <- 1L
+          h$block <- "smooth"
+          hist_inner <- list(h)
+        }
+        inner_f <- list(
+          par = r$par, value = rf$value, converged = isTRUE(r$converged), obj = obj_f,
+          note = r$note, aliased = sort(as.integer(union(integer(0), r$aliased))),
+          hist_blocks = list(data.frame(pass = 1L, block = "smooth", objective = rf$value,
+                                        change = rf$value0 - rf$value,
+                                        iterations = r$iterations,
+                                        converged = r$converged)),
+          hist_inner = hist_inner, spec = sp_f)
+      }
+      m_f <- if (isTRUE(rf$crit_r)) {
+        statmod_marginal(inner_f$spec, design, inner_f$obj$split(inner_f$par), hy_f, method,
+                         emethod, basis)
+      } else if (isTRUE(rf$crit_na)) NULL else list(value = rf$crit)
+      fin$refit <- list(inner = inner_f, m = m_f)
     }
   }
 
   # the last evaluation is not necessarily the optimum, so the fit is taken at
   # the reported point rather than at whatever was tried last
-  hy <- eta_to_hyper(res@par[seq_len(nh)], idx, hyper)
-  sp <- spec_at(res@par)
+  hy <- eta_to_hyper(fin$par[seq_len(nh)], idx, hyper)
+  sp <- spec_at(fin$par)
   # from the incumbent, as every trial was: the reported point is the one the
   # search stands on, and refitting it from a rejected trial's state is what
   # reported a worse mode than the search had found
@@ -2515,19 +2941,20 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       sst$value <- NULL
     }
   }
-  if (ng) warm[gam$where] <- res@par[nh + seq_len(ng)]
-  inner <- statmod_alternate(sp, design, blocks, hy, inner_optimizer,
-                             warm, expected, emethod, maxit, tol, vb,
-                             hold_refresh = TRUE)
+  if (ng) warm[gam$where] <- fin$par[nh + seq_len(ng)]
+  inner <- if (!is.null(fin$refit)) fin$refit$inner else
+    statmod_alternate(sp, design, blocks, hy, inner_optimizer, warm, expected, emethod,
+                      maxit, tol, vb, hold_refresh = TRUE)
   cff <- inner$obj$split(inner$par)
   # a scaled SCAD or MCP is read at the curvature the refit settled at
   if (!is.null(inner$spec)) sp <- inner$spec
   m <- if (pe) statmod_pe(sp, design, cff, hy, method, emethod,
                           statmod_active(sp, blocks, inner$par, hy)) else
+    if (!is.null(fin$refit)) fin$refit$m else
     statmod_marginal(sp, design, cff, hy, method, emethod, basis)
   list(par = inner$par, hyper = hy, value = inner$value,
        criterion = if (is.null(m)) NA_real_ else m$value,
-       converged = res@converged && inner$converged,
+       converged = fin$converged && inner$converged,
        settled = settled && inner$converged,
        obj = inner$obj, hist_blocks = inner$hist_blocks,
        hist_inner = inner$hist_inner,
@@ -2538,7 +2965,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
        aliased = inner$aliased, spec = inner$spec,
        hist_outer = if (length(state$rows)) do.call(rbind, state$rows) else
          NULL,
-       iterations = res@iterations, evaluations = state$evals,
+       iterations = fin$iterations, evaluations = state$evals,
        exact_gradient = exact, exact_hessian = exact2,
        # the optimizer that actually searched, which is the caller's where
        # one was given and otherwise the one chosen from what the criterion

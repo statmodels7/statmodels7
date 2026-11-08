@@ -45,7 +45,9 @@ Imports:
     utils
 LinkingTo:
     distributions7,
+    optimizers7,
     Rcpp,
+    RcppArmadillo,
     RcppEigen,
     RcppParallel
 SystemRequirements: GNU make

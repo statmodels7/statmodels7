@@ -162,6 +162,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
       r <- engine_outer_hess(eo, mb$mrow, mb$munit, mb$mname, mb$mchain, mb$nh, gw,
                              mb$h1, mb$h2)
       if (identical(r$status, 0L)) return(r$hessian)
+      if (identical(r$status, 4L)) return(NULL)
     }
   }
   # the block AT THE MODE, for the reason statmod_marginal_grad() records: the

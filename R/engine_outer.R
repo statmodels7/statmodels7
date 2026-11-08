@@ -65,6 +65,29 @@ engine_outer_at <- function(ctx, spec, design, coef, hyper, method,
 engine_outer_build <- function(spec, design, coef, hyper, basis) {
   kc <- kinked_coords(spec, design)
   if (length(kc) && !is.null(basis)) return(NULL)
+  em <- engine_outer_pen(spec, design, coef, hyper)
+  if (is.null(em)) return(NULL)
+  beta <- unlist(coef[spec@distrib@params], use.names = FALSE)
+  pc <- as.integer(pinned_coords(spec, design))
+  # beside a kinked penalty, the criterion's matrix is pinned at every kinked
+  # coordinate (laplace_pinned()) and the mode's at the kinked ones at zero
+  hold <- if (length(kc)) as.integer(laplace_pinned(spec, design)) else pc
+  hm <- if (length(kc)) as.integer(c(pc, zero_kinked(spec, design, coef))) else NULL
+  B <- if (is.null(basis)) NULL else as_dense(basis)
+  r <- engine_outer_new(em$model, em$pen, as.numeric(beta), hold, B, 2L, hm)
+  if (!identical(r$status, 0L)) return(NULL)
+  r$ctx
+}
+
+#' @rdname engine_outer_at
+#' @details
+#' `engine_outer_pen()` returns the model and the penalty as the outer
+#' context reads them, `list(model, pen)`, or `NULL` where the point is not
+#' covered: [engine_model()] on the Cholesky route, with the pieces that the
+#' context reads beside the penalty's units (the positions of a t prior's
+#' hyperparameters, an additive penalty's blocks, a covariance chart).
+#' @keywords internal
+engine_outer_pen <- function(spec, design, coef, hyper) {
   em <- tryCatch(engine_model(spec, design, coef, hyper, "chol"),
                  error = function(e) NULL)
   if (is.null(em) || em$covered < 4L) return(NULL)
@@ -102,16 +125,7 @@ engine_outer_build <- function(spec, design, coef, hyper, basis) {
     if (is.null(ch)) return(NULL)
     em$pen$units[[k]]$chart <- ch
   }
-  beta <- unlist(coef[spec@distrib@params], use.names = FALSE)
-  pc <- as.integer(pinned_coords(spec, design))
-  # beside a kinked penalty, the criterion's matrix is pinned at every kinked
-  # coordinate (laplace_pinned()) and the mode's at the kinked ones at zero
-  hold <- if (length(kc)) as.integer(laplace_pinned(spec, design)) else pc
-  hm <- if (length(kc)) as.integer(c(pc, zero_kinked(spec, design, coef))) else NULL
-  B <- if (is.null(basis)) NULL else as_dense(basis)
-  r <- engine_outer_new(em$model, em$pen, as.numeric(beta), hold, B, 2L, hm)
-  if (!identical(r$status, 0L)) return(NULL)
-  r$ctx
+  em
 }
 
 #' @rdname engine_outer_at
@@ -179,6 +193,9 @@ engine_ctx_solve <- function(ctx, x) {
 #' @keywords internal
 engine_flags <- new.env(parent = emptyenv())
 engine_flags$mode_inverse <- TRUE
+engine_flags$outer_search <- TRUE
+engine_flags$outer_point <- TRUE
+engine_flags$outer_pen <- TRUE
 
 #' @rdname engine_outer_at
 #' @param eo An outer context of [engine_outer_at()].
@@ -316,4 +333,222 @@ engine_outer_chart <- function(u, hyper) {
     h <- c(hs(lk$link_scale, eta[1L]), hs(lk$link_rho, eta[2L]))
   }
   list(code = code, eta = eta, h = h)
+}
+
+#' @rdname engine_outer_at
+#' @param optimizer An optimizer of optimizers7.
+#' @param nv The length of the outer vector.
+#' @details
+#' `outer_search_settings()` returns the settings of a descent method for
+#' the compiled outer search ([optimizers7::descent_settings()]), or `NULL`
+#' where the search runs in R: an optimizer that does not run the descent
+#' loop, and a stopping rule without a compiled form. The switch
+#' `engine_flags$outer_search` turns the compiled search on, `engine_flags$outer_point`
+#' the point computed in compiled code within it, and `engine_flags$outer_pen`
+#' the penalty built in compiled code at each point; all three are on.
+#' @keywords internal
+outer_search_settings <- function(optimizer, nv) {
+  s <- optimizers7::descent_settings(optimizer, nv)
+  if (is.null(s) || is.null(s$rule_spec)) return(NULL)
+  s
+}
+
+#' @rdname engine_outer_at
+#' @param beta The stacked coefficients at the start.
+#' @param how The solver of the inner fit, as for [engine_model()].
+#' @details
+#' `engine_pen_spec()` describes the penalty to the compiled construction of
+#' the outer search (`engine_pen_build()`): per penalized unit its kind, its
+#' positions, its description by [engine_penalty_units()] for the inner fit
+#' and for the outer context, its hyperparameters in the order of the
+#' penalty's parameters, and the static pieces of its kind; and the members of
+#' the outer index with the links of its rows. It returns `NULL` where a unit
+#' is not one that the compiled construction writes (kinds 1 to 4, a kind 4
+#' unit on a log-Cholesky, compound symmetry or AR(1) chart, no map on kinds 3
+#' and 4), or where a link has no compiled route.
+#' @keywords internal
+engine_pen_spec <- function(spec, design, idx, hyper, beta, how) {
+  cf <- NULL
+  em <- tryCatch({
+    obj <- statmod_objective(spec, hyper, design, FALSE, NULL)
+    cf <- obj$split(beta)
+    engine_model(spec, design, cf, hyper, how)
+  }, error = function(e) NULL)
+  eo <- if (is.null(cf)) NULL else engine_outer_pen(spec, design, cf, hyper)
+  if (is.null(em) || is.null(eo)) return(NULL)
+  units <- statmod_penalized(spec, design)
+  link_ref <- function(l) {
+    r <- linkfunctions7::link_scalar_route(l)
+    if (is.null(r)) return(NULL)
+    list(name = r$name, par = as.numeric(r$par), bounds = as.numeric(l@link_bounds))
+  }
+  out <- vector("list", length(units))
+  for (k in seq_along(units)) {
+    u <- units[[k]]
+    pen <- u$penalty
+    ul <- em$pen$units[[k]]
+    ulo <- eo$pen$units[[k]]
+    th <- as.list(hyper[[u$param]][[u$key]])
+    if (!identical(names(th), pen@params) ||
+        !all(vapply(th, function(x) is.numeric(x) && length(x) == 1L, logical(1)))) {
+      return(NULL)
+    }
+    s <- list(kind = ul$kind, idx = as.integer(ul$idx), ul = ul, ulo = ulo,
+              theta = as.numeric(unlist(th)))
+    if (identical(ul$kind, 3L)) {
+      if (!is.null(ul$map)) return(NULL)
+      s$si <- match("sigma", pen@params)
+      if (is.na(s$si) || !identical(ul$sigma, th$sigma)) return(NULL)
+    } else if (identical(ul$kind, 10L)) {
+      if (!is.null(ul$map)) return(NULL)
+      ms <- engine_mvt_static(u, ul)
+      if (is.null(ms)) return(NULL)
+      s$mvt <- ms
+    } else if (identical(ul$kind, 4L) && identical(ulo$chart$code, 9L)) {
+      # dr_prod with correlation_matrix (D49)
+      if (!is.null(ul$map)) return(NULL)
+      full <- distributions7::fixed_full_theta(pen@parent, th)
+      pc <- distributions7::mvg_pieces(pen@parent@parent_distrib, full)
+      cs <- engine_chart_static(pc$s, isTRUE(ul$inverted))
+      if (is.null(cs) || !identical(cs$code, 4L) ||
+          !identical(as.numeric(ulo$chart$eta), s$theta)) {
+        return(NULL)
+      }
+      s$chart7 <- cs
+    } else if (identical(ul$kind, 4L)) {
+      ch <- ulo$chart
+      if (!is.null(ul$map) || is.null(ch) || !ch$code %in% 1:3 ||
+          !identical(as.numeric(ch$eta), s$theta)) {
+        return(NULL)
+      }
+      full <- distributions7::fixed_full_theta(pen@parent, th)
+      pc <- distributions7::mvg_pieces(pen@parent@parent_distrib, full)
+      s$code <- ch$code
+      s$pd <- as.integer(pen@block)
+      s$inverted <- isTRUE(ul$inverted)
+      if (ch$code == 1L) {
+        pos <- pc$s@param_params$positions
+        s$lc_row <- as.integer(pos$row)
+        s$lc_col <- as.integer(pos$col)
+        s$lc_diag <- as.logical(pos$on_diagonal)
+      } else {
+        lk <- pc$s@param_params
+        s$link_scale <- link_ref(lk$link_scale)
+        s$link_rho <- link_ref(lk$link_rho)
+        if (is.null(s$link_scale) || is.null(s$link_rho)) return(NULL)
+      }
+    } else if (ul$kind %in% 5:8) {
+      second <- switch(as.character(ul$kind), "5" = NA_character_, "6" = "alpha",
+                       "7" = "a", "8" = "gamma")
+      s$tl <- match("lambda", pen@params, nomatch = 0L)
+      s$tp2 <- if (is.na(second)) 0L else match(second, pen@params, nomatch = 0L)
+      s$p20 <- if (identical(ul$kind, 6L)) {
+        as.numeric(distributions7::fixed_full_theta(pen@parent, th)[[3]])
+      } else if (ul$kind >= 7L) as.numeric(ul$par) else 0
+      if (!s$tl || !identical(as.numeric(ul$lambda), th$lambda)) return(NULL)
+    } else if (identical(ul$kind, 9L)) {
+      s$tsig <- match("sigma", pen@params, nomatch = 0L)
+      s$tnu <- match("nu", pen@params, nomatch = 0L)
+      if ((s$tsig && !identical(ul$sigma, th$sigma)) ||
+          (s$tnu && !identical(ul$nu, th$nu))) {
+        return(NULL)
+      }
+    } else if (!ul$kind %in% 1:2) {
+      return(NULL)
+    }
+    out[[k]] <- s
+  }
+  mb <- engine_outer_members(spec, design, idx, hyper)
+  if (is.null(mb)) return(NULL)
+  if (!length(mb$mrow)) mb$mrow <- mb$munit <- mb$mname <- integer(0)
+  links <- lapply(attr(idx, "links"), link_ref)
+  if (any(vapply(links, is.null, logical(1)))) return(NULL)
+  list(p = length(beta), sparse = isTRUE(em$model$sparse),
+       need_C = how %in% c("qr", "svd"), units = out,
+       members = list(mrow = as.integer(mb$mrow), munit = as.integer(mb$munit),
+                      mname = as.integer(mb$mname), links = links))
+}
+
+#' @rdname engine_outer_at
+#' @param s A matrix parameter of parameters7 (a covariance chart).
+#' @param inverted Whether the chart is of the precision.
+#' @details
+#' `engine_chart_static()` describes a covariance chart to the compiled
+#' construction (`engine_charts.h`): its code (1 log-Cholesky, 2 compound
+#' symmetry, 3 AR(1), 4 `dr_prod()` over a `correlation_matrix()`), its
+#' dimension and number of free values, the orientation, the positions of the
+#' log-Cholesky factor or of the angles (0-based), and the links of the
+#' scales and of the correlation. It returns `NULL` for any other chart, and
+#' for a `dr_prod()` whose links are not the log and the doubly bounded link.
+#' `engine_mvt_static()` describes a multivariate t prior: its chart, its
+#' location, the role of each hyperparameter (the chart's free value, 0-based,
+#' or -1 for `nu`), and for an odd dimension the coefficients of the series of
+#' `mvt_cp_d()`.
+#' @keywords internal
+engine_chart_static <- function(s, inverted = FALSE) {
+  cls <- attr(S7::S7_class(s), "name")
+  pp <- s@param_params
+  out <- list(code = switch(cls, LogCholeskyParam = 1L, CompoundSymmetryParam = 2L,
+                            Ar1Param = 3L, DrProdParam = 4L, NA_integer_),
+              p = as.integer(s@dimension), K = as.integer(s@n_free),
+              inverted = isTRUE(inverted))
+  if (is.na(out$code)) return(NULL)
+  lspec <- function(lk, pre) {
+    r <- linkfunctions7::link_scalar_route(lk)
+    if (is.null(r)) return(NULL)
+    stats::setNames(list(r$name, as.numeric(r$par), as.numeric(lk@link_bounds[1]),
+                         as.numeric(lk@link_bounds[2])),
+                    paste0(pre, c("_name", "_par", "_lwr", "_upr")))
+  }
+  if (cls == "LogCholeskyParam") {
+    pos <- pp$positions
+    out$row <- as.integer(pos$row - 1L)
+    out$col <- as.integer(pos$col - 1L)
+    out$ondiag <- as.logical(pos$on_diagonal)
+  } else if (cls %in% c("CompoundSymmetryParam", "Ar1Param")) {
+    a <- lspec(pp$link_scale, "ls")
+    b <- lspec(pp$link_rho, "lr")
+    if (is.null(a) || is.null(b)) return(NULL)
+    out <- c(out, a, b)
+  } else {
+    cor <- pp$cor
+    if (!identical(attr(S7::S7_class(cor), "name"), "CorrelationParam") || out$p < 2L) {
+      return(NULL)
+    }
+    a <- lspec(pp$link, "ls")
+    b <- lspec(cor@param_params$link, "lr")
+    if (is.null(a) || is.null(b) || !identical(a$ls_name, "LogLink") ||
+        !identical(b$lr_name, "DoublyBoundedLink")) {
+      return(NULL)
+    }
+    out <- c(out, a, b)
+    out$arow <- as.integer(cor@param_params$row - 1L)
+    out$acol <- as.integer(cor@param_params$col - 1L)
+  }
+  out
+}
+
+#' @rdname engine_outer_at
+#' @param ul The unit's description by [engine_penalty_units()].
+#' @keywords internal
+engine_mvt_static <- function(u, ul) {
+  pen <- u$penalty
+  parent <- pen@parent@parent_distrib
+  p <- as.integer(pen@block)
+  if (p < 2L) return(NULL)
+  ch <- engine_chart_static(parent@param, FALSE)
+  if (is.null(ch)) return(NULL)
+  par <- pen@params
+  chart <- setdiff(par, "nu")
+  role <- vapply(par, function(nm) if (nm == "nu") -1L else match(nm, chart) - 1L, 0L)
+  if (length(chart) != ch$K) return(NULL)
+  cf <- list(numeric(0), numeric(0), numeric(0))
+  if (p %% 2L == 1L) {
+    g <- distributions7:::mvt_nu_coef(p)
+    n <- seq_len(length(g) - 1L)
+    cf[[1]] <- -g[n + 1L] * factorial(n - 1L)
+    for (k in 1:2) cf[[k + 1]] <- (-1)^(k - 1L) * g[n + 1L] * factorial(n + k - 1L)
+  }
+  list(chart = ch, mu = as.numeric(ul$mu), role = unname(role),
+       cf0 = cf[[1]], cf1 = cf[[2]], cf2 = cf[[3]])
 }
