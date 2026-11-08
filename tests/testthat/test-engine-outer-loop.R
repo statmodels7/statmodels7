@@ -74,7 +74,7 @@ expect_same_fit <- function(f) {
   # class and its rule are compared, the rest of the record exactly
   mr <- f$r@methods
   mc <- f$c@methods
-  for (k in setdiff(names(mr), "search")) expect_true(same_fit_value(mc[[k]], mr[[k]]), info = k)
+  for (k in setdiff(names(mr), "search")) expect_true(same_fit_value(mc[[k]], mr[[k]]), info = paste(k, if (!same_fit_value(mc[[k]], mr[[k]])) paste(gap_detail(mc[[k]], mr[[k]]), paste(capture.output(str(mc[[k]], max.level = 1)), collapse = " | "))))
   if (!is.null(mr$search)) {
     expect_identical(class(mc$search), class(mr$search))
     expect_identical(mc$search@criterion@label, mr$search@criterion@label)
