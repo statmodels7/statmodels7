@@ -56,6 +56,10 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      - name: Temporary distributions7 from ci-fma
+        run: pak::pkg_install("statmodels7/distributions7@ci-fma", upgrade = FALSE, dependencies = FALSE)
+        shell: Rscript {0}
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
