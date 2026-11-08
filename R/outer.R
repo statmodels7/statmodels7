@@ -2189,7 +2189,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # THE SEARCH IN COMPILED CODE where the optimizer is a descent method
   # with a compiled stopping rule (engine_outer_search(), phase 4): the
   # same steps, the point computed by the closures below
-  eng <- if (!pe && isTRUE(engine_flags$outer_search) &&
+  eng <- if (!pe && identical(spec@engine, "auto") &&
+              isTRUE(engine_flags$outer_search) &&
               is.null(statmod_structural_state(design)) &&
               !length(attr(design, "structural")))
     outer_search_settings(optimizer, nv) else NULL

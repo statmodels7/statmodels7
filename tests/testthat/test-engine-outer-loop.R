@@ -19,9 +19,9 @@ loop_fits <- function(...) {
   old <- mget(c("outer_search", "outer_point", "outer_pen"), envir = fl)
   on.exit(for (k in names(old)) assign(k, old[[k]], envir = fl))
   for (k in names(old)) assign(k, FALSE, envir = fl)
-  a <- statmod(...)
+  a <- statmod(..., engine = "auto")
   for (k in names(old)) assign(k, TRUE, envir = fl)
-  b <- statmod(...)
+  b <- statmod(..., engine = "auto")
   list(r = a, c = b)
 }
 
