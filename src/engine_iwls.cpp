@@ -22,6 +22,11 @@
 // runs iwls_fit() from the same start, which reproduces the error.
 //
 // [[Rcpp::depends(RcppEigen)]]
+// R evaluates these expressions one operation at a time; clang (arm64
+// macOS) would otherwise fuse a*b + c into one rounding
+#if defined(__clang__)
+#pragma clang fp contract(off)
+#endif
 #include <RcppEigen.h>
 #include <R_ext/Rdynload.h>
 #include "engine_la.h"

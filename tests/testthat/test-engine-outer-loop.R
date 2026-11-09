@@ -1,7 +1,7 @@
 # The outer search in compiled code (engine_outer_search(): the search, the
 # point and the penalty, phase 4) against the R route of outer_fit(): the
-# same fit in every property, and the penalty built in C++ identical to the
-# one R builds, signed zeros included.
+# same fit in every property (numbers to rounding), and the penalty built in
+# C++ identical to the one R builds, signed zeros included.
 
 loop_data <- function(n = 300, groups = 15, seed = 5) {
   set.seed(seed)
@@ -31,18 +31,51 @@ same_value <- function(a, b) {
   identical(a, b) || isTRUE(all.equal(a, b, tolerance = 0, check.environment = FALSE))
 }
 
-expect_same_fit <- function(f) {
+# the same fit up to rounding: numeric leaves agree to 1e-12 on the scale
+# of the R route's values, floor 1 (on Linux the two routes have differed
+# by one ulp in the objective, run to run, and a block's change is a
+# difference of two objectives near 1e-14); every other leaf, the structure
+# and the attributes exactly
+same_fit_value <- function(a, b, tol = 1e-12) {
+  if (same_value(a, b)) return(TRUE)
+  if (is.numeric(a) && is.numeric(b)) return(scale_gap(a, b, floor = 1) <= tol)
+  if (is.list(a) && is.list(b) && !is.object(a) && !is.object(b)) {
+    if (length(a) != length(b) || !identical(names(a), names(b))) return(FALSE)
+    return(all(vapply(seq_along(a), function(k) same_fit_value(a[[k]], b[[k]], tol), TRUE)))
+  }
+  if (is.data.frame(a) && is.data.frame(b)) {
+    if (!identical(dim(a), dim(b)) || !identical(names(a), names(b))) return(FALSE)
+    return(all(vapply(seq_along(a), function(k) same_fit_value(a[[k]], b[[k]], tol), TRUE)))
+  }
+  FALSE
+}
+
+# On arm64 macOS R's own BLAS rounds with fused multiply-adds and the
+# compiled code does not, so a search along a weakly identified direction
+# can drift by 1e-9 and reach the rounding floor on one route only: there
+# the fits marked `at_resolution` are compared at the search's resolution,
+# and the stopping rule of one route may carry the floor rule besides
+on_arm_mac <- identical(Sys.info()[["sysname"]], "Darwin")
+
+expect_same_fit <- function(f, at_resolution = FALSE) {
+  tol <- if (at_resolution && on_arm_mac) 1e-6 else 1e-12
   for (p in setdiff(S7::prop_names(f$r), c("elapsed", "methods"))) {
-    expect_true(same_value(S7::prop(f$c, p), S7::prop(f$r, p)), info = p)
+    expect_true(same_fit_value(S7::prop(f$c, p), S7::prop(f$r, p), tol), info = p)
   }
   # the optimizer's line search holds a closure over each run's frame: its
   # class and its rule are compared, the rest of the record exactly
   mr <- f$r@methods
   mc <- f$c@methods
-  for (k in setdiff(names(mr), "search")) expect_true(same_value(mc[[k]], mr[[k]]), info = k)
+  for (k in setdiff(names(mr), "search")) expect_true(same_fit_value(mc[[k]], mr[[k]], tol), info = k)
   if (!is.null(mr$search)) {
     expect_identical(class(mc$search), class(mr$search))
-    expect_identical(mc$search@criterion@label, mr$search@criterion@label)
+    lc <- mc$search@criterion@label
+    lr <- mr$search@criterion@label
+    if (at_resolution && on_arm_mac) {
+      expect_true(startsWith(lc, lr) || startsWith(lr, lc), info = paste(lc, "|", lr))
+    } else {
+      expect_identical(lc, lr)
+    }
   }
 }
 
@@ -53,7 +86,7 @@ test_that("the compiled search reproduces the R route: smooth, random slope, two
   expect_same_fit(loop_fits(y ~ s(x) + random(~ z | g), distrib = g1, data = d))
   expect_same_fit(loop_fits(y ~ s(x) | sigma ~ z, distrib = g1, data = d))
   expect_same_fit(loop_fits(y ~ s(x) + random(~ 1 | g), distrib = g1, data = d,
-                            outer_criterion = ml()))
+                            outer_criterion = ml()), at_resolution = TRUE)
 })
 
 test_that("the compiled search reproduces the R route: t priors and a kinked block", {
@@ -62,7 +95,8 @@ test_that("the compiled search reproduces the R route: t priors and a kinked blo
   tp <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0)
   expect_same_fit(loop_fits(y ~ z + random(~ 1 | g, distrib = tp), distrib = g1, data = d))
   mv2 <- distributions7::fixed(distributions7::mvstudent_t1_distrib(2), mu1 = 0, mu2 = 0)
-  expect_same_fit(loop_fits(y ~ z + random(~ z | g, distrib = mv2), distrib = g1, data = d))
+  expect_same_fit(loop_fits(y ~ z + random(~ z | g, distrib = mv2), distrib = g1, data = d),
+                  at_resolution = TRUE)
   expect_same_fit(loop_fits(y ~ lasso(~ x + z) + random(~ 1 | g), distrib = g1, data = d))
 })
 
