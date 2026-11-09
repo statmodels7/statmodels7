@@ -1,5 +1,18 @@
 # Changelog
 
+## statmodels7 0.246.1
+
+- The compiled outer search builds on macOS: the LAPACK calls of its
+  decrement sit in a source file of their own, apart from RcppArmadillo,
+  whose prototypes clang rejects beside R’s.
+- The engine’s source files are compiled without contracting `a * b + c`
+  into a fused multiply-add on clang, so that on arm64 macOS they round
+  as R’s operations do.
+- Tests only: the outer-search twins compare numbers on the scale of the
+  R route’s values (1e-12, floor 1), and on arm64 macOS two fits along a
+  weakly identified direction at the search’s resolution.
+- Requires distributions7 (\>= 0.95.2).
+
 ## statmodels7 0.246.0
 
 - [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
